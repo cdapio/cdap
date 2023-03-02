@@ -54,8 +54,8 @@ public class ProgramFieldOperationInfo {
       return false;
     }
     ProgramFieldOperationInfo info = (ProgramFieldOperationInfo) o;
-    return Objects.equals(programs, info.programs) &&
-        Objects.equals(operations, info.operations);
+    return Objects.equals(programs, info.programs)
+        && Objects.equals(operations, info.operations);
   }
 
   @Override

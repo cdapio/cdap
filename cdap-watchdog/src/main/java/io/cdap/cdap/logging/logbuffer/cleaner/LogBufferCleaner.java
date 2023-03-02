@@ -56,8 +56,8 @@ public class LogBufferCleaner implements Runnable {
   @Override
   public void run() {
     if (!shouldCleanup.get() || !baseLogDir.exists()) {
-      LOG.debug("Log buffer base directory {} does not exist or recovery is still running. " +
-          "So cleanup task will not run.", baseLogDir);
+      LOG.debug("Log buffer base directory {} does not exist or recovery is still running. "
+          + "So cleanup task will not run.", baseLogDir);
       return;
     }
 

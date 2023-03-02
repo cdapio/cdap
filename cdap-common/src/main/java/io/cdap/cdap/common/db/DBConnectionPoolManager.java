@@ -187,8 +187,8 @@ public class DBConnectionPoolManager {
         throw new TimeoutException();
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException("Interrupted while waiting for a " +
-          "database connection.", e);
+      throw new RuntimeException("Interrupted while waiting for a "
+          + "database connection.", e);
     }
 
     boolean ok = false;
@@ -273,14 +273,14 @@ public class DBConnectionPoolManager {
         try {
           Thread.sleep(250);
         } catch (InterruptedException e) {
-          throw new RuntimeException("Interrupted while waiting " +
-              "for a valid database connection.", e);
+          throw new RuntimeException("Interrupted while waiting "
+              + "for a valid database connection.", e);
         }
       }
       time = System.currentTimeMillis();
       if (time >= timeoutTime) {
-        throw new TimeoutException("Timeout while waiting for a " +
-            "valid database connection.");
+        throw new TimeoutException("Timeout while waiting for a "
+            + "valid database connection.");
       }
     }
   }

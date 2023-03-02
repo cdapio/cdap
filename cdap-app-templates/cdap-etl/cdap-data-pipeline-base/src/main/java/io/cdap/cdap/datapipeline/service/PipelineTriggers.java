@@ -86,8 +86,8 @@ public final class PipelineTriggers {
       }
       String sourceKey = mapping.getSource();
       if (sourceKey == null) {
-        LOG.warn("The name of argument from the triggering pipeline cannot be null, " +
-          "skip this argument mapping: '{}'.", mapping);
+        LOG.warn("The name of argument from the triggering pipeline cannot be null, "
+          + "skip this argument mapping: '{}'.", mapping);
         continue;
       }
       String value = triggeringArguments.get(sourceKey);
@@ -124,8 +124,8 @@ public final class PipelineTriggers {
       }
       String sourceKey = mapping.getSource();
       if (sourceKey == null) {
-        LOG.warn("The name of argument from the triggering pipeline cannot be null, " +
-            "skip this argument mapping: '{}'.", mapping);
+        LOG.warn("The name of argument from the triggering pipeline cannot be null, "
+            + "skip this argument mapping: '{}'.", mapping);
         continue;
       }
       String value = pluginProperties.get(sourceKey);

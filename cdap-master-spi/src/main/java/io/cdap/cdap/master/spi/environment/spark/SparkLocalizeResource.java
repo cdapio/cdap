@@ -54,9 +54,9 @@ public class SparkLocalizeResource {
 
   @Override
   public String toString() {
-    return "SparkLocalizeResource{" +
-        "uri=" + uri +
-        ", isArchive=" + isArchive +
-        '}';
+    return "SparkLocalizeResource{"
+        + "uri=" + uri
+        + ", isArchive=" + isArchive
+        + '}';
   }
 }

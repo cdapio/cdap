@@ -106,8 +106,8 @@ public class DefaultFieldLineageReader implements FieldLineageReader {
       try {
         // No need to compute summaries here.
         FieldLineageInfo info = new FieldLineageInfo(programRunOperation.getOperations(), false);
-        Set<Operation> fieldOperations = incoming ?
-            info.getIncomingOperationsForField(endPointField)
+        Set<Operation> fieldOperations = incoming
+            ? info.getIncomingOperationsForField(endPointField)
             : info.getOutgoingOperationsForField(endPointField);
         ProgramRunOperations result = new ProgramRunOperations(
             programRunOperation.getProgramRunIds(), fieldOperations);

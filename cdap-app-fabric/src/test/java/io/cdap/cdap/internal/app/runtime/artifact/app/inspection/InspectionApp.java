@@ -152,8 +152,8 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   }
 
   @Plugin(type = PLUGIN_TYPE)
-  @Name("Capability" +
-    "Plugin")
+  @Name("Capability"
+      + "Plugin")
   @Description(PLUGIN_DESCRIPTION)
   @Requirements(capabilities = {"cdc"})
   public static class CapabilityPlugin {

@@ -67,9 +67,9 @@ public abstract class FieldOperation {
       return false;
     }
     FieldOperation operation = (FieldOperation) o;
-    return Objects.equals(name, operation.name) &&
-        type == operation.type &&
-        Objects.equals(description, operation.description);
+    return Objects.equals(name, operation.name)
+        && type == operation.type
+        && Objects.equals(description, operation.description);
   }
 
   @Override

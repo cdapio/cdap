@@ -110,11 +110,11 @@ public class DataAccessLineage {
 
   @Override
   public String toString() {
-    return "DataAccessLineage{" +
-        "accessTime=" + accessTime +
-        ", accessType=" + accessType +
-        ", datasetId=" + datasetId +
-        ", componentId=" + getComponentId() +
-        '}';
+    return "DataAccessLineage{"
+        + "accessTime=" + accessTime
+        + ", accessType=" + accessType
+        + ", datasetId=" + datasetId
+        + ", componentId=" + getComponentId()
+        + '}';
   }
 }

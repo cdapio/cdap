@@ -65,10 +65,10 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-          o != null
-              && getClass().equals(o.getClass())
-              && Objects.equals(getCronExpression(), ((TimeTrigger) o).getCronExpression());
+      return this == o
+          || o != null
+          && getClass().equals(o.getClass())
+          && Objects.equals(getCronExpression(), ((TimeTrigger) o).getCronExpression());
     }
 
     @Override
@@ -120,11 +120,11 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-          o != null &&
-              getClass().equals(o.getClass()) &&
-              Objects.equals(getDataset(), ((PartitionTrigger) o).getDataset()) &&
-              Objects.equals(getNumPartitions(), ((PartitionTrigger) o).getNumPartitions());
+      return this == o
+          || o != null
+          && getClass().equals(o.getClass())
+          && Objects.equals(getDataset(), ((PartitionTrigger) o).getDataset())
+          && Objects.equals(getNumPartitions(), ((PartitionTrigger) o).getNumPartitions());
     }
 
     @Override
@@ -166,14 +166,14 @@ public abstract class ProtoTrigger implements Trigger {
       List<T> triggers = getTriggers();
       if (triggers.isEmpty()) {
         throw new IllegalArgumentException(
-            String.format("Triggers passed in to construct a trigger " +
-                "of type %s cannot be empty.", getType().name()));
+            String.format("Triggers passed in to construct a trigger "
+                + "of type %s cannot be empty.", getType().name()));
       }
       for (T trigger : triggers) {
         if (trigger == null) {
           throw new IllegalArgumentException(
-              String.format("Triggers passed in to construct a trigger " +
-                  "of type %s cannot contain null.", getType().name()));
+              String.format("Triggers passed in to construct a trigger "
+                  + "of type %s cannot contain null.", getType().name()));
         }
       }
     }
@@ -198,9 +198,9 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public String toString() {
-      return getType() + "Trigger{" +
-          "triggers=" + triggers +
-          '}';
+      return getType() + "Trigger{"
+          + "triggers=" + triggers
+          + '}';
     }
   }
 
@@ -264,8 +264,8 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public void validate() {
-      if (getProgramStatuses().contains(ProgramStatus.INITIALIZING) ||
-          getProgramStatuses().contains(ProgramStatus.RUNNING)) {
+      if (getProgramStatuses().contains(ProgramStatus.INITIALIZING)
+          || getProgramStatuses().contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
             "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
             programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
@@ -282,12 +282,12 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-          o != null &&
-              getClass().equals(o.getClass()) &&
-              Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses())
-              &&
-              Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
+      return this == o
+          || o != null
+          && getClass().equals(o.getClass())
+          && Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses())
+
+          && Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
     }
 
     @Override

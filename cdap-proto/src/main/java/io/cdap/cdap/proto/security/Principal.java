@@ -99,8 +99,8 @@ public class Principal {
 
     Principal other = (Principal) o;
 
-    return Objects.equals(name, other.name) && Objects.equals(type, other.type) &&
-        Objects.equals(kerberosPrincipal, other.kerberosPrincipal);
+    return Objects.equals(name, other.name) && Objects.equals(type, other.type)
+        && Objects.equals(kerberosPrincipal, other.kerberosPrincipal);
   }
 
   @Override
@@ -116,11 +116,11 @@ public class Principal {
 
   @Override
   public String toString() {
-    return "Principal{" +
-        "name='" + name + '\'' +
-        ", type=" + type +
-        ", kerberosPrincipal=" + kerberosPrincipal +
-        ", credential=" + credential +
-        '}';
+    return "Principal{"
+        + "name='" + name + '\''
+        + ", type=" + type
+        + ", kerberosPrincipal=" + kerberosPrincipal
+        + ", credential=" + credential
+        + '}';
   }
 }

@@ -61,8 +61,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   private void validateInputStages(Map<String, Schema> inputSchemas, List<String> inputStages) {
     if (!inputStages.containsAll(inputSchemas.keySet())) {
       throw new RuntimeException(
-          "inputStages: " + inputStages + "doesn't have all stages in inputSchemas: " +
-              inputSchemas.keySet());
+          "inputStages: " + inputStages + "doesn't have all stages in inputSchemas: "
+              + inputSchemas.keySet());
     }
   }
 
@@ -186,8 +186,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
               .omitEmptyStrings().split(perStageKey));
           if (stageKey.size() != 2) {
             collector.addFailure(
-                    String.format("Join key is not specified in stageName.columnName " +
-                        "format for key %s", perStageKey),
+                    String.format("Join key is not specified in stageName.columnName "
+                        + "format for key %s", perStageKey),
                     "Make sure syntax for joinKeys config property is correct")
                 .withConfigProperty("joinKeys");
           } else {
@@ -226,7 +226,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     }
 
     /**
-     * Converts join keys to map of per stage join keys For example, customers.id=items.cust_id&customers.name=items.cust_name
+     * Converts join keys to map of per stage join keys For example,
+     * customers.id=items.cust_id&customers.name=items.cust_name
      * will get converted to customers -> (id,name) and items -> (cust_id,cust_name)
      *
      * @return map of stage to join key fields from that stage

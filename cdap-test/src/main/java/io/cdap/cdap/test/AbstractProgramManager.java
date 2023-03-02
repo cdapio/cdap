@@ -150,8 +150,8 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
     Tasks.waitFor(true, () -> {
       if (failPredicate.apply(getLastRunStatus())) {
-        throw new AssertionError("Latest run failed with status " + getLastRunStatus() +
-            " while waiting for " + runCount + " " + status + " run(s)"
+        throw new AssertionError("Latest run failed with status " + getLastRunStatus()
+            + " while waiting for " + runCount + " " + status + " run(s)"
         );
       }
       return getHistory(status).size() >= runCount;

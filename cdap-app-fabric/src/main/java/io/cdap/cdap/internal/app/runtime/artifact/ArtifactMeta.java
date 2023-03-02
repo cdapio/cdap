@@ -79,9 +79,9 @@ public class ArtifactMeta {
 
     ArtifactMeta that = (ArtifactMeta) o;
 
-    return Objects.equals(classes, that.classes) &&
-        Objects.equals(usableBy, that.usableBy) &&
-        Objects.equals(getProperties(), that.getProperties());
+    return Objects.equals(classes, that.classes)
+        && Objects.equals(usableBy, that.usableBy)
+        && Objects.equals(getProperties(), that.getProperties());
   }
 
   @Override
@@ -91,10 +91,10 @@ public class ArtifactMeta {
 
   @Override
   public String toString() {
-    return "ArtifactMeta{" +
-        "classes=" + classes +
-        ", usableBy=" + usableBy +
-        ", properties=" + getProperties() +
-        '}';
+    return "ArtifactMeta{"
+        + "classes=" + classes
+        + ", usableBy=" + usableBy
+        + ", properties=" + getProperties()
+        + '}';
   }
 }

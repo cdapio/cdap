@@ -98,10 +98,10 @@ public class SparkClassLoader extends CombineClassLoader {
 
     if (!createIfNotExists) {
       throw new IllegalStateException(
-        "SparkExecutionContext does not exist. " +
-          "This is caused by using SparkExecutionContext from a " +
-          "closure function executing in Spark executor process. " +
-          "SparkExecutionContext can only be used in Spark driver process.");
+        "SparkExecutionContext does not exist. "
+          + "This is caused by using SparkExecutionContext from a "
+          + "closure function executing in Spark executor process. "
+          + "SparkExecutionContext can only be used in Spark driver process.");
     }
 
     SparkConf sparkConf = new SparkConf();

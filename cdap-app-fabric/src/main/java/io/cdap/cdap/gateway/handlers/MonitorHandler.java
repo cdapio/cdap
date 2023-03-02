@@ -269,8 +269,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
     if (!masterServiceManager.isServiceEnabled()) {
-      throw new ForbiddenException(String.format("Failed to update log levels for service %s " +
-          "because the service is not enabled", serviceName));
+      throw new ForbiddenException(String.format("Failed to update log levels for service %s "
+          + "because the service is not enabled", serviceName));
     }
 
     try {
@@ -280,8 +280,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
       throw new ServiceUnavailableException(
-          String.format("Failed to update log levels for service %s " +
-              "because the service may not be ready yet", serviceName));
+          String.format("Failed to update log levels for service %s "
+              + "because the service may not be ready yet", serviceName));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());
     } catch (JsonSyntaxException e) {
@@ -306,8 +306,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
     if (!masterServiceManager.isServiceEnabled()) {
-      throw new ForbiddenException(String.format("Failed to reset log levels for service %s " +
-          "because the service is not enabled", serviceName));
+      throw new ForbiddenException(String.format("Failed to reset log levels for service %s "
+          + "because the service is not enabled", serviceName));
     }
 
     try {
@@ -317,8 +317,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
       throw new ServiceUnavailableException(
-          String.format("Failed to reset log levels for service %s " +
-              "because the service may not be ready yet", serviceName));
+          String.format("Failed to reset log levels for service %s "
+              + "because the service may not be ready yet", serviceName));
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid Json in the body");
     }

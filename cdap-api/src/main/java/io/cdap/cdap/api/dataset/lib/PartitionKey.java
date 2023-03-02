@@ -57,9 +57,9 @@ public class PartitionKey {
 
   @Override
   public boolean equals(Object other) {
-    return this == other ||
-        (other != null && getClass() == other.getClass()
-            && getFields().equals(((PartitionKey) other).getFields())); // fields is never null
+    return this == other
+        || (other != null && getClass() == other.getClass()
+        && getFields().equals(((PartitionKey) other).getFields())); // fields is never null
   }
 
   @Override

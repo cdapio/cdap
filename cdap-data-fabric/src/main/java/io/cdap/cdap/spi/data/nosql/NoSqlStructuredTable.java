@@ -160,8 +160,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     // TODO: remove this warning after CDAP-20177
-    LOG_RATE_LIMITED.warn("Potential performance impact while scanning table {} with range {} " +
-            "which does in-memory filtering with filterRange {}",
+    LOG_RATE_LIMITED.warn("Potential performance impact while scanning table {} with range {} "
+            + "which does in-memory filtering with filterRange {}",
         schema.getTableId(), keyRange, filterRange);
     return new FilterByRangeIterator(Collections.singleton(scannerIterator).iterator(),
         Collections.singleton(filterRange));
@@ -547,8 +547,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-          String.format("Given fields %s does not contain all the " +
-              "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s does not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
     int numColumns = fields.size() - schema.getPrimaryKeys().size();
 
@@ -591,8 +591,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-          String.format("Given fields %s does not contain all the " +
-              "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s does not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
     Set<String> primaryKeys = new HashSet<>(schema.getPrimaryKeys());
     Collection<Field<?>> keyFields = fields.stream()

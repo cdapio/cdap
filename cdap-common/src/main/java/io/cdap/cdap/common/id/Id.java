@@ -245,8 +245,8 @@ public abstract class Id implements EntityIdCompatible {
 
     @Override
     public ApplicationId toEntityId() {
-      return new ApplicationId(namespace.getId(), applicationId, version == null ?
-          ApplicationId.DEFAULT_VERSION : version);
+      return new ApplicationId(namespace.getId(), applicationId, version == null
+          ? ApplicationId.DEFAULT_VERSION : version);
     }
 
     public static Application fromEntityId(ApplicationId applicationId) {
@@ -520,8 +520,8 @@ public abstract class Id implements EntityIdCompatible {
       }
       if (!isValidDatasetId(moduleId)) {
         throw new IllegalArgumentException(
-            "Invalid characters found in dataset module Id '" + moduleId +
-                "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+            "Invalid characters found in dataset module Id '" + moduleId
+                + "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
       }
       this.namespace = namespace;
       this.moduleId = moduleId;

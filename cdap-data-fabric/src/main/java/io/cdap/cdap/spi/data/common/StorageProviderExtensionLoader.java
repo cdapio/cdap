@@ -43,8 +43,8 @@ final class StorageProviderExtensionLoader extends
           StorageProviderExtensionLoader.class.getClassLoader(),
           StorageProvider.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to trace dependencies for storage provider extension. " +
-          "Usage of storage provider might fail.", e);
+      throw new RuntimeException("Failed to trace dependencies for storage provider extension. "
+          + "Usage of storage provider might fail.", e);
     }
   }
 

@@ -51,8 +51,8 @@ public class EndPointField {
       return false;
     }
     EndPointField that = (EndPointField) o;
-    return Objects.equals(endPoint, that.endPoint) &&
-        Objects.equals(field, that.field);
+    return Objects.equals(endPoint, that.endPoint)
+        && Objects.equals(field, that.field);
   }
 
   @Override
@@ -65,10 +65,10 @@ public class EndPointField {
 
   @Override
   public String toString() {
-    return "EndPointField{" +
-        "endPoint=" + endPoint +
-        ", field='" + field + '\'' +
-        '}';
+    return "EndPointField{"
+        + "endPoint=" + endPoint
+        + ", field='" + field + '\''
+        + '}';
   }
 
   /**
@@ -82,10 +82,10 @@ public class EndPointField {
    * @return true if an EndPointField is valid, false otherwise
    */
   public boolean isValid() {
-    return endPoint != null &&
-        endPoint.getName() != null &&
-        endPoint.getNamespace() != null &&
-        !endPoint.getProperties().isEmpty() &&
-        field != null;
+    return endPoint != null
+        && endPoint.getName() != null
+        && endPoint.getNamespace() != null
+        && !endPoint.getProperties().isEmpty()
+        && field != null;
   }
 }

@@ -146,10 +146,10 @@ public class UserIdentity {
     }
     UserIdentity otherToken = (UserIdentity) other;
 
-    return Objects.equal(username, otherToken.username) &&
-        Objects.equal(groups, otherToken.groups) &&
-        issueTimestamp == otherToken.issueTimestamp &&
-        expireTimestamp == otherToken.expireTimestamp;
+    return Objects.equal(username, otherToken.username)
+        && Objects.equal(groups, otherToken.groups)
+        && issueTimestamp == otherToken.issueTimestamp
+        && expireTimestamp == otherToken.expireTimestamp;
   }
 
   @Override

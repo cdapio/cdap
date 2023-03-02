@@ -145,10 +145,10 @@ public class DataprocTool {
     helpFormatter.printHelp(
         DataprocTool.class.getSimpleName() + " provision|details|status|deprovision",
         "Provisions, deprovisions, or gets the status of a cluster. Basic provisioner settings can be passed in as "
-            +
-            "options. Advanced provisioner settings can be specified in a file, in which case every setting must be "
-            +
-            "given.",
+
+            + "options. Advanced provisioner settings can be specified in a file, in which case every setting must be "
+
+            + "given.",
         options, "");
   }
 }

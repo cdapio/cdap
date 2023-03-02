@@ -58,11 +58,11 @@ public class Plugin {
 
   @Override
   public String toString() {
-    return "Plugin{" +
-        "name='" + name + '\'' +
-        ", properties=" + properties +
-        ", artifact=" + artifact +
-        '}';
+    return "Plugin{"
+        + "name='" + name + '\''
+        + ", properties=" + properties
+        + ", artifact=" + artifact
+        + '}';
   }
 
   @Override
@@ -76,9 +76,9 @@ public class Plugin {
 
     Plugin that = (Plugin) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(artifact, that.artifact);
+    return Objects.equals(name, that.name)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override

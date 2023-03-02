@@ -58,8 +58,8 @@ public class ETLTransformationPushdown {
 
   @Override
   public String toString() {
-    return "ETLTransformationPushdown{" +
-        "plugin=" + plugin +
-        '}';
+    return "ETLTransformationPushdown{"
+        + "plugin=" + plugin
+        + '}';
   }
 }

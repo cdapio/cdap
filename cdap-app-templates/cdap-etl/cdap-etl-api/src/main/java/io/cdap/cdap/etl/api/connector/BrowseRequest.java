@@ -57,8 +57,8 @@ public class BrowseRequest {
     }
 
     BrowseRequest that = (BrowseRequest) o;
-    return Objects.equals(path, that.path) &&
-        Objects.equals(limit, that.limit);
+    return Objects.equals(path, that.path)
+        && Objects.equals(limit, that.limit);
   }
 
   @Override

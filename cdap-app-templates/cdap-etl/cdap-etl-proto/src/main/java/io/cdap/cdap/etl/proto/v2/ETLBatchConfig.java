@@ -179,12 +179,12 @@ public final class ETLBatchConfig extends ETLConfig {
 
     ETLBatchConfig that = (ETLBatchConfig) o;
 
-    return Objects.equals(engine, that.engine) &&
-        Objects.equals(schedule, that.schedule) &&
-        Objects.equals(postActions, that.postActions) &&
-        Objects.equals(actions, that.actions) &&
-        Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns) &&
-        Objects.equals(transformationPushdown, that.transformationPushdown);
+    return Objects.equals(engine, that.engine)
+        && Objects.equals(schedule, that.schedule)
+        && Objects.equals(postActions, that.postActions)
+        && Objects.equals(actions, that.actions)
+        && Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns)
+        && Objects.equals(transformationPushdown, that.transformationPushdown);
 
   }
 
@@ -196,14 +196,14 @@ public final class ETLBatchConfig extends ETLConfig {
 
   @Override
   public String toString() {
-    return "ETLBatchConfig{" +
-        "engine=" + engine +
-        ", schedule='" + schedule + '\'' +
-        ", maxConcurrentRuns=" + maxConcurrentRuns +
-        ", postActions=" + postActions +
-        ", actions=" + actions +
-        ", transformationPushdown=" + transformationPushdown +
-        "} " + super.toString();
+    return "ETLBatchConfig{"
+        + "engine=" + engine
+        + ", schedule='" + schedule + '\''
+        + ", maxConcurrentRuns=" + maxConcurrentRuns
+        + ", postActions=" + postActions
+        + ", actions=" + actions
+        + ", transformationPushdown=" + transformationPushdown
+        + "} " + super.toString();
   }
 
   /**

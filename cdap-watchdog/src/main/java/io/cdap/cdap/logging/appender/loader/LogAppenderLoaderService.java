@@ -83,8 +83,8 @@ public class LogAppenderLoaderService extends AbstractIdleService {
     Appender<ILoggingEvent> appender = new LogAppenderExtensionLoader(cConf).get(appenderProvider);
     if (appender == null) {
       // this will not happen unless log appender provider is misconfigured.
-      throw new RuntimeException("Log appender " + appenderProvider + " is not constructed. " +
-          "Please provide correct log appender provider.");
+      throw new RuntimeException("Log appender " + appenderProvider + " is not constructed. "
+          + "Please provide correct log appender provider.");
     }
     return appender;
   }

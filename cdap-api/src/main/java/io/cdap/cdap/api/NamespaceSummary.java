@@ -67,9 +67,9 @@ public class NamespaceSummary {
       return false;
     }
     NamespaceSummary that = (NamespaceSummary) o;
-    return generation == that.generation &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description);
+    return generation == that.generation
+        && Objects.equals(name, that.name)
+        && Objects.equals(description, that.description);
   }
 
   @Override
@@ -79,10 +79,10 @@ public class NamespaceSummary {
 
   @Override
   public String toString() {
-    return "NamespaceSummary{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", generation=" + generation +
-        '}';
+    return "NamespaceSummary{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", generation=" + generation
+        + '}';
   }
 }

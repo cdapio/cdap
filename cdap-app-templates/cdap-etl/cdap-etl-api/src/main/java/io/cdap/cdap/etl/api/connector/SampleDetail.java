@@ -60,8 +60,8 @@ public class SampleDetail {
     }
 
     SampleDetail that = (SampleDetail) o;
-    return Objects.equals(sample, that.sample) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(sample, that.sample)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override

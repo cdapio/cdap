@@ -621,8 +621,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (conditionStages.contains(connection.getFrom())) {
         if (connection.getCondition() == null) {
           String msg = String.format(
-              "For condition stage %s, the connection %s is not marked with either " +
-                  "'true' or 'false'.", connection.getFrom(), connection);
+              "For condition stage %s, the connection %s is not marked with either "
+                  + "'true' or 'false'.", connection.getFrom(), connection);
           throw new IllegalArgumentException(msg);
         }
 
@@ -647,8 +647,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         return new ValidatedPipeline(traversalOrder, config);
       } else {
         throw new IllegalArgumentException(
-            "Invalid pipeline. There are no connections between stages. " +
-                "This is only allowed if the pipeline consists of a single action plugin.");
+            "Invalid pipeline. There are no connections between stages. "
+                + "This is only allowed if the pipeline consists of a single action plugin.");
       }
     }
 
@@ -784,9 +784,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       Set<String> outputs = dag.getNodeOutputs(conditionStage);
       if (outputs == null || outputs.size() > 2) {
         String msg = String.format(
-            "Condition stage in the pipeline '%s' should have at least 1 and at max 2 " +
-                "outgoing connections corresponding to 'true' and 'false' branches " +
-                "but found '%s'.", conditionStage, outputs == null ? 0 : outputs.size());
+            "Condition stage in the pipeline '%s' should have at least 1 and at max 2 "
+                + "outgoing connections corresponding to 'true' and 'false' branches "
+                + "but found '%s'.", conditionStage, outputs == null ? 0 : outputs.size());
         throw new IllegalArgumentException(msg);
       }
       for (String output : outputs) {
@@ -817,9 +817,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
           paths += parent + "->" + currentStage;
         }
         String msg = String.format(
-            "Stage in the pipeline '%s' is on the branch of condition '%s'. However it also " +
-                "has following incoming paths: '%s'. Different branches of a condition cannot " +
-                "be inputs to the same stage.", currentStage, currentCondition, paths);
+            "Stage in the pipeline '%s' is on the branch of condition '%s'. However it also "
+                + "has following incoming paths: '%s'. Different branches of a condition cannot "
+                + "be inputs to the same stage.", currentStage, currentCondition, paths);
         throw new IllegalArgumentException(msg);
       }
     }

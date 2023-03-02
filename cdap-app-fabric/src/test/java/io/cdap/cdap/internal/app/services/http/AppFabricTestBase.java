@@ -590,9 +590,10 @@ public abstract class AppFabricTestBase {
     HttpResponse response = HttpRequests.execute(builder.build(), httpRequestConfig);
     if (expectedCode != response.getResponseCode()) {
       Assert.fail(
-        String.format("Expected response code %d but got %d when trying to deploy app '%s' in namespace '%s'. " +
-                        "Response message = '%s'", expectedCode, response.getResponseCode(),
-                      application.getName(), namespace, response.getResponseMessage()));
+          String.format(
+              "Expected response code %d but got %d when trying to deploy app '%s' in namespace '%s'. "
+                  + "Response message = '%s'", expectedCode, response.getResponseCode(),
+              application.getName(), namespace, response.getResponseMessage()));
     }
     return response;
   }
@@ -1174,13 +1175,15 @@ public abstract class AppFabricTestBase {
                                                                @Nullable ProgramScheduleStatus scheduleStatus,
                                                                ProgramStatus... programStatuses)
     throws Exception {
-    String schedulesUrl = String.format("schedules/trigger-type/program-status?trigger-namespace-id=%s" +
-                                          "&trigger-app-name=%s&trigger-app-version=%s" +
-                                          "&trigger-program-type=%s&trigger-program-name=%s", programId.getNamespace(),
-                                        programId.getApplication(), programId.getVersion(),
-                                        programId.getType().getCategoryName(), programId.getProgram());
+    String schedulesUrl = String.format(
+        "schedules/trigger-type/program-status?trigger-namespace-id=%s"
+            + "&trigger-app-name=%s&trigger-app-version=%s"
+            + "&trigger-program-type=%s&trigger-program-name=%s", programId.getNamespace(),
+        programId.getApplication(), programId.getVersion(),
+        programId.getType().getCategoryName(), programId.getProgram());
     if (programStatuses.length > 0) {
-      List<String> statusNames = Arrays.stream(programStatuses).map(Enum::name).collect(Collectors.toList());
+      List<String> statusNames = Arrays.stream(programStatuses).map(Enum::name)
+          .collect(Collectors.toList());
       schedulesUrl = schedulesUrl + "&trigger-program-statuses=" + Joiner.on(",").join(statusNames);
     }
     if (scheduleStatus != null) {

@@ -202,8 +202,8 @@ public class LevelDBTableService implements AutoCloseable {
       long failedMillis = System.currentTimeMillis();
       LOG.debug(
           "LevelDBTableService background periodic compaction on table {} failed after {} millis. "
-              +
-              "Ignore and try again later: ", failedMillis - startMillis, e);
+
+              + "Ignore and try again later: ", failedMillis - startMillis, e);
     }
   }
 

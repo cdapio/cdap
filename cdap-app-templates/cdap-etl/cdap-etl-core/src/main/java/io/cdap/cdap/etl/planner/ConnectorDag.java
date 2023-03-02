@@ -540,10 +540,10 @@ public class ConnectorDag extends Dag {
 
   @Override
   public String toString() {
-    return "ConnectorDag{" +
-        "reduceNodes=" + reduceNodes +
-        ", connectors=" + connectors +
-        "} " + super.toString();
+    return "ConnectorDag{"
+        + "reduceNodes=" + reduceNodes
+        + ", connectors=" + connectors
+        + "} " + super.toString();
   }
 
   @Override
@@ -560,8 +560,8 @@ public class ConnectorDag extends Dag {
 
     ConnectorDag that = (ConnectorDag) o;
 
-    return Objects.equals(reduceNodes, that.reduceNodes) &&
-        Objects.equals(connectors, that.connectors);
+    return Objects.equals(reduceNodes, that.reduceNodes)
+        && Objects.equals(connectors, that.connectors);
   }
 
   @Override
@@ -640,8 +640,8 @@ public class ConnectorDag extends Dag {
     public Builder addConnectors(String... nodes) {
       if (nodes.length % 2 != 0) {
         throw new IllegalArgumentException(
-            "must specify an even number of nodes, alternating between the " +
-                "connector name and the original node it was placed in front of.");
+            "must specify an even number of nodes, alternating between the "
+                + "connector name and the original node it was placed in front of.");
       }
       for (int i = 0; i < nodes.length; i += 2) {
         connectors.put(nodes[i], nodes[i + 1]);

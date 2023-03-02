@@ -177,8 +177,8 @@ public final class SecurityUtil {
   public static String getMasterPrincipal(CConfiguration cConf) {
     String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     if (principal == null) {
-      throw new IllegalArgumentException("Kerberos authentication is enabled, but " +
-          Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
+      throw new IllegalArgumentException("Kerberos authentication is enabled, but "
+          + Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
     }
     return principal;
   }
@@ -263,8 +263,8 @@ public final class SecurityUtil {
     try {
       String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
       if (confPath == null) {
-        throw new IllegalArgumentException(String.format("Failed to get a valid keytab path. " +
-                "Please ensure that you have specified %s in cdap-site.xml",
+        throw new IllegalArgumentException(String.format("Failed to get a valid keytab path. "
+                + "Please ensure that you have specified %s in cdap-site.xml",
             Constants.Security.KEYTAB_PATH));
       }
       String name = new KerberosName(principal).getShortName();
@@ -315,14 +315,14 @@ public final class SecurityUtil {
     // if an owner principal was not specified then ensure that a direct owner doesn't exist. Although, if an owner
     // principal was specified then it must be equal to the effective impersonating principal of this entity
     if (!((specifiedOwnerPrincipal == null && ownerAdmin.getOwnerPrincipal(existingEntity) == null)
-        ||
-        Objects.equals(specifiedOwnerPrincipal,
-            ownerAdmin.getImpersonationPrincipal(existingEntity)))) {
+
+        || Objects.equals(specifiedOwnerPrincipal,
+        ownerAdmin.getImpersonationPrincipal(existingEntity)))) {
       // Not giving existing owner information as it might be unacceptable under some security scenarios
       throw new UnauthorizedException(
-          String.format("%s '%s' already exists and the specified %s '%s' is not the " +
-                  "same as the existing one. The %s of an entity cannot be " +
-                  "changed.",
+          String.format("%s '%s' already exists and the specified %s '%s' is not the "
+                  + "same as the existing one. The %s of an entity cannot be "
+                  + "changed.",
               existingEntity.getEntityType(), existingEntity.getEntityName(),
               Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
               Constants.Security.PRINCIPAL));

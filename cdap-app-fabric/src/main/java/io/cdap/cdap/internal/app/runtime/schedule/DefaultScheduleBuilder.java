@@ -199,8 +199,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
     @Override
     public Trigger getTrigger() {
       throw new UnsupportedOperationException(
-          String.format("Schedule %s does not have a trigger because it is  " +
-                  "missing a defined namespace and application environment",
+          String.format("Schedule %s does not have a trigger because it is  "
+                  + "missing a defined namespace and application environment",
               getName()));
     }
 

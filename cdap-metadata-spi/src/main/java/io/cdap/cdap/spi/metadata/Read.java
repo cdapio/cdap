@@ -111,11 +111,11 @@ public class Read {
 
   @Override
   public String toString() {
-    return "Read{" +
-        "entity=" + entity +
-        ", scopes=" + scopes +
-        ", kinds=" + kinds +
-        ", selection=" + selection +
-        '}';
+    return "Read{"
+        + "entity=" + entity
+        + ", scopes=" + scopes
+        + ", kinds=" + kinds
+        + ", selection=" + selection
+        + '}';
   }
 }

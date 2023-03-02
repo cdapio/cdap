@@ -104,8 +104,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     Set<ProgramRunId> fixed = doFixRunRecords();
 
     if (!fixed.isEmpty()) {
-      LOG.info("Corrected {} run records with status in {} that have no actual running program. " +
-              "Such programs likely have crashed or were killed by external signal.",
+      LOG.info("Corrected {} run records with status in {} that have no actual running program. "
+              + "Such programs likely have crashed or were killed by external signal.",
           fixed.size(), NOT_STOPPED_STATUSES);
     }
   }

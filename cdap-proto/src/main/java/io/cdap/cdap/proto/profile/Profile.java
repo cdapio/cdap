@@ -117,12 +117,12 @@ public class Profile {
       return false;
     }
     Profile profile = (Profile) o;
-    return Objects.equals(name, profile.name) &&
-        Objects.equals(label, profile.label) &&
-        Objects.equals(description, profile.description) &&
-        Objects.equals(scope, profile.scope) &&
-        Objects.equals(status, profile.status) &&
-        Objects.equals(provisioner, profile.provisioner);
+    return Objects.equals(name, profile.name)
+        && Objects.equals(label, profile.label)
+        && Objects.equals(description, profile.description)
+        && Objects.equals(scope, profile.scope)
+        && Objects.equals(status, profile.status)
+        && Objects.equals(provisioner, profile.provisioner);
   }
 
   @Override
@@ -132,14 +132,14 @@ public class Profile {
 
   @Override
   public String toString() {
-    return "Profile{" +
-        "name='" + name + '\'' +
-        ", label='" + label + '\'' +
-        ", description='" + description + '\'' +
-        ", scope=" + scope +
-        ", status=" + status +
-        ", provisioner=" + provisioner +
-        ", creationTimeSeconds=" + created +
-        '}';
+    return "Profile{"
+        + "name='" + name + '\''
+        + ", label='" + label + '\''
+        + ", description='" + description + '\''
+        + ", scope=" + scope
+        + ", status=" + status
+        + ", provisioner=" + provisioner
+        + ", creationTimeSeconds=" + created
+        + '}';
   }
 }

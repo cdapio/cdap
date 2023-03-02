@@ -195,16 +195,16 @@ public class SingleTypeModule implements DatasetModule {
       }
       if (suitableCtor != null) {
         throw new IllegalArgumentException(
-            String.format("Dataset class %s must have single constructor with parameter types of" +
-                " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+            String.format("Dataset class %s must have single constructor with parameter types of"
+                + " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
       }
       suitableCtor = ctor;
     }
 
     if (suitableCtor == null) {
       throw new IllegalArgumentException(
-          String.format("Dataset class %s must have single constructor with parameter types of" +
-              " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+          String.format("Dataset class %s must have single constructor with parameter types of"
+              + " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
     }
 
     return suitableCtor;

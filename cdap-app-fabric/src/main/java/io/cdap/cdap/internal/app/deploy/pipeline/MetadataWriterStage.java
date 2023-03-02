@@ -78,8 +78,8 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
 
     // add the rest user defined metadata
     Metadata userAppMetadata = input.getMetadata().get(MetadataScope.USER);
-    if (userAppMetadata != null &&
-        (!userAppMetadata.getProperties().isEmpty() || !userAppMetadata.getTags().isEmpty())) {
+    if (userAppMetadata != null
+        && (!userAppMetadata.getProperties().isEmpty() || !userAppMetadata.getTags().isEmpty())) {
       mutations.add(new MetadataMutation.Create(
           appId.toMetadataEntity(),
           new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, userAppMetadata.getTags(),

@@ -116,8 +116,8 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
    */
   @Override
   protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) {
-    return !(impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
-        impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE));
+    return !(impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE)
+        && impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE));
   }
 
   private HttpResponse executeRequest(ImpersonationRequest impersonationRequest)

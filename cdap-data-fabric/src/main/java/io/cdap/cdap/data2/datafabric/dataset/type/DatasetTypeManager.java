@@ -167,8 +167,8 @@ public class DatasetTypeManager {
           if (!instances.isEmpty()) {
             throw new DatasetModuleConflictException(String.format(
                 "Attempt to remove dataset types %s from module '%s' that have existing instances: %s. "
-                    +
-                    "Delete them first.", removedTypes, datasetModuleId,
+
+                    + "Delete them first.", removedTypes, datasetModuleId,
                 instances.stream()
                     .map(input -> input.getName() + ":" + input.getType())
                     .collect(Collectors.joining(", "))));
@@ -536,8 +536,8 @@ public class DatasetTypeManager {
     public boolean hasType(String datasetTypeName) {
       boolean hasType;
       try {
-        hasType = registry.hasType(datasetTypeName) ||
-            datasetTypeTable.getType(getNamespaceId().datasetType(datasetTypeName)) != null;
+        hasType = registry.hasType(datasetTypeName)
+            || datasetTypeTable.getType(getNamespaceId().datasetType(datasetTypeName)) != null;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

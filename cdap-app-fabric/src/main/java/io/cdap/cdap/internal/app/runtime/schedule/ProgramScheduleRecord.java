@@ -53,8 +53,8 @@ public class ProgramScheduleRecord {
 
     ProgramScheduleRecord that = (ProgramScheduleRecord) o;
 
-    return Objects.equal(this.schedule, that.schedule) &&
-        Objects.equal(this.meta, that.meta);
+    return Objects.equal(this.schedule, that.schedule)
+        && Objects.equal(this.meta, that.meta);
   }
 
   @Override
@@ -64,10 +64,10 @@ public class ProgramScheduleRecord {
 
   @Override
   public String toString() {
-    return "ProgramScheduleRecord{" +
-        "schedule=" + schedule +
-        ", meta=" + meta +
-        '}';
+    return "ProgramScheduleRecord{"
+        + "schedule=" + schedule
+        + ", meta=" + meta
+        + '}';
   }
 
   public ScheduleDetail toScheduleDetail() {

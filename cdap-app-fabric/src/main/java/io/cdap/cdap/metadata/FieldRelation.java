@@ -42,8 +42,8 @@ public class FieldRelation {
     }
 
     FieldRelation that = (FieldRelation) o;
-    return Objects.equals(source, that.source) &&
-        Objects.equals(destination, that.destination);
+    return Objects.equals(source, that.source)
+        && Objects.equals(destination, that.destination);
   }
 
   @Override

@@ -464,8 +464,8 @@ public class DatasetInstanceService {
    * @throws NamespaceNotFoundException if the requested namespace was not found
    * @throws IOException if there was a problem in checking if the namespace exists over HTTP
    * @throws UnauthorizedException if perimeter security and authorization are enabled, and the
-   *     current user does not have -
-   *     <ol>
+   *     current user does not have
+  - *     <ol>
    *       <li>{@link StandardPermission#DELETE} privileges on the dataset for "truncate" </li>
    *       <li>{@link StandardPermission#UPDATE} privileges on the dataset for "upgrade" </li>
    *       <li>read privileges on the dataset for "exists"</li>

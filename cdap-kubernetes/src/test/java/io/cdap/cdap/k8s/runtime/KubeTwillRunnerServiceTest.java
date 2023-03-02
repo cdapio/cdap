@@ -334,8 +334,9 @@ public class KubeTwillRunnerServiceTest {
 
   private void enableWorkloadIdentity() {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
-      "memberships/test-cluster";
+    String workloadIdentityProvider =
+        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
+            + "memberships/test-cluster";
     twillRunnerService.setWorkloadIdentityEnabled();
     twillRunnerService.setWorkloadIdentityPool(workloadIdentityPool);
     twillRunnerService.setWorkloadIdentityProvider(workloadIdentityProvider);

@@ -72,11 +72,11 @@ public class ArtifactVersionRange {
     if (isExactVersion()) {
       return lower.getVersion();
     } else {
-      return (isLowerInclusive ? '[' : '(') +
-          lower.getVersion() +
-          ',' +
-          upper.getVersion() +
-          (isUpperInclusive ? ']' : ')');
+      return (isLowerInclusive ? '[' : '(')
+          + lower.getVersion()
+          + ','
+          + upper.getVersion()
+          + (isUpperInclusive ? ']' : ')');
     }
   }
 
@@ -141,8 +141,8 @@ public class ArtifactVersionRange {
     } else if (comp == 0 && isLowerInclusive && !isUpperInclusive) {
       // if lower and upper are equal, but lower is inclusive and upper is exclusive, this is also invalid
       throw new InvalidArtifactRangeException(String.format(
-          "Invalid version range %s. Lower and upper versions %s are equal, " +
-              "but lower is inclusive and upper is exclusive.",
+          "Invalid version range %s. Lower and upper versions %s are equal, "
+              + "but lower is inclusive and upper is exclusive.",
           artifactVersionStr, lowerStr));
     }
     return new ArtifactVersionRange(lower, isLowerInclusive, upper, isUpperInclusive);

@@ -114,9 +114,9 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
       return false;
     }
     ApplicationId that = (ApplicationId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(application, that.application) &&
-        Objects.equals(version, that.version);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(application, that.application)
+        && Objects.equals(version, that.version);
   }
 
   @Override

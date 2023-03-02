@@ -348,8 +348,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     try {
       provisioningService.validateProperties(provisionerInfo.getName(), properties);
     } catch (NotFoundException e) {
-      throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
-              "thus cannot be associated with a profile",
+      throw new BadRequestException(String.format("The specified provisioner %s does not exist, "
+              + "thus cannot be associated with a profile",
           provisionerInfo.getName()), e);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage(), e);
@@ -362,8 +362,8 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
     try {
       return provisioningService.getTotalProcessingCpusLabel(provisionerInfo.getName(), properties);
     } catch (NotFoundException e) {
-      throw new BadRequestException(String.format("The specified provisioner %s does not exist, " +
-              "thus cannot be associated with a profile",
+      throw new BadRequestException(String.format("The specified provisioner %s does not exist, "
+              + "thus cannot be associated with a profile",
           provisionerInfo.getName()), e);
     }
   }

@@ -51,10 +51,10 @@ public final class ImpersonationInfo {
 
   @Override
   public String toString() {
-    return "ImpersonationInfo{" +
-        "principal='" + principal + '\'' +
-        ", keytabURI='" + keytabURI + '\'' +
-        '}';
+    return "ImpersonationInfo{"
+        + "principal='" + principal + '\''
+        + ", keytabURI='" + keytabURI + '\''
+        + '}';
   }
 
   @Override

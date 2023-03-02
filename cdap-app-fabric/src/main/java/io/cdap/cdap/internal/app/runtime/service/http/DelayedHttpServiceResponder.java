@@ -89,9 +89,9 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
       @Nullable HttpContentProducer contentProducer,
       @Nullable HttpHeaders headers) {
     Preconditions.checkState(!closed,
-        "Responder is already closed. " +
-            "This may due to either using a HttpServiceResponder inside HttpContentProducer or " +
-            "not using HttpServiceResponder provided to the HttpContentConsumer onFinish/onError method.");
+        "Responder is already closed. "
+            + "This may due to either using a HttpServiceResponder inside HttpContentProducer or "
+            + "not using HttpServiceResponder provided to the HttpContentConsumer onFinish/onError method.");
 
     if (bufferedResponse != null) {
       LOG.warn(

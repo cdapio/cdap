@@ -233,8 +233,8 @@ public class DefaultCube implements Cube, MeteredDataset {
     if (numFacts > 0) {
       long avgTimestamp = sumTimestamp / numFacts;
       PROGRESS_LOG.debug(
-          "Persisted {} updates for {} facts with {} measurements for {} dimension sets " +
-              "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
+          "Persisted {} updates for {} facts with {} measurements for {} dimension sets "
+              + "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
           numUpdates.get(), numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp,
           maxTimestamp,
           avgTimestamp, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);

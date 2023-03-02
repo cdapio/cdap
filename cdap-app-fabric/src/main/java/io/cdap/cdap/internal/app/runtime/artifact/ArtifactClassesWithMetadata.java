@@ -55,8 +55,8 @@ public class ArtifactClassesWithMetadata {
     }
 
     ArtifactClassesWithMetadata that = (ArtifactClassesWithMetadata) o;
-    return Objects.equals(artifactClasses, that.artifactClasses) &&
-        Objects.equals(mutations, that.mutations);
+    return Objects.equals(artifactClasses, that.artifactClasses)
+        && Objects.equals(mutations, that.mutations);
   }
 
   @Override

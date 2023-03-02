@@ -548,8 +548,10 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // Get the runId for the currently running Workflow
     String newRunId = getRunIdOfRunningProgram(programId);
     Assert.assertTrue(
-      String.format("Expected a new runId to be generated after starting the workflow for the second time, but " +
-                      "found old runId '%s' = new runId '%s'", runId, newRunId), !runId.equals(newRunId));
+        String.format(
+            "Expected a new runId to be generated after starting the workflow for the second time, but "
+                + "found old runId '%s' = new runId '%s'", runId, newRunId),
+        !runId.equals(newRunId));
 
     // Store the new RunId
     runId = newRunId;
@@ -680,25 +682,32 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
     // Making this version specific for correct version in the expected error message string below
-    ProgramId mr1ProgramId = Ids.namespace(TEST_NAMESPACE2).app(WorkflowAppWithScopedParameters.APP_NAME,
-                                                                applicationDetail.getAppVersion())
-      .mr(WorkflowAppWithScopedParameters.ONE_MR);
+    ProgramId mr1ProgramId = Ids.namespace(TEST_NAMESPACE2)
+        .app(WorkflowAppWithScopedParameters.APP_NAME,
+            applicationDetail.getAppVersion())
+        .mr(WorkflowAppWithScopedParameters.ONE_MR);
 
     verifyProgramRuns(Id.Program.fromEntityId(mr1ProgramId), ProgramRunStatus.RUNNING);
-    List<RunRecord> oneMRHistoryRuns = getProgramRuns(Id.Program.fromEntityId(mr1ProgramId), ProgramRunStatus.ALL);
+    List<RunRecord> oneMRHistoryRuns = getProgramRuns(Id.Program.fromEntityId(mr1ProgramId),
+        ProgramRunStatus.ALL);
 
-    String expectedMessage = String.format("Cannot stop the program run '%s' started by the Workflow run '%s'. " +
-                                             "Please stop the Workflow.",
-                                           mr1ProgramId.run(oneMRHistoryRuns.get(0).getPid()), workflowRunId);
-    stopProgram(Id.Program.fromEntityId(mr1ProgramId), oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
+    String expectedMessage = String.format(
+        "Cannot stop the program run '%s' started by the Workflow run '%s'. "
+            + "Please stop the Workflow.",
+        mr1ProgramId.run(oneMRHistoryRuns.get(0).getPid()), workflowRunId);
+    stopProgram(Id.Program.fromEntityId(mr1ProgramId), oneMRHistoryRuns.get(0).getPid(), 400,
+        expectedMessage);
 
     verifyProgramRuns(Id.Program.fromEntityId(programId), ProgramRunStatus.COMPLETED);
 
-    workflowHistoryRuns = getProgramRuns(Id.Program.fromEntityId(programId), ProgramRunStatus.COMPLETED);
+    workflowHistoryRuns = getProgramRuns(Id.Program.fromEntityId(programId),
+        ProgramRunStatus.COMPLETED);
 
-    oneMRHistoryRuns = getProgramRuns(Id.Program.fromEntityId(mr1ProgramId), ProgramRunStatus.COMPLETED);
+    oneMRHistoryRuns = getProgramRuns(Id.Program.fromEntityId(mr1ProgramId),
+        ProgramRunStatus.COMPLETED);
 
-    Id.Program mr2ProgramId = Id.Program.from(TEST_NAMESPACE2, WorkflowAppWithScopedParameters.APP_NAME,
+    Id.Program mr2ProgramId = Id.Program.from(TEST_NAMESPACE2,
+        WorkflowAppWithScopedParameters.APP_NAME,
                                               ProgramType.MAPREDUCE, WorkflowAppWithScopedParameters.ANOTHER_MR);
 
     List<RunRecord> anotherMRHistoryRuns = getProgramRuns(mr2ProgramId, ProgramRunStatus.COMPLETED);
@@ -869,8 +878,9 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // check that there were at least 1 previous runs
     List<ScheduledRuntime> previousRuntimes = getScheduledRunTimes(programId.toEntityId(), false);
     int numRuns = previousRuntimes.size();
-    Assert.assertTrue(String.format("After sleeping for two seconds, the schedule should have at least triggered " +
-                                      "once, but found %s previous runs", numRuns), numRuns >= 1);
+    Assert.assertTrue(
+        String.format("After sleeping for two seconds, the schedule should have at least triggered "
+            + "once, but found %s previous runs", numRuns), numRuns >= 1);
 
     // Verify no program running
     verifyNoRunWithStatus(programId, ProgramRunStatus.RUNNING);
@@ -1046,7 +1056,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     // create input data in which number of good records are lesser than the number of bad records
     runtimeArguments.put("inputPath", createConditionInput("ConditionProgramInput", 2, 12));
-    runtimeArguments.put("outputPath", new File(tmpFolder.newFolder(), "ConditionProgramOutput").getAbsolutePath());
+    runtimeArguments.put("outputPath",
+        new File(tmpFolder.newFolder(), "ConditionProgramOutput").getAbsolutePath());
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
     // Start the workflow
@@ -1055,9 +1066,9 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     // Since the number of good records are lesser than the number of bad records,
     // 'else' branch of the condition will get executed.
     // Wait until the execution of the fork on the else branch starts
-    while (!(elseForkOneActionFile.exists() &&
-             elseForkAnotherActionFile.exists() &&
-             elseForkThirdActionFile.exists())) {
+    while (!(elseForkOneActionFile.exists()
+        && elseForkAnotherActionFile.exists()
+        && elseForkThirdActionFile.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 

@@ -87,8 +87,8 @@ public class FieldWriteOperation extends FieldOperation {
       return false;
     }
     FieldWriteOperation that = (FieldWriteOperation) o;
-    return Objects.equals(inputFields, that.inputFields) &&
-        Objects.equals(sink, that.sink);
+    return Objects.equals(inputFields, that.inputFields)
+        && Objects.equals(sink, that.sink);
   }
 
   @Override

@@ -78,8 +78,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     if (resolution != Integer.MAX_VALUE) {
       int ttl =
           resolution < 60 ? cConf.getInt(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS) :
-              cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
-                  Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+              cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution
+                  + Constants.Metrics.RETENTION_SECONDS_SUFFIX);
       if (ttl > 0) {
         props.setTTL(ttl);
       }

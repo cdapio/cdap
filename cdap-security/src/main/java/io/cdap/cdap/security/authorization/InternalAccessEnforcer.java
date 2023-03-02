@@ -97,8 +97,8 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     UserIdentity userIdentity = accessToken.getIdentifier();
     if (!userIdentity.getUsername().equals(principalName)) {
       LOG.debug(
-          String.format("Internal access token username differs from principal name; got token " +
-                  "name '%s', expected principal name '%s'",
+          String.format("Internal access token username differs from principal name; got token "
+                  + "name '%s', expected principal name '%s'",
               userIdentity.getUsername(), principalName));
     }
     if (userIdentity.getIdentifierType() == null || !userIdentity.getIdentifierType()

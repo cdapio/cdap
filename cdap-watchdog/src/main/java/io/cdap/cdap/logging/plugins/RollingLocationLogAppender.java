@@ -99,8 +99,8 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
       filePath = filePath.replace("instanceId", Integer.toString(context.getInstanceId()));
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException(
-          "Expected logger context instance of " + AppenderContext.class.getName() +
-              " but got " + context.getClass().getName());
+          "Expected logger context instance of " + AppenderContext.class.getName()
+              + " but got " + context.getClass().getName());
     }
 
     started = true;

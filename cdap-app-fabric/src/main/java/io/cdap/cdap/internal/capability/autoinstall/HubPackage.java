@@ -148,8 +148,8 @@ public class HubPackage {
         continue;
       }
       URL configURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-          url.getPath() +
-              Joiner.on("/").join(Arrays.asList("/packages", name, version, configFilename)));
+          url.getPath()
+              + Joiner.on("/").join(Arrays.asList("/packages", name, version, configFilename)));
       // Download plugin json from hub
       JsonObject jsonObj = GSON.fromJson(HttpClients.doGetAsString(configURL), JsonObject.class);
       List<String> parents = GSON.fromJson(jsonObj.get("parents"), new TypeToken<List<String>>() {
@@ -164,8 +164,8 @@ public class HubPackage {
       File destination = File.createTempFile("artifact-", ".jar", tmpDir);
       FileChannel channel = new FileOutputStream(destination, false).getChannel();
       URL jarURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-          url.getPath() +
-              Joiner.on("/").join(Arrays.asList("/packages", name, version, jarName)));
+          url.getPath()
+              + Joiner.on("/").join(Arrays.asList("/packages", name, version, jarName)));
       HttpRequest request = HttpRequest.get(jarURL).withContentConsumer(new HttpContentConsumer() {
         @Override
         public boolean onReceived(ByteBuffer buffer) {

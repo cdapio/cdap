@@ -69,8 +69,8 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
     Schema schema2 = schemaIterator.next();
     if (!schema1.equals(schema2)) {
       throw new IllegalArgumentException(
-          "The DupeFlagger plugin must have exactly two inputs with the same schema, " +
-              "but the schemas are not the same.");
+          "The DupeFlagger plugin must have exactly two inputs with the same schema, "
+              + "but the schemas are not the same.");
     }
     if (!config.containsMacro("keep")) {
       if (!inputSchemas.keySet().contains(config.keep)) {

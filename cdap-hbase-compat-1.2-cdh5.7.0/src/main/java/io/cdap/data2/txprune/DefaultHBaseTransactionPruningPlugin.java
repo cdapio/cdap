@@ -58,7 +58,7 @@ public class DefaultHBaseTransactionPruningPlugin extends HBaseTransactionPrunin
 
   @Override
   protected boolean isTransactionalTable(HTableDescriptor tableDescriptor) {
-    return tableDescriptor.hasCoprocessor(DefaultTransactionProcessor.class.getName()) ||
-        tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName());
+    return tableDescriptor.hasCoprocessor(DefaultTransactionProcessor.class.getName())
+        || tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName());
   }
 }

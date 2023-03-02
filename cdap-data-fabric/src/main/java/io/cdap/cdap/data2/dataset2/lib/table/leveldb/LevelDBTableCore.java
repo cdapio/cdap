@@ -158,9 +158,9 @@ public class LevelDBTableCore {
     }
     if (existingValue.length != Bytes.SIZEOF_LONG) {
       throw new NumberFormatException(
-          "Attempted to increment a value that is not convertible to long," +
-              " row: " + Bytes.toStringBinary(row) +
-              " column: " + Bytes.toStringBinary(col));
+          "Attempted to increment a value that is not convertible to long,"
+              + " row: " + Bytes.toStringBinary(row)
+              + " column: " + Bytes.toStringBinary(col));
     }
     return value + Bytes.toLong(existingValue);
   }
@@ -378,8 +378,8 @@ public class LevelDBTableCore {
       // have we seen this row & column before?
       byte[] row = kv.getRow();
       byte[] column = kv.getQualifier();
-      boolean seenThisColumn = previousRow != null && Bytes.equals(previousRow, row) &&
-          previousCol != null && Bytes.equals(previousCol, column);
+      boolean seenThisColumn = previousRow != null && Bytes.equals(previousRow, row)
+          && previousCol != null && Bytes.equals(previousCol, column);
       if (seenThisColumn) {
         continue;
       }

@@ -184,8 +184,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
   static long getTimeIntervalsCount(final long startTime, final long endTime,
       final long rowPartitionIntervalSize) {
-    return (getRowKeyTimestampPart(endTime, rowPartitionIntervalSize) -
-        getRowKeyTimestampPart(startTime, rowPartitionIntervalSize) + 1);
+    return (getRowKeyTimestampPart(endTime, rowPartitionIntervalSize)
+        - getRowKeyTimestampPart(startTime, rowPartitionIntervalSize) + 1);
   }
 
   static byte[] getRowOfKthInterval(final byte[] key,

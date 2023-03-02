@@ -114,16 +114,16 @@ public class ProgramRun {
 
   @Override
   public String toString() {
-    return "ProgramRun{" +
-        "id='" + runId + '\'' +
-        ", programId='" + programId + '\'' +
-        ", namespace='" + namespace + '\'' +
-        ", application='" + application + '\'' +
-        ", startTimeMs=" + startTimeMs +
-        ", endTimeMs=" + endTimeMs +
-        ", status='" + status + '\'' +
-        ", properties=" + properties +
-        '}';
+    return "ProgramRun{"
+        + "id='" + runId + '\''
+        + ", programId='" + programId + '\''
+        + ", namespace='" + namespace + '\''
+        + ", application='" + application + '\''
+        + ", startTimeMs=" + startTimeMs
+        + ", endTimeMs=" + endTimeMs
+        + ", status='" + status + '\''
+        + ", properties=" + properties
+        + '}';
   }
 
   @Override
@@ -135,14 +135,14 @@ public class ProgramRun {
       return false;
     }
     ProgramRun that = (ProgramRun) o;
-    return runId.equals(that.runId) &&
-        Objects.equals(programId, that.programId) &&
-        Objects.equals(namespace, that.namespace) &&
-        Objects.equals(application, that.application) &&
-        Objects.equals(startTimeMs, that.startTimeMs) &&
-        Objects.equals(endTimeMs, that.endTimeMs) &&
-        Objects.equals(status, that.status) &&
-        properties.equals(that.properties);
+    return runId.equals(that.runId)
+        && Objects.equals(programId, that.programId)
+        && Objects.equals(namespace, that.namespace)
+        && Objects.equals(application, that.application)
+        && Objects.equals(startTimeMs, that.startTimeMs)
+        && Objects.equals(endTimeMs, that.endTimeMs)
+        && Objects.equals(status, that.status)
+        && properties.equals(that.properties);
   }
 
   @Override

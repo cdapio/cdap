@@ -51,8 +51,8 @@ public class MetadataRecord {
       return false;
     }
     MetadataRecord that = (MetadataRecord) o;
-    return Objects.equals(entity, that.entity) &&
-        Objects.equals(metadata, that.metadata);
+    return Objects.equals(entity, that.entity)
+        && Objects.equals(metadata, that.metadata);
   }
 
   @Override

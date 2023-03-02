@@ -77,8 +77,8 @@ public abstract class OwnerStore {
   protected final void validate(NamespacedEntityId entityId) {
     if (!SUPPORTED_ENTITY_TYPES.contains(entityId.getEntityType())) {
       throw new IllegalArgumentException(
-          String.format("The given entity '%s' is of unsupported types '%s'. " +
-                  "Entity ownership is only supported for '%s'.",
+          String.format("The given entity '%s' is of unsupported types '%s'. "
+                  + "Entity ownership is only supported for '%s'.",
               entityId.getEntityName(), entityId.getEntityType(),
               SUPPORTED_ENTITY_TYPES));
     }

@@ -91,10 +91,10 @@ public final class ApplicationClass {
 
     ApplicationClass that = (ApplicationClass) o;
 
-    return Objects.equals(description, that.description) &&
-        Objects.equals(className, that.className) &&
-        Objects.equals(configSchema, that.configSchema) &&
-        Objects.equals(requirements, that.requirements);
+    return Objects.equals(description, that.description)
+        && Objects.equals(className, that.className)
+        && Objects.equals(configSchema, that.configSchema)
+        && Objects.equals(requirements, that.requirements);
   }
 
   @Override
@@ -104,11 +104,11 @@ public final class ApplicationClass {
 
   @Override
   public String toString() {
-    return "ApplicationClass{" +
-        "className='" + className + '\'' +
-        ", description='" + description + '\'' +
-        ", configSchema=" + configSchema +
-        ", requirements=" + requirements +
-        '}';
+    return "ApplicationClass{"
+        + "className='" + className + '\''
+        + ", description='" + description + '\''
+        + ", configSchema=" + configSchema
+        + ", requirements=" + requirements
+        + '}';
   }
 }

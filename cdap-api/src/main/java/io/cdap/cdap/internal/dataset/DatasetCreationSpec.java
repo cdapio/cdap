@@ -57,9 +57,9 @@ public final class DatasetCreationSpec {
 
     DatasetCreationSpec that = (DatasetCreationSpec) o;
 
-    return Objects.equals(instanceName, that.instanceName) &&
-        Objects.equals(typeName, that.typeName) &&
-        Objects.equals(props.getProperties(), that.props.getProperties());
+    return Objects.equals(instanceName, that.instanceName)
+        && Objects.equals(typeName, that.typeName)
+        && Objects.equals(props.getProperties(), that.props.getProperties());
   }
 
   @Override

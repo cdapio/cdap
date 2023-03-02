@@ -61,8 +61,8 @@ public class EventWriterExtensionProvider extends AbstractExtensionLoader<String
       return ClassPathResources.getResourcesWithDependencies(EventWriter.class.getClassLoader(),
           EventWriter.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to trace dependencies for writer extension. " +
-          "Usage of events writer might fail.", e);
+      throw new RuntimeException("Failed to trace dependencies for writer extension. "
+          + "Usage of events writer might fail.", e);
     }
   }
 

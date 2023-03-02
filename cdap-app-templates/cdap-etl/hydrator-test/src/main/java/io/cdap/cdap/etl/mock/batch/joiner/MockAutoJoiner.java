@@ -74,8 +74,8 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   @Override
   public JoinDefinition define(AutoJoinerContext context) {
     if (conf.containsMacro(Conf.STAGES) || conf.containsMacro(Conf.KEY) || conf.containsMacro(
-        Conf.REQUIRED) ||
-        conf.containsMacro(Conf.SELECT)) {
+        Conf.REQUIRED)
+        || conf.containsMacro(Conf.SELECT)) {
       return null;
     }
 

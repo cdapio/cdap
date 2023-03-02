@@ -217,8 +217,8 @@ public class HBaseMetricsTable implements MetricsTable {
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
         throw new NumberFormatException(
-            "Attempted to increment a value that is not convertible to long," +
-                " row: " + Bytes.toStringBinary(distributedKey));
+            "Attempted to increment a value that is not convertible to long,"
+                + " row: " + Bytes.toStringBinary(distributedKey));
       }
       throw new DataSetException("Increment failed on table " + tableId, e);
     }
@@ -281,8 +281,8 @@ public class HBaseMetricsTable implements MetricsTable {
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
         throw new NumberFormatException(
-            "Attempted to increment a value that is not convertible to long," +
-                " row: " + Bytes.toStringBinary(distributedKey) +
+            "Attempted to increment a value that is not convertible to long,"
+                + " row: " + Bytes.toStringBinary(distributedKey) +
                 " column: " + Bytes.toStringBinary(column));
       }
       throw new DataSetException("IncrementAndGet failed on table " + tableId, e);

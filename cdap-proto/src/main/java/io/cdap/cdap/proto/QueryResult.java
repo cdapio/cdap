@@ -73,8 +73,8 @@ public class QueryResult {
 
   @Override
   public String toString() {
-    return "QueryResult{" +
-        "columns=" + columns +
-        '}';
+    return "QueryResult{"
+        + "columns=" + columns
+        + '}';
   }
 }

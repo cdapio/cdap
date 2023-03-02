@@ -88,8 +88,8 @@ public abstract class TransformExecutorFactory<T> {
     splitterTransform.initialize(transformContext);
 
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-    StageStatisticsCollector collector = collectStageStatistics ?
-        getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
+    StageStatisticsCollector collector = collectStageStatistics
+        ? getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
     return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics,
         getDataTracer(stageName), collector);
   }
@@ -101,8 +101,8 @@ public abstract class TransformExecutorFactory<T> {
     String stageName = stageSpec.getName();
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-    StageStatisticsCollector collector = collectStageStatistics ?
-        getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
+    StageStatisticsCollector collector = collectStageStatistics
+        ? getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
 
     Transformation transformation = getInitializedTransformation(stageSpec);
     // we emit metrics for records into alert publishers when the actual alerts are published,
@@ -128,8 +128,8 @@ public abstract class TransformExecutorFactory<T> {
     // input. this will allow us to setup all outputs for a stage when we get to it.
     Dag pipelineDag = pipeline.getDag();
     // dag is null if the pipeline phase contains a single stage.
-    List<String> traversalOrder = pipelineDag == null ?
-        Collections.singletonList(pipeline.iterator().next().getName())
+    List<String> traversalOrder = pipelineDag == null
+        ? Collections.singletonList(pipeline.iterator().next().getName())
         : pipelineDag.getTopologicalOrder();
     Collections.reverse(traversalOrder);
 
@@ -175,8 +175,8 @@ public abstract class TransformExecutorFactory<T> {
     // ConnectorSources require a special emitter since they need to build RecordInfo from the temporary dataset
     PipeEmitter.Builder emitterBuilder =
         Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources()
-            .contains(stageName) ?
-            ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
+            .contains(stageName)
+            ? ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
 
     Map<String, StageSpec.Port> outputPorts = stageSpec.getOutputPorts();
     for (String outputStageName : pipeline.getStageOutputs(stageName)) {
@@ -194,8 +194,8 @@ public abstract class TransformExecutorFactory<T> {
       } else {
         // if the output is a connector like agg5.connector, the outputPorts will contain the original 'agg5' as
         // a key, but not 'agg5.connector' so we need to lookup the original stage from the connector's plugin spec
-        String originalOutputName = Constants.Connector.PLUGIN_TYPE.equals(outputStageType) ?
-            outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME)
+        String originalOutputName = Constants.Connector.PLUGIN_TYPE.equals(outputStageType)
+            ? outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME)
             : outputStageName;
 
         String port =

@@ -125,8 +125,8 @@ public class HBaseMetricsTableDefinition extends
     // Log a warning if that's the case.
     if (cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) != datasetSplits) {
       CONFIG_CHANGE_LOG.warn(
-          "Ignoring configuration {} with value {} from cdap-site.xml. " +
-              "The system table {} already has a splits value {}, which can not be changed.",
+          "Ignoring configuration {} with value {} from cdap-site.xml. "
+              + "The system table {} already has a splits value {}, which can not be changed.",
           Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
           cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
           spec.getName(), datasetSplits);

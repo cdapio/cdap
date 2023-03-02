@@ -120,10 +120,10 @@ public class MetadataRecord {
 
     MetadataRecord that = (MetadataRecord) o;
 
-    return Objects.equals(metadataEntity, that.metadataEntity) &&
-        scope == that.scope &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(tags, that.tags);
+    return Objects.equals(metadataEntity, that.metadataEntity)
+        && scope == that.scope
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(tags, that.tags);
   }
 
   @Override
@@ -133,11 +133,11 @@ public class MetadataRecord {
 
   @Override
   public String toString() {
-    return "MetadataRecord{" +
-        "metadataEntity=" + metadataEntity +
-        ", scope=" + scope +
-        ", properties=" + properties +
-        ", tags=" + tags +
-        '}';
+    return "MetadataRecord{"
+        + "metadataEntity=" + metadataEntity
+        + ", scope=" + scope
+        + ", properties=" + properties
+        + ", tags=" + tags
+        + '}';
   }
 }

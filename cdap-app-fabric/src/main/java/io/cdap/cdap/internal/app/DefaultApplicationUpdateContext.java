@@ -114,8 +114,8 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     // Given configtype has to be derived from Config class.
     Preconditions.checkArgument(
         Config.class.isAssignableFrom(TypeToken.of(configType).getRawType()),
-        "Application config type " + configType + " is not supported. " +
-            "Type must extend Config and cannot be parameterized.");
+        "Application config type " + configType + " is not supported. "
+            + "Type must extend Config and cannot be parameterized.");
     if (configString.isEmpty()) {
       try {
         return ((Class<C>) TypeToken.of(configType).getRawType()).newInstance();
@@ -166,9 +166,9 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
 
     Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = input -> {
       // Check if it is from the scoped namespace and should check if plugin is in given range if provided.
-      return (pluginArtifactNamespace.equals(input.getParent()) &&
-          (pluginRange == null || pluginRange.versionIsInRange(
-              new ArtifactVersion(input.getVersion()))));
+      return (pluginArtifactNamespace.equals(input.getParent())
+          && (pluginRange == null || pluginRange.versionIsInRange(
+          new ArtifactVersion(input.getVersion()))));
     };
 
     try {

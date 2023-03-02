@@ -53,12 +53,12 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
 
   private void checkTopic(TopicId topicId, int generation) {
     Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId),
-        "Not allowed to use table with a " +
-            "different topic id. Table's topic Id: {}. Specified topic id: {}",
+        "Not allowed to use table with a "
+            + "different topic id. Table's topic Id: {}. Specified topic id: {}",
         this.topicMetadata.getTopicId(), topicId);
     Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation,
-        "Not allowed to use table with " +
-            "a different generation id. Table's generation: {}. Specified generation: {}",
+        "Not allowed to use table with "
+            + "a different generation id. Table's generation: {}. Specified generation: {}",
         this.topicMetadata.getGeneration(), generation);
   }
 
@@ -139,8 +139,8 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
           continue;
         }
 
-        if ((dataGeneration == Math.abs(currGeneration)) &&
-            ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
+        if ((dataGeneration == Math.abs(currGeneration))
+            && ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
           writeBatch.delete(entry.getKey());
         } else {
           // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,

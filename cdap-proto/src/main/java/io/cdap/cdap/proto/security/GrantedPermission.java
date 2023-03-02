@@ -67,9 +67,9 @@ public class GrantedPermission {
 
   @Override
   public String toString() {
-    return "GrantedPermission {" +
-        "authorizable=" + authorizable +
-        ", permission=" + permission +
-        '}';
+    return "GrantedPermission {"
+        + "authorizable=" + authorizable
+        + ", permission=" + permission
+        + '}';
   }
 }

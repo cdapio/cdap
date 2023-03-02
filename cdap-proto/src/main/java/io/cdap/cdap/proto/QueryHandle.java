@@ -55,9 +55,9 @@ public final class QueryHandle {
 
   @Override
   public String toString() {
-    return "QueryHandle{" +
-        "handle='" + handle + '\'' +
-        '}';
+    return "QueryHandle{"
+        + "handle='" + handle + '\''
+        + '}';
   }
 
   @Override

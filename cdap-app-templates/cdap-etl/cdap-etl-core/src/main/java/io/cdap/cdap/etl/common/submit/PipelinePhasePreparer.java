@@ -110,8 +110,8 @@ public abstract class PipelinePhasePreparer {
             pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSource(batchSource, stageSpec);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || AlertPublisher.PLUGIN_TYPE.equals(
-          pluginType) ||
-          isConnectorSink) {
+          pluginType)
+          || isConnectorSink) {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(
             stageName, macroEvaluator);
         submitterPlugin = createSink(batchSink, stageSpec);
@@ -188,8 +188,8 @@ public abstract class PipelinePhasePreparer {
     failureCollector.getOrThrowException();
     if (joinDefinition == null) {
       throw new IllegalArgumentException(String.format(
-          "Joiner stage '%s' using plugin '%s' did not provide a join definition. " +
-              "Check with the plugin developer to make sure it is implemented correctly.",
+          "Joiner stage '%s' using plugin '%s' did not provide a join definition. "
+              + "Check with the plugin developer to make sure it is implemented correctly.",
           stageName, pluginName));
     }
 
@@ -202,8 +202,8 @@ public abstract class PipelinePhasePreparer {
     if (!missingInputs.isEmpty()) {
       throw new IllegalArgumentException(
           String.format(
-              "Joiner stage '%s' using plugin '%s' did not include input stage %s in the join. " +
-                  "Check with the plugin developer to make sure it is implemented correctly.",
+              "Joiner stage '%s' using plugin '%s' did not include input stage %s in the join. "
+                  + "Check with the plugin developer to make sure it is implemented correctly.",
               stageName, pluginName, String.join(", ", missingInputs)));
     }
     Set<String> extraInputs = Sets.difference(joinStages, inputStages);
@@ -211,8 +211,8 @@ public abstract class PipelinePhasePreparer {
       throw new IllegalArgumentException(
           String.format(
               "Joiner stage '%s' using plugin '%s' is trying to join stage %s, which is not an input. "
-                  +
-                  "Check with the plugin developer to make sure it is implemented correctly.",
+
+                  + "Check with the plugin developer to make sure it is implemented correctly.",
               stageName, pluginName, String.join(", ", missingInputs)));
     }
   }

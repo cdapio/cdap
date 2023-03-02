@@ -81,9 +81,9 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
         } else {
           // should not happen
           LOG.warn(String.format(
-              "Ignoring key '%s' in the Workflow token while generating stage statistics " +
-                  "because it is not in the form " +
-                  "'stage.statistics.<stage_name>.<input|output|error>.records'.",
+              "Ignoring key '%s' in the Workflow token while generating stage statistics "
+                  + "because it is not in the form "
+                  + "'stage.statistics.<stage_name>.<input|output|error>.records'.",
               stageKey));
           continue;
         }

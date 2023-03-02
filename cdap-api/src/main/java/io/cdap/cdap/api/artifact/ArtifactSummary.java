@@ -102,9 +102,9 @@ public class ArtifactSummary {
 
     ArtifactSummary that = (ArtifactSummary) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(version, that.version) &&
-        Objects.equals(scope, that.scope);
+    return Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(scope, that.scope);
   }
 
   @Override

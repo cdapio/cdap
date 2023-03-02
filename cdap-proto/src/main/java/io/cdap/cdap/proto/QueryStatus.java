@@ -77,12 +77,12 @@ public class QueryStatus {
 
   @Override
   public String toString() {
-    return "QueryStatus{" +
-        "status=" + status +
-        ", hasResults=" + hasResults +
-        ", errorMessage='" + errorMessage + '\'' +
-        ", sqlState='" + sqlState + '\'' +
-        '}';
+    return "QueryStatus{"
+        + "status=" + status
+        + ", hasResults=" + hasResults
+        + ", errorMessage='" + errorMessage + '\''
+        + ", sqlState='" + sqlState + '\''
+        + '}';
   }
 
   @Override
@@ -96,10 +96,10 @@ public class QueryStatus {
 
     QueryStatus that = (QueryStatus) o;
 
-    return Objects.equals(this.status, that.status) &&
-        Objects.equals(this.hasResults, that.hasResults) &&
-        Objects.equals(this.errorMessage, that.errorMessage) &&
-        Objects.equals(this.sqlState, that.sqlState);
+    return Objects.equals(this.status, that.status)
+        && Objects.equals(this.hasResults, that.hasResults)
+        && Objects.equals(this.errorMessage, that.errorMessage)
+        && Objects.equals(this.sqlState, that.sqlState);
   }
 
   @Override

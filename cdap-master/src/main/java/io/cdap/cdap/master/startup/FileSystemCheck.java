@@ -68,10 +68,10 @@ public class FileSystemCheck extends AbstractMasterCheck {
       }
     } catch (IOException e) {
       throw new RuntimeException(String.format(
-          "Unable to connect to the FileSystem with %s set to %s. " +
-              "Please check that the FileSystem is running and that the correct " +
-              "Hadoop configuration (e.g. core-site.xml, hdfs-site.xml) " +
-              "and Hadoop libraries are included in the CDAP Master classpath.",
+          "Unable to connect to the FileSystem with %s set to %s. "
+              + "Please check that the FileSystem is running and that the correct "
+              + "Hadoop configuration (e.g. core-site.xml, hdfs-site.xml) "
+              + "and Hadoop libraries are included in the CDAP Master classpath.",
           CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY,
           hConf.get(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY)), e);
     }
@@ -84,18 +84,18 @@ public class FileSystemCheck extends AbstractMasterCheck {
         Location tmpFile = rootLocation.append("newTempFile").getTempFile("tmp");
         if (!tmpFile.createNew()) {
           throw new RuntimeException(String.format(
-              "Could not make a temp file %s in directory %s on the FileSystem. " +
-                  "Please check that user %s has permission to write to %s, " +
-                  "or create the directory manually with write permissions.",
+              "Could not make a temp file %s in directory %s on the FileSystem. "
+                  + "Please check that user %s has permission to write to %s, "
+                  + "or create the directory manually with write permissions.",
               tmpFile, rootPath, user, rootPath));
         } else {
           tmpFile.delete();
         }
       } catch (IOException e) {
         throw new RuntimeException(String.format(
-            "Could not make/delete a temp file in directory %s on the FileSystem. " +
-                "Please check that user %s has permission to write to %s, " +
-                "or create the directory manually with write permissions.",
+            "Could not make/delete a temp file in directory %s on the FileSystem. "
+                + "Please check that user %s has permission to write to %s, "
+                + "or create the directory manually with write permissions.",
             rootPath, user, rootPath), e);
       }
     } else {
@@ -103,16 +103,16 @@ public class FileSystemCheck extends AbstractMasterCheck {
       try {
         if (!rootLocation.mkdirs()) {
           throw new RuntimeException(String.format(
-              "Could not make directory %s on the FileSystem. " +
-                  "Please check that user %s has permission to write to %s, " +
-                  "or create the directory manually with write permissions.",
+              "Could not make directory %s on the FileSystem. "
+                  + "Please check that user %s has permission to write to %s, "
+                  + "or create the directory manually with write permissions.",
               rootPath, user, rootPath));
         }
       } catch (IOException e) {
         throw new RuntimeException(String.format(
-            "Could not make directory %s on the FileSystem. " +
-                "Please check that user %s has permission to write to %s, " +
-                "or create the directory manually with write permissions.",
+            "Could not make directory %s on the FileSystem. "
+                + "Please check that user %s has permission to write to %s, "
+                + "or create the directory manually with write permissions.",
             rootPath, user, rootPath), e);
       }
     }

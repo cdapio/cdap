@@ -357,8 +357,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @VisibleForTesting
   @Override
   public boolean hasType(DatasetTypeId datasetTypeId) {
-    return registries.containsKey(datasetTypeId.getParent()) &&
-        registries.get(datasetTypeId.getParent()).hasType(datasetTypeId.getEntityName());
+    return registries.containsKey(datasetTypeId.getParent())
+        && registries.get(datasetTypeId.getParent()).hasType(datasetTypeId.getEntityName());
   }
 
   @Nullable
@@ -584,8 +584,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   private void publishAudit(DatasetId datasetInstance, AuditType auditType) {
     // Don't publish audit for system datasets admin operations, there can be a deadlock
-    if (NamespaceId.SYSTEM.equals(datasetInstance.getParent()) &&
-        auditType != AuditType.ACCESS) {
+    if (NamespaceId.SYSTEM.equals(datasetInstance.getParent())
+        && auditType != AuditType.ACCESS) {
       return;
     }
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType,

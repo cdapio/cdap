@@ -369,8 +369,8 @@ public class PipelinePlanner {
       // add connectors
       String originalName = connectors.get(stageName);
       if (originalName != null || conditionConnectors.values().contains(stageName)) {
-        String connectorType = dag.getSources().contains(stageName) ?
-            Constants.Connector.SOURCE_TYPE : Constants.Connector.SINK_TYPE;
+        String connectorType = dag.getSources().contains(stageName)
+            ? Constants.Connector.SOURCE_TYPE : Constants.Connector.SINK_TYPE;
         PluginSpec connectorSpec =
             new PluginSpec(Constants.Connector.PLUGIN_TYPE, "connector",
                 ImmutableMap.of(Constants.Connector.ORIGINAL_NAME, originalName != null
@@ -396,9 +396,9 @@ public class PipelinePlanner {
   @VisibleForTesting
   static String getPhaseName(Set<String> sources, Set<String> sinks, String tail) {
     // using sorted sets to guarantee the name is deterministic
-    return Joiner.on('.').join(new TreeSet<>(sources)) +
-        ".to." +
-        Joiner.on('.').join(new TreeSet<>(sinks)) + "." + tail;
+    return Joiner.on('.').join(new TreeSet<>(sources))
+        + ".to."
+        + Joiner.on('.').join(new TreeSet<>(sinks)) + "." + tail;
   }
 
   @VisibleForTesting

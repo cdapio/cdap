@@ -82,10 +82,10 @@ public class PluginSpec implements Externalizable {
 
     PluginSpec that = (PluginSpec) o;
 
-    return Objects.equals(type, that.type) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(artifact, that.artifact);
+    return Objects.equals(type, that.type)
+        && Objects.equals(name, that.name)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override
@@ -95,12 +95,12 @@ public class PluginSpec implements Externalizable {
 
   @Override
   public String toString() {
-    return "PluginSpec{" +
-        "type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        ", properties=" + properties +
-        ", artifact=" + artifact +
-        '}';
+    return "PluginSpec{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", properties=" + properties
+        + ", artifact=" + artifact
+        + '}';
   }
 
   @Override

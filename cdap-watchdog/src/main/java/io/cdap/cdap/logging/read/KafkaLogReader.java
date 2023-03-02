@@ -276,8 +276,8 @@ public class KafkaLogReader implements LogReader {
       LogOffset logOffset = new LogOffset(offset, event == null ? 0L : event.getTimeStamp());
 
       if (event != null && offset < stopOffset && eventsMatched < maxEvents && logFilter.match(
-          event) &&
-          event.getTimeStamp() > fromTimeMs) {
+          event)
+          && event.getTimeStamp() > fromTimeMs) {
         ++eventsMatched;
         callback.handle(new LogEvent(event, logOffset));
       }

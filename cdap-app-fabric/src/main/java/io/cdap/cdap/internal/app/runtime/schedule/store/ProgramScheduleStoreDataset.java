@@ -365,8 +365,9 @@ public class ProgramScheduleStoreDataset {
               scheduleRecord.getMeta().getStatus(), System.currentTimeMillis());
         } catch (AlreadyExistsException e) {
           // this should never happen
-          LOG.warn("Failed to add the schedule '{}' triggered by '{}' with updated trigger '{}', " +
-              "skip adding this schedule.", schedule.getScheduleId(), programId, updatedTrigger, e);
+          LOG.warn("Failed to add the schedule '{}' triggered by '{}' with updated trigger '{}', "
+                  + "skip adding this schedule.", schedule.getScheduleId(), programId, updatedTrigger,
+              e);
         }
       } else {
         deleted.add(schedule);
@@ -438,10 +439,10 @@ public class ProgramScheduleStoreDataset {
       long endTimeMillis)
       throws IOException {
     Predicate<StructuredRow> predicate =
-        row -> row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) >= startTimeMillis &&
-            row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) < endTimeMillis &&
-            ProgramScheduleStatus.SUSPENDED.toString()
-                .equals(row.getString(StoreDefinition.ProgramScheduleStore.STATUS));
+        row -> row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) >= startTimeMillis
+            && row.getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME) < endTimeMillis
+            && ProgramScheduleStatus.SUSPENDED.toString()
+            .equals(row.getString(StoreDefinition.ProgramScheduleStore.STATUS));
     return listSchedulesWithPrefixAndKeyPredicate(getScheduleKeysForNamespaceScan(namespaceId),
         predicate);
   }

@@ -115,8 +115,8 @@ public class SFTPFileSystem extends FileSystem {
       user = URLDecoder.decode(user, "UTF-8");
       conf.set(FS_SFTP_USER_PREFIX + host, user);
       if (userPasswdInfo.length > 1) {
-        conf.set(FS_SFTP_PASSWORD_PREFIX + host + "." +
-            user, userPasswdInfo[1]);
+        conf.set(FS_SFTP_PASSWORD_PREFIX + host + "."
+            + user, userPasswdInfo[1]);
       }
     }
 

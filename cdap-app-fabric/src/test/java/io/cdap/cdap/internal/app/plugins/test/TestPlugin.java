@@ -97,10 +97,10 @@ public class TestPlugin implements Callable<String> {
 
     @Override
     public String toString() {
-      return "AuthInfo{" +
-        "token='" + token + '\'' +
-        ", id='" + id + '\'' +
-        '}';
+      return "AuthInfo{"
+          + "token='" + token + '\''
+          + ", id='" + id + '\''
+          + '}';
     }
   }
 }

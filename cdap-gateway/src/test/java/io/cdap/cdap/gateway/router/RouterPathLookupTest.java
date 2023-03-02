@@ -179,18 +179,19 @@ public class RouterPathLookupTest {
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
     Assert.assertEquals(String.format("%s.testnamespace.PurchaseHistory.CatalogLookup",
-                                      ProgramType.SERVICE.getDiscoverableTypeName()),
-                        result.getServiceName());
+            ProgramType.SERVICE.getDiscoverableTypeName()),
+        result.getServiceName());
     Assert.assertNull(result.getVersion());
 
-    servicePath = "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/" +
-      "echo/someParam";
+    servicePath =
+        "///v3/namespaces/testnamespace//apps/PurchaseHistory-123//services/weird!service@@NAme///methods/"
+            + "echo/someParam";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), servicePath);
     httpRequest.headers().set(Constants.Gateway.API_KEY, API_KEY);
     result = pathLookup.getRoutingService(servicePath, httpRequest);
     Assert.assertEquals(String.format("%s.testnamespace.PurchaseHistory-123.weird!service@@NAme",
-                                      ProgramType.SERVICE.getDiscoverableTypeName()),
-                        result.getServiceName());
+            ProgramType.SERVICE.getDiscoverableTypeName()),
+        result.getServiceName());
     Assert.assertNull(result.getVersion());
 
     servicePath = "v3/namespaces/testnamespace/apps/SomeApp_Name/services/CatalogLookup/methods/getHistory/itemID";

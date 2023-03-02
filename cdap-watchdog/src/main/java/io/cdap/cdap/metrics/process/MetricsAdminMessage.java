@@ -68,9 +68,9 @@ public final class MetricsAdminMessage {
 
   @Override
   public String toString() {
-    return "MetricsAdminMessage{" +
-        "type=" + type +
-        ", payload=" + payload +
-        '}';
+    return "MetricsAdminMessage{"
+        + "type=" + type
+        + ", payload=" + payload
+        + '}';
   }
 }

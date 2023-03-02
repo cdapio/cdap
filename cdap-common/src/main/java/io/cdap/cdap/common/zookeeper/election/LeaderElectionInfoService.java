@@ -264,10 +264,10 @@ public class LeaderElectionInfoService extends AbstractIdleService {
 
     @Override
     public String toString() {
-      return "ParticipantInfo{" +
-          "zkPath='" + zkPath + '\'' +
-          ", hostname='" + hostname + '\'' +
-          '}';
+      return "ParticipantInfo{"
+          + "zkPath='" + zkPath + '\''
+          + ", hostname='" + hostname + '\''
+          + '}';
     }
 
     @Override

@@ -47,10 +47,10 @@ public class MultiRecordWriter extends RecordWriter<String, KeyValue<Object, Obj
     if (sinkDelegates == null) {
       // this means there was a bug, every sink output should be represented in the delegates map.
       throw new IOException(String.format(
-          "Unable to find a writer for output '%s'. This means there is a planner error. " +
-              "Please report this bug and turn off stage consolidation by setting '%s' to 'false' in the"
-              +
-              "runtime arguments for the pipeline.", key, Constants.CONSOLIDATE_STAGES));
+          "Unable to find a writer for output '%s'. This means there is a planner error. "
+              + "Please report this bug and turn off stage consolidation by setting '%s' to 'false' in the"
+
+              + "runtime arguments for the pipeline.", key, Constants.CONSOLIDATE_STAGES));
     }
     for (RecordWriter<Object, Object> delegate : sinkDelegates) {
       delegate.write(kv.getKey(), kv.getValue());

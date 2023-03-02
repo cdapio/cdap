@@ -289,8 +289,8 @@ public final class Locations {
       case "gz":
         // gz is not recommended for archiving multiple files together. So we only support .tar.gz
         Preconditions.checkArgument(archive.getName().endsWith(".tar.gz"),
-            "'.gz' format is not supported for " +
-                "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
+            "'.gz' format is not supported for "
+                + "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
         try (InputStream is = archive.getInputStream()) {
           expandTgz(is, targetDir);
         }
@@ -307,8 +307,8 @@ public final class Locations {
         break;
       default:
         throw new IOException(
-            String.format("Unsupported compression type '%s'. Only 'zip', 'jar', " +
-                "'tar.gz', 'tgz' and 'tar'  are supported.", extension));
+            String.format("Unsupported compression type '%s'. Only 'zip', 'jar', "
+                + "'tar.gz', 'tgz' and 'tar'  are supported.", extension));
     }
   }
 

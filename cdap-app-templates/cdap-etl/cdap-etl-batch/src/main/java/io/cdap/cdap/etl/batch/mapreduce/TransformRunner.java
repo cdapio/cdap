@@ -127,8 +127,8 @@ public class TransformRunner<KEY, VALUE> {
     Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
     Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr,
         ETLMapReduce.SINK_OUTPUTS_TYPE);
-    return hasSingleOutput(sinkOutputs) ?
-        new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
+    return hasSingleOutput(sinkOutputs)
+        ? new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
   }
 
   private boolean hasSingleOutput(Map<String, SinkOutput> sinkOutputs) {

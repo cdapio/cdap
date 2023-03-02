@@ -1383,8 +1383,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       }
       if (!(memoryMultiplier > 0 && memoryMultiplier <= 1)) {
         throw new IllegalArgumentException(
-            String.format("Memory multiplier %f should be greater than 0 " +
-                "and less than or equal to 1.", memoryMultiplier));
+            String.format("Memory multiplier %f should be greater than 0 "
+                + "and less than or equal to 1.", memoryMultiplier));
       }
 
       requirementsBuilder

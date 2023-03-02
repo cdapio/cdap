@@ -143,17 +143,17 @@ public class ScanApplicationsRequest {
 
   @Override
   public String toString() {
-    return "ScanApplicationsRequest{" +
-        "namespaceId=" + namespaceId +
-        ", application=" + application +
-        ", scanFrom=" + scanFrom +
-        ", scanTo=" + scanTo +
-        ", filters=" + filters +
-        ", sortOrder=" + sortOrder +
-        ", limit=" + limit +
-        ", latestOnly=" + latestOnly +
-        ", sortCreationTime=" + sortCreationTime +
-        '}';
+    return "ScanApplicationsRequest{"
+        + "namespaceId=" + namespaceId
+        + ", application=" + application
+        + ", scanFrom=" + scanFrom
+        + ", scanTo=" + scanTo
+        + ", filters=" + filters
+        + ", sortOrder=" + sortOrder
+        + ", limit=" + limit
+        + ", latestOnly=" + latestOnly
+        + ", sortCreationTime=" + sortCreationTime
+        + '}';
   }
 
   /**
@@ -302,14 +302,14 @@ public class ScanApplicationsRequest {
       if (namespaceId != null) {
         if (scanFrom != null && !namespaceId.equals(scanFrom.getNamespaceId())) {
           throw new IllegalArgumentException(
-              "Requested to start scan from application " + scanFrom +
-                  " that is outside of scan namespace " + namespaceId
+              "Requested to start scan from application " + scanFrom
+                  + " that is outside of scan namespace " + namespaceId
           );
         }
 
         if (scanTo != null && !namespaceId.equals(scanTo.getNamespaceId())) {
-          throw new IllegalArgumentException("Requested to finish scan at application " + scanTo +
-              " that is outside of scan namespace " + namespaceId
+          throw new IllegalArgumentException("Requested to finish scan at application " + scanTo
+              + " that is outside of scan namespace " + namespaceId
           );
         }
       }
@@ -323,15 +323,15 @@ public class ScanApplicationsRequest {
 
         if (scanFrom != null && !application.equals(scanFrom.getApplication())) {
           throw new IllegalArgumentException(
-              "Requested to start scan from application ID " + scanFrom +
-                  " that does not match application name" + application
+              "Requested to start scan from application ID " + scanFrom
+                  + " that does not match application name" + application
           );
         }
 
         if (scanTo != null && !application.equals(scanTo.getApplication())) {
           throw new IllegalArgumentException(
-              "Requested to finish scan at application ID " + scanTo +
-                  " that does not match application name" + application
+              "Requested to finish scan at application ID " + scanTo
+                  + " that does not match application name" + application
           );
         }
       }

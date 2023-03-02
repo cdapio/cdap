@@ -110,9 +110,9 @@ public class AccessToken implements Signed<UserIdentity> {
   public boolean equals(Object object) {
     if (object instanceof AccessToken) {
       AccessToken other = (AccessToken) object;
-      return Objects.equal(identifier, other.identifier) &&
-          keyId == other.keyId &&
-          Bytes.equals(digest, other.digest);
+      return Objects.equal(identifier, other.identifier)
+          && keyId == other.keyId
+          && Bytes.equals(digest, other.digest);
     }
     return false;
   }

@@ -141,8 +141,8 @@ public class RemoteLauncher {
       throw new RuntimeException(
           "Failed to load container class loader class " + containerClassLoaderName, e);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException("Container class loader must have a public constructor with " +
-          "parameters (URL[] classpath, ClassLoader parent)", e);
+      throw new RuntimeException("Container class loader must have a public constructor with "
+          + "parameters (URL[] classpath, ClassLoader parent)", e);
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(
           "Failed to create container class loader of class " + containerClassLoaderName, e);

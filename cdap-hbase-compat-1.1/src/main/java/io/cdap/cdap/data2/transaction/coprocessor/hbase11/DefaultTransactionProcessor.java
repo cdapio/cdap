@@ -141,8 +141,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
     long defaultMaxLifeTimeInSecs = TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME;
     if (LOG.isDebugEnabled()) {
       LOG.debug(
-          String.format("txMaxLifetimeMillis is not available in client's operation attributes. " +
-                  "Defaulting to the default value of %d seconds for region %s.",
+          String.format("txMaxLifetimeMillis is not available in client's operation attributes. "
+                  + "Defaulting to the default value of %d seconds for region %s.",
               defaultMaxLifeTimeInSecs, env.getRegionInfo().getRegionNameAsString()));
     }
     return TimeUnit.SECONDS.toMillis(defaultMaxLifeTimeInSecs);

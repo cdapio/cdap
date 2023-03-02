@@ -218,8 +218,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         // this better be the same dataset, otherwise the cache did not work
         throw new IllegalStateException(
             String.format(
-                "Unexpected state: Cache returned %s for %s, which is different from the " +
-                    "active transaction aware %s for the same key. This should never happen.",
+                "Unexpected state: Cache returned %s for %s, which is different from the "
+                    + "active transaction aware %s for the same key. This should never happen.",
                 dataset, key, existing));
       }
     }
@@ -287,8 +287,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   public TransactionContext newTransactionContext() throws TransactionFailureException {
     if (txContext != null && txContext.getCurrentTransaction() != null) {
       throw new TransactionFailureException(
-          "Attempted to start a transaction within active transaction " +
-              txContext.getCurrentTransaction().getTransactionId());
+          "Attempted to start a transaction within active transaction "
+              + txContext.getCurrentTransaction().getTransactionId());
     }
     dismissTransactionContext();
     txContext = new DelayedDiscardingTransactionContext(txClient, activeTxAwares.values());

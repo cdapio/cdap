@@ -47,8 +47,8 @@ public class MetricsWriterExtensionLoader extends AbstractExtensionLoader<String
       return ClassPathResources.getResourcesWithDependencies(MetricsWriter.class.getClassLoader(),
           MetricsWriter.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to trace dependencies for provisioner extension. " +
-          "Usage of metrics writer might fail.", e);
+      throw new RuntimeException("Failed to trace dependencies for provisioner extension. "
+          + "Usage of metrics writer might fail.", e);
     }
   }
 

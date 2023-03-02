@@ -70,9 +70,9 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       throws AccessException {
     try {
       UGIWithPrincipal ugi =
-          impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) ||
-              impersonationRequest.getPrincipal() == null ?
-              null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
+          impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)
+              || impersonationRequest.getPrincipal() == null
+              ? null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
       if (ugi != null) {
         return ugi;
       }

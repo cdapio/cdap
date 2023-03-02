@@ -72,8 +72,8 @@ public class SourceControlConfig {
     }
     SourceControlConfig that = (SourceControlConfig) o;
     return gitCommandTimeoutSeconds == that.gitCommandTimeoutSeconds && namespaceID.equals(
-        that.namespaceID) &&
-        localReposClonePath.equals(that.localReposClonePath) && repositoryConfig.equals(
+        that.namespaceID)
+        && localReposClonePath.equals(that.localReposClonePath) && repositoryConfig.equals(
         that.repositoryConfig);
   }
 

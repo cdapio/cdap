@@ -127,8 +127,8 @@ public final class AuthorizationUtil {
     // a complete principal name (alice/somehost.net@someREALM). For authorization we need the enforcement to happen
     // on the username and not the complete principal. The user name is the shortname of the principal so return the
     // shortname as authorizing user.
-    String appAuthorizingUser = effectiveOwner != null ?
-        new KerberosName(effectiveOwner.getPrincipal()).getShortName()
+    String appAuthorizingUser = effectiveOwner != null
+        ? new KerberosName(effectiveOwner.getPrincipal()).getShortName()
         : authenticationContext.getPrincipal().getName();
     LOG.trace("Returning {} as authorizing app user for {}", appAuthorizingUser, applicationId);
     return appAuthorizingUser;
@@ -151,8 +151,8 @@ public final class AuthorizationUtil {
       }
     } catch (IOException e) {
       throw new RuntimeException(
-          String.format("Failed to translate the principal name %s to an operating system " +
-              "user name.", masterPrincipal), e);
+          String.format("Failed to translate the principal name %s to an operating system "
+              + "user name.", masterPrincipal), e);
     }
     return masterPrincipal;
   }

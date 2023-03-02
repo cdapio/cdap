@@ -73,11 +73,11 @@ public class LineageRecord {
       return false;
     }
     LineageRecord that = (LineageRecord) o;
-    return Objects.equals(start, that.start) &&
-        Objects.equals(end, that.end) &&
-        Objects.equals(relations, that.relations) &&
-        Objects.equals(programs, that.programs) &&
-        Objects.equals(data, that.data);
+    return Objects.equals(start, that.start)
+        && Objects.equals(end, that.end)
+        && Objects.equals(relations, that.relations)
+        && Objects.equals(programs, that.programs)
+        && Objects.equals(data, that.data);
   }
 
   @Override
@@ -87,12 +87,12 @@ public class LineageRecord {
 
   @Override
   public String toString() {
-    return "LineageRecord{" +
-        "start=" + start +
-        ", end=" + end +
-        ", relations=" + relations +
-        ", programs=" + programs +
-        ", data=" + data +
-        '}';
+    return "LineageRecord{"
+        + "start=" + start
+        + ", end=" + end
+        + ", relations=" + relations
+        + ", programs=" + programs
+        + ", data=" + data
+        + '}';
   }
 }

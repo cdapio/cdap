@@ -120,10 +120,10 @@ public final class FuzzyRowFilter implements Filter {
     if (nextRowKey == null) {
       // SHOULD NEVER happen
       // TODO: is there a better way than throw exception? (stop the scanner?)
-      throw new IllegalStateException("No next row key that satisfies fuzzy exists when" +
-          " getNextKeyHint() is invoked." +
-          " Filter: " + this.toString() +
-          " RowKey: " + Bytes.toStringBinary(rowKey));
+      throw new IllegalStateException("No next row key that satisfies fuzzy exists when"
+          + " getNextKeyHint() is invoked."
+          + " Filter: " + this.toString()
+          + " RowKey: " + Bytes.toStringBinary(rowKey));
     }
     return nextRowKey;
   }

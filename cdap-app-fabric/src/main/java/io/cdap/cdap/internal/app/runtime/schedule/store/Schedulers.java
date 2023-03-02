@@ -108,8 +108,8 @@ public class Schedulers {
     // CronExpression will directly be used for tests.
     String parts[] = cronEntry.split(" ");
     Preconditions.checkArgument(parts.length == 5 || parts.length == 6,
-        "Invalid cron entry format in '%s'. " +
-            "Cron entry must contain 5 or 6 fields.", cronEntry);
+        "Invalid cron entry format in '%s'. "
+            + "Cron entry must contain 5 or 6 fields.", cronEntry);
     if (parts.length == 5) {
       // Convert cron entry format to Quartz format by replacing wild-card character "*"
       // if day-of-the-month is not "?" and day-of-the-week is wild-card, replace day-of-the-week with "?"

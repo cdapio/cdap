@@ -86,13 +86,13 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
         }
       }
     } catch (InterruptedException e) {
-      throw new RuntimeException("Thread interrupted while trying evaluate " +
-          "the value for '" + functionName + "' with" +
-          " args " + Arrays.asList(args), e);
+      throw new RuntimeException("Thread interrupted while trying evaluate "
+          + "the value for '" + functionName + "' with"
+          + " args " + Arrays.asList(args), e);
     }
-    throw new IllegalStateException("Timed out when trying to evaluate the " +
-        "value for '" + functionName + "' with " +
-        "args " + Arrays.asList(args));
+    throw new IllegalStateException("Timed out when trying to evaluate the "
+        + "value for '" + functionName + "' with "
+        + "args " + Arrays.asList(args));
   }
 
   @Override
@@ -163,8 +163,8 @@ abstract class AbstractServiceRetryableMacroEvaluator implements MacroEvaluator 
             serviceName + " service is not available with status " + responseCode);
       }
       throw new IOException(
-          "Failed to call " + serviceName + " service with status " + responseCode + ": " +
-              getError(urlConn));
+          "Failed to call " + serviceName + " service with status " + responseCode + ": "
+              + getError(urlConn));
     }
   }
 

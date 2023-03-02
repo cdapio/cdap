@@ -49,11 +49,11 @@ public class PluginPropertyMapping extends ArgumentMapping {
 
   @Override
   public String toString() {
-    return "PluginPropertyMapping{" +
-        "source='" + getSource() + '\'' +
-        ", target='" + getTarget() + '\'' +
-        ", stageName='" + getStageName() + '\'' +
-        ", triggeringPipelineId='" + getTriggeringPipelineId() + '\'' +
-        '}';
+    return "PluginPropertyMapping{"
+        + "source='" + getSource() + '\''
+        + ", target='" + getTarget() + '\''
+        + ", stageName='" + getStageName() + '\''
+        + ", triggeringPipelineId='" + getTriggeringPipelineId() + '\''
+        + '}';
   }
 }

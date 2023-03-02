@@ -66,9 +66,9 @@ public class KafkaServerMain extends DaemonMain {
         Services.startAndWait(client,
             cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
             TimeUnit.MILLISECONDS,
-            String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-                    "verify that the ZooKeeper quorum settings are correct in " +
-                    "cdap-site.xml. Currently configured as: %s",
+            String.format("Connection timed out while trying to start ZooKeeper client. Please "
+                    + "verify that the ZooKeeper quorum settings are correct in "
+                    + "cdap-site.xml. Currently configured as: %s",
                 client.getConnectString()));
 
         String path = "/" + zkNamespace;

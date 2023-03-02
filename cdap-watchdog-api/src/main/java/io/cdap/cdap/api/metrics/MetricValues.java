@@ -61,10 +61,10 @@ public class MetricValues {
 
   @Override
   public String toString() {
-    return "MetricValues{" +
-        "tags=" + tags +
-        ", metrics=" + metrics +
-        ", timestamp=" + timestamp +
-        '}';
+    return "MetricValues{"
+        + "tags=" + tags
+        + ", metrics=" + metrics
+        + ", timestamp=" + timestamp
+        + '}';
   }
 }

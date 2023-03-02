@@ -50,8 +50,8 @@ public class MetadataMutationCodec implements JsonSerializer<MetadataMutation>,
         return context.deserialize(json, MetadataMutation.Update.class);
       default:
         throw new IllegalArgumentException(
-            String.format("Unsupported metadata mutation type %s, only " +
-                "supported types are CREATE, REMOVE, DROP, UPDATE.", type));
+            String.format("Unsupported metadata mutation type %s, only "
+                + "supported types are CREATE, REMOVE, DROP, UPDATE.", type));
     }
   }
 

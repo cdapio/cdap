@@ -155,8 +155,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
         try {
           int numExecutors = Integer.parseInt(property.getValue());
           if (numExecutors < minExecutors) {
-            LOG.warn("Number of executors {} is less than the minimum number required to run the pipeline. " +
-                       "Automatically increasing it to {}", numExecutors, minExecutors);
+            LOG.warn("Number of executors {} is less than the minimum number required to run the pipeline. "
+                       + "Automatically increasing it to {}", numExecutors, minExecutors);
             numExecutors = minExecutors;
           }
           sparkConf.set(property.getKey(), String.valueOf(numExecutors));

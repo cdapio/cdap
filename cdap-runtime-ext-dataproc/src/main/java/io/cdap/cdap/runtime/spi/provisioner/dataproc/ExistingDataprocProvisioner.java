@@ -107,8 +107,8 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       }
       Cluster cluster = client.getCluster(clusterName)
           .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
-          .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
-              " does not exist or not in running state.",
+          .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName
+              + " does not exist or not in running state.",
               ErrorTag.CONFIGURATION));
 
       // Determine cluster version and fail if version is smaller than 1.5

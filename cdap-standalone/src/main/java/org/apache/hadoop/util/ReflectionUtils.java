@@ -90,8 +90,8 @@ public class ReflectionUtils {
       if (jobConfigurableClass == null) {
         return;
       }
-      if (jobConfClass.isAssignableFrom(conf.getClass()) &&
-          jobConfigurableClass.isAssignableFrom(theObject.getClass())) {
+      if (jobConfClass.isAssignableFrom(conf.getClass())
+          && jobConfigurableClass.isAssignableFrom(theObject.getClass())) {
         Method configureMethod =
             jobConfigurableClass.getMethod("configure", jobConfClass);
         configureMethod.invoke(theObject, conf);
@@ -155,9 +155,9 @@ public class ReflectionUtils {
         stream.println("  Inactive");
         continue;
       }
-      stream.println("Thread " +
-          getTaskName(info.getThreadId(),
-              info.getThreadName()) + ":");
+      stream.println("Thread "
+          + getTaskName(info.getThreadId(),
+          info.getThreadName()) + ":");
       Thread.State state = info.getThreadState();
       stream.println("  State: " + state);
       stream.println("  Blocked count: " + info.getBlockedCount());
@@ -170,9 +170,9 @@ public class ReflectionUtils {
         stream.println("  Waiting on " + info.getLockName());
       } else if (state == Thread.State.BLOCKED) {
         stream.println("  Blocked on " + info.getLockName());
-        stream.println("  Blocked by " +
-            getTaskName(info.getLockOwnerId(),
-                info.getLockOwnerName()));
+        stream.println("  Blocked by "
+            + getTaskName(info.getLockOwnerId(),
+            info.getLockOwnerName()));
       }
       stream.println("  Stack:");
       for (StackTraceElement frame : info.getStackTrace()) {

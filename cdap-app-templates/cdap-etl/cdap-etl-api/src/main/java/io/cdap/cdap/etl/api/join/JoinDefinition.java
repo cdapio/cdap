@@ -279,8 +279,8 @@ public class JoinDefinition {
         if (expectedFieldSchema.getType() != providedFieldSchema.getType()) {
           errors.add(new OutputSchemaError(
               expectedField.getName(), expectedFieldSchema.getDisplayName(),
-              String.format("Provided schema does not match expected schema. " +
-                      "Field '%s' is a '%s' but is expected to be a '%s'",
+              String.format("Provided schema does not match expected schema. "
+                      + "Field '%s' is a '%s' but is expected to be a '%s'",
                   expectedField.getName(), expectedFieldSchema.getDisplayName(),
                   providedFieldSchema.getDisplayName())));
           continue;

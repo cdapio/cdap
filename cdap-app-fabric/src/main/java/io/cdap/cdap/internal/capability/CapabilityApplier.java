@@ -449,8 +449,8 @@ class CapabilityApplier {
   }
 
   private boolean shouldRetry(Throwable throwable) {
-    return !(throwable instanceof UnauthorizedException ||
-        throwable instanceof InvalidArtifactException);
+    return !(throwable instanceof UnauthorizedException
+        || throwable instanceof InvalidArtifactException);
   }
 
   /**

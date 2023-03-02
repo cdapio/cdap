@@ -262,10 +262,10 @@ public final class LogFileManager implements Flushable, Syncable {
 
     @Override
     public String toString() {
-      return "TimeStampLocation{" +
-          "location=" + location +
-          ", timeStamp=" + timeStamp +
-          '}';
+      return "TimeStampLocation{"
+          + "location=" + location
+          + ", timeStamp=" + timeStamp
+          + '}';
     }
   }
 

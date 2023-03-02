@@ -312,11 +312,11 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     Set<MetadataOperation> operations = GSON.fromJson(config.metadataOperations,
         SET_METADATA_OPERATION_TYPE);
     // must be to fetch metadata and there should be system metadata
-    if (currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty() ||
-        currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty()) {
+    if (currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty()
+        || currentMetadata.get(MetadataScope.SYSTEM).getProperties().isEmpty()) {
       throw new IllegalArgumentException(
-          String.format("System properties or tags for '%s' is empty. " +
-              "Expected to have system metadata.", metadataEntity));
+          String.format("System properties or tags for '%s' is empty. "
+              + "Expected to have system metadata.", metadataEntity));
     }
     LOG.trace("Metadata operations {} will be applied. Current Metadata Record is {}", operations,
         currentMetadata);

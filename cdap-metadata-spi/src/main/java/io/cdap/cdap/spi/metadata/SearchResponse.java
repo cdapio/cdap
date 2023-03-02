@@ -101,14 +101,14 @@ public class SearchResponse {
 
   @Override
   public String toString() {
-    return "SearchResponse{" +
-        "request=" + request +
-        ", cursor='" + cursor + '\'' +
-        ", offset=" + offset +
-        ", limit=" + limit +
-        ", totalResults=" + totalResults +
-        ", results=" + results +
-        '}';
+    return "SearchResponse{"
+        + "request=" + request
+        + ", cursor='" + cursor + '\''
+        + ", offset=" + offset
+        + ", limit=" + limit
+        + ", totalResults=" + totalResults
+        + ", results=" + results
+        + '}';
   }
 
   @Override
@@ -120,9 +120,9 @@ public class SearchResponse {
       return false;
     }
     SearchResponse response = (SearchResponse) o;
-    return offset == response.offset &&
-        limit == response.limit &&
-        totalResults == response.totalResults &&
+    return offset == response.offset
+        && limit == response.limit
+        && totalResults == response.totalResults &&
         Objects.equals(request, response.request) &&
         Objects.equals(cursor, response.cursor) &&
         Objects.equals(results, response.results);

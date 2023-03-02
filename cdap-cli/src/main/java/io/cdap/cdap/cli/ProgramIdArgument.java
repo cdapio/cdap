@@ -49,8 +49,8 @@ public class ProgramIdArgument {
     }
 
     ProgramIdArgument other = (ProgramIdArgument) o;
-    return Objects.equal(appId, other.getAppId()) &&
-        Objects.equal(programId, other.getProgramId());
+    return Objects.equal(appId, other.getAppId())
+        && Objects.equal(programId, other.getProgramId());
   }
 
   @Override

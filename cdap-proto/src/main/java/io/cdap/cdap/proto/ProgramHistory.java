@@ -60,9 +60,9 @@ public class ProgramHistory {
     }
 
     ProgramHistory that = (ProgramHistory) o;
-    return Objects.equals(programId, that.programId) &&
-        Objects.equals(runs, that.runs) &&
-        Objects.equals(exception, that.exception);
+    return Objects.equals(programId, that.programId)
+        && Objects.equals(runs, that.runs)
+        && Objects.equals(exception, that.exception);
   }
 
   @Override

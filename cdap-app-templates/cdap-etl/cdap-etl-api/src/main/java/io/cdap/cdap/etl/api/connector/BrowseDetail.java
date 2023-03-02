@@ -74,10 +74,10 @@ public class BrowseDetail {
     }
 
     BrowseDetail that = (BrowseDetail) o;
-    return totalCount == that.totalCount &&
-        Objects.equals(sampleProperties, that.sampleProperties) &&
-        Objects.equals(entities, that.entities) &&
-        Objects.equals(propertyHeaders, that.propertyHeaders);
+    return totalCount == that.totalCount
+        && Objects.equals(sampleProperties, that.sampleProperties)
+        && Objects.equals(entities, that.entities)
+        && Objects.equals(propertyHeaders, that.propertyHeaders);
   }
 
   @Override

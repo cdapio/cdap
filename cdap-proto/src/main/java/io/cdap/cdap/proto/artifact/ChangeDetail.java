@@ -79,8 +79,8 @@ public class ChangeDetail extends ChangeSummary {
 
     ChangeDetail that = (ChangeDetail) o;
 
-    return creationTimeMillis == that.creationTimeMillis &&
-        Objects.equals(author, that.author);
+    return creationTimeMillis == that.creationTimeMillis
+        && Objects.equals(author, that.author);
   }
 
   @Override
@@ -90,10 +90,10 @@ public class ChangeDetail extends ChangeSummary {
 
   @Override
   public String toString() {
-    return "ChangeDetail{" +
-        "author='" + author + '\'' +
-        ", creationTimeMillis=" + creationTimeMillis + '\'' +
-        ", latest=" + latest +
-        '}';
+    return "ChangeDetail{"
+        + "author='" + author + '\''
+        + ", creationTimeMillis=" + creationTimeMillis + '\''
+        + ", latest=" + latest
+        + '}';
   }
 }

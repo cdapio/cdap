@@ -62,8 +62,8 @@ public class InvalidFieldOperations {
       return false;
     }
     InvalidFieldOperations that = (InvalidFieldOperations) o;
-    return Objects.equals(invalidInputs, that.invalidInputs) &&
-        Objects.equals(invalidOutputs, that.invalidOutputs);
+    return Objects.equals(invalidInputs, that.invalidInputs)
+        && Objects.equals(invalidOutputs, that.invalidOutputs);
   }
 
   @Override

@@ -100,20 +100,24 @@ public class SystemMetadataWriterStageTest {
     systemMetadataWriterStage.process(stageContext);
     systemMetadataWriterStage.process(appWithPrograms);
 
-    Assert.assertEquals(false, metadataStorage.read(new Read(appId.workflow(workflowName).toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty());
+    Assert.assertEquals(false,
+        metadataStorage.read(new Read(appId.workflow(workflowName).toMetadataEntity(),
+            MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty());
     Set<String> workflowSystemTags = metadataStorage
-      .read(new Read(appId.workflow(workflowName).toMetadataEntity())).getTags(MetadataScope.SYSTEM);
-    Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags, getWorkflowForkNodes(workflowSpec));
-    Assert.assertTrue("Workflows should not be tagged with fork node names, but found the following fork nodes " +
-                        "in the workflow's system tags: " + intersection, intersection.isEmpty());
+        .read(new Read(appId.workflow(workflowName).toMetadataEntity()))
+        .getTags(MetadataScope.SYSTEM);
+    Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags,
+        getWorkflowForkNodes(workflowSpec));
+    Assert.assertTrue(
+        "Workflows should not be tagged with fork node names, but found the following fork nodes "
+            + "in the workflow's system tags: " + intersection, intersection.isEmpty());
 
     Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
-                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+        MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
     Map<String, String> metadataProperties = metadataStorage
-      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
+        .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
     Assert.assertEquals(WorkflowAppWithFork.SCHED_NAME + ":testDescription",
-                        metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
+        metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
   }
 
   @Test

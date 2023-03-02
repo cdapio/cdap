@@ -1069,8 +1069,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteAkkaRemoting(InputStream byteCodeStream) throws IOException {
     final Type dispatcherReturnType = determineAkkaDispatcherReturnType();
     if (dispatcherReturnType == null) {
-      LOG.warn("Failed to determine ActorSystem.dispatcher() return type. " +
-                 "No rewriting of akka.remote.Remoting class. ClassLoader leakage might happen in SDK.");
+      LOG.warn("Failed to determine ActorSystem.dispatcher() return type. "
+                 + "No rewriting of akka.remote.Remoting class. ClassLoader leakage might happen in SDK.");
       return null;
     }
 

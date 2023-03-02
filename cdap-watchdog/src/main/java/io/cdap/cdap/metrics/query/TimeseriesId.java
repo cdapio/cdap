@@ -41,10 +41,10 @@ public final class TimeseriesId {
       return false;
     }
     TimeseriesId other = (TimeseriesId) o;
-    return Objects.equal(context, other.context) &&
-        Objects.equal(metric, other.metric) &&
-        Objects.equal(tag, other.tag) &&
-        Objects.equal(runId, other.runId);
+    return Objects.equal(context, other.context)
+        && Objects.equal(metric, other.metric)
+        && Objects.equal(tag, other.tag)
+        && Objects.equal(runId, other.runId);
   }
 
   @Override

@@ -48,8 +48,8 @@ public class Field {
       return false;
     }
     Field field = (Field) o;
-    return lineage == field.lineage &&
-        Objects.equals(name, field.name);
+    return lineage == field.lineage
+        && Objects.equals(name, field.name);
   }
 
   @Override
@@ -59,9 +59,9 @@ public class Field {
 
   @Override
   public String toString() {
-    return "Field{" +
-        "name='" + name + '\'' +
-        ", lineage=" + lineage +
-        '}';
+    return "Field{"
+        + "name='" + name + '\''
+        + ", lineage=" + lineage
+        + '}';
   }
 }

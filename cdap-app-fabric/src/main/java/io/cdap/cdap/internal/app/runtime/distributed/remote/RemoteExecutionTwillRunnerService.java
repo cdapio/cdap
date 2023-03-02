@@ -319,8 +319,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
       long delay, TimeUnit unit) {
     // This method is deprecated and not used in CDAP
-    throw new UnsupportedOperationException("The scheduleSecureStoreUpdate method is deprecated, " +
-        "use setSecureStoreRenewer instead");
+    throw new UnsupportedOperationException("The scheduleSecureStoreUpdate method is deprecated, "
+        + "use setSecureStoreRenewer instead");
   }
 
   @Override
@@ -682,8 +682,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService,
       Map<String, String> systemArguments = programOpts.getArguments().asMap();
       String provisionerName = SystemArguments.getProfileProvisioner(systemArguments);
       String peerName = systemArguments.get(ProgramOptionConstants.PEER_NAME);
-      boolean useControllerToStop = TetheringProvisioner.TETHERING_NAME.equals(provisionerName) &&
-          peerName == null;
+      boolean useControllerToStop = TetheringProvisioner.TETHERING_NAME.equals(provisionerName)
+          && peerName == null;
       // Create the controller and start the runtime monitor when the startup task completed successfully.
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(cConf,
           programRunId,

@@ -57,8 +57,8 @@ public class CLIMainArgs {
       return false;
     }
     final CLIMainArgs other = (CLIMainArgs) obj;
-    return Arrays.equals(this.optionTokens, other.optionTokens) &&
-        Arrays.equals(this.commandTokens, other.commandTokens);
+    return Arrays.equals(this.optionTokens, other.optionTokens)
+        && Arrays.equals(this.commandTokens, other.commandTokens);
   }
 
   @Override

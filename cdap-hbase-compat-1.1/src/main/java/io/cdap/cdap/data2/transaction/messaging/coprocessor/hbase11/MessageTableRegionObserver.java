@@ -219,8 +219,8 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
             pruneFlushInterval);
         if (LOG.isDebugEnabled()) {
           LOG.debug(String.format(
-              "Automatic invalid list pruning is enabled for table %s. Compaction state " +
-                  "will be recorded in table %s",
+              "Automatic invalid list pruning is enabled for table %s. Compaction state "
+                  + "will be recorded in table %s",
               env.getRegionInfo().getTable().getNameWithNamespaceInclAsString(), pruneTable));
         }
       }
@@ -313,9 +313,9 @@ public class MessageTableRegionObserver extends BaseRegionObserver {
           MessagingUtils.getTopicLengthMessageEntry(sizeOfRowKey) - Bytes.SIZEOF_INT;
       int generationId = Bytes.toInt(cell.getRowArray(), rowKeyOffset + topicIdLength);
 
-      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null ||
-          (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
-              cell.getRowArray(), rowKeyOffset, topicIdLength))) {
+      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null
+          || (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
+          cell.getRowArray(), rowKeyOffset, topicIdLength))) {
         prevTopicIdBytes = Arrays.copyOfRange(cell.getRowArray(), rowKeyOffset,
             rowKeyOffset + topicIdLength);
         Map<String, String> properties = metadataCache.getTopicMetadata(

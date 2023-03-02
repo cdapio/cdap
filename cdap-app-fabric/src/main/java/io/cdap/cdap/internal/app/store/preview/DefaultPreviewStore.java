@@ -119,8 +119,8 @@ public class DefaultPreviewStore implements PreviewStore {
       previewTable.putDefaultVersion(mdsKey.getKey(), VALUE, Bytes.toBytes(gson.toJson(value)));
     } catch (IOException e) {
       String message = String.format(
-          "Error while putting property '%s' for application '%s' and tracer '%s' in" +
-              " preview table.", propertyName, applicationId, tracerName);
+          "Error while putting property '%s' for application '%s' and tracer '%s' in"
+              + " preview table.", propertyName, applicationId, tracerName);
       throw new RuntimeException(message, e);
     }
   }
@@ -345,8 +345,8 @@ public class DefaultPreviewStore implements PreviewStore {
     }
     if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
       throw new ConflictException(
-          String.format("Preview application with id %s does not exist in the " +
-                  "waiting state. Its current state is %s", applicationId,
+          String.format("Preview application with id %s does not exist in the "
+                  + "waiting state. Its current state is %s", applicationId,
               previewStatus.getStatus().name()));
     }
     long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);

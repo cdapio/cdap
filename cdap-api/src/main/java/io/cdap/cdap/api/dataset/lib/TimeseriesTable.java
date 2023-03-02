@@ -301,10 +301,10 @@ public class TimeseriesTable extends TimeseriesDataset
         return false;
       }
       InputSplit that = (InputSplit) o;
-      return startTime == that.startTime &&
-          endTime == that.endTime &&
-          Arrays.equals(key, that.key) &&
-          Arrays.equals(tags, that.tags);
+      return startTime == that.startTime
+          && endTime == that.endTime
+          && Arrays.equals(key, that.key)
+          && Arrays.equals(tags, that.tags);
     }
 
     @Override
@@ -348,10 +348,10 @@ public class TimeseriesTable extends TimeseriesDataset
   @Override
   public List<Split> getSplits() {
     throw new UnsupportedOperationException(
-        "Cannot use TimeSeriesTable as input for Batch directly. " +
-            "Use getInput(...) and call " +
-            "MapReduceContext.setInput(tsTable, splits) in the " +
-            "initialize(MapReduceContext context) method of the MapReduce app.");
+        "Cannot use TimeSeriesTable as input for Batch directly. "
+            + "Use getInput(...) and call "
+            + "MapReduceContext.setInput(tsTable, splits) in the "
+            + "initialize(MapReduceContext context) method of the MapReduce app.");
   }
 
   @ReadOnly

@@ -83,10 +83,10 @@ public final class PreviewMessage {
 
   @Override
   public String toString() {
-    return "PreviewMessage{" +
-        "type=" + type +
-        ", entityId=" + entityId +
-        ", payload=" + payload +
-        '}';
+    return "PreviewMessage{"
+        + "type=" + type
+        + ", entityId=" + entityId
+        + ", payload=" + payload
+        + '}';
   }
 }

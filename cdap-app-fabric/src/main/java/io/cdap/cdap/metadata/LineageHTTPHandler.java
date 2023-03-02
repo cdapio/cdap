@@ -379,8 +379,8 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     } catch (NullPointerException | IllegalArgumentException e) {
       String directionValues = Joiner.on(", ").join(Constants.FieldLineage.Direction.values());
       throw new BadRequestException(
-          String.format("Direction must be specified to get the field lineage " +
-                  "summary and should be one of the following: [%s].",
+          String.format("Direction must be specified to get the field lineage "
+                  + "summary and should be one of the following: [%s].",
               directionValues.toLowerCase()));
     }
   }

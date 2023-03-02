@@ -200,16 +200,16 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     ETLConfig that = (ETLConfig) o;
 
-    return Objects.equals(description, that.description) &&
-        Objects.equals(stages, that.stages) &&
-        Objects.equals(connections, that.connections) &&
-        Objects.equals(getResources(), that.getResources()) &&
-        Objects.equals(getDriverResources(), that.getDriverResources()) &&
-        Objects.equals(getClientResources(), that.getClientResources()) &&
-        Objects.equals(getProperties(), that.getProperties()) &&
-        isStageLoggingEnabled() == that.isStageLoggingEnabled() &&
-        isProcessTimingEnabled() == that.isProcessTimingEnabled() &&
-        getNumOfRecordsPreview() == that.getNumOfRecordsPreview();
+    return Objects.equals(description, that.description)
+        && Objects.equals(stages, that.stages)
+        && Objects.equals(connections, that.connections)
+        && Objects.equals(getResources(), that.getResources())
+        && Objects.equals(getDriverResources(), that.getDriverResources())
+        && Objects.equals(getClientResources(), that.getClientResources())
+        && Objects.equals(getProperties(), that.getProperties())
+        && isStageLoggingEnabled() == that.isStageLoggingEnabled()
+        && isProcessTimingEnabled() == that.isProcessTimingEnabled()
+        && getNumOfRecordsPreview() == that.getNumOfRecordsPreview();
   }
 
   @Override
@@ -232,21 +232,21 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   @Override
   public String toString() {
-    return "ETLConfig{" +
-        "description='" + description + '\'' +
-        ", stages=" + stages +
-        ", connections=" + connections +
-        ", resources=" + resources +
-        ", driverResources=" + driverResources +
-        ", clientResources=" + clientResources +
-        ", stageLoggingEnabled=" + stageLoggingEnabled +
-        ", processTimingEnabled=" + processTimingEnabled +
-        ", numOfRecordsPreview=" + numOfRecordsPreview +
-        ", properties=" + properties +
-        ", source=" + source +
-        ", sinks=" + sinks +
-        ", transforms=" + transforms +
-        "} " + super.toString();
+    return "ETLConfig{"
+        + "description='" + description + '\''
+        + ", stages=" + stages
+        + ", connections=" + connections
+        + ", resources=" + resources
+        + ", driverResources=" + driverResources
+        + ", clientResources=" + clientResources
+        + ", stageLoggingEnabled=" + stageLoggingEnabled
+        + ", processTimingEnabled=" + processTimingEnabled
+        + ", numOfRecordsPreview=" + numOfRecordsPreview
+        + ", properties=" + properties
+        + ", source=" + source
+        + ", sinks=" + sinks
+        + ", transforms=" + transforms
+        + "} " + super.toString();
   }
 
   /**

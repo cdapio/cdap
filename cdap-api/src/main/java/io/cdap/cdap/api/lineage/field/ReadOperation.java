@@ -82,8 +82,8 @@ public class ReadOperation extends Operation {
       return false;
     }
     ReadOperation that = (ReadOperation) o;
-    return Objects.equals(source, that.source) &&
-        Objects.equals(outputs, that.outputs);
+    return Objects.equals(source, that.source)
+        && Objects.equals(outputs, that.outputs);
   }
 
   @Override

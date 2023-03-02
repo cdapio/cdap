@@ -393,10 +393,10 @@ public class LineageAdmin {
 
       // Don't use AccessType for equals (same for hashCode)
       RelationKey other = (RelationKey) o;
-      return Objects.equals(relation.getData(), other.relation.getData()) &&
-          Objects.equals(relation.getProgram(), other.relation.getProgram()) &&
-          Objects.equals(relation.getRun(), other.relation.getRun()) &&
-          Objects.equals(relation.getComponents(), other.relation.getComponents());
+      return Objects.equals(relation.getData(), other.relation.getData())
+          && Objects.equals(relation.getProgram(), other.relation.getProgram())
+          && Objects.equals(relation.getRun(), other.relation.getRun())
+          && Objects.equals(relation.getComponents(), other.relation.getComponents());
     }
 
     @Override

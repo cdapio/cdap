@@ -209,8 +209,8 @@ public class IncrementHandler extends BaseRegionObserver {
         for (Cell cell : entry.getValue()) {
           // rewrite the cell value with a special prefix to identify it as a delta
           // for 0.98 we can update this to use cell tags
-          byte[] newValue = isIncrement ?
-              Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell)) :
+          byte[] newValue = isIncrement
+              ? Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell)) :
               CellUtil.cloneValue(cell);
           newCells.add(CellUtil.createCell(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell),
               CellUtil.cloneQualifier(cell),
@@ -278,11 +278,11 @@ public class IncrementHandler extends BaseRegionObserver {
 
   static boolean isIncrement(Cell cell) {
     return !CellUtil.isDelete(cell)
-        && cell.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH &&
-        Bytes.equals(cell.getValueArray(), cell.getValueOffset(),
-            IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
-            IncrementHandlerState.DELTA_MAGIC_PREFIX, 0,
-            IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
+        && cell.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH
+        && Bytes.equals(cell.getValueArray(), cell.getValueOffset(),
+        IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
+        IncrementHandlerState.DELTA_MAGIC_PREFIX, 0,
+        IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
   }
 
   @Override

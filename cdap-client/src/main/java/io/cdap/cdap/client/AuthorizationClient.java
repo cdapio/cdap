@@ -83,16 +83,16 @@ public class AuthorizationClient implements AccessController {
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
     throw new UnsupportedOperationException(
-        "Enforcement is not supported via Java Client. Please instead use the " +
-            "listPrivileges method to view the privileges for a principal.");
+        "Enforcement is not supported via Java Client. Please instead use the "
+            + "listPrivileges method to view the privileges for a principal.");
   }
 
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
       Permission permission) {
     throw new UnsupportedOperationException(
-        "Enforcement is not supported via Java Client. Please instead use the " +
-            "listPrivileges method to view the privileges for a principal.");
+        "Enforcement is not supported via Java Client. Please instead use the "
+            + "listPrivileges method to view the privileges for a principal.");
   }
 
   @Override

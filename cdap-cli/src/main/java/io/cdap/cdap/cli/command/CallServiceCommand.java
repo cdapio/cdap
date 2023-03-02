@@ -79,8 +79,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     Preconditions.checkNotNull(bodyString);
     Preconditions.checkNotNull(bodyFile);
     if (!bodyString.isEmpty() && !bodyFile.isEmpty()) {
-      String message = String.format("Please provide either [body <%s>] or [body:file <%s>], " +
-              "but not both", ArgumentName.HTTP_BODY.toString(),
+      String message = String.format("Please provide either [body <%s>] or [body:file <%s>], "
+              + "but not both", ArgumentName.HTTP_BODY.toString(),
           ArgumentName.LOCAL_FILE_PATH.toString());
       throw new CommandInputError(this, message);
     }
@@ -88,8 +88,8 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
     Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
     }.getType());
     ServiceId service = new ServiceId(parseProgramId(arguments, ElementType.SERVICE));
-    URL url = arguments.hasArgument(ArgumentName.APP_VERSION.getName()) ?
-        new URL(serviceClient.getVersionedServiceURL(service), path) :
+    URL url = arguments.hasArgument(ArgumentName.APP_VERSION.getName())
+        ? new URL(serviceClient.getVersionedServiceURL(service), path) :
         new URL(serviceClient.getServiceURL(service), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
@@ -124,10 +124,10 @@ public class CallServiceCommand extends AbstractCommand implements Categorized {
   @Override
   public String getDescription() {
     return String.format(
-        "Calls %s endpoint. The '<%s>' are formatted as '{\"key\":\"value\", ...}'. " +
-            "The request body may be provided as either a string or a file. " +
-            "To provide the body as a string, use 'body <%s>'. " +
-            "To provide the body as a file, use 'body:file <%s>'.",
+        "Calls %s endpoint. The '<%s>' are formatted as '{\"key\":\"value\", ...}'. "
+            + "The request body may be provided as either a string or a file. "
+            + "To provide the body as a string, use 'body <%s>'. "
+            + "To provide the body as a file, use 'body:file <%s>'.",
         Fragment.of(Article.A, ElementType.SERVICE.getName()),
         ArgumentName.HEADERS, ArgumentName.HTTP_BODY, ArgumentName.LOCAL_FILE_PATH);
   }

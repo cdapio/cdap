@@ -62,8 +62,8 @@ public class SecureStoreUtils {
       return (Class<? extends SecureStoreService>) Class.forName(KMS_CLASS_NAME);
     } catch (ClassNotFoundException e) {
       // KMSSecureStore could not be loaded
-      throw new RuntimeException("CDAP KMS classes could not be loaded. " +
-          "Please verify that CDAP is correctly installed");
+      throw new RuntimeException("CDAP KMS classes could not be loaded. "
+          + "Please verify that CDAP is correctly installed");
     }
   }
 }

@@ -188,8 +188,8 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           }
         } catch (IOException ioe) {
           String exceptionMessage =
-              String.format("Exception while publishing metrics for tags: [%s] to topic '%s' " +
-                      "with %s metrics and %s bytes payload",
+              String.format("Exception while publishing metrics for tags: [%s] to topic '%s' "
+                      + "with %s metrics and %s bytes payload",
                   MAP_JOINER.join(metricsTags == null ? Collections.emptyMap() : metricsTags),
                   topicId.getTopic(), metricsCount, payloadSize);
           throw new IOException(exceptionMessage, ioe);

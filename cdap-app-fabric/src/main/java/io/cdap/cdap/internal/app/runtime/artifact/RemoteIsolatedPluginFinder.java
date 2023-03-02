@@ -68,8 +68,8 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
         artifactId.getNamespace(),
         artifactId.getArtifact(),
         artifactId.getVersion(),
-        artifactId.getNamespace().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace()) ?
-            ArtifactScope.SYSTEM.name().toLowerCase() : ArtifactScope.USER.name().toLowerCase());
+        artifactId.getNamespace().equalsIgnoreCase(NamespaceId.SYSTEM.getNamespace())
+            ? ArtifactScope.SYSTEM.name().toLowerCase() : ArtifactScope.USER.name().toLowerCase());
 
     HttpURLConnection urlConn = remoteClientInternal.openConnection(HttpMethod.GET, url);
 
@@ -78,8 +78,8 @@ public class RemoteIsolatedPluginFinder extends RemotePluginFinder {
       if (responseCode != HttpURLConnection.HTTP_OK) {
         if (HttpCodes.isRetryable(responseCode)) {
           throw new ServiceUnavailableException(
-              Constants.Service.APP_FABRIC_HTTP, Constants.Service.APP_FABRIC_HTTP +
-              " service is not available with status " + responseCode);
+              Constants.Service.APP_FABRIC_HTTP, Constants.Service.APP_FABRIC_HTTP
+              + " service is not available with status " + responseCode);
         }
         if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
           throw new ArtifactNotFoundException(artifactId);

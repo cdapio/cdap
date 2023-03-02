@@ -68,9 +68,9 @@ public class ArtifactAggregate extends ProgramRunAggregate {
     }
 
     ArtifactAggregate that = (ArtifactAggregate) o;
-    return Objects.equal(name, that.name) &&
-        Objects.equal(version, that.version) &&
-        Objects.equal(scope, that.scope);
+    return Objects.equal(name, that.name)
+        && Objects.equal(version, that.version)
+        && Objects.equal(scope, that.scope);
   }
 
   @Override

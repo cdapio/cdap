@@ -128,10 +128,10 @@ public class TopicMetadata {
 
   @Override
   public String toString() {
-    return "TopicMetadata{" +
-        "topicId=" + topicId +
-        ", properties=" + properties +
-        '}';
+    return "TopicMetadata{"
+        + "topicId=" + topicId
+        + ", properties=" + properties
+        + '}';
   }
 
   /**
@@ -185,8 +185,8 @@ public class TopicMetadata {
             "The generation property must not be zero for topic " + topicId);
       }
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("The generation property must be a number other " +
-          "than zero for topic " + topicId);
+      throw new IllegalArgumentException("The generation property must be a number other "
+          + "than zero for topic " + topicId);
     }
   }
 

@@ -80,8 +80,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   @Override
   protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest)
       throws AccessException {
-    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
-        impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
+    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE)
+        && impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
       // specifies that it can be impersonated with the namespace owner.
       // This is done here rather than in the get getConfiguredUGI because the getConfiguredUGI will be called at
@@ -144,8 +144,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       URI keytabURI = URI.create(keytab);
       boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
-      File localKeytabFile = isKeytabLocal ?
-          new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
+      File localKeytabFile = isKeytabLocal
+          ? new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
       try {
         String expandedPrincipal = SecurityUtil.expandPrincipal(
             impersonationRequest.getPrincipal());
@@ -169,8 +169,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
           // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
           // not working
           throw new AccessException(
-              String.format("Failed to login for principal=%s, keytab=%s. Check that " +
-                      "the principal was not deleted and that the keytab is still valid.",
+              String.format("Failed to login for principal=%s, keytab=%s. Check that "
+                      + "the principal was not deleted and that the keytab is still valid.",
                   expandedPrincipal, keytabURI),
               e);
         }

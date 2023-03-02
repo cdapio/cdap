@@ -123,8 +123,8 @@ public class RemotePluginFinder implements PluginFinder {
         }
 
         Location artifactLocation = getArtifactLocation(
-            Artifacts.toProtoArtifactId(selected.getKey().getScope().equals(ArtifactScope.SYSTEM) ?
-                    NamespaceId.SYSTEM : pluginNamespaceId,
+            Artifacts.toProtoArtifactId(selected.getKey().getScope().equals(ArtifactScope.SYSTEM)
+                    ? NamespaceId.SYSTEM : pluginNamespaceId,
                 selected.getKey()));
         return Maps.immutableEntry(new ArtifactDescriptor(pluginNamespaceId.getEntityName(),
             selected.getKey(), artifactLocation), selected.getValue());

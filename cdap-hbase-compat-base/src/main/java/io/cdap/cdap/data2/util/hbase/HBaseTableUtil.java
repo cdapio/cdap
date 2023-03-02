@@ -149,23 +149,23 @@ public abstract class HBaseTableUtil {
 
   public String getHBaseNamespace(NamespaceId namespaceId) throws IOException {
     // Convert CDAP Namespace to HBase namespace
-    if (NamespaceId.SYSTEM.equals(namespaceId) || NamespaceId.CDAP.equals(namespaceId) ||
-        NamespaceId.DEFAULT.equals(namespaceId)) {
+    if (NamespaceId.SYSTEM.equals(namespaceId) || NamespaceId.CDAP.equals(namespaceId)
+        || NamespaceId.DEFAULT.equals(namespaceId)) {
       return toCDAPManagedHBaseNamespace(namespaceId);
     }
 
     if (namespaceQueryAdmin == null) {
       throw new IOException(
-          String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
-              "lookup is requested. Namespace %s", namespaceId.getNamespace()));
+          String.format("NamespaceQueryAdmin is not set and a non-reserved namespace "
+              + "lookup is requested. Namespace %s", namespaceId.getNamespace()));
     }
 
     try {
       return getHBaseNamespace(namespaceQueryAdmin.get(namespaceId));
     } catch (Exception ex) {
       throw new IOException(
-          String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
-              "Can't find mapping for %s", namespaceId.getNamespace()), ex);
+          String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. "
+              + "Can't find mapping for %s", namespaceId.getNamespace()), ex);
     }
   }
 
@@ -183,8 +183,8 @@ public abstract class HBaseTableUtil {
   private String toCDAPManagedHBaseNamespace(NamespaceId namespace) {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
-    return NamespaceId.DEFAULT.getEntityName().equals(namespace.getNamespace()) ?
-        namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
+    return NamespaceId.DEFAULT.getEntityName().equals(namespace.getNamespace())
+        ? namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
   }
 
   protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {

@@ -64,10 +64,10 @@ public class Sort extends ReportGenerationRequest.Field {
 
   @Override
   public String toString() {
-    return "Sort{" +
-        "fieldName=" + getFieldName() +
-        ", order=" + order +
-        '}';
+    return "Sort{"
+        + "fieldName=" + getFieldName()
+        + ", order=" + order
+        + '}';
   }
 
   /**

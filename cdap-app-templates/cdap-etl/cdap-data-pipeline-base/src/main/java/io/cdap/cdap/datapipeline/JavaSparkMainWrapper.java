@@ -63,8 +63,8 @@ public class JavaSparkMainWrapper implements JavaSparkMain {
     } else {
       // otherwise, assume there is a 'main' method and call it
       String programArgs = getProgramArgs(sec, stageName);
-      String[] args = programArgs == null ?
-        RuntimeArguments.toPosixArray(sec.getRuntimeArguments()) : programArgs.split(" ");
+      String[] args = programArgs == null
+        ? RuntimeArguments.toPosixArray(sec.getRuntimeArguments()) : programArgs.split(" ");
       final Method mainMethod = mainClass.getMethod("main", String[].class);
       final Object[] methodArgs = new Object[1];
       methodArgs[0] = args;
@@ -83,8 +83,8 @@ public class JavaSparkMainWrapper implements JavaSparkMain {
   private String getProgramArgs(JavaSparkExecutionContext sec, String stageName) {
     // get program args from plugin properties
     PluginProperties pluginProperties = sec.getPluginContext().getPluginProperties(stageName);
-    String programArgs = pluginProperties == null ?
-      null : pluginProperties.getProperties().get(ExternalSparkProgram.PROGRAM_ARGS);
+    String programArgs = pluginProperties == null
+      ? null : pluginProperties.getProperties().get(ExternalSparkProgram.PROGRAM_ARGS);
 
     // can be overridden by runtime args
     String programArgsKey = stageName + "." + ExternalSparkProgram.PROGRAM_ARGS;

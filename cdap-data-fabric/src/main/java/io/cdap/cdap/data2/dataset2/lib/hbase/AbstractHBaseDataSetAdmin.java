@@ -154,8 +154,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
           && hbaseVersion.equals(HBaseVersion.getVersionString())
           && version.compareTo(ProjectInfo.getVersion()) >= 0) {
         // If neither the table spec nor the cdap version have changed, no need to update
-        LOG.info("Table '{}' has not changed and its version '{}' is same or greater " +
-                "than current CDAP version '{}'. The underlying HBase version {} has also not changed.",
+        LOG.info("Table '{}' has not changed and its version '{}' is same or greater "
+                + "than current CDAP version '{}'. The underlying HBase version {} has also not changed.",
             tableId, version, ProjectInfo.getVersion(), hbaseVersion);
         return;
       }

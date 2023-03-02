@@ -72,9 +72,9 @@ public final class LoggingContextHelper {
   public static NamespaceId getNamespaceId(LoggingContext loggingContext) {
     Preconditions.checkArgument(
         loggingContext.getSystemTagsMap().containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID),
-        String.format("Failed to identify the namespace in the logging context '%s' since " +
-                "it does not contains a '%s'. LoggingContexts should have a " +
-                "namespace.", loggingContext.getSystemTagsMap(),
+        String.format("Failed to identify the namespace in the logging context '%s' since "
+                + "it does not contains a '%s'. LoggingContexts should have a "
+                + "namespace.", loggingContext.getSystemTagsMap(),
             NamespaceLoggingContext.TAG_NAMESPACE_ID));
     return new NamespaceId(loggingContext.getSystemTagsMap()
         .get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
@@ -152,8 +152,8 @@ public final class LoggingContextHelper {
    */
   public static LogPathIdentifier getLogPathIdentifier(LoggingContext loggingContext) {
     Map<String, LoggingContext.SystemTag> tagMap = loggingContext.getSystemTagsMap();
-    String namespace = tagMap.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ?
-        tagMap.get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue() :
+    String namespace = tagMap.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID)
+        ? tagMap.get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue() :
         tagMap.get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
 
     if (loggingContext instanceof ServiceLoggingContext) {

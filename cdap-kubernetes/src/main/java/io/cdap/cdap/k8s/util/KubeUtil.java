@@ -53,15 +53,15 @@ public class KubeUtil {
     for (int i = 0; i < name.length(); i++) {
       if (PATH_SEGMENT_NAME_ILLEGAL_CHARACTERS.contains(name.charAt(i))) {
         throw new IllegalArgumentException(
-            String.format("Illegal path segment name '%s': name contains illegal " +
-                "characters '/' or '%%' at position %d", name, i));
+            String.format("Illegal path segment name '%s': name contains illegal "
+                + "characters '/' or '%%' at position %d", name, i));
       }
     }
   }
 
   /**
-   * Validates that a given name is a valid RFC-1123 DNS label name. A valid RFC-1123 DNS label: -
-   * contains at most 63 characters - contains only lowercase alphanumeric characters or '-' -
+   * Validates that a given name is a valid RFC-1123 DNS label name. A valid RFC-1123 DNS label: - *
+   * contains at most 63 characters - contains only lowercase alphanumeric characters or '-' - *
    * starts with an alphanumeric character - ends with an alphanumeric character
    *
    * For details, see https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-label-names
@@ -73,14 +73,14 @@ public class KubeUtil {
   public static void validateRFC1123LabelName(String name) throws IllegalArgumentException {
     if (name.length() > 63) {
       throw new IllegalArgumentException(
-          String.format("Illegal RFC-1123 name '%s': Must be no longer than 63 " +
-              "characters", name));
+          String.format("Illegal RFC-1123 name '%s': Must be no longer than 63 "
+              + "characters", name));
     }
     if (!RFC1123_VALIDATION_REGEX.matcher(name).matches()) {
       throw new IllegalArgumentException(
-          String.format("Illegal RFC-1123 name '%s': must start and end with an " +
-              "alphanumeric character, and may only contain alphanumeric " +
-              "characters and '-'.", name));
+          String.format("Illegal RFC-1123 name '%s': must start and end with an "
+              + "alphanumeric character, and may only contain alphanumeric "
+              + "characters and '-'.", name));
     }
   }
 }

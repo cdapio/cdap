@@ -196,8 +196,8 @@ public final class SQLSchemaParser {
   private String nextToken() {
     char currChar = schema.charAt(pos);
     int endPos = pos;
-    while (!(Character.isWhitespace(currChar) ||
-        currChar == ':' || currChar == ',' || currChar == '<' || currChar == '>')) {
+    while (!(Character.isWhitespace(currChar)
+        || currChar == ':' || currChar == ',' || currChar == '<' || currChar == '>')) {
       endPos++;
       if (endPos == end) {
         break;

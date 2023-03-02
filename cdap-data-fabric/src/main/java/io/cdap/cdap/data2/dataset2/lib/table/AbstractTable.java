@@ -74,8 +74,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   protected AbstractTable(Map<String, String> props) {
     this.tableSchema = TableProperties.getSchema(props);
     this.rowFieldName = TableProperties.getRowFieldName(props);
-    this.recordPutTransformer = (tableSchema == null || rowFieldName == null) ?
-        null : new RecordPutTransformer(rowFieldName, tableSchema);
+    this.recordPutTransformer = (tableSchema == null || rowFieldName == null)
+        ? null : new RecordPutTransformer(rowFieldName, tableSchema);
   }
 
   @ReadOnly
@@ -88,8 +88,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @ReadOnly
   @Override
   public Row get(Get get) {
-    return get.getColumns() == null ?
-        get(get.getRow()) :
+    return get.getColumns() == null
+        ? get(get.getRow()) :
         get(get.getRow(), get.getColumns().toArray(new byte[get.getColumns().size()][]));
   }
 
@@ -222,8 +222,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   public void write(StructuredRecord structuredRecord) throws IOException {
     if (recordPutTransformer == null) {
       throw new IllegalStateException(
-          String.format("Table must have both '%s' and '%s' properties set in " +
-                  "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA,
+          String.format("Table must have both '%s' and '%s' properties set in "
+                  + "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA,
               Table.PROPERTY_SCHEMA_ROW_FIELD));
     }
     Put put = recordPutTransformer.toPut(structuredRecord);

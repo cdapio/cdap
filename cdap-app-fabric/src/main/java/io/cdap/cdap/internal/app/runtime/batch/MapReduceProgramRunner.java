@@ -150,8 +150,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     RunId runId = ProgramRunners.getRunId(options);
 
     WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
-    DatasetFramework programDatasetFramework = workflowInfo == null ?
-        datasetFramework :
+    DatasetFramework programDatasetFramework = workflowInfo == null
+        ? datasetFramework :
         NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
             appSpec);
 

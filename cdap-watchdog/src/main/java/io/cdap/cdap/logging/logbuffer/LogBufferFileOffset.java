@@ -69,9 +69,9 @@ public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
 
   @Override
   public String toString() {
-    return "LogBufferFileOffset{" +
-        "fileId=" + fileId +
-        ", filePos=" + filePos +
-        '}';
+    return "LogBufferFileOffset{"
+        + "fileId=" + fileId
+        + ", filePos=" + filePos
+        + '}';
   }
 }

@@ -130,9 +130,9 @@ public class SpannerStructuredRow implements StructuredRow {
 
   @Override
   public String toString() {
-    return "SpannerStructuredRow{" +
-        "struct=" + struct +
-        '}';
+    return "SpannerStructuredRow{"
+        + "struct=" + struct
+        + '}';
   }
 
   private boolean isNull(String fieldName) {

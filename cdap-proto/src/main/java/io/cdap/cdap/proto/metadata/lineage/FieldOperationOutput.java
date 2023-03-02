@@ -79,8 +79,8 @@ public class FieldOperationOutput {
       return false;
     }
     FieldOperationOutput output = (FieldOperationOutput) o;
-    return Objects.equals(endPoint, output.endPoint) &&
-        Objects.equals(fields, output.fields);
+    return Objects.equals(endPoint, output.endPoint)
+        && Objects.equals(fields, output.fields);
   }
 
   @Override

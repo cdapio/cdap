@@ -48,10 +48,10 @@ public class KafkaOffset implements Comparable<KafkaOffset> {
 
   @Override
   public String toString() {
-    return "KafkaOffset{" +
-        "nextOffset=" + nextOffset +
-        ", nextEventTime=" + nextEventTime +
-        '}';
+    return "KafkaOffset{"
+        + "nextOffset=" + nextOffset
+        + ", nextEventTime=" + nextEventTime
+        + '}';
   }
 
   @Override

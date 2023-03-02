@@ -204,16 +204,16 @@ public class PluginClass {
 
   @Override
   public String toString() {
-    return "PluginClass{" +
-        "type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        ", category='" + category + '\'' +
-        ", description='" + description + '\'' +
-        ", className='" + className + '\'' +
-        ", configFieldName='" + configFieldName + '\'' +
-        ", properties=" + properties +
-        ", requirements=" + requirements +
-        '}';
+    return "PluginClass{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", category='" + category + '\''
+        + ", description='" + description + '\''
+        + ", className='" + className + '\''
+        + ", configFieldName='" + configFieldName + '\''
+        + ", properties=" + properties
+        + ", requirements=" + requirements
+        + '}';
   }
 
   /**

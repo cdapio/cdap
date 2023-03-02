@@ -69,9 +69,9 @@ public class ProgramRunCluster {
 
     ProgramRunCluster that = (ProgramRunCluster) o;
 
-    return Objects.equals(status, that.status) &&
-        Objects.equals(end, that.end) &&
-        Objects.equals(numNodes, that.numNodes);
+    return Objects.equals(status, that.status)
+        && Objects.equals(end, that.end)
+        && Objects.equals(numNodes, that.numNodes);
   }
 
   @Override
@@ -81,10 +81,10 @@ public class ProgramRunCluster {
 
   @Override
   public String toString() {
-    return "ProgramRunCluster{" +
-        "status=" + status +
-        ", end=" + end +
-        ", numNodes=" + numNodes +
-        '}';
+    return "ProgramRunCluster{"
+        + "status=" + status
+        + ", end=" + end
+        + ", numNodes=" + numNodes
+        + '}';
   }
 }

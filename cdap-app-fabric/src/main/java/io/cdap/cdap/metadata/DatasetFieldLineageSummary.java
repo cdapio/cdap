@@ -124,9 +124,9 @@ public class DatasetFieldLineageSummary {
       }
 
       DatasetFieldLineageSummary.FieldLineageRelations that = (DatasetFieldLineageSummary.FieldLineageRelations) o;
-      return Objects.equals(datasetId, that.datasetId) &&
-          Objects.equals(relations, that.relations) &&
-          Objects.equals(fieldCount, that.fieldCount);
+      return Objects.equals(datasetId, that.datasetId)
+          && Objects.equals(relations, that.relations)
+          && Objects.equals(fieldCount, that.fieldCount);
     }
 
     @Override

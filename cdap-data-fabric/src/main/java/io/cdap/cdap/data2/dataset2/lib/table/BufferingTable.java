@@ -600,8 +600,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       rowMap = getRowMap(row, columns);
       reportRead(1);
     } catch (Exception e) {
-      LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName() +
-          ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName()
+          + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("incrementAndGet failed", e);
     }
 
@@ -618,9 +618,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       } else {
         if (val.length != Bytes.SIZEOF_LONG) {
           throw new NumberFormatException(
-              "Attempted to increment a value that is not convertible to long," +
-                  " row: " + Bytes.toStringBinary(row) +
-                  " column: " + Bytes.toStringBinary(column));
+              "Attempted to increment a value that is not convertible to long,"
+                  + " row: " + Bytes.toStringBinary(row)
+                  + " column: " + Bytes.toStringBinary(column));
         }
         longVal = Bytes.toLong(val);
       }
@@ -674,8 +674,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         return true;
       }
     } catch (Exception e) {
-      LOG.debug("compareAndSwap failed for table: " + getTransactionAwareName() +
-          ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("compareAndSwap failed for table: " + getTransactionAwareName()
+          + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("compareAndSwap failed", e);
     }
 
@@ -721,8 +721,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     try {
       return new BufferingScanner(bufferMap, scanPersisted(scan));
     } catch (Exception e) {
-      LOG.debug("scan failed for table: " + getTransactionAwareName() +
-          ", scan: " + scan.toString(), e);
+      LOG.debug("scan failed for table: " + getTransactionAwareName()
+          + ", scan: " + scan.toString(), e);
       throw new DataSetException("scan failed", e);
     }
   }
@@ -1121,8 +1121,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
           "To reduce log verbosity, this warning will now only be logged one in %d times",
           warnFrequency);
     }
-    LOG.warn("Attempt to write an empty value to column '{}' of table '{}'. " +
-            "This will result in deleting the column. {}", Bytes.toString(column), name,
+    LOG.warn("Attempt to write an empty value to column '{}' of table '{}'. "
+            + "This will result in deleting the column. {}", Bytes.toString(column), name,
         additionalMessage);
   }
 }

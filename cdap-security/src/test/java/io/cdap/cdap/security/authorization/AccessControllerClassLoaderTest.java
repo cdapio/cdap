@@ -90,8 +90,9 @@ public class AccessControllerClassLoaderTest {
   private void assertClassUnavailable(String aClassName) {
     try {
       parent.loadClass(aClassName);
-      Assert.fail(String.format("Class %s should not be available from the parent class loader of the " +
-                                  "AuthorizerClassLoader, but it is.", aClassName));
+      Assert.fail(
+          String.format("Class %s should not be available from the parent class loader of the "
+              + "AuthorizerClassLoader, but it is.", aClassName));
     } catch (ClassNotFoundException e) {
       // expected
     }

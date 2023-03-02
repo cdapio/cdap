@@ -74,14 +74,14 @@ final class ThrowableProxyImpl implements IThrowableProxy {
 
   @Override
   public String toString() {
-    return "ThrowableProxyImpl{" +
-        "cause=" + cause +
-        ", className='" + className + '\'' +
-        ", commonFrames=" + commonFrames +
-        ", message='" + message + '\'' +
-        ", stackTraceElementProxyArray=" +
-        (stackTraceElementProxyArray == null ? null : Arrays.asList(stackTraceElementProxyArray)) +
-        ", suppressed=" + (suppressed == null ? null : Arrays.asList(suppressed)) +
-        '}';
+    return "ThrowableProxyImpl{"
+        + "cause=" + cause
+        + ", className='" + className + '\''
+        + ", commonFrames=" + commonFrames
+        + ", message='" + message + '\''
+        + ", stackTraceElementProxyArray="
+        + (stackTraceElementProxyArray == null ? null : Arrays.asList(stackTraceElementProxyArray))
+        + ", suppressed=" + (suppressed == null ? null : Arrays.asList(suppressed))
+        + '}';
   }
 }

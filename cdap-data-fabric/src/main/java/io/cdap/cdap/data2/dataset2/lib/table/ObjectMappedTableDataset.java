@@ -91,10 +91,10 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
         if (missingClass != null) {
           LOG.error(
               "Cannot load dataset because class {} could not be found. This is probably because the "
-                  +
-                  "type parameter of the dataset is not present in the dataset's jar file. See the developer "
-                  +
-                  "guide for more information.", missingClass);
+
+                  + "type parameter of the dataset is not present in the dataset's jar file. See the developer "
+
+                  + "guide for more information.", missingClass);
         }
         throw e;
       }

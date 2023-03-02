@@ -199,20 +199,20 @@ public class RunRecord {
 
     RunRecord that = (RunRecord) o;
 
-    return Objects.equals(this.pid, that.pid) &&
-        Objects.equals(this.startTs, that.startTs) &&
-        Objects.equals(this.runTs, that.runTs) &&
-        Objects.equals(this.stopTs, that.stopTs) &&
-        Objects.equals(this.suspendTs, that.suspendTs) &&
-        Objects.equals(this.resumeTs, that.resumeTs) &&
-        Objects.equals(this.stoppingTs, that.stoppingTs) &&
-        Objects.equals(this.terminateTs, that.terminateTs) &&
-        Objects.equals(this.status, that.status) &&
-        Objects.equals(this.properties, that.properties) &&
-        Objects.equals(this.cluster, that.cluster) &&
-        Objects.equals(this.profileId, that.profileId) &&
-        Objects.equals(this.peerName, that.peerName) &&
-        Objects.equals(this.version, that.version);
+    return Objects.equals(this.pid, that.pid)
+        && Objects.equals(this.startTs, that.startTs)
+        && Objects.equals(this.runTs, that.runTs)
+        && Objects.equals(this.stopTs, that.stopTs)
+        && Objects.equals(this.suspendTs, that.suspendTs)
+        && Objects.equals(this.resumeTs, that.resumeTs)
+        && Objects.equals(this.stoppingTs, that.stoppingTs)
+        && Objects.equals(this.terminateTs, that.terminateTs)
+        && Objects.equals(this.status, that.status)
+        && Objects.equals(this.properties, that.properties)
+        && Objects.equals(this.cluster, that.cluster)
+        && Objects.equals(this.profileId, that.profileId)
+        && Objects.equals(this.peerName, that.peerName)
+        && Objects.equals(this.version, that.version);
   }
 
   @Override
@@ -224,22 +224,22 @@ public class RunRecord {
 
   @Override
   public String toString() {
-    return "RunRecord{" +
-        "pid='" + pid + '\'' +
-        ", startTs=" + startTs +
-        ", runTs=" + runTs +
-        ", stopTs=" + stopTs +
-        ", suspendTs=" + suspendTs +
-        ", resumeTs=" + resumeTs +
-        ", stoppingTs=" + stoppingTs +
-        ", terminateTs=" + terminateTs +
-        ", status=" + status +
-        ", properties=" + properties +
-        ", cluster=" + cluster +
-        ", profile=" + profileId +
-        ", peerName=" + peerName +
-        ", version=" + version +
-        '}';
+    return "RunRecord{"
+        + "pid='" + pid + '\''
+        + ", startTs=" + startTs
+        + ", runTs=" + runTs
+        + ", stopTs=" + stopTs
+        + ", suspendTs=" + suspendTs
+        + ", resumeTs=" + resumeTs
+        + ", stoppingTs=" + stoppingTs
+        + ", terminateTs=" + terminateTs
+        + ", status=" + status
+        + ", properties=" + properties
+        + ", cluster=" + cluster
+        + ", profile=" + profileId
+        + ", peerName=" + peerName
+        + ", version=" + version
+        + '}';
   }
 
   /**

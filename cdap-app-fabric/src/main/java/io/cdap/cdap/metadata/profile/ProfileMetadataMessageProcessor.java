@@ -184,8 +184,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (namespaceTable.get(namespaceId) == null) {
           LOG.debug(
               "Namespace {} is not found, so the profile metadata of programs or schedules in it will not get "
-                  +
-                  "updated. Ignoring the message {}", namespaceId, message);
+
+                  + "updated. Ignoring the message {}", namespaceId, message);
           return;
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
@@ -209,8 +209,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (meta == null) {
           LOG.debug(
               "Application {} is not found, so the profile metadata of its programs/schedules will not get "
-                  +
-                  "updated. Ignoring the message {}", appId, message);
+
+                  + "updated. Ignoring the message {}", appId, message);
           return;
         }
         collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
@@ -223,8 +223,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (meta == null) {
           LOG.debug(
               "Application {} is not found, so the profile metadata of program {} will not get updated. "
-                  +
-                  "Ignoring the message {}", programId.getParent(), programId, message);
+
+                  + "Ignoring the message {}", programId.getParent(), programId, message);
           return;
         }
         if (PROFILE_ALLOWED_PROGRAM_TYPES.contains(programId.getType())) {
@@ -239,15 +239,15 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()),
               updates);
         } catch (NotFoundException e) {
-          LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
-              "Ignoring the message {}", scheduleId, message);
+          LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. "
+              + "Ignoring the message {}", scheduleId, message);
           return;
         }
         break;
       default:
         // this should not happen
-        LOG.warn("Type of the entity id {} cannot be used to update profile metadata. " +
-            "Ignoring the message {}", entityId, message);
+        LOG.warn("Type of the entity id {} cannot be used to update profile metadata. "
+            + "Ignoring the message {}", entityId, message);
     }
   }
 
@@ -369,8 +369,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    */
   // TODO: CDAP-13579 consider preference key starts with [scope].[name].system.profile.name
   private ProfileId getResolvedProfileId(EntityId entityId) throws IOException {
-    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE)
+        ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
     String profileName = preferencesTable.getResolvedPreference(entityId,
         SystemArguments.PROFILE_NAME);
     return profileName == null ? ProfileId.NATIVE
@@ -385,8 +385,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    * @return the profile id configured for this entity id, if any
    */
   private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
-    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE)
+        ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
     String profileName = preferencesTable.getPreferences(entityId).getProperties()
         .get(SystemArguments.PROFILE_NAME);
     return profileName == null ? Optional.empty()

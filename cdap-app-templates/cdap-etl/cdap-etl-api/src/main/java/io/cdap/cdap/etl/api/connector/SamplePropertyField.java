@@ -51,8 +51,8 @@ public class SamplePropertyField {
     }
 
     SamplePropertyField that = (SamplePropertyField) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description);
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description);
   }
 
   @Override

@@ -109,8 +109,8 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     for (double i : percentiles) {
       if (i < 0.0 || i > 100.0) {
         throw new BadRequestException(
-            "Percentile values have to be greater than or equal to 0 and" +
-                " less than or equal to 100. Invalid input was " + Double.toString(i));
+            "Percentile values have to be greater than or equal to 0 and"
+                + " less than or equal to 100. Invalid input was " + Double.toString(i));
       }
     }
     WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(
@@ -158,14 +158,14 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       timeInterval = TimeMathParser.resolutionInSeconds(interval);
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(
-          "Interval is specified with invalid time unit. It should be specified with one" +
-              " of the 'ms', 's', 'm', 'h', 'd' units. Entered value was : " + interval);
+          "Interval is specified with invalid time unit. It should be specified with one"
+              + " of the 'ms', 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
 
     if (timeInterval <= 0) {
       throw new BadRequestException(
-          "Interval should be greater than 0 and should be specified with one of the 'ms'," +
-              " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
+          "Interval should be greater than 0 and should be specified with one of the 'ms',"
+              + " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
     Collection<WorkflowTable.WorkflowRunRecord> workflowRunRecords =
         store.retrieveSpacedRecords(new NamespaceId(namespaceId), appId, workflowId, runId, limit,

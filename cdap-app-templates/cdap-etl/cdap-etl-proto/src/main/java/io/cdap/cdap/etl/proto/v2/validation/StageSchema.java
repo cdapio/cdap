@@ -64,8 +64,8 @@ public class StageSchema {
       return false;
     }
     StageSchema that = (StageSchema) o;
-    return Objects.equals(stage, that.stage) &&
-        Objects.equals(schema, that.schema);
+    return Objects.equals(stage, that.stage)
+        && Objects.equals(schema, that.schema);
   }
 
   @Override

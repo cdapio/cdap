@@ -102,13 +102,13 @@ public class ProgramSchedule {
     }
     ProgramSchedule that = (ProgramSchedule) o;
 
-    return Objects.equal(this.scheduleId, that.scheduleId) &&
-        Objects.equal(this.programId, that.programId) &&
-        Objects.equal(this.description, that.description) &&
-        Objects.equal(this.properties, that.properties) &&
-        Objects.equal(this.trigger, that.trigger) &&
-        Objects.equal(this.constraints, that.constraints) &&
-        Objects.equal(this.timeoutMillis, that.timeoutMillis);
+    return Objects.equal(this.scheduleId, that.scheduleId)
+        && Objects.equal(this.programId, that.programId)
+        && Objects.equal(this.description, that.description)
+        && Objects.equal(this.properties, that.properties)
+        && Objects.equal(this.trigger, that.trigger)
+        && Objects.equal(this.constraints, that.constraints)
+        && Objects.equal(this.timeoutMillis, that.timeoutMillis);
   }
 
   @Override
@@ -119,15 +119,15 @@ public class ProgramSchedule {
 
   @Override
   public String toString() {
-    return "ProgramSchedule{" +
-        "scheduleId=" + scheduleId +
-        ", programId=" + programId +
-        ", description='" + description + '\'' +
-        ", properties=" + properties +
-        ", trigger=" + trigger +
-        ", constraints=" + constraints +
-        ", timeoutMillis=" + timeoutMillis +
-        '}';
+    return "ProgramSchedule{"
+        + "scheduleId=" + scheduleId
+        + ", programId=" + programId
+        + ", description='" + description + '\''
+        + ", properties=" + properties
+        + ", trigger=" + trigger
+        + ", constraints=" + constraints
+        + ", timeoutMillis=" + timeoutMillis
+        + '}';
   }
 
   public ScheduleDetail toScheduleDetail() {

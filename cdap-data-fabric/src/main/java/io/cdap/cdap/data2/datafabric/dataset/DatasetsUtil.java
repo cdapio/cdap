@@ -181,16 +181,16 @@ public final class DatasetsUtil {
   }
 
   public static boolean isUserDataset(DatasetId datasetInstanceId) {
-    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
-        !isSystemDatasetInUserNamespace(datasetInstanceId);
+    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())
+        && !isSystemDatasetInUserNamespace(datasetInstanceId);
   }
 
   public static boolean isSystemDatasetInUserNamespace(DatasetId datasetInstanceId) {
-    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
-        ("system.queue.config".equals(datasetInstanceId.getEntityName()) ||
-            datasetInstanceId.getEntityName().startsWith("system.sharded.queue") ||
-            datasetInstanceId.getEntityName().startsWith("system.queue") ||
-            datasetInstanceId.getEntityName().startsWith("system.stream"));
+    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())
+        && ("system.queue.config".equals(datasetInstanceId.getEntityName())
+        || datasetInstanceId.getEntityName().startsWith("system.sharded.queue")
+        || datasetInstanceId.getEntityName().startsWith("system.queue")
+        || datasetInstanceId.getEntityName().startsWith("system.stream"));
   }
 
   /**

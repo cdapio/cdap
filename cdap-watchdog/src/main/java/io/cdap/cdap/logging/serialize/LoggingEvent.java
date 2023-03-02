@@ -255,22 +255,22 @@ public final class LoggingEvent implements ILoggingEvent {
 
   @Override
   public String toString() {
-    return "LoggingEvent{" +
-        "timestamp=" + getTimeStamp() +
-        ", formattedMessage='" + getFormattedMessage() + '\'' +
-        ", threadName='" + getThreadName() + '\'' +
-        ", level=" + getLevel() +
-        ", message='" + getMessage() + '\'' +
-        ", argumentArray=" + (getArgumentArray() == null ? null
-        : Arrays.toString(getArgumentArray())) +
-        ", formattedMessage='" + getFormattedMessage() + '\'' +
-        ", loggerName='" + getLoggerName() + '\'' +
-        ", loggerContextVO=" + getLoggerContextVO() +
-        ", throwableProxy=" + getThrowableProxy() +
-        ", callerData=" + (getCallerData() == null ? null : Arrays.toString(getCallerData())) +
-        ", hasCallerData=" + hasCallerData() +
-        ", marker=" + getMarker() +
-        ", mdc=" + getMDCPropertyMap() +
-        '}';
+    return "LoggingEvent{"
+        + "timestamp=" + getTimeStamp()
+        + ", formattedMessage='" + getFormattedMessage() + '\''
+        + ", threadName='" + getThreadName() + '\''
+        + ", level=" + getLevel()
+        + ", message='" + getMessage() + '\''
+        + ", argumentArray=" + (getArgumentArray() == null ? null
+        : Arrays.toString(getArgumentArray()))
+        + ", formattedMessage='" + getFormattedMessage() + '\''
+        + ", loggerName='" + getLoggerName() + '\''
+        + ", loggerContextVO=" + getLoggerContextVO()
+        + ", throwableProxy=" + getThrowableProxy()
+        + ", callerData=" + (getCallerData() == null ? null : Arrays.toString(getCallerData()))
+        + ", hasCallerData=" + hasCallerData()
+        + ", marker=" + getMarker()
+        + ", mdc=" + getMDCPropertyMap()
+        + '}';
   }
 }

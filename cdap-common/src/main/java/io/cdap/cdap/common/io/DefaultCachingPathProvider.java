@@ -168,8 +168,8 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
         return false;
       }
       CacheKey that = (CacheKey) o;
-      return this.lastModified == that.lastModified &&
-          this.fileName.equals(that.fileName);
+      return this.lastModified == that.lastModified
+          && this.fileName.equals(that.fileName);
     }
 
     String getFileName() {

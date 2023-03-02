@@ -62,11 +62,11 @@ public final class ETLStage {
 
   @Override
   public String toString() {
-    return "ETLStage{" +
-        "name='" + name + '\'' +
-        ", plugin=" + plugin +
-        ", errorDatasetName='" + errorDatasetName + '\'' +
-        '}';
+    return "ETLStage{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + ", errorDatasetName='" + errorDatasetName + '\''
+        + '}';
   }
 
   @Override
@@ -80,9 +80,9 @@ public final class ETLStage {
 
     ETLStage that = (ETLStage) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(plugin, that.plugin) &&
-        Objects.equals(errorDatasetName, that.errorDatasetName);
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin)
+        && Objects.equals(errorDatasetName, that.errorDatasetName);
   }
 
   @Override
@@ -103,10 +103,10 @@ public final class ETLStage {
     if (errorDatasetName != null) {
       throw new IllegalStateException(
           String.format(
-              "Cannot upgrade stage '%s'. Error datasets have been replaced by error collectors. " +
-                  "Please connect stage '%s' to an error collector, then connect the error collector "
-                  +
-                  "to a sink.", name, name));
+              "Cannot upgrade stage '%s'. Error datasets have been replaced by error collectors. "
+                  + "Please connect stage '%s' to an error collector, then connect the error collector "
+
+                  + "to a sink.", name, name));
     }
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }

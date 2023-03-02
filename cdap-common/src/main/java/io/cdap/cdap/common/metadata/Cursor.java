@@ -117,15 +117,15 @@ public class Cursor {
       return false;
     }
     Cursor cursor = (Cursor) o;
-    return offset == cursor.offset &&
-        limit == cursor.limit &&
-        showHidden == cursor.showHidden &&
-        scope == cursor.scope &&
-        Objects.equals(namespaces, cursor.namespaces) &&
-        Objects.equals(types, cursor.types) &&
-        Objects.equals(sorting, cursor.sorting) &&
-        Objects.equals(actualCursor, cursor.actualCursor) &&
-        Objects.equals(query, cursor.query);
+    return offset == cursor.offset
+        && limit == cursor.limit
+        && showHidden == cursor.showHidden
+        && scope == cursor.scope
+        && Objects.equals(namespaces, cursor.namespaces)
+        && Objects.equals(types, cursor.types)
+        && Objects.equals(sorting, cursor.sorting)
+        && Objects.equals(actualCursor, cursor.actualCursor)
+        && Objects.equals(query, cursor.query);
   }
 
   @Override

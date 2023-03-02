@@ -62,9 +62,9 @@ public class ConnectionConfig {
     }
 
     ConnectionConfig that = (ConnectionConfig) o;
-    return Objects.equals(disabledTypes, that.disabledTypes) &&
-        Objects.equals(connections, that.connections) &&
-        Objects.equals(defaultConnection, that.defaultConnection);
+    return Objects.equals(disabledTypes, that.disabledTypes)
+        && Objects.equals(connections, that.connections)
+        && Objects.equals(defaultConnection, that.defaultConnection);
   }
 
   @Override

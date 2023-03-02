@@ -67,8 +67,8 @@ public class FieldLineageDetails {
       return false;
     }
     FieldLineageDetails details = (FieldLineageDetails) o;
-    return Objects.equals(incoming, details.incoming) &&
-        Objects.equals(outgoing, details.outgoing);
+    return Objects.equals(incoming, details.incoming)
+        && Objects.equals(outgoing, details.outgoing);
   }
 
   @Override

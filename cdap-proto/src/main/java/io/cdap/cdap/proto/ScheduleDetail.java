@@ -144,13 +144,13 @@ public class ScheduleDetail {
       return false;
     }
     ScheduleDetail that = (ScheduleDetail) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(program, that.program) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(trigger, that.trigger) &&
-        Objects.equals(constraints, that.constraints) &&
-        Objects.equals(timeoutMillis, that.timeoutMillis);
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(program, that.program)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(trigger, that.trigger)
+        && Objects.equals(constraints, that.constraints)
+        && Objects.equals(timeoutMillis, that.timeoutMillis);
   }
 
   @Override
@@ -161,14 +161,14 @@ public class ScheduleDetail {
 
   @Override
   public String toString() {
-    return "ScheduleDetail{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", program=" + program +
-        ", properties=" + properties +
-        ", trigger=" + trigger +
-        ", constraints=" + constraints +
-        ", timeoutMillis=" + timeoutMillis +
-        '}';
+    return "ScheduleDetail{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", program=" + program
+        + ", properties=" + properties
+        + ", trigger=" + trigger
+        + ", constraints=" + constraints
+        + ", timeoutMillis=" + timeoutMillis
+        + '}';
   }
 }

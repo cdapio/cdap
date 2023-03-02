@@ -547,8 +547,8 @@ public class FieldLineageTable {
         Map<String, String> existingProperties = GSON.fromJson(
             row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD),
             MAP_STRING_TYPE);
-        EndPoint matchingEndPoint = EndPoint.of(namespace, name, existingProperties != null ?
-            existingProperties : Collections.emptyMap());
+        EndPoint matchingEndPoint = EndPoint.of(namespace, name, existingProperties != null
+            ? existingProperties : Collections.emptyMap());
         result.add(matchingEndPoint);
       }
     }
@@ -557,8 +557,8 @@ public class FieldLineageTable {
 
   private boolean programRunMatches(ProgramRunId programRunId,
       ProgramReference programReference, RunId runId) {
-    return programRunId.getParent().getProgramReference().equals(programReference) &&
-        RunIds.fromString(programRunId.getRun()).equals(runId);
+    return programRunId.getParent().getProgramReference().equals(programReference)
+        && RunIds.fromString(programRunId.getRun()).equals(runId);
   }
 
   private Range getNamespaceIncomingRange(String namespaceId) {

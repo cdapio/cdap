@@ -419,13 +419,13 @@ public class DraftServiceTest extends DataPipelineServiceTest {
   private boolean sameDraft(Draft d1, Draft d2) {
     boolean sameCreateTime = Math.abs(d1.getCreatedTimeMillis() - d2.getCreatedTimeMillis()) < 1000;
     boolean sameUpdateTime = Math.abs(d1.getUpdatedTimeMillis() - d2.getUpdatedTimeMillis()) < 1000;
-    boolean sameProperties = d1.getRevision() == d2.getRevision() &&
-        Objects.equals(d1.getConfig(), d2.getConfig()) &&
-        Objects.equals(d1.getPreviousHash(), d2.getPreviousHash()) &&
-        Objects.equals(d1.getName(), d2.getName()) &&
-        Objects.equals(d1.getDescription(), d2.getDescription()) &&
-        Objects.equals(d1.getId(), d2.getId()) &&
-        Objects.equals(d1.getArtifact(), d2.getArtifact());
+    boolean sameProperties = d1.getRevision() == d2.getRevision()
+        && Objects.equals(d1.getConfig(), d2.getConfig())
+        && Objects.equals(d1.getPreviousHash(), d2.getPreviousHash())
+        && Objects.equals(d1.getName(), d2.getName())
+        && Objects.equals(d1.getDescription(), d2.getDescription())
+        && Objects.equals(d1.getId(), d2.getId())
+        && Objects.equals(d1.getArtifact(), d2.getArtifact());
 
     return sameProperties && sameCreateTime && sameUpdateTime;
   }

@@ -65,8 +65,8 @@ public final class ArtifactClasses {
     }
 
     ArtifactClasses that = (ArtifactClasses) o;
-    return Objects.equals(apps, that.apps) &&
-        Objects.equals(plugins, that.plugins);
+    return Objects.equals(apps, that.apps)
+        && Objects.equals(plugins, that.plugins);
   }
 
   @Override
@@ -76,10 +76,10 @@ public final class ArtifactClasses {
 
   @Override
   public String toString() {
-    return "ArtifactClasses{" +
-        "apps=" + apps +
-        ", plugins=" + plugins +
-        '}';
+    return "ArtifactClasses{"
+        + "apps=" + apps
+        + ", plugins=" + plugins
+        + '}';
   }
 
   public static Builder builder() {

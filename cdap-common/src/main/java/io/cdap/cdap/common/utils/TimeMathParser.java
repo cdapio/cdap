@@ -50,8 +50,8 @@ public class TimeMathParser {
     } else if ("d".equals(unitStr)) {
       milliseconds = TimeUnit.DAYS.toMillis(num);
     } else {
-      throw new IllegalArgumentException("invalid time unit " + unitStr +
-          ", should be one of 'ms', 's', 'm', 'h', 'd'");
+      throw new IllegalArgumentException("invalid time unit " + unitStr
+          + ", should be one of 'ms', 's', 'm', 'h', 'd'");
     }
 
     if ("+".equals(op)) {

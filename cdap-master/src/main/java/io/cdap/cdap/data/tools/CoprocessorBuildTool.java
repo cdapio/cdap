@@ -65,8 +65,8 @@ public class CoprocessorBuildTool {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
           CoprocessorBuildTool.class.getName() + " check",
-          "Checks that HBase coprocessors required by CDAP are loaded onto HDFS. " +
-              "If not, the coprocessors are built and placed on HDFS.", options, "");
+          "Checks that HBase coprocessors required by CDAP are loaded onto HDFS. "
+              + "If not, the coprocessors are built and placed on HDFS.", options, "");
       System.exit(0);
     }
 

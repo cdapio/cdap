@@ -66,8 +66,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
     Map<String, TypeToken<?>> recordFieldTypes =
-        typeToken.getRawType().isInterface() ?
-            collectByMethods(typeToken, new TreeMap<>()) :
+        typeToken.getRawType().isInterface()
+            ? collectByMethods(typeToken, new TreeMap<>()) :
             collectByFields(typeToken, new TreeMap<>());
 
     // Recursively generate field type schema.
@@ -131,8 +131,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
         // Ignore not getter methods
         continue;
       }
-      String fieldName = methodName.startsWith("get") ?
-          methodName.substring("get".length()) : methodName.substring("is".length());
+      String fieldName = methodName.startsWith("get")
+          ? methodName.substring("get".length()) : methodName.substring("is".length());
       if (fieldName.isEmpty()) {
         continue;
       }

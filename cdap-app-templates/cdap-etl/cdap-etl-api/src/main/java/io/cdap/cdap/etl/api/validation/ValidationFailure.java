@@ -277,8 +277,9 @@ public class ValidationFailure {
       return false;
     }
     ValidationFailure failure = (ValidationFailure) o;
-    return message.equals(failure.message) &&
-        Objects.equals(correctiveAction, failure.correctiveAction) && causes.equals(failure.causes);
+    return message.equals(failure.message)
+        && Objects.equals(correctiveAction, failure.correctiveAction) && causes.equals(
+        failure.causes);
   }
 
   @Override

@@ -91,10 +91,10 @@ public class Requirements {
 
   @Override
   public String toString() {
-    return "Requirements{" +
-        "datasetTypes=" + datasetTypes +
-        "capabilities=" + capabilities +
-        '}';
+    return "Requirements{"
+        + "datasetTypes=" + datasetTypes
+        + "capabilities=" + capabilities
+        + '}';
   }
 
   public boolean isEmpty() {

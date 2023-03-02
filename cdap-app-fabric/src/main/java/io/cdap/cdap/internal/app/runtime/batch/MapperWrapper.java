@@ -132,8 +132,8 @@ public class MapperWrapper extends Mapper {
         Throwable rootCause = Throwables.getRootCause(e);
         USERLOG.error(
             "Failed to initialize program '{}' with error: {}. Please check the system logs for more "
-                +
-                "details.", program, rootCause.getMessage(), rootCause);
+
+                + "details.", program, rootCause.getMessage(), rootCause);
         throw new IOException(
             String.format("Failed to initialize mapper with %s", basicMapReduceContext), e);
       } finally {
@@ -247,8 +247,8 @@ public class MapperWrapper extends Mapper {
       LOG.error("Failed to create instance of the user-defined Mapper class: " + userMapper);
       USERLOG.error(
           "Failed to create mapper instance for program '{}' with error: {}. Please check the system logs "
-              +
-              "for more details.", program, rootCause.getMessage(), rootCause);
+
+              + "for more details.", program, rootCause.getMessage(), rootCause);
       throw Throwables.propagate(e);
     }
   }

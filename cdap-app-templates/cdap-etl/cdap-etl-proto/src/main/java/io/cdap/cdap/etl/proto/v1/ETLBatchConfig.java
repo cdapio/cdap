@@ -103,8 +103,8 @@ public final class ETLBatchConfig extends ETLConfig
 
     ETLBatchConfig that = (ETLBatchConfig) o;
 
-    return Objects.equals(schedule, that.schedule) &&
-        Objects.equals(actions, that.actions);
+    return Objects.equals(schedule, that.schedule)
+        && Objects.equals(actions, that.actions);
   }
 
   @Override
@@ -114,12 +114,12 @@ public final class ETLBatchConfig extends ETLConfig
 
   @Override
   public String toString() {
-    return "ETLBatchConfig{" +
-        "engine=" + engine +
-        ", schedule='" + schedule + '\'' +
-        ", actions=" + actions +
-        ", driverResources=" + driverResources +
-        "} " + super.toString();
+    return "ETLBatchConfig{"
+        + "engine=" + engine
+        + ", schedule='" + schedule + '\''
+        + ", actions=" + actions
+        + ", driverResources=" + driverResources
+        + "} " + super.toString();
   }
 
   public static Builder builder(String schedule) {

@@ -263,8 +263,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     // Do the app spec regeneration if the mode is on premise or if it's a tethered run.
     // For non-tethered run in isolated mode, the regeneration is done on the runtime environment before the program
     // launch. For preview we already have a resolved app spec, so no need to regenerate the app spec again
-    if (!isPreview && appSpec != null &&
-        (ClusterMode.ON_PREMISE.equals(clusterMode) || tetheredRun)) {
+    if (!isPreview && appSpec != null
+        && (ClusterMode.ON_PREMISE.equals(clusterMode) || tetheredRun)) {
       RemoteClientFactory factory = remoteClientFactory;
 
       PluginFinder pf = pluginFinder;
@@ -296,8 +296,8 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
     if (!tetheredRun) {
       ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
-      if (artifactsComputeHash && (artifactsComputeHashSnapshot ||
-          !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
+      if (artifactsComputeHash && (artifactsComputeHashSnapshot
+          || !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
         hasher.putString(artifactDescriptor.getNamespace());
         hasher.putString(artifactDescriptor.getArtifactId().getName());
@@ -576,10 +576,10 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
      * {@link Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT} allows to compute hash on snapshots
      * which should only be used in testings.
      */
-    boolean computeHash = artifactsComputeHash && !appSpec.getPlugins().isEmpty() &&
-        (artifactsComputeHashSnapshot ||
-            appSpec.getPlugins().values().stream()
-                .allMatch(plugin -> !plugin.getArtifactId().getVersion().isSnapshot()));
+    boolean computeHash = artifactsComputeHash && !appSpec.getPlugins().isEmpty()
+        && (artifactsComputeHashSnapshot
+        || appSpec.getPlugins().values().stream()
+        .allMatch(plugin -> !plugin.getArtifactId().getVersion().isSnapshot()));
 
     // Sort plugins based on keys so generated hashes remain identical
     SortedMap<String, Plugin> sortedMap = new TreeMap<>(appSpec.getPlugins());

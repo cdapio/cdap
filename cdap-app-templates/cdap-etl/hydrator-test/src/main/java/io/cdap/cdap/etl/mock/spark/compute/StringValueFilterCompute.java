@@ -70,18 +70,18 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
 
     interpreter = context.createSparkInterpreter();
     interpreter.compile(
-        "package test\n" +
-            "import io.cdap.cdap.api.data.format._\n" +
-            "import org.apache.spark._\n" +
-            "import org.apache.spark.api.java._\n" +
-            "import org.apache.spark.rdd._\n" +
-            "object Compute {\n" +
-            "  def compute(rdd: RDD[StructuredRecord]): JavaRDD[StructuredRecord] = {\n" +
-            "    val value = \"" + conf.value + "\"\n" +
-            "    val field = \"" + conf.field + "\"\n" +
-            "    JavaRDD.fromRDD(rdd.filter(r => !value.equals(r.get(field))))\n" +
-            "  }\n" +
-            "}"
+        "package test\n"
+            + "import io.cdap.cdap.api.data.format._\n"
+            + "import org.apache.spark._\n"
+            + "import org.apache.spark.api.java._\n"
+            + "import org.apache.spark.rdd._\n"
+            + "object Compute {\n"
+            + "  def compute(rdd: RDD[StructuredRecord]): JavaRDD[StructuredRecord] = {\n"
+            + "    val value = \"" + conf.value + "\"\n"
+            + "    val field = \"" + conf.field + "\"\n"
+            + "    JavaRDD.fromRDD(rdd.filter(r => !value.equals(r.get(field))))\n"
+            + "  }\n"
+            + "}"
     );
 
     computeMethod = interpreter.getClassLoader().loadClass("test.Compute")

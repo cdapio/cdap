@@ -268,15 +268,16 @@ public class DatasetUpgrader extends AbstractUpgrader {
     // If table is in system namespace: (starts with <tablePrefix>_system
     // or if it is not created by CDAP it is not user table
     if (tableName.startsWith(
-        String.format("%s_%s", this.datasetTablePrefix, NamespaceId.SYSTEM.getEntityName())) ||
-        (!isTableCreatedByCDAP(desc))) {
+        String.format("%s_%s", this.datasetTablePrefix, NamespaceId.SYSTEM.getEntityName()))
+        || (!isTableCreatedByCDAP(desc))) {
       return false;
     }
     // User tables are named differently in default vs non-default namespace
     // User table in default namespace starts with cdap.user
     // User table in Non-default namespace is a table that doesn't have
     //    system.queue or system.stream or system.sharded.queue
-    return defaultNSUserTablePrefix.matcher(tableName).matches() ||
+    return defaultNSUserTablePrefix.matcher(tableName).matches()
+        ||
         // Note: if the user has created a dataset called system.* then we will not upgrade the table.
         // CDAP-2977 should be fixed to have a cleaner fix for this.
         !(isStreamOrQueueTable(tableName));
@@ -284,8 +285,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private boolean isStreamOrQueueTable(String tableName) {
     // table name should start with "cdap_" or "cdap." for versions 3.4 or earlier (before namespace mapping)
-    return tableName.startsWith(datasetTablePrefix) && (tableName.contains("system.queue") ||
-        tableName.contains("system.stream") || tableName.contains("system.sharded.queue"));
+    return tableName.startsWith(datasetTablePrefix) && (tableName.contains("system.queue")
+        || tableName.contains("system.stream") || tableName.contains("system.sharded.queue"));
   }
 
   // Note: This check can be safely used for user table since we create meta.

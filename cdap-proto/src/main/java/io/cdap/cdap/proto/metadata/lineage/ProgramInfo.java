@@ -49,8 +49,8 @@ public class ProgramInfo {
       return false;
     }
     ProgramInfo that = (ProgramInfo) o;
-    return lastExecutedTimeInSeconds == that.lastExecutedTimeInSeconds &&
-        Objects.equals(program, that.program);
+    return lastExecutedTimeInSeconds == that.lastExecutedTimeInSeconds
+        && Objects.equals(program, that.program);
   }
 
   @Override

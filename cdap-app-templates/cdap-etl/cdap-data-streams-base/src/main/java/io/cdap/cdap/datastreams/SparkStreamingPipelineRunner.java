@@ -139,8 +139,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       // adds itself to the context dag. Yay for constructors with global side effects.
       // TODO: (HYDRATOR-1030) figure out how to do this at configure time instead of run time
       MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
-        "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing " +
-          "is enabled.");
+        "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing "
+          + "is enabled.");
       PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                    spec.isStageLoggingEnabled(),
                                                                    spec.isProcessTimingEnabled());
@@ -206,8 +206,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
       if (joinDefinition == null) {
         throw new IllegalStateException(
-          String.format("Joiner stage '%s' did not specify a join definition. " +
-                          "Check with the plugin developer to ensure it is implemented correctly.",
+          String.format("Joiner stage '%s' did not specify a join definition. "
+                          + "Check with the plugin developer to ensure it is implemented correctly.",
                         stageName));
       }
       joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);

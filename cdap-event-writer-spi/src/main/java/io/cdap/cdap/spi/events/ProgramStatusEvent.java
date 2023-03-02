@@ -71,12 +71,12 @@ public class ProgramStatusEvent implements Event<ProgramStatusEventDetails> {
 
   @Override
   public String toString() {
-    return "ProgramStatusEvent{" +
-        "publishTime=" + publishTime +
-        ", version='" + version + '\'' +
-        ", instanceName='" + instanceName + '\'' +
-        ", projectName='" + projectName + '\'' +
-        ", programStatusEventDetails=" + programStatusEventDetails.toString() +
-        '}';
+    return "ProgramStatusEvent{"
+        + "publishTime=" + publishTime
+        + ", version='" + version + '\''
+        + ", instanceName='" + instanceName + '\''
+        + ", projectName='" + projectName + '\''
+        + ", programStatusEventDetails=" + programStatusEventDetails.toString()
+        + '}';
   }
 }

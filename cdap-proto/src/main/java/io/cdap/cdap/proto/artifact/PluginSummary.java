@@ -80,12 +80,12 @@ public class PluginSummary {
 
     PluginSummary that = (PluginSummary) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(category, that.category) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(className, that.className) &&
-        Objects.equals(artifact, that.artifact);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(category, that.category)
+        && Objects.equals(description, that.description)
+        && Objects.equals(className, that.className)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override
@@ -95,13 +95,13 @@ public class PluginSummary {
 
   @Override
   public String toString() {
-    return "PluginSummary{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", category='" + category + '\'' +
-        ", description='" + description + '\'' +
-        ", className='" + className + '\'' +
-        ", artifact=" + artifact +
-        '}';
+    return "PluginSummary{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", category='" + category + '\''
+        + ", description='" + description + '\''
+        + ", className='" + className + '\''
+        + ", artifact=" + artifact
+        + '}';
   }
 }

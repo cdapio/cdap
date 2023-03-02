@@ -87,8 +87,8 @@ public class FieldTransformOperation extends FieldOperation {
       return false;
     }
     FieldTransformOperation that = (FieldTransformOperation) o;
-    return Objects.equals(inputFields, that.inputFields) &&
-        Objects.equals(outputFields, that.outputFields);
+    return Objects.equals(inputFields, that.inputFields)
+        && Objects.equals(outputFields, that.outputFields);
   }
 
   @Override

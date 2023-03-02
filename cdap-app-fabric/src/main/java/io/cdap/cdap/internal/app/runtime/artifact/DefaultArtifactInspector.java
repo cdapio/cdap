@@ -250,8 +250,8 @@ final class DefaultArtifactInspector implements ArtifactInspector {
         configType = Artifacts.getConfigType(app.getClass());
       } catch (Exception e) {
         throw new InvalidArtifactException(String.format(
-            "Could not resolve config type for Application class %s in artifact %s. " +
-                "The type must extend Config and cannot be parameterized.", mainClassName,
+            "Could not resolve config type for Application class %s in artifact %s. "
+                + "The type must extend Config and cannot be parameterized.", mainClassName,
             artifactId));
       }
 
@@ -264,8 +264,8 @@ final class DefaultArtifactInspector implements ArtifactInspector {
           "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
     } catch (UnsupportedTypeException e) {
       throw new InvalidArtifactException(String.format(
-          "Config for Application %s in artifact %s has an unsupported schema. " +
-              "The type must extend Config and cannot be parameterized.", mainClassName,
+          "Config for Application %s in artifact %s has an unsupported schema. "
+              + "The type must extend Config and cannot be parameterized.", mainClassName,
           artifactId));
     } catch (InstantiationException | IllegalAccessException e) {
       throw new InvalidArtifactException(String.format(
@@ -326,10 +326,10 @@ final class DefaultArtifactInspector implements ArtifactInspector {
       }
     } catch (Throwable t) {
       throw new InvalidArtifactException(String.format(
-          "Class could not be found while inspecting artifact for plugins. " +
-              "Please check dependencies are available, and that the correct parent artifact was specified. "
-              +
-              "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
+          "Class could not be found while inspecting artifact for plugins. "
+              + "Please check dependencies are available, and that the correct parent artifact was specified. "
+
+              + "Error class: %s, message: %s.", t.getClass(), t.getMessage()), t);
     }
   }
 
@@ -591,9 +591,9 @@ final class DefaultArtifactInspector implements ArtifactInspector {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     if (PluginConfig.class.isAssignableFrom(rawType)) {
       if (!inspectNested) {
-        throw new IllegalArgumentException("Plugin config with name " + name +
-            " is a subclass of PluginGroupConfig and can " +
-            "only be defined within PluginConfig.");
+        throw new IllegalArgumentException("Plugin config with name " + name
+            + " is a subclass of PluginGroupConfig and can "
+            + "only be defined within PluginConfig.");
       }
       // don't inspect if the field is already nested
       inspectConfigField(fieldType, properties, false);

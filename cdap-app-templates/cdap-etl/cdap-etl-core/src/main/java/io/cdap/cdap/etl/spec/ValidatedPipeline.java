@@ -59,13 +59,13 @@ public class ValidatedPipeline {
   }
 
   public Set<String> getOutputs(String stageName) {
-    return connectionTable.containsKey(stageName) ?
-        connectionTable.get(stageName).keySet() : Collections.<String>emptySet();
+    return connectionTable.containsKey(stageName)
+        ? connectionTable.get(stageName).keySet() : Collections.<String>emptySet();
   }
 
   public Map<String, String> getOutputPorts(String stageName) {
-    return connectionTable.containsKey(stageName) ?
-        connectionTable.get(stageName) : Collections.<String, String>emptyMap();
+    return connectionTable.containsKey(stageName)
+        ? connectionTable.get(stageName) : Collections.<String, String>emptyMap();
   }
 
   public boolean isStageLoggingEnabled() {

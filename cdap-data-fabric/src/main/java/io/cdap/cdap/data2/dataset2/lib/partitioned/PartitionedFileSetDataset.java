@@ -313,8 +313,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       String existingPath = Bytes.toString(row.get(RELATIVE_PATH));
       if (!path.equals(existingPath)) {
         throw new DataSetException(
-            String.format("Attempting to append to Dataset '%s', to partition '%s' with a " +
-                    "different path. Original path: '%s'. New path: '%s'",
+            String.format("Attempting to append to Dataset '%s', to partition '%s' with a "
+                    + "different path. Original path: '%s'. New path: '%s'",
                 getName(), key.toString(), existingPath, path));
       }
     }
@@ -606,8 +606,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
         for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
           sb.append("\n\tat ").append(stackTraceElement.toString());
         }
-        SAMPLING_LOG.warn("Operation should be performed within a transaction. " +
-            "This operation may require a transaction in the future. {}", sb);
+        SAMPLING_LOG.warn("Operation should be performed within a transaction. "
+            + "This operation may require a transaction in the future. {}", sb);
       }
       // to handle backwards compatibility (user might have called PartitionedFileSet#getPartitionOutput outside
       // of a transaction), we can't check partition existence via the partitionsTable. As an fallback approach,
@@ -1026,16 +1026,16 @@ public class PartitionedFileSetDataset extends AbstractDataset
         });
       } catch (TransactionConflictException e) {
         throw new DataSetException(
-            "Transaction conflict while reading partitions. This should never happen. " +
-                "Make sure that no other programs are using this dataset at the same time.");
+            "Transaction conflict while reading partitions. This should never happen. "
+                + "Make sure that no other programs are using this dataset at the same time.");
       } catch (TransactionFailureException e) {
         throw new DataSetException("Transaction failure: " + e.getMessage(), e.getCause());
       } catch (RuntimeException e) {
         // this looks like duplication but is needed in case this is run from a worker: see CDAP-6837
         if (e.getCause() instanceof TransactionConflictException) {
           throw new DataSetException(
-              "Transaction conflict while reading partitions. This should never happen. " +
-                  "Make sure that no other programs are using this dataset at the same time.");
+              "Transaction conflict while reading partitions. This should never happen. "
+                  + "Make sure that no other programs are using this dataset at the same time.");
         } else if (e.getCause() instanceof TransactionFailureException) {
           throw new DataSetException("Transaction failure: " + e.getMessage(),
               e.getCause().getCause());
@@ -1063,8 +1063,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       if (!partitioning.getFields().containsKey(entry.getKey())) {
         LOG.warn(
             "Partition filter cannot match any partitions in dataset '{}' because it contains field '{}' "
-                +
-                "that is not a valid partitioning field", getName(), entry.getKey());
+
+                + "that is not a valid partitioning field", getName(), entry.getKey());
       }
     }
   }
@@ -1233,14 +1233,14 @@ public class PartitionedFileSetDataset extends AbstractDataset
       if (!first) {
         if (offset >= rowKey.length) {
           throw new IllegalArgumentException(
-              String.format("Invalid row key: Expecting field '%s' at offset %d " +
-                  "but the end of the row key is reached.", fieldName, offset));
+              String.format("Invalid row key: Expecting field '%s' at offset %d "
+                  + "but the end of the row key is reached.", fieldName, offset));
         }
         if (rowKey[offset] != 0) {
           throw new IllegalArgumentException(
               String.format(
-                  "Invalid row key: Expecting field separator \\0 before field '%s' at offset %d " +
-                      "but found byte value %x.", fieldName, offset, rowKey[offset]));
+                  "Invalid row key: Expecting field separator \\0 before field '%s' at offset %d "
+                      + "but found byte value %x.", fieldName, offset, rowKey[offset]));
         }
         offset++;
       }
@@ -1248,8 +1248,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       int size = FieldTypes.determineLengthInBytes(rowKey, offset, fieldType);
       if (size + offset > rowKey.length) {
         throw new IllegalArgumentException(
-            String.format("Invalid row key: Expecting field '%s' of type %s, " +
-                    "requiring %d bytes at offset %d, but only %d bytes remain.",
+            String.format("Invalid row key: Expecting field '%s' of type %s, "
+                    + "requiring %d bytes at offset %d, but only %d bytes remain.",
                 fieldName, fieldType.name(), size, offset, rowKey.length - offset));
       }
       Comparable fieldValue = FieldTypes.fromBytes(rowKey, offset, size, fieldType);

@@ -106,8 +106,8 @@ public final class DistributedStorageProviderNamespaceAdmin extends
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
         throw new IOException(
-            String.format("HBase namespace '%s' specified for new namespace '%s' does not" +
-                    " exist. Please specify an existing HBase namespace.", hbaseNamespace,
+            String.format("HBase namespace '%s' specified for new namespace '%s' does not"
+                    + " exist. Please specify an existing HBase namespace.", hbaseNamespace,
                 namespaceMeta.getName()));
       }
     }

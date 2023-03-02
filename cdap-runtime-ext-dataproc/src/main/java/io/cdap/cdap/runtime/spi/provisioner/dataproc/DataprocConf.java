@@ -506,8 +506,8 @@ final class DataprocConf {
   private String getMachineType(@Nullable String type, int cpus, int memoryMB) {
     // n1 is of format custom-cpu-memory
     // other types are of format type-custom-cpu-memory. For example, n2d-custom-4-16
-    String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase()) ?
-        "" : type.toLowerCase() + "-";
+    String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase())
+        ? "" : type.toLowerCase() + "-";
     return String.format("%scustom-%d-%d", typePrefix, cpus, memoryMB);
   }
 
@@ -584,8 +584,8 @@ final class DataprocConf {
     if (workerNumNodes == 1) {
       throw new IllegalArgumentException(
           "Invalid config 'workerNumNodes' = 1. Worker nodes must either be zero for a single node cluster, "
-              +
-              "or at least 2 for a multi node cluster.");
+
+              + "or at least 2 for a multi node cluster.");
     }
 
     if (secondaryWorkerNumNodes < 0) {

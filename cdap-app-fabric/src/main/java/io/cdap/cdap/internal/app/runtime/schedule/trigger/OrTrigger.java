@@ -59,8 +59,9 @@ public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
   public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId) {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (SatisfiableTrigger trigger : getTriggers()) {
-      if (trigger instanceof ProgramStatusTrigger &&
-          programId.isSameProgramExceptVersion(((ProgramStatusTrigger) trigger).getProgramId())) {
+      if (trigger instanceof ProgramStatusTrigger
+          && programId.isSameProgramExceptVersion(
+          ((ProgramStatusTrigger) trigger).getProgramId())) {
         // this program status trigger will never be satisfied, skip adding it to updatedTriggers
         continue;
       }

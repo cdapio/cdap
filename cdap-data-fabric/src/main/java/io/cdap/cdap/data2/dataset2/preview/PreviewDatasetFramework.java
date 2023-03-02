@@ -108,8 +108,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
       @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
     if (ownerPrincipal != null) {
       throw new UnsupportedOperationException(
-          "Creating dataset instance with owner is not supported in preview, " +
-              "please try to start the preview without the ownership");
+          "Creating dataset instance with owner is not supported in preview, "
+              + "please try to start the preview without the ownership");
     }
     super.addInstance(datasetTypeName, datasetInstanceId, props, null);
   }

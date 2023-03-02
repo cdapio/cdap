@@ -365,8 +365,8 @@ final class SparkTransactional implements Transactional {
       NamespaceId programNamespaceId = runtimeContext.getProgramRunId().getNamespaceId();
       if (NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespace)
         && !NamespaceId.SYSTEM.equals(programNamespaceId)) {
-        throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. " +
-                                                                "Cannot access %s namespace.",
+        throw new DatasetInstantiationException(String.format("Dataset %s cannot be instantiated from %s namespace. "
+                                                                + "Cannot access %s namespace.",
                                                               name, programNamespaceId, NamespaceId.SYSTEM));
       }
       T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);

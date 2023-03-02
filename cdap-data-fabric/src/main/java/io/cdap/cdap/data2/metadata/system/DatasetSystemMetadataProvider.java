@@ -107,8 +107,8 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
   @Override
   public Set<String> getSystemTagsToAdd() {
     Set<String> tags = new HashSet<>();
-    if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
-        dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
+    if (dataset instanceof BatchReadable || dataset instanceof BatchWritable
+        || dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
       tags.add(BATCH_TAG);
     }
 

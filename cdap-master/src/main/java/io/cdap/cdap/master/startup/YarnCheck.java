@@ -77,11 +77,11 @@ class YarnCheck extends AbstractMasterCheck {
       LOG.info("  YARN availability successfully verified.");
     } catch (Exception e) {
       throw new RuntimeException(
-          "Unable to get status of YARN nodemanagers. " +
-              "Please check that YARN is running " +
-              "and that the correct Hadoop configuration (core-site.xml, yarn-site.xml) and libraries "
-              +
-              "are included in the CDAP master classpath.", e);
+          "Unable to get status of YARN nodemanagers. "
+              + "Please check that YARN is running "
+              + "and that the correct Hadoop configuration (core-site.xml, yarn-site.xml) and libraries "
+
+              + "are included in the CDAP master classpath.", e);
     } finally {
       try {
         yarnClient.stop();

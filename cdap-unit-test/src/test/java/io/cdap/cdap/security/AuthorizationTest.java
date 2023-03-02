@@ -347,8 +347,9 @@ public class AuthorizationTest extends TestBase {
     // deleting all apps should fail because bob does not have admin privileges on the apps and the namespace
     try {
       deleteAllApplications(AUTH_NAMESPACE);
-      Assert.fail("Deleting all applications in the namespace should have failed because bob does not have ADMIN " +
-                    "privilege on the workflow app.");
+      Assert.fail(
+          "Deleting all applications in the namespace should have failed because bob does not have ADMIN "
+              + "privilege on the workflow app.");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -363,20 +364,24 @@ public class AuthorizationTest extends TestBase {
     String appArtifactName = "app-artifact";
     String appArtifactVersion = "1.1.1";
     try {
-      ArtifactId defaultNsArtifact = NamespaceId.DEFAULT.artifact(appArtifactName, appArtifactVersion);
+      ArtifactId defaultNsArtifact = NamespaceId.DEFAULT.artifact(appArtifactName,
+          appArtifactVersion);
       addAppArtifact(defaultNsArtifact, ConfigTestApp.class);
-      Assert.fail("Should not be able to add an app artifact to the default namespace because alice does not have " +
-                    "admin privileges on the artifact.");
+      Assert.fail(
+          "Should not be able to add an app artifact to the default namespace because alice does not have "
+              + "admin privileges on the artifact.");
     } catch (UnauthorizedException expected) {
       // expected
     }
     String pluginArtifactName = "plugin-artifact";
     String pluginArtifactVersion = "1.2.3";
     try {
-      ArtifactId defaultNsArtifact = NamespaceId.DEFAULT.artifact(pluginArtifactName, pluginArtifactVersion);
+      ArtifactId defaultNsArtifact = NamespaceId.DEFAULT.artifact(pluginArtifactName,
+          pluginArtifactVersion);
       addAppArtifact(defaultNsArtifact, ToStringPlugin.class);
-      Assert.fail("Should not be able to add a plugin artifact to the default namespace because alice does not have " +
-                    "admin privileges on the artifact.");
+      Assert.fail(
+          "Should not be able to add a plugin artifact to the default namespace because alice does not have "
+              + "admin privileges on the artifact.");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -396,8 +401,9 @@ public class AuthorizationTest extends TestBase {
     SecurityRequestContext.setUserId(BOB.getName());
     try {
       appArtifactManager.writeProperties(ImmutableMap.of("authorized", "no"));
-      Assert.fail("Writing properties to artifact should have failed because Bob does not have admin privileges on " +
-                    "the artifact");
+      Assert.fail(
+          "Writing properties to artifact should have failed because Bob does not have admin privileges on "
+              + "the artifact");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -411,16 +417,18 @@ public class AuthorizationTest extends TestBase {
 
     try {
       pluginArtifactManager.writeProperties(ImmutableMap.of("authorized", "no"));
-      Assert.fail("Writing properties to artifact should have failed because Bob does not have admin privileges on " +
-                    "the artifact");
+      Assert.fail(
+          "Writing properties to artifact should have failed because Bob does not have admin privileges on "
+              + "the artifact");
     } catch (UnauthorizedException expected) {
       // expected
     }
 
     try {
       pluginArtifactManager.removeProperties();
-      Assert.fail("Removing properties to artifact should have failed because Bob does not have admin privileges on " +
-                    "the artifact");
+      Assert.fail(
+          "Removing properties to artifact should have failed because Bob does not have admin privileges on "
+              + "the artifact");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -513,16 +521,18 @@ public class AuthorizationTest extends TestBase {
     }
     try {
       greetingService.setRuntimeArgs(args);
-      Assert.fail("Setting runtime arguments should have failed because bob does not have admin privileges on the " +
-                    "service");
+      Assert.fail(
+          "Setting runtime arguments should have failed because bob does not have admin privileges on the "
+              + "service");
     } catch (UnauthorizedException expected) {
       // expected
     }
 
     try {
       greetingService.getRuntimeArgs();
-      Assert.fail("Getting runtime arguments should have failed because bob does not have one of READ, WRITE, ADMIN " +
-                    "privileges on the service");
+      Assert.fail(
+          "Getting runtime arguments should have failed because bob does not have one of READ, WRITE, ADMIN "
+              + "privileges on the service");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -1492,9 +1502,9 @@ public class AuthorizationTest extends TestBase {
       public Boolean call() throws Exception {
         List<RunRecord> runs = programManager.getHistory();
         for (RunRecord meta : runs) {
-          if (meta.getStatus() == ProgramRunStatus.STARTING ||
-            meta.getStatus() == ProgramRunStatus.RUNNING ||
-            meta.getStatus() == ProgramRunStatus.RESUMING) {
+          if (meta.getStatus() == ProgramRunStatus.STARTING
+              || meta.getStatus() == ProgramRunStatus.RUNNING
+              || meta.getStatus() == ProgramRunStatus.RESUMING) {
             return false;
           }
         }

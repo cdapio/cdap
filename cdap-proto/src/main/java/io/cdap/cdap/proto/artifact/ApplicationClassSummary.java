@@ -61,9 +61,9 @@ public class ApplicationClassSummary {
 
   @Override
   public String toString() {
-    return "ApplicationClassSummary{" +
-        "artifact=" + artifact +
-        ", className='" + className + '\'' +
-        '}';
+    return "ApplicationClassSummary{"
+        + "artifact=" + artifact
+        + ", className='" + className + '\''
+        + '}';
   }
 }

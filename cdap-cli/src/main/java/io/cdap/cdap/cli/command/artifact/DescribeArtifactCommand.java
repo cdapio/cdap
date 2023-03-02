@@ -91,10 +91,10 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format(
         "Describes %s, including information about the application and plugin classes contained in "
-            +
-            "the artifact. If no scope is provided, the artifact is looked for first in the 'SYSTEM' "
-            +
-            "and then in the 'USER' scope.",
+
+            + "the artifact. If no scope is provided, the artifact is looked for first in the 'SYSTEM' "
+
+            + "and then in the 'USER' scope.",
         Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

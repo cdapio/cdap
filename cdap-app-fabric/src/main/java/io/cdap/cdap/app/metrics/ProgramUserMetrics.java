@@ -63,8 +63,8 @@ public class ProgramUserMetrics implements Metrics {
     Sets.SetView<String> intersection = Sets.intersection(getTags().keySet(), tags.keySet());
     if (!intersection.isEmpty()) {
       throw new IllegalArgumentException(
-          String.format("Tags with names '%s' already exists in the context. " +
-                  "Child Metrics cannot be created with duplicate tag names.",
+          String.format("Tags with names '%s' already exists in the context. "
+                  + "Child Metrics cannot be created with duplicate tag names.",
               String.join(", ", intersection)));
     }
     return new ProgramUserMetrics(metricsContext.childContext(tags), false);

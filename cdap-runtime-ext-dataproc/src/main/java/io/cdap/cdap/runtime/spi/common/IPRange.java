@@ -49,9 +49,9 @@ public final class IPRange {
 
   @Override
   public String toString() {
-    return "IPRange{" +
-        "lower=" + lower +
-        ", upper=" + upper +
-        '}';
+    return "IPRange{"
+        + "lower=" + lower
+        + ", upper=" + upper
+        + '}';
   }
 }

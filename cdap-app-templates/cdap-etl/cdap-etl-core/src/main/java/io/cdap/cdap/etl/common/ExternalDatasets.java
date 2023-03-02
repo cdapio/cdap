@@ -205,8 +205,8 @@ public final class ExternalDatasets {
       method.invoke(ds);
     } catch (NoSuchMethodException e) {
       // should never happen unless somebody changes ExternalDataset in cdap-data-fabric
-      LOG.warn("ExternalDataset '{}' does not have method '{}'. " +
-          "Can't register {} lineage for this dataset", referenceName, methodName, accessType);
+      LOG.warn("ExternalDataset '{}' does not have method '{}'. "
+          + "Can't register {} lineage for this dataset", referenceName, methodName, accessType);
     } catch (Exception e) {
       LOG.warn("Unable to register {} access for dataset {}", accessType, referenceName);
     }

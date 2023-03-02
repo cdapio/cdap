@@ -114,9 +114,9 @@ public class OwnerTable {
     Optional<StructuredRow> row = table.read(ImmutableList.of
         (Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, createRowKey(entityId))));
 
-    return row.isPresent() ?
-        new KerberosPrincipalId(
-            Bytes.toString(row.get().getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))) : null;
+    return row.isPresent()
+        ? new KerberosPrincipalId(
+        Bytes.toString(row.get().getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))) : null;
   }
 
   /**
@@ -264,8 +264,8 @@ public class OwnerTable {
         builder.append(scheduleId.getSchedule());
         break;
       default:
-        throw new IllegalArgumentException(String.format("Error converting id for entity, %s. " +
-                "Unexpected entity type %s",
+        throw new IllegalArgumentException(String.format("Error converting id for entity, %s. "
+                + "Unexpected entity type %s",
             namespacedEntityId.toString(),
             namespacedEntityId.getEntityType().toString()));
 

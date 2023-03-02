@@ -63,9 +63,9 @@ public final class TimeSeries {
 
     TimeSeries that = (TimeSeries) o;
 
-    return Objects.equals(measureName, that.measureName) &&
-        Objects.equals(dimensionValues, that.dimensionValues) &&
-        Objects.equals(timeValues, that.timeValues);
+    return Objects.equals(measureName, that.measureName)
+        && Objects.equals(dimensionValues, that.dimensionValues)
+        && Objects.equals(timeValues, that.timeValues);
   }
 
   @Override

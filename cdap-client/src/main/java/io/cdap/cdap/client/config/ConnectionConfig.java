@@ -129,10 +129,10 @@ public class ConnectionConfig {
       return false;
     }
     final ConnectionConfig other = (ConnectionConfig) obj;
-    return Objects.equal(this.hostname, other.hostname) &&
-        Objects.equal(this.port, other.port) &&
-        Objects.equal(this.sslEnabled, other.sslEnabled) &&
-        Objects.equal(this.apiPath, other.apiPath);
+    return Objects.equal(this.hostname, other.hostname)
+        && Objects.equal(this.port, other.port)
+        && Objects.equal(this.sslEnabled, other.sslEnabled)
+        && Objects.equal(this.apiPath, other.apiPath);
   }
 
   @Override

@@ -66,8 +66,8 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
       this.metricsContext = new NoopMetricsContext();
     } else {
       throw new IllegalStateException(
-          "Expected logger context instance of " + AppenderContext.class.getName() +
-              " but get " + context.getClass().getName());
+          "Expected logger context instance of " + AppenderContext.class.getName()
+              + " but get " + context.getClass().getName());
     }
   }
 
@@ -79,9 +79,9 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
       String metricName = getMetricName(metricsTags.get(Constants.Metrics.Tag.NAMESPACE),
           eventObject.getLevel().toString().toLowerCase());
       // Don't increment metrics for logs from MetricsProcessor to avoid possibility of infinite loop
-      if (!(metricsTags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
-          metricsTags.get(Constants.Metrics.Tag.COMPONENT)
-              .equals(Constants.Service.METRICS_PROCESSOR))) {
+      if (!(metricsTags.containsKey(Constants.Metrics.Tag.COMPONENT)
+          && metricsTags.get(Constants.Metrics.Tag.COMPONENT)
+          .equals(Constants.Service.METRICS_PROCESSOR))) {
         // todo this is inefficient as childContext implementation creates new map should use metricsCollectionService
         MetricsContext childContext = metricsContext.childContext(metricsTags);
         childContext.increment(metricName, 1);
@@ -90,8 +90,8 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    return namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
-        SYSTEM_METRIC_PREFIX + "." + logLevel :
+    return namespace.equals(NamespaceId.SYSTEM.getNamespace())
+        ? SYSTEM_METRIC_PREFIX + "." + logLevel :
         APP_METRIC_PREFIX + "." + logLevel;
   }
 

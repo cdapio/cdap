@@ -1905,8 +1905,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     JoinCondition.OnExpression condition = JoinCondition.onExpression()
       .addDatasetAlias("sales", "S")
       .addDatasetAlias("categories", "C")
-      .setExpression("S.price > 1000 and S.date > '2020-01-01 00:00:00' and " +
-                       "(S.category = C.id or (S.category is null and S.department = C.department))")
+      .setExpression("S.price > 1000 and S.date > '2020-01-01 00:00:00' and "
+                       + "(S.category = C.id or (S.category is null and S.department = C.department))")
       .build();
     Map<String, String> joinerProperties = MockAutoJoiner.getProperties(Arrays.asList("sales", "categories"),
                                                                         Collections.emptyList(),

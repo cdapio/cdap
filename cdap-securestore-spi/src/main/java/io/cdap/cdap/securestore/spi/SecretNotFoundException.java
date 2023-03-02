@@ -27,8 +27,8 @@ public class SecretNotFoundException extends Exception {
   public SecretNotFoundException(String namespace, String secretName) {
     super(String.format(
         "Secret name %s is not found the namespace %s. Please provide correct secret name that was "
-            +
-            "stored in %s namespace.", namespace, secretName, namespace));
+
+            + "stored in %s namespace.", namespace, secretName, namespace));
     this.namespace = namespace;
     this.secretName = secretName;
   }

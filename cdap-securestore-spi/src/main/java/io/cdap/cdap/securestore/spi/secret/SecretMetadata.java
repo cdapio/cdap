@@ -86,10 +86,10 @@ public class SecretMetadata {
       return false;
     }
     SecretMetadata that = (SecretMetadata) o;
-    return creationTimeMs == that.creationTimeMs &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(properties, that.properties);
+    return creationTimeMs == that.creationTimeMs
+        && Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -99,10 +99,10 @@ public class SecretMetadata {
 
   @Override
   public String toString() {
-    return "SecretMetadata{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", creationTimeMs=" + creationTimeMs +
-        '}';
+    return "SecretMetadata{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", creationTimeMs=" + creationTimeMs
+        + '}';
   }
 }

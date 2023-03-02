@@ -125,30 +125,32 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return LOG_QUERY;
     } else if ((!beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) && (
-        endsWith(uriParts, "metadata") ||
+        endsWith(uriParts, "metadata")
+            ||
             // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
             // SecureStoreHandler
             endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata",
-            "properties", null) ||
-            endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null)
-            ||
-            endsWith(uriParts, "metadata", "search") ||
-            beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-            endsWith(uriParts, "runs", null, "endpoints") ||
-            beginsWith(uriParts, "v3", "metadata", "search"))) {
+            "properties", null)
+            || endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags",
+            null)
+
+            || endsWith(uriParts, "metadata", "search")
+            || beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage")
+            || endsWith(uriParts, "runs", null, "endpoints")
+            || beginsWith(uriParts, "v3", "metadata", "search"))) {
       return METADATA_SERVICE;
-    } else if (beginsWith(uriParts, "v3", "security", "authorization") ||
-        beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) {
+    } else if (beginsWith(uriParts, "v3", "security", "authorization")
+        || beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) {
       // Authorization and Secure Store Handlers currently run in App Fabric
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "security", "store", "namespaces", null)) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")
-        &&
-        requestMethod.equals(AllowedMethod.GET)) {
+
+        && requestMethod.equals(AllowedMethod.GET)) {
       return APP_FABRIC_HTTP;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles") ||
-        beginsWith(uriParts, "v3", "profiles")) {
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles")
+        || beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "runs")) {
       return APP_FABRIC_HTTP;
@@ -156,9 +158,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
       return APP_FABRIC_HTTP;
-    } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
-        (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
-        (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
+    } else if ((uriParts.length >= 8 && uriParts[7].equals("logs"))
+        || (uriParts.length >= 10 && uriParts[9].equals("logs"))
+        || (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
       //Log Handler Paths:
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
@@ -193,9 +195,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
           return null;
       }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets")
-        &&
-        (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals(
-            "mapreduce"))) {
+
+        && (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals(
+        "mapreduce"))) {
       // namespaced app fabric data operations:
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers

@@ -819,8 +819,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       } catch (Exception e) {
         throw new BadRequestException(
-            String.format("Unable to parse program statuses '%s'. Must be comma separated " +
-                    "valid ProgramStatus names such as COMPLETED, FAILED, KILLED.",
+            String.format("Unable to parse program statuses '%s'. Must be comma separated "
+                    + "valid ProgramStatus names such as COMPLETED, FAILED, KILLED.",
                 triggerProgramStatuses), e);
       }
     } else {
@@ -1712,8 +1712,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
     if (programs.size() > 100) {
       throw new BadRequestException(
-          String.format("%d programs found in the request, the maximum number " +
-              "supported is 100", programs.size()));
+          String.format("%d programs found in the request, the maximum number "
+              + "supported is 100", programs.size()));
     }
 
     List<ProgramReference> programRefs = programs.stream()

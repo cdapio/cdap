@@ -51,8 +51,8 @@ public class SecureKeyCreateRequest {
 
   @Override
   public String toString() {
-    return "SecureKeyCreateRequest{" +
-        "description='" + description + '\'' +
-        '}';
+    return "SecureKeyCreateRequest{"
+        + "description='" + description + '\''
+        + '}';
   }
 }

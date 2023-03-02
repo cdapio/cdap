@@ -62,8 +62,8 @@ public class StructuredTableId {
 
   @Override
   public String toString() {
-    return "StructuredTableId{" +
-        "name='" + name + '\'' +
-        '}';
+    return "StructuredTableId{"
+        + "name='" + name + '\''
+        + '}';
   }
 }

@@ -122,15 +122,15 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
 
     // Only query for aggregate metrics. Currently that's the only use case.
     String queryString =
-        "aggregate=true&start=" + start + "&end=" + end + "&resolution=" + resolution + "s" +
-            metricsParam + tagsParam + groupByParam;
+        "aggregate=true&start=" + start + "&end=" + end + "&resolution=" + resolution + "s"
+            + metricsParam + tagsParam + groupByParam;
 
     URL url = getBaseURI().resolve("query?" + queryString).toURL();
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(), REQUEST_CONFIG);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException("Failed to query for metrics " + metrics + ", with tags " + tags +
-          ". Error code " + response.getResponseCode() +
-          ", message " + response.getResponseBodyAsString());
+      throw new IOException("Failed to query for metrics " + metrics + ", with tags " + tags
+          + ". Error code " + response.getResponseCode()
+          + ", message " + response.getResponseBodyAsString());
     }
     MetricQueryResult queryResult = GSON.fromJson(response.getResponseBodyAsString(),
         MetricQueryResult.class);
@@ -157,9 +157,9 @@ public class RemoteMetricsSystemClient implements MetricsSystemClient {
 
     HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build(), REQUEST_CONFIG);
     if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException("Failed to search for metrics names for tags " + tags +
-          ". Error code " + response.getResponseCode() +
-          ", message " + response.getResponseBodyAsString());
+      throw new IOException("Failed to search for metrics names for tags " + tags
+          + ". Error code " + response.getResponseCode()
+          + ", message " + response.getResponseBodyAsString());
     }
     return GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<String>>() {
     }.getType());

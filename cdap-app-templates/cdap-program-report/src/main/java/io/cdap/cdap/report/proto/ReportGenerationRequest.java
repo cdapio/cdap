@@ -199,11 +199,11 @@ public class ReportGenerationRequest {
     }
 
     ReportGenerationRequest that = (ReportGenerationRequest) o;
-    return Objects.equals(this.name, that.name) &&
-        Objects.equals(this.start, that.start) &&
-        Objects.equals(this.end, that.end) &&
-        Objects.equals(this.fields, that.fields) &&
-        Objects.equals(this.sort, that.sort) &&
-        Objects.equals(this.filters, that.filters);
+    return Objects.equals(this.name, that.name)
+        && Objects.equals(this.start, that.start)
+        && Objects.equals(this.end, that.end)
+        && Objects.equals(this.fields, that.fields)
+        && Objects.equals(this.sort, that.sort)
+        && Objects.equals(this.filters, that.filters);
   }
 }

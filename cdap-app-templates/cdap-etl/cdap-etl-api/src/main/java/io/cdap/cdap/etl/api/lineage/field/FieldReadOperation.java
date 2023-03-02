@@ -89,8 +89,8 @@ public class FieldReadOperation extends FieldOperation {
       return false;
     }
     FieldReadOperation that = (FieldReadOperation) o;
-    return Objects.equals(source, that.source) &&
-        Objects.equals(outputFields, that.outputFields);
+    return Objects.equals(source, that.source)
+        && Objects.equals(outputFields, that.outputFields);
   }
 
   @Override

@@ -79,8 +79,8 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     String existingModuleClass = datasetModules.get(moduleName);
     if (existingModuleClass != null && !existingModuleClass.equals(moduleClass.getName())) {
       throw new IllegalArgumentException(
-          String.format("Module '%s' added multiple times with different classes " +
-                  "'%s' and '%s'. Please resolve the conflict.", moduleName, existingModuleClass,
+          String.format("Module '%s' added multiple times with different classes "
+                  + "'%s' and '%s'. Please resolve the conflict.", moduleName, existingModuleClass,
               moduleClassName));
     }
     datasetModules.put(moduleName, moduleClassName);
@@ -94,8 +94,8 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     String existingClassName = datasetModules.get(datasetClass.getName());
     if (existingClassName != null && !existingClassName.equals(className)) {
       throw new IllegalArgumentException(
-          String.format("Dataset class '%s' was added already as a module with class " +
-                  "'%s'. Please resolve the conflict so there is only one class.", className,
+          String.format("Dataset class '%s' was added already as a module with class "
+                  + "'%s'. Please resolve the conflict so there is only one class.", className,
               existingClassName));
     }
     datasetModules.put(datasetClass.getName(), className);
@@ -126,10 +126,10 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     DatasetCreationSpec existingSpec = datasetSpecs.get(datasetInstanceName);
     if (existingSpec != null && !existingSpec.equals(spec)) {
       throw new IllegalArgumentException(
-          String.format("DatasetInstance '%s' was added multiple times with " +
-              "different specifications. Please resolve the conflict so that there is only one specification for "
-              +
-              "the dataset instance.", datasetInstanceName));
+          String.format("DatasetInstance '%s' was added multiple times with "
+              + "different specifications. Please resolve the conflict so that there is only one specification for "
+
+              + "the dataset instance.", datasetInstanceName));
     }
     datasetSpecs.put(datasetInstanceName, spec);
   }

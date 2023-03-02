@@ -200,8 +200,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       String programName = entry.getValue().getProgramName();
       if (!specification.getWorkflows().containsKey(programName)) {
         throw new RuntimeException(
-            String.format("Schedule '%s' is invalid: Workflow '%s' is not configured " +
-                    "in application '%s'",
+            String.format("Schedule '%s' is invalid: Workflow '%s' is not configured "
+                    + "in application '%s'",
                 entry.getValue().getName(), programName, specification.getName()));
       }
     }
@@ -219,9 +219,9 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     WorkflowNodeType nodeType = node.getType();
     // TODO CDAP-5640 Add check so that node id in the Workflow should not be same as name of the Workflow.
     if (node.getNodeId().equals(workflowSpec.getName())) {
-      String msg = String.format("Node used in Workflow has same name as that of Workflow '%s'." +
-              " This will conflict while getting the Workflow token details associated with" +
-              " the node. Please use name for the node other than the name of the Workflow.",
+      String msg = String.format("Node used in Workflow has same name as that of Workflow '%s'."
+              + " This will conflict while getting the Workflow token details associated with"
+              + " the node. Please use name for the node other than the name of the Workflow.",
           workflowSpec.getName());
       LOG.warn(msg);
     }
@@ -245,8 +245,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       WorkflowNode node, Set<String> existingNodeNames) {
     WorkflowForkNode forkNode = (WorkflowForkNode) node;
     Preconditions.checkNotNull(forkNode.getBranches(),
-        String.format("Fork is added in the Workflow '%s' without" +
-            " any branches", workflowSpec.getName()));
+        String.format("Fork is added in the Workflow '%s' without"
+            + " any branches", workflowSpec.getName()));
 
     for (List<WorkflowNode> branch : forkNode.getBranches()) {
       verifyWorkflowNodeList(appSpec, workflowSpec, branch, existingNodeNames);

@@ -71,10 +71,10 @@ public class Cluster {
 
     Cluster that = (Cluster) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(status, that.status) &&
-        Objects.equals(nodes, that.nodes) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(status, that.status)
+        && Objects.equals(nodes, that.nodes)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -84,11 +84,11 @@ public class Cluster {
 
   @Override
   public String toString() {
-    return "Cluster{" +
-        "name='" + name + '\'' +
-        ", status=" + status +
-        ", nodes=" + nodes +
-        ", properties=" + properties +
-        '}';
+    return "Cluster{"
+        + "name='" + name + '\''
+        + ", status=" + status
+        + ", nodes=" + nodes
+        + ", properties=" + properties
+        + '}';
   }
 }

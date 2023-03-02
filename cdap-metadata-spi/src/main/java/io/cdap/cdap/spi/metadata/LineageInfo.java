@@ -105,15 +105,15 @@ public class LineageInfo {
 
   @Override
   public String toString() {
-    return "LineageInfo{" +
-        "sources=" + sources +
-        ", targets=" + targets +
-        ", sourceToTargets=" + sourceToTargets +
-        ", targetToSources=" + targetToSources +
-        ", startTimeMs=" + startTimeMs +
-        ", endTimeMs=" + endTimeMs +
-        ", lineageId=" + lineageId +
-        '}';
+    return "LineageInfo{"
+        + "sources=" + sources
+        + ", targets=" + targets
+        + ", sourceToTargets=" + sourceToTargets
+        + ", targetToSources=" + targetToSources
+        + ", startTimeMs=" + startTimeMs
+        + ", endTimeMs=" + endTimeMs
+        + ", lineageId=" + lineageId
+        + '}';
   }
 
   @Override
@@ -125,13 +125,13 @@ public class LineageInfo {
       return false;
     }
     LineageInfo that = (LineageInfo) o;
-    return sources.equals(that.sources) &&
-        targets.equals(that.targets) &&
-        sourceToTargets.equals(that.sourceToTargets) &&
-        targetToSources.equals(that.targetToSources) &&
-        Objects.equals(startTimeMs, that.startTimeMs) &&
-        Objects.equals(endTimeMs, that.endTimeMs) &&
-        Objects.equals(lineageId, that.lineageId);
+    return sources.equals(that.sources)
+        && targets.equals(that.targets)
+        && sourceToTargets.equals(that.sourceToTargets)
+        && targetToSources.equals(that.targetToSources)
+        && Objects.equals(startTimeMs, that.startTimeMs)
+        && Objects.equals(endTimeMs, that.endTimeMs)
+        && Objects.equals(lineageId, that.lineageId);
   }
 
   @Override

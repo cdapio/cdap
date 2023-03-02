@@ -81,9 +81,9 @@ public class BatchProgram {
 
     BatchProgram that = (BatchProgram) o;
 
-    return Objects.equals(appId, that.appId) &&
-        Objects.equals(programType, that.programType) &&
-        Objects.equals(programId, that.programId);
+    return Objects.equals(appId, that.appId)
+        && Objects.equals(programType, that.programType)
+        && Objects.equals(programId, that.programId);
   }
 
   @Override

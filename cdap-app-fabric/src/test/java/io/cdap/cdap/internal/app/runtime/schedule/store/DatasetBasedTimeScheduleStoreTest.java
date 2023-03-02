@@ -417,14 +417,14 @@ public class DatasetBasedTimeScheduleStoreTest {
   }
 
   private JobDetail getJobDetail(String jobGroup, String jobName, @Nullable String appVersion) {
-    String identity = Strings.isNullOrEmpty(appVersion) ?
-      String.format("developer:application1:flow:%s", jobName) :
-      String.format("developer:application1:%s:flow:%s", appVersion, jobName);
+    String identity = Strings.isNullOrEmpty(appVersion)
+        ? String.format("developer:application1:flow:%s", jobName) :
+        String.format("developer:application1:%s:flow:%s", appVersion, jobName);
 
     return JobBuilder.newJob(LogPrintingJob.class)
-      .withIdentity(identity, jobGroup)
-      .storeDurably()
-      .build();
+        .withIdentity(identity, jobGroup)
+        .storeDurably()
+        .build();
   }
 
   @AfterClass

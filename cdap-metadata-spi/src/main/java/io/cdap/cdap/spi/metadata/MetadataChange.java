@@ -58,9 +58,9 @@ public class MetadataChange {
       return false;
     }
     MetadataChange that = (MetadataChange) o;
-    return Objects.equals(entity, that.entity) &&
-        Objects.equals(before, that.before) &&
-        Objects.equals(after, that.after);
+    return Objects.equals(entity, that.entity)
+        && Objects.equals(before, that.before)
+        && Objects.equals(after, that.after);
   }
 
   @Override
@@ -70,10 +70,10 @@ public class MetadataChange {
 
   @Override
   public String toString() {
-    return "MetadataChange{" +
-        "entity=" + entity +
-        ", before=" + before +
-        ", after=" + after +
-        '}';
+    return "MetadataChange{"
+        + "entity=" + entity
+        + ", before=" + before
+        + ", after=" + after
+        + '}';
   }
 }

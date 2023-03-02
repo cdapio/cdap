@@ -101,8 +101,8 @@ public final class RuntimeArguments {
    * Identifies arguments with a given scope prefix and adds them back without the scope prefix.
    *
    * 1. An argument can be prefixed by "&lt;scope>.&lt;name>.". e.g. mapreduce.myMapReduce.read.timeout=30.
-   * In this case the MapReduce program named 'myMapReduce' will receive two arguments -
-   * mapreduce.myMapReduce.read.timeout=30 and read.timeout=30. However MapReduce programs other
+   * In this case the MapReduce program named 'myMapReduce' will receive two arguments
+   - * mapreduce.myMapReduce.read.timeout=30 and read.timeout=30. However MapReduce programs other
    * than 'myMapReduce' will receive only one argument - mapreduce.myMapReduce.read.timeout=30 2. An
    * argument can be prefixed by "&lt;scope>.*.". e.g. mapreduce.*.read.timeout=30. In this case all
    * the underlying MapReduce programs will receive the arguments mapreduce.*.read.timeout=30 and

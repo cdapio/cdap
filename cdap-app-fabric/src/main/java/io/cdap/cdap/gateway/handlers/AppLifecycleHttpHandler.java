@@ -759,8 +759,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                 null, createProgramTerminator());
             LOG.info(
                 "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
-                    +
-                    "principal {}", app.getApplicationId().getApplication(),
+
+                    + "principal {}", app.getApplicationId().getApplication(),
                 app.getApplicationId().getNamespace(),
                 app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal());
 
@@ -867,8 +867,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                   updateSchedules);
           LOG.info(
               "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
-                  +
-                  "principal {}", app.getApplicationId().getApplication(), namespace.getNamespace(),
+
+                  + "principal {}", app.getApplicationId().getApplication(),
+              namespace.getNamespace(),
               artifactId,
               configString, finalOwnerPrincipalId);
           responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getApplicationRecord(app)));
@@ -877,15 +878,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (ArtifactAlreadyExistsException e) {
           responder.sendString(HttpResponseStatus.CONFLICT, String.format(
               "Artifact '%s' already exists. Please use the API that creates an application from an existing artifact. "
-                  +
-                  "If you are trying to replace the artifact, please delete it and then try again.",
+
+                  + "If you are trying to replace the artifact, please delete it and then try again.",
               artifactId));
         } catch (WriteConflictException e) {
           // don't really expect this to happen. It means after multiple retries there were still write conflicts.
           LOG.warn("Write conflict while trying to add artifact {}.", artifactId, e);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-              "Write conflict while adding artifact. This can happen if multiple requests to add " +
-                  "the same artifact occur simultaneously. Please try again.");
+              "Write conflict while adding artifact. This can happen if multiple requests to add "
+                  + "the same artifact occur simultaneously. Please try again.");
         } catch (UnauthorizedException e) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (ConflictException e) {

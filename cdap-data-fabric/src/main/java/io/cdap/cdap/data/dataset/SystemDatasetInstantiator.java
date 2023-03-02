@@ -73,9 +73,9 @@ public class SystemDatasetInstantiator implements Closeable {
     this.owners = owners;
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;
-    this.parentClassLoader = parentClassLoader == null ?
-        Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-            getClass().getClassLoader()) :
+    this.parentClassLoader = parentClassLoader == null
+        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        getClass().getClassLoader()) :
         parentClassLoader;
   }
 

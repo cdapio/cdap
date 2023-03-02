@@ -91,8 +91,8 @@ public final class UpdateTimeScheduleCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("update time schedule <%s> for workflow <%s> [version <%s>] " +
-            "[description <%s>] at <%s> [concurrency <%s>] [properties <%s>]",
+    return String.format("update time schedule <%s> for workflow <%s> [version <%s>] "
+            + "[description <%s>] at <%s> [concurrency <%s>] [properties <%s>]",
         ArgumentName.SCHEDULE_NAME, ArgumentName.PROGRAM, ArgumentName.APP_VERSION,
         ArgumentName.DESCRIPTION, ArgumentName.CRON_EXPRESSION, ArgumentName.CONCURRENCY,
         ArgumentName.SCHEDULE_PROPERTIES);

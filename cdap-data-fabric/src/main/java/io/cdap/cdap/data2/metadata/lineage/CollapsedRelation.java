@@ -75,11 +75,11 @@ public class CollapsedRelation {
       return false;
     }
     CollapsedRelation that = (CollapsedRelation) o;
-    return Objects.equals(data, that.data) &&
-        Objects.equals(program, that.program) &&
-        Objects.equals(access, that.access) &&
-        Objects.equals(runs, that.runs) &&
-        Objects.equals(components, that.components);
+    return Objects.equals(data, that.data)
+        && Objects.equals(program, that.program)
+        && Objects.equals(access, that.access)
+        && Objects.equals(runs, that.runs)
+        && Objects.equals(components, that.components);
   }
 
   @Override
@@ -89,12 +89,12 @@ public class CollapsedRelation {
 
   @Override
   public String toString() {
-    return "CollapsedRelation{" +
-        "data=" + data +
-        ", program=" + program +
-        ", access=" + access +
-        ", runs=" + runs +
-        ", components=" + components +
-        '}';
+    return "CollapsedRelation{"
+        + "data=" + data
+        + ", program=" + program
+        + ", access=" + access
+        + ", runs=" + runs
+        + ", components=" + components
+        + '}';
   }
 }

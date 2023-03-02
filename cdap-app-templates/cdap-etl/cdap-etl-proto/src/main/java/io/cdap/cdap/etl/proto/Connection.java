@@ -90,11 +90,11 @@ public class Connection {
 
   @Override
   public String toString() {
-    return "Connection{" +
-        "from='" + from + '\'' +
-        ", to='" + to + '\'' +
-        ", port='" + port + '\'' +
-        ", condition='" + condition + '\'' +
-        '}';
+    return "Connection{"
+        + "from='" + from + '\''
+        + ", to='" + to + '\''
+        + ", port='" + port + '\''
+        + ", condition='" + condition + '\''
+        + '}';
   }
 }

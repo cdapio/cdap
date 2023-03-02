@@ -66,10 +66,10 @@ public class AuditLogConfig {
     }
 
     AuditLogConfig other = (AuditLogConfig) o;
-    return Objects.equals(httpMethod, other.getHttpMethod()) &&
-        logRequestBody == other.isLogRequestBody() &&
-        logResponseBody == other.isLogResponseBody() &&
-        Objects.equals(headerNames, other.getHeaderNames());
+    return Objects.equals(httpMethod, other.getHttpMethod())
+        && logRequestBody == other.isLogRequestBody()
+        && logResponseBody == other.isLogResponseBody()
+        && Objects.equals(headerNames, other.getHeaderNames());
   }
 
   @Override
@@ -79,11 +79,11 @@ public class AuditLogConfig {
 
   @Override
   public String toString() {
-    return "AuditLogContent{" +
-        "httpMethod=" + httpMethod +
-        ", logRequestBody=" + logRequestBody +
-        ", logResponseBody=" + logResponseBody +
-        ", headerNames=" + headerNames +
-        '}';
+    return "AuditLogContent{"
+        + "httpMethod=" + httpMethod
+        + ", logRequestBody=" + logRequestBody
+        + ", logResponseBody=" + logResponseBody
+        + ", headerNames=" + headerNames
+        + '}';
   }
 }

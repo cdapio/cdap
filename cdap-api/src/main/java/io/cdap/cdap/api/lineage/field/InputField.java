@@ -66,8 +66,8 @@ public class InputField {
       return false;
     }
     InputField that = (InputField) o;
-    return Objects.equals(origin, that.origin) &&
-        Objects.equals(name, that.name);
+    return Objects.equals(origin, that.origin)
+        && Objects.equals(name, that.name);
   }
 
   @Override

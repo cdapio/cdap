@@ -150,8 +150,8 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       if (hasAbsoluteBasePathBug) {
         LOG.info(
             "Dataset {} was created with a version of FileSet that treats absolute path {} as relative. "
-                +
-                "To disable this message, upgrade the dataset properties with a relative path. ",
+
+                + "To disable this message, upgrade the dataset properties with a relative path. ",
             spec.getName(), basePath);
       } else {
         String topLevelPath = locationFactory.create("/").toURI().getPath();
@@ -159,8 +159,8 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
         Location baseLocation = Locations.getLocationFromAbsolutePath(locationFactory, basePath);
         if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
           throw new DataSetException(
-              "Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
-                  "It must not be inside the CDAP base path '" + topLevelPath + "'.");
+              "Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. "
+                  + "It must not be inside the CDAP base path '" + topLevelPath + "'.");
         }
         return baseLocation;
       }
@@ -190,8 +190,8 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     try {
       return baseLocation.append(relativePath);
     } catch (IOException e) {
-      throw new DataSetException("Error constructing path from base '" + baseLocation +
-          "' and relative path '" + relativePath + "'", e);
+      throw new DataSetException("Error constructing path from base '" + baseLocation
+          + "' and relative path '" + relativePath + "'", e);
     }
   }
 

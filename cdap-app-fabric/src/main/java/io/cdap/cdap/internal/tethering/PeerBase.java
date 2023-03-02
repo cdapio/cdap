@@ -69,11 +69,11 @@ public class PeerBase {
       return false;
     }
     PeerBase that = (PeerBase) other;
-    return Objects.equals(this.name, that.name) &&
-        Objects.equals(this.endpoint, that.endpoint) &&
-        Objects.equals(this.tetheringStatus, that.tetheringStatus) &&
-        Objects.equals(this.metadata, that.metadata) &&
-        Objects.equals(this.requestTime, that.requestTime);
+    return Objects.equals(this.name, that.name)
+        && Objects.equals(this.endpoint, that.endpoint)
+        && Objects.equals(this.tetheringStatus, that.tetheringStatus)
+        && Objects.equals(this.metadata, that.metadata)
+        && Objects.equals(this.requestTime, that.requestTime);
   }
 
   @Override

@@ -440,8 +440,8 @@ public class IndexedTable extends AbstractDataset implements Table {
     // the index is not affected - just execute the swap.
     // also, if the swap is on the index column, but the old value
     // is the same as the new value, then the index is not affected either.
-    if (!indexedColumns.contains(column) ||
-        Arrays.equals(expected, newValue)) {
+    if (!indexedColumns.contains(column)
+        || Arrays.equals(expected, newValue)) {
       return table.compareAndSwap(row, column, expected, newValue);
     }
 
@@ -518,9 +518,9 @@ public class IndexedTable extends AbstractDataset implements Table {
       if (existingBytes != null) {
         if (existingBytes.length != Bytes.SIZEOF_LONG) {
           throw new NumberFormatException(
-              "Attempted to increment a value that is not convertible to long," +
-                  " row: " + Bytes.toStringBinary(row) +
-                  " column: " + Bytes.toStringBinary(columns[i]));
+              "Attempted to increment a value that is not convertible to long,"
+                  + " row: " + Bytes.toStringBinary(row)
+                  + " column: " + Bytes.toStringBinary(columns[i]));
         }
         existingValue = Bytes.toLong(existingBytes);
         if (indexedColumns.contains(columns[i])) {

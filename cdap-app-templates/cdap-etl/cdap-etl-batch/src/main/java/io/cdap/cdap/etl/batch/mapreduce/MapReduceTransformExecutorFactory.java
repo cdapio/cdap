@@ -155,8 +155,8 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
-    StageStatisticsCollector collector = collectStageStatistics ?
-        new MapReduceStageStatisticsCollector(stageName, taskAttemptContext)
+    StageStatisticsCollector collector = collectStageStatistics
+        ? new MapReduceStageStatisticsCollector(stageName, taskAttemptContext)
         : new NoopStageStatisticsCollector();
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);

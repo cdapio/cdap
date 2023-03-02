@@ -72,10 +72,10 @@ public class SpecGenerationRequest {
     }
 
     SpecGenerationRequest that = (SpecGenerationRequest) o;
-    return Objects.equals(path, that.path) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(pluginName, that.pluginName) &&
-        Objects.equals(pluginType, that.pluginType);
+    return Objects.equals(path, that.path)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(pluginName, that.pluginName)
+        && Objects.equals(pluginType, that.pluginType);
   }
 
   @Override

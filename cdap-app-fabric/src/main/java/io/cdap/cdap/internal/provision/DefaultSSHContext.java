@@ -81,8 +81,8 @@ public class DefaultSSHContext implements SSHContext {
   @Override
   public void setSSHKeyPair(SSHKeyPair keyPair) {
     if (keysDir == null) {
-      throw new IllegalStateException("Setting of key pair is not allowed. " +
-          "It can only be called during the Provisioner.createCluster cycle");
+      throw new IllegalStateException("Setting of key pair is not allowed. "
+          + "It can only be called during the Provisioner.createCluster cycle");
     }
     this.sshKeyPair = keyPair;
 

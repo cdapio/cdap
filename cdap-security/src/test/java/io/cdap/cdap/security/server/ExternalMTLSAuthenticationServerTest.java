@@ -64,7 +64,8 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
-    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostName());
+    cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS,
+        InetAddress.getLoopbackAddress().getHostName());
 
     // enables SSL
     cConf.set(Constants.Security.SSL.EXTERNAL_ENABLED, "true");
@@ -74,18 +75,20 @@ public class ExternalMTLSAuthenticationServerTest extends ExternalAuthentication
     cConf.set(Constants.Security.AUTH_SERVER_BIND_PORT, "1");
 
     // Configure the Custom Handler
-    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("ClassName"), "io.cdap.cdap.security.server" +
-      ".CertificateAuthenticationHandler");
+    cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("ClassName"), "io.cdap.cdap.security.server"
+        + ".CertificateAuthenticationHandler");
 
     // setup the realm file for Identity
     cConf.set(AUTH_HANDLER_CONFIG_BASE.concat("realmfile"), realmURL.getPath());
 
-    cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH, serverTrustoreURL.getPath());
+    cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH,
+        serverTrustoreURL.getPath());
     cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD, "secret");
     cConf.set(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE, "JKS");
 
     // Setup the Server's Key Store
-    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, serverKeystoreURL.getPath());
+    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH,
+        serverKeystoreURL.getPath());
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, serverKeystoreURL.getPath());
 
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD, "secret");

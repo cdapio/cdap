@@ -136,8 +136,8 @@ public class RemoteAppStateStore implements AppStateStore {
       case HttpURLConnection.HTTP_UNAVAILABLE:
       case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
         throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP,
-            Constants.Service.APP_FABRIC_HTTP +
-                " service is not available with status " + responseCode);
+            Constants.Service.APP_FABRIC_HTTP
+                + " service is not available with status " + responseCode);
       case HttpURLConnection.HTTP_NOT_FOUND:
         throw new NotFoundException(notFoundExceptionMessage);
     }

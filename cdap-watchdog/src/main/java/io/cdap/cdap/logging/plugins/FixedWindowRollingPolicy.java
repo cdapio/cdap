@@ -64,8 +64,8 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
             Integer.toString(context.getInstanceId()));
       } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
         throw new IllegalStateException(
-            "Expected logger context instance of " + AppenderContext.class.getName() +
-                " but got " + context.getClass().getName());
+            "Expected logger context instance of " + AppenderContext.class.getName()
+                + " but got " + context.getClass().getName());
       }
 
       fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);

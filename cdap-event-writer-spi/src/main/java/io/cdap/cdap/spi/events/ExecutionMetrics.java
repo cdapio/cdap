@@ -90,17 +90,17 @@ public class ExecutionMetrics {
 
   @Override
   public String toString() {
-    return "ExecutionMetrics{" +
-        "stageId='" + stageId + '\'' +
-        ", inputRows=" + inputRows +
-        ", outputRows=" + outputRows +
-        ", inputBytes=" + inputBytes +
-        ", outputBytes=" + outputBytes +
-        ", shuffleReadRecords=" + shuffleReadRecords +
-        ", shuffleReadBytes=" + shuffleReadBytes +
-        ", shuffleWriteRecords=" + shuffleWriteRecords +
-        ", shuffleWriteBytes=" + shuffleWriteBytes +
-        '}';
+    return "ExecutionMetrics{"
+        + "stageId='" + stageId + '\''
+        + ", inputRows=" + inputRows
+        + ", outputRows=" + outputRows
+        + ", inputBytes=" + inputBytes
+        + ", outputBytes=" + outputBytes
+        + ", shuffleReadRecords=" + shuffleReadRecords
+        + ", shuffleReadBytes=" + shuffleReadBytes
+        + ", shuffleWriteRecords=" + shuffleWriteRecords
+        + ", shuffleWriteBytes=" + shuffleWriteBytes
+        + '}';
   }
 
   @Override

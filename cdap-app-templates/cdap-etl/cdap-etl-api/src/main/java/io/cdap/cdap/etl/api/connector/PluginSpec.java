@@ -58,9 +58,9 @@ public class PluginSpec {
     }
 
     PluginSpec that = (PluginSpec) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override

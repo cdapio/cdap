@@ -72,9 +72,9 @@ public class Privilege {
 
   @Override
   public String toString() {
-    return "Privilege {" +
-        "authorizable=" + authorizable +
-        ", action=" + action +
-        '}';
+    return "Privilege {"
+        + "authorizable=" + authorizable
+        + ", action=" + action
+        + '}';
   }
 }

@@ -107,8 +107,8 @@ public class IncrementHandlerState {
         ttl = Long.parseLong(stringTTL);
         LOG.info("Family " + familyAsString + " has TTL of " + ttl);
       } catch (NumberFormatException nfe) {
-        LOG.warn("Invalid TTL value configured for column family " + familyAsString +
-            ", value = " + Bytes.toStringBinary(columnTTL));
+        LOG.warn("Invalid TTL value configured for column family " + familyAsString
+            + ", value = " + Bytes.toStringBinary(columnTTL));
       }
     }
     ttlByFamily.put(familyName, ttl);

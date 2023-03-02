@@ -269,8 +269,8 @@ public class PartitionFilter {
         // this should never happen because we make sure that partition keys and filters
         // match the field types declared for the partitioning. But just to be sure:
         throw new IllegalArgumentException(
-            "Incompatible partition filter: condition for field '" + fieldName +
-                "' is on " + determineClass() + " but partition key value '" + value
+            "Incompatible partition filter: condition for field '" + fieldName
+                + "' is on " + determineClass() + " but partition key value '" + value
                 + "' is of " + value.getClass());
       }
     }

@@ -82,10 +82,10 @@ public class AuthenticationServerMain extends DaemonMain {
             configuration.getLong(
                 Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
             TimeUnit.MILLISECONDS,
-            String.format("Connection timed out while trying to start " +
-                    "ZooKeeper client. Please verify that the " +
-                    "ZooKeeper quorum settings are correct in " +
-                    "cdap-site.xml. Currently configured as: %s",
+            String.format("Connection timed out while trying to start "
+                    + "ZooKeeper client. Please verify that the "
+                    + "ZooKeeper quorum settings are correct in "
+                    + "cdap-site.xml. Currently configured as: %s",
                 zkClientService.getConnectString()));
         authServer.startAndWait();
       } catch (Exception e) {
@@ -97,9 +97,9 @@ public class AuthenticationServerMain extends DaemonMain {
         }
       }
     } else {
-      String warning = "AuthenticationServer not started since security is disabled." +
-          " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
-          " and edit the appropriate configuration.";
+      String warning = "AuthenticationServer not started since security is disabled."
+          + " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml"
+          + " and edit the appropriate configuration.";
       LOG.warn(warning);
     }
   }

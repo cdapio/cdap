@@ -36,9 +36,9 @@ public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
   }
 
   public ConstantClassLoaderProvider(@Nullable ClassLoader classLoader) {
-    this.classLoader = classLoader == null ?
-        Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-            getClass().getClassLoader()) :
+    this.classLoader = classLoader == null
+        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        getClass().getClassLoader()) :
         classLoader;
   }
 

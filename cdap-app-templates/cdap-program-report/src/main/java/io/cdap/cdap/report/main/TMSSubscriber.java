@@ -56,8 +56,8 @@ public class TMSSubscriber extends Thread {
     isStopped = false;
     this.baseLocation = baseLocation;
     this.runMetaFileManager = new RunMetaFileManager(baseLocation, runtimeArguments, metrics);
-    this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE) ?
-        Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
+    this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE)
+        ? Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
     this.metrics = metrics;
   }
 

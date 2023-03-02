@@ -77,12 +77,12 @@ public class MetricsQueryService extends AbstractIdleService {
     this.httpService = builder.build();
     this.discoveryService = discoveryService;
 
-    LOG.info("Configuring MetricsService " +
-        ", address: " + address +
-        ", backlog connections: " + backlogcnxs +
-        ", execthreads: " + execthreads +
-        ", bossthreads: " + bossthreads +
-        ", workerthreads: " + workerthreads);
+    LOG.info("Configuring MetricsService "
+        + ", address: " + address
+        + ", backlog connections: " + backlogcnxs
+        + ", execthreads: " + execthreads
+        + ", bossthreads: " + bossthreads
+        + ", workerthreads: " + workerthreads);
   }
 
   @Override

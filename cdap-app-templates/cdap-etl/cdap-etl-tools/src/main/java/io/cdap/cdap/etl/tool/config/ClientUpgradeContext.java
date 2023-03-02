@@ -72,8 +72,8 @@ public class ClientUpgradeContext implements UpgradeContext {
           chosenArtifact.getName(),
           chosenArtifact.getVersion());
     } catch (Exception e) {
-      LOG.warn("Unable to find an artifact for plugin of type {} and name {}. " +
-          "Plugin artifact section will be left empty.", pluginType, pluginName);
+      LOG.warn("Unable to find an artifact for plugin of type {} and name {}. "
+          + "Plugin artifact section will be left empty.", pluginType, pluginName);
       return null;
     }
   }

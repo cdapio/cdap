@@ -266,9 +266,9 @@ public class MasterServiceMain extends DaemonMain {
     Services.startAndWait(zkClient,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
         TimeUnit.MILLISECONDS,
-        String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-            "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-            "Currently configured as: %s", zkClient.getConnectString()));
+        String.format("Connection timed out while trying to start ZooKeeper client. Please "
+            + "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. "
+            + "Currently configured as: %s", zkClient.getConnectString()));
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
         KeeperException.NodeExistsException.class, null));
@@ -383,8 +383,9 @@ public class MasterServiceMain extends DaemonMain {
           fileContext.getFileStatus(path).getPermission().getOtherAction();
       if (!action.implies(FsAction.WRITE)) {
         LOG.error(
-            "Directory {} is not writable for others, If you are using secure impersonation, " +
-                "make this directory writable for others, else you can ignore this message.", path);
+            "Directory {} is not writable for others, If you are using secure impersonation, "
+                + "make this directory writable for others, else you can ignore this message.",
+            path);
       }
       return true;
     }

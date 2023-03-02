@@ -252,11 +252,12 @@ public class MetricsQueryHelper {
   private void setTimeRangeInQueryRequest(MetricQueryRequest request,
       Map<String, List<String>> queryTimeParams) {
     Long start =
-        queryTimeParams.containsKey(PARAM_START_TIME) ?
-            TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+        queryTimeParams.containsKey(PARAM_START_TIME)
+            ? TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0))
+            : null;
     Long end =
-        queryTimeParams.containsKey(PARAM_END_TIME) ?
-            TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+        queryTimeParams.containsKey(PARAM_END_TIME)
+            ? TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
     AggregationOption aggregationOption =
@@ -266,14 +267,14 @@ public class MetricsQueryHelper {
     boolean aggregate =
         aggregationOption.equals(AggregationOption.TRUE) || ((start == null) && (end == null));
 
-    Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
-        getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end)
+    Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION)
+        ? getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end)
         : getResolution(null, start, end);
 
     Interpolator interpolator = null;
     if (queryTimeParams.containsKey(PARAM_INTERPOLATE)) {
-      long timeLimit = queryTimeParams.containsKey(PARAM_MAX_INTERPOLATE_GAP) ?
-          Long.parseLong(queryTimeParams.get(PARAM_MAX_INTERPOLATE_GAP).get(0)) : Long.MAX_VALUE;
+      long timeLimit = queryTimeParams.containsKey(PARAM_MAX_INTERPOLATE_GAP)
+          ? Long.parseLong(queryTimeParams.get(PARAM_MAX_INTERPOLATE_GAP).get(0)) : Long.MAX_VALUE;
       interpolator = getInterpolator(queryTimeParams.get(PARAM_INTERPOLATE).get(0), timeLimit);
     }
 
@@ -288,8 +289,8 @@ public class MetricsQueryHelper {
       count = (int) (
           ((end / resolution * resolution) - (start / resolution * resolution)) / resolution + 1);
     } else if (!aggregate) {
-      throw new IllegalArgumentException("At least two of count/start/end parameters " +
-          "are required for time-range queries ");
+      throw new IllegalArgumentException("At least two of count/start/end parameters "
+          + "are required for time-range queries ");
     }
 
     if (aggregate) {
@@ -322,24 +323,24 @@ public class MetricsQueryHelper {
       if (start != null && end != null) {
         long difference = end - start;
         if (difference < 0) {
-          throw new IllegalArgumentException(String.format("The start time %d should not be " +
-              "larger than the end time %d", start, end));
+          throw new IllegalArgumentException(String.format("The start time %d should not be "
+              + "larger than the end time %d", start, end));
         }
         return getResolution(difference);
       } else if (resolution != null) {
-        throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
-            "should be provided to determine resolution");
+        throw new IllegalArgumentException("if resolution=auto, start and end timestamp "
+            + "should be provided to determine resolution");
       } else {
         return minResolution;
       }
     } else {
       // if not auto, check if the given resolution matches available resolutions that we support.
       int resolutionInterval = TimeMathParser.resolutionInSeconds(resolution);
-      if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600) ||
-          (resolutionInterval == 60) || (resolutionInterval == minResolution))) {
+      if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600)
+          || (resolutionInterval == 60) || (resolutionInterval == minResolution))) {
         throw new IllegalArgumentException(
-            String.format("Resolution interval not supported, only %d second, " +
-                    "1 minute and 1 hour resolutions are supported currently",
+            String.format("Resolution interval not supported, only %d second, "
+                    + "1 minute and 1 hour resolutions are supported currently",
                 minResolution));
       }
       return resolutionInterval;

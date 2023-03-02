@@ -68,9 +68,9 @@ public abstract class Operation {
     }
 
     Operation operation = (Operation) o;
-    return Objects.equals(name, operation.name) &&
-        type == operation.type &&
-        Objects.equals(description, operation.description);
+    return Objects.equals(name, operation.name)
+        && type == operation.type
+        && Objects.equals(description, operation.description);
   }
 
   @Override

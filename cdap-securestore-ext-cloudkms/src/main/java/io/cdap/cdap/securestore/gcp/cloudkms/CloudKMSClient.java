@@ -61,8 +61,8 @@ class CloudKMSClient implements Closeable {
   private static final String SERVICE_ACCOUNT_FILE = "service.account.file";
   private static final String METADATA_SERVER_API = "metadata.server.api";
   private static final String DEFAULT_METADATA_SERVER_API =
-      "http://metadata.google.internal/computeMetadata" +
-          "/v1/project/project-id";
+      "http://metadata.google.internal/computeMetadata"
+          + "/v1/project/project-id";
   private static final String KEYRING_ID = "keyring.id";
   private static final String DEFAULT_KEYRING_ID = "cdap";
 

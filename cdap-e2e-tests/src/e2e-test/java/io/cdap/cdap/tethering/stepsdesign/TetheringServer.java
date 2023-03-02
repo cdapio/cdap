@@ -163,10 +163,10 @@ public class TetheringServer implements CdfHelper {
     connection.setRequestProperty("Content-Type", "application/json");
     connection.setDoOutput(true);
     try {
-      String contents = String.format("{\"label\": \"tethering-profile\",\"description\": \"test profile\"," +
-                                        "\"provisioner\": {\"name\": \"tethering\",\"properties\": [{\"name\": " +
-                                        "\"tetheredInstanceName\",\"value\": \"%s\"},{\"name\": " +
-                                        "\"tetheredNamespace\",\"value\": \"default\"}]}}",
+      String contents = String.format("{\"label\": \"tethering-profile\",\"description\": \"test profile\","
+                                        + "\"provisioner\": {\"name\": \"tethering\",\"properties\": [{\"name\": "
+                                        + "\"tetheredInstanceName\",\"value\": \"%s\"},{\"name\": "
+                                        + "\"tetheredNamespace\",\"value\": \"default\"}]}}",
                                       clientName);
       connection.getOutputStream().write(contents.getBytes(StandardCharsets.UTF_8));
       verifyConnection(connection);

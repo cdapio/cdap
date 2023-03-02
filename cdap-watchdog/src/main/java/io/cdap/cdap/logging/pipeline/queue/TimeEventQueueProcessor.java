@@ -109,8 +109,8 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
 
   private ProcessedEventMetadata<OFFSET> append() {
     long minEventTime = System.currentTimeMillis() - eventDelayMillis;
-    long maxRetainSize = eventQueue.getEventSize() >= maxBufferSize ?
-        (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
+    long maxRetainSize = eventQueue.getEventSize() >= maxBufferSize
+        ? (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
 
     int eventsAppended = 0;
     long minDelay = Long.MAX_VALUE;

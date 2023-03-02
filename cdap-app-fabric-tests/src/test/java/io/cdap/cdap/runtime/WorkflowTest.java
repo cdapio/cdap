@@ -183,9 +183,11 @@ public class WorkflowTest {
 
     // try deploying app containing workflow with non-unique programs
     try {
-      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
-      Assert.fail("Should have thrown Exception because 'NoOpMR' added multiple times in the workflow " +
-                    "'NonUniqueProgramsInWorkflow'.");
+      AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowApp.class,
+          TEMP_FOLDER_SUPPLIER);
+      Assert.fail(
+          "Should have thrown Exception because 'NoOpMR' added multiple times in the workflow "
+              + "'NonUniqueProgramsInWorkflow'.");
     } catch (Exception ex) {
       Assert.assertEquals("Node 'NoOpMR' already exists in workflow 'NonUniqueProgramsInWorkflow'.",
                           ex.getCause().getMessage());
@@ -194,9 +196,10 @@ public class WorkflowTest {
     // try deploying app containing workflow fork with non-unique programs
     try {
       AppFabricTestHelper.deployApplicationWithManager(NonUniqueProgramsInWorkflowWithForkApp.class,
-                                                       TEMP_FOLDER_SUPPLIER);
-      Assert.fail("Should have thrown Exception because 'MyTestPredicate' added multiple times in the workflow " +
-                    "'NonUniqueProgramsInWorkflowWithFork'");
+          TEMP_FOLDER_SUPPLIER);
+      Assert.fail(
+          "Should have thrown Exception because 'MyTestPredicate' added multiple times in the workflow "
+              + "'NonUniqueProgramsInWorkflowWithFork'");
     } catch (Exception ex) {
       Assert.assertEquals("Node 'MyTestPredicate' already exists in workflow 'NonUniqueProgramsInWorkflowWithFork'.",
                           ex.getCause().getMessage());

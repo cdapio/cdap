@@ -235,8 +235,8 @@ public class TestBase {
     if (nestedStartCount++ > 0) {
       Assert.assertEquals(
           "Test is loaded that requires custom configuration while other configuration is in place. "
-              +
-              "Please check if test is part of the suite and apply configuration on the suite level",
+
+              + "Please check if test is part of the suite and apply configuration on the suite level",
           customConfiguration, getCustomConfiguration());
       return;
     }

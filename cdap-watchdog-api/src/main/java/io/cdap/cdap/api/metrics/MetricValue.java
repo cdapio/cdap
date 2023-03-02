@@ -88,19 +88,19 @@ public class MetricValue {
   @Override
   public String toString() {
     if (type != MetricType.DISTRIBUTION) {
-      return "MetricValue{" +
-          "name='" + name + '\'' +
-          ", type=" + type +
-          ", value=" + value +
-          '}';
+      return "MetricValue{"
+          + "name='" + name + '\''
+          + ", type=" + type
+          + ", value=" + value
+          + '}';
     } else {
-      return "MetricValue{" +
-          "name='" + name + '\'' +
-          ", type=" + type +
-          ", sum=" + sum +
-          ", bucketMask=" + bucketMask +
-          ", bucketCounts=" + Arrays.toString(bucketCounts) +
-          '}';
+      return "MetricValue{"
+          + "name='" + name + '\''
+          + ", type=" + type
+          + ", sum=" + sum
+          + ", bucketMask=" + bucketMask
+          + ", bucketCounts=" + Arrays.toString(bucketCounts)
+          + '}';
     }
   }
 

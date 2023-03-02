@@ -115,15 +115,15 @@ public final class WorkflowSpecification extends AbstractProgramSpecification im
 
   @Override
   public String toString() {
-    return "WorkflowSpecification{" +
-        "className='" + getClassName() + '\'' +
-        ", name='" + getName() + '\'' +
-        ", description='" + getDescription() + '\'' +
-        ", plugins=" + getPlugins() +
-        ", properties=" + properties +
-        ", nodes=" + nodes +
-        ", nodeIdMap=" + nodeIdMap +
-        ", localDatasetSpecs=" + localDatasetSpecs +
-        '}';
+    return "WorkflowSpecification{"
+        + "className='" + getClassName() + '\''
+        + ", name='" + getName() + '\''
+        + ", description='" + getDescription() + '\''
+        + ", plugins=" + getPlugins()
+        + ", properties=" + properties
+        + ", nodes=" + nodes
+        + ", nodeIdMap=" + nodeIdMap
+        + ", localDatasetSpecs=" + localDatasetSpecs
+        + '}';
   }
 }

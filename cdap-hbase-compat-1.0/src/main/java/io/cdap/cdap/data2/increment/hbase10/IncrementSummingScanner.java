@@ -176,8 +176,8 @@ class IncrementSummingScanner implements RegionScanner {
       if (IncrementHandler.isIncrement(cell)) {
         if (LOG.isTraceEnabled()) {
           LOG.trace(
-              "Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
-                  "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+              "Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", "
+                  + "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
         }
         if (!sameCell(previousIncrement, cell)) {
           if (previousIncrement != null) {
@@ -260,9 +260,9 @@ class IncrementSummingScanner implements RegionScanner {
       return false;
     }
 
-    return CellUtil.matchingRow(first, second) &&
-        CellUtil.matchingFamily(first, second) &&
-        CellUtil.matchingQualifier(first, second);
+    return CellUtil.matchingRow(first, second)
+        && CellUtil.matchingFamily(first, second)
+        && CellUtil.matchingQualifier(first, second);
   }
 
   private Cell newCell(Cell toCopy, long value) {

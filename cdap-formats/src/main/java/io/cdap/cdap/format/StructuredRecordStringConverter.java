@@ -144,8 +144,8 @@ public class StructuredRecordStringConverter {
       try {
         return FormatUtils.base64Encode(value);
       } catch (IOException ioe) {
-        throw new IllegalArgumentException("Invalid schema for field " + fieldName + ". " +
-            "ByteBuffer or Byte Array was expected.", ioe);
+        throw new IllegalArgumentException("Invalid schema for field " + fieldName + ". "
+            + "ByteBuffer or Byte Array was expected.", ioe);
       }
     }
 

@@ -239,8 +239,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
               ProfileId profileId = profile.get();
               if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
                 throw new ProfileConflictException(
-                    String.format("Profile %s in namespace %s is disabled. It cannot " +
-                            "be assigned to schedule %s",
+                    String.format("Profile %s in namespace %s is disabled. It cannot "
+                            + "be assigned to schedule %s",
                         profileId.getProfile(), profileId.getNamespace(),
                         schedule.getName()), profileId);
               }
@@ -399,8 +399,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
           } catch (NotFoundException e) {
             // this should not happen since the profile cannot be deleted if there is a schedule who is using it
-            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
-                "skipping assignment deletion.", profileId.get(), scheduleId);
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, "
+                + "skipping assignment deletion.", profileId.get(), scheduleId);
           }
         }
       }
@@ -432,8 +432,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
           } catch (NotFoundException e) {
             // this should not happen since the profile cannot be deleted if there is a schedule who is using it
-            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
-                "skipping assignment deletion.", profileId.get(), scheduleId);
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, "
+                + "skipping assignment deletion.", profileId.get(), scheduleId);
           }
         }
       }
@@ -464,8 +464,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             profileDataset.removeProfileAssignment(profileId.get(), scheduleId);
           } catch (NotFoundException e) {
             // this should not happen since the profile cannot be deleted if there is a schedule who is using it
-            LOG.warn("Unable to find the profile {} when deleting schedule {}, " +
-                "skipping assignment deletion.", profileId.get(), scheduleId);
+            LOG.warn("Unable to find the profile {} when deleting schedule {}, "
+                + "skipping assignment deletion.", profileId.get(), scheduleId);
           }
         }
       }
@@ -586,8 +586,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       LOG.error("Exception occurs when looking up program descriptor for program {} in schedule {}",
           schedule.getProgramId(), schedule, e);
       throw new RuntimeException(
-          String.format("Exception occurs when looking up program descriptor for" +
-              " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+          String.format("Exception occurs when looking up program descriptor for"
+              + " program %s in schedule %s", schedule.getProgramId(), schedule), e);
     }
     additionalProperties.put(ProgramOptionConstants.ARTIFACT_ID,
         GSON.toJson(programDescriptor.getArtifactId().toApiArtifactId()));
@@ -600,8 +600,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           "Exception occurs when looking up user group information for program {} in schedule {}",
           schedule.getProgramId(), schedule, e);
       throw new RuntimeException(
-          String.format("Exception occurs when looking up user group information for" +
-              " program %s in schedule %s", schedule.getProgramId(), schedule), e);
+          String.format("Exception occurs when looking up user group information for"
+              + " program %s in schedule %s", schedule.getProgramId(), schedule), e);
     }
     // add the user name to the schedule property
     additionalProperties.put(ProgramOptionConstants.USER_ID, userId);

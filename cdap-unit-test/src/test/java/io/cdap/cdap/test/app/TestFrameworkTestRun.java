@@ -1224,10 +1224,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        DataSetManager<KeyValueTable> dataSetManager = getDataset(testSpace.dataset(AppWithWorker.DATASET));
+        DataSetManager<KeyValueTable> dataSetManager = getDataset(
+            testSpace.dataset(AppWithWorker.DATASET));
         KeyValueTable table = dataSetManager.get();
-        return AppWithWorker.INITIALIZE.equals(Bytes.toString(table.read(AppWithWorker.INITIALIZE))) &&
-          AppWithWorker.RUN.equals(Bytes.toString(table.read(AppWithWorker.RUN)));
+        return AppWithWorker.INITIALIZE.equals(Bytes.toString(table.read(AppWithWorker.INITIALIZE)))
+            && AppWithWorker.RUN.equals(Bytes.toString(table.read(AppWithWorker.RUN)));
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 

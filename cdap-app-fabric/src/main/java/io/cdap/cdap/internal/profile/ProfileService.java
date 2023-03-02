@@ -298,8 +298,8 @@ public class ProfileService {
       throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     if (profileId.equals(ProfileId.NATIVE)) {
       throw new MethodNotAllowedException(
-          String.format("Cannot change status for Profile Native %s, " +
-              "it should always be ENABLED", profileId.getScopedName()));
+          String.format("Cannot change status for Profile Native %s, "
+              + "it should always be ENABLED", profileId.getScopedName()));
     }
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).disableProfile(profileId);
@@ -354,8 +354,8 @@ public class ProfileService {
     // The profile status must be DISABLED
     if (profile.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
-          String.format("Profile %s in namespace %s is currently enabled. A profile can " +
-                  "only be deleted if it is disabled", profileId.getProfile(),
+          String.format("Profile %s in namespace %s is currently enabled. A profile can "
+                  + "only be deleted if it is disabled", profileId.getProfile(),
               profileId.getNamespace()),
           profileId);
     }
@@ -367,8 +367,8 @@ public class ProfileService {
       String firstEntity = getUserFriendlyEntityStr(assignments.iterator().next());
       String countStr = getCountStr(numAssignments, "entity", "entities");
       throw new ProfileConflictException(
-          String.format("Profile '%s' is still assigned to %s%s. " +
-                  "Please delete all assignments before deleting the profile.",
+          String.format("Profile '%s' is still assigned to %s%s. "
+                  + "Please delete all assignments before deleting the profile.",
               profileId.getProfile(), firstEntity, countStr),
           profileId);
     }
@@ -391,8 +391,8 @@ public class ProfileService {
       String firstRun = activeRuns.keySet().iterator().next().toString();
       String countStr = getCountStr(numRuns, "run", "runs");
       throw new ProfileConflictException(
-          String.format("Profile '%s' is in use by run %s%s. Please stop all active runs " +
-                  "before deleting the profile.",
+          String.format("Profile '%s' is in use by run %s%s. Please stop all active runs "
+                  + "before deleting the profile.",
               profileId.toString(), firstRun, countStr),
           profileId);
     }

@@ -83,22 +83,22 @@ public class CLIMain {
 
   private static final Option URI_OPTION = new Option(
       "u", "uri", true,
-      "(Deprecated. Please use option --link instead). CDAP instance URI to interact with in" +
-          " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
-          " Defaults to \"" + getDefaultURI().toString() + "\".");
+      "(Deprecated. Please use option --link instead). CDAP instance URI to interact with in"
+          + " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"."
+          + " Defaults to \"" + getDefaultURI().toString() + "\".");
 
   private static final Option LINK_OPTION = new Option(
-      "l", "link", true, "CDAP instance URI to interact with in" +
-      " the format \"[http[s]://]<hostname>[:<port>][/<path>]\" ." +
-      " Defaults to \"" + getDefaultURI().toString() + "\".");
+      "l", "link", true, "CDAP instance URI to interact with in"
+      + " the format \"[http[s]://]<hostname>[:<port>][/<path>]\" ."
+      + " Defaults to \"" + getDefaultURI().toString() + "\".");
 
   private static final Option NAMESPACE_OPTION = new Option(
-      "n", "namespace", true, "CDAP Instance Namespace to connect to" +
-      " Defaults to \"" + NamespaceId.DEFAULT.getNamespace() + "\".");
+      "n", "namespace", true, "CDAP Instance Namespace to connect to"
+      + " Defaults to \"" + NamespaceId.DEFAULT.getNamespace() + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
-      "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
-      " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
+      "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests."
+      + " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
   private static final Option RETRIES_OPTION = new Option(
       "r", "retries", true,
@@ -107,10 +107,10 @@ public class CLIMain {
 
   @VisibleForTesting
   static final Option AUTOCONNECT_OPTION = new Option(
-      "a", "autoconnect", true, "If \"true\", try provided connection" +
-      " (from " + URI_OPTION.getLongOpt() + ")" +
-      " upon launch or try default connection if none provided." +
-      " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
+      "a", "autoconnect", true, "If \"true\", try provided connection"
+      + " (from " + URI_OPTION.getLongOpt() + ")"
+      + " upon launch or try default connection if none provided."
+      + " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option DEBUG_OPTION = new Option(
       "d", "debug", false, "Print exception stack traces.");
@@ -204,9 +204,10 @@ public class CLIMain {
       String uri = options.getUri();
       boolean uriParamEmpty = uri == null || uri.isEmpty();
       CLIConnectionConfig connection =
-          uriParamEmpty ?
-              instanceURIParser.parseInstanceURI(options.getInstanceURI(), options.getNamespace()) :
-              instanceURIParser.parse(uri);
+          uriParamEmpty
+              ? instanceURIParser.parseInstanceURI(options.getInstanceURI(), options.getNamespace())
+              :
+                  instanceURIParser.parse(uri);
       if (!uriParamEmpty) {
         cliConfig.getOutput().println("-u option is deprecated. Use -l instead. ");
       }
@@ -387,15 +388,15 @@ public class CLIMain {
     String toolName = "cdap" + (OSDetector.isWindows() ? ".bat " : " ") + TOOL_NAME;
     HelpFormatter formatter = new HelpFormatter();
     String args =
-        "[--autoconnect <true|false>] " +
-            "[--debug] " +
-            "[--help] " +
-            "[--verify-ssl <true|false>] " +
-            "[--uri <uri>] " +
-            "[--link <uri>] " +
-            "[--namespace <namespace>] " +
-            "[--script <script-file>] " +
-            "[-r | --retries N]";
+        "[--autoconnect <true|false>] "
+            + "[--debug] "
+            + "[--help] "
+            + "[--verify-ssl <true|false>] "
+            + "[--uri <uri>] "
+            + "[--link <uri>] "
+            + "[--namespace <namespace>] "
+            + "[--script <script-file>] "
+            + "[-r | --retries N]";
     formatter.printHelp(toolName + " " + args, getOptions());
     System.exit(0);
   }

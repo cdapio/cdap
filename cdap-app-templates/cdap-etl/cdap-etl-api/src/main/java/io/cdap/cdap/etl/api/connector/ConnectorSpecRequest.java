@@ -70,9 +70,9 @@ public class ConnectorSpecRequest {
     }
 
     ConnectorSpecRequest that = (ConnectorSpecRequest) o;
-    return Objects.equals(path, that.path) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(connectionWithMacro, that.connectionWithMacro);
+    return Objects.equals(path, that.path)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(connectionWithMacro, that.connectionWithMacro);
   }
 
   @Override

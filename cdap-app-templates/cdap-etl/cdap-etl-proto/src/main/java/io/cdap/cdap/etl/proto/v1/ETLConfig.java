@@ -152,14 +152,14 @@ public class ETLConfig extends Config {
 
   @Override
   public String toString() {
-    return "ETLConfig{" +
-        "stageLoggingEnabled=" + stageLoggingEnabled +
-        ", source=" + source +
-        ", sinks=" + sinks +
-        ", transforms=" + transforms +
-        ", connections=" + connections +
-        ", resources=" + resources +
-        "} " + super.toString();
+    return "ETLConfig{"
+        + "stageLoggingEnabled=" + stageLoggingEnabled
+        + ", source=" + source
+        + ", sinks=" + sinks
+        + ", transforms=" + transforms
+        + ", connections=" + connections
+        + ", resources=" + resources
+        + "} " + super.toString();
   }
 
   @Override
@@ -173,12 +173,12 @@ public class ETLConfig extends Config {
 
     ETLConfig that = (ETLConfig) o;
 
-    return Objects.equals(source, that.source) &&
-        Objects.equals(sinks, that.sinks) &&
-        Objects.equals(transforms, that.transforms) &&
-        Objects.equals(connections, that.connections) &&
-        Objects.equals(resources, that.resources) &&
-        isStageLoggingEnabled() == that.isStageLoggingEnabled();
+    return Objects.equals(source, that.source)
+        && Objects.equals(sinks, that.sinks)
+        && Objects.equals(transforms, that.transforms)
+        && Objects.equals(connections, that.connections)
+        && Objects.equals(resources, that.resources)
+        && isStageLoggingEnabled() == that.isStageLoggingEnabled();
   }
 
   @Override

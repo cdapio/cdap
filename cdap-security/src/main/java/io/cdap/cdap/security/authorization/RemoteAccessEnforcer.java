@@ -185,8 +185,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         permissions, null);
 
     try {
-      EnforcementResponse res = cacheEnabled ?
-          authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
+      EnforcementResponse res = cacheEnabled
+          ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
       if (!res.isSuccess()) {
         throw res.getException();
       }
@@ -207,8 +207,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         entityType);
 
     try {
-      EnforcementResponse res = cacheEnabled ?
-          authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
+      EnforcementResponse res = cacheEnabled
+          ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
       if (!res.isSuccess()) {
         throw res.getException();
       }
@@ -333,8 +333,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         return false;
       }
       VisibilityKey that = (VisibilityKey) o;
-      return Objects.equals(principal, that.principal) &&
-          Objects.equals(entityId, that.entityId);
+      return Objects.equals(principal, that.principal)
+          && Objects.equals(entityId, that.entityId);
     }
 
     @Override
@@ -344,10 +344,10 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
     @Override
     public String toString() {
-      return "VisibilityKey {" +
-          "principal=" + principal +
-          ", entityId=" + entityId +
-          '}';
+      return "VisibilityKey {"
+          + "principal=" + principal
+          + ", entityId=" + entityId
+          + '}';
     }
   }
 }

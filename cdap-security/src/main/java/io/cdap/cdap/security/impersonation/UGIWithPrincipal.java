@@ -43,9 +43,9 @@ public class UGIWithPrincipal {
 
   @Override
   public String toString() {
-    return "UGIWithPrincipal{" +
-        "principal='" + principal + '\'' +
-        ", ugi=" + ugi +
-        '}';
+    return "UGIWithPrincipal{"
+        + "principal='" + principal + '\''
+        + ", ugi=" + ugi
+        + '}';
   }
 }

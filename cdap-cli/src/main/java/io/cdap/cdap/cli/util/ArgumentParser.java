@@ -83,8 +83,8 @@ public class ArgumentParser {
    * @return unquoted string if quoted, otherwise the original string
    */
   private static String extractValue(String value) {
-    if ((value.startsWith("'") && value.endsWith("'")) ||
-        (value.startsWith("\"") && value.endsWith("\""))) {
+    if ((value.startsWith("'") && value.endsWith("'"))
+        || (value.startsWith("\"") && value.endsWith("\""))) {
       return value.substring(1, value.length() - 1);
     }
     return value;
@@ -125,12 +125,12 @@ public class ArgumentParser {
     while (!patternTokens.isEmpty() && !inputTokens.isEmpty()) {
       String patternPart = patternTokens.get(0);
       String inputPart = inputTokens.get(0);
-      if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING))) &&
-          patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
+      if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING)))
+          && patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
         arguments.putAll(parseOptional(inputTokens, getEntry(patternPart)));
       } else {
-        if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING))) &&
-            patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
+        if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING)))
+            && patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
           arguments.put(getEntry(patternPart), tryGetInputEntry(inputPart));
         } else if (!patternPart.equals(inputPart)) {
           return Collections.emptyMap();
@@ -161,11 +161,11 @@ public class ArgumentParser {
       }
       String patternPart = splitPattern.get(0);
       String inputPart = tryGetInputEntry(copyInput.get(0));
-      if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING))) &&
-          patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
+      if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING)))
+          && patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
         args.put(getEntry(patternPart), inputPart);
-      } else if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING))) &&
-          patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
+      } else if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING)))
+          && patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
         args.putAll(parseOptional(copyInput, getEntry(patternPart)));
       } else if (!patternPart.equals(inputPart)) {
         return Collections.emptyMap();
@@ -198,8 +198,8 @@ public class ArgumentParser {
    * @return entry {@link String}
    */
   private static String tryGetInputEntry(String input) {
-    if (input.startsWith("'") && input.endsWith("'") ||
-        input.startsWith("\"") && input.endsWith("\"")) {
+    if (input.startsWith("'") && input.endsWith("'")
+        || input.startsWith("\"") && input.endsWith("\"")) {
       return getEntry(input);
     }
     return input;

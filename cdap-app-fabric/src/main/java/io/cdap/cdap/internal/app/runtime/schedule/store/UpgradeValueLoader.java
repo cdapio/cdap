@@ -75,8 +75,8 @@ public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
             }
           });
     } catch (Exception ex) {
-      LIMITED_LOGGER.debug("Upgrade Check got an exception while trying to read the " +
-          "upgrade version of {} table.", name, ex);
+      LIMITED_LOGGER.debug("Upgrade Check got an exception while trying to read the "
+          + "upgrade version of {} table.", name, ex);
     }
     return resultFlag.get();
   }

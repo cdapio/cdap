@@ -72,9 +72,9 @@ public class MacroFunction {
 
   @Override
   public String toString() {
-    return "MacroFunction{" +
-        "functionName='" + functionName + '\'' +
-        ", arguments=" + arguments +
-        '}';
+    return "MacroFunction{"
+        + "functionName='" + functionName + '\''
+        + ", arguments=" + arguments
+        + '}';
   }
 }

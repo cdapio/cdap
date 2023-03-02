@@ -187,8 +187,8 @@ public class ETLMapReduce extends AbstractMapReduce {
         reducersStr.append(reducerIter.next().getName());
       }
       throw new IllegalStateException(
-          "Found multiple reducers ( " + reducersStr + " ) in the same pipeline phase. " +
-              "This means there was a bug in planning the pipeline when it was deployed. ");
+          "Found multiple reducers ( " + reducersStr + " ) in the same pipeline phase. "
+              + "This means there was a bug in planning the pipeline when it was deployed. ");
     }
 
     job.setMapperClass(ETLMapper.class);

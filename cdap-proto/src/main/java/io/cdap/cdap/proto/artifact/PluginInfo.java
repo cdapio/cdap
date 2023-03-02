@@ -69,9 +69,9 @@ public class PluginInfo extends PluginSummary {
 
     PluginInfo that = (PluginInfo) o;
 
-    return super.equals(that) &&
-        Objects.equals(configFieldName, that.configFieldName) &&
-        Objects.equals(properties, that.properties);
+    return super.equals(that)
+        && Objects.equals(configFieldName, that.configFieldName)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -81,19 +81,19 @@ public class PluginInfo extends PluginSummary {
 
   @Override
   public String toString() {
-    return "PluginInfo{" +
-        "configFieldName='" + configFieldName + '\'' +
-        ", properties=" + properties +
-        ", name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", description='" + description + '\'' +
-        ", className='" + className + '\'' +
-        ", artifact=" + artifact +
-        ", name='" + getName() + '\'' +
-        ", type='" + getType() + '\'' +
-        ", description='" + getDescription() + '\'' +
-        ", className='" + getClassName() + '\'' +
-        ", artifact=" + getArtifact() +
-        '}';
+    return "PluginInfo{"
+        + "configFieldName='" + configFieldName + '\''
+        + ", properties=" + properties
+        + ", name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", description='" + description + '\''
+        + ", className='" + className + '\''
+        + ", artifact=" + artifact
+        + ", name='" + getName() + '\''
+        + ", type='" + getType() + '\''
+        + ", description='" + getDescription() + '\''
+        + ", className='" + getClassName() + '\''
+        + ", artifact=" + getArtifact()
+        + '}';
   }
 }

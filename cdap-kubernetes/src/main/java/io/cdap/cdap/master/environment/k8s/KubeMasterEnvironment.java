@@ -363,8 +363,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     boolean enableMonitor = true;
     if (twillRunnables != null) {
       for (String twillRunnable : twillRunnables.split(",")) {
-        if (podLabels.containsKey(DEFAULT_CONTAINER_LABEL) &&
-            podLabels.get(DEFAULT_CONTAINER_LABEL).equals(twillRunnable)) {
+        if (podLabels.containsKey(DEFAULT_CONTAINER_LABEL)
+            && podLabels.get(DEFAULT_CONTAINER_LABEL).equals(twillRunnable)) {
           enableMonitor = false;
         }
       }
@@ -558,8 +558,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       throw new IllegalArgumentException(
           String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
     }
-    String namespace = podNamespaceFile.exists() ?
-        Files.lines(podNamespaceFile.toPath()).findFirst().orElse(null) : systemNamespace;
+    String namespace = podNamespaceFile.exists()
+        ? Files.lines(podNamespaceFile.toPath()).findFirst().orElse(null) : systemNamespace;
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     Map<String, String> podLabels = new HashMap<>();
@@ -601,8 +601,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
     V1ObjectMeta podMeta = pod.getMetadata();
     List<V1OwnerReference> ownerReferences =
-        podMeta == null || podMeta.getOwnerReferences() == null ?
-            Collections.emptyList() : podMeta.getOwnerReferences();
+        podMeta == null || podMeta.getOwnerReferences() == null
+            ? Collections.emptyList() : podMeta.getOwnerReferences();
 
     // Find the container that is having this CDAP process running inside (because a pod can have multiple containers).
     // If there is no such label, default to the first container.
@@ -971,8 +971,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
         // https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-phase
         if (resource.getStatus().getPhase().equalsIgnoreCase("Succeeded")) {
           podStatusFuture.complete(true);
-        } else if (resource.getStatus().getPhase().equalsIgnoreCase("Failed") ||
-            resource.getStatus().getPhase().equalsIgnoreCase("Unknown")) {
+        } else if (resource.getStatus().getPhase().equalsIgnoreCase("Failed")
+            || resource.getStatus().getPhase().equalsIgnoreCase("Unknown")) {
           podStatusFuture.completeExceptionally(
               new Throwable(String.format("Spark pod %s returned error state.",
                   resource.getMetadata().getName())));

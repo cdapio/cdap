@@ -153,8 +153,8 @@ public class PartitionedFileSetDefinition
     DatasetProperties.Builder newFileProperties = DatasetProperties.builder()
         .addAll(properties.getProperties());
     String useNameAsBasePathDefault = currentSpec.getProperty(NAME_AS_BASE_PATH_DEFAULT);
-    if (Boolean.parseBoolean(useNameAsBasePathDefault) &&
-        !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+    if (Boolean.parseBoolean(useNameAsBasePathDefault)
+        && !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
       newFileProperties.add(FileSetProperties.BASE_PATH, instanceName);
       pfsProperties.put(NAME_AS_BASE_PATH_DEFAULT, Boolean.TRUE.toString());
     }

@@ -100,9 +100,9 @@ public class Credential {
 
   @Override
   public String toString() {
-    return "Credential{" +
-        "type=" + type +
-        ", length=" + value.length() +
-        "}";
+    return "Credential{"
+        + "type=" + type
+        + ", length=" + value.length()
+        + "}";
   }
 }

@@ -67,15 +67,15 @@ public class Timing {
 
     // report if needed
     if (now > lastReportedTs + reportInterval) {
-      LOG.info(name + " stats. " +
-          " total: " +
-          " {count: " + totalCount +
-          ", time since start: " + (now - startTs) +
-          ", avg latency: " + round(totalLatency / totalCount) + "}" +
-          " last interval: " +
-          " {count: " + currentIntervalCount +
-          ", time since interval start: " + (now - lastReportedTs) +
-          ", avg latency: " + round(currentIntervalLatency / currentIntervalCount) + "}");
+      LOG.info(name + " stats. "
+          + " total: "
+          + " {count: " + totalCount
+          + ", time since start: " + (now - startTs)
+          + ", avg latency: " + round(totalLatency / totalCount) + "}"
+          + " last interval: "
+          + " {count: " + currentIntervalCount
+          + ", time since interval start: " + (now - lastReportedTs)
+          + ", avg latency: " + round(currentIntervalLatency / currentIntervalCount) + "}");
       currentIntervalCount = 0;
       currentIntervalLatency = 0;
       lastReportedTs = now;

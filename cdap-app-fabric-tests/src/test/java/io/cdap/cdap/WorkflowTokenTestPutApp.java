@@ -56,8 +56,8 @@ public class WorkflowTokenTestPutApp extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Application to test the put operation on the Workflow in initialize, " +
-                     "destroy, map, and reduce methods of the MapReduce program.");
+    setDescription("Application to test the put operation on the Workflow in initialize, "
+        + "destroy, map, and reduce methods of the MapReduce program.");
     addMapReduce(new RecordCounter());
     addSpark(new SparkTestApp());
     addWorkflow(new WorkflowTokenTestPut());

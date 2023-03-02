@@ -79,9 +79,9 @@ public class PreferencesDetail {
       return false;
     }
     PreferencesDetail that = (PreferencesDetail) o;
-    return Objects.equals(properties, that.properties) &&
-        Objects.equals(seqId, that.seqId) &&
-        Objects.equals(resolved, that.resolved);
+    return Objects.equals(properties, that.properties)
+        && Objects.equals(seqId, that.seqId)
+        && Objects.equals(resolved, that.resolved);
   }
 
   @Override
@@ -91,11 +91,11 @@ public class PreferencesDetail {
 
   @Override
   public String toString() {
-    return "PreferencesDetail{" +
-        "properties='" + properties.toString() +
-        "seqId='" + seqId +
-        "resolved='" + resolved +
-        '}';
+    return "PreferencesDetail{"
+        + "properties='" + properties.toString()
+        + "seqId='" + seqId
+        + "resolved='" + resolved
+        + '}';
   }
 }
 

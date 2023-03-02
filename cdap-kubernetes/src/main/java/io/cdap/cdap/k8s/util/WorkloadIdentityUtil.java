@@ -58,8 +58,8 @@ public class WorkloadIdentityUtil {
   private static final String WORKLOAD_IDENTITY_DATA_KEY = "config";
   private static final String WORKLOAD_IDENTITY_AUDIENCE_FORMAT = "identitynamespace:%s:%s";
   private static final String WORKLOAD_IDENTITY_IMPERSONATION_URL_FORMAT =
-      "https://iamcredentials.googleapis.com/" +
-          "v1/projects/-/serviceAccounts/%s:generateAccessToken";
+      "https://iamcredentials.googleapis.com/"
+          + "v1/projects/-/serviceAccounts/%s:generateAccessToken";
   private static final String WORKLOAD_IDENTITY_TOKEN_URL = "https://sts.googleapis.com/v1/token";
   private static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_PATH = "token";
   private static final String WORKLOAD_IDENTITY_CREDENTIAL_KSA_SOURCE_PATH
@@ -110,8 +110,8 @@ public class WorkloadIdentityUtil {
             k8sNamespace);
       } else {
         throw new IOException(
-            "Failed to fetch existing workload identity config map. Error code = " + e.getCode() +
-                ", Body = " + e.getResponseBody(), e);
+            "Failed to fetch existing workload identity config map. Error code = " + e.getCode()
+                + ", Body = " + e.getResponseBody(), e);
       }
     }
 
@@ -196,8 +196,8 @@ public class WorkloadIdentityUtil {
     }
     if (ttl <= 0) {
       throw new IllegalArgumentException(
-          String.format("Workload identity k8s service account token TTL '%d' " +
-              "cannot be less than zero", ttl));
+          String.format("Workload identity k8s service account token TTL '%d' "
+              + "cannot be less than zero", ttl));
     }
     return ttl;
   }

@@ -53,8 +53,8 @@ import javax.annotation.Nullable;
  * weight. When the cache weight is larger than this limit, weight reduction logic will be executed
  * by the consumer. On adding entries to the cache, the cache can keep growing without blocking as
  * long as the hard limit is not hit so that the publisher doesn't need to be blocked. The room
- * between the reduce trigger and hard limits is basically the buffer for non-blocking addition. -
- * On addition, once the hard limit is reached, a blocking operation is needed to reduce the weight
+ * between the reduce trigger and hard limits is basically the buffer for non-blocking addition.
+ - * On addition, once the hard limit is reached, a blocking operation is needed to reduce the weight
  * of the cache back to min retain. - On fetching entries from the cache, the fetcher will check
  * whether it needs to reduce the cache weight and reduce it if needed. This essentially is to
  * amortize the cost of the blocking weight reduction operations among all fetchers (which typically
@@ -156,9 +156,9 @@ public class MessageCache<T> {
           // unless there is bug in the TMS system (from the caller side).
           currentWeight.addAndGet(-1 * cacheEntry.getWeight());
           clear();
-          throw new IllegalArgumentException("Cache entry must be in strictly increasing order. " +
-              "Entry " + entry + " is smaller than or equal to " +
-              largestCacheEntry.getEntry());
+          throw new IllegalArgumentException("Cache entry must be in strictly increasing order. "
+              + "Entry " + entry + " is smaller than or equal to "
+              + largestCacheEntry.getEntry());
         }
 
         // It's ok to "leak" this to reader even if the new weight is larger than the hard limit
@@ -495,10 +495,10 @@ public class MessageCache<T> {
 
     @Override
     public String toString() {
-      return "CacheEntry{" +
-          "entry=" + entry +
-          ", weight=" + weight +
-          '}';
+      return "CacheEntry{"
+          + "entry=" + entry
+          + ", weight=" + weight
+          + '}';
     }
   }
 

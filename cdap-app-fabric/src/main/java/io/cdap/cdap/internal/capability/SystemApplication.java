@@ -77,10 +77,10 @@ public class SystemApplication {
       return false;
     }
     SystemApplication otherApplication = (SystemApplication) other;
-    return Objects.equals(namespace, otherApplication.namespace) &&
-        Objects.equals(name, otherApplication.name) &&
-        Objects.equals(artifact, otherApplication.artifact) &&
-        Objects.equals(config, otherApplication.config);
+    return Objects.equals(namespace, otherApplication.namespace)
+        && Objects.equals(name, otherApplication.name)
+        && Objects.equals(artifact, otherApplication.artifact)
+        && Objects.equals(config, otherApplication.config);
   }
 
   @Override

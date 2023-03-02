@@ -72,8 +72,8 @@ public class FireAndForgetTwillRunnerService extends RemoteExecutionTwillRunnerS
 
   @Override
   public Iterable<LiveInfo> lookupLive() {
-    throw new UnsupportedOperationException("The lookupLive method is not supported in " +
-        "FireAndForgetTwillRunnerService.");
+    throw new UnsupportedOperationException("The lookupLive method is not supported in "
+        + "FireAndForgetTwillRunnerService.");
   }
 
   @Override

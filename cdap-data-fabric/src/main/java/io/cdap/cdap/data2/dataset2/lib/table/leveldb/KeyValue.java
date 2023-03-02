@@ -71,8 +71,8 @@ public class KeyValue {
   // How far into the key the row starts at. First thing to read is the short
   // that says how long the row is.
   public static final int ROW_OFFSET =
-      Bytes.SIZEOF_INT /*keylength*/ +
-          Bytes.SIZEOF_INT /*valuelength*/;
+      Bytes.SIZEOF_INT /*keylength*/
+          + Bytes.SIZEOF_INT /*valuelength*/;
 
   // Size of the length ints in a KeyValue datastructure.
   public static final int KEYVALUE_INFRASTRUCTURE_SIZE = ROW_OFFSET;

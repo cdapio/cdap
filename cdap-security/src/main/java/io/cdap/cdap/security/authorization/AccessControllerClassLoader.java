@@ -96,8 +96,8 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
     } catch (IOException e) {
       LOG.error(
           "Failed to determine resources for access controller class loader while tracing dependencies of "
-              +
-              "AccessController.", e);
+
+              + "AccessController.", e);
       return ImmutableSet.of();
     }
   }
@@ -297,11 +297,11 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
       throw new InvalidAccessControllerException(
           String.format(
               "Access Controller class not set in the manifest of the access controle extension jar "
-                  +
-                  "located at %s. " +
-                  "Please set the attribute %s to the fully qualified class name of the class that "
-                  +
-                  "implements %s in the extension jar's manifest.",
+
+                  + "located at %s. "
+                  + "Please set the attribute %s to the fully qualified class name of the class that "
+
+                  + "implements %s in the extension jar's manifest.",
               extensionJar, Attributes.Name.MAIN_CLASS, AccessController.class.getName()));
     }
     return manifestAttributes.getValue(Attributes.Name.MAIN_CLASS);

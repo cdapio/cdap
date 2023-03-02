@@ -54,8 +54,8 @@ public class Lineage {
 
   @Override
   public String toString() {
-    return "Lineage{" +
-        "relations=" + relations +
-        '}';
+    return "Lineage{"
+        + "relations=" + relations
+        + '}';
   }
 }

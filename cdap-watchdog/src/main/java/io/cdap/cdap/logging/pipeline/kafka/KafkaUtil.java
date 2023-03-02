@@ -84,8 +84,8 @@ public final class KafkaUtil {
       }
       // This shouldn't happen. The find earliest offset response should return at least one offset.
       throw new UnknownServerException(
-          "Empty offsets received from offsets request on " + topic + ":" + partition +
-              " from broker " + consumer.host() + ":" + consumer.port());
+          "Empty offsets received from offsets request on " + topic + ":" + partition
+              + " from broker " + consumer.host() + ":" + consumer.port());
     }
 
     LOG.debug("Offset {} fetched for {}:{} with timestamp {}.", offsets[0], topic, partition,

@@ -132,8 +132,8 @@ public final class ImpersonatedTwillRunnerService implements TwillRunnerService 
   @Override
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
       long delay, TimeUnit unit) {
-    throw new UnsupportedOperationException("The scheduleSecureStoreUpdate method is deprecated, " +
-        "it shouldn't be used.");
+    throw new UnsupportedOperationException("The scheduleSecureStoreUpdate method is deprecated, "
+        + "it shouldn't be used.");
   }
 
   @Override

@@ -172,9 +172,9 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
 
     PipelinePhase that = (PipelinePhase) o;
 
-    return Objects.equals(stagesByType, that.stagesByType) &&
-        Objects.equals(stagesByName, that.stagesByName) &&
-        Objects.equals(dag, that.dag);
+    return Objects.equals(stagesByType, that.stagesByType)
+        && Objects.equals(stagesByName, that.stagesByName)
+        && Objects.equals(dag, that.dag);
   }
 
   @Override
@@ -184,11 +184,11 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
 
   @Override
   public String toString() {
-    return "PipelinePhase{" +
-        "stagesByType=" + stagesByType +
-        ", stagesByName=" + stagesByName +
-        ", dag=" + dag +
-        '}';
+    return "PipelinePhase{"
+        + "stagesByType=" + stagesByType
+        + ", stagesByName=" + stagesByName
+        + ", dag=" + dag
+        + '}';
   }
 
   /**

@@ -96,8 +96,8 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    LOG.debug("Launching program run {} with following configurations: " +
-            "tethered instance name {}, tethered namespace {}.",
+    LOG.debug("Launching program run {} with following configurations: "
+            + "tethered instance name {}, tethered namespace {}.",
         runInfo, tetheredInstanceName, tetheredNamespace);
     checkTetheredConnection(tetheredInstanceName, tetheredNamespace);
     byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo)));
@@ -129,8 +129,8 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     if (status.isTerminated()) {
       return;
     }
-    LOG.debug("Stopping program run {} with following configurations: " +
-            "tethered instance name {}, tethered namespace {}.",
+    LOG.debug("Stopping program run {} with following configurations: "
+            + "tethered instance name {}, tethered namespace {}.",
         programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
         TetheringControlMessage.Type.STOP_PROGRAM);

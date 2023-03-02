@@ -216,9 +216,9 @@ public class NamespaceConfig {
 
   @Override
   public String toString() {
-    return "NamespaceConfig{" +
-        "configs=" + configs +
-        '}';
+    return "NamespaceConfig{"
+        + "configs=" + configs
+        + '}';
   }
 
   /**

@@ -163,10 +163,10 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
     DatasetCreationSpec existingSpec = localDatasetSpecs.get(datasetName);
     if (existingSpec != null && !existingSpec.equals(spec)) {
       throw new IllegalArgumentException(
-          String.format("DatasetInstance '%s' was added multiple times with" +
-              " different specifications. Please resolve the conflict so" +
-              " that there is only one specification for the local dataset" +
-              " instance in the Workflow.", datasetName));
+          String.format("DatasetInstance '%s' was added multiple times with"
+              + " different specifications. Please resolve the conflict so"
+              + " that there is only one specification for the local dataset"
+              + " instance in the Workflow.", datasetName));
     }
     localDatasetSpecs.put(datasetName, spec);
   }

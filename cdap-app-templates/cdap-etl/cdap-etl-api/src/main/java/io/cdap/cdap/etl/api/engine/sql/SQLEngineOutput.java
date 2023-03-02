@@ -67,9 +67,9 @@ public class SQLEngineOutput extends Output {
 
   @Override
   public String toString() {
-    return "SQLEngineOutput{" +
-        "name='" + getName() + '\'' +
-        ", sqlEngineClassName='" + sqlEngineClassName + '\'' +
-        "} ";
+    return "SQLEngineOutput{"
+        + "name='" + getName() + '\''
+        + ", sqlEngineClassName='" + sqlEngineClassName + '\''
+        + "} ";
   }
 }

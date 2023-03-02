@@ -700,8 +700,8 @@ public class PluginInstantiator implements Closeable {
         for (String child : children) {
           PluginPropertyField childProperty = pluginClass.getProperties().get(child);
           // if child property is required and it is missing, add it to missing properties and continue
-          if (childProperty.isRequired() && !macroFields.contains(child) &&
-              !properties.getProperties().containsKey(child)) {
+          if (childProperty.isRequired() && !macroFields.contains(child)
+              && !properties.getProperties().containsKey(child)) {
             missingProperties.add(child);
             missing = true;
             continue;
@@ -794,9 +794,9 @@ public class PluginInstantiator implements Closeable {
         } catch (InvocationTargetException e) {
           if (e.getCause() instanceof NumberFormatException) {
             // if exception is due to wrong value for integer/double conversion
-            String errorMessage = Strings.isNullOrEmpty(value) ?
-                String.format("Value of field %s.%s is null or empty. It should be a number",
-                    declareType, name) :
+            String errorMessage = Strings.isNullOrEmpty(value)
+                ? String.format("Value of field %s.%s is null or empty. It should be a number",
+                declareType, name) :
                 String.format("Value of field %s.%s is expected to be a number", declareType, name);
             throw new InvalidPluginConfigException(errorMessage, e.getCause());
           }

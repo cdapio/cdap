@@ -70,8 +70,8 @@ public enum ProgramRunStatus {
         // COMPLETED happens somehow? Not sure when we expect this but we test that this transition can happen
         // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
         return status == RUNNING || status == STOPPING || status == SUSPENDED || status == COMPLETED
-            ||
-            status == KILLED || status == FAILED;
+
+            || status == KILLED || status == FAILED;
       case RUNNING:
         // SUSPENDED happens if the run was suspended
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
@@ -166,8 +166,8 @@ public enum ProgramRunStatus {
         return ProgramStatus.KILLED;
       default:
         throw new IllegalArgumentException(
-            String.format("No program status available corresponding to program run " +
-                "status %s", status.name()));
+            String.format("No program status available corresponding to program run "
+                + "status %s", status.name()));
     }
   }
 }

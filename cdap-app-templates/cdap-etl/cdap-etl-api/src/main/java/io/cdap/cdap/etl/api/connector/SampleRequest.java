@@ -75,9 +75,9 @@ public class SampleRequest {
     }
 
     SampleRequest that = (SampleRequest) o;
-    return limit == that.limit &&
-        Objects.equals(path, that.path) &&
-        Objects.equals(properties, that.properties) &&
+    return limit == that.limit
+        && Objects.equals(path, that.path)
+        && Objects.equals(properties, that.properties) &&
         Objects.equals(timeoutMs, that.timeoutMs);
   }
 

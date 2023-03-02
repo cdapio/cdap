@@ -80,8 +80,8 @@ public class DistributedTransactionSystemClientService
       } catch (TimeoutException e) {
         // its not a nice message... throw one with a better message
         throw new TimeoutException(String.format(
-            "Timed out after %d seconds while waiting to discover the %s service. " +
-                "Check the logs for the service to see what went wrong.",
+            "Timed out after %d seconds while waiting to discover the %s service. "
+                + "Check the logs for the service to see what went wrong.",
             timeout, Constants.Service.TRANSACTION));
       } catch (InterruptedException e) {
         throw new RuntimeException(

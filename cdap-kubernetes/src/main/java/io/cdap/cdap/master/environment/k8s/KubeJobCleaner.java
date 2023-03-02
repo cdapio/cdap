@@ -106,8 +106,8 @@ class KubeJobCleaner implements MasterEnvironmentTask {
           // If interrupted during sleep, just break the loop
           break;
         }
-        LOG.warn("Error while listing jobs or creating batch api client for cleanup, " +
-            "this attempt will be retried.", e);
+        LOG.warn("Error while listing jobs or creating batch api client for cleanup, "
+            + "this attempt will be retried.", e);
       }
     } while (retryCount != 0 && continuationToken != null);
 

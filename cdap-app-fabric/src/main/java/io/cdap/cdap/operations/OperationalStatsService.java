@@ -177,8 +177,8 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
       if (objectName == null) {
         LOG.warn(
             "Found an operational extension with null service name and stat type while unregistering - {}. "
-                +
-                "Ignoring this extension.", operationalStats.getClass().getName());
+
+                + "Ignoring this extension.", operationalStats.getClass().getName());
         continue;
       }
       try {

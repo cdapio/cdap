@@ -71,8 +71,9 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       throws IOException {
     URI jarLocation = moduleMeta.getJarLocationPath() == null ? null
         : URI.create(moduleMeta.getJarLocationPath());
-    return jarLocation == null ?
-        parentClassLoader : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
+    return jarLocation == null
+        ? parentClassLoader
+        : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
   }
 
   @Override

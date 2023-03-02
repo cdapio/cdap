@@ -55,8 +55,8 @@ public class PreconfiguredConnectionCreationRequest extends ConnectionCreationRe
     }
 
     PreconfiguredConnectionCreationRequest that = (PreconfiguredConnectionCreationRequest) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(name, that.name);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(name, that.name);
   }
 
   @Override

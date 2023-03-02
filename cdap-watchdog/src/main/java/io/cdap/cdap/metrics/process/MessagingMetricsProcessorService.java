@@ -242,8 +242,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     String writeFreqConfig = String.format(Constants.Metrics.WRITER_WRITE_FREQUENCY_SECONDS,
         metricsWriter.getID());
     int writeFreq = cConf.getInt(writeFreqConfig, -1);
-    return writeFreq == -1 ?
-        Math.min(defaultInterval, Constants.Metrics.PROCESS_INTERVAL_MILLIS)
+    return writeFreq == -1
+        ? Math.min(defaultInterval, Constants.Metrics.PROCESS_INTERVAL_MILLIS)
         : TimeUnit.SECONDS.toMillis(writeFreq);
   }
 

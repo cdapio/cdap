@@ -45,8 +45,8 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
       return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(),
           Provisioner.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to trace dependencies for provisioner extension. " +
-          "Usage of provisioner might fail.", e);
+      throw new RuntimeException("Failed to trace dependencies for provisioner extension. "
+          + "Usage of provisioner might fail.", e);
     }
   }
 

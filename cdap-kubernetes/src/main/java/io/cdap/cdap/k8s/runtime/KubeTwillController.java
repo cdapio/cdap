@@ -406,10 +406,10 @@ class KubeTwillController implements ExtendedTwillController {
     }
 
     // For stateful set, it can be done by deleting pods by the selected names formed by the instance ids.
-    String labelSelector = "statefulset.kubernetes.io/pod-name in " +
-        instanceIds.stream()
-            .map(i -> String.format("%s-%d", meta.getName(), i))
-            .collect(Collectors.joining(",", "(", ")"));
+    String labelSelector = "statefulset.kubernetes.io/pod-name in "
+        + instanceIds.stream()
+        .map(i -> String.format("%s-%d", meta.getName(), i))
+        .collect(Collectors.joining(",", "(", ")"));
 
     try {
       api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,

@@ -181,18 +181,18 @@ public final class AuditPublishers {
       }
 
       AccessAuditInfo that = (AccessAuditInfo) obj;
-      return Objects.equals(accessorEntity, that.accessorEntity) &&
-          Objects.equals(accessedEntity, that.accessedEntity) &&
-          Objects.equals(accessType, that.accessType);
+      return Objects.equals(accessorEntity, that.accessorEntity)
+          && Objects.equals(accessedEntity, that.accessedEntity)
+          && Objects.equals(accessType, that.accessType);
     }
 
     @Override
     public String toString() {
-      return "AccessedEntityInfo{" +
-          "accessorEntity='" + accessorEntity + '\'' +
-          "accessedEntity='" + accessedEntity + '\'' +
-          ", accessType='" + accessType +
-          '}';
+      return "AccessedEntityInfo{"
+          + "accessorEntity='" + accessorEntity + '\''
+          + "accessedEntity='" + accessedEntity + '\''
+          + ", accessType='" + accessType
+          + '}';
     }
   }
 }

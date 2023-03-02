@@ -425,8 +425,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       } catch (IOException e) {
         LOG.error("Failed to check whether the location of report with {} exists", idMessage, e);
         responder.sendError(500,
-            String.format("Failed to check whether the location of report with %s exists" +
-                " because of error: %s", idMessage, e.getMessage()));
+            String.format("Failed to check whether the location of report with %s exists"
+                + " because of error: %s", idMessage, e.getMessage()));
         return;
       }
       ReportGenerationInfo reportGenerationInfo;
@@ -437,8 +437,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status for report with {}.", idMessage, e);
-        responder.sendError(500, String.format("Failed to get the status for report with %s" +
-            " because of error: %s", idMessage, e.getMessage()));
+        responder.sendError(500, String.format("Failed to get the status for report with %s"
+            + " because of error: %s", idMessage, e.getMessage()));
         return;
       }
       // expired report is considered as deleted
@@ -577,8 +577,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       } catch (IOException e) {
         LOG.error("Failed to access the directory of the report with id {}", reportId, e);
         responder.sendError(500,
-            String.format("Failed to access the directory of the report with id %s " +
-                "because of error: %s", reportId, e.getMessage()));
+            String.format("Failed to access the directory of the report with id %s "
+                + "because of error: %s", reportId, e.getMessage()));
         return;
       }
       ReportStatus status;
@@ -601,8 +601,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         if (!reportIdDir.delete(true)) {
           // this should never happen since the directory is asserted to exist with valid path before reaching here
           responder.sendError(500,
-              String.format("Failed to delete report with id %s because the directory %s " +
-                      "does not exist or the path is invalid", reportId,
+              String.format("Failed to delete report with id %s because the directory %s "
+                      + "does not exist or the path is invalid", reportId,
                   reportIdDir.toURI().toString()));
           return;
         }
@@ -632,8 +632,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       } catch (IOException e) {
         LOG.error("Failed to access the directory of the report with id {}", reportId, e);
         responder.sendError(500,
-            String.format("Failed to access the directory of the report with id %s " +
-                "because of error: %s", reportId, e.getMessage()));
+            String.format("Failed to access the directory of the report with id %s "
+                + "because of error: %s", reportId, e.getMessage()));
         return;
       }
       ReportStatus status;
@@ -668,13 +668,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
                 GSON.fromJson(readStringFromFile(reportIdDir.append(SAVED_FILE)),
                     REPORT_SAVE_REQUEST_TYPE);
             responder.sendError(403,
-                String.format("Report with id %s is already saved with name '%s' " +
-                        "and description '%s'. Updating the saved report is not allowed.",
+                String.format("Report with id %s is already saved with name '%s' "
+                        + "and description '%s'. Updating the saved report is not allowed.",
                     reportId, saveRequest.getName(), saveRequest.getDescription()));
             return;
           } catch (Exception e) {
-            LOG.warn("Failed to parse the content of the existing report saving request in {}. " +
-                "Will overwrite with the new saving request.", savedFile.toURI().toString(), e);
+            LOG.warn("Failed to parse the content of the existing report saving request in {}. "
+                + "Will overwrite with the new saving request.", savedFile.toURI().toString(), e);
           }
         }
       } catch (Exception e) {
@@ -694,15 +694,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       try {
         if (!savedFile.createNew()) {
           responder.sendError(500,
-              String.format("Failed to create a file %s for saving the report with id %s " +
-                  "since it already exists", savedFile.toURI().toString(), reportId));
+              String.format("Failed to create a file %s for saving the report with id %s "
+                  + "since it already exists", savedFile.toURI().toString(), reportId));
           return;
         }
       } catch (IOException e) {
         LOG.error("Failed to save the report {} when creating the file {}", reportId,
             savedFile.toURI().toString(), e);
-        responder.sendError(500, String.format("Failed to save the report %s because of error in " +
-                "creating the file %s: %s",
+        responder.sendError(500, String.format("Failed to save the report %s because of error in "
+                + "creating the file %s: %s",
             reportId, savedFile.toURI().toString(), e.getMessage()));
         return;
       }
@@ -713,14 +713,14 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       } catch (IOException e) {
         LOG.error("Failed to save the report {} when writing to the file", reportId,
             savedFile.toURI().toString(), e);
-        responder.sendError(500, String.format("Failed to save the report %s because of error " +
-                "in writing to the file %s: %s",
+        responder.sendError(500, String.format("Failed to save the report %s because of error "
+                + "in writing to the file %s: %s",
             reportId, savedFile.toURI().toString(), e.getMessage()));
         return;
       }
       responder.sendString(200,
-          String.format("Report with id %s is saved successfully with the name: '%s' " +
-                  "and description: '%s' ", reportId, saveRequest.getName(),
+          String.format("Report with id %s is saved successfully with the name: '%s' "
+                  + "and description: '%s' ", reportId, saveRequest.getName(),
               saveRequest.getDescription()),
           StandardCharsets.UTF_8);
     }

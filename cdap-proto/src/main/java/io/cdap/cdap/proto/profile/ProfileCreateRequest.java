@@ -68,9 +68,9 @@ public class ProfileCreateRequest {
       return false;
     }
     ProfileCreateRequest that = (ProfileCreateRequest) o;
-    return Objects.equals(label, that.label) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(provisioner, that.provisioner);
+    return Objects.equals(label, that.label)
+        && Objects.equals(description, that.description)
+        && Objects.equals(provisioner, that.provisioner);
   }
 
   @Override

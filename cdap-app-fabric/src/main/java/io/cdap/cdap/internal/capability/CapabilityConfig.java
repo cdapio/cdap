@@ -99,12 +99,12 @@ public class CapabilityConfig {
       return false;
     }
     CapabilityConfig otherConfig = (CapabilityConfig) other;
-    return Objects.equals(label, otherConfig.label) &&
-        status == otherConfig.status &&
-        Objects.equals(capability, otherConfig.capability) &&
-        Objects.equals(applications, otherConfig.applications) &&
-        Objects.equals(programs, otherConfig.programs) &&
-        Objects.equals(hubs, otherConfig.hubs);
+    return Objects.equals(label, otherConfig.label)
+        && status == otherConfig.status
+        && Objects.equals(capability, otherConfig.capability)
+        && Objects.equals(applications, otherConfig.applications)
+        && Objects.equals(programs, otherConfig.programs)
+        && Objects.equals(hubs, otherConfig.hubs);
   }
 
   @Override

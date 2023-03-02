@@ -66,9 +66,9 @@ public abstract class ApplicationFilter {
 
     @Override
     public String toString() {
-      return "ApplicationIdContainsFilter{" +
-          "searchFor='" + searchFor + '\'' +
-          '}';
+      return "ApplicationIdContainsFilter{"
+          + "searchFor='" + searchFor + '\''
+          + '}';
     }
   }
 
@@ -90,9 +90,9 @@ public abstract class ApplicationFilter {
 
     @Override
     public String toString() {
-      return "ApplicationIdEqualsFilter{" +
-          "searchFor='" + searchFor + '\'' +
-          '}';
+      return "ApplicationIdEqualsFilter{"
+          + "searchFor='" + searchFor + '\''
+          + '}';
     }
   }
 
@@ -114,9 +114,9 @@ public abstract class ApplicationFilter {
 
     @Override
     public String toString() {
-      return "ArtifactNamesInFilter{" +
-          "names=" + names +
-          '}';
+      return "ArtifactNamesInFilter{"
+          + "names=" + names
+          + '}';
     }
   }
 
@@ -138,9 +138,9 @@ public abstract class ApplicationFilter {
 
     @Override
     public String toString() {
-      return "ArtifactVersionFilter{" +
-          "version='" + version + '\'' +
-          '}';
+      return "ArtifactVersionFilter{"
+          + "version='" + version + '\''
+          + '}';
     }
   }
 }

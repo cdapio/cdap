@@ -212,21 +212,22 @@ class ConstraintCheckerService extends AbstractIdleService {
       long now = System.currentTimeMillis();
       if (job.isToBeDeleted()) {
         // only delete jobs that are pending trigger or pending constraint. If pending launch, the launcher will delete
-        if ((job.getState() == Job.State.PENDING_CONSTRAINT ||
-            // if pending trigger, we need to check if now - deletionTime > 2 * txTimeout.
+        if ((job.getState() == Job.State.PENDING_CONSTRAINT
+            || // if pending trigger, we need to check if now - deletionTime > 2 * txTimeout.
             // Otherwise the subscriber thread might update this job concurrently (because
             // its tx does not see the delete flag) and cause a conflict.
             // It's 2 * txTimeout for:
             // - the transaction the marked it as to be deleted
             // - the subscriber's transaction that may not have seen that change
-            (job.getState() == Job.State.PENDING_TRIGGER &&
-                now - job.getDeleteTimeMillis() > 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS))) {
+            (job.getState() == Job.State.PENDING_TRIGGER
+                && now - job.getDeleteTimeMillis()
+                > 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS))) {
           jobQueue.deleteJob(job);
         }
         return;
       }
-      if (now - job.getCreationTime() >= job.getSchedule().getTimeoutMillis() +
-          2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS) {
+      if (now - job.getCreationTime() >= job.getSchedule().getTimeoutMillis()
+          + 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS) {
         LOG.info("Deleted job {}, due to timeout value of {}.", job.getJobKey(),
             job.getSchedule().getTimeoutMillis());
         jobQueue.deleteJob(job);
@@ -313,8 +314,8 @@ class ConstraintCheckerService extends AbstractIdleService {
         if (!(constraint instanceof CheckableConstraint)) {
           // this shouldn't happen, since implementation of Constraint in ProgramSchedule
           // should implement CheckableConstraint
-          throw new IllegalArgumentException("Implementation of Constraint in ProgramSchedule" +
-              " must implement CheckableConstraint");
+          throw new IllegalArgumentException("Implementation of Constraint in ProgramSchedule"
+              + " must implement CheckableConstraint");
         }
 
         CheckableConstraint abstractConstraint = (CheckableConstraint) constraint;

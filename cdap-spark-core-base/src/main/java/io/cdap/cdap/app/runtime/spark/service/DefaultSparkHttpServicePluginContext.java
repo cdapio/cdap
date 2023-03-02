@@ -216,8 +216,8 @@ public class DefaultSparkHttpServicePluginContext implements SparkHttpServicePlu
                                                                             InvalidMacroException {
     // Try to get it from the runtime context
     try {
-      return evaluator == null ?
-        runtimeContext.newPluginInstance(pluginId) : runtimeContext.newPluginInstance(pluginId, evaluator);
+      return evaluator == null
+        ? runtimeContext.newPluginInstance(pluginId) : runtimeContext.newPluginInstance(pluginId, evaluator);
     } catch (IllegalArgumentException | UnsupportedOperationException e) {
       // Expected if the plugin in not in the runtime context. Keep going.
     }

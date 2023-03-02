@@ -57,8 +57,8 @@ public class JobKey {
 
     JobKey that = (JobKey) o;
 
-    return Objects.equal(this.scheduleId, that.scheduleId) &&
-        Objects.equal(this.generationId, that.generationId);
+    return Objects.equal(this.scheduleId, that.scheduleId)
+        && Objects.equal(this.generationId, that.generationId);
   }
 
   @Override

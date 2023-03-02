@@ -244,8 +244,8 @@ public final class TimeScheduler {
     // We do not need to check for same schedule in the current list as its already checked in app configuration stage
     if (scheduler.checkExists(triggerKey)) {
       throw new ObjectAlreadyExistsException(
-          "Unable to store Trigger with name " + triggerKey.getName() +
-              "because one already exists with this identification.");
+          "Unable to store Trigger with name " + triggerKey.getName()
+              + "because one already exists with this identification.");
     }
   }
 

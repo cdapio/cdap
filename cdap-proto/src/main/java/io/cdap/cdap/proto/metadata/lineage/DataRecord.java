@@ -49,8 +49,8 @@ public class DataRecord {
 
   @Override
   public String toString() {
-    return "DataRecord{" +
-        "entityId=" + entityId +
-        '}';
+    return "DataRecord{"
+        + "entityId=" + entityId
+        + '}';
   }
 }

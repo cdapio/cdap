@@ -62,9 +62,9 @@ public class JoinField {
       return false;
     }
     JoinField field1 = (JoinField) o;
-    return Objects.equals(stageName, field1.stageName) &&
-        Objects.equals(fieldName, field1.fieldName) &&
-        Objects.equals(alias, field1.alias);
+    return Objects.equals(stageName, field1.stageName)
+        && Objects.equals(fieldName, field1.fieldName)
+        && Objects.equals(alias, field1.alias);
   }
 
   @Override
@@ -74,10 +74,10 @@ public class JoinField {
 
   @Override
   public String toString() {
-    return "JoinField{" +
-        "stage='" + stageName + '\'' +
-        ", field='" + fieldName + '\'' +
-        ", alias='" + alias + '\'' +
-        '}';
+    return "JoinField{"
+        + "stage='" + stageName + '\''
+        + ", field='" + fieldName + '\''
+        + ", alias='" + alias + '\''
+        + '}';
   }
 }

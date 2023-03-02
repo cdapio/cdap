@@ -66,10 +66,10 @@ public class ColumnDesc {
 
     ColumnDesc that = (ColumnDesc) o;
 
-    return Objects.equals(this.name, that.name) &&
-        Objects.equals(this.type, that.type) &&
-        Objects.equals(this.position, that.position) &&
-        Objects.equals(this.comment, that.comment);
+    return Objects.equals(this.name, that.name)
+        && Objects.equals(this.type, that.type)
+        && Objects.equals(this.position, that.position)
+        && Objects.equals(this.comment, that.comment);
   }
 
   @Override
@@ -79,11 +79,11 @@ public class ColumnDesc {
 
   @Override
   public String toString() {
-    return "ColumnDesc{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", position=" + position +
-        ", comment='" + comment + '\'' +
-        '}';
+    return "ColumnDesc{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", position=" + position
+        + ", comment='" + comment + '\''
+        + '}';
   }
 }

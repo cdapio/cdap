@@ -63,8 +63,8 @@ public class ConnectionId {
   public static String getConnectionId(String name) {
     if (MACRO_CHARS.matcher(name).find()) {
       throw new ConnectionBadRequestException(
-          String.format("The connection name %s should not contain characters " +
-              "'$', '{', '}', '(', ')'.", name));
+          String.format("The connection name %s should not contain characters "
+              + "'$', '{', '}', '(', ')'.", name));
     }
 
     name = name.trim();
@@ -93,9 +93,9 @@ public class ConnectionId {
     }
 
     ConnectionId that = (ConnectionId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(connection, that.connection) &&
-        Objects.equals(connectionId, that.connectionId);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(connection, that.connection)
+        && Objects.equals(connectionId, that.connectionId);
   }
 
   @Override

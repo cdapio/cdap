@@ -58,7 +58,7 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   /**
-   * Creates a new instance which maps the given set of dataset names by appending ("." +
+   * Creates a new instance which maps the given set of dataset names by appending ("." + *
    * nameSuffix).
    */
   public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets,

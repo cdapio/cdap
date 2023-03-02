@@ -65,8 +65,8 @@ public class Asset {
 
   @Override
   public String toString() {
-    return "Dataset{" +
-        "fqn='" + fqn + '\'' +
-        '}';
+    return "Dataset{"
+        + "fqn='" + fqn + '\''
+        + '}';
   }
 }

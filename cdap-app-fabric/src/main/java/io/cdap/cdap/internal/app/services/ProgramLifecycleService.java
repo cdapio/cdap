@@ -737,8 +737,8 @@ public class ProgramLifecycleService {
       }
 
       if (maxConcurrentLaunching >= 0 && maxConcurrentLaunching < counter.getLaunchingCount()) {
-        String msg = String.format("Program %s cannot start because the maximum of %d concurrent " +
-            "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
+        String msg = String.format("Program %s cannot start because the maximum of %d concurrent "
+            + "provisioning/starting runs is allowed", programId, maxConcurrentLaunching);
         LOG.info(msg);
 
         TooManyRequestsException e = new TooManyRequestsException(msg);
@@ -770,8 +770,8 @@ public class ProgramLifecycleService {
     Profile profile = profileService.getProfile(profileId, profileProperties);
     if (profile.getStatus() == ProfileStatus.DISABLED) {
       throw new ProfileConflictException(
-          String.format("Profile %s in namespace %s is disabled. It cannot be " +
-                  "used to start the program %s",
+          String.format("Profile %s in namespace %s is disabled. It cannot be "
+                  + "used to start the program %s",
               profileId.getProfile(), profileId.getNamespace(),
               programId.toString()), profileId);
     }
@@ -1074,8 +1074,8 @@ public class ProgramLifecycleService {
           && runRecord.getStatus().equals(ProgramRunStatus.RUNNING)) {
         String workflowRunId = runRecord.getProperties().get(AppMetadataStore.WORKFLOW_RUNID);
         throw new BadRequestException(
-            String.format("Cannot stop the program run '%s' started by the Workflow " +
-                    "run '%s'. Please stop the Workflow.", activeRunId,
+            String.format("Cannot stop the program run '%s' started by the Workflow "
+                    + "run '%s'. Please stop the Workflow.", activeRunId,
                 workflowRunId));
       }
       // send a message to stop the program run
@@ -1549,8 +1549,8 @@ public class ProgramLifecycleService {
 
   private void authorizePipelineRuntimeImpersonation(Map<String, String> userArgs)
       throws Exception {
-    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME)) &&
-        (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
+    if ((userArgs.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))
+        && (userArgs.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))) {
       String principal = userArgs.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
       LOG.debug("Checking authorisation for user: {}, using runtime config principal: {}",
           authenticationContext.getPrincipal(), principal);
@@ -1579,8 +1579,8 @@ public class ProgramLifecycleService {
     String latestVersion = getLatestApplicationId(programId.getAppReference()).getVersion();
     if (!latestVersion.equals(programId.getVersion())) {
       throw new BadRequestException(
-          String.format("Start action is only allowed on the latest version %s. " +
-              "Please use the versionless start API instead.", latestVersion));
+          String.format("Start action is only allowed on the latest version %s. "
+              + "Please use the versionless start API instead.", latestVersion));
     }
   }
 

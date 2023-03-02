@@ -217,15 +217,15 @@ public class DefaultMetricStore implements MetricStore {
   DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
     int writeParallelism = cConf.getInt(Constants.Metrics.METRICS_TABLE_WRITE_PARRALELISM);
     int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
-    int[] resolutions = minimumResolution < 60 ?
-        new int[]{minimumResolution, 60, 3600, TOTALS_RESOLUTION}
+    int[] resolutions = minimumResolution < 60
+        ? new int[]{minimumResolution, 60, 3600, TOTALS_RESOLUTION}
         : new int[]{60, 3600, TOTALS_RESOLUTION};
     long minRetentionSecs = cConf.getLong(
-        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION +
-            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION
+            + Constants.Metrics.RETENTION_SECONDS_SUFFIX);
     long hourRetentionSecs = cConf.getLong(
-        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION +
-            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION
+            + Constants.Metrics.RETENTION_SECONDS_SUFFIX);
     ImmutableMap.Builder<Integer, Long> builder = ImmutableMap.<Integer, Long>builder()
         .put(60, minRetentionSecs)
         .put(3600, hourRetentionSecs);

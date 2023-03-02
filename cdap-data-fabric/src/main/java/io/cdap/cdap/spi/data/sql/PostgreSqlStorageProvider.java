@@ -111,8 +111,8 @@ public class PostgreSqlStorageProvider implements StorageProvider {
     String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     if (!storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
       throw new IllegalArgumentException(
-          String.format("The storage implementation is not %s, cannot create the " +
-              "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
+          String.format("The storage implementation is not %s, cannot create the "
+              + "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
     }
 
     if (cConf.getBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL)) {
@@ -146,8 +146,8 @@ public class PostgreSqlStorageProvider implements StorageProvider {
     String password = sConf.get(Constants.Dataset.DATA_STORAGE_SQL_PASSWORD);
     if ((username == null) != (password == null)) {
       throw new IllegalArgumentException(
-          "The username and password for the jdbc connection must both be set" +
-              " or both not be set.");
+          "The username and password for the jdbc connection must both be set"
+              + " or both not be set.");
     }
 
     if (username != null) {

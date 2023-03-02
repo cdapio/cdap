@@ -53,8 +53,8 @@ public class JoinKey {
       return false;
     }
     JoinKey that = (JoinKey) o;
-    return Objects.equals(stageName, that.stageName) &&
-        Objects.equals(fields, that.fields);
+    return Objects.equals(stageName, that.stageName)
+        && Objects.equals(fields, that.fields);
   }
 
   @Override
@@ -64,9 +64,9 @@ public class JoinKey {
 
   @Override
   public String toString() {
-    return "JoinKey{" +
-        "stageName='" + stageName + '\'' +
-        ", fields=" + fields +
-        '}';
+    return "JoinKey{"
+        + "stageName='" + stageName + '\''
+        + ", fields=" + fields
+        + '}';
   }
 }

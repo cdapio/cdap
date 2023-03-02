@@ -58,12 +58,12 @@ public class RunMetaFileManager {
   RunMetaFileManager(Location baseLocation, Map<String, String> runtimeArguments, Metrics metrics) {
     this.namespaceToLogFileStreamMap = new HashMap<>();
     this.baseLocation = baseLocation;
-    this.syncIntervalBytes = runtimeArguments.containsKey(SYNC_INTERVAL) ?
-        Integer.parseInt(runtimeArguments.get(SYNC_INTERVAL)) : DEFAULT_SYNC_INTERVAL_BYTES;
-    this.maxFileSizeBytes = runtimeArguments.containsKey(MAX_FILE_SIZE_BYTES) ?
-        Integer.parseInt(runtimeArguments.get(MAX_FILE_SIZE_BYTES)) : DEFAULT_MAX_FILE_SIZE_BYTES;
-    this.maxFileOpenDurationMillis = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION_MILLIS) ?
-        Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION_MILLIS))
+    this.syncIntervalBytes = runtimeArguments.containsKey(SYNC_INTERVAL)
+        ? Integer.parseInt(runtimeArguments.get(SYNC_INTERVAL)) : DEFAULT_SYNC_INTERVAL_BYTES;
+    this.maxFileSizeBytes = runtimeArguments.containsKey(MAX_FILE_SIZE_BYTES)
+        ? Integer.parseInt(runtimeArguments.get(MAX_FILE_SIZE_BYTES)) : DEFAULT_MAX_FILE_SIZE_BYTES;
+    this.maxFileOpenDurationMillis = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION_MILLIS)
+        ? Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION_MILLIS))
         : DEFAULT_MAX_FILE_OPEN_DURATION;
     this.lastSyncTime = System.currentTimeMillis();
     this.metrics = metrics;

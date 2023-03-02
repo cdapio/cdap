@@ -65,12 +65,12 @@ public class ReportContent {
   }
 
   public String toJson() {
-    return "{" +
-        "\"offset\":" + offset +
-        ", \"limit\":" + limit +
-        ", \"total\":" + total +
-        ", \"details\":" + details +
-        // directly return details as JSON objects without stringifying them
+    return "{"
+        + "\"offset\":" + offset
+        + ", \"limit\":" + limit
+        + ", \"total\":" + total
+        + ", \"details\":" + details
+        + // directly return details as JSON objects without stringifying them
         '}';
   }
 }

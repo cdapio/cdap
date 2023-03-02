@@ -62,9 +62,9 @@ public class MetadataPayload extends AuditPayload {
       return false;
     }
     MetadataPayload that = (MetadataPayload) o;
-    return Objects.equals(previous, that.previous) &&
-        Objects.equals(additions, that.additions) &&
-        Objects.equals(deletions, that.deletions);
+    return Objects.equals(previous, that.previous)
+        && Objects.equals(additions, that.additions)
+        && Objects.equals(deletions, that.deletions);
   }
 
   @Override
@@ -74,10 +74,10 @@ public class MetadataPayload extends AuditPayload {
 
   @Override
   public String toString() {
-    return "MetadataPayload{" +
-        "previous=" + previous +
-        ", additions=" + additions +
-        ", deletions=" + deletions +
-        "} " + super.toString();
+    return "MetadataPayload{"
+        + "previous=" + previous
+        + ", additions=" + additions
+        + ", deletions=" + deletions
+        + "} " + super.toString();
   }
 }

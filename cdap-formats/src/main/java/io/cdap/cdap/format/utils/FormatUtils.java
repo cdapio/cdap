@@ -47,9 +47,9 @@ public class FormatUtils {
       MathContext mc = new MathContext(precision, RoundingMode.UNNECESSARY);
       return new BigDecimal(strVal, mc).setScale(scale, RoundingMode.UNNECESSARY);
     } catch (NumberFormatException | ArithmeticException e) {
-      throw new UnexpectedFormatException("Cannot convert String " + strVal + " to a Decimal" +
-          " with precision " + decimalSchema.getPrecision() +
-          " and scale " + decimalSchema.getScale(),
+      throw new UnexpectedFormatException("Cannot convert String " + strVal + " to a Decimal"
+          + " with precision " + decimalSchema.getPrecision()
+          + " and scale " + decimalSchema.getScale(),
           e);
     }
   }

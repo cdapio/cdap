@@ -150,8 +150,8 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
       // If failed to fetch messages and the remote process is not running, emit a failure program state and
       // terminates the monitor
       programStateWriter.error(programRunId,
-          new IllegalStateException("Program runtime terminated due to too many failures. " +
-              "Please inspect logs for root cause.", e));
+          new IllegalStateException("Program runtime terminated due to too many failures. "
+              + "Please inspect logs for root cause.", e));
       throw e;
     } finally {
       cancellable.cancel();

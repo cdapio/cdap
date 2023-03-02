@@ -123,8 +123,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       Credential credential = getUserCredential(userIdentityPair);
 
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
-      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
-          credential != null) {
+      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true)
+          && credential != null) {
         request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
             String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
@@ -245,9 +245,9 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     if (userIdentity.getIdentifierType() == UserIdentity.IdentifierType.INTERNAL) {
       return new Credential(userCredential, Credential.CredentialType.INTERNAL);
     }
-    if (userCredential == null ||
-        !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
-            false)) {
+    if (userCredential == null
+        || !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
+        false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
     String encryptedCredential = new TinkCipher(sConf).encryptStringToBase64(userCredential, null);

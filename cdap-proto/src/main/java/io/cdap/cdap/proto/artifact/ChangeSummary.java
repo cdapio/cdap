@@ -68,9 +68,9 @@ public class ChangeSummary {
 
   @Override
   public String toString() {
-    return "ChangeSummary{" +
-        "description='" + description + '\'' +
-        ", parentVersion=" + parentVersion +
-        '}';
+    return "ChangeSummary{"
+        + "description='" + description + '\''
+        + ", parentVersion=" + parentVersion
+        + '}';
   }
 }

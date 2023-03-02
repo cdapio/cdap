@@ -171,8 +171,8 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
 
     // Gather indexes of the table
     Statement statement = Statement.newBuilder(
-            "SELECT index_name FROM information_schema.indexes " +
-                "WHERE table_name = @table_name AND index_type = 'INDEX'")
+            "SELECT index_name FROM information_schema.indexes "
+                + "WHERE table_name = @table_name AND index_type = 'INDEX'")
         .bind("table_name").to(tableId.getName())
         .build();
 
@@ -206,11 +206,11 @@ public class SpannerStructuredTableAdmin implements StructuredTableAdmin {
     // See https://cloud.google.com/spanner/docs/information-schema for details
     Statement schemaStatement = Statement.newBuilder(
             "SELECT C.column_name, C.spanner_type, I.index_type, I.ordinal_position FROM information_schema.columns C "
-                +
-                "LEFT JOIN information_schema.index_columns I " +
-                "ON C.column_name = I.column_name AND C.table_name = I.table_name AND I.ordinal_position is not NULL "
-                +
-                "WHERE C.table_name = @table_name ORDER BY C.ordinal_position")
+
+                + "LEFT JOIN information_schema.index_columns I "
+                + "ON C.column_name = I.column_name AND C.table_name = I.table_name AND I.ordinal_position is not NULL "
+
+                + "WHERE C.table_name = @table_name ORDER BY C.ordinal_position")
         .bind("table_name").to(tableId.getName())
         .build();
 

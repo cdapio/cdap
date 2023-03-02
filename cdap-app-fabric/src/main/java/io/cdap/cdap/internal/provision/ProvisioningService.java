@@ -292,8 +292,8 @@ public class ProvisioningService extends AbstractIdleService {
 
       // the actual task still needs to be run for cleanup to happen, but avoid logging a confusing
       // message about resuming a task that is in cancelled state or resuming a task that is completed
-      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED &&
-          provisioningOp.getStatus() != ProvisioningOp.Status.CREATED) {
+      if (provisioningOp.getStatus() != ProvisioningOp.Status.CANCELLED
+          && provisioningOp.getStatus() != ProvisioningOp.Status.CREATED) {
         LOG.info("Resuming provisioning task for run {} of type {} in state {}.",
             provisioningTaskInfo.getProgramRunId(),
             provisioningTaskInfo.getProvisioningOp().getType(),
@@ -380,13 +380,13 @@ public class ProvisioningService extends AbstractIdleService {
       if (!unfulfilledRequirements.isEmpty()) {
         runWithProgramLogging(programRunId, args, () ->
             LOG.error(String.format(
-                "'%s' cannot be run using profile '%s' because the profile does not met all " +
-                    "plugin requirements. Following requirements were not meet by the listed " +
-                    "plugins: '%s'", programRunId.getProgram(), name,
+                "'%s' cannot be run using profile '%s' because the profile does not met all "
+                    + "plugin requirements. Following requirements were not meet by the listed "
+                    + "plugins: '%s'", programRunId.getProgram(), name,
                 groupByRequirement(unfulfilledRequirements))));
         programStateWriter.error(programRunId,
-            new IllegalArgumentException("Provisioner does not meet all the " +
-                "requirements for the program to run."));
+            new IllegalArgumentException("Provisioner does not meet all the "
+                + "requirements for the program to run."));
         provisionerNotifier.deprovisioned(programRunId);
         return () -> {
         };
@@ -779,9 +779,9 @@ public class ProvisioningService extends AbstractIdleService {
           Throwable rootCause = Throwables.getRootCause(t);
           if (!(rootCause instanceof SocketTimeoutException
               || rootCause instanceof ConnectException)) {
-            SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
-                "Tasks that were in progress during the last CDAP shutdown will " +
-                "not be resumed until this succeeds. ", t);
+            SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. "
+                + "Tasks that were in progress during the last CDAP shutdown will "
+                + "not be resumed until this succeeds. ", t);
           }
           return true;
         });

@@ -58,8 +58,8 @@ public class DatasetModuleId extends NamespacedEntityId implements ParentedId<Na
       return false;
     }
     DatasetModuleId that = (DatasetModuleId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(module, that.module);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(module, that.module);
   }
 
   @Override

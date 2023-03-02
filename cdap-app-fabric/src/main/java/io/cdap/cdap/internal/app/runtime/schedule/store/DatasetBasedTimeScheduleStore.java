@@ -305,8 +305,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           TriggerStatusV2 trigger =
               (TriggerStatusV2) SerializationUtils.deserialize(
                   iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
-          if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
-              trigger.state.equals(Trigger.TriggerState.PAUSED)) {
+          if (trigger.state.equals(Trigger.TriggerState.NORMAL)
+              || trigger.state.equals(Trigger.TriggerState.PAUSED)) {
             triggers.add(trigger);
             LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
           } else {
@@ -341,8 +341,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
 
     for (TriggerKey key : triggersWithNoJob) {
-      LOG.error(String.format("No Job was found for the Trigger key '%s'." +
-          " Deleting the trigger entry from the store.", key));
+      LOG.error(String.format("No Job was found for the Trigger key '%s'."
+          + " Deleting the trigger entry from the store.", key));
       executeDelete(key);
     }
   }

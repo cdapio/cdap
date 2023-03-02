@@ -63,8 +63,8 @@ import javax.annotation.Nullable;
  */
 public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
   private static final Logger LOG = LoggerFactory.getLogger(SQLEngineCollection.class);
-  private static final String DIRECT_WRITE_ERROR = "Exception when trying to write to sink {} using direct output. " +
-    "Operation will continue with standard sink flow.";
+  private static final String DIRECT_WRITE_ERROR = "Exception when trying to write to sink {} using direct output. "
+    + "Operation will continue with standard sink flow.";
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;

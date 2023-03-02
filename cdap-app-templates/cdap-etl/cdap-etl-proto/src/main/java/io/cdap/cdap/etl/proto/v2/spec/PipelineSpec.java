@@ -133,15 +133,15 @@ public class PipelineSpec {
 
     PipelineSpec that = (PipelineSpec) o;
 
-    return Objects.equals(stages, that.stages) &&
-        Objects.equals(connections, that.connections) &&
-        Objects.equals(resources, that.resources) &&
-        Objects.equals(driverResources, that.driverResources) &&
-        Objects.equals(clientResources, that.clientResources) &&
-        Objects.equals(properties, that.properties) &&
-        stageLoggingEnabled == that.stageLoggingEnabled &&
-        processTimingEnabled == that.processTimingEnabled &&
-        numOfRecordsPreview == that.numOfRecordsPreview && engine == that.engine;
+    return Objects.equals(stages, that.stages)
+        && Objects.equals(connections, that.connections)
+        && Objects.equals(resources, that.resources)
+        && Objects.equals(driverResources, that.driverResources)
+        && Objects.equals(clientResources, that.clientResources)
+        && Objects.equals(properties, that.properties)
+        && stageLoggingEnabled == that.stageLoggingEnabled
+        && processTimingEnabled == that.processTimingEnabled
+        && numOfRecordsPreview == that.numOfRecordsPreview && engine == that.engine;
   }
 
   @Override
@@ -152,18 +152,18 @@ public class PipelineSpec {
 
   @Override
   public String toString() {
-    return "PipelineSpec{" +
-        "stages=" + stages +
-        ", connections=" + connections +
-        ", resources=" + resources +
-        ", driverResources=" + driverResources +
-        ", clientResources=" + clientResources +
-        ", stageLoggingEnabled=" + stageLoggingEnabled +
-        ", processTimingEnabled=" + processTimingEnabled +
-        ", numOfRecordsPreview=" + numOfRecordsPreview +
-        ", properties=" + properties +
-        ", engine=" + engine +
-        "}";
+    return "PipelineSpec{"
+        + "stages=" + stages
+        + ", connections=" + connections
+        + ", resources=" + resources
+        + ", driverResources=" + driverResources
+        + ", clientResources=" + clientResources
+        + ", stageLoggingEnabled=" + stageLoggingEnabled
+        + ", processTimingEnabled=" + processTimingEnabled
+        + ", numOfRecordsPreview=" + numOfRecordsPreview
+        + ", properties=" + properties
+        + ", engine=" + engine
+        + "}";
   }
 
   public boolean isPreviewEnabled(RuntimeContext context) {

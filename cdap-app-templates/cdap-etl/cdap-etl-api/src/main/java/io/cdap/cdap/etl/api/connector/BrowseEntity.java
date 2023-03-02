@@ -79,12 +79,12 @@ public class BrowseEntity {
     }
 
     BrowseEntity that = (BrowseEntity) o;
-    return canSample == that.canSample &&
-        canBrowse == that.canBrowse &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(path, that.path) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(properties, that.properties);
+    return canSample == that.canSample
+        && canBrowse == that.canBrowse
+        && Objects.equals(name, that.name)
+        && Objects.equals(path, that.path)
+        && Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override

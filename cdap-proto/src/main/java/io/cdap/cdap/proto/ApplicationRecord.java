@@ -139,14 +139,14 @@ public class ApplicationRecord {
 
     ApplicationRecord that = (ApplicationRecord) o;
 
-    return Objects.equals(type, that.type) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(version, that.version) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(artifact, that.artifact) &&
-        Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
-        Objects.equals(change, that.change) &&
-        Objects.equals(sourceControlMeta, that.sourceControlMeta);
+    return Objects.equals(type, that.type)
+        && Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(description, that.description)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(ownerPrincipal, that.ownerPrincipal)
+        && Objects.equals(change, that.change)
+        && Objects.equals(sourceControlMeta, that.sourceControlMeta);
   }
 
   @Override
@@ -157,15 +157,15 @@ public class ApplicationRecord {
 
   @Override
   public String toString() {
-    return "ApplicationRecord{" +
-        "type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        ", version='" + version + '\'' +
-        ", description='" + description + '\'' +
-        ", artifact=" + artifact +
-        ", ownerPrincipal='" + ownerPrincipal + '\'' +
-        ", change=" + change +
-        ", sourceControlMeta=" + sourceControlMeta +
-        '}';
+    return "ApplicationRecord{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", version='" + version + '\''
+        + ", description='" + description + '\''
+        + ", artifact=" + artifact
+        + ", ownerPrincipal='" + ownerPrincipal + '\''
+        + ", change=" + change
+        + ", sourceControlMeta=" + sourceControlMeta
+        + '}';
   }
 }

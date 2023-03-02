@@ -90,8 +90,8 @@ public class ArtifactConfigReader {
           if (!NamespaceId.SYSTEM.equals(parentNamespace) && !namespace.toEntityId()
               .equals(parentNamespace)) {
             throw new InvalidArtifactException(
-                String.format("Invalid parent %s. Parents must be in the same " +
-                    "namespace or a system artifact.", parent));
+                String.format("Invalid parent %s. Parents must be in the same "
+                    + "namespace or a system artifact.", parent));
           }
         }
         return config;

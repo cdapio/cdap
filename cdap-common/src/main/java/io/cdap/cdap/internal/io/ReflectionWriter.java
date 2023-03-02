@@ -225,8 +225,8 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
         // Ignore not getter methods
         continue;
       }
-      String fieldName = methodName.startsWith("get") ?
-          methodName.substring("get".length()) : methodName.substring("is".length());
+      String fieldName = methodName.startsWith("get")
+          ? methodName.substring("get".length()) : methodName.substring("is".length());
       if (fieldName.isEmpty()) {
         continue;
       }

@@ -393,8 +393,8 @@ public class DatasetServiceClient {
       if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
         LOG.trace(
             "Accessing dataset in system namespace using the system principal because the current user "
-                +
-                "{} is the same as the CDAP master user {}.",
+
+                + "{} is the same as the CDAP master user {}.",
             currUserShortName, masterShortUserName);
         userId = currUserShortName;
       }
@@ -417,15 +417,15 @@ public class DatasetServiceClient {
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static void append(StringBuilder sb, ThreadInfo threadInfo) {
-    sb.append("\"" + threadInfo.getThreadName() + "\"" +
-        " Id=" + threadInfo.getThreadId() + " " +
-        threadInfo.getThreadState());
+    sb.append("\"" + threadInfo.getThreadName() + "\""
+        + " Id=" + threadInfo.getThreadId() + " "
+        + threadInfo.getThreadState());
     if (threadInfo.getLockName() != null) {
       sb.append(" on " + threadInfo.getLockName());
     }
     if (threadInfo.getLockOwnerName() != null) {
-      sb.append(" owned by \"" + threadInfo.getLockOwnerName() +
-          "\" Id=" + threadInfo.getLockOwnerId());
+      sb.append(" owned by \"" + threadInfo.getLockOwnerName()
+          + "\" Id=" + threadInfo.getLockOwnerId());
     }
     if (threadInfo.isSuspended()) {
       sb.append(" (suspended)");

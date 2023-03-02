@@ -66,9 +66,9 @@ public class Notification {
 
   @Override
   public String toString() {
-    return "Notification{" +
-        "notificationType=" + notificationType +
-        ", properties=" + properties +
-        '}';
+    return "Notification{"
+        + "notificationType=" + notificationType
+        + ", properties=" + properties
+        + '}';
   }
 }

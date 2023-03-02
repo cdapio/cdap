@@ -54,9 +54,9 @@ public class PushAppResponse {
       return false;
     }
     PushAppResponse that = (PushAppResponse) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(version, that.version) &&
-        Objects.equals(fileHash, that.fileHash);
+    return Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(fileHash, that.fileHash);
   }
 
   @Override

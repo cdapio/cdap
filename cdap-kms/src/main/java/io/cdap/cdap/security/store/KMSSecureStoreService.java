@@ -88,16 +88,16 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
       String keyProviderPath = conf.get(KeyProviderFactory.KEY_PROVIDER_PATH);
       if (Strings.isNullOrEmpty(keyProviderPath)) {
         throw new IllegalArgumentException(
-            "Could not find the key provider URI. Please make sure that " +
-                "hadoop.security.key.provider.path is set to the KMS URI in your " +
-                "core-site.xml.");
+            "Could not find the key provider URI. Please make sure that "
+                + "hadoop.security.key.provider.path is set to the KMS URI in your "
+                + "core-site.xml.");
       }
       URI providerUri = new URI(keyProviderPath);
       provider = KMSClientProvider.Factory.get(providerUri, conf);
     } catch (URISyntaxException e) {
       throw new URISyntaxException(
-          "Secure store could not be loaded. The value for hadoop.security.key.provider.path" +
-              "in core-site.xml is not a valid URI.", e.getReason());
+          "Secure store could not be loaded. The value for hadoop.security.key.provider.path"
+              + "in core-site.xml is not a valid URI.", e.getReason());
     } catch (IOException e) {
       throw new IOException(
           "Secure store could not be loaded. KMS KeyProvider failed to initialize", e);

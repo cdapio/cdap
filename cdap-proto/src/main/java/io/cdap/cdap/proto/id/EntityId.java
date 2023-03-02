@@ -77,16 +77,16 @@ public abstract class EntityId {
   public static void ensureValidId(String propertyName, String name) {
     if (!isValidId(name)) {
       throw new IllegalArgumentException(
-          String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
-              "characters and _ or -.", propertyName, name));
+          String.format("Invalid %s ID: %s. Should only contain alphanumeric "
+              + "characters and _ or -.", propertyName, name));
     }
   }
 
   public static void ensureValidArtifactId(String propertyName, String name) {
     if (!isValidArtifactId(name)) {
       throw new IllegalArgumentException(
-          String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
-              "characters and _ or - or .", propertyName, name));
+          String.format("Invalid %s ID: %s. Should only contain alphanumeric "
+              + "characters and _ or - or .", propertyName, name));
     }
   }
 
@@ -102,8 +102,8 @@ public abstract class EntityId {
   public static void ensureValidDatasetId(String propertyName, String datasetId) {
     if (!isValidDatasetId(datasetId)) {
       throw new IllegalArgumentException(
-          String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
-              "characters, $, ., _, or -.", propertyName, datasetId));
+          String.format("Invalid %s ID: %s. Should only contain alphanumeric "
+              + "characters, $, ., _, or -.", propertyName, datasetId));
     }
   }
 
@@ -114,8 +114,8 @@ public abstract class EntityId {
   public static void ensureValidNamespace(String namespace) {
     if (!isValidNamespace(namespace)) {
       throw new IllegalArgumentException(
-          String.format("Invalid namespace ID: %s. Should only contain alphanumeric " +
-              "characters or _.", namespace));
+          String.format("Invalid namespace ID: %s. Should only contain alphanumeric "
+              + "characters or _.", namespace));
     }
   }
 
@@ -192,8 +192,8 @@ public abstract class EntityId {
     // key-value pair and needs to be included too
     List<MetadataEntity.KeyValue> extractedParts = metadataEntity.head(entityType.toString());
     // if a version was specified extract that else use the default version
-    String version = metadataEntity.containsKey(MetadataEntity.VERSION) ?
-        metadataEntity.getValue(MetadataEntity.VERSION) : ApplicationId.DEFAULT_VERSION;
+    String version = metadataEntity.containsKey(MetadataEntity.VERSION)
+        ? metadataEntity.getValue(MetadataEntity.VERSION) : ApplicationId.DEFAULT_VERSION;
     if (entityType == EntityType.APPLICATION) {
       // if the entity is an application our extractParts will not contain the version info since we extracted till
       // application so append it

@@ -336,8 +336,8 @@ public class ArtifactStore {
               ArtifactData.class);
           ArtifactMeta filteredArtifactMeta = filterPlugins(data.meta);
           ArtifactId artifactId = new ArtifactId(artifactKey.name, e.getKey(),
-              artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
-                  ArtifactScope.SYSTEM : ArtifactScope.USER);
+              artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace())
+                  ? ArtifactScope.SYSTEM : ArtifactScope.USER);
           Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory,
               data.getLocationPath());
           return new ArtifactDetail(
@@ -626,8 +626,8 @@ public class ArtifactStore {
                 parentArtifactRange.getName());
           }
 
-          SortedMap<ArtifactDescriptor, PluginClass> plugins = order == ArtifactSortOrder.DESC ?
-              new TreeMap<>(Collections.reverseOrder()) :
+          SortedMap<ArtifactDescriptor, PluginClass> plugins = order == ArtifactSortOrder.DESC
+              ? new TreeMap<>(Collections.reverseOrder()) :
               new TreeMap<>();
 
           List<Id.Artifact> parentArtifacts = new ArrayList<>();

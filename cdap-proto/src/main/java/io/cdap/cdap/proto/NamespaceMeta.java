@@ -248,11 +248,11 @@ public final class NamespaceMeta {
 
   @Override
   public String toString() {
-    return "NamespaceMeta{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", generation=" + generation +
-        ", config=" + config +
-        '}';
+    return "NamespaceMeta{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", generation=" + generation
+        + ", config=" + config
+        + '}';
   }
 }

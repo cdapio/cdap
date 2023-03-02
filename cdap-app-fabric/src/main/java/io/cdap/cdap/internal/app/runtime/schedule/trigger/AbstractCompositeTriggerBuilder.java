@@ -42,8 +42,8 @@ public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder 
     SatisfiableTrigger[] builtTriggers = new SatisfiableTrigger[numTriggers];
     for (int i = 0; i < numTriggers; i++) {
       Trigger trigger = triggers[i];
-      builtTriggers[i] = trigger instanceof TriggerBuilder ?
-          ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion)
+      builtTriggers[i] = trigger instanceof TriggerBuilder
+          ? ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion)
           : (SatisfiableTrigger) trigger;
     }
     return builtTriggers;

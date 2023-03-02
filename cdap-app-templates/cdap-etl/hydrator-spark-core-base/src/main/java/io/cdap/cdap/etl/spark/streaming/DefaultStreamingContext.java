@@ -113,8 +113,8 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
           Method method = dsClass.getMethod("recordRead");
           method.invoke(ds);
         } catch (NoSuchMethodException e) {
-          LOG.warn("ExternalDataset '{}' does not have method 'recordRead()'. " +
-                     "Can't register read-only lineage for this dataset", referenceName);
+          LOG.warn("ExternalDataset '{}' does not have method 'recordRead()'. "
+                     + "Can't register read-only lineage for this dataset", referenceName);
         }
       }
     }, DatasetManagementException.class);
@@ -132,8 +132,8 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
 
   @Override
   public void record(List<FieldOperation> operations) {
-    throw new UnsupportedOperationException("Field lineage recording is not supported. Please record lineage " +
-                                              "in prepareRun() stage");
+    throw new UnsupportedOperationException("Field lineage recording is not supported. Please record lineage "
+                                              + "in prepareRun() stage");
   }
 
   @Override

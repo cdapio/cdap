@@ -325,8 +325,8 @@ public class Bytes {
 
   private static boolean isHexDigit(char c) {
     return
-        (c >= 'A' && c <= 'F') ||
-            (c >= '0' && c <= '9');
+        (c >= 'A' && c <= 'F')
+            || (c >= '0' && c <= '9');
   }
 
   /**
@@ -362,8 +362,8 @@ public class Bytes {
         char hd2 = in.charAt(i + 3);
 
         // they need to be A-F0-9:
-        if (!isHexDigit(hd1) ||
-            !isHexDigit(hd2)) {
+        if (!isHexDigit(hd1)
+            || !isHexDigit(hd2)) {
           // bogus escape code, ignore:
           continue;
         }
@@ -828,8 +828,8 @@ public class Bytes {
    * @return the char value
    */
   public static BigDecimal toBigDecimal(byte[] bytes, int offset, final int length) {
-    if (bytes == null || length < SIZEOF_INT + 1 ||
-        (offset + length > bytes.length)) {
+    if (bytes == null || length < SIZEOF_INT + 1
+        || (offset + length > bytes.length)) {
       return null;
     }
 
@@ -1073,9 +1073,9 @@ public class Bytes {
       public int compareTo(byte[] buffer1, int offset1, int length1,
           byte[] buffer2, int offset2, int length2) {
         // Short circuit equal case
-        if (buffer1 == buffer2 &&
-            offset1 == offset2 &&
-            length1 == length2) {
+        if (buffer1 == buffer2
+            && offset1 == offset2
+            && length1 == length2) {
           return 0;
         }
         // Bring WritableComparator code local
@@ -1140,9 +1140,9 @@ public class Bytes {
   public static boolean equals(final byte[] left, int leftOffset, int leftLen,
       final byte[] right, int rightOffset, int rightLen) {
     // short circuit case
-    if (left == right &&
-        leftOffset == rightOffset &&
-        leftLen == rightLen) {
+    if (left == right
+        && leftOffset == rightOffset
+        && leftLen == rightLen) {
       return true;
     }
     // different lengths fast check
@@ -1169,10 +1169,10 @@ public class Bytes {
    * Return true if the byte array on the right is a prefix of the byte array on the left.
    */
   public static boolean startsWith(byte[] bytes, byte[] prefix) {
-    return bytes != null && prefix != null &&
-        bytes.length >= prefix.length &&
-        LexicographicalComparerHolder.BEST_COMPARER.
-            compareTo(bytes, 0, prefix.length, prefix, 0, prefix.length) == 0;
+    return bytes != null && prefix != null
+        && bytes.length >= prefix.length
+        && LexicographicalComparerHolder.BEST_COMPARER.
+        compareTo(bytes, 0, prefix.length, prefix, 0, prefix.length) == 0;
   }
 
   /**
@@ -1557,8 +1557,8 @@ public class Bytes {
           val.length);
       val = newvalue;
     } else if (val.length > SIZEOF_LONG) {
-      throw new IllegalArgumentException("Increment Bytes - value too big: " +
-          val.length);
+      throw new IllegalArgumentException("Increment Bytes - value too big: "
+          + val.length);
     }
     if (amount == 0) {
       return val;
@@ -1630,8 +1630,8 @@ public class Bytes {
       int size) throws IOException {
     byte[] b = toBytes(s);
     if (b.length > size) {
-      throw new IOException("Trying to write " + b.length + " bytes (" +
-          toStringBinary(b) + ") into a field of length " + size);
+      throw new IOException("Trying to write " + b.length + " bytes ("
+          + toStringBinary(b) + ") into a field of length " + size);
     }
 
     out.writeBytes(s);

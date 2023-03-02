@@ -84,8 +84,8 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug(
             "Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but"
-                +
-                "skipping namespace home directory delete.", namespaceHome, namespaceId);
+
+                + "skipping namespace home directory delete.", namespaceHome, namespaceId);
         // delete everything inside the namespace home but not the namespace home as its user owned directory
         Locations.deleteContent(namespaceHome);
       } else {
@@ -224,16 +224,16 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     if (!customNamespacedLocation.exists()) {
       throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' does not exist. Please create it on filesystem "
-              +
-              "with sufficient privileges for the user %s and then try creating a namespace.",
+
+              + "with sufficient privileges for the user %s and then try creating a namespace.",
           customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
           namespaceMeta.getConfig().getPrincipal()));
     }
     if (!customNamespacedLocation.isDirectory()) {
       throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' is not a directory. Please specify a directory for the "
-              +
-              "namespace with sufficient privileges for the user %s and then try creating a namespace.",
+
+              + "namespace with sufficient privileges for the user %s and then try creating a namespace.",
           customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
           namespaceMeta.getConfig().getPrincipal()));
     }
@@ -241,8 +241,8 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     if (!customNamespacedLocation.list().isEmpty()) {
       throw new IOException(String.format(
           "The provided home directory '%s' for namespace '%s' is not empty. Please try creating the namespace "
-              +
-              "again with an empty directory mapping and sufficient privileges for the user %s.",
+
+              + "again with an empty directory mapping and sufficient privileges for the user %s.",
           customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(),
           namespaceMeta.getConfig().getPrincipal()));
     }
@@ -253,15 +253,16 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       if (!groupName.equals(namespaceMeta.getConfig().getGroupName())) {
         LOG.warn(
             "The provided home directory '{}' for namespace '{}' has group '{}', which is different from "
-                +
-                "the configured group '{}' of the namespace.", customNamespacedLocation.toString(),
+
+                + "the configured group '{}' of the namespace.",
+            customNamespacedLocation.toString(),
             namespaceMeta.getNamespaceId(), groupName, namespaceMeta.getConfig().getGroupName());
       }
       if (!"rwx".equals(permissions)) {
         LOG.warn(
             "The provided home directory '{}' for namespace '{}' has group permissions of '{}'. It is "
-                +
-                "recommended to set the group permissions to 'rwx'",
+
+                + "recommended to set the group permissions to 'rwx'",
             customNamespacedLocation.toString(), namespaceMeta.getNamespaceId(), permissions);
       }
     }

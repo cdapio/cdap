@@ -70,10 +70,10 @@ public interface ProgramOptions {
     }.getType();
 
     boolean debug = Boolean.parseBoolean(debugString);
-    Map<String, String> userArguments = userArgumentsString == null ?
-        Collections.emptyMap() : gson.fromJson(userArgumentsString, stringStringMap);
-    Map<String, String> systemArguments = systemArgumentsString == null ?
-        Collections.emptyMap() : gson.fromJson(systemArgumentsString, stringStringMap);
+    Map<String, String> userArguments = userArgumentsString == null
+        ? Collections.emptyMap() : gson.fromJson(userArgumentsString, stringStringMap);
+    Map<String, String> systemArguments = systemArgumentsString == null
+        ? Collections.emptyMap() : gson.fromJson(systemArgumentsString, stringStringMap);
 
     return new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
         new BasicArguments(userArguments), debug);

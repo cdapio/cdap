@@ -211,16 +211,16 @@ public class SearchRequest {
       return false;
     }
     SearchRequest that = (SearchRequest) o;
-    return offset == that.offset &&
-        limit == that.limit &&
-        numCursors == that.numCursors &&
-        showHidden == that.showHidden &&
-        Objects.equals(namespaceId, that.namespaceId) &&
-        Objects.equals(query, that.query) &&
-        Objects.equals(types, that.types) &&
-        Objects.equals(sortInfo, that.sortInfo) &&
-        Objects.equals(cursor, that.cursor) &&
-        Objects.equals(entityScope, that.entityScope);
+    return offset == that.offset
+        && limit == that.limit
+        && numCursors == that.numCursors
+        && showHidden == that.showHidden
+        && Objects.equals(namespaceId, that.namespaceId)
+        && Objects.equals(query, that.query)
+        && Objects.equals(types, that.types)
+        && Objects.equals(sortInfo, that.sortInfo)
+        && Objects.equals(cursor, that.cursor)
+        && Objects.equals(entityScope, that.entityScope);
   }
 
   @Override
@@ -232,17 +232,17 @@ public class SearchRequest {
 
   @Override
   public String toString() {
-    return "SearchRequest{" +
-        "namespaceId=" + namespaceId +
-        ", query='" + query + '\'' +
-        ", types=" + types +
-        ", sortInfo=" + sortInfo +
-        ", offset=" + offset +
-        ", limit=" + limit +
-        ", numCursors=" + numCursors +
-        ", cursor='" + cursor + '\'' +
-        ", showHidden=" + showHidden +
-        ", entityScope=" + entityScope +
-        '}';
+    return "SearchRequest{"
+        + "namespaceId=" + namespaceId
+        + ", query='" + query + '\''
+        + ", types=" + types
+        + ", sortInfo=" + sortInfo
+        + ", offset=" + offset
+        + ", limit=" + limit
+        + ", numCursors=" + numCursors
+        + ", cursor='" + cursor + '\''
+        + ", showHidden=" + showHidden
+        + ", entityScope=" + entityScope
+        + '}';
   }
 }

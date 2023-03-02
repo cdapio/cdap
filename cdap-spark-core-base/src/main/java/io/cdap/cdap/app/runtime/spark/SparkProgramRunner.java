@@ -178,8 +178,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
       // Get the WorkflowProgramInfo if it is started by Workflow
       WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(arguments);
-      DatasetFramework programDatasetFramework = workflowInfo == null ?
-        datasetFramework :
+      DatasetFramework programDatasetFramework = workflowInfo == null
+        ? datasetFramework :
         NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
 
       // Setup dataset framework context, if required

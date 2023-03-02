@@ -69,9 +69,9 @@ public class SQLEngineInput extends Input {
 
   @Override
   public String toString() {
-    return "SQLEngineInput{" +
-        "name='" + getName() + '\'' +
-        ", sqlEngineClassName='" + sqlEngineClassName + '\'' +
-        "} ";
+    return "SQLEngineInput{"
+        + "name='" + getName() + '\''
+        + ", sqlEngineClassName='" + sqlEngineClassName + '\''
+        + "} ";
   }
 }

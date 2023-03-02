@@ -52,9 +52,9 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
       if (extensionDir != null) {
         // Extension directory is provided but the extension is not loaded
         throw new RuntimeException(
-            String.format("HBaseDDLExecutor extension cannot be loaded from directory '%s'." +
-                " Please make sure jar is available at that location with " +
-                "appropriate permissions.", extensionDir));
+            String.format("HBaseDDLExecutor extension cannot be loaded from directory '%s'."
+                + " Please make sure jar is available at that location with "
+                + "appropriate permissions.", extensionDir));
       }
       // Return the version specific executor instance.
       executor = super.get();

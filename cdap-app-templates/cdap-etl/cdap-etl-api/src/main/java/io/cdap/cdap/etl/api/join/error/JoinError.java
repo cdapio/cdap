@@ -63,9 +63,9 @@ public class JoinError {
       return false;
     }
     JoinError joinError = (JoinError) o;
-    return type == joinError.type &&
-        Objects.equals(message, joinError.message) &&
-        Objects.equals(correctiveAction, joinError.correctiveAction);
+    return type == joinError.type
+        && Objects.equals(message, joinError.message)
+        && Objects.equals(correctiveAction, joinError.correctiveAction);
   }
 
   @Override

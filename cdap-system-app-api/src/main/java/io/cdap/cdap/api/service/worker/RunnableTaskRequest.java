@@ -67,8 +67,8 @@ public class RunnableTaskRequest {
     String requestString =
         "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
     return String.format(requestString, className, param == null ? null :
-            param.getSimpleParam().length() > 500 ?
-                param.getSimpleParam().substring(500) : param.getSimpleParam(),
+            param.getSimpleParam().length() > 500
+                ? param.getSimpleParam().substring(500) : param.getSimpleParam(),
         artifactId, namespace);
   }
 

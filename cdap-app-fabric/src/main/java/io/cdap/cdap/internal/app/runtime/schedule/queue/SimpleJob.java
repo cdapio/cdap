@@ -97,13 +97,13 @@ public final class SimpleJob implements Job {
 
     SimpleJob that = (SimpleJob) o;
 
-    return Objects.equal(this.schedule, that.schedule) &&
-        Objects.equal(this.creationTime, that.creationTime) &&
-        Objects.equal(this.jobKey, that.jobKey) &&
-        Objects.equal(this.notifications, that.notifications) &&
-        Objects.equal(this.state, that.state) &&
-        Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime) &&
-        Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
+    return Objects.equal(this.schedule, that.schedule)
+        && Objects.equal(this.creationTime, that.creationTime)
+        && Objects.equal(this.jobKey, that.jobKey)
+        && Objects.equal(this.notifications, that.notifications)
+        && Objects.equal(this.state, that.state)
+        && Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime)
+        && Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
   }
 
   @Override

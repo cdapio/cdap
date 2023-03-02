@@ -171,11 +171,11 @@ public class RepositoryConfig {
       return false;
     }
     RepositoryConfig that = (RepositoryConfig) o;
-    return Objects.equals(provider, that.provider) &&
-        Objects.equals(link, that.link) &&
-        Objects.equals(defaultBranch, that.defaultBranch) &&
-        Objects.equals(auth, that.auth) &&
-        Objects.equals(pathPrefix, that.pathPrefix);
+    return Objects.equals(provider, that.provider)
+        && Objects.equals(link, that.link)
+        && Objects.equals(defaultBranch, that.defaultBranch)
+        && Objects.equals(auth, that.auth)
+        && Objects.equals(pathPrefix, that.pathPrefix);
   }
 
   @Override
@@ -185,12 +185,12 @@ public class RepositoryConfig {
 
   @Override
   public String toString() {
-    return "RepositoryConfig{" +
-        "provider=" + provider +
-        ", link=" + link +
-        ", defaultBranch=" + defaultBranch +
-        ", auth=" + auth +
-        ", pathPrefix=" + pathPrefix +
-        '}';
+    return "RepositoryConfig{"
+        + "provider=" + provider
+        + ", link=" + link
+        + ", defaultBranch=" + defaultBranch
+        + ", auth=" + auth
+        + ", pathPrefix=" + pathPrefix
+        + '}';
   }
 }

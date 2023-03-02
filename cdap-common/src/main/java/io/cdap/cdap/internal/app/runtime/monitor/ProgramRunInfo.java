@@ -86,8 +86,8 @@ public class ProgramRunInfo {
     }
 
     ProgramRunInfo that = (ProgramRunInfo) o;
-    return Objects.equals(this.getProgramRunStatus(), that.getProgramRunStatus()) &&
-        Objects.equals(this.getTerminateTimestamp(), that.getTerminateTimestamp());
+    return Objects.equals(this.getProgramRunStatus(), that.getProgramRunStatus())
+        && Objects.equals(this.getTerminateTimestamp(), that.getTerminateTimestamp());
   }
 
   @Override
@@ -97,9 +97,9 @@ public class ProgramRunInfo {
 
   @Override
   public String toString() {
-    return "ProgramRunInfo" +
-        "{programRunStatus=" + programRunStatus +
-        ", terminateTs='" + terminateTs +
-        '}';
+    return "ProgramRunInfo"
+        + "{programRunStatus=" + programRunStatus
+        + ", terminateTs='" + terminateTs
+        + '}';
   }
 }

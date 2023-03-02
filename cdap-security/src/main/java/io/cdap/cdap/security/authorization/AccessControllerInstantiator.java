@@ -99,19 +99,20 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
   @Override
   public AccessController get() {
     if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
-      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
-          Constants.Security.Authorization.ENABLED + " to true.");
+      LOG.debug("Authorization is disabled. Authorization can be enabled  by setting "
+          + Constants.Security.Authorization.ENABLED + " to true.");
       return NOOP_ACCESS_CONTROLLER;
     }
     if (!cConf.getBoolean(Constants.Security.ENABLED)) {
       LOG.warn(
           "Authorization is enabled. However, authentication is disabled. Authorization policies will not be "
-              +
-              "enforced. To enforce authorization policies please enable both authorization, by setting "
-              +
-              Constants.Security.Authorization.ENABLED + " to true and authentication, by setting "
-              +
-              Constants.Security.ENABLED + "to true.");
+
+              + "enforced. To enforce authorization policies please enable both authorization, by setting "
+
+              + Constants.Security.Authorization.ENABLED
+              + " to true and authentication, by setting "
+
+              + Constants.Security.ENABLED + "to true.");
       return NOOP_ACCESS_CONTROLLER;
     }
 
@@ -138,10 +139,10 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       if (Strings.isNullOrEmpty(accessControllerExtensionJarPath)) {
         throw new IllegalArgumentException(
             String.format(
-                "Access control extension jar path not found in configuration. Please set %s in " +
-                    "cdap-site.xml to the fully qualified path of the jar file to use as the authorization "
-                    +
-                    "backend.",
+                "Access control extension jar path not found in configuration. Please set %s in "
+                    + "cdap-site.xml to the fully qualified path of the jar file to use as the authorization "
+
+                    + "backend.",
                 Constants.Security.Authorization.EXTENSION_JAR_PATH));
       }
       try {
@@ -185,9 +186,9 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
         }
       } catch (Exception e) {
         throw new InvalidAccessControllerException(
-            String.format("Error while instantiating for access controller extension %s. " +
-                "Please make sure that the extension " +
-                "is a public class with a default constructor.", accessControllerClass.getName()),
+            String.format("Error while instantiating for access controller extension %s. "
+                + "Please make sure that the extension "
+                + "is a public class with a default constructor.", accessControllerClass.getName()),
             e);
       }
       AuthorizationContext context = authorizationContextFactory.create(
@@ -255,8 +256,8 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       throw new InvalidAccessControllerException(
           String.format(
               "Access controle extension class %s not found. Please make sure that the right class "
-                  +
-                  "is specified  in the extension jar's manifest located at %s.",
+
+                  + "is specified  in the extension jar's manifest located at %s.",
               accessControllerClassName, classLoader.getExtensionJar()), e);
     }
     if (!Authorizer.class.isAssignableFrom(accessControllerClass)

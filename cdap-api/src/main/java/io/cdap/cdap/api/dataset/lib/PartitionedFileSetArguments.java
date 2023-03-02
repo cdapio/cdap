@@ -350,8 +350,8 @@ public class PartitionedFileSetArguments {
   private static void ensureDynamicPartitionerConfigured(Map<String, String> args) {
     if (getDynamicPartitioner(args) == null) {
       throw new IllegalArgumentException(
-          "Cannot get or set a setting of DynamicPartitioner, without first setting " +
-              "a DynamicPartitioner.");
+          "Cannot get or set a setting of DynamicPartitioner, without first setting "
+              + "a DynamicPartitioner.");
     }
   }
 }

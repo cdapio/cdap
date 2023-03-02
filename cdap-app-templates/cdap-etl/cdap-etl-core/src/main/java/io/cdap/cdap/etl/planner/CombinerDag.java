@@ -304,8 +304,8 @@ public class CombinerDag extends Dag {
     int numSinks = 0;
     for (String groupNode : mergedGroup) {
       if (uncombinableNodes.contains(groupNode)) {
-        LOG.debug("Planner tried to create an invalid group containing uncombinable node {}. " +
-                "This group will be ignored.",
+        LOG.debug("Planner tried to create an invalid group containing uncombinable node {}. "
+                + "This group will be ignored.",
             groupNode);
         return;
       }
@@ -317,24 +317,24 @@ public class CombinerDag extends Dag {
       Set<String> interGroupInputs = Sets.intersection(inputs, mergedGroup);
       Set<String> intraGroupInputs = Sets.difference(inputs, mergedGroup);
       if (!interGroupInputs.isEmpty() && !intraGroupInputs.isEmpty()) {
-        LOG.debug("Planner tried to create an invalid group with nodes {}. " +
-            "Node {} has inputs from both within the group and from outside the group. " +
-            "This group will be ignored.", mergedGroup, groupNode);
+        LOG.debug("Planner tried to create an invalid group with nodes {}. "
+            + "Node {} has inputs from both within the group and from outside the group. "
+            + "This group will be ignored.", mergedGroup, groupNode);
         return;
       }
 
       Set<String> outputs = getNodeOutputs(groupNode);
       if (!Sets.difference(outputs, mergedGroup).isEmpty()) {
-        LOG.debug("Planner tried to create an invalid group with nodes {}. " +
-                "Node {} is connected to a node outside the group. This group will be ignored.",
+        LOG.debug("Planner tried to create an invalid group with nodes {}. "
+                + "Node {} is connected to a node outside the group. This group will be ignored.",
             mergedGroup, groupNode);
         return;
       }
     }
 
     if (numSinks < 2) {
-      LOG.debug("Planner tried to create a group using nodes {}, but it only contains {} sinks. " +
-          "This group will be ignored.", mergedGroup, numSinks);
+      LOG.debug("Planner tried to create a group using nodes {}, but it only contains {} sinks. "
+          + "This group will be ignored.", mergedGroup, numSinks);
       return;
     }
 

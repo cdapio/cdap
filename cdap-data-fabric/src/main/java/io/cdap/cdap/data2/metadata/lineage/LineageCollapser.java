@@ -157,11 +157,11 @@ public final class LineageCollapser {
         return false;
       }
       CollapseKey that = (CollapseKey) o;
-      return Objects.equals(data, that.data) &&
-          Objects.equals(program, that.program) &&
-          Objects.equals(access, that.access) &&
-          Objects.equals(run, that.run) &&
-          Objects.equals(components, that.components);
+      return Objects.equals(data, that.data)
+          && Objects.equals(program, that.program)
+          && Objects.equals(access, that.access)
+          && Objects.equals(run, that.run)
+          && Objects.equals(components, that.components);
     }
 
     @Override
@@ -171,13 +171,13 @@ public final class LineageCollapser {
 
     @Override
     public String toString() {
-      return "CollapseKey{" +
-          "data=" + data +
-          ", program=" + program +
-          ", access=" + access +
-          ", run=" + run +
-          ", components=" + components +
-          '}';
+      return "CollapseKey{"
+          + "data=" + data
+          + ", program=" + program
+          + ", access=" + access
+          + ", run=" + run
+          + ", components=" + components
+          + '}';
     }
   }
 }

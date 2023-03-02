@@ -291,11 +291,11 @@ public class JobQueueTable implements JobQueue {
 
   /**
    * Construct a Job object from the rows in iterator. A job may need up to three rows from the
-   * iterator for its construction -
-   * <ul>
-   *   <li>Row JOB - the row containing the job data, required</li>
-   *   <li>Row DELETE - the row containing the time when the job was marked for deletion, optional</li>
-   *   <li>Row OBSOLETE - the row containing the time when the job was marked as obsolete, optional</li>
+   * iterator for its construction
+   * - * <ul>
+   * <li>Row JOB - the row containing the job data, required</li>
+   * <li>Row DELETE - the row containing the time when the job was marked for deletion, optional</li>
+   * <li>Row OBSOLETE - the row containing the time when the job was marked as obsolete, optional</li>
    * </ul>
    * The above three rows will always be next to each other due to sorting.
    *
@@ -312,8 +312,8 @@ public class JobQueueTable implements JobQueue {
     // Also get the generationId to only read the rows for the current job
     int generationId = getGenerationId(peekingIterator.peek());
     // Get all the rows for the current job from the iterator
-    while (peekingIterator.hasNext() && generationId == getGenerationId(peekingIterator.peek()) &&
-        scheduleId.equals(getScheduleId(peekingIterator.peek()))) {
+    while (peekingIterator.hasNext() && generationId == getGenerationId(peekingIterator.peek())
+        && scheduleId.equals(getScheduleId(peekingIterator.peek()))) {
       StructuredRow row = peekingIterator.next();
       StoreDefinition.JobQueueStore.RowType rowType = getRowType(row);
       switch (rowType) {

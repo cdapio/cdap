@@ -96,10 +96,10 @@ public final class MetadataMessage {
 
   @Override
   public String toString() {
-    return "MetadataMessage{" +
-        "type=" + type +
-        ", entityId=" + entityId +
-        ", payload=" + payload +
-        '}';
+    return "MetadataMessage{"
+        + "type=" + type
+        + ", entityId=" + entityId
+        + ", payload=" + payload
+        + '}';
   }
 }

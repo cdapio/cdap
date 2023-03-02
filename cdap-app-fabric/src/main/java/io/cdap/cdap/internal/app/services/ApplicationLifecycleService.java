@@ -372,8 +372,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return enforceApplicationDetailAccess(appId,
         ApplicationDetail.fromSpec(appMeta.getSpec(), ownerPrincipal,
             appMeta.getChange(),
-            getSourceControlMeta ?
-                appMeta.getSourceControlMeta() : null));
+            getSourceControlMeta
+                ? appMeta.getSourceControlMeta() : null));
   }
 
   /**
@@ -512,8 +512,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
 
       if (!currentArtifact.getScope().equals(requestedArtifact.getScope())) {
-        throw new InvalidArtifactException("Only artifact version updates are allowed. " +
-            "Cannot change from a non-system artifact to a system artifact or vice versa.");
+        throw new InvalidArtifactException("Only artifact version updates are allowed. "
+            + "Cannot change from a non-system artifact to a system artifact or vice versa.");
       }
 
       // check requested artifact version is valid
@@ -533,8 +533,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Object requestedConfigObj = appRequest.getConfig();
     // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
     // be a user class, otherwise there will be ClassLoader leakage.
-    String requestedConfigStr = requestedConfigObj == null ?
-        currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
+    String requestedConfigStr = requestedConfigObj == null
+        ? currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);
 
     Id.Artifact artifactId = Id.Artifact.fromEntityId(
         Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
@@ -998,8 +998,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta,
         programTerminator,
-        artifactDetail.get(0), ownerPrincipal, updateSchedules == null ?
-            appUpdateSchedules : updateSchedules, isPreview, userProps);
+        artifactDetail.get(0), ownerPrincipal, updateSchedules == null
+            ? appUpdateSchedules : updateSchedules, isPreview, userProps);
   }
 
   /**
@@ -1348,8 +1348,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn(
           "Failed to delete app owner principal for application {} if one existed while deleting the "
-              +
-              "application.", appId);
+
+              + "application.", appId);
     }
 
     try {

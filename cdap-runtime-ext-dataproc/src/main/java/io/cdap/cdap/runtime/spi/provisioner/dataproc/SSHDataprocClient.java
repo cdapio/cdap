@@ -205,8 +205,8 @@ class SSHDataprocClient extends DataprocClient {
           .collect(Collectors.joining(","));
       throw new IllegalArgumentException(String.format(
           "Could not find an ingress firewall rule for network '%s' in project '%s' for ports '%s'. "
-              +
-              "Please create a rule to allow incoming traffic on those ports for your IP range.",
+
+              + "Please create a rule to allow incoming traffic on those ports for your IP range.",
           network.getName(), conf.getNetworkHostProjectID(), portList));
     }
     return tags;

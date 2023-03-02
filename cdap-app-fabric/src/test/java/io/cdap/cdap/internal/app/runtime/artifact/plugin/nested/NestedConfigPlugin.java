@@ -64,8 +64,8 @@ public class NestedConfigPlugin implements Callable<String> {
       }
 
       Config config = (Config) o;
-      return x == config.x &&
-               Objects.equals(nested, config.nested);
+      return x == config.x
+          && Objects.equals(nested, config.nested);
     }
 
     @Override
@@ -98,8 +98,8 @@ public class NestedConfigPlugin implements Callable<String> {
       }
 
       NestedConfig that = (NestedConfig) o;
-      return Objects.equals(nested1, that.nested1) &&
-               Objects.equals(nested2, that.nested2);
+      return Objects.equals(nested1, that.nested1)
+          && Objects.equals(nested2, that.nested2);
     }
 
     @Override

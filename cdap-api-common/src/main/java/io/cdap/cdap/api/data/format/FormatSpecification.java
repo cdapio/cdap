@@ -75,9 +75,9 @@ public final class FormatSpecification {
 
     FormatSpecification that = (FormatSpecification) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(schema, that.schema) &&
-        Objects.equals(settings, that.settings);
+    return Objects.equals(name, that.name)
+        && Objects.equals(schema, that.schema)
+        && Objects.equals(settings, that.settings);
   }
 
   @Override

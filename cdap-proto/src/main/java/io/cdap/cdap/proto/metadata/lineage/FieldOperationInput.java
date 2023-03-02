@@ -80,8 +80,8 @@ public class FieldOperationInput {
       return false;
     }
     FieldOperationInput input = (FieldOperationInput) o;
-    return Objects.equals(endPoint, input.endPoint) &&
-        Objects.equals(fields, input.fields);
+    return Objects.equals(endPoint, input.endPoint)
+        && Objects.equals(fields, input.fields);
   }
 
   @Override

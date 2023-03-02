@@ -83,8 +83,8 @@ public class TransformOperation extends Operation {
       return false;
     }
     TransformOperation that = (TransformOperation) o;
-    return Objects.equals(inputs, that.inputs) &&
-        Objects.equals(outputs, that.outputs);
+    return Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs);
   }
 
   @Override

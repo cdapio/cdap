@@ -54,8 +54,8 @@ public class ConnectionRegistryMacroEvaluator implements MacroEvaluator {
     connectionNames.add(ConnectionId.getConnectionId(args[0]));
 
     throw new InvalidMacroException("The '" + FUNCTION_NAME
-        + "' macro function doesn't support evaluating the connection macro " +
-        "for connection '" + args[0] + "'");
+        + "' macro function doesn't support evaluating the connection macro "
+        + "for connection '" + args[0] + "'");
   }
 
   public Set<String> getUsedConnections() {

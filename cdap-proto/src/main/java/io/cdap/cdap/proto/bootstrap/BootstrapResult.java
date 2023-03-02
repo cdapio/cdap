@@ -55,8 +55,8 @@ public class BootstrapResult {
 
   @Override
   public String toString() {
-    return "BootstrapResult{" +
-        "steps=" + steps +
-        '}';
+    return "BootstrapResult{"
+        + "steps=" + steps
+        + '}';
   }
 }

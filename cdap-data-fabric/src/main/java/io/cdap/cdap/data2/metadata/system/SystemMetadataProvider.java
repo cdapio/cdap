@@ -69,8 +69,8 @@ public interface SystemMetadataProvider {
     );
     if (version != null) {
       properties.put(
-          PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name +
-              MetadataConstants.KEYVALUE_SEPARATOR + type,
+          PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name
+              + MetadataConstants.KEYVALUE_SEPARATOR + type,
           name + MetadataConstants.KEYVALUE_SEPARATOR + version
       );
     }

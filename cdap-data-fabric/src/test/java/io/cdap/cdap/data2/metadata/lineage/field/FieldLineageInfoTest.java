@@ -234,8 +234,8 @@ public class FieldLineageInfoTest {
     try {
       // Create info without invalid origins
       FieldLineageInfo info = new FieldLineageInfo(operations);
-      Assert.fail("Field lineage info creation should fail since operation with name 'invalid' " +
-              "and 'anotherinvalid' do not exist.");
+      Assert.fail("Field lineage info creation should fail since operation with name 'invalid' "
+          + "and 'anotherinvalid' do not exist.");
     } catch (IllegalArgumentException e) {
       String msg = "No operation is associated with the origins '[invalid, anotherinvalid]'.";
       Assert.assertEquals(msg, e.getMessage());

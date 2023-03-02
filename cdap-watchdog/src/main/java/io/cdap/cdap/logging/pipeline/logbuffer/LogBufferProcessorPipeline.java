@@ -258,10 +258,10 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     @Override
     public String toString() {
-      return "MutableLogBufferCheckpoint{" +
-          "offset=" + offset +
-          ", maxEventTs=" + maxEventTs +
-          '}';
+      return "MutableLogBufferCheckpoint{"
+          + "offset=" + offset
+          + ", maxEventTs=" + maxEventTs
+          + '}';
     }
   }
 
@@ -299,10 +299,10 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     @Override
     public String toString() {
-      return "MutableLogBufferFileOffset{" +
-          "fileId=" + fileId +
-          ", filePos=" + filePos +
-          '}';
+      return "MutableLogBufferFileOffset{"
+          + "fileId=" + fileId
+          + ", filePos=" + filePos
+          + '}';
     }
   }
 

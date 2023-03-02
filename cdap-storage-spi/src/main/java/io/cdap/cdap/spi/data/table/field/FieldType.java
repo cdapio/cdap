@@ -102,8 +102,8 @@ public final class FieldType {
       return false;
     }
     FieldType fieldType = (FieldType) o;
-    return Objects.equals(name, fieldType.name) &&
-        type == fieldType.type;
+    return Objects.equals(name, fieldType.name)
+        && type == fieldType.type;
   }
 
   @Override
@@ -114,9 +114,9 @@ public final class FieldType {
 
   @Override
   public String toString() {
-    return "FieldType{" +
-        "name='" + name + '\'' +
-        ", type=" + type +
-        '}';
+    return "FieldType{"
+        + "name='" + name + '\''
+        + ", type=" + type
+        + '}';
   }
 }

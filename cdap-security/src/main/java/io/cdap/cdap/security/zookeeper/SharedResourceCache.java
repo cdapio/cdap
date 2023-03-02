@@ -257,8 +257,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
 
     SharedResourceCache other = (SharedResourceCache) object;
-    return Objects.equals(this.parentZnode, other.parentZnode) &&
-        Objects.equals(this.resources, other.resources);
+    return Objects.equals(this.parentZnode, other.parentZnode)
+        && Objects.equals(this.resources, other.resources);
   }
 
   @Override

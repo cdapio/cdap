@@ -81,9 +81,9 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
       return false;
     }
     ScheduleId that = (ScheduleId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(application, that.application) &&
-        Objects.equals(schedule, that.schedule);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(application, that.application)
+        && Objects.equals(schedule, that.schedule);
   }
 
   @Override

@@ -112,13 +112,13 @@ final class PendingStoreRequest extends StoreRequest {
 
   @Override
   public String toString() {
-    return "PendingStoreRequest{" +
-        "completed=" + completed +
-        ", startTimestamp=" + startTimestamp +
-        ", startSequenceId=" + startSequenceId +
-        ", endTimestamp=" + endTimestamp +
-        ", endSequenceId=" + endSequenceId +
-        ", failureCause=" + failureCause +
-        '}';
+    return "PendingStoreRequest{"
+        + "completed=" + completed
+        + ", startTimestamp=" + startTimestamp
+        + ", startSequenceId=" + startSequenceId
+        + ", endTimestamp=" + endTimestamp
+        + ", endSequenceId=" + endSequenceId
+        + ", failureCause=" + failureCause
+        + '}';
   }
 }

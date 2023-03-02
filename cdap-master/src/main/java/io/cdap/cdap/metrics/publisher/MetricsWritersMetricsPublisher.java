@@ -91,8 +91,8 @@ public class MetricsWritersMetricsPublisher extends AbstractMetricsPublisher {
         //enforce at least one correct initialization
         if (!initStateFile.exists()) {
           throw new RuntimeException(
-              "Initialization for metric writer " + writer.getID() + " failed. Please fix the " +
-                  "errors " + "to proceed.", e);
+              "Initialization for metric writer " + writer.getID() + " failed. Please fix the "
+                  + "errors " + "to proceed.", e);
         } else {
           LOG.error("Initialization for metric writer {} failed. Recheck the configuration.",
               writer.getID(), e);

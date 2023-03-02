@@ -64,10 +64,10 @@ public class FieldOperationInfo {
       return false;
     }
     FieldOperationInfo that = (FieldOperationInfo) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(inputs, that.inputs) &&
-        Objects.equals(outputs, that.outputs);
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs);
   }
 
   @Override

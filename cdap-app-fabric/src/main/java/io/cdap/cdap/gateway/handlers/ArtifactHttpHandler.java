@@ -354,8 +354,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespaceId,
       @PathParam("artifact-name") String artifactName,
       @PathParam("artifact-version") String artifactVersion) throws Exception {
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-        NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)
+        ? NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     Map<String, String> properties;
@@ -363,16 +363,16 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         StandardCharsets.UTF_8)) {
       properties = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
     } catch (JsonSyntaxException e) {
-      throw new BadRequestException("Json Syntax Error while parsing properties from request. " +
-          "Please check that the properties are a json map from string to string.", e);
+      throw new BadRequestException("Json Syntax Error while parsing properties from request. "
+          + "Please check that the properties are a json map from string to string.", e);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read properties from the request.", e);
     }
 
     if (properties == null) {
       throw new BadRequestException(
-          "Missing properties from the request. Please check that the request body " +
-              "is a json map from string to string.");
+          "Missing properties from the request. Please check that the request body "
+              + "is a json map from string to string.");
     }
 
     try {
@@ -393,8 +393,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @PathParam("artifact-name") String artifactName,
       @PathParam("artifact-version") String artifactVersion,
       @PathParam("property") String key) throws Exception {
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-        NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)
+        ? NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     String value = request.content().toString(StandardCharsets.UTF_8);
@@ -443,8 +443,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @PathParam("artifact-name") String artifactName,
       @PathParam("artifact-version") String artifactVersion) throws Exception {
 
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-        NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)
+        ? NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -465,8 +465,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @PathParam("artifact-version") String artifactVersion,
       @PathParam("property") String key) throws Exception {
 
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-        NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)
+        ? NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -558,8 +558,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   @GET
-  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/" +
-      "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/"
+      + "versions/{artifact-version}/extensions/{plugin-type}/plugins/{plugin-name}")
   public void getArtifactPlugin(HttpRequest request, HttpResponder responder,
       @PathParam("namespace-id") String namespaceId,
       @PathParam("artifact-name") String artifactName,
@@ -591,10 +591,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         // should check if the artifact is from SYSTEM namespace, if not, check if it is from the scoped namespace.
         // by default, the scoped namespace is for USER scope
         return (((pluginScope == null && NamespaceId.SYSTEM.equals(input.getParent()))
-            || pluginArtifactNamespace.equals(input.getParent())) &&
-            (pluginArtifactName == null || pluginArtifactName.equals(input.getArtifact())) &&
-            (pluginRange == null || pluginRange.versionIsInRange(
-                new ArtifactVersion(input.getVersion()))));
+            || pluginArtifactNamespace.equals(input.getParent()))
+            && (pluginArtifactName == null || pluginArtifactName.equals(input.getArtifact()))
+            && (pluginRange == null || pluginRange.versionIsInRange(
+            new ArtifactVersion(input.getVersion()))));
       }
     };
 
@@ -733,8 +733,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         @Override
         protected void onFinish(HttpResponder responder, File uploadedFile) {
           try {
-            String version = (artifactVersion == null || artifactVersion.isEmpty()) ?
-                getBundleVersion(uploadedFile) : artifactVersion;
+            String version = (artifactVersion == null || artifactVersion.isEmpty())
+                ? getBundleVersion(uploadedFile) : artifactVersion;
             ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
             // add the artifact to the repo
@@ -771,8 +771,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             if (manifest == null) {
               throw new BadRequestException(
                   "Unable to derive version from artifact because it does not contain a manifest. "
-                      +
-                      "Please package the jar with a manifest, or explicitly specify the artifact version.");
+
+                      + "Please package the jar with a manifest, or explicitly specify the artifact version.");
             }
             Attributes attributes = manifest.getMainAttributes();
             String version =
@@ -780,8 +780,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             if (version == null) {
               throw new BadRequestException(
                   "Unable to derive version from artifact because manifest does not contain Bundle-Version attribute. "
-                      +
-                      "Please include Bundle-Version in the manifest, or explicitly specify the artifact version.");
+
+                      + "Please include Bundle-Version in the manifest, or explicitly specify the artifact version.");
             }
             return version;
           } catch (ZipException e) {
@@ -805,8 +805,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespaceId,
       @PathParam("artifact-name") String artifactName,
       @PathParam("artifact-version") String artifactVersion) throws Exception {
-    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
-        NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
+    NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId)
+        ? NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
     ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -885,8 +885,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         try {
           range = ArtifactRanges.parseArtifactRange(parent);
           // only support extending an artifact that is in the same namespace, or system namespace
-          if (!NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace()) &&
-              !namespace.getNamespace().equals(range.getNamespace())) {
+          if (!NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace())
+              && !namespace.getNamespace().equals(range.getNamespace())) {
             throw new BadRequestException(
                 String.format(
                     "Parent artifact %s must be in the same namespace or a system artifact.",

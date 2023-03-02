@@ -81,8 +81,8 @@ public class WriteOperation extends Operation {
       return false;
     }
     WriteOperation that = (WriteOperation) o;
-    return Objects.equals(inputs, that.inputs) &&
-        Objects.equals(destination, that.destination);
+    return Objects.equals(inputs, that.inputs)
+        && Objects.equals(destination, that.destination);
   }
 
   @Override

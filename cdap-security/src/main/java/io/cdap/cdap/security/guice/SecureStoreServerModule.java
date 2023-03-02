@@ -91,17 +91,17 @@ public class SecureStoreServerModule extends PrivateModule {
       if (SecureStoreUtils.isFileBacked(cConf)) {
         if (Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD))) {
           throw new IllegalArgumentException(
-              "File secure store password is not set. Please set the " +
-                  "\"security.store.file.password\" property in cdap-security.xml.");
+              "File secure store password is not set. Please set the "
+                  + "\"security.store.file.password\" property in cdap-security.xml.");
         }
         return injector.getInstance(FileSecureStoreService.class);
       }
 
       if (SecureStoreUtils.isKMSBacked(cConf)) {
         if (!SecureStoreUtils.isKMSCapable()) {
-          throw new IllegalArgumentException("Could not find classes such as " +
-              "org.apache.hadoop.crypto.key.kms.KMSClientProvider. KMS based secure " +
-              "store is only supported in Apache Hadoop 2.6.0 and above.");
+          throw new IllegalArgumentException("Could not find classes such as "
+              + "org.apache.hadoop.crypto.key.kms.KMSClientProvider. KMS based secure "
+              + "store is only supported in Apache Hadoop 2.6.0 and above.");
         }
         return injector.getInstance(SecureStoreUtils.getKMSSecureStore());
       }

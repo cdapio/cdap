@@ -70,9 +70,9 @@ public class ArtifactSelectorConfig {
 
     ArtifactSelectorConfig that = (ArtifactSelectorConfig) o;
 
-    return Objects.equals(scope, that.scope) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(version, that.version);
+    return Objects.equals(scope, that.scope)
+        && Objects.equals(name, that.name)
+        && Objects.equals(version, that.version);
   }
 
   @Override
@@ -82,10 +82,10 @@ public class ArtifactSelectorConfig {
 
   @Override
   public String toString() {
-    return "ArtifactSelectorConfig{" +
-        "scope='" + scope + '\'' +
-        ", name='" + name + '\'' +
-        ", version='" + version + '\'' +
-        '}';
+    return "ArtifactSelectorConfig{"
+        + "scope='" + scope + '\''
+        + ", name='" + name + '\''
+        + ", version='" + version + '\''
+        + '}';
   }
 }

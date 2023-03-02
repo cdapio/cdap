@@ -98,17 +98,17 @@ public class MetadataDocument {
       return false;
     }
     MetadataDocument that = (MetadataDocument) o;
-    return hidden == that.hidden &&
-        Objects.equals(entity, that.entity) &&
-        Objects.equals(metadata, that.metadata) &&
-        Objects.equals(namespace, that.namespace) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(created, that.created) &&
-        Objects.equals(ttl, that.ttl) &&
-        Objects.equals(user, that.user) &&
-        Objects.equals(system, that.system) &&
-        Objects.equals(props, that.props);
+    return hidden == that.hidden
+        && Objects.equals(entity, that.entity)
+        && Objects.equals(metadata, that.metadata)
+        && Objects.equals(namespace, that.namespace)
+        && Objects.equals(type, that.type)
+        && Objects.equals(name, that.name)
+        && Objects.equals(created, that.created)
+        && Objects.equals(ttl, that.ttl)
+        && Objects.equals(user, that.user)
+        && Objects.equals(system, that.system)
+        && Objects.equals(props, that.props);
   }
 
   @Override
@@ -119,19 +119,19 @@ public class MetadataDocument {
 
   @Override
   public String toString() {
-    return "MetadataDocument{" +
-        "entity=" + entity +
-        ", metadata=" + metadata +
-        ", namespace='" + namespace + '\'' +
-        ", type='" + type + '\'' +
-        ", name='" + name + '\'' +
-        ", created=" + created +
-        ", ttl=" + ttl +
-        ", hidden=" + hidden +
-        ", user='" + user + '\'' +
-        ", system='" + system + '\'' +
-        ", props=" + props +
-        '}';
+    return "MetadataDocument{"
+        + "entity=" + entity
+        + ", metadata=" + metadata
+        + ", namespace='" + namespace + '\''
+        + ", type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", created=" + created
+        + ", ttl=" + ttl
+        + ", hidden=" + hidden
+        + ", user='" + user + '\''
+        + ", system='" + system + '\''
+        + ", props=" + props
+        + '}';
   }
 
   /**
@@ -158,9 +158,9 @@ public class MetadataDocument {
         return false;
       }
       Property property = (Property) o;
-      return Objects.equals(scope, property.scope) &&
-          Objects.equals(name, property.name) &&
-          Objects.equals(value, property.value);
+      return Objects.equals(scope, property.scope)
+          && Objects.equals(name, property.name)
+          && Objects.equals(value, property.value);
     }
 
     @Override

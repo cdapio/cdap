@@ -132,10 +132,10 @@ public class EndPoint {
 
   @Override
   public String toString() {
-    return "EndPoint{" +
-        "namespace='" + namespace + '\'' +
-        ", name='" + name + '\'' +
-        ", properties='" + properties + '\'' +
-        '}';
+    return "EndPoint{"
+        + "namespace='" + namespace + '\''
+        + ", name='" + name + '\''
+        + ", properties='" + properties + '\''
+        + '}';
   }
 }

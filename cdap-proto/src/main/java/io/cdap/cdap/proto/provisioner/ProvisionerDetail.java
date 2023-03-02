@@ -72,13 +72,13 @@ public class ProvisionerDetail {
     }
     ProvisionerDetail that = (ProvisionerDetail) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(label, that.label) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(configurationGroups, that.configurationGroups) &&
-        Objects.equals(filters, that.filters) &&
-        Objects.equals(icon, that.icon) &&
-        Objects.equals(beta, that.beta);
+    return Objects.equals(name, that.name)
+        && Objects.equals(label, that.label)
+        && Objects.equals(description, that.description)
+        && Objects.equals(configurationGroups, that.configurationGroups)
+        && Objects.equals(filters, that.filters)
+        && Objects.equals(icon, that.icon)
+        && Objects.equals(beta, that.beta);
   }
 
   @Override

@@ -82,12 +82,12 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
 
   @Override
   public String toString() {
-    return "ArtifactDescriptor{" +
-        " artifactId=" + artifactId +
-        ", namespace=" + namespace +
-        ", locationURI=" + locationURI +
-        ", location=" + location +
-        '}';
+    return "ArtifactDescriptor{"
+        + " artifactId=" + artifactId
+        + ", namespace=" + namespace
+        + ", locationURI=" + locationURI
+        + ", location=" + location
+        + '}';
   }
 
   @Override

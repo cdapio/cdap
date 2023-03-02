@@ -163,13 +163,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       String configuredPrincipal = metadata.getConfig().getPrincipal();
       String configuredKeytabURI = metadata.getConfig().getKeytabURI();
       if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(
-          configuredKeytabURI)) ||
-          (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(
-              configuredKeytabURI))) {
+          configuredKeytabURI))
+          || (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(
+          configuredKeytabURI))) {
         throw new BadRequestException(
             String.format(
-                "Either both or none of the following two configurations must be configured. " +
-                    "Configured principal: %s, Configured keytabURI: %s",
+                "Either both or none of the following two configurations must be configured. "
+                    + "Configured principal: %s, Configured keytabURI: %s",
                 configuredPrincipal, configuredKeytabURI));
       }
       hasValidKerberosConf = true;
@@ -224,20 +224,20 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     for (NamespaceMeta existingNamespaceMeta : list()) {
       NamespaceConfig existingConfig = existingNamespaceMeta.getConfig();
       // if hbase namespace is provided validate no other existing namespace is mapped to it
-      if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
-          metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace())
+          && metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
         throw new BadRequestException(
-            String.format("A namespace '%s' already exists with the given " +
-                    "namespace mapping for hbase namespace '%s'",
+            String.format("A namespace '%s' already exists with the given "
+                    + "namespace mapping for hbase namespace '%s'",
                 existingNamespaceMeta.getName(),
                 existingConfig.getHbaseNamespace()));
       }
       // if hive database is provided validate no other existing namespace is mapped to it
-      if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
-          metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
+      if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase())
+          && metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
         throw new BadRequestException(
-            String.format("A namespace '%s' already exists with the given " +
-                    "namespace mapping for hive database '%s'",
+            String.format("A namespace '%s' already exists with the given "
+                    + "namespace mapping for hive database '%s'",
                 existingNamespaceMeta.getName(),
                 existingConfig.getHiveDatabase()));
       }
@@ -248,10 +248,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // location or vice versa.
         if (hasSubDirRelationship(existingConfig.getRootDirectory(),
             metadata.getConfig().getRootDirectory())) {
-          throw new BadRequestException(String.format("Failed to create namespace %s with custom " +
-                  "location %s. A namespace '%s' already exists " +
-                  "with location '%s' and these two locations are " +
-                  "have a subdirectory relationship.",
+          throw new BadRequestException(String.format("Failed to create namespace %s with custom "
+                  + "location %s. A namespace '%s' already exists "
+                  + "with location '%s' and these two locations are "
+                  + "have a subdirectory relationship.",
               metadata.getName(),
               metadata.getConfig().getRootDirectory(),
               existingNamespaceMeta.getName(),
@@ -263,15 +263,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   private boolean hasSubDirRelationship(@Nullable String existingDir, String newDir) {
     // only check for subdir if the existing namespace dir is custom mapped in which case this will not be null
-    return !Strings.isNullOrEmpty(existingDir) &&
-        (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
+    return !Strings.isNullOrEmpty(existingDir)
+        && (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
   }
 
   private boolean hasCustomMapping(NamespaceMeta metadata) {
     NamespaceConfig config = metadata.getConfig();
     return !(Strings.isNullOrEmpty(config.getRootDirectory()) && Strings.isNullOrEmpty(
-        config.getHbaseNamespace()) &&
-        Strings.isNullOrEmpty(config.getHiveDatabase()));
+        config.getHbaseNamespace())
+        && Strings.isNullOrEmpty(config.getHiveDatabase()));
   }
 
   private void validatePath(String namespace, String rootDir) throws IOException {
@@ -301,17 +301,17 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-          String.format("Some programs are currently running in namespace " +
-                  "'%s', please stop them before deleting namespace",
+          String.format("Some programs are currently running in namespace "
+                  + "'%s', please stop them before deleting namespace",
               namespaceId));
     }
 
     List<String> tetheredPeers = getTetheredPeersUsingNamespace(namespaceId);
     if (!tetheredPeers.isEmpty()) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-          String.format("Namespace '%s' is used in tethering connections " +
-                  "with peers: %s. Delete tethering connections " +
-                  "before deleting the namespace",
+          String.format("Namespace '%s' is used in tethering connections "
+                  + "with peers: %s. Delete tethering connections "
+                  + "before deleting the namespace",
               namespaceId,
               tetheredPeers));
     }
@@ -357,9 +357,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-          String.format("Some programs are currently running in namespace " +
-                  "'%s', please stop them before deleting datasets " +
-                  "in the namespace.",
+          String.format("Some programs are currently running in namespace "
+                  + "'%s', please stop them before deleting datasets "
+                  + "in the namespace.",
               namespaceId));
     }
     try {
@@ -418,8 +418,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     Set<String> difference = existingMeta.getConfig().getDifference(config);
     if (!difference.isEmpty()) {
       throw new BadRequestException(
-          String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
-              "is created.", difference, namespaceId));
+          String.format("Mappings %s for namespace %s cannot be updated once the namespace "
+              + "is created.", difference, namespaceId));
     }
     NamespaceMeta updatedMeta = builder.build();
     nsStore.update(updatedMeta);
@@ -473,8 +473,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     } catch (Exception e) {
       if (lastUnauthorizedException == null) {
         Throwable cause = e.getCause();
-        if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
-            cause instanceof UnauthorizedException) {
+        if (cause instanceof NamespaceNotFoundException || cause instanceof IOException
+            || cause instanceof UnauthorizedException) {
           throw (Exception) cause;
         }
         throw e;

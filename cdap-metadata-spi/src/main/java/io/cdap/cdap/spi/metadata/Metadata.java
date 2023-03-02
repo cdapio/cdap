@@ -130,8 +130,8 @@ public final class Metadata {
       return false;
     }
     Metadata metadata = (Metadata) o;
-    return Objects.equals(tags, metadata.tags) &&
-        Objects.equals(properties, metadata.properties);
+    return Objects.equals(tags, metadata.tags)
+        && Objects.equals(properties, metadata.properties);
   }
 
   @Override
@@ -141,9 +141,9 @@ public final class Metadata {
 
   @Override
   public String toString() {
-    return "Metadata{" +
-        "tags=" + tags +
-        ", properties=" + properties +
-        '}';
+    return "Metadata{"
+        + "tags=" + tags
+        + ", properties=" + properties
+        + '}';
   }
 }

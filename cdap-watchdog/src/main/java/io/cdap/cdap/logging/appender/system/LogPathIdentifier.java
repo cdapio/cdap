@@ -97,9 +97,9 @@ public class LogPathIdentifier {
       return false;
     }
     LogPathIdentifier that = (LogPathIdentifier) o;
-    return Objects.equals(namespaceId, that.namespaceId) &&
-        Objects.equals(pathId1, that.pathId1) &&
-        Objects.equals(pathId2, that.pathId2);
+    return Objects.equals(namespaceId, that.namespaceId)
+        && Objects.equals(pathId1, that.pathId1)
+        && Objects.equals(pathId2, that.pathId2);
   }
 
   @Override

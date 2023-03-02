@@ -164,8 +164,8 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
         ProgramStateWriter programStateWriter) {
       super(runner, programStateWriter);
       if (!(runner instanceof ProgramControllerCreator)) {
-        throw new IllegalArgumentException("ProgramRunner " + runner +
-            " does not implement " + ProgramControllerCreator.class);
+        throw new IllegalArgumentException("ProgramRunner " + runner
+            + " does not implement " + ProgramControllerCreator.class);
       }
       this.controllerCreator = (ProgramControllerCreator) runner;
     }

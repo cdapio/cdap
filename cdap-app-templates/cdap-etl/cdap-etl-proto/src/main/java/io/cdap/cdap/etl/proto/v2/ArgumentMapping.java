@@ -68,10 +68,10 @@ public class ArgumentMapping {
 
   @Override
   public String toString() {
-    return "ArgumentMapping{" +
-        "source='" + getSource() + '\'' +
-        ", target='" + getTarget() + '\'' +
-        ", triggeringPipelineId='" + getTriggeringPipelineId() + '\'' +
-        '}';
+    return "ArgumentMapping{"
+        + "source='" + getSource() + '\''
+        + ", target='" + getTarget() + '\''
+        + ", triggeringPipelineId='" + getTriggeringPipelineId() + '\''
+        + '}';
   }
 }

@@ -69,9 +69,9 @@ public class Capabilities {
 
   @Override
   public String toString() {
-    return "Capabilities{" +
-        "datasetTypes=" + datasetTypes +
-        '}';
+    return "Capabilities{"
+        + "datasetTypes=" + datasetTypes
+        + '}';
   }
 
   public boolean isEmpty() {

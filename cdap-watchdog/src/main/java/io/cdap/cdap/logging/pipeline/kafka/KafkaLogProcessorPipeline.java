@@ -123,8 +123,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       Checkpoint<KafkaOffset> checkpoint = entry.getValue();
       KafkaOffset kafkaOffset = checkpoint.getOffset();
       // Skip the partition that doesn't have previous checkpoint.
-      if (kafkaOffset.getNextOffset() >= 0 && kafkaOffset.getNextEventTime() >= 0 &&
-          checkpoint.getMaxEventTime() >= 0) {
+      if (kafkaOffset.getNextOffset() >= 0 && kafkaOffset.getNextEventTime() >= 0
+          && checkpoint.getMaxEventTime() >= 0) {
         checkpoints.put(entry.getKey(), new MutableCheckpoint(checkpoint));
       }
     }
@@ -558,10 +558,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     @Override
     public String toString() {
-      return "MutableCheckpoint{" +
-          "offset=" + offset +
-          ", maxEventTime=" + maxEventTime +
-          '}';
+      return "MutableCheckpoint{"
+          + "offset=" + offset
+          + ", maxEventTime=" + maxEventTime
+          + '}';
     }
   }
 
@@ -605,10 +605,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     @Override
     public String toString() {
-      return "MutableKafkaOffset{" +
-          "nextOffset=" + nextOffset +
-          ", nextEventTime=" + nextEventTime +
-          '}';
+      return "MutableKafkaOffset{"
+          + "nextOffset=" + nextOffset
+          + ", nextEventTime=" + nextEventTime
+          + '}';
     }
   }
 

@@ -301,14 +301,14 @@ public class AppMetadataStore {
 
     if (request.getScanFrom() != null) {
       startBound = Range.Bound.EXCLUSIVE;
-      startFields = sortCreationTime ?
-          getApplicationNamespaceAppCreationKeys(request.getScanFrom()) :
+      startFields = sortCreationTime
+          ? getApplicationNamespaceAppCreationKeys(request.getScanFrom()) :
           getApplicationPrimaryKeys(request.getScanFrom());
     }
     if (request.getScanTo() != null) {
       endBound = Range.Bound.EXCLUSIVE;
-      endFields = sortCreationTime ?
-          getApplicationNamespaceAppCreationKeys(request.getScanTo()) :
+      endFields = sortCreationTime
+          ? getApplicationNamespaceAppCreationKeys(request.getScanTo()) :
           getApplicationPrimaryKeys(request.getScanTo());
     }
 
@@ -603,8 +603,8 @@ public class AppMetadataStore {
     String latestVersion = latest == null ? null : latest.getSpec().getAppVersion();
     if (!deployAppAllowed(parentVersion, latest)) {
       throw new ConflictException(
-          String.format("Cannot deploy the application because parent version '%s' does not " +
-              "match the latest version '%s'.", parentVersion, latestVersion));
+          String.format("Cannot deploy the application because parent version '%s' does not "
+              + "match the latest version '%s'.", parentVersion, latestVersion));
     }
     // When the app does not exist, it is not an edit
     if (latest != null) {
@@ -811,8 +811,8 @@ public class AppMetadataStore {
     if (startTs == -1L) {
       LOG.error(
           "Ignoring unexpected request to record provisioning state for program run {} that does not have "
-              +
-              "a timestamp in the run id.", programRunId);
+
+              + "a timestamp in the run id.", programRunId);
       return null;
     }
 
@@ -1063,8 +1063,8 @@ public class AppMetadataStore {
     if (startTs == -1L) {
       LOG.error(
           "Ignoring unexpected request to record provisioning state for program run {} that does not have "
-              +
-              "a timestamp in the run id.", programRunId);
+
+              + "a timestamp in the run id.", programRunId);
       return null;
     }
 
@@ -1438,8 +1438,8 @@ public class AppMetadataStore {
     byte[] existingSourceId = existing.getSourceId();
     if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) < 0) {
       LOG.debug(
-          "Current source id '{}' is not larger than the existing source id '{}' in the existing " +
-              "run record meta '{}'. Skip recording state transition to program state {} and cluster state {}.",
+          "Current source id '{}' is not larger than the existing source id '{}' in the existing "
+              + "run record meta '{}'. Skip recording state transition to program state {} and cluster state {}.",
           Bytes.toHexString(sourceId), Bytes.toHexString(existingSourceId), existing,
           nextProgramState, nextClusterState);
       return false;
@@ -2213,8 +2213,8 @@ public class AppMetadataStore {
                 row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD))
             .getProgramReference();
         // calculate total run counts for programs across versions
-        result.put(programRef, result.get(programRef) +
-            Optional.ofNullable(row.getLong(StoreDefinition.AppMetadataStore.COUNTS)).orElse(0L));
+        result.put(programRef, result.get(programRef)
+            + Optional.ofNullable(row.getLong(StoreDefinition.AppMetadataStore.COUNTS)).orElse(0L));
       }
     }
     return result;
@@ -2265,8 +2265,8 @@ public class AppMetadataStore {
       long endTimeInSecs) throws IOException {
     // Create time filter to get running programs between start and end time
     Predicate<RunRecordDetail> timeFilter = (runRecordMeta) ->
-        runRecordMeta.getStartTs() < endTimeInSecs &&
-            (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
+        runRecordMeta.getStartTs() < endTimeInSecs
+            && (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
 
     List<Field<?>> prefix = getRunRecordStatusPrefix(statusKey);
     Set<RunId> runIds = new HashSet<>();

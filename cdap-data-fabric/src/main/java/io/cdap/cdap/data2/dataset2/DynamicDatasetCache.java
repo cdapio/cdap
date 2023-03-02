@@ -366,9 +366,9 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
 
       // Omit accessType here since we don't have to request a another dataset instance just because
       // of the different accessType. Same for the hashCode() method
-      return Objects.equal(this.namespace, that.namespace) &&
-          Objects.equal(this.name, that.name) &&
-          Objects.equal(this.arguments, that.arguments);
+      return Objects.equal(this.namespace, that.namespace)
+          && Objects.equal(this.name, that.name)
+          && Objects.equal(this.arguments, that.arguments);
     }
 
     @Override

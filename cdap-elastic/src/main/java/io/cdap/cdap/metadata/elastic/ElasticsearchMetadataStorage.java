@@ -399,19 +399,19 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (maxResultWindow != null) {
       indexSettings.put(SETTING_MAX_RESULT_WINDOW, Integer.parseInt(maxResultWindow));
     }
-    return ("{" +
-        (indexSettings.isEmpty() ? "" : "'index': " + GSON.toJson(indexSettings) + ",") +
-        "  'analysis': {" +
-        "    'analyzer': {" +
-        "      'text_analyzer': {" +
-        "        'type': 'pattern'," +
-        "        'pattern': '[-_,;.\\\\s]+'," +
-        // this reflects the tokenization performed by MetadataDataset
-        "        'lowercase': true" +
-        "      }" +
-        "    }" +
-        "  }" +
-        "}").replace('\'', '"');
+    return ("{"
+        + (indexSettings.isEmpty() ? "" : "'index': " + GSON.toJson(indexSettings) + ",")
+        + "  'analysis': {"
+        + "    'analyzer': {"
+        + "      'text_analyzer': {"
+        + "        'type': 'pattern',"
+        + "        'pattern': '[-_,;.\\\\s]+',"
+        + // this reflects the tokenization performed by MetadataDataset
+        "        'lowercase': true"
+        + "      }"
+        + "    }"
+        + "  }"
+        + "}").replace('\'', '"');
   }
 
   @Override
@@ -1257,8 +1257,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     for (MetadataEntity.KeyValue kv : entity) {
       // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
       // if it is a versioned entity then ignore the version
-      if (MetadataUtil.isVersionedEntityType(entity.getType()) &&
-          MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
+      if (MetadataUtil.isVersionedEntityType(entity.getType())
+          && MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
         continue;
       }
       builder.append(sep).append(kv.getKey()).append('=').append(kv.getValue());

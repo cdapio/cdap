@@ -96,8 +96,8 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
             publishSizeLimit);
         isLineageWarningLogged = true;
       }
-      LOG.trace("Size of lineage message is {} bytes, which is larger than the limit {}.\n" +
-          "Therefore the lineage will not be published.", lineageSize, publishSizeLimit);
+      LOG.trace("Size of lineage message is {} bytes, which is larger than the limit {}.\n"
+          + "Therefore the lineage will not be published.", lineageSize, publishSizeLimit);
     } else {
       StoreRequest request = StoreRequestBuilder.of(topic).addPayload(messageJson).build();
       try {
@@ -107,8 +107,8 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
         LOG.trace("Failed to publish metadata message: {}", message);
         ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
         throw new RuntimeException(
-            String.format("Failed to publish metadata message of type '%s' for program " +
-                "run '%s'.", message.getType(), programRunId), e);
+            String.format("Failed to publish metadata message of type '%s' for program "
+                + "run '%s'.", message.getType(), programRunId), e);
       }
     }
   }

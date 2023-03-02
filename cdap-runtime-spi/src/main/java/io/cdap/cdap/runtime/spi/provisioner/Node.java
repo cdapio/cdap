@@ -71,11 +71,11 @@ public class Node {
       return false;
     }
     Node node = (Node) o;
-    return createTime == node.createTime &&
-        Objects.equals(id, node.id) &&
-        type == node.type &&
-        Objects.equals(ipAddress, node.ipAddress) &&
-        Objects.equals(properties, node.properties);
+    return createTime == node.createTime
+        && Objects.equals(id, node.id)
+        && type == node.type
+        && Objects.equals(ipAddress, node.ipAddress)
+        && Objects.equals(properties, node.properties);
   }
 
   @Override
@@ -85,13 +85,13 @@ public class Node {
 
   @Override
   public String toString() {
-    return "Node{" +
-        "id='" + id + '\'' +
-        ", type='" + type + '\'' +
-        ", ipAddress='" + ipAddress + '\'' +
-        ", createTime=" + createTime +
-        ", properties=" + properties +
-        '}';
+    return "Node{"
+        + "id='" + id + '\''
+        + ", type='" + type + '\''
+        + ", ipAddress='" + ipAddress + '\''
+        + ", createTime=" + createTime
+        + ", properties=" + properties
+        + '}';
   }
 
   /**

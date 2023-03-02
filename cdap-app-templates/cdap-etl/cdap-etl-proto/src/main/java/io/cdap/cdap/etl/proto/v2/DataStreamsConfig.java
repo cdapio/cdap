@@ -90,14 +90,14 @@ public final class DataStreamsConfig extends ETLConfig {
 
   @Override
   public String toString() {
-    return "DataStreamsConfig{" +
-        "batchInterval='" + batchInterval + '\'' +
-        ", extraJavaOpts='" + extraJavaOpts + '\'' +
-        ", disableCheckpoints=" + disableCheckpoints +
-        ", checkpointDir='" + checkpointDir + '\'' +
-        ", stopGracefully=" + stopGracefully +
-        ", isUnitTest=" + isUnitTest +
-        "} " + super.toString();
+    return "DataStreamsConfig{"
+        + "batchInterval='" + batchInterval + '\''
+        + ", extraJavaOpts='" + extraJavaOpts + '\''
+        + ", disableCheckpoints=" + disableCheckpoints
+        + ", checkpointDir='" + checkpointDir + '\''
+        + ", stopGracefully=" + stopGracefully
+        + ", isUnitTest=" + isUnitTest
+        + "} " + super.toString();
   }
 
   @Override
@@ -114,11 +114,11 @@ public final class DataStreamsConfig extends ETLConfig {
 
     DataStreamsConfig that = (DataStreamsConfig) o;
 
-    return Objects.equals(batchInterval, that.batchInterval) &&
-        Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
-        Objects.equals(disableCheckpoints, that.disableCheckpoints) &&
-        Objects.equals(checkpointDir, that.checkpointDir) &&
-        Objects.equals(stopGracefully, that.stopGracefully);
+    return Objects.equals(batchInterval, that.batchInterval)
+        && Objects.equals(extraJavaOpts, that.extraJavaOpts)
+        && Objects.equals(disableCheckpoints, that.disableCheckpoints)
+        && Objects.equals(checkpointDir, that.checkpointDir)
+        && Objects.equals(stopGracefully, that.stopGracefully);
   }
 
   @Override

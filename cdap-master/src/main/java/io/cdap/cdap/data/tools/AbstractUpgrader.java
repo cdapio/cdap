@@ -71,8 +71,8 @@ public abstract class AbstractUpgrader {
     } else {
       LOG.debug(
           "Failed to perform rename. Either the new location {} already exists or old location {} "
-              +
-              "does not exist.", newLocation, oldLocation);
+
+              + "does not exist.", newLocation, oldLocation);
       return null;
     }
   }

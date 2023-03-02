@@ -261,8 +261,8 @@ public class LocalLogAppender extends LogAppender {
       try {
         logger.callAppenders(event);
       } catch (Throwable t) {
-        addError("Exception raised when appending to logger " + logger.getName() +
-            " with message " + event.getFormattedMessage(), t);
+        addError("Exception raised when appending to logger " + logger.getName()
+            + " with message " + event.getFormattedMessage(), t);
       }
     }
 

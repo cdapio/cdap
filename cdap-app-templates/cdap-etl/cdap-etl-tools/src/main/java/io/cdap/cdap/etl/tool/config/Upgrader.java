@@ -61,9 +61,9 @@ public class Upgrader {
         new ClientUpgradeContext(namespaceClient, artifactClient, DATA_PIPELINE_NAME, newVersion);
     this.dataStreamsContext = new ClientUpgradeContext(namespaceClient, artifactClient,
         DATA_STREAMS_NAME, newVersion);
-    this.upgradeRange = downgrade ?
-        new ArtifactVersionRange(new ArtifactVersion(newVersion), includeCurrentVersion,
-            new ArtifactVersion(ETLVersion.getVersion()), true) :
+    this.upgradeRange = downgrade
+        ? new ArtifactVersionRange(new ArtifactVersion(newVersion), includeCurrentVersion,
+        new ArtifactVersion(ETLVersion.getVersion()), true) :
         new ArtifactVersionRange(LOWEST_VERSION, true, new ArtifactVersion(newVersion),
             includeCurrentVersion);
     this.newVersion = newVersion;

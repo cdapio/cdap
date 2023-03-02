@@ -94,8 +94,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     // invalidate twill and launcher jar cache.
     if (Files.exists(DataprocUtils.CACHE_DIR_PATH)) {
       DataprocUtils.deleteDirectoryWithRetries(DataprocUtils.CACHE_DIR_PATH.toFile(),
-          "Unable to delete local cache directory %s for " +
-              "twill.jar and launcher.jar");
+          "Unable to delete local cache directory %s for "
+              + "twill.jar and launcher.jar");
     }
   }
 

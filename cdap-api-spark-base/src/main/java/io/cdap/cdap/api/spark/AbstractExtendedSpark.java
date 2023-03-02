@@ -35,8 +35,8 @@ public abstract class AbstractExtendedSpark extends AbstractSpark {
     if (!(configurer instanceof ExtendedSparkConfigurer)) {
       // This shouldn't happen, unless there is bug in app-fabric
       throw new IllegalStateException(
-        "Expected the configurer is an instance of " + ExtendedSparkConfigurer.class.getName() +
-          ", but get " + configurer.getClass().getName() + " instead.");
+        "Expected the configurer is an instance of " + ExtendedSparkConfigurer.class.getName()
+          + ", but get " + configurer.getClass().getName() + " instead.");
     }
     return (ExtendedSparkConfigurer) configurer;
   }

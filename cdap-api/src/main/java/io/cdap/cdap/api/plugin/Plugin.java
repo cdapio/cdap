@@ -108,11 +108,11 @@ public final class Plugin {
 
   @Override
   public String toString() {
-    return "Plugin{" +
-        "parents=" + getParents() +
-        ", artifactId=" + artifactId +
-        ", pluginClass=" + pluginClass +
-        ", properties=" + properties +
-        '}';
+    return "Plugin{"
+        + "parents=" + getParents()
+        + ", artifactId=" + artifactId
+        + ", pluginClass=" + pluginClass
+        + ", properties=" + properties
+        + '}';
   }
 }

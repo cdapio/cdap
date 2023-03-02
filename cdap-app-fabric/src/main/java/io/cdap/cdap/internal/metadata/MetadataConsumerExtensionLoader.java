@@ -62,8 +62,8 @@ public class MetadataConsumerExtensionLoader extends
           MetadataConsumer.class.getClassLoader(),
           MetadataConsumer.class);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to trace dependencies for metadata consumer extension. " +
-          "Usage of metadata consumer might fail.", e);
+      throw new RuntimeException("Failed to trace dependencies for metadata consumer extension. "
+          + "Usage of metadata consumer might fail.", e);
     }
   }
 

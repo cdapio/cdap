@@ -71,11 +71,12 @@ public class RouterMain extends DaemonMain {
 
       if (cConf.getBoolean(Constants.Security.ENABLED)) {
         int foundPaths = RouterAuditLookUp.getInstance().getNumberOfPaths();
-        if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_PATH_CHECK_ENABLED) &&
-            foundPaths != ExpectedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER) {
+        if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_PATH_CHECK_ENABLED)
+            && foundPaths != ExpectedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER) {
           LOG.error(
-              "Failed to start the router due to the incorrect number of paths with AuditPolicy. " +
-                  "Expected: {}, found: {}", ExpectedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER,
+              "Failed to start the router due to the incorrect number of paths with AuditPolicy. "
+                  + "Expected: {}, found: {}",
+              ExpectedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER,
               foundPaths);
           System.exit(1);
         }
@@ -104,10 +105,10 @@ public class RouterMain extends DaemonMain {
     io.cdap.cdap.common.service.Services.startAndWait(zkClientService,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
         TimeUnit.MILLISECONDS,
-        String.format("Connection timed out while trying to start " +
-                "ZooKeeper client. Please verify that the " +
-                "ZooKeeper quorum settings are correct in " +
-                "cdap-site.xml. Currently configured as: %s",
+        String.format("Connection timed out while trying to start "
+                + "ZooKeeper client. Please verify that the "
+                + "ZooKeeper quorum settings are correct in "
+                + "cdap-site.xml. Currently configured as: %s",
             zkClientService.getConnectString()));
     router.startAndWait();
     LOG.info("Router started.");

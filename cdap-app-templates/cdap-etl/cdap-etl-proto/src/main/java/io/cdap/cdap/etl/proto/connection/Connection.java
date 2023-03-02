@@ -102,13 +102,13 @@ public class Connection {
     }
 
     Connection that = (Connection) o;
-    return preConfigured == that.preConfigured &&
-        isDefault == that.isDefault &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(connectionId, that.connectionId) &&
-        Objects.equals(connectionType, that.connectionType) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(plugin, that.plugin);
+    return preConfigured == that.preConfigured
+        && isDefault == that.isDefault
+        && Objects.equals(name, that.name)
+        && Objects.equals(connectionId, that.connectionId)
+        && Objects.equals(connectionType, that.connectionType)
+        && Objects.equals(description, that.description)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override

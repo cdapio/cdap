@@ -413,9 +413,9 @@ public final class DataprocUtils {
         // Blob can be null when we set temporary hold to false as we don't need to check pre-existing custom time.
         // When setting to true, we'll check if custom time was recently set in which case we'll skip this operation.
         assert temporaryHold == (blob != null);
-        if (!temporaryHold || blob.getCustomTime() == null ||
-            blob.getTemporaryHold() == null || !blob.getTemporaryHold().booleanValue() ||
-            blob.getCustomTime() + jitter < System.currentTimeMillis()) {
+        if (!temporaryHold || blob.getCustomTime() == null
+            || blob.getTemporaryHold() == null || !blob.getTemporaryHold().booleanValue()
+            || blob.getCustomTime() + jitter < System.currentTimeMillis()) {
           BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
               .setCustomTime(System.currentTimeMillis())
               .setTemporaryHold(temporaryHold)

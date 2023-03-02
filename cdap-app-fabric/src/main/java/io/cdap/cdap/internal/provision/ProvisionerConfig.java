@@ -72,9 +72,9 @@ public class ProvisionerConfig {
     }
     ProvisionerConfig that = (ProvisionerConfig) o;
 
-    return Objects.equals(configurationGroups, that.configurationGroups) &&
-        Objects.equals(filters, that.filters) &&
-        Objects.equals(beta, that.beta);
+    return Objects.equals(configurationGroups, that.configurationGroups)
+        && Objects.equals(filters, that.filters)
+        && Objects.equals(beta, that.beta);
   }
 
   @Override

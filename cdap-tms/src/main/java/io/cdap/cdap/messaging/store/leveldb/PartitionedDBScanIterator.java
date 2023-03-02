@@ -45,8 +45,8 @@ public class PartitionedDBScanIterator<T> extends AbstractCloseableIterator<T> {
     this.stopRow = stopRow;
     this.decodeFunction = decodeFunction;
     this.closed = false;
-    this.currentPartition = partitionIter.hasNext() ?
-        new DBScanIterator(partitionIter.next().getLevelDB(), startRow, stopRow)
+    this.currentPartition = partitionIter.hasNext()
+        ? new DBScanIterator(partitionIter.next().getLevelDB(), startRow, stopRow)
         : CloseableIterator.empty();
   }
 

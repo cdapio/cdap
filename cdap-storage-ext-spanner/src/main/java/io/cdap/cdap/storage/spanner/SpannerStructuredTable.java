@@ -115,8 +115,8 @@ public class SpannerStructuredTable implements StructuredTable {
 
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-          String.format("Given fields %s do not contain all the " +
-              "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s do not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
 
     String sql = "UPDATE " + escapeName(schema.getTableId().getName())

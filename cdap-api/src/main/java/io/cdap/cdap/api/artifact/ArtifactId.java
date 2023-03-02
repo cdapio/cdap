@@ -64,11 +64,11 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   @Override
   public String toString() {
-    return "ArtifactId{" +
-        "name='" + name + '\'' +
-        ", version=" + version +
-        ", scope='" + scope + '\'' +
-        '}';
+    return "ArtifactId{"
+        + "name='" + name + '\''
+        + ", version=" + version
+        + ", scope='" + scope + '\''
+        + '}';
   }
 
   @Override
@@ -81,9 +81,9 @@ public final class ArtifactId implements Comparable<ArtifactId> {
     }
 
     ArtifactId that = (ArtifactId) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(version, that.version) &&
-        Objects.equals(scope, that.scope);
+    return Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(scope, that.scope);
   }
 
   @Override

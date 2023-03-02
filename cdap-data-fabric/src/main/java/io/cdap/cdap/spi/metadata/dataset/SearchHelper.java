@@ -268,12 +268,12 @@ public class SearchHelper {
         // a full index search should not be done in production.
         LOG.warn(
             "Attempt to search through all indexes. This query can have an adverse effect on performance and is "
-                +
-                "not recommended for production use. It is only meant to be used for administrative purposes "
-                +
-                "such as upgrade. To improve the performance of such queries, please specify sort parameters "
-                +
-                "as well.");
+
+                + "not recommended for production use. It is only meant to be used for administrative purposes "
+
+                + "such as upgrade. To improve the performance of such queries, please specify sort parameters "
+
+                + "as well.");
       } else {
         // when it is a known sort (stored sorted in the metadata dataset already), restrict it to system scope only
         searchScopes = EnumSet.of(SYSTEM);

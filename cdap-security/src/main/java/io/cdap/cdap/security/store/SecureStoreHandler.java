@@ -83,15 +83,15 @@ public class SecureStoreHandler extends AbstractHttpHandler {
       SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
           ImmutableMap.of("key", "value"));
       throw new BadRequestException(
-          "Unable to parse the request. The request body should be of the following format." +
-              " \n" + GSON.toJson(dummy));
+          "Unable to parse the request. The request body should be of the following format."
+              + " \n" + GSON.toJson(dummy));
     }
 
     if (Strings.isNullOrEmpty(secureKeyCreateRequest.getData()) || secureKeyCreateRequest.getData()
         .trim().isEmpty()) {
       throw new BadRequestException(
-          "The data field must not be null or empty. The data will be stored securely " +
-              "under provided key name.");
+          "The data field must not be null or empty. The data will be stored securely "
+              + "under provided key name.");
     }
 
     secureStoreManager.put(namespace, name, secureKeyCreateRequest.getData(),

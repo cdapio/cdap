@@ -1897,16 +1897,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   private void historyStatusWithRetry(ProgramId program, ProgramRunStatus status, int size) throws Exception {
-    String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
-      "" : "/versions/" + program.getVersion();
-    String basePath = String.format("apps/%s%s/%s/%s/runs", program.getApplication(), urlAppVersionPart,
-                                    program.getType().getCategoryName(), program.getProgram());
+    String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion())
+        ? "" : "/versions/" + program.getVersion();
+    String basePath = String.format("apps/%s%s/%s/%s/runs", program.getApplication(),
+        urlAppVersionPart,
+        program.getType().getCategoryName(), program.getProgram());
     String runsUrl = getVersionedAPIPath(basePath + "?status=" + status.name(),
-                                         Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespace());
+        Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespace());
     int trials = 0;
     while (trials++ < 5) {
       HttpResponse response = doGet(runsUrl);
-      List<RunRecord> result = GSON.fromJson(response.getResponseBodyAsString(), LIST_OF_RUN_RECORD);
+      List<RunRecord> result = GSON.fromJson(response.getResponseBodyAsString(),
+          LIST_OF_RUN_RECORD);
       if (result != null && result.size() >= size) {
         for (RunRecord m : result) {
           String runUrl = getVersionedAPIPath(basePath + "/" + m.getPid(), Constants.Gateway.API_VERSION_3_TOKEN,
@@ -1937,17 +1939,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     deploy(app, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     ApplicationDetail appDetails = getAppDetails(namespace, appId);
 
-    String versionedRuntimeArgsUrl = getVersionedAPIPath("apps/" + appId + "/" + programType + "/" + programId +
-                                                           "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                         namespace);
+    String versionedRuntimeArgsUrl = getVersionedAPIPath(
+        "apps/" + appId + "/" + programType + "/" + programId
+            + "/runtimeargs", Constants.Gateway.API_VERSION_3_TOKEN,
+        namespace);
     verifyRuntimeArgs(versionedRuntimeArgsUrl);
 
     String versionedRuntimeArgsAppVersionUrl = getVersionedAPIPath("apps/" + appId
-                                                                     + "/versions/" +
-                                                                     appDetails.getAppVersion()
-                                                                     + "/" + programType
-                                                                     + "/" + programId + "/runtimeargs",
-                                                                   Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+            + "/versions/"
+            + appDetails.getAppVersion()
+            + "/" + programType
+            + "/" + programId + "/runtimeargs",
+        Constants.Gateway.API_VERSION_3_TOKEN, namespace);
     verifyRuntimeArgs(versionedRuntimeArgsAppVersionUrl);
   }
 

@@ -179,39 +179,46 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     // WCount should be found in yourspace, not in myspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
-                       getSearchResultExpected("service", "WCounter",
-                                               "service", "WordCounter",
-                                               "mapreduce", "ClassicWordCount",
-                                               "worker", "WorkerWordCount"
-                       ));
+        getSearchResultExpected("service", "WCounter",
+            "service", "WordCounter",
+            "mapreduce", "ClassicWordCount",
+            "worker", "WorkerWordCount"
+        ));
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WCount1",
-                               getSearchResultExpected());
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WCount1",
+        getSearchResultExpected());
 
     // verify other metrics for WCount app
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=mapreduce:ClassicWordCount",
-                               getSearchResultExpected("run", "run1"));
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=mapreduce:ClassicWordCount",
+        getSearchResultExpected("run", "run1"));
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1",
-                               getSearchResultExpected("tasktype", "m", "tasktype", "r"));
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=mapreduce:ClassicWordCount&tag=run:run1",
+        getSearchResultExpected("tasktype", "m", "tasktype", "r"));
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m",
-                               getSearchResultExpected("instance", "task1"));
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m",
+        getSearchResultExpected("instance", "task1"));
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m&tag=instance:task1",
-                               getSearchResultExpected());
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=mapreduce:ClassicWordCount&tag=run:run1&tag=tasktype:m&tag=instance:task1",
+        getSearchResultExpected());
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=worker:WorkerWordCount",
-                               getSearchResultExpected("run", "run1",
-                                                       "run", "run2"));
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1" +
-                                 "&tag=worker:WorkerWordCount&tag=run:run1",
-                               getSearchResultExpected("instance", "task1"));
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=worker:WorkerWordCount",
+        getSearchResultExpected("run", "run1",
+            "run", "run2"));
+    verifySearchResultWithTags(
+        "/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=worker:WorkerWordCount&tag=run:run1",
+        getSearchResultExpected("instance", "task1"));
 
     // verify "*"
 
@@ -219,8 +226,8 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     // some of the services might not have emitted metrics yet since the beginning of this test,
     // so all expected component metrics are listed under optional.
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
-                               //required
-                               getSearchResultExpected("app", "WordCount1",
+        //required
+        getSearchResultExpected("app", "WordCount1",
                                                        "app", "WCount1",
                                                        "app", "Replicator"),
                                //optional
@@ -408,15 +415,15 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
   @Test
   public void testMultipleMetricsSingleContext() throws Exception {
     verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:splitter" +
-        "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.of(2L, 2L));
+        "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:splitter"
+            + "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.of(2L, 2L));
 
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 300 * 1000) / 1000;
     verifyRangeQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:collector" +
-        "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
-        + end, ImmutableList.of(1L, 1L, 1L), ImmutableList.of(1L, 1L, 1L));
+        "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:collector"
+            + "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
+            + end, ImmutableList.of(1L, 1L, 1L), ImmutableList.of(1L, 1L, 1L));
   }
 
   @Test
@@ -425,61 +432,61 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     long end = (emitTs + 300 * 1000) / 1000;
 
     verifyRangeQueryResult(
-      "/v3/metrics/query?tag=namespace:childctx&tag=app:Replicator&tag=worker:ReplicatorWorker&tag=ent:mytable" +
-        "&metric=user.inserts&metric=user.ddls&start=" + start + "&end="
-        + end, ImmutableList.of(1L, 1L), ImmutableList.of(1L, 10L));
+        "/v3/metrics/query?tag=namespace:childctx&tag=app:Replicator&tag=worker:ReplicatorWorker&tag=ent:mytable"
+            + "&metric=user.inserts&metric=user.ddls&start=" + start + "&end="
+            + end, ImmutableList.of(1L, 1L), ImmutableList.of(1L, 10L));
   }
 
   @Test
   public void testQueryMetricsWithTags() throws Exception {
     //aggregate result, in the right namespace
     verifyAggregateQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&aggregate=true", 3);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter")
+            + "&metric=system.reads&aggregate=true", 3);
     verifyAggregateQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "counter") +
-        "&metric=system.reads&aggregate=true", 1);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "counter")
+            + "&metric=system.reads&aggregate=true", 1);
 
     verifyAggregateQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "*") +
-        "&metric=system.reads&aggregate=true", 4);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "*")
+            + "&metric=system.reads&aggregate=true", 4);
 
     verifyAggregateQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
-        "&metric=system.reads&aggregate=true", 4);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter")
+            + "&metric=system.reads&aggregate=true", 4);
 
     // aggregate result, in the wrong namespace
     verifyEmptyQueryResult(
-      "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&aggregate=true");
+        "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter")
+            + "&metric=system.reads&aggregate=true");
 
     // time range
     // now-60s, now+60s
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter")
+            + "&metric=system.reads&start=now%2D60s&end=now%2B60s", 2, 3);
 
     // note: times are in seconds, hence "divide by 1000";
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 60 * 1000) / 1000;
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&start=" + start + "&end="
-        + end, 2, 3);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter", "splitter")
+            + "&metric=system.reads&start=" + start + "&end="
+            + end, 2, 3);
     // range query, in the wrong namespace
     verifyEmptyQueryResult(
-      "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter") +
-        "&metric=system.reads&start=" + start + "&end="
-        + end);
+        "/v3/metrics/query?" + getTags("myspace", "WCount1", "WCounter", "splitter")
+            + "&metric=system.reads&start=" + start + "&end="
+            + end);
 
     List<TimeSeriesResult> groupByResult =
       ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("handler", "counter"), 1),
                        new TimeSeriesResult(ImmutableMap.of("handler", "splitter"), 3));
 
     verifyGroupByResult(
-      "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
-        "&metric=system.reads&groupBy=handler&start=" + start + "&end="
-        + end, groupByResult);
+        "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter")
+            + "&metric=system.reads&groupBy=handler&start=" + start + "&end="
+            + end, groupByResult);
 
     groupByResult = ImmutableList.of(
         new TimeSeriesResult(ImmutableMap.of("namespace", "myspace", "handler", "splitter", "app", "WordCount1"), 2),
@@ -487,8 +494,9 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
         new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "handler", "splitter", "app", "WCount1"), 4));
 
     verifyGroupByResult(
-      "/v3/metrics/query?metric=system.reads" +
-        "&groupBy=namespace&groupBy=handler&groupBy=app&start=" + start + "&end=" + end, groupByResult);
+        "/v3/metrics/query?metric=system.reads"
+            + "&groupBy=namespace&groupBy=handler&groupBy=app&start=" + start + "&end=" + end,
+        groupByResult);
   }
 
   @Test
@@ -505,14 +513,14 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     metricStore.add(value);
 
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("interspace", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&interpolate=step&start=" + start + "&end="
-        + end, 4, 700);
+        "/v3/metrics/query?" + getTags("interspace", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&interpolate=step&start=" + start + "&end="
+            + end, 4, 700);
 
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("interspace", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&interpolate=linear&start=" + start + "&end="
-        + end, 4, 1000);
+        "/v3/metrics/query?" + getTags("interspace", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&interpolate=linear&start=" + start + "&end="
+            + end, 4, 1000);
 
     Map<String, String> deleteTags = new LinkedHashMap<>();
     deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "interspace");
@@ -528,21 +536,22 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
   public void testResolutionInResponse() throws Exception {
     long start = 1;
 
-    String url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-      "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
-      + (start + 36000);
+    String url =
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+            + (start + 36000);
     MetricQueryResult queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals("3600s", queryResult.getResolution());
 
-    url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-      "&metric=system.reads&resolution=1m&start=" + (start - 1) + "&end="
-      + (start + 36000);
+    url = "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+        + "&metric=system.reads&resolution=1m&start=" + (start - 1) + "&end="
+        + (start + 36000);
     queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals("60s", queryResult.getResolution());
 
     // Have an aggregate query and ensure that its resolution is INT_MAX
-    url = "/v3/metrics/query?" + getTags("WordCount1", "WordCounter", "splitter") +
-      "&metric=system.reads";
+    url = "/v3/metrics/query?" + getTags("WordCount1", "WordCounter", "splitter")
+        + "&metric=system.reads";
     queryResult = post(url, MetricQueryResult.class);
     Assert.assertEquals(Integer.MAX_VALUE + "s", queryResult.getResolution());
 
@@ -569,27 +578,27 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     // seconds
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&start=" + start  + "&end="
-        + (start + 600), 4, 4);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&start=" + start + "&end="
+            + (start + 600), 4, 4);
 
     // minutes
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
-        + (start + 600), 3, 4);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+            + (start + 600), 3, 4);
 
     // minutes
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
-        + (start + 3600), 4, 5);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+            + (start + 3600), 4, 5);
 
     // hours
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
-        + (start + 36000), 3, 6);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&start=" + (start - 1) + "&end="
+            + (start + 36000), 3, 6);
 
     Map<String, String> deleteTags = new LinkedHashMap<>();
     deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "resolutions");
@@ -640,47 +649,54 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
   @Test
   public void testSearchMetricsWithTags() throws Exception {
     // metrics in myspace
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
-                             ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1"
+            + "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
+        ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
 
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:collector",
-                             ImmutableList.of("system.aa", "system.ab", "system.zz"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1"
+            + "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:collector",
+        ImmutableList.of("system.aa", "system.ab", "system.zz"));
 
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1",
-                             ImmutableList.of("system.aa", "system.ab", "system.reads",
-                                              "system.writes", "system.zz", "user.reads", "user.writes"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1"
+            + "&tag=service:WordCounter&tag=dataset:*&tag=run:run1",
+        ImmutableList.of("system.aa", "system.ab", "system.reads",
+            "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1" +
-                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
-                             ImmutableList.<String>of());
-
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1"
+            + "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
+        ImmutableList.<String>of());
 
     // metrics in yourspace
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1" +
-                               "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
-                             ImmutableList.of("system.reads"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1"
+            + "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
+        ImmutableList.of("system.reads"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace",
-                             ImmutableList.of("system.reads", "system.workerreads", "system.workerwrites"));
+        ImmutableList.of("system.reads", "system.workerreads", "system.workerwrites"));
 
     // wrong namespace
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +
-                               "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
-                             ImmutableList.<String>of());
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1"
+            + "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
+        ImmutableList.<String>of());
 
     // verify "*"
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:*",
-                             ImmutableList.of("system.aa", "system.ab", "system.reads",
-                                              "system.writes", "system.zz", "user.reads", "user.writes"));
-    verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=service:*&tag=dataset:*&tag=run:run1",
-                             ImmutableList.of("system.aa", "system.ab", "system.reads",
-                                              "system.writes", "system.zz", "user.reads", "user.writes"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1"
+            + "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:*",
+        ImmutableList.of("system.aa", "system.ab", "system.reads",
+            "system.writes", "system.zz", "user.reads", "user.writes"));
+    verifySearchMetricResult(
+        "/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1"
+            + "&tag=service:*&tag=dataset:*&tag=run:run1",
+        ImmutableList.of("system.aa", "system.ab", "system.reads",
+            "system.writes", "system.zz", "user.reads", "user.writes"));
   }
   
   /**
@@ -753,8 +769,8 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
   private TimeSeriesSummary findExpectedQueryResult(ImmutableList<TimeSeriesSummary> expected,
                                               MetricQueryResult.TimeSeries actualTimeSeries) {
     for (TimeSeriesSummary result : expected) {
-      if (result.getGrouping().equals(actualTimeSeries.getGrouping()) &&
-        result.getMetricName().equals(actualTimeSeries.getMetricName())) {
+      if (result.getGrouping().equals(actualTimeSeries.getGrouping())
+          && result.getMetricName().equals(actualTimeSeries.getMetricName())) {
         return result;
       }
     }
@@ -794,21 +810,21 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
 
     // count is one record
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&count=1&start=" + start + "&end="
-        + (start + 600), 1, 1);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&count=1&start=" + start + "&end="
+            + (start + 600), 1, 1);
 
     // count is greater than data points in time-range
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&count=6&start=" + start + "&end="
-        + (start + 600), 4, 4);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&count=6&start=" + start + "&end="
+            + (start + 600), 4, 4);
 
     // count is less than data points in time-range
     verifyRangeQueryResult(
-      "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter") +
-        "&metric=system.reads&resolution=auto&count=2&start=" + (start - 1) + "&end="
-        + (start + 3600), 2, 3);
+        "/v3/metrics/query?" + getTags("resolutions", "WordCount1", "WordCounter", "splitter")
+            + "&metric=system.reads&resolution=auto&count=2&start=" + (start - 1) + "&end="
+            + (start + 3600), 2, 3);
   }
 
   @Test

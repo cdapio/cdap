@@ -24,7 +24,7 @@ import io.cdap.cdap.proto.id.ProgramId;
 public class ProgramRunForbiddenException extends ForbiddenException {
 
   public ProgramRunForbiddenException(ProgramId programId) {
-    super(String.format("Program %s can not be run because launching " +
-        "user programs with native profile is disabled.", programId.toString()));
+    super(String.format("Program %s can not be run because launching "
+        + "user programs with native profile is disabled.", programId.toString()));
   }
 }

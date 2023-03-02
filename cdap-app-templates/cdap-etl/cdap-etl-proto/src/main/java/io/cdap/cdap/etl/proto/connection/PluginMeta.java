@@ -66,10 +66,10 @@ public class PluginMeta {
     }
 
     PluginMeta that = (PluginMeta) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(artifact, that.artifact);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override

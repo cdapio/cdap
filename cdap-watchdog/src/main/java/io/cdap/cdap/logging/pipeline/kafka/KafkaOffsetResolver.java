@@ -126,8 +126,8 @@ class KafkaOffsetResolver {
    * time later than {@code maxTime} or offset larger than {@code maxOffset}
    *
    * @return next offset of the message with smallest offset and log event time equal to targetTime,
-   *     or next offset of the message with largest offset and timestamp smaller than (targetTime -
-   *     EVENT_DELAY_MILLIS) if no message has log event time equal to targetTime, or startOffset if
+   *     or next offset of the message with largest offset and timestamp smaller than (targetTime
+  - *     EVENT_DELAY_MILLIS) if no message has log event time equal to targetTime, or startOffset if
    *     no event has log event time smaller than (targetTime - EVENT_DELAY_MILLIS)
    * @throws OffsetOutOfRangeException if the given offset is out of range.
    * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
@@ -180,8 +180,8 @@ class KafkaOffsetResolver {
       }
     }
 
-    LOG.debug("Fail to find a log event with timestamp {} in {}:{}. " +
-            "The largest offset with event timestamp smaller than {} (target event time minus event delay {}) is {}",
+    LOG.debug("Fail to find a log event with timestamp {} in {}:{}. "
+            + "The largest offset with event timestamp smaller than {} (target event time minus event delay {}) is {}",
         targetTime, topic, partition, minTime, config.getEventDelayMillis(), closestOffset);
     return closestOffset;
   }
@@ -212,8 +212,8 @@ class KafkaOffsetResolver {
       return serializer.decodeEventTimestamp(iterator.next().message().payload());
     } catch (IOException e) {
       // Fail to deserialize is the same as not found because in anywhere this is not the event we are looking for
-      throw new NotFoundException("Invalid log event found in " + topic + ":" + partition +
-          " at offset " + requestOffset);
+      throw new NotFoundException("Invalid log event found in " + topic + ":" + partition
+          + " at offset " + requestOffset);
     }
   }
 }

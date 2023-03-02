@@ -57,9 +57,9 @@ public class ProvisionerSpecification {
 
     ProvisionerSpecification that = (ProvisionerSpecification) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(label, that.label) &&
-        Objects.equals(description, that.description);
+    return Objects.equals(name, that.name)
+        && Objects.equals(label, that.label)
+        && Objects.equals(description, that.description);
   }
 
   @Override

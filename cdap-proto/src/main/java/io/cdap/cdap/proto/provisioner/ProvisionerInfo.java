@@ -90,9 +90,9 @@ public class ProvisionerInfo {
 
     ProvisionerInfo that = (ProvisionerInfo) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(totalProcessingCpusLabel, that.totalProcessingCpusLabel) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(totalProcessingCpusLabel, that.totalProcessingCpusLabel)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -102,10 +102,10 @@ public class ProvisionerInfo {
 
   @Override
   public String toString() {
-    return "ProvisionerInfo{" +
-        "name='" + name + '\'' +
-        "totalProcessingCpusLabel='" + totalProcessingCpusLabel + '\'' +
-        ", properties=" + properties +
-        '}';
+    return "ProvisionerInfo{"
+        + "name='" + name + '\''
+        + "totalProcessingCpusLabel='" + totalProcessingCpusLabel + '\''
+        + ", properties=" + properties
+        + '}';
   }
 }

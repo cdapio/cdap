@@ -90,10 +90,10 @@ public class BatchPipelineSpec extends PipelineSpec {
 
   @Override
   public String toString() {
-    return "BatchPipelineSpec{" +
-        "endingActions=" + endingActions +
-        ", sqlEngineStageSpec=" + sqlEngineStageSpec +
-        "} " + super.toString();
+    return "BatchPipelineSpec{"
+        + "endingActions=" + endingActions
+        + ", sqlEngineStageSpec=" + sqlEngineStageSpec
+        + "} " + super.toString();
   }
 
   public static Builder builder() {

@@ -83,8 +83,8 @@ public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
 
     if (arguments.length > 3) {
       throw new IllegalArgumentException(
-          "runtime macro supports at most 3 arguments - format, offset, and timezone. " +
-              "Formats containing a comma are not supported.");
+          "runtime macro supports at most 3 arguments - format, offset, and timezone. "
+              + "Formats containing a comma are not supported.");
     }
 
     dateFormat = new SimpleDateFormat(arguments[0]);

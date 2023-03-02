@@ -85,8 +85,8 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
     long now = System.currentTimeMillis();
     for (TimeoutEvent event : timeoutEvents) {
       LOG.warn(
-          "Requested {} containers for runnable {} when running application {} with run id {}," +
-              " only got {} after {} ms.",
+          "Requested {} containers for runnable {} when running application {} with run id {},"
+              + " only got {} after {} ms.",
           event.getExpectedInstances(), event.getRunnableName(), applicationName, runId,
           event.getActualInstances(), System.currentTimeMillis() - event.getRequestTime());
 

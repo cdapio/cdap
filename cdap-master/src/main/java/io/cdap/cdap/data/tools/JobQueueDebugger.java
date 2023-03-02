@@ -294,11 +294,11 @@ public class JobQueueDebugger extends AbstractIdleService {
     }
 
     private String getReport() {
-      return String.format("Number of Jobs by state:\n" +
-              "  Pending Trigger: %s\n" +
-              "  Pending Constraint: %s\n" +
-              "  Pending Launch: %s\n" +
-              "  Total: %s\n",
+      return String.format("Number of Jobs by state:\n"
+              + "  Pending Trigger: %s\n"
+              + "  Pending Constraint: %s\n"
+              + "  Pending Launch: %s\n"
+              + "  Total: %s\n",
           pendingTrigger, pendingConstraint, pendingLaunch,
           getTotal());
     }

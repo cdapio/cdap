@@ -405,8 +405,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     } catch (IllegalArgumentException e) {
       // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
       // type is not support (maybe due to version mismatch in upgrade).
-      LOG.error("Unsupported program type {} for program {}. " +
-              "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
+      LOG.error("Unsupported program type {} for program {}. "
+              + "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
           programId.getType(), programId);
       return null;
     }
@@ -417,8 +417,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       ResourceReport resourceReport = controller.getResourceReport();
       LOG.error(
           "Unable to create ProgramController for program {} for twill application {}. It is likely caused by "
-              +
-              "invalid CDAP program runtime extension.",
+
+              + "invalid CDAP program runtime extension.",
           programId, resourceReport == null ? "'unknown twill application'"
               : resourceReport.getApplicationId());
       return null;

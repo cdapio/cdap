@@ -110,8 +110,8 @@ public final class AuthEnforceUtil {
       }
 
       throw new IllegalArgumentException(
-          String.format("Enforcement was specified on %s but an instance of %s was " +
-              "provided.", entityClass, entityId.getClass()));
+          String.format("Enforcement was specified on %s but an instance of %s was "
+              + "provided.", entityClass, entityId.getClass()));
     } else {
       return createEntityId(entityClass, entities);
     }
@@ -147,9 +147,9 @@ public final class AuthEnforceUtil {
       return CONS_CACHE.get(ProgramId.class).getParameterTypes().length;
     }
     throw new IllegalArgumentException(
-        String.format("Failed to determine required number of entity parts " +
-                "needed for %s. Please make sure its a valid %s class " +
-                "for authorization enforcement",
+        String.format("Failed to determine required number of entity parts "
+                + "needed for %s. Please make sure its a valid %s class "
+                + "for authorization enforcement",
             enforceOn.getClassName(), EntityId.class.getSimpleName()));
   }
 
@@ -158,8 +158,8 @@ public final class AuthEnforceUtil {
     Constructor<? extends EntityId> constructor = CONS_CACHE.get(entityClass);
 
     Preconditions.checkNotNull(constructor,
-        String.format("Failed to find constructor for entity class %s. Please " +
-            "make sure it exists.", entityClass));
+        String.format("Failed to find constructor for entity class %s. Please "
+            + "make sure it exists.", entityClass));
     // its okay to call with object [] without checking that all of these are string because if one of them is not
     // then newInstance call will throw IllegalArgumentException.
     return constructor.newInstance(args);
@@ -175,8 +175,8 @@ public final class AuthEnforceUtil {
     }
     // since constructor was not found throw an exception
     throw new IllegalStateException(
-        String.format("Failed to find constructor for %s whose parameters are only of " +
-            "String type", entityClass.getName()));
+        String.format("Failed to find constructor for %s whose parameters are only of "
+            + "String type", entityClass.getName()));
   }
 
   /**

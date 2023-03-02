@@ -50,9 +50,9 @@ class BasicPartitionDetail extends BasicPartition implements PartitionDetail {
 
     BasicPartitionDetail that = (BasicPartitionDetail) o;
 
-    return Objects.equal(this.metadata, that.metadata) &&
-        Objects.equal(this.relativePath, that.relativePath) &&
-        Objects.equal(this.key, that.key);
+    return Objects.equal(this.metadata, that.metadata)
+        && Objects.equal(this.relativePath, that.relativePath)
+        && Objects.equal(this.key, that.key);
   }
 
   @Override

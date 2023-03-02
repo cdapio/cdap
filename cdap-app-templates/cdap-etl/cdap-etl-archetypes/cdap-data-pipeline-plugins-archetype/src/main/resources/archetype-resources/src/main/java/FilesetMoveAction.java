@@ -63,8 +63,8 @@ public class FilesetMoveAction extends Action {
     @Name(FILTER_REGEX)
     @Description(
         "Filter any files whose name matches this regex. Defaults to '^\\.', which will filter any files "
-            +
-            "that begin with a period.")
+
+            + "that begin with a period.")
     private String filterRegex;
 
     // set defaults for properties in a no-argument constructor.

@@ -70,9 +70,9 @@ public class Alert implements Serializable {
 
   @Override
   public String toString() {
-    return "Alert{" +
-        "stageName='" + stageName + '\'' +
-        ", payload=" + payload +
-        '}';
+    return "Alert{"
+        + "stageName='" + stageName + '\''
+        + ", payload=" + payload
+        + '}';
   }
 }

@@ -49,8 +49,8 @@ public class ProgramRecord {
 
   @Override
   public String toString() {
-    return "ProgramRecord{" +
-        "entityId=" + entityId +
-        '}';
+    return "ProgramRecord{"
+        + "entityId=" + entityId
+        + '}';
   }
 }

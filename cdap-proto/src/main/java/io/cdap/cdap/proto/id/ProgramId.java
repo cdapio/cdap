@@ -132,9 +132,9 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
       return false;
     }
     ProgramId programId = (ProgramId) o;
-    return Objects.equals(getParent(), programId.getParent()) &&
-        Objects.equals(type, programId.type) &&
-        Objects.equals(program, programId.program);
+    return Objects.equals(getParent(), programId.getParent())
+        && Objects.equals(type, programId.type)
+        && Objects.equals(program, programId.program);
   }
 
   /**

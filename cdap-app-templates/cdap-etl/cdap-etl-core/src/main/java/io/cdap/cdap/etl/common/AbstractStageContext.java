@@ -66,8 +66,8 @@ public abstract class AbstractStageContext implements StageContext {
     this.stageMetrics = new DefaultStageMetrics(pipelineRuntime.getMetrics(), stageSpec.getName());
     Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
     // all plugins except joiners have just a single input schema
-    this.inputSchema = inputSchemas.isEmpty() ?
-        null : stageSpec.getInputSchemas().values().iterator().next();
+    this.inputSchema = inputSchemas.isEmpty()
+        ? null : stageSpec.getInputSchemas().values().iterator().next();
     Map<String, Schema> portSchemas = new HashMap<>();
     for (StageSpec.Port outputPort : stageSpec.getOutputPorts().values()) {
       if (outputPort.getPort() != null) {

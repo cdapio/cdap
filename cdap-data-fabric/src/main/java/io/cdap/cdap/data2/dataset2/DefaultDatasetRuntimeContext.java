@@ -171,8 +171,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
       enforcer.enforce(datasetId, principal, accessInfo.getPermissions());
     } catch (Exception e) {
       throw new DataSetException(
-          "The principal " + principal + " is not authorized to access " + datasetId +
-              " for operation types " + accessInfo.getPermissions(), e);
+          "The principal " + principal + " is not authorized to access " + datasetId
+              + " for operation types " + accessInfo.getPermissions(), e);
     }
 
     recordAccess(callStack.enter(accessInfo.getAccessType()), accessInfo.getAccessType());
@@ -262,8 +262,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     void exit() {
       // Make sure we won't pop more than it should
       if (stack.size() <= minSize) {
-        throw new DataSetException("Invalid dataset call stack for dataset " + datasetId +
-            ". Potentially caused by illegal manipulation of callstack");
+        throw new DataSetException("Invalid dataset call stack for dataset " + datasetId
+            + ". Potentially caused by illegal manipulation of callstack");
       }
       stack.removeLast();
     }

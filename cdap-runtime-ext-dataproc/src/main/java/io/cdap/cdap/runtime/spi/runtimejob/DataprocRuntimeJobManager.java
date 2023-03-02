@@ -272,8 +272,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
-        LOG.debug("Local caching is disabled, " +
-            "continuing without caching twill and dataproc launcher jars.");
+        LOG.debug("Local caching is disabled, "
+            + "continuing without caching twill and dataproc launcher jars.");
         tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
       }
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
@@ -460,18 +460,18 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     Storage storage = getStorageClient();
     Bucket bucket = storage.get(bucketName);
     for (BucketInfo.LifecycleRule rule : bucket.getLifecycleRules()) {
-      if (rule.getAction() == null || rule.getCondition() == null ||
-          rule.getCondition().getDaysSinceCustomTime() == null) {
+      if (rule.getAction() == null || rule.getCondition() == null
+          || rule.getCondition().getDaysSinceCustomTime() == null) {
         continue;
       }
-      if (rule.getAction() instanceof BucketInfo.LifecycleRule.DeleteLifecycleAction &&
-          rule.getCondition().getDaysSinceCustomTime() > 0) {
+      if (rule.getAction() instanceof BucketInfo.LifecycleRule.DeleteLifecycleAction
+          && rule.getCondition().getDaysSinceCustomTime() > 0) {
         if (!provisionerContext.getProperties()
             .containsKey(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)) {
           LOG.warn(
               "ArtifactsHashTimeBucket property not set for {}, ignoring check for it's value being less than "
-                  +
-                  "Bucket DeleteLifecycleAction for {}", run, bucketName);
+
+                  + "Bucket DeleteLifecycleAction for {}", run, bucketName);
           return true;
         }
         try {
@@ -482,8 +482,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
           if (!isValid) {
             LOG.warn(
                 "Days since custom time rule of delete lifecycle for bucket {} should be strictly greater than "
-                    +
-                    "{} days", bucketName, timeBucketDays);
+
+                    + "{} days", bucketName, timeBucketDays);
           }
           return isValid;
         } catch (NumberFormatException e) {
@@ -601,8 +601,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private long getCustomTime() {
     // if the version is SNAPSHOT, set a custom time of buildTime + 7 days for cleanup,
     // otherwise set a custom time of buildTime + 2 years for cleanup.
-    return cdapVersionInfo.getBuildTime() +
-        TimeUnit.DAYS.toMillis(cdapVersionInfo.isSnapshot() ? SNAPSHOT_EXPIRE_DAYS : EXPIRE_DAYS);
+    return cdapVersionInfo.getBuildTime()
+        + TimeUnit.DAYS.toMillis(cdapVersionInfo.isSnapshot() ? SNAPSHOT_EXPIRE_DAYS : EXPIRE_DAYS);
   }
 
   /**

@@ -135,8 +135,8 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
           fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (!fieldType.isSimpleType()) {
         throw new UnsupportedTypeException(
-            String.format("Field %s is of unsupported type %s." +
-                    " Must be a simple type (boolean, int, long, float, double, string, bytes).",
+            String.format("Field %s is of unsupported type %s."
+                    + " Must be a simple type (boolean, int, long, float, double, string, bytes).",
                 field.getName(), fieldType.toString()));
       }
     }

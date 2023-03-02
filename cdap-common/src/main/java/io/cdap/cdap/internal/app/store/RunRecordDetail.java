@@ -147,21 +147,21 @@ public class RunRecordDetail extends RunRecord {
     }
 
     RunRecordDetail that = (RunRecordDetail) o;
-    return Objects.equal(this.getProgramRunId(), that.getProgramRunId()) &&
-        Objects.equal(this.getStartTs(), that.getStartTs()) &&
-        Objects.equal(this.getRunTs(), that.getRunTs()) &&
-        Objects.equal(this.getStopTs(), that.getStopTs()) &&
-        Objects.equal(this.getSuspendTs(), that.getSuspendTs()) &&
-        Objects.equal(this.getResumeTs(), that.getResumeTs()) &&
-        Objects.equal(this.getStoppingTs(), that.getStoppingTs()) &&
-        Objects.equal(this.getTerminateTs(), that.getTerminateTs()) &&
-        Objects.equal(this.getStatus(), that.getStatus()) &&
-        Objects.equal(this.getProperties(), that.getProperties()) &&
-        Objects.equal(this.getPeerName(), that.getPeerName()) &&
-        Objects.equal(this.getTwillRunId(), that.getTwillRunId()) &&
-        Arrays.equals(this.getSourceId(), that.getSourceId()) &&
-        Objects.equal(this.getArtifactId(), that.getArtifactId()) &&
-        Objects.equal(this.getPrincipal(), that.getPrincipal());
+    return Objects.equal(this.getProgramRunId(), that.getProgramRunId())
+        && Objects.equal(this.getStartTs(), that.getStartTs())
+        && Objects.equal(this.getRunTs(), that.getRunTs())
+        && Objects.equal(this.getStopTs(), that.getStopTs())
+        && Objects.equal(this.getSuspendTs(), that.getSuspendTs())
+        && Objects.equal(this.getResumeTs(), that.getResumeTs())
+        && Objects.equal(this.getStoppingTs(), that.getStoppingTs())
+        && Objects.equal(this.getTerminateTs(), that.getTerminateTs())
+        && Objects.equal(this.getStatus(), that.getStatus())
+        && Objects.equal(this.getProperties(), that.getProperties())
+        && Objects.equal(this.getPeerName(), that.getPeerName())
+        && Objects.equal(this.getTwillRunId(), that.getTwillRunId())
+        && Arrays.equals(this.getSourceId(), that.getSourceId())
+        && Objects.equal(this.getArtifactId(), that.getArtifactId())
+        && Objects.equal(this.getPrincipal(), that.getPrincipal());
   }
 
   @Override

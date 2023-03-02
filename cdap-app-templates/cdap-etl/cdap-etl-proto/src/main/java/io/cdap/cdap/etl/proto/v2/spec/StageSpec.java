@@ -142,15 +142,15 @@ public class StageSpec implements Serializable {
 
     StageSpec that = (StageSpec) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(plugin, that.plugin) &&
-        Objects.equals(inputSchemas, that.inputSchemas) &&
-        Objects.equals(getInputStages(), that.getInputStages()) &&
-        Objects.equals(outputPorts, that.outputPorts) &&
-        Objects.equals(outputSchema, that.outputSchema) &&
-        Objects.equals(errorSchema, that.errorSchema) &&
-        stageLoggingEnabled == that.stageLoggingEnabled &&
-        processTimingEnabled == that.processTimingEnabled;
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin)
+        && Objects.equals(inputSchemas, that.inputSchemas)
+        && Objects.equals(getInputStages(), that.getInputStages())
+        && Objects.equals(outputPorts, that.outputPorts)
+        && Objects.equals(outputSchema, that.outputSchema)
+        && Objects.equals(errorSchema, that.errorSchema)
+        && stageLoggingEnabled == that.stageLoggingEnabled
+        && processTimingEnabled == that.processTimingEnabled;
   }
 
   @Override
@@ -161,18 +161,18 @@ public class StageSpec implements Serializable {
 
   @Override
   public String toString() {
-    return "StageSpec{" +
-        "name='" + name + '\'' +
-        ", plugin=" + plugin +
-        ", inputSchemas=" + inputSchemas +
-        ", inputStages=" + inputStages +
-        ", outputPorts=" + outputPorts +
-        ", outputSchema=" + outputSchema +
-        ", errorSchema=" + errorSchema +
-        ", stageLoggingEnabled=" + stageLoggingEnabled +
-        ", processTimingEnabled=" + processTimingEnabled +
-        ", maxPreviewRecords=" + maxPreviewRecords +
-        '}';
+    return "StageSpec{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + ", inputSchemas=" + inputSchemas
+        + ", inputStages=" + inputStages
+        + ", outputPorts=" + outputPorts
+        + ", outputSchema=" + outputSchema
+        + ", errorSchema=" + errorSchema
+        + ", stageLoggingEnabled=" + stageLoggingEnabled
+        + ", processTimingEnabled=" + processTimingEnabled
+        + ", maxPreviewRecords=" + maxPreviewRecords
+        + '}';
   }
 
   public boolean isPreviewEnabled(RuntimeContext context) {

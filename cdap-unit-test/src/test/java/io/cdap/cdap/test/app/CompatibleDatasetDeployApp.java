@@ -50,9 +50,9 @@ public class CompatibleDatasetDeployApp extends DatasetDeployApp {
 
       CompatibleRecord that = (CompatibleRecord) o;
 
-      return Objects.equal(this.id, that.id) &&
-        Objects.equal(this.firstName, that.firstName) &&
-        Objects.equal(this.lastName, that.lastName);
+      return Objects.equal(this.id, that.id)
+          && Objects.equal(this.firstName, that.firstName)
+          && Objects.equal(this.lastName, that.lastName);
     }
 
     @Override

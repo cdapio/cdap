@@ -56,9 +56,9 @@ public class TriggeringPropertyMapping {
 
   @Override
   public String toString() {
-    return "TriggeringPropertyMapping{" +
-        "arguments=" + getArguments() +
-        ", pluginProperties=" + getPluginProperties() +
-        '}';
+    return "TriggeringPropertyMapping{"
+        + "arguments=" + getArguments()
+        + ", pluginProperties=" + getPluginProperties()
+        + '}';
   }
 }

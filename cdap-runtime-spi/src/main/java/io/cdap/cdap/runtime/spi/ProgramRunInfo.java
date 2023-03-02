@@ -178,12 +178,12 @@ public class ProgramRunInfo {
       return false;
     }
     ProgramRunInfo that = (ProgramRunInfo) o;
-    return namespace.equals(that.namespace) &&
-        application.equals(that.application) &&
-        version.equals(that.version) &&
-        programType.equals(that.programType) &&
-        program.equals(that.program) &&
-        run.equals(that.run);
+    return namespace.equals(that.namespace)
+        && application.equals(that.application)
+        && version.equals(that.version)
+        && programType.equals(that.programType)
+        && program.equals(that.program)
+        && run.equals(that.run);
   }
 
   @Override
@@ -193,13 +193,13 @@ public class ProgramRunInfo {
 
   @Override
   public String toString() {
-    return "ProgramRunInfo{" +
-        "namespace='" + namespace + '\'' +
-        ", application='" + application + '\'' +
-        ", version='" + version + '\'' +
-        ", programType='" + programType + '\'' +
-        ", program='" + program + '\'' +
-        ", run='" + run + '\'' +
-        '}';
+    return "ProgramRunInfo{"
+        + "namespace='" + namespace + '\''
+        + ", application='" + application + '\''
+        + ", version='" + version + '\''
+        + ", programType='" + programType + '\''
+        + ", program='" + program + '\''
+        + ", run='" + run + '\''
+        + '}';
   }
 }

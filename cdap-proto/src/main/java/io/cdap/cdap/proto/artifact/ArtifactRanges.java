@@ -86,8 +86,8 @@ public final class ArtifactRanges {
     int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);
     if (versionStartIndex < 0) {
       throw new InvalidArtifactRangeException(
-          String.format("Invalid artifact range %s. " +
-                  "Could not find '[' or '(' indicating start of artifact lower version.",
+          String.format("Invalid artifact range %s. "
+                  + "Could not find '[' or '(' indicating start of artifact lower version.",
               artifactRangeStr));
     }
     String name = artifactRangeStr.substring(0, versionStartIndex);

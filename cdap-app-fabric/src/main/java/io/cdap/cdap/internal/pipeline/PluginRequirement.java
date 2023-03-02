@@ -64,9 +64,9 @@ public class PluginRequirement {
       return false;
     }
     PluginRequirement that = (PluginRequirement) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(requirements, that.requirements);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(requirements, that.requirements);
   }
 
   @Override
@@ -76,10 +76,10 @@ public class PluginRequirement {
 
   @Override
   public String toString() {
-    return "PluginRequirement{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", requirements=" + requirements +
-        '}';
+    return "PluginRequirement{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", requirements=" + requirements
+        + '}';
   }
 }

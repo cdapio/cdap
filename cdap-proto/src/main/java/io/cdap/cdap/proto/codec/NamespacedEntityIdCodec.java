@@ -69,8 +69,8 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
         throw new UnsupportedOperationException(
             String.format(
                 "Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, "
-                    +
-                    "%s, %s is supported.",
+
+                    + "%s, %s is supported.",
                 entity,
                 ApplicationId.class.getSimpleName(),
                 ProgramId.class.getSimpleName(),

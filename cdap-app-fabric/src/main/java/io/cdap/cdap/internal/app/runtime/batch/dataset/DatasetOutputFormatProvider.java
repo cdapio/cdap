@@ -45,8 +45,8 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
       this.outputFormatClassName = MapReduceBatchWritableOutputFormat.class.getName();
       this.configuration = createDatasetConfiguration(namespace, datasetName, datasetArgs);
     } else {
-      throw new IllegalArgumentException("Dataset '" + dataset +
-          "' is neither OutputFormatProvider nor BatchWritable.");
+      throw new IllegalArgumentException("Dataset '" + dataset
+          + "' is neither OutputFormatProvider nor BatchWritable.");
     }
     this.dataset = dataset;
   }

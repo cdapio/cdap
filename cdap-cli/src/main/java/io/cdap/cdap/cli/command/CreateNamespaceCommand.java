@@ -69,8 +69,8 @@ public class CreateNamespaceCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("create namespace <%s> [%s <%s>] [%s <%s>] [%s <%s>] " +
-            "[%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>]", ArgumentName.NAMESPACE_NAME,
+    return String.format("create namespace <%s> [%s <%s>] [%s <%s>] [%s <%s>] "
+            + "[%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>]", ArgumentName.NAMESPACE_NAME,
         ArgumentName.DESCRIPTION, ArgumentName.DESCRIPTION,
         ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL,
         ArgumentName.NAMESPACE_GROUP_NAME, ArgumentName.NAMESPACE_GROUP_NAME,

@@ -97,8 +97,8 @@ class ConfigurationCheck extends AbstractMasterCheck {
     boolean pruningEnabled = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE);
     if (hbaseDDLExtensionDir != null && pruningEnabled) {
       LOG.error(
-          "  Invalid transaction list cannot be automatically pruned when replication is in use. " +
-              "Please disable pruning by setting {} to false, or remove your custom HBase DDL executor from {}.",
+          "  Invalid transaction list cannot be automatically pruned when replication is in use. "
+              + "Please disable pruning by setting {} to false, or remove your custom HBase DDL executor from {}.",
           TxConstants.TransactionPruning.PRUNE_ENABLE, Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
       problemKeys.add(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
       problemKeys.add(TxConstants.TransactionPruning.PRUNE_ENABLE);

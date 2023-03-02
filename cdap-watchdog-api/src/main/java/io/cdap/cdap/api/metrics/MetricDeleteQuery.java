@@ -77,12 +77,12 @@ public class MetricDeleteQuery {
 
   @Override
   public String toString() {
-    return "MetricDeleteQuery{" +
-        "startTs=" + startTs +
-        ", endTs=" + endTs +
-        ", metricNames=" + metricNames +
-        ", sliceByTagValues=" + sliceByTagValues +
-        ", aggregationTags=" + aggregationTags +
-        '}';
+    return "MetricDeleteQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", metricNames=" + metricNames
+        + ", sliceByTagValues=" + sliceByTagValues
+        + ", aggregationTags=" + aggregationTags
+        + '}';
   }
 }

@@ -652,11 +652,11 @@ public class Dag implements Serializable {
 
     Dag that = (Dag) o;
 
-    return Objects.equals(nodes, that.nodes) &&
-        Objects.equals(sources, that.sources) &&
-        Objects.equals(sinks, that.sinks) &&
-        Objects.equals(outgoingConnections, that.outgoingConnections) &&
-        Objects.equals(incomingConnections, that.incomingConnections);
+    return Objects.equals(nodes, that.nodes)
+        && Objects.equals(sources, that.sources)
+        && Objects.equals(sinks, that.sinks)
+        && Objects.equals(outgoingConnections, that.outgoingConnections)
+        && Objects.equals(incomingConnections, that.incomingConnections);
   }
 
   @Override
@@ -666,12 +666,12 @@ public class Dag implements Serializable {
 
   @Override
   public String toString() {
-    return "Dag{" +
-        "nodes=" + nodes +
-        ", sources=" + sources +
-        ", sinks=" + sinks +
-        ", outgoingConnections=" + outgoingConnections +
-        ", incomingConnections=" + incomingConnections +
-        '}';
+    return "Dag{"
+        + "nodes=" + nodes
+        + ", sources=" + sources
+        + ", sinks=" + sinks
+        + ", outgoingConnections=" + outgoingConnections
+        + ", incomingConnections=" + incomingConnections
+        + '}';
   }
 }

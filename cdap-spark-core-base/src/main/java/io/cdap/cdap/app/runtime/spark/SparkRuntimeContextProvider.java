@@ -155,8 +155,8 @@ public final class SparkRuntimeContextProvider {
         }
         runtimeClassLoader = ((ClassLoader) getParentLoader.invoke(runtimeClassLoader)).getParent();
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
-        LOG.warn("Unable to get the CDAP runtime classloader from {}. " +
-                   "Spark program may not be running correctly if {} is being used.",
+        LOG.warn("Unable to get the CDAP runtime classloader from {}. "
+                   + "Spark program may not be running correctly if {} is being used.",
                  EXECUTOR_CLASSLOADER_NAME, SparkInterpreter.class.getName(), e);
       }
     }
@@ -265,8 +265,8 @@ public final class SparkRuntimeContextProvider {
       // Constructor the DatasetFramework
       DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
       WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
-      DatasetFramework programDatasetFramework = workflowInfo == null ?
-        datasetFramework :
+      DatasetFramework programDatasetFramework = workflowInfo == null
+        ? datasetFramework :
         NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
                                                                  contextConfig.getApplicationSpecification());
       // Setup dataset framework context, if required

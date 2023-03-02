@@ -70,13 +70,13 @@ public class JoinDistribution {
     if (leftStage == null) {
       errors.add(
           new DistributionStageError(
-              String.format("Skewed stage '%s' does not match any of the specified " +
-                  "stages", skewedStageName)));
+              String.format("Skewed stage '%s' does not match any of the specified "
+                  + "stages", skewedStageName)));
     } else if (!leftStage.isRequired()) {
       errors.add(
           new DistributionStageError(
-              String.format("Distribution only supports inner or left outer joins, the skewed " +
-                  "stage '%s' must be required", skewedStageName)));
+              String.format("Distribution only supports inner or left outer joins, the skewed "
+                  + "stage '%s' must be required", skewedStageName)));
     }
 
     if (stages.stream().anyMatch(JoinStage::isBroadcast)) {

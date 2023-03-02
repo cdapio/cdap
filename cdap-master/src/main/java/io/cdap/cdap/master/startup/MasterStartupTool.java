@@ -102,8 +102,8 @@ public class MasterStartupTool {
               ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
         }
       }
-      LOG.error("Errors detected while starting up master. " +
-          "Please check the logs, address all errors, then try again.");
+      LOG.error("Errors detected while starting up master. "
+          + "Please check the logs, address all errors, then try again.");
       return false;
     }
     return true;
@@ -137,8 +137,8 @@ public class MasterStartupTool {
         try {
           checkRunnerBuilder.addClass(className);
         } catch (ClassNotFoundException e) {
-          LOG.error("Startup check {} not found. " +
-                  "Please check for typos and ensure the class is available on the classpath.",
+          LOG.error("Startup check {} not found. "
+                  + "Please check for typos and ensure the class is available on the classpath.",
               className);
           throw new RuntimeException(e);
         }

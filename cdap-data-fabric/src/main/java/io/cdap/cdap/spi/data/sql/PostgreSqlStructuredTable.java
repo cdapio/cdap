@@ -79,8 +79,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(tableSchema.getPrimaryKeys())) {
       throw new InvalidFieldException(tableSchema.getTableId(), fields,
-          String.format("Given fields %s do not contain all the " +
-              "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
+          String.format("Given fields %s do not contain all the "
+              + "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
     }
     upsertInternal(fields);
   }
@@ -91,8 +91,8 @@ public class PostgreSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(tableSchema.getPrimaryKeys())) {
       throw new InvalidFieldException(tableSchema.getTableId(), fields,
-          String.format("Given fields %s do not contain all the " +
-              "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
+          String.format("Given fields %s do not contain all the "
+              + "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
     }
     updateInternal(fields);
   }

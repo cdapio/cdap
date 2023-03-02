@@ -200,8 +200,8 @@ public class NettyRouter extends AbstractIdleService {
 
       if (sslHandlerFactory == null) {
         throw new RuntimeException(
-            "SSL is enabled but there is no keystore file nor certificate file being " +
-                "configured. Please ensure either '" + Constants.Security.Router.SSL_KEYSTORE_PATH
+            "SSL is enabled but there is no keystore file nor certificate file being "
+                + "configured. Please ensure either '" + Constants.Security.Router.SSL_KEYSTORE_PATH
                 + "' is set in cdap-security.xml or '" + Constants.Security.Router.SSL_CERT_PATH
                 + "' is set in cdap-site.xml file.");
       }

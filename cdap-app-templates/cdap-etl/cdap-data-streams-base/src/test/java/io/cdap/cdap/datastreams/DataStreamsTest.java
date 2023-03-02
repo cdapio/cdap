@@ -372,8 +372,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("users2", MockSource.getPlugin(userSchema, users2)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("sink1")))
       .addStage(new ETLStage("sink2", MockSink.getPlugin("sink2")))
-      .addStage(new ETLStage("aggregator", isReducibleAggregator ?
-        FieldCountReducibleAggregator.getPlugin("${aggfield}", "${aggType}") :
+      .addStage(new ETLStage("aggregator", isReducibleAggregator
+        ? FieldCountReducibleAggregator.getPlugin("${aggfield}", "${aggType}") :
         FieldCountAggregator.getPlugin("${aggfield}", "${aggType}")))
       .addStage(new ETLStage("dupeFlagger", DupeFlagger.getPlugin("users1", "${flagField}")))
       .addConnection("users1", "aggregator")
@@ -522,10 +522,10 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("source2", MockSource.getPlugin(inputSchema, input2)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
-      .addStage(new ETLStage("agg1", isReducibleAggregator ?
-        FieldCountReducibleAggregator.getPlugin("user", "string") : FieldCountAggregator.getPlugin("user", "string")))
-      .addStage(new ETLStage("agg2", isReducibleAggregator ?
-        FieldCountReducibleAggregator.getPlugin("item", "long") : FieldCountAggregator.getPlugin("item", "long")))
+      .addStage(new ETLStage("agg1", isReducibleAggregator
+        ? FieldCountReducibleAggregator.getPlugin("user", "string") : FieldCountAggregator.getPlugin("user", "string")))
+      .addStage(new ETLStage("agg2", isReducibleAggregator
+        ? FieldCountReducibleAggregator.getPlugin("item", "long") : FieldCountAggregator.getPlugin("item", "long")))
       .addConnection("source1", "agg1")
       .addConnection("source1", "agg2")
       .addConnection("source2", "agg1")
@@ -1398,11 +1398,11 @@ public class DataStreamsTest extends HydratorTestBase {
     Set<StructuredRecord> sink4Expected = new HashSet<>(Arrays.asList(item0, item2));
     Set<StructuredRecord> sink5Expected = new HashSet<>(Arrays.asList(item0, item1));
 
-    Tasks.waitFor(true, () -> sink1Expected.equals(new HashSet<>(MockExternalSink.readOutput(output1, schema))) &&
-                    sink2Expected.equals(new HashSet<>(MockExternalSink.readOutput(output2, schema))) &&
-                    sink3Expected.equals(new HashSet<>(MockExternalSink.readOutput(output3, errorSchema))) &&
-                    sink4Expected.equals(new HashSet<>(MockExternalSink.readOutput(output4, schema))) &&
-                    sink5Expected.equals(new HashSet<>(MockExternalSink.readOutput(output5, schema))),
+    Tasks.waitFor(true, () -> sink1Expected.equals(new HashSet<>(MockExternalSink.readOutput(output1, schema)))
+                    && sink2Expected.equals(new HashSet<>(MockExternalSink.readOutput(output2, schema)))
+                    && sink3Expected.equals(new HashSet<>(MockExternalSink.readOutput(output3, errorSchema)))
+                    && sink4Expected.equals(new HashSet<>(MockExternalSink.readOutput(output4, schema)))
+                    && sink5Expected.equals(new HashSet<>(MockExternalSink.readOutput(output5, schema))),
                   3, TimeUnit.MINUTES);
     sparkManager.stop();
     sparkManager.waitForStopped(1, TimeUnit.MINUTES);

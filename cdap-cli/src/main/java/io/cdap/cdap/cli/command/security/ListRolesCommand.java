@@ -79,7 +79,7 @@ public class ListRolesCommand extends AbstractAuthCommand {
   public String getDescription() {
     return
         "Lists all roles, optionally for a particular principal in an authorization system for role-based "
-            +
-            "access control";
+
+            + "access control";
   }
 }

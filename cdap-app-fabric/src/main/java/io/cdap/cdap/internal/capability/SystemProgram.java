@@ -89,11 +89,11 @@ public class SystemProgram {
       return false;
     }
     SystemProgram program = (SystemProgram) other;
-    return Objects.equals(namespace, program.namespace) &&
-        Objects.equals(application, program.application) &&
-        Objects.equals(type, program.type) &&
-        Objects.equals(name, program.name) &&
-        Objects.equals(args, program.args);
+    return Objects.equals(namespace, program.namespace)
+        && Objects.equals(application, program.application)
+        && Objects.equals(type, program.type)
+        && Objects.equals(name, program.name)
+        && Objects.equals(args, program.args);
   }
 
   @Override

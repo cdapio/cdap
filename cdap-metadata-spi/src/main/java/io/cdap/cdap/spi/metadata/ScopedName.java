@@ -51,8 +51,8 @@ public class ScopedName {
       return false;
     }
     ScopedName other = (ScopedName) o;
-    return scope == other.scope &&
-        Objects.equals(name, other.name);
+    return scope == other.scope
+        && Objects.equals(name, other.name);
   }
 
   @Override

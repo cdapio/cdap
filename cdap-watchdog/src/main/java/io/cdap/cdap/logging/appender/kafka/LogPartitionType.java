@@ -43,9 +43,9 @@ public enum LogPartitionType {
       case PROGRAM:
         return loggingContext.getLogPartition();
       case APPLICATION:
-        return namespaceId + ":" +
-            loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID)
-                .getValue();
+        return namespaceId + ":"
+            + loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID)
+            .getValue();
       default:
         // this should never happen
         throw new IllegalArgumentException(

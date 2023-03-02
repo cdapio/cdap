@@ -85,9 +85,9 @@ public class ProvisionerTable {
   public ProvisioningTaskInfo getTaskInfo(ProvisioningTaskKey key) throws IOException {
     Optional<StructuredRow> row = table.read(
         createPrimaryKey(key.getProgramRunId(), key.getType()));
-    return row.isPresent() ?
-        deserialize(
-            row.get().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)) :
+    return row.isPresent()
+        ? deserialize(
+        row.get().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)) :
         null;
   }
 

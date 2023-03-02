@@ -55,8 +55,8 @@ public class StartStats {
     }
 
     StartStats that = (StartStats) o;
-    return Objects.equal(oldest, that.oldest) &&
-        Objects.equal(newest, that.newest);
+    return Objects.equal(oldest, that.oldest)
+        && Objects.equal(newest, that.newest);
   }
 
   @Override

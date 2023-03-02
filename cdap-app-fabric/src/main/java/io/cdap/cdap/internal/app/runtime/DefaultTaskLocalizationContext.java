@@ -39,8 +39,8 @@ public class DefaultTaskLocalizationContext implements TaskLocalizationContext, 
   public File getLocalFile(String name) throws FileNotFoundException {
     if (!localizedResources.containsKey(name)) {
       throw new FileNotFoundException(
-          String.format("The specified file %s was not found. Please make sure it was " +
-              "localized using context.localize().", name));
+          String.format("The specified file %s was not found. Please make sure it was "
+              + "localized using context.localize().", name));
     }
     return localizedResources.get(name);
   }

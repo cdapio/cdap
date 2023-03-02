@@ -177,11 +177,11 @@ public final class Range {
 
   @Override
   public String toString() {
-    return "Range{" +
-        "begin=" + begin +
-        ", beginBound=" + beginBound +
-        ", end=" + end +
-        ", endBound=" + endBound +
-        '}';
+    return "Range{"
+        + "begin=" + begin
+        + ", beginBound=" + beginBound
+        + ", end=" + end
+        + ", endBound=" + endBound
+        + '}';
   }
 }

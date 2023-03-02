@@ -587,8 +587,8 @@ public final class FactTable implements Closeable {
         return false;
       }
       FactCacheKey that = (FactCacheKey) o;
-      return Objects.equals(dimensionValues, that.dimensionValues) &&
-          Objects.equals(metricName, that.metricName);
+      return Objects.equals(dimensionValues, that.dimensionValues)
+          && Objects.equals(metricName, that.metricName);
     }
 
     @Override

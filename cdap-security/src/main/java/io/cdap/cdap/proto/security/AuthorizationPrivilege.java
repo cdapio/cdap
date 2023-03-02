@@ -76,9 +76,9 @@ public class AuthorizationPrivilege {
       return false;
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-    return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
-        Objects.equals(childEntityType, that.childEntityType) &&
-        Objects.equals(principal, that.principal);
+    return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions)
+        && Objects.equals(childEntityType, that.childEntityType)
+        && Objects.equals(principal, that.principal);
   }
 
   @Override
@@ -88,11 +88,11 @@ public class AuthorizationPrivilege {
 
   @Override
   public String toString() {
-    return "AuthorizationPrivilege {" +
-        "entityId=" + entityId +
-        ", permissions=" + permissions +
-        ", principal=" + principal +
-        ", childEntityType=" + childEntityType +
-        '}';
+    return "AuthorizationPrivilege {"
+        + "entityId=" + entityId
+        + ", permissions=" + permissions
+        + ", principal=" + principal
+        + ", childEntityType=" + childEntityType
+        + '}';
   }
 }

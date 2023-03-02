@@ -79,9 +79,9 @@ public class ArtifactInfo extends ArtifactSummary {
 
     ArtifactInfo that = (ArtifactInfo) o;
 
-    return super.equals(that) &&
-        Objects.equals(classes, that.classes) &&
-        Objects.equals(properties, that.properties);
+    return super.equals(that)
+        && Objects.equals(classes, that.classes)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -91,12 +91,12 @@ public class ArtifactInfo extends ArtifactSummary {
 
   @Override
   public String toString() {
-    return "ArtifactInfo{" +
-        "name='" + name + '\'' +
-        ", version='" + version + '\'' +
-        ", scope=" + scope +
-        ", classes=" + classes +
-        ", properties=" + properties +
-        '}';
+    return "ArtifactInfo{"
+        + "name='" + name + '\''
+        + ", version='" + version + '\''
+        + ", scope=" + scope
+        + ", classes=" + classes
+        + ", properties=" + properties
+        + '}';
   }
 }

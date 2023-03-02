@@ -68,11 +68,11 @@ public final class SecureStoreMetadata {
 
   @Override
   public String toString() {
-    return "SecureStoreMetadata{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", createdEpochMs=" + createdEpochMs +
-        '}';
+    return "SecureStoreMetadata{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", createdEpochMs=" + createdEpochMs
+        + '}';
   }
 
   @Override

@@ -64,8 +64,8 @@ public class TetheringControlMessage {
     }
 
     TetheringControlMessage that = (TetheringControlMessage) o;
-    return Objects.equals(type, that.type) &&
-        Arrays.equals(payload, that.payload);
+    return Objects.equals(type, that.type)
+        && Arrays.equals(payload, that.payload);
   }
 
   @Override

@@ -118,8 +118,8 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
       return false;
     }
     ProfileId profileId = (ProfileId) o;
-    return Objects.equals(namespace, profileId.namespace) &&
-        Objects.equals(profileName, profileId.profileName);
+    return Objects.equals(namespace, profileId.namespace)
+        && Objects.equals(profileName, profileId.profileName);
   }
 
   @Override

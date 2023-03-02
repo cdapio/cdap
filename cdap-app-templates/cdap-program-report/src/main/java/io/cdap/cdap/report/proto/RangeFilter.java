@@ -78,10 +78,10 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
 
   @Override
   public String toString() {
-    return "RangeFilter{" +
-        "fieldName=" + getFieldName() +
-        ", range=" + range +
-        '}';
+    return "RangeFilter{"
+        + "fieldName=" + getFieldName()
+        + ", range=" + range
+        + '}';
   }
 
   /**
@@ -120,10 +120,10 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
 
     @Override
     public String toString() {
-      return "Range{" +
-          "min=" + min +
-          ", max=" + max +
-          '}';
+      return "Range{"
+          + "min=" + min
+          + ", max=" + max
+          + '}';
     }
 
     @Override
@@ -140,8 +140,8 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
         return false;
       }
       Range that = (Range) o;
-      return Objects.equals(this.min, that.min) &&
-          Objects.equals(this.max, that.max);
+      return Objects.equals(this.min, that.min)
+          && Objects.equals(this.max, that.max);
     }
   }
 

@@ -64,11 +64,12 @@
       The default ignore pattern exempts the following elements:
         - import statements
         - long URLs inside comments
+        - JavaDoc links or code fragments without spaces
     -->
 
     <property name="ignorePattern"
               value="${com.puppycrawl.tools.checkstyle.checks.sizes.LineLength.ignorePattern}"
-              default="^(package .*;\s*)|(import .*;\s*)|( *\* *https?://.*)$"/>
+              default="^(package .*;\s*)|(import .*;\s*)|( *\* *https?://.*)|( *[*].*[{]@(link|code) [^ ]*)$"/>
   </module>
 
   <!--
@@ -298,12 +299,14 @@
                value="Type name ''{0}'' must match pattern ''{1}''."/>
     </module>
     <module name="MemberName">
-      <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9]*$"/>
+      <!-- Allow cConf/hConf -->
+      <property name="format" value="^[a-z][a-zA-Z0-9]+$"/>
       <message key="name.invalidPattern"
-               value="Member name ''{0}'' must match pattern ''{1}''."/>
+          value="Member name ''{0}'' must match pattern ''{1}''."/>
     </module>
     <module name="ParameterName">
-      <property name="format" value="^[a-z]([a-z0-9][a-zA-Z0-9]*)?$"/>
+      <!-- Allow cConf / hConf -->
+      <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
       <message key="name.invalidPattern"
                value="Parameter name ''{0}'' must match pattern ''{1}''."/>
     </module>
@@ -498,23 +501,6 @@
       <!-- The check is suppressed in the next line of code after the comment -->
       <property name="influenceFormat" value="1"/>
     </module>
-  </module>
-
-  <module name="LineLength">
-    <!-- Checks if a line is too long. -->
-    <property name="max" value="120" default="120"/>
-    <property name="severity" value="error"/>
-    <property name="fileExtensions" value="java, scala"/>
-
-    <!--
-      The default ignore pattern exempts the following elements:
-        - import statements
-        - long URLs inside comments
-    -->
-
-    <property name="ignorePattern"
-              value="${com.puppycrawl.tools.checkstyle.checks.sizes.LineLength.ignorePattern}"
-              default="^(package .*;\s*)|(import .*;\s*)|( *\* *https?://.*)$"/>
   </module>
 
   <!--

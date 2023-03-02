@@ -94,9 +94,9 @@ public class CheckRunner {
       ClassPath classPath = getClassPath();
       for (ClassPath.ClassInfo classInfo : classPath.getAllClassesRecursive(pkg)) {
         Class<?> cls = classInfo.load();
-        if (!Modifier.isInterface(cls.getModifiers()) &&
-            !Modifier.isAbstract(cls.getModifiers()) &&
-            Check.class.isAssignableFrom(cls)) {
+        if (!Modifier.isInterface(cls.getModifiers())
+            && !Modifier.isAbstract(cls.getModifiers())
+            && Check.class.isAssignableFrom(cls)) {
           checks.add((Check) injector.getInstance(cls));
         }
       }

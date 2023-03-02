@@ -122,8 +122,8 @@ public class OutboundHandler extends ChannelDuplexHandler {
         channel.close();
         LOG.trace(
             "No data has been sent or received for channel '{}' for more than the configured idle timeout. "
-                +
-                "Closing the channel. Local Address: {}, Remote Address: {}",
+
+                + "Closing the channel. Local Address: {}, Remote Address: {}",
             channel, channel.localAddress(), channel.remoteAddress());
       }
     }

@@ -91,8 +91,8 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
     MacroEvaluator evaluator = getMacroEvaluator(macroFunction);
     if (!mapFunctions.contains(macroFunction)) {
       throw new InvalidMacroException(
-          String.format("The macro function %s cannot be evaluated as map. " +
-              "Please use evaluate() instead", macroFunction));
+          String.format("The macro function %s cannot be evaluated as map. "
+              + "Please use evaluate() instead", macroFunction));
     }
     return evaluator.evaluateMap(macroFunction, arguments);
   }

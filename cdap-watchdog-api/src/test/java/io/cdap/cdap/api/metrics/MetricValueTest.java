@@ -21,18 +21,18 @@ import org.junit.Test;
 public class MetricValueTest {
   @Test
   public void testGetAllCounts() {
-    long bucketMask = 1L /* first position */ +
-        1L << 2 /* 2^2 i.e. third position */ +
-        1L << 8 /* 2^8 i.e. 9th position */ +
-        1L << 20 /* 2^20 i.e. 21st position */;
+    long bucketMask = 1L /* first position */
+        + 1L << 2 /* 2^2 i.e. third position */
+        + 1L << 8 /* 2^8 i.e. 9th position */
+        + 1L << 20 /* 2^20 i.e. 21st position */;
 
-    MetricValue metricValue = new MetricValue("ignore", new long[] {1, 1, 1, 1}, bucketMask, 0);
+    MetricValue metricValue = new MetricValue("ignore", new long[]{1, 1, 1, 1}, bucketMask, 0);
     long[] allBucketCounts = metricValue.getAllBucketCounts();
     Assert.assertEquals(MetricValue.NUM_FINITE_BUCKETS + 2, allBucketCounts.length);
     for (int i = 0; i < allBucketCounts.length; i++) {
-    if ((bucketMask & (1L << i)) != 0) {
-      Assert.assertEquals(1, allBucketCounts[i]);
-    } else {
+      if ((bucketMask & (1L << i)) != 0) {
+        Assert.assertEquals(1, allBucketCounts[i]);
+      } else {
         Assert.assertEquals(0, allBucketCounts[i]);
       }
     }

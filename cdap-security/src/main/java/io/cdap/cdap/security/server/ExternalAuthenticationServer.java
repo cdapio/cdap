@@ -97,8 +97,8 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
       DiscoveryService discoveryService,
       @Named("security.handlers.map") Map<String, Object> handlers,
       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.port = cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED) ?
-        cConfiguration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
+    this.port = cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)
+        ? cConfiguration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
         cConfiguration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     this.maxThreads = cConfiguration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;

@@ -119,8 +119,8 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of AccessController should have failed " +
-                    "because extension jar does not have a manifest");
+      Assert.fail("Instantiation of AccessController should have failed "
+          + "because extension jar does not have a manifest");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
@@ -134,8 +134,9 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of AccessController should have failed because extension jar's manifest does not " +
-                    "define AccessController class.");
+      Assert.fail(
+          "Instantiation of AccessController should have failed because extension jar's manifest does not "
+              + "define AccessController class.");
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
@@ -151,8 +152,10 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of AccessController should have failed because the AccessController class defined " +
-                    "in the extension jar's manifest does not implement " + AccessController.class.getName());
+      Assert.fail(
+          "Instantiation of AccessController should have failed because the AccessController class defined "
+              + "in the extension jar's manifest does not implement "
+              + AccessController.class.getName());
     } catch (Throwable e) {
       throw Throwables.getRootCause(e);
     }
@@ -168,8 +171,10 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
     CCONF.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     try (AccessControllerInstantiator instantiator = new AccessControllerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       instantiator.get();
-      Assert.fail("Instantiation of AccessController should have failed because the AccessController class defined " +
-                    "in the extension jar's manifest does not implement " + AccessController.class.getName());
+      Assert.fail(
+          "Instantiation of AccessController should have failed because the AccessController class defined "
+              + "in the extension jar's manifest does not implement "
+              + AccessController.class.getName());
     } catch (Throwable e) {
       throw e.getCause();
     }
@@ -233,8 +238,9 @@ public class AccessControllerInstantiatorTest extends AuthorizationTestBase {
       // should not be able to load the ExternalAccessController class via the parent class loader
       try {
         parent.loadClass(ValidExternalAccessController.class.getName());
-        Assert.fail("Should not be able to load external accessController classes via the parent classloader of the " +
-                      "AccessController class loader.");
+        Assert.fail(
+            "Should not be able to load external accessController classes via the parent classloader of the "
+                + "AccessController class loader.");
       } catch (ClassNotFoundException expected) {
         // expected
       }

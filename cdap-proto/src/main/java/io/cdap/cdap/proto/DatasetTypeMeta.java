@@ -55,9 +55,9 @@ public class DatasetTypeMeta {
 
   @Override
   public String toString() {
-    return "DatasetTypeMeta{" +
-        "name='" + name + '\'' +
-        ", modules=" + modules +
-        '}';
+    return "DatasetTypeMeta{"
+        + "name='" + name + '\''
+        + ", modules=" + modules
+        + '}';
   }
 }

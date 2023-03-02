@@ -394,21 +394,23 @@ public abstract class CLITestBase {
     CLIConfig cliConfig = getCliConfig();
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
-    testCommandOutputContains("create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
-                              "Successfully created dataset");
+    testCommandOutputContains(
+        "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
+        "Successfully created dataset");
     testCommandOutputContains("list dataset instances", FakeDataset.class.getSimpleName());
     testCommandOutputContains("get dataset instance properties " + datasetName, "a,1");
 
     // test dataset creation with owner
-    String commandOutput = getCommandOutput("create dataset instance " + datasetType.getName() + " " +
-                                              ownedDatasetName + " \"a=1\"" + " " + "someDescription " +
-                                              ArgumentName.PRINCIPAL +
-                                              " alice/somehost.net@somekdc.net");
+    String commandOutput = getCommandOutput("create dataset instance " + datasetType.getName() + " "
+        + ownedDatasetName + " \"a=1\"" + " " + "someDescription "
+        + ArgumentName.PRINCIPAL
+        + " alice/somehost.net@somekdc.net");
     Assert.assertTrue(commandOutput.contains("Successfully created dataset"));
     Assert.assertTrue(commandOutput.contains("alice/somehost.net@somekdc.net"));
 
     // test describing the table returns the given owner information
-    testCommandOutputContains("describe dataset instance " + ownedDatasetName, "alice/somehost.net@somekdc.net");
+    testCommandOutputContains("describe dataset instance " + ownedDatasetName,
+        "alice/somehost.net@somekdc.net");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
@@ -424,19 +426,22 @@ public abstract class CLITestBase {
 
     testCommandOutputContains("use namespace default", "Now using namespace 'default'");
     try {
-      testCommandOutputContains("truncate dataset instance " + datasetName, "Successfully truncated");
+      testCommandOutputContains("truncate dataset instance " + datasetName,
+          "Successfully truncated");
     } finally {
       testCommandOutputContains("delete dataset instance " + datasetName, "Successfully deleted");
     }
 
     String datasetName2 = PREFIX + "asoijm39485";
     String description = "test-description-for-" + datasetName2;
-    testCommandOutputContains("create dataset instance " + datasetType.getName() + " " + datasetName2 +
-                                " \"a=1\"" + " " + description,
-                              "Successfully created dataset");
+    testCommandOutputContains(
+        "create dataset instance " + datasetType.getName() + " " + datasetName2
+            + " \"a=1\"" + " " + description,
+        "Successfully created dataset");
     testCommandOutputContains("list dataset instances", description);
     testCommandOutputContains("delete dataset instance " + datasetName2, "Successfully deleted");
-    testCommandOutputContains("delete dataset instance " + ownedDatasetName, "Successfully deleted");
+    testCommandOutputContains("delete dataset instance " + ownedDatasetName,
+        "Successfully deleted");
   }
 
   @Test
@@ -598,24 +603,26 @@ public abstract class CLITestBase {
 
     // describe non-existing namespace
     testCommandOutputContains(String.format("describe namespace %s", doesNotExist),
-                              String.format("Error: 'namespace:%s' was not found", doesNotExist));
+        String.format("Error: 'namespace:%s' was not found", doesNotExist));
     // delete non-existing namespace
     // TODO: uncomment when fixed - this makes build hang since it requires confirmation from user
 //    testCommandOutputContains(String.format("delete namespace %s", doesNotExist),
 //                              String.format("Error: namespace '%s' was not found", doesNotExist));
 
     // create a namespace
-    String command = String.format("create namespace %s description %s principal %s group-name %s keytab-URI %s " +
-                                     "hbase-namespace %s hive-database %s root-directory %s %s %s",
-                                   name, description, principal, group, keytab, hbaseNamespace,
-                                   hiveDatabase, rootDirectory, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME,
-                                   schedulerQueueName);
+    String command = String.format(
+        "create namespace %s description %s principal %s group-name %s keytab-URI %s "
+            + "hbase-namespace %s hive-database %s root-directory %s %s %s",
+        name, description, principal, group, keytab, hbaseNamespace,
+        hiveDatabase, rootDirectory, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME,
+        schedulerQueueName);
     testCommandOutputContains(command, String.format("Namespace '%s' created successfully.", name));
 
     NamespaceMeta expected = new NamespaceMeta.Builder()
-      .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group).setKeytabURI(keytab)
-      .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
-      .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
+        .setName(name).setDescription(description).setPrincipal(principal).setGroupName(group)
+        .setKeytabURI(keytab)
+        .setHBaseNamespace(hbaseNamespace).setSchedulerQueueName(schedulerQueueName)
+        .setHiveDatabase(hiveDatabase).setRootDirectory(rootDirectory).build();
     expectedNamespaces = Lists.newArrayList(defaultNs, expected);
     // list namespaces and verify
     testNamespacesOutput("list namespaces", expectedNamespaces);
@@ -709,9 +716,12 @@ public abstract class CLITestBase {
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "0 4 * * *");
 
     testCommandOutputContains(
-      String.format("update time schedule %s for workflow %s version %s description \"testdesc\" at \"* * * * *\" " +
-                      "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow, V1_SNAPSHOT),
-      String.format("Successfully updated schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE, FakeApp.NAME));
+        String.format(
+            "update time schedule %s for workflow %s version %s description \"testdesc\" at \"* * * * *\" "
+                + "concurrency 4 properties \"key=value\"", FakeWorkflow.SCHEDULE, workflow,
+            V1_SNAPSHOT),
+        String.format("Successfully updated schedule '%s' in app '%s'", FakeWorkflow.SCHEDULE,
+            FakeApp.NAME));
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "* * * * *");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "testdesc");
     testCommandOutputContains(String.format("get workflow schedules %s", workflow), "{\"key\":\"value\"}");

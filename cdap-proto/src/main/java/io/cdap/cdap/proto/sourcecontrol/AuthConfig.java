@@ -60,9 +60,9 @@ public class AuthConfig {
       return false;
     }
     AuthConfig that = (AuthConfig) o;
-    return Objects.equals(type, that.type) &&
-        Objects.equals(tokenName, that.tokenName) &&
-        Objects.equals(username, that.username);
+    return Objects.equals(type, that.type)
+        && Objects.equals(tokenName, that.tokenName)
+        && Objects.equals(username, that.username);
   }
 
   @Override
@@ -72,10 +72,10 @@ public class AuthConfig {
 
   @Override
   public String toString() {
-    return "Auth{" +
-        "type=" + type +
-        ", tokenName=" + tokenName +
-        ", username=" + username +
-        '}';
+    return "Auth{"
+        + "type=" + type
+        + ", tokenName=" + tokenName
+        + ", username=" + username
+        + '}';
   }
 }

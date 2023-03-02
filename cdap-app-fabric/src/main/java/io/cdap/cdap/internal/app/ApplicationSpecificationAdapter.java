@@ -135,8 +135,8 @@ public final class ApplicationSpecificationAdapter {
           String appName = reader.nextString();
           if (!appId.getApplication().equals(appName)) {
             throw new IllegalArgumentException(
-                String.format("Application name in the specification is '%s' and it doesn't " +
-                        "match with the provided application id '%s'", appName,
+                String.format("Application name in the specification is '%s' and it doesn't "
+                        + "match with the provided application id '%s'", appName,
                     appId.getApplication()));
           }
           break;
@@ -181,8 +181,8 @@ public final class ApplicationSpecificationAdapter {
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
       Class<?> rawType = type.getRawType();
       // note: we want ordered maps to remain ordered
-      if (!Map.class.isAssignableFrom(rawType) ||
-          SortedMap.class.isAssignableFrom(rawType)) {
+      if (!Map.class.isAssignableFrom(rawType)
+          || SortedMap.class.isAssignableFrom(rawType)) {
         return null;
       }
       // For non-parameterized Map, use the default TypeAdapter

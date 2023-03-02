@@ -74,19 +74,19 @@ public class ProgramStatusEventDetails {
 
   @Override
   public String toString() {
-    return "ProgramStatusEventDetails{" +
-        "runID='" + runID + '\'' +
-        ", programName='" + programName + '\'' +
-        ", applicationName='" + applicationName + '\'' +
-        ", namespace='" + namespace + '\'' +
-        ", status='" + status + '\'' +
-        ", eventTime=" + eventTime +
-        ", userArgs=" + userArgs +
-        ", systemArgs=" + systemArgs +
-        ", error='" + error + '\'' +
-        ", pipelineMetrics=" + Arrays.toString(pipelineMetrics) +
-        ", workflowId='" + workflowId + '\'' +
-        '}';
+    return "ProgramStatusEventDetails{"
+        + "runID='" + runID + '\''
+        + ", programName='" + programName + '\''
+        + ", applicationName='" + applicationName + '\''
+        + ", namespace='" + namespace + '\''
+        + ", status='" + status + '\''
+        + ", eventTime=" + eventTime
+        + ", userArgs=" + userArgs
+        + ", systemArgs=" + systemArgs
+        + ", error='" + error + '\''
+        + ", pipelineMetrics=" + Arrays.toString(pipelineMetrics)
+        + ", workflowId='" + workflowId + '\''
+        + '}';
   }
 
   public String getNamespace() {

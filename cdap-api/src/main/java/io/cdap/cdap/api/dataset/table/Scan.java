@@ -95,11 +95,11 @@ public class Scan {
 
   @Override
   public String toString() {
-    return "Scan{" +
-        "startRow=" + Bytes.toStringBinary(startRow) +
-        ", stopRow=" + Bytes.toStringBinary(stopRow) +
-        ", filter=" + filter +
-        ", properties=" + properties +
-        '}';
+    return "Scan{"
+        + "startRow=" + Bytes.toStringBinary(startRow)
+        + ", stopRow=" + Bytes.toStringBinary(stopRow)
+        + ", filter=" + filter
+        + ", properties=" + properties
+        + '}';
   }
 }

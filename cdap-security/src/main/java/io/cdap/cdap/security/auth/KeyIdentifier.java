@@ -91,8 +91,8 @@ public final class KeyIdentifier {
   public boolean equals(Object object) {
     if (object instanceof KeyIdentifier) {
       KeyIdentifier other = (KeyIdentifier) object;
-      return Arrays.equals(encodedKey, other.encodedKey) &&
-          keyId == other.keyId && algorithm.equals(other.algorithm)
+      return Arrays.equals(encodedKey, other.encodedKey)
+          && keyId == other.keyId && algorithm.equals(other.algorithm)
           && Objects.equal(getKey(), other.getKey())
           && Objects.equal(expiration, other.expiration);
     }

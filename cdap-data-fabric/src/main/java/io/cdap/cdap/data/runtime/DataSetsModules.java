@@ -181,8 +181,8 @@ class MetadataStorageProvider implements Provider<MetadataStorage> {
     if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
       return injector.getInstance(ElasticsearchMetadataStorage.class);
     }
-    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '" +
-        Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '" +
-        Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
+    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '"
+        + Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '"
+        + Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
   }
 }

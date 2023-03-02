@@ -63,9 +63,9 @@ public class ConnectionCreationRequest {
     }
 
     ConnectionCreationRequest that = (ConnectionCreationRequest) o;
-    return overWrite == that.overWrite &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(plugin, that.plugin);
+    return overWrite == that.overWrite
+        && Objects.equals(description, that.description)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override

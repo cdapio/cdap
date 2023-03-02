@@ -112,8 +112,8 @@ public class JoinCondition {
         if (stage.getSchema() == null) {
           errors.add(
               new ExpressionConditionError(
-                  String.format("Input stage '%s' does not have a set schema. " +
-                          "Advanced join conditions cannot be used with dynamic or unknown input schemas.",
+                  String.format("Input stage '%s' does not have a set schema. "
+                          + "Advanced join conditions cannot be used with dynamic or unknown input schemas.",
                       stage.getStageName())));
         }
       }
@@ -192,8 +192,8 @@ public class JoinCondition {
         // check that the stage for each key is in the list of stages
         if (joinStage == null) {
           errors.add(new JoinKeyError(joinKey,
-              String.format("Join key for stage '%s' is invalid. " +
-                  "Stage '%s' is not an input.", joinStageName, joinStageName)));
+              String.format("Join key for stage '%s' is invalid. "
+                  + "Stage '%s' is not an input.", joinStageName, joinStageName)));
           continue;
         }
         // this happens if the schema for that stage is unknown.
@@ -211,14 +211,14 @@ public class JoinCondition {
         keysCopy.removeAll(fields);
         if (keysCopy.size() == 1) {
           errors.add(new JoinKeyError(joinKey,
-              String.format("Join key for stage '%s' is invalid. " +
-                      "Field '%s' does not exist in the stage.",
+              String.format("Join key for stage '%s' is invalid. "
+                      + "Field '%s' does not exist in the stage.",
                   joinStageName, keysCopy.iterator().next())));
         }
         if (keysCopy.size() > 1) {
           errors.add(new JoinKeyError(joinKey,
-              String.format("Join key for stage '%s' is invalid. " +
-                      "Fields %s do not exist in the stage.",
+              String.format("Join key for stage '%s' is invalid. "
+                      + "Fields %s do not exist in the stage.",
                   joinStageName, String.join(", ", keysCopy))));
         }
       }

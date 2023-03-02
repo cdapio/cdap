@@ -454,8 +454,8 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   public void testValidationFailureForJoiner() throws Exception {
     String stageName = "joiner";
     // join key field t2_cust_name does not exist
-    ETLStage stage = new ETLStage(stageName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id&" +
-                                                                    "t1.customer_name=t2.t2_cust_name", "t1,t2", ""));
+    ETLStage stage = new ETLStage(stageName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id&"
+                                                                    + "t1.customer_name=t2.t2_cust_name", "t1,t2", ""));
     StageSchema inputSchema1 = new StageSchema(
       "t1", Schema.recordOf("id", Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
                             Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))));

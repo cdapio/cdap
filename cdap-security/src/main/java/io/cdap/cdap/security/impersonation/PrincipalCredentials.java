@@ -41,9 +41,9 @@ public class PrincipalCredentials {
 
   @Override
   public String toString() {
-    return "PrincipalCredentials{" +
-        "principal='" + principal + '\'' +
-        ", credentialsPath=" + credentialsPath +
-        '}';
+    return "PrincipalCredentials{"
+        + "principal='" + principal + '\''
+        + ", credentialsPath=" + credentialsPath
+        + '}';
   }
 }

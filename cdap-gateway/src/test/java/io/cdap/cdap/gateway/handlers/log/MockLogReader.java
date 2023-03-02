@@ -233,8 +233,8 @@ public class MockLogReader implements LogReader {
       for (LogEvent logLine : logEvents) {
         if (logLine.getOffset().getKafkaOffset() >= readRange.getKafkaOffset()) {
           long logTime = logLine.getLoggingEvent().getTimeStamp();
-          if (!contextFilter.match(logLine.getLoggingEvent()) || logTime < readRange.getFromMillis() ||
-            logTime >= readRange.getToMillis()) {
+          if (!contextFilter.match(logLine.getLoggingEvent()) || logTime < readRange.getFromMillis()
+              || logTime >= readRange.getToMillis()) {
             continue;
           }
 
@@ -271,13 +271,13 @@ public class MockLogReader implements LogReader {
       long startOffset = readRange.getKafkaOffset() - maxEvents;
       for (LogEvent logLine : logEvents) {
         long logTime = logLine.getLoggingEvent().getTimeStamp();
-        if (!contextFilter.match(logLine.getLoggingEvent()) || logTime < readRange.getFromMillis() ||
-          logTime >= readRange.getToMillis()) {
+        if (!contextFilter.match(logLine.getLoggingEvent()) || logTime < readRange.getFromMillis()
+            || logTime >= readRange.getToMillis()) {
           continue;
         }
 
-        if (logLine.getOffset().getKafkaOffset() >= startOffset &&
-          logLine.getOffset().getKafkaOffset() < readRange.getKafkaOffset()) {
+        if (logLine.getOffset().getKafkaOffset() >= startOffset
+            && logLine.getOffset().getKafkaOffset() < readRange.getKafkaOffset()) {
           if (++count > maxEvents) {
             break;
           }

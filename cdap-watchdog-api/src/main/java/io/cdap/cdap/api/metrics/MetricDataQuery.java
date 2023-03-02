@@ -154,16 +154,16 @@ public final class MetricDataQuery {
 
   @Override
   public String toString() {
-    return "MetricDataQuery{" +
-        "startTs=" + startTs +
-        ", endTs=" + endTs +
-        ", resolution=" + resolution +
-        ", limit=" + limit +
-        ", metrics=" + metrics +
-        ", sliceByTagValues=" + sliceByTagValues +
-        ", groupByTags=" + groupByTags +
-        ", aggregationOption=" + aggregationOption +
-        ", interpolator=" + interpolator +
-        '}';
+    return "MetricDataQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", resolution=" + resolution
+        + ", limit=" + limit
+        + ", metrics=" + metrics
+        + ", sliceByTagValues=" + sliceByTagValues
+        + ", groupByTags=" + groupByTags
+        + ", aggregationOption=" + aggregationOption
+        + ", interpolator=" + interpolator
+        + '}';
   }
 }

@@ -139,11 +139,11 @@ public abstract class DefaultSecretStoreTest {
 
       TestSecret secret = (TestSecret) o;
 
-      return creationTimeMs == secret.creationTimeMs &&
-        Objects.equals(name, secret.name) &&
-        Objects.equals(description, secret.description) &&
-        Arrays.equals(secretData, secret.secretData) &&
-        Objects.equals(properties, secret.properties);
+      return creationTimeMs == secret.creationTimeMs
+          && Objects.equals(name, secret.name)
+          && Objects.equals(description, secret.description)
+          && Arrays.equals(secretData, secret.secretData)
+          && Objects.equals(properties, secret.properties);
     }
 
     @Override

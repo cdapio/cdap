@@ -59,8 +59,8 @@ public class ArtifactSelectorProvider {
   private ArtifactSelector getArtifactSelector(ArtifactSelectorConfig config) {
     String name = config.getName();
     if (name != null && !nameMatcher.matchesAllOf(name)) {
-      throw new IllegalArgumentException(String.format("'%s' is an invalid artifact name. " +
-              "Must contain only alphanumeric, '-', '.', or '_' characters.",
+      throw new IllegalArgumentException(String.format("'%s' is an invalid artifact name. "
+              + "Must contain only alphanumeric, '-', '.', or '_' characters.",
           name));
     }
 
@@ -69,9 +69,9 @@ public class ArtifactSelectorProvider {
     try {
       range = version == null ? null : ArtifactVersionRange.parse(version);
     } catch (InvalidArtifactRangeException e) {
-      throw new IllegalArgumentException(String.format("%s is an invalid artifact version." +
-          "Must be an exact version or a version range " +
-          "with a lower and upper bound.", version));
+      throw new IllegalArgumentException(String.format("%s is an invalid artifact version."
+          + "Must be an exact version or a version range "
+          + "with a lower and upper bound.", version));
     }
 
     String scope = config.getScope();

@@ -101,10 +101,10 @@ public class SystemAppEntityId extends NamespacedEntityId implements ParentedId<
       return false;
     }
     SystemAppEntityId that = (SystemAppEntityId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(appName, that.appName) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(name, that.name);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(appName, that.appName)
+        && Objects.equals(type, that.type)
+        && Objects.equals(name, that.name);
   }
 
   public static SystemAppEntityId fromString(String string) {

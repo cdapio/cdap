@@ -114,9 +114,9 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
       return false;
     }
     ArtifactId that = (ArtifactId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(artifact, that.artifact) &&
-        Objects.equals(version, that.version);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(version, that.version);
   }
 
   @Override

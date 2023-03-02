@@ -117,8 +117,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
       if (!DaemonMain.class.getName().equals(superClass.getName())) {
         // This should never happen
-        throw new IllegalStateException("Main service class " + mainClass.getName() +
-            " should inherit from " + DaemonMain.class.getName());
+        throw new IllegalStateException("Main service class " + mainClass.getName()
+            + " should inherit from " + DaemonMain.class.getName());
       }
 
       Method method = superClass.getDeclaredMethod("doMain", String[].class);

@@ -169,8 +169,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     try {
       klistPath = session.executeAndWait("which klist").trim();
     } catch (IOException e) {
-      LOG.warn("Failed to locate klist command for Kerberos validation. " +
-              "If the Kerberos principal and keytab are mis-configured, program execution will fail.",
+      LOG.warn("Failed to locate klist command for Kerberos validation. "
+              + "If the Kerberos principal and keytab are mis-configured, program execution will fail.",
           e);
       return;
     }
@@ -387,8 +387,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     }
 
     scriptWriter.printf(
-        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s " +
-          ">%s/stdout 2>%s/stderr &\n",
+        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s "
+            + ">%s/stdout 2>%s/stderr &\n",
         getProgramRunId().getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
         jvmOptions.getAMExtraOptions(),
         RemoteLauncher.class.getName(),

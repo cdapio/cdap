@@ -41,9 +41,9 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
     }
     if (!isValidSecureKey(name)) {
       throw new IllegalArgumentException(
-          String.format("Improperly formatted secure key name '%s'." +
-              " The name can contain lower case alphabets," +
-              " numbers, _, and -", name));
+          String.format("Improperly formatted secure key name '%s'."
+              + " The name can contain lower case alphabets,"
+              + " numbers, _, and -", name));
     }
     this.name = name;
   }
@@ -70,8 +70,8 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
       return false;
     }
     SecureKeyId secureKeyId = (SecureKeyId) o;
-    return Objects.equals(namespace, secureKeyId.namespace) &&
-        Objects.equals(name, secureKeyId.name);
+    return Objects.equals(namespace, secureKeyId.namespace)
+        && Objects.equals(name, secureKeyId.name);
   }
 
   @Override

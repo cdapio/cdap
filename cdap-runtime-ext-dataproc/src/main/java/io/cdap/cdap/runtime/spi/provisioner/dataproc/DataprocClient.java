@@ -386,8 +386,8 @@ abstract class DataprocClient implements AutoCloseable {
       // if the network uses custom subnets but none exist, error out
       if (subnets == null || subnets.isEmpty()) {
         throw new DataprocRuntimeException(
-            String.format("Network '%s' in project '%s' does not contain any subnets. " +
-                    "Please create a subnet or use a different network.", network,
+            String.format("Network '%s' in project '%s' does not contain any subnets. "
+                    + "Please create a subnet or use a different network.", network,
                 networkHostProjectId),
             ErrorTag.CONFIGURATION);
       }
@@ -558,8 +558,8 @@ abstract class DataprocClient implements AutoCloseable {
         deleteCluster(name);
       }
     } catch (Exception e) {
-      LOG.warn("Can't remove Dataproc Cluster " + name + ". " +
-          "Attempted deletion because state was ERROR after creation", e);
+      LOG.warn("Can't remove Dataproc Cluster " + name + ". "
+          + "Attempted deletion because state was ERROR after creation", e);
     }
   }
 
@@ -597,8 +597,8 @@ abstract class DataprocClient implements AutoCloseable {
       // If the labels to set are already exist and labels to remove are not set,
       // no need to update the cluster labelsToSet.
       if (labelsToSet.entrySet().stream()
-          .allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey()))) &&
-          labelsToRemove.stream().noneMatch(existingLabels::containsKey)
+          .allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey())))
+          && labelsToRemove.stream().noneMatch(existingLabels::containsKey)
       ) {
         return;
       }
@@ -730,8 +730,8 @@ abstract class DataprocClient implements AutoCloseable {
     if (page.getPageElementCount() > 1) {
       // shouldn't be possible
       return MessageFormat.format(
-          "Multiple create operations found for cluster {0}, may not be able to " +
-              "find the failure message.", name);
+          "Multiple create operations found for cluster {0}, may not be able to "
+              + "find the failure message.", name);
     }
 
     if (page.getPageElementCount() > 0) {
@@ -740,8 +740,8 @@ abstract class DataprocClient implements AutoCloseable {
       if (operationError != null) {
         return MessageFormat.format("Failed to create cluster {0}: {1}. Details: {2}", name,
             operationError.getMessage(),
-            operationError.getDetailsList() != null ?
-                Arrays.toString(operationError.getDetailsList().toArray()) : "");
+            operationError.getDetailsList() != null
+                ? Arrays.toString(operationError.getDetailsList().toArray()) : "");
       }
     }
 

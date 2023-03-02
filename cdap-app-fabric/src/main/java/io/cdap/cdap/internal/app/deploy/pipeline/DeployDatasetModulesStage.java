@@ -90,8 +90,8 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
             classLoader, authorizingUser);
       }
     } else if (deployer.hasNonSystemDatasetModules(datasetModules)) {
-      throw new IllegalStateException("Custom dataset module is not supported. " +
-          "One of the dataset module is a custom module: " + datasetModules);
+      throw new IllegalStateException("Custom dataset module is not supported. "
+          + "One of the dataset module is a custom module: " + datasetModules);
     }
 
     // Emit the input to next stage.

@@ -133,8 +133,8 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     byte[][] bucketSplits = getAllDistributedKeys(io.cdap.cdap.api.common.Bytes.EMPTY_BYTE_ARRAY);
     Preconditions.checkArgument(
         splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
-        "Number of pre-splits should be in [1.." +
-            MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
+        "Number of pre-splits should be in [1.."
+            + MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
 
     // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
     // salt bucket bytes are usually sequential in which case we cannot insert any value in between them.

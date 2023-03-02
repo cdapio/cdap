@@ -107,12 +107,12 @@ public class ETLPlugin {
 
   @Override
   public String toString() {
-    return "Plugin{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", properties=" + properties +
-        ", artifact=" + artifact +
-        '}';
+    return "Plugin{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", properties=" + properties
+        + ", artifact=" + artifact
+        + '}';
   }
 
   @Override
@@ -126,10 +126,10 @@ public class ETLPlugin {
 
     ETLPlugin that = (ETLPlugin) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(artifact, that.artifact);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override

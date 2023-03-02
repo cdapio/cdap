@@ -64,8 +64,8 @@ public class BrowseEntityPropertyValue {
     }
 
     BrowseEntityPropertyValue that = (BrowseEntityPropertyValue) o;
-    return Objects.equals(value, that.value) &&
-        Objects.equals(type, that.type);
+    return Objects.equals(value, that.value)
+        && Objects.equals(type, that.type);
   }
 
   @Override

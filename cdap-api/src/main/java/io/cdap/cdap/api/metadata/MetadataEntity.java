@@ -203,14 +203,14 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
           }
         }
         throw new IllegalArgumentException(
-            String.format("Failed to build MetadataEntity of type '%s' from '%s'. " +
-                    "Type '%s' is a CDAP entity type and must follow one of " +
-                    "the following key hierarchies '%s'." +
-                    "If you want to represent a CDAP Entity please follow the " +
-                    "correct hierarchy. If you are trying to represent a " +
-                    "custom resource please use a different type name. " +
-                    "Note: if a type name is not specified, the last key is " +
-                    "considered as the type.",
+            String.format("Failed to build MetadataEntity of type '%s' from '%s'. "
+                    + "Type '%s' is a CDAP entity type and must follow one of "
+                    + "the following key hierarchies '%s'."
+                    + "If you want to represent a CDAP Entity please follow the "
+                    + "correct hierarchy. If you are trying to represent a "
+                    + "custom resource please use a different type name. "
+                    + "Note: if a type name is not specified, the last key is "
+                    + "considered as the type.",
                 type, parts, type, Arrays.deepToString(validSequences)));
       }
     }
@@ -408,10 +408,10 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
 
   @Override
   public String toString() {
-    return "MetadataEntity{" +
-        "details=" + details +
-        ", type='" + type + '\'' +
-        '}';
+    return "MetadataEntity{"
+        + "details=" + details
+        + ", type='" + type + '\''
+        + '}';
   }
 
   @Override
@@ -423,8 +423,8 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
       return false;
     }
     MetadataEntity that = (MetadataEntity) o;
-    return Objects.equals(details, that.details) &&
-        Objects.equals(type, that.type);
+    return Objects.equals(details, that.details)
+        && Objects.equals(type, that.type);
   }
 
   @Override
@@ -462,8 +462,8 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
         return false;
       }
       KeyValue keyValue = (KeyValue) o;
-      return Objects.equals(key, keyValue.key) &&
-          Objects.equals(value, keyValue.value);
+      return Objects.equals(key, keyValue.key)
+          && Objects.equals(value, keyValue.value);
     }
 
     @Override

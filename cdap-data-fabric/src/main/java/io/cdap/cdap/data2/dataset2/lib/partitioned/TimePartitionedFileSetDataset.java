@@ -73,9 +73,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     // the first version of TPFS in CDAP 2.7 did not have the partitioning in the properties. It is not supported.
     if (PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null) {
       throw new DataSetException(
-          "Unsupported version of TimePartitionedFileSet. Dataset '" + name + "' is missing " +
-              "the partitioning property. This probably means that it was created in CDAP 2.7, " +
-              "which is not supported any longer.");
+          "Unsupported version of TimePartitionedFileSet. Dataset '" + name + "' is missing "
+              + "the partitioning property. This probably means that it was created in CDAP 2.7, "
+              + "which is not supported any longer.");
     }
   }
 

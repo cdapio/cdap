@@ -185,8 +185,8 @@ public class ProfileStore {
     }
     if (value.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
-          String.format("Profile %s in namespace %s is currently enabled. A profile can " +
-                  "only be deleted if it is disabled", profileId.getProfile(),
+          String.format("Profile %s in namespace %s is currently enabled. A profile can "
+                  + "only be deleted if it is disabled", profileId.getProfile(),
               profileId.getNamespace()),
           profileId);
     }

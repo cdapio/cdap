@@ -221,8 +221,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         }
 
         WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
-        DatasetFramework programDatasetFramework = workflowInfo == null ?
-            datasetFramework :
+        DatasetFramework programDatasetFramework = workflowInfo == null
+            ? datasetFramework :
             NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
                 program.getApplicationSpecification());
 

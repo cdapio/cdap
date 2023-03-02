@@ -452,12 +452,12 @@ public abstract class SparkPipelineRunner {
       // a key, but not 'c1.connector'. Similarly, if the input stage is a connector, it won't have any output ports
       // however, this is fine since we know that the output of a connector stage is always normal output,
       // not errors or alerts or output port records
-      if (!Constants.Connector.PLUGIN_TYPE.equals(inputStageSpec.getPluginType()) &&
-        !Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
+      if (!Constants.Connector.PLUGIN_TYPE.equals(inputStageSpec.getPluginType())
+        && !Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
         port = inputStageSpec.getOutputPorts().get(stageName).getPort();
       }
-      SparkCollection<Object> inputRecords = port == null ?
-        emittedRecords.get(inputStageName).getOutputRecords() :
+      SparkCollection<Object> inputRecords = port == null
+        ? emittedRecords.get(inputStageName).getOutputRecords() :
         emittedRecords.get(inputStageName).getOutputPortRecords().get(port);
       inputDataCollections.put(inputStageName, inputRecords);
     }
@@ -728,9 +728,9 @@ public abstract class SparkPipelineRunner {
     // when we properly propagate schema at runtime, this condition should no longer happen
     if (outputSchema == null) {
       throw new IllegalArgumentException(
-        String.format("Joiner stage '%s' cannot calculate its output schema because " +
-                        "one or more inputs have dynamic or unknown schema. " +
-                        "An output schema must be directly provided.", stageName));
+        String.format("Joiner stage '%s' cannot calculate its output schema because "
+                        + "one or more inputs have dynamic or unknown schema. "
+                        + "An output schema must be directly provided.", stageName));
     }
     List<JoinCollection> toJoin = new ArrayList<>();
     List<Schema> keySchema = null;
@@ -862,15 +862,15 @@ public abstract class SparkPipelineRunner {
         }
 
         // if the key field is A.x, JoinField is (A.x as id), and outputField is the 'id' field in the output schema
-        String outputFieldName = selectedKeyField.getAlias() == null ?
-          selectedKeyField.getFieldName() : selectedKeyField.getAlias();
+        String outputFieldName = selectedKeyField.getAlias() == null
+          ? selectedKeyField.getFieldName() : selectedKeyField.getAlias();
         Schema.Field outputField = outputSchema.getField(outputFieldName);
 
         if (outputField == null) {
           // this is an invalid join definition
           throw new IllegalArgumentException(
-            String.format("Joiner stage '%s' provided an invalid definition. " +
-                            "The output schema does not contain a field for selected field '%s'.'%s'%s",
+            String.format("Joiner stage '%s' provided an invalid definition. "
+                            + "The output schema does not contain a field for selected field '%s'.'%s'%s",
                           joinerStageName, keyStage, selectedKeyField.getFieldName(),
                           selectedKeyField.getAlias() == null ? "" : "as " + selectedKeyField.getAlias()));
         }
@@ -887,14 +887,14 @@ public abstract class SparkPipelineRunner {
         }
 
         Schema existingSchema = keySchema.get(keyFieldNum);
-        if (existingSchema != null && existingSchema.isSimpleOrNullableSimple() &&
-          !Schemas.equalsIgnoringRecordName(existingSchema, keyFieldSchema)) {
+        if (existingSchema != null && existingSchema.isSimpleOrNullableSimple()
+          && !Schemas.equalsIgnoringRecordName(existingSchema, keyFieldSchema)) {
           // this is an invalid join definition
           // this condition is normally checked at deployment time,
           // but it will be skipped if the input schema is not known.
           throw new IllegalArgumentException(
-            String.format("Joiner stage '%s' has mismatched join key types. " +
-                            "Key field '%s' from stage '%s' has a different than another stage.",
+            String.format("Joiner stage '%s' has mismatched join key types. "
+                            + "Key field '%s' from stage '%s' has a different than another stage.",
                           joinerStageName, keyField, keyStage));
         }
         keySchema.set(keyFieldNum, keyFieldSchema);
@@ -905,9 +905,9 @@ public abstract class SparkPipelineRunner {
       Schema keyFieldSchema = keySchema.get(i);
       if (keyFieldSchema == null) {
         throw new IllegalArgumentException(
-          String.format("Joiner stage '%s' has inputs with dynamic or unknown schema. " +
-                          "Unable to derive the schema for key field #%d. " +
-                          "Please include all key fields in the output schema.",
+          String.format("Joiner stage '%s' has inputs with dynamic or unknown schema. "
+                          + "Unable to derive the schema for key field #%d. "
+                          + "Please include all key fields in the output schema.",
                         joinerStageName, i + 1));
       }
     }
@@ -955,8 +955,8 @@ public abstract class SparkPipelineRunner {
       Schema.Field outputField = outputSchema.getField(outputName);
       if (outputField == null) {
         throw new IllegalArgumentException(
-          String.format("Joiner stage '%s' provided an invalid definition. " +
-                          "The output schema does not contain a field for selected field '%s'.'%s'%s",
+          String.format("Joiner stage '%s' provided an invalid definition. "
+                          + "The output schema does not contain a field for selected field '%s'.'%s'%s",
                         joinerStageName, selectedField.getStageName(), preAliasedName,
                         preAliasedName == null ? "" : "as " + preAliasedName));
       }
@@ -1004,8 +1004,8 @@ public abstract class SparkPipelineRunner {
         joinedInputs = preJoinCollection.mapValues(new InitialJoinFunction<>(inputStageName));
       } else {
         JoinFlattenFunction<Object> joinFlattenFunction = new JoinFlattenFunction<>(inputStageName);
-        joinedInputs = numPartitions == null ?
-          joinedInputs.join(preJoinCollection).mapValues(joinFlattenFunction) :
+        joinedInputs = numPartitions == null
+          ? joinedInputs.join(preJoinCollection).mapValues(joinFlattenFunction) :
           joinedInputs.join(preJoinCollection, numPartitions).mapValues(joinFlattenFunction);
       }
       remainingInputs.remove(inputStageName);
@@ -1022,14 +1022,14 @@ public abstract class SparkPipelineRunner {
         if (isFullOuter) {
           OuterJoinFlattenFunction<Object> flattenFunction = new OuterJoinFlattenFunction<>(inputStageName);
 
-          joinedInputs = numPartitions == null ?
-            joinedInputs.fullOuterJoin(preJoinStream).mapValues(flattenFunction) :
+          joinedInputs = numPartitions == null
+            ? joinedInputs.fullOuterJoin(preJoinStream).mapValues(flattenFunction) :
             joinedInputs.fullOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
         } else {
           LeftJoinFlattenFunction<Object> flattenFunction = new LeftJoinFlattenFunction<>(inputStageName);
 
-          joinedInputs = numPartitions == null ?
-            joinedInputs.leftOuterJoin(preJoinStream).mapValues(flattenFunction) :
+          joinedInputs = numPartitions == null
+            ? joinedInputs.leftOuterJoin(preJoinStream).mapValues(flattenFunction) :
             joinedInputs.leftOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
         }
       }

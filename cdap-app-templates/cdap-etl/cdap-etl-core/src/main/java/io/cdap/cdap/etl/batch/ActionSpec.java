@@ -51,8 +51,8 @@ public class ActionSpec {
 
     ActionSpec that = (ActionSpec) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(plugin, that.plugin);
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override
@@ -62,9 +62,9 @@ public class ActionSpec {
 
   @Override
   public String toString() {
-    return "ActionSpec{" +
-        "name='" + name + '\'' +
-        ", plugin=" + plugin +
-        '}';
+    return "ActionSpec{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + '}';
   }
 }

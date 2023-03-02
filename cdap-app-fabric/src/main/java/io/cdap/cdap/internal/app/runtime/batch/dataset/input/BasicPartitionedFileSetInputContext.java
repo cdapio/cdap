@@ -93,8 +93,8 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements
         throw new IllegalStateException(
             String.format(
                 "The value of '%s' in the configuration must be set by the RecordReader in case of using an "
-                    +
-                    "InputFormat that returns CombineFileSplit.",
+
+                    + "InputFormat that returns CombineFileSplit.",
                 MRJobConfig.MAP_INPUT_FILE));
       }
       if (!inputFileName.equals(currentInputfileName)) {

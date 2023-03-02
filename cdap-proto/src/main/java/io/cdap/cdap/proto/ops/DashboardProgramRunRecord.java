@@ -204,8 +204,8 @@ public class DashboardProgramRunRecord {
         return false;
       }
       ApplicationNameVersion that = (ApplicationNameVersion) o;
-      return Objects.equals(this.getName(), that.getName()) &&
-          Objects.equals(this.getVersion(), that.getVersion());
+      return Objects.equals(this.getName(), that.getName())
+          && Objects.equals(this.getVersion(), that.getVersion());
     }
 
     @Override
@@ -230,19 +230,19 @@ public class DashboardProgramRunRecord {
     }
 
     DashboardProgramRunRecord that = (DashboardProgramRunRecord) o;
-    return Objects.equals(this.getNamespace(), that.getNamespace()) &&
-        Objects.equals(this.getArtifact(), that.getArtifact()) &&
-        Objects.equals(this.getApplication(), that.getApplication()) &&
-        Objects.equals(this.getType(), that.getType()) &&
-        Objects.equals(this.getProgram(), that.getProgram()) &&
-        Objects.equals(this.getRun(), that.getRun()) &&
-        Objects.equals(this.getUser(), that.getUser()) &&
-        Objects.equals(this.getStartMethod(), that.getStartMethod()) &&
-        Objects.equals(this.getStart(), that.getStart()) &&
-        Objects.equals(this.getRunning(), that.getRunning()) &&
-        Objects.equals(this.getSuspend(), that.getSuspend()) &&
-        Objects.equals(this.getResume(), that.getResume()) &&
-        Objects.equals(this.getEnd(), that.getEnd()) &&
-        Objects.equals(this.getStatus(), that.getStatus());
+    return Objects.equals(this.getNamespace(), that.getNamespace())
+        && Objects.equals(this.getArtifact(), that.getArtifact())
+        && Objects.equals(this.getApplication(), that.getApplication())
+        && Objects.equals(this.getType(), that.getType())
+        && Objects.equals(this.getProgram(), that.getProgram())
+        && Objects.equals(this.getRun(), that.getRun())
+        && Objects.equals(this.getUser(), that.getUser())
+        && Objects.equals(this.getStartMethod(), that.getStartMethod())
+        && Objects.equals(this.getStart(), that.getStart())
+        && Objects.equals(this.getRunning(), that.getRunning())
+        && Objects.equals(this.getSuspend(), that.getSuspend())
+        && Objects.equals(this.getResume(), that.getResume())
+        && Objects.equals(this.getEnd(), that.getEnd())
+        && Objects.equals(this.getStatus(), that.getStatus());
   }
 }

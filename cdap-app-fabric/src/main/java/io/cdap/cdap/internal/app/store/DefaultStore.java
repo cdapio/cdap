@@ -252,8 +252,8 @@ public class DefaultStore implements Store {
     ApplicationSpecification appSpec = getApplicationSpec(metaStore, app);
     if (appSpec == null || appSpec.getWorkflows() == null
         || appSpec.getWorkflows().get(workflowId.getProgram()) == null) {
-      LOG.warn("Missing ApplicationSpecification for {}, " +
-              "potentially caused by application removal right after stopping workflow {}", app,
+      LOG.warn("Missing ApplicationSpecification for {}, "
+              + "potentially caused by application removal right after stopping workflow {}", app,
           workflowId);
       return;
     }
@@ -275,8 +275,8 @@ public class DefaultStore implements Store {
           Long stopTs = innerProgramRun.getStopTs();
           // since the program is completed, the stop ts cannot be null
           if (stopTs == null) {
-            LOG.warn("Since the program has completed, expected its stop time to not be null. " +
-                    "Not writing workflow completed record for Program = {}, Workflow = {}, Run = {}",
+            LOG.warn("Since the program has completed, expected its stop time to not be null. "
+                    + "Not writing workflow completed record for Program = {}, Workflow = {}, Run = {}",
                 innerProgram, workflowId, runRecord);
             workFlowNodeFailed = true;
             break;
@@ -929,15 +929,15 @@ public class DefaultStore implements Store {
       @Nullable ApplicationSpecification appSpec) {
     if (appSpec == null) {
       throw new NoSuchElementException(
-          "no such application @ namespace id: " + id.getNamespaceId() +
-              ", app id: " + id.getApplication());
+          "no such application @ namespace id: " + id.getNamespaceId()
+              + ", app id: " + id.getApplication());
     }
 
     ServiceSpecification spec = appSpec.getServices().get(id.getProgram());
     if (spec == null) {
-      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespace() +
-          ", app id: " + id.getApplication() +
-          ", service id: " + id.getProgram());
+      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespace()
+          + ", app id: " + id.getApplication()
+          + ", service id: " + id.getProgram());
     }
     return spec;
   }
@@ -946,15 +946,15 @@ public class DefaultStore implements Store {
       @Nullable ApplicationSpecification appSpec) {
     if (appSpec == null) {
       throw new NoSuchElementException(
-          "no such application @ namespace id: " + id.getNamespaceId() +
-              ", app id: " + id.getApplication());
+          "no such application @ namespace id: " + id.getNamespaceId()
+              + ", app id: " + id.getApplication());
     }
 
     WorkerSpecification workerSpecification = appSpec.getWorkers().get(id.getProgram());
     if (workerSpecification == null) {
-      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
-          ", app id: " + id.getApplication() +
-          ", worker id: " + id.getProgram());
+      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId()
+          + ", app id: " + id.getApplication()
+          + ", worker id: " + id.getProgram());
     }
     return workerSpecification;
   }

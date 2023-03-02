@@ -66,8 +66,8 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
     datasetClient.create(cliConfig.getCurrentNamespace().dataset(datasetName), datasetConfig);
 
     StringBuilder builder = new StringBuilder(
-        String.format("Successfully created dataset named '%s' with type " +
-                "'%s', properties '%s'", datasetName, datasetType,
+        String.format("Successfully created dataset named '%s' with type "
+                + "'%s', properties '%s'", datasetName, datasetType,
             GSON.toJson(datasetProperties)));
     if (datasetDescription != null) {
       builder.append(String.format(", description '%s'", datasetDescription));
@@ -89,10 +89,10 @@ public class CreateDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format(
-        "Creates %s instance of the specified %s. Can optionally take %s, %s, or %s where '<%s>' " +
-            "is in the format 'key1=val1 key2=val2' and '<%s>' is the Kerberos principal of the owner "
-            +
-            "of the dataset.", Fragment.of(Article.A, ElementType.DATASET.getName()),
+        "Creates %s instance of the specified %s. Can optionally take %s, %s, or %s where '<%s>' "
+            + "is in the format 'key1=val1 key2=val2' and '<%s>' is the Kerberos principal of the owner "
+
+            + "of the dataset.", Fragment.of(Article.A, ElementType.DATASET.getName()),
         ArgumentName.DATASET_TYPE, ArgumentName.DATASET_PROPERTIES, ArgumentName.DATASET_DESCRIPTON,
         ArgumentName.PRINCIPAL, ArgumentName.DATASET_PROPERTIES, ArgumentName.PRINCIPAL);
   }

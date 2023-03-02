@@ -167,9 +167,10 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private void cleanupQueue() {
     while (true) {
       ProgramRunId programRunId = launchingQueue.peek();
-      if (programRunId == null ||
-          RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) + (ageThresholdSec * 1000) >=
-              System.currentTimeMillis()) {
+      if (programRunId == null
+          || RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) + (ageThresholdSec * 1000)
+          >=
+          System.currentTimeMillis()) {
         //Queue is empty or queue head has not expired yet.
         return;
       }
@@ -230,7 +231,7 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
-     * total number of run records with {@link ProgramRunStatus#PENDING} status + total number of
+     * * total number of run records with {@link ProgramRunStatus#PENDING} status + total number of
      * run records with {@link ProgramRunStatus#STARTING} status
      */
     private final int launchingCount;

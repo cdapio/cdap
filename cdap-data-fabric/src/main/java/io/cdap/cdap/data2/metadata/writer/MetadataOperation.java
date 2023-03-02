@@ -136,12 +136,12 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "Create{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", properties=" + properties +
-          ", tags=" + tags +
-          '}';
+      return "Create{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", properties=" + properties
+          + ", tags=" + tags
+          + '}';
     }
   }
 
@@ -160,10 +160,10 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "Drop{" +
-          "type=" + type +
-          ", entity=" + entity +
-          '}';
+      return "Drop{"
+          + "type=" + type
+          + ", entity=" + entity
+          + '}';
     }
   }
 
@@ -254,13 +254,13 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "Put{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", scope=" + scope +
-          ", properties=" + properties +
-          ", tags=" + tags +
-          '}';
+      return "Put{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", scope=" + scope
+          + ", properties=" + properties
+          + ", tags=" + tags
+          + '}';
     }
   }
 
@@ -321,13 +321,13 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "Delete{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", scope=" + scope +
-          ", properties=" + properties +
-          ", tags=" + tags +
-          '}';
+      return "Delete{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", scope=" + scope
+          + ", properties=" + properties
+          + ", tags=" + tags
+          + '}';
     }
   }
 
@@ -355,11 +355,11 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "DeleteAll{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", scope=" + scope +
-          '}';
+      return "DeleteAll{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", scope=" + scope
+          + '}';
     }
   }
 
@@ -387,11 +387,11 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "DeleteAllProperties{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", scope=" + scope +
-          '}';
+      return "DeleteAllProperties{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", scope=" + scope
+          + '}';
     }
   }
 
@@ -419,11 +419,11 @@ public abstract class MetadataOperation {
 
     @Override
     public String toString() {
-      return "DeleteAllTags{" +
-          "type=" + type +
-          ", entity=" + entity +
-          ", scope=" + scope +
-          '}';
+      return "DeleteAllTags{"
+          + "type=" + type
+          + ", entity=" + entity
+          + ", scope=" + scope
+          + '}';
     }
   }
 }

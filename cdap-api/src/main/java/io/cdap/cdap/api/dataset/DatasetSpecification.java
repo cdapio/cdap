@@ -239,12 +239,12 @@ public final class DatasetSpecification {
       return false;
     }
     DatasetSpecification that = (DatasetSpecification) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(originalProperties, that.originalProperties) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(datasetSpecs, that.datasetSpecs);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(description, that.description)
+        && Objects.equals(originalProperties, that.originalProperties)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(datasetSpecs, that.datasetSpecs);
   }
 
   @Override
@@ -281,14 +281,14 @@ public final class DatasetSpecification {
 
   @Override
   public String toString() {
-    return "DatasetSpecification{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", description='" + description + '\'' +
-        ", originalProperties=" + originalProperties +
-        ", properties=" + properties +
-        ", datasetSpecs=" + datasetSpecs +
-        '}';
+    return "DatasetSpecification{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", description='" + description + '\''
+        + ", originalProperties=" + originalProperties
+        + ", properties=" + properties
+        + ", datasetSpecs=" + datasetSpecs
+        + '}';
   }
 
   /**

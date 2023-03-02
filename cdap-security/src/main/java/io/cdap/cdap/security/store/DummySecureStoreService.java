@@ -31,8 +31,8 @@ import javax.annotation.Nullable;
 public class DummySecureStoreService extends AbstractIdleService implements SecureStoreService {
 
   private static final String SECURE_STORE_SETUP =
-      "Secure store is not configured. To use secure store please set " +
-          "\"security.store.provider\" property in cdap-site.xml.";
+      "Secure store is not configured. To use secure store please set "
+          + "\"security.store.provider\" property in cdap-site.xml.";
 
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {

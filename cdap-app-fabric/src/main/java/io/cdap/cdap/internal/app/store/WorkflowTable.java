@@ -71,8 +71,8 @@ public class WorkflowTable {
     List<Field<?>> fields = getPrimaryKeyFields(id, startTs);
     Long stopTs = runRecordMeta.getStopTs();
     Preconditions.checkState(stopTs != null,
-        "Workflow Stats are written when the workflow has completed. Hence, " +
-            "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s",
+        "Workflow Stats are written when the workflow has completed. Hence, "
+            + "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s",
         id, runRecordMeta, stopTs);
     long timeTaken = stopTs - startTs;
     fields.add(
@@ -290,8 +290,8 @@ public class WorkflowTable {
             indexRow.getLong(StoreDefinition.WorkflowStore.START_TIME_FIELD);
         workflowRunRecords.put(indexRow.getString(StoreDefinition.WorkflowStore.RUN_ID_FIELD),
             getRunRecordFromRow(indexRow));
-        prevStartTime = startTime + (i * timeInterval) < timeOfNextRecord ?
-            timeOfNextRecord + 1 : startTime + (i * timeInterval);
+        prevStartTime = startTime + (i * timeInterval) < timeOfNextRecord
+            ? timeOfNextRecord + 1 : startTime + (i * timeInterval);
         i++;
       }
     }

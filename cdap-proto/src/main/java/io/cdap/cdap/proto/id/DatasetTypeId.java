@@ -58,8 +58,8 @@ public class DatasetTypeId extends NamespacedEntityId implements ParentedId<Name
       return false;
     }
     DatasetTypeId that = (DatasetTypeId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(type, that.type);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(type, that.type);
   }
 
   @Override

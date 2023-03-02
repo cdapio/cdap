@@ -61,9 +61,9 @@ public class RunCountResult {
     }
 
     RunCountResult that = (RunCountResult) o;
-    return Objects.equals(programReference, that.programReference) &&
-        Objects.equals(count, that.count) &&
-        Objects.equals(exception, that.exception);
+    return Objects.equals(programReference, that.programReference)
+        && Objects.equals(count, that.count)
+        && Objects.equals(exception, that.exception);
   }
 
   @Override

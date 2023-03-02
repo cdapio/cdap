@@ -96,8 +96,8 @@ public final class ConnectionUtils {
       List<StructuredRecord> sample = limitingConnector.sample(connectorContext, sampleRequest);
       return new SampleResponse(detail, sample.isEmpty() ? null : sample.get(0).getSchema(), sample);
     }
-    throw new ConnectionBadRequestException("Connector is not supported. " +
-                                    "The supported connector should be DirectConnector or BatchConnector.");
+    throw new ConnectionBadRequestException("Connector is not supported. "
+                                    + "The supported connector should be DirectConnector or BatchConnector.");
   }
 
   /**

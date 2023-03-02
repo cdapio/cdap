@@ -84,10 +84,10 @@ public class PluginProperties implements Serializable {
 
   @Override
   public String toString() {
-    return "PluginProperties{" +
-        "properties=" + properties +
-        ", macros=" + macros +
-        '}';
+    return "PluginProperties{"
+        + "properties=" + properties
+        + ", macros=" + macros
+        + '}';
   }
 
   @Override

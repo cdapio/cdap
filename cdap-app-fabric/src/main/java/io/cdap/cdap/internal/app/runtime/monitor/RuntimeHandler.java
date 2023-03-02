@@ -72,8 +72,8 @@ import org.slf4j.LoggerFactory;
 /**
  * The http handler for handling runtime requests from the program runtime.
  */
-@Path(Constants.Gateway.INTERNAL_API_VERSION_3 +
-    "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
+@Path(Constants.Gateway.INTERNAL_API_VERSION_3
+    + "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
 public class RuntimeHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeHandler.class);

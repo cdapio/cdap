@@ -259,8 +259,8 @@ public class DefaultUGIProviderTest extends AppFabricTestBase {
   }
 
   private void setKeytabDir(String keytabDirPath) {
-    cConf.set(Constants.Security.KEYTAB_PATH, keytabDirPath + "/" +
-      Constants.USER_NAME_SPECIFIER + ".keytab");
+    cConf.set(Constants.Security.KEYTAB_PATH, keytabDirPath + "/"
+        + Constants.USER_NAME_SPECIFIER + ".keytab");
   }
 
   private static String getPrincipal(String name) {

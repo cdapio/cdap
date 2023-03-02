@@ -107,8 +107,8 @@ public class PreferencesService {
       throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
 
     boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
-    NamespaceId namespaceId = isInstanceLevel ?
-        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    NamespaceId namespaceId = isInstanceLevel
+        ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
 
     // validate the profile and publish the necessary metadata change if the profile exists in the property
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(namespaceId, propertyMap);
@@ -119,16 +119,16 @@ public class PreferencesService {
       if (isInstanceLevel && !propertyMap.get(SystemArguments.PROFILE_NAME)
           .startsWith(EntityScope.SYSTEM.name())) {
         throw new BadRequestException(
-            String.format("Cannot set profile %s at the instance level. " +
-                    "Only system profiles can be set at the instance level. " +
-                    "The profile property must look like SYSTEM:[profile-name]",
+            String.format("Cannot set profile %s at the instance level. "
+                    + "Only system profiles can be set at the instance level. "
+                    + "The profile property must look like SYSTEM:[profile-name]",
                 propertyMap.get(SystemArguments.PROFILE_NAME)));
       }
 
       if (profileStore.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
         throw new ProfileConflictException(
-            String.format("Profile %s in namespace %s is disabled. It cannot be " +
-                    "assigned to any programs or schedules",
+            String.format("Profile %s in namespace %s is disabled. It cannot be "
+                    + "assigned to any programs or schedules",
                 profileId.getProfile(), profileId.getNamespace()),
             profileId);
       }
@@ -164,8 +164,8 @@ public class PreferencesService {
     TransactionRunners.run(transactionRunner, context -> {
       PreferencesTable dataset = new PreferencesTable(context);
       Map<String, String> oldProp = dataset.getPreferences(entityId).getProperties();
-      NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-          NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+      NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE)
+          ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
       Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProp);
       long seqId = dataset.deleteProperties(entityId);
 

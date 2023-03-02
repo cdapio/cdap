@@ -52,8 +52,8 @@ public class JoinKeyFieldError extends JoinError {
       return false;
     }
     JoinKeyFieldError that = (JoinKeyFieldError) o;
-    return Objects.equals(stageName, that.stageName) &&
-        Objects.equals(keyField, that.keyField);
+    return Objects.equals(stageName, that.stageName)
+        && Objects.equals(keyField, that.keyField);
   }
 
   @Override

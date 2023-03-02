@@ -68,8 +68,8 @@ public class MessagingApp extends AbstractApplication {
       }
 
       if (!iterator.hasNext()) {
-        throw new TimeoutException("Failed to get any messages from " + topic +
-                                     " in " + timeout + " " + unit.name().toLowerCase());
+        throw new TimeoutException("Failed to get any messages from " + topic
+            + " in " + timeout + " " + unit.name().toLowerCase());
       }
       // The payload contains the message to publish in next step
       return iterator.next();

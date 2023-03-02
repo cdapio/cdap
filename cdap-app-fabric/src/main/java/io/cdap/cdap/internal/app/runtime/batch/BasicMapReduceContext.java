@@ -192,8 +192,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
         .equals(NamespaceId.SYSTEM.getNamespace())
         && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
       // trying to access system namespace from a program outside system namespace is not allowed
-      throw new IllegalArgumentException(String.format("Accessing Input %s in system namespace " +
-              "is not allowed from the namespace %s",
+      throw new IllegalArgumentException(String.format("Accessing Input %s in system namespace "
+              + "is not allowed from the namespace %s",
           input.getName(), getProgram().getNamespaceId()));
     }
     if (input instanceof Input.DatasetInput) {
@@ -216,8 +216,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
         .equals(NamespaceId.SYSTEM.getNamespace())
         && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
       // trying to access system namespace from a program outside system namespace is not allowed
-      throw new IllegalArgumentException(String.format("Accessing Output %s in system namespace " +
-              "is not allowed from the namespace %s",
+      throw new IllegalArgumentException(String.format("Accessing Output %s in system namespace "
+              + "is not allowed from the namespace %s",
           output.getName(), getProgram().getNamespaceId()));
     }
     String alias = output.getAlias();
@@ -235,8 +235,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
         // disallow user from adding a DatasetOutputCommitter as an OutputFormatProviderOutput because we would not
         // be able to call its methods in MainOutputCommitter. It needs to be a DatasetOutput.
         throw new IllegalArgumentException(
-            "Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. " +
-                "Add the output as a DatasetOutput.");
+            "Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. "
+                + "Add the output as a DatasetOutput.");
       }
       providedOutput = new ProvidedOutput(output, outputFormatProvider);
     } else if (output.getClass().getCanonicalName().startsWith(CDAP_PACKAGE_PREFIX)) {

@@ -99,9 +99,9 @@ public class SparkCommand implements Command {
 
   @Override
   public String toString() {
-    return "SparkCommand{" +
-      "command='" + command + '\'' +
-      ", options=" + options +
-      '}';
+    return "SparkCommand{"
+      + "command='" + command + '\''
+      + ", options=" + options
+      + '}';
   }
 }

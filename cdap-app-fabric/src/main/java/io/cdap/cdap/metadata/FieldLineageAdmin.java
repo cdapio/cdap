@@ -174,8 +174,8 @@ public class FieldLineageAdmin {
       EndPointField endPointField = new EndPointField(endPoint, field);
 
       // compute the incoming field level lineage
-      if (direction == Constants.FieldLineage.Direction.INCOMING ||
-          direction == Constants.FieldLineage.Direction.BOTH) {
+      if (direction == Constants.FieldLineage.Direction.INCOMING
+          || direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> incomingSummary =
             convertSummaryToDatasetMap(
                 fieldLineageReader.getIncomingSummary(endPointField, start, end));
@@ -192,8 +192,8 @@ public class FieldLineageAdmin {
       }
 
       // compute the outgoing field level lineage
-      if (direction == Constants.FieldLineage.Direction.OUTGOING ||
-          direction == Constants.FieldLineage.Direction.BOTH) {
+      if (direction == Constants.FieldLineage.Direction.OUTGOING
+          || direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> outgoingSummary =
             convertSummaryToDatasetMap(
                 fieldLineageReader.getOutgoingSummary(endPointField, start, end));
@@ -318,8 +318,8 @@ public class FieldLineageAdmin {
     } else {
       LOG.trace(
           "Received request to include schema fields for {} but no schema was found. Only fields present in "
-              +
-              "the lineage store will be returned.", dataset);
+
+              + "the lineage store will be returned.", dataset);
     }
     return Collections.emptySet();
   }

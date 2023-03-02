@@ -132,8 +132,8 @@ public class PredefinedAutoScaling {
         if (yarnDiff || workerDiff || secondaryWorkerDiff) {
           LOG.warn(
               "The predefined auto-scaling policy {} already exists and is having a different configuration"
-                  +
-                  "as compared to CDF/CDAP's chosen configuration", existingPolicy.getName());
+
+                  + "as compared to CDF/CDAP's chosen configuration", existingPolicy.getName());
         }
       } catch (NotFoundException e) {
         createPolicy = true;

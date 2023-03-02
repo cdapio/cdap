@@ -385,8 +385,8 @@ public final class SystemArguments {
     }
     int heapMemory = containerMemory - reservedMemory;
     if (heapMemory <= 0) {
-      LOG.warn("Ignoring invalid reserved memory size '{}' from runtime arguments. " +
-          "It must be smaller than container memory size '{}'", reservedMemory, containerMemory);
+      LOG.warn("Ignoring invalid reserved memory size '{}' from runtime arguments. "
+          + "It must be smaller than container memory size '{}'", reservedMemory, containerMemory);
       return Collections.emptyMap();
     }
     double ratio = ((double) heapMemory) / containerMemory;

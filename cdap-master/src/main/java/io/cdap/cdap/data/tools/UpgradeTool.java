@@ -117,14 +117,14 @@ public class UpgradeTool {
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
-        "  The upgrade tool upgrades the following: \n" +
-        "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-        "  2. Stream State Store\n" +
-        "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
-    UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
-        "system HBase tables to a version that is compatible with the new HBase \n" +
-        "version. All tables must be disabled prior to this step."),
+    UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n"
+        + "  The upgrade tool upgrades the following: \n"
+        + "  1. User and System Datasets (upgrades the coprocessor jars)\n"
+        + "  2. Stream State Store\n"
+        + "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
+    UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n"
+        + "system HBase tables to a version that is compatible with the new HBase \n"
+        + "version. All tables must be disabled prior to this step."),
     HELP("Show this help.");
 
     private final String description;
@@ -266,9 +266,9 @@ public class UpgradeTool {
     Services.startAndWait(zkClientService,
         cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
         TimeUnit.MILLISECONDS,
-        String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-            "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-            "Currently configured as: %s", zkClientService.getConnectString()));
+        String.format("Connection timed out while trying to start ZooKeeper client. Please "
+            + "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. "
+            + "Currently configured as: %s", zkClientService.getConnectString()));
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");

@@ -102,10 +102,10 @@ public final class ETLStage {
     if (errorDatasetName != null) {
       throw new IllegalArgumentException(
           String.format(
-              "Invalid stage '%s'. Error datasets have been replaced by error collectors. " +
-                  "Please connect stage '%s' to an error collector, then connect the error collector "
-                  +
-                  "to a sink.", name, name));
+              "Invalid stage '%s'. Error datasets have been replaced by error collectors. "
+                  + "Please connect stage '%s' to an error collector, then connect the error collector "
+
+                  + "to a sink.", name, name));
     }
     plugin.validate();
   }
@@ -242,10 +242,10 @@ public final class ETLStage {
 
   @Override
   public String toString() {
-    return "ETLStage{" +
-        "name='" + name + '\'' +
-        ", plugin=" + plugin +
-        '}';
+    return "ETLStage{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + '}';
   }
 
   @Override
@@ -259,8 +259,8 @@ public final class ETLStage {
 
     ETLStage that = (ETLStage) o;
 
-    return Objects.equals(name, that.name) &&
-        Objects.equals(plugin, that.plugin);
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override

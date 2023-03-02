@@ -50,9 +50,9 @@ public class IncompatibleDatasetDeployApp extends DatasetDeployApp {
 
       IncompatibleRecord that = (IncompatibleRecord) o;
 
-      return Objects.equal(this.id, that.id) &&
-        Objects.equal(this.firstName, that.firstName) &&
-        Objects.equal(this.alive, that.alive);
+      return Objects.equal(this.id, that.id)
+          && Objects.equal(this.firstName, that.firstName)
+          && Objects.equal(this.alive, that.alive);
     }
 
     @Override

@@ -108,11 +108,11 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
       return false;
     }
     PluginId that = (PluginId) o;
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(artifact, that.artifact) &&
-        Objects.equals(version, that.version) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(plugin, that.plugin);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(version, that.version)
+        && Objects.equals(type, that.type)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override

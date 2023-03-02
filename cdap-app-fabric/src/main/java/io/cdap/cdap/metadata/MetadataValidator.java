@@ -114,8 +114,8 @@ public class MetadataValidator {
       throws InvalidMetadataException {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
-          "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-              "underscores and hyphens.", keyword));
+          "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), "
+              + "underscores and hyphens.", keyword));
     }
   }
 
@@ -127,8 +127,8 @@ public class MetadataValidator {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
           "Illegal format for the value '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), "
-              +
-              "underscores, hyphens and whitespaces.", keyword));
+
+              + "underscores, hyphens and whitespaces.", keyword));
     }
   }
 

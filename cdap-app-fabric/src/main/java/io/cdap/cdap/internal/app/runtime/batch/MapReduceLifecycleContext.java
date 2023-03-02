@@ -337,9 +337,9 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
 
   @Override
   public String toString() {
-    return "MapReduceLifecycleContext{" +
-        "delegate=" + delegate +
-        '}';
+    return "MapReduceLifecycleContext{"
+        + "delegate=" + delegate
+        + '}';
   }
 
   @Override
@@ -378,15 +378,15 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public void record(Collection<? extends Operation> operations) {
     throw new UnsupportedOperationException(
-        "Recording field lineage operations is not supported in " +
-            "MapReduce task-level context");
+        "Recording field lineage operations is not supported in "
+            + "MapReduce task-level context");
   }
 
   @Override
   public void flushLineage() {
     throw new UnsupportedOperationException(
-        "Recording field lineage operations is not supported in " +
-            "MapReduce task-level context");
+        "Recording field lineage operations is not supported in "
+            + "MapReduce task-level context");
   }
 
   @Override

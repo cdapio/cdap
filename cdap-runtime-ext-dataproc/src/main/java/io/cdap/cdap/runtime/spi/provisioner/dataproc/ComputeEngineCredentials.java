@@ -150,8 +150,8 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
 
       String key = token.get(ACCESS_TOKEN_KEY).toString();
       Double expiration = Double.parseDouble(token.get(EXPIRES_IN_KEY).toString());
-      long expiresAtMilliseconds = System.currentTimeMillis() +
-          expiration.longValue() * 1000;
+      long expiresAtMilliseconds = System.currentTimeMillis()
+          + expiration.longValue() * 1000;
 
       return new AccessToken(key, new Date(expiresAtMilliseconds));
     } finally {

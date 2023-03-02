@@ -60,17 +60,17 @@ public final class ConfigEntry {
       return false;
     }
     final ConfigEntry other = (ConfigEntry) obj;
-    return Objects.equals(this.name, other.name) &&
-        Objects.equals(this.value, other.value) &&
-        Objects.equals(this.source, other.source);
+    return Objects.equals(this.name, other.name)
+        && Objects.equals(this.value, other.value)
+        && Objects.equals(this.source, other.source);
   }
 
   @Override
   public String toString() {
-    return "ConfigEntry{" +
-        "name='" + name + '\'' +
-        ", value='" + value + '\'' +
-        ", source='" + source + '\'' +
-        '}';
+    return "ConfigEntry{"
+        + "name='" + name + '\''
+        + ", value='" + value + '\''
+        + ", source='" + source + '\''
+        + '}';
   }
 }

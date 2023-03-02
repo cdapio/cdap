@@ -61,8 +61,8 @@ public class CommitMeta {
     }
     CommitMeta that = (CommitMeta) o;
     return timestampMillis == that.timestampMillis && author.equals(that.author)
-        && committer.equals(that.committer) &&
-        message.equals(that.message);
+        && committer.equals(that.committer)
+        && message.equals(that.message);
   }
 
   @Override

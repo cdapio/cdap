@@ -124,12 +124,12 @@ public class PreviewStatus {
     }
 
     PreviewStatus status1 = (PreviewStatus) o;
-    return status == status1.status &&
-        submitTime == status1.submitTime &&
-        Objects.equals(throwable, status1.throwable) &&
-        Objects.equals(startTime, status1.startTime) &&
-        Objects.equals(endTime, status1.endTime) &&
-        Objects.equals(positionInWaitingQueue, status1.positionInWaitingQueue);
+    return status == status1.status
+        && submitTime == status1.submitTime
+        && Objects.equals(throwable, status1.throwable)
+        && Objects.equals(startTime, status1.startTime)
+        && Objects.equals(endTime, status1.endTime)
+        && Objects.equals(positionInWaitingQueue, status1.positionInWaitingQueue);
   }
 
   @Override

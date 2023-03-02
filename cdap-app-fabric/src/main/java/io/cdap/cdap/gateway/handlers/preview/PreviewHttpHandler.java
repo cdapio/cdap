@@ -347,12 +347,12 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       String previewId) {
     for (MetricsQueryHelper.QueryRequestFormat format : query.values()) {
       Map<String, String> tags = format.getTags();
-      if (!tags.containsKey(MetricsQueryHelper.NAMESPACE_STRING) ||
-          !tags.get(MetricsQueryHelper.NAMESPACE_STRING).equals(namespaceId)) {
+      if (!tags.containsKey(MetricsQueryHelper.NAMESPACE_STRING)
+          || !tags.get(MetricsQueryHelper.NAMESPACE_STRING).equals(namespaceId)) {
         tags.put(MetricsQueryHelper.NAMESPACE_STRING, namespaceId);
       }
-      if (!tags.containsKey(MetricsQueryHelper.APP_STRING) ||
-          !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
+      if (!tags.containsKey(MetricsQueryHelper.APP_STRING)
+          || !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
         tags.put(MetricsQueryHelper.APP_STRING, previewId);
       }
     }

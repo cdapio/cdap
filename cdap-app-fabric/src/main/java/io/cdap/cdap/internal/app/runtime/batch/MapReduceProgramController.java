@@ -45,8 +45,8 @@ final class MapReduceProgramController extends ProgramControllerServiceAdapter i
     BasicWorkflowToken workflowTokenFromContext = context.getWorkflowToken();
 
     if (workflowTokenFromContext == null) {
-      throw new IllegalStateException("WorkflowToken cannot be null when the " +
-          "MapReduce program is started by Workflow.");
+      throw new IllegalStateException("WorkflowToken cannot be null when the "
+          + "MapReduce program is started by Workflow.");
     }
 
     try {

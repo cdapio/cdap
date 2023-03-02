@@ -109,9 +109,9 @@ public abstract class MetadataMutation {
         return false;
       }
       Create create = (Create) o;
-      return Objects.equals(entity, create.entity) &&
-          Objects.equals(metadata, create.metadata) &&
-          Objects.equals(directives, create.directives);
+      return Objects.equals(entity, create.entity)
+          && Objects.equals(metadata, create.metadata)
+          && Objects.equals(directives, create.directives);
     }
 
     @Override
@@ -121,11 +121,11 @@ public abstract class MetadataMutation {
 
     @Override
     public String toString() {
-      return "Create{" +
-          "entity=" + getEntity() +
-          ", metadata=" + getMetadata() +
-          ", directives=" + getDirectives() +
-          '}';
+      return "Create{"
+          + "entity=" + getEntity()
+          + ", metadata=" + getMetadata()
+          + ", directives=" + getDirectives()
+          + '}';
     }
   }
 
@@ -158,9 +158,9 @@ public abstract class MetadataMutation {
 
     @Override
     public String toString() {
-      return "Drop{" +
-          "entity=" + getEntity() +
-          '}';
+      return "Drop{"
+          + "entity=" + getEntity()
+          + '}';
     }
   }
 
@@ -189,8 +189,8 @@ public abstract class MetadataMutation {
         return false;
       }
       Update update = (Update) o;
-      return Objects.equals(entity, update.entity) &&
-          Objects.equals(updates, update.updates);
+      return Objects.equals(entity, update.entity)
+          && Objects.equals(updates, update.updates);
     }
 
     @Override
@@ -200,10 +200,10 @@ public abstract class MetadataMutation {
 
     @Override
     public String toString() {
-      return "Update{" +
-          "entity=" + getEntity() +
-          ", updates=" + getUpdates() +
-          '}';
+      return "Update{"
+          + "entity=" + getEntity()
+          + ", updates=" + getUpdates()
+          + '}';
     }
   }
 

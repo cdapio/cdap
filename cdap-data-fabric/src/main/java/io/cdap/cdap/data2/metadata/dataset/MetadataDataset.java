@@ -687,8 +687,8 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Searches entities that match the specified search query in the specified namespace and {@link
    * NamespaceId#SYSTEM} for the specified types. When using default sorting, limits, cursors, and
-   * offset are ignored and all results are returned. When using custom sorting, at most offset +
-   * limit * (numCursors + 1) results are returned. When using default sorting, results are returned
+   * offset are ignored and all results are returned. When using custom sorting, at most offset
+   + * limit * (numCursors + 1) results are returned. When using default sorting, results are returned
    * in whatever order is determined by the underlying storage. When using custom sorting, results
    * are returned sorted according to the field and order specified. When using default sorting, any
    * query is allowed. When using custom sorting, the query must be '*'. In all cases, duplicate
@@ -713,8 +713,8 @@ public class MetadataDataset extends AbstractDataset {
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
-    String column = request.isNamespaced() ?
-        DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
+    String column = request.isNamespaced()
+        ? DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
 
     for (SearchTerm searchTerm : getSearchTerms(request)) {
       Scanner scanner;
@@ -772,8 +772,9 @@ public class MetadataDataset extends AbstractDataset {
       byte[] namespaceStartKey = Bytes.toBytes(searchTerm.getTerm());
       byte[] startKey = namespaceStartKey;
       if (!Strings.isNullOrEmpty(cursor)) {
-        String prefix = searchTerm.getNamespaceId() == null ?
-            "" : searchTerm.getNamespaceId().getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR;
+        String prefix = searchTerm.getNamespaceId() == null
+            ? ""
+            : searchTerm.getNamespaceId().getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR;
         startKey = Bytes.toBytes(prefix + cursor);
       }
       @SuppressWarnings("ConstantConditions")
@@ -1292,9 +1293,9 @@ public class MetadataDataset extends AbstractDataset {
 
       Record that = (Record) o;
 
-      return Objects.equals(metadataEntity, that.metadataEntity) &&
-          Objects.equals(properties, that.properties) &&
-          Objects.equals(tags, that.tags);
+      return Objects.equals(metadataEntity, that.metadataEntity)
+          && Objects.equals(properties, that.properties)
+          && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -1304,11 +1305,11 @@ public class MetadataDataset extends AbstractDataset {
 
     @Override
     public String toString() {
-      return "MetaRecord{" +
-          "metadataEntity=" + metadataEntity +
-          ", properties=" + properties +
-          ", tags=" + tags +
-          '}';
+      return "MetaRecord{"
+          + "metadataEntity=" + metadataEntity
+          + ", properties=" + properties
+          + ", tags=" + tags
+          + '}';
     }
   }
 

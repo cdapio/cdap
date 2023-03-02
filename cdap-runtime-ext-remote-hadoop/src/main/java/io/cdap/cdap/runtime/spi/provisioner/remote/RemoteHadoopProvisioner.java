@@ -83,8 +83,8 @@ public class RemoteHadoopProvisioner implements Provisioner {
     } catch (IOException ioe) {
       if (Throwables.getRootCause(ioe) instanceof ConnectException) {
         throw new IOException(String.format(
-            "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh " +
-                "on port 22.", host),
+            "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh "
+                + "on port 22.", host),
             ioe);
       }
       throw ioe;

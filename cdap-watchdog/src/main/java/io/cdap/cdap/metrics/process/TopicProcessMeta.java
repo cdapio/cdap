@@ -49,9 +49,9 @@ public final class TopicProcessMeta {
    * @param latestMetricsTimestamp - latest timestamp among the processed metrics
    * @param messagesProcessed - messages processed in an iteration
    * @param lastProcessedTimestamp - timestamp when the most recent update happened
-   * @param oldestMetricsTimestampMetricName - metric name used for oldest metrics timestamp -
+   * @param oldestMetricsTimestampMetricName - metric name used for oldest metrics timestamp - *
    *     not serialized
-   * @param latestMetricsTimestampMetricName - metric name used for latest metrics timestamp -
+   * @param latestMetricsTimestampMetricName - metric name used for latest metrics timestamp - *
    *     not serialized
    */
   public TopicProcessMeta(@Nullable byte[] messageId, long oldestMetricsTimestamp,

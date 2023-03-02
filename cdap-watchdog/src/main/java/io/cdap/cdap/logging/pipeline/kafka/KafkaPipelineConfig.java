@@ -67,13 +67,13 @@ public final class KafkaPipelineConfig {
 
   @Override
   public String toString() {
-    return "KafkaPipelineConfig{" +
-        "topic='" + topic + '\'' +
-        ", partitions=" + partitions +
-        ", maxBufferSize=" + maxBufferSize +
-        ", eventDelayMillis=" + eventDelayMillis +
-        ", kafkaFetchBufferSize=" + kafkaFetchBufferSize +
-        ", checkpointIntervalMillis=" + checkpointIntervalMillis +
-        '}';
+    return "KafkaPipelineConfig{"
+        + "topic='" + topic + '\''
+        + ", partitions=" + partitions
+        + ", maxBufferSize=" + maxBufferSize
+        + ", eventDelayMillis=" + eventDelayMillis
+        + ", kafkaFetchBufferSize=" + kafkaFetchBufferSize
+        + ", checkpointIntervalMillis=" + checkpointIntervalMillis
+        + '}';
   }
 }

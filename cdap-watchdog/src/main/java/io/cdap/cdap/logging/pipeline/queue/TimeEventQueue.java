@@ -157,8 +157,8 @@ public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> impl
   private SortedSet<OFFSET> getOffsets(int partition) {
     SortedSet<OFFSET> offsets = partitionOffsets.get(partition);
     if (offsets == null) {
-      throw new IllegalArgumentException("Partition " + partition +
-          " is not in allowed partitions " + partitionOffsets.keySet());
+      throw new IllegalArgumentException("Partition " + partition
+          + " is not in allowed partitions " + partitionOffsets.keySet());
     }
     return offsets;
   }

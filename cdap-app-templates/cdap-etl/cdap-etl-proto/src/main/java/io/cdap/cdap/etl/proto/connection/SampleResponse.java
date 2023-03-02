@@ -65,9 +65,9 @@ public class SampleResponse {
     }
 
     SampleResponse that = (SampleResponse) o;
-    return Objects.equals(detail, that.detail) &&
-        Objects.equals(schema, that.schema) &&
-        Objects.equals(sample, that.sample);
+    return Objects.equals(detail, that.detail)
+        && Objects.equals(schema, that.schema)
+        && Objects.equals(sample, that.sample);
   }
 
   @Override

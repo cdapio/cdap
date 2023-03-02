@@ -157,57 +157,63 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
         outlierRunId = workflowRunId.getId();
       }
 
-      store.setStop(workflowProgram.run(workflowRunId.getId()), workflowStopTime, ProgramRunStatus.COMPLETED,
-                    AppFabricTestHelper.createSourceId(++sourceId));
+      store.setStop(workflowProgram.run(workflowRunId.getId()), workflowStopTime,
+          ProgramRunStatus.COMPLETED,
+          AppFabricTestHelper.createSourceId(++sourceId));
     }
 
-    String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
-                                     "&percentile=%s",
-                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
-                                   WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(),
-                                   TimeUnit.MILLISECONDS.toSeconds(startTime),
-                                   TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + TimeUnit.MINUTES.toSeconds(2),
-                                   "99");
+    String request = String.format(
+        "%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s"
+            + "&percentile=%s",
+        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+        WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(),
+        TimeUnit.MILLISECONDS.toSeconds(startTime),
+        TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + TimeUnit.MINUTES.toSeconds(2),
+        "99");
 
     HttpResponse response = doGet(request);
     WorkflowStatistics workflowStatistics =
-      readResponse(response, new TypeToken<WorkflowStatistics>() { }.getType());
-    PercentileInformation percentileInformation = workflowStatistics.getPercentileInformationList().get(0);
+        readResponse(response, new TypeToken<WorkflowStatistics>() {
+        }.getType());
+    PercentileInformation percentileInformation = workflowStatistics.getPercentileInformationList()
+        .get(0);
     Assert.assertEquals(1, percentileInformation.getRunIdsOverPercentile().size());
     Assert.assertEquals(outlierRunId, percentileInformation.getRunIdsOverPercentile().get(0));
     Assert.assertEquals("5", workflowStatistics.getNodes().get(sparkName).get("runs"));
 
-    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
-                              "&percentile=%s&percentile=%s",
-                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
-                            WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90", "95");
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s"
+            + "&percentile=%s&percentile=%s",
+        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+        WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90", "95");
 
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
-                        response.getResponseCode());
+        response.getResponseCode());
 
-    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
-                              "&percentile=%s&percentile=%s",
-                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
-                            WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90.0", "950");
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s"
+            + "&percentile=%s&percentile=%s",
+        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+        WorkflowApp.class.getSimpleName(), workflowProgram.getProgram(), "now", "0", "90.0", "950");
 
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
-                        response.getResponseCode());
-    Id.Application appId = new Id.Application(Id.Namespace.DEFAULT, WorkflowApp.class.getSimpleName());
+        response.getResponseCode());
+    Id.Application appId = new Id.Application(Id.Namespace.DEFAULT,
+        WorkflowApp.class.getSimpleName());
     deleteApp(appId, HttpResponseStatus.OK.code());
 
-    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
-                              "&percentile=%s",
-                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
-                            WorkflowApp.class.getSimpleName(), workflowProgram,
-                            0,
-                            System.currentTimeMillis(),
-                            "99");
+    request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s"
+            + "&percentile=%s",
+        Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
+        WorkflowApp.class.getSimpleName(), workflowProgram,
+        0,
+        System.currentTimeMillis(),
+        "99");
     response = doGet(request);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     Assert.assertTrue(
-      response.getResponseBodyAsString().startsWith("There are no statistics associated with this workflow : "));
+        response.getResponseBodyAsString()
+            .startsWith("There are no statistics associated with this workflow : "));
   }
 
 

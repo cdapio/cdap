@@ -55,8 +55,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
       "gcp-dataproc", "Dataproc",
       "Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache "
-          +
-          "Hadoop clusters in a simpler, more cost-efficient way on Google Cloud Platform.");
+
+          + "Hadoop clusters in a simpler, more cost-efficient way on Google Cloud Platform.");
   private static final String CLUSTER_PREFIX = "cdap-";
 
   // Key which is set to true if the instance only have private ip assigned to it else false
@@ -91,8 +91,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       // the instance being private instance is incapable of using external ip for communication
       throw new DataprocRuntimeException(
           "The instance is incapable of using external ip for communication with Dataproc cluster. "
-              +
-              "Please correct profile configuration by deselecting preferExternalIP.",
+
+              + "Please correct profile configuration by deselecting preferExternalIP.",
           ErrorTag.CONFIGURATION);
     }
 
@@ -271,8 +271,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     Optional<Cluster> clusterOptional = findCluster(clusterKey, client);
     if (clusterOptional.isPresent()) {
       Cluster cluster = clusterOptional.get();
-      if (cluster.getStatus() == ClusterStatus.CREATING ||
-          cluster.getStatus() == ClusterStatus.RUNNING) {
+      if (cluster.getStatus() == ClusterStatus.CREATING
+          || cluster.getStatus() == ClusterStatus.RUNNING) {
         LOG.debug("Found allocated cluster {}", cluster.getName());
         return cluster;
       } else {
@@ -338,9 +338,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   }
 
   private boolean isReuseSupported(DataprocConf conf) {
-    return conf.isClusterReuseEnabled() && conf.isSkipDelete() &&
-        (conf.getIdleTTLMinutes() <= 0
-            || conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes());
+    return conf.isClusterReuseEnabled() && conf.isSkipDelete()
+        && (conf.getIdleTTLMinutes() <= 0
+        || conf.getIdleTTLMinutes() > conf.getClusterReuseThresholdMinutes());
   }
 
   @Nullable
@@ -421,9 +421,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     String clusterName = cluster.getName();
     try (DataprocClient client = clientFactory.create(conf)) {
       if (isReuseSupported(conf)) {
-        long reuseUntil = System.currentTimeMillis() +
-            TimeUnit.MINUTES.toMillis(
-                conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
+        long reuseUntil = System.currentTimeMillis()
+            + TimeUnit.MINUTES.toMillis(
+            conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
         LOG.debug("Marking cluster {} reusable for {} minutes",
             clusterName,
             conf.getIdleTTLMinutes() - conf.getClusterReuseThresholdMinutes());
@@ -555,9 +555,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   private boolean isAutoscalingFieldsValid(DataprocConf conf, Map<String, String> properties) {
     if (conf.isPredefinedAutoScaleEnabled()) {
       //If predefined auto-scaling is enabled, then user should not send values for the following
-      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES) ||
-          properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES) ||
-          properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
+      if (properties.containsKey(DataprocConf.WORKER_NUM_NODES)
+          || properties.containsKey(DataprocConf.SECONDARY_WORKER_NUM_NODES)
+          || properties.containsKey(DataprocConf.AUTOSCALING_POLICY)) {
         return false;
       }
     }

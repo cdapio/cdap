@@ -59,8 +59,8 @@ public class Sorting {
       return false;
     }
     Sorting sorting = (Sorting) o;
-    return Objects.equals(key, sorting.key) &&
-        order == sorting.order;
+    return Objects.equals(key, sorting.key)
+        && order == sorting.order;
   }
 
   @Override

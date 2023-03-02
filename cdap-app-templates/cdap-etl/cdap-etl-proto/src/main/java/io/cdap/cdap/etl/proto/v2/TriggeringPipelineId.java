@@ -53,9 +53,9 @@ public class TriggeringPipelineId {
 
   @Override
   public String toString() {
-    return "TriggeringPipelineId{" +
-        "namespace='" + getNamespace() + '\'' +
-        ", pipelineName='" + getName() + '\'' +
-        '}';
+    return "TriggeringPipelineId{"
+        + "namespace='" + getNamespace() + '\''
+        + ", pipelineName='" + getName() + '\''
+        + '}';
   }
 }

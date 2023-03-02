@@ -110,18 +110,18 @@ public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredR
   public static class Config extends PluginConfig {
 
     @Nullable
-    @Description("The name of the error message field to use in the output schema. " +
-        "If this not specified, the error message will be dropped.")
+    @Description("The name of the error message field to use in the output schema. "
+        + "If this not specified, the error message will be dropped.")
     private String messageField;
 
     @Nullable
-    @Description("The name of the error code field to use in the output schema. " +
-        "If this not specified, the error code will be dropped.")
+    @Description("The name of the error code field to use in the output schema. "
+        + "If this not specified, the error code will be dropped.")
     private String codeField;
 
     @Nullable
-    @Description("The name of the error stage field to use in the output schema. " +
-        "If this not specified, the error stage will be dropped.")
+    @Description("The name of the error stage field to use in the output schema. "
+        + "If this not specified, the error stage will be dropped.")
     private String stageField;
 
   }

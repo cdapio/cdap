@@ -138,13 +138,6 @@ import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.api.RunId;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -164,6 +157,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import org.apache.twill.api.RunId;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  *
@@ -2401,8 +2400,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
-      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
-                                                                  "t1.customer_name=t2.cust_name=t3.c_name",
+      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&"
+                                                                  + "t1.customer_name=t2.cust_name=t3.c_name",
                                                                 "t1,t2,t3", "")))
       .addStage(new ETLStage(sinkName, MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s1", output1)))
       .addStage(new ETLStage(sinkName2, MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s2", output2)))
@@ -2530,8 +2529,9 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
-      .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
-                                                                  "t1.customer_name=t2.cust_name=t3.c_name", "t1", "")))
+        .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&"
+                + "t1.customer_name=t2.cust_name=t3.c_name",
+            "t1", "")))
       .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")

@@ -61,8 +61,8 @@ public class Secret {
       return false;
     }
     Secret secret = (Secret) o;
-    return Arrays.equals(data, secret.data) &&
-        Objects.equals(metadata, secret.metadata);
+    return Arrays.equals(data, secret.data)
+        && Objects.equals(metadata, secret.metadata);
   }
 
   @Override
@@ -74,8 +74,8 @@ public class Secret {
 
   @Override
   public String toString() {
-    return "Secret{" +
-        "metadata=" + metadata +
-        '}';
+    return "Secret{"
+        + "metadata=" + metadata
+        + '}';
   }
 }

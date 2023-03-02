@@ -178,8 +178,8 @@ public final class EntityTable implements Closeable {
         }
 
         if (key.getName() == null || key.getName().isEmpty()) {
-          LOG.warn("Adding mapping for " + (key.getName() == null ? "null" : "empty") + " name, " +
-              " with type " + key.getType() + ", new id is " + newId);
+          LOG.warn("Adding mapping for " + (key.getName() == null ? "null" : "empty") + " name, "
+              + " with type " + key.getType() + ", new id is " + newId);
         }
 
         // Save the mapping

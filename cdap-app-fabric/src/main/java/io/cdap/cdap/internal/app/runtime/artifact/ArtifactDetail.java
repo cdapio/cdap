@@ -50,8 +50,8 @@ public class ArtifactDetail {
     }
 
     ArtifactDetail that = (ArtifactDetail) o;
-    return Objects.equals(descriptor, that.descriptor) &&
-        Objects.equals(meta, that.meta);
+    return Objects.equals(descriptor, that.descriptor)
+        && Objects.equals(meta, that.meta);
   }
 
   @Override

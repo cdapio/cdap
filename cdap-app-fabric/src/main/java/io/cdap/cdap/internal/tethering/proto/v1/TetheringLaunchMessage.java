@@ -57,11 +57,11 @@ public class TetheringLaunchMessage {
 
   @Override
   public String toString() {
-    return "TetheringLaunchMessage{" +
-        "localizeFiles='" + localizeFiles + '\'' +
-        ", cConfEntries=" + cConfEntries +
-        ", runtimeNamespace=" + runtimeNamespace +
-        '}';
+    return "TetheringLaunchMessage{"
+        + "localizeFiles='" + localizeFiles + '\''
+        + ", cConfEntries=" + cConfEntries
+        + ", runtimeNamespace=" + runtimeNamespace
+        + '}';
   }
 
   @Override
@@ -74,9 +74,9 @@ public class TetheringLaunchMessage {
     }
 
     TetheringLaunchMessage that = (TetheringLaunchMessage) o;
-    return Objects.equals(localizeFiles, that.localizeFiles) &&
-        Objects.equals(cConfEntries, that.cConfEntries) &&
-        Objects.equals(runtimeNamespace, that.runtimeNamespace);
+    return Objects.equals(localizeFiles, that.localizeFiles)
+        && Objects.equals(cConfEntries, that.cConfEntries)
+        && Objects.equals(runtimeNamespace, that.runtimeNamespace);
   }
 
   @Override

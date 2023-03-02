@@ -194,8 +194,8 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
       throw new IllegalStateException(
-          "Expected logger context instance of " + AppenderContext.class.getName() +
-              " but get " + context.getClass().getName());
+          "Expected logger context instance of " + AppenderContext.class.getName()
+              + " but get " + context.getClass().getName());
     }
     super.start();
   }

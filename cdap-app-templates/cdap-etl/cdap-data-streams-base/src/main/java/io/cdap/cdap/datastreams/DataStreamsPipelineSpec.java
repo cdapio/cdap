@@ -116,14 +116,14 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
     DataStreamsPipelineSpec that = (DataStreamsPipelineSpec) o;
 
-    return batchIntervalMillis == that.batchIntervalMillis &&
-      Objects.equals(extraJavaOpts, that.extraJavaOpts) &&
-      stopGracefully == that.stopGracefully &&
-      checkpointsDisabled == that.checkpointsDisabled &&
-      isUnitTest == that.isUnitTest &&
-      Objects.equals(stateSpec, that.stateSpec) &&
-      Objects.equals(checkpointDirectory, that.checkpointDirectory) &&
-      Objects.equals(pipelineId, that.pipelineId);
+    return batchIntervalMillis == that.batchIntervalMillis
+      && Objects.equals(extraJavaOpts, that.extraJavaOpts)
+      && stopGracefully == that.stopGracefully
+      && checkpointsDisabled == that.checkpointsDisabled
+      && isUnitTest == that.isUnitTest
+      && Objects.equals(stateSpec, that.stateSpec)
+      && Objects.equals(checkpointDirectory, that.checkpointDirectory)
+      && Objects.equals(pipelineId, that.pipelineId);
   }
 
   @Override
@@ -134,16 +134,16 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
 
   @Override
   public String toString() {
-    return "DataStreamsPipelineSpec{" +
-      "batchIntervalMillis=" + batchIntervalMillis +
-      ", extraJavaOpts='" + extraJavaOpts + '\'' +
-      ", stopGracefully=" + stopGracefully +
-      ", checkpointsDisabled=" + checkpointsDisabled +
-      ", isUnitTest=" + isUnitTest +
-      ", checkpointDirectory='" + checkpointDirectory + '\'' +
-      ", pipelineId='" + pipelineId + '\'' +
-      ", stateSpec='" + stateSpec + '\'' +
-      "} " + super.toString();
+    return "DataStreamsPipelineSpec{"
+      + "batchIntervalMillis=" + batchIntervalMillis
+      + ", extraJavaOpts='" + extraJavaOpts + '\''
+      + ", stopGracefully=" + stopGracefully
+      + ", checkpointsDisabled=" + checkpointsDisabled
+      + ", isUnitTest=" + isUnitTest
+      + ", checkpointDirectory='" + checkpointDirectory + '\''
+      + ", pipelineId='" + pipelineId + '\''
+      + ", stateSpec='" + stateSpec + '\''
+      + "} " + super.toString();
   }
 
   public static Builder builder(long batchIntervalMillis) {

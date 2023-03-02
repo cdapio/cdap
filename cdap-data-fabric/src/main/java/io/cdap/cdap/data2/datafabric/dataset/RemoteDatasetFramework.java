@@ -87,8 +87,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
   private static final Predicate<Throwable> RETRYABLE_PREDICATE = t ->
-      t instanceof RetryableException ||
-          (t instanceof UncheckedExecutionException && t.getCause() instanceof RetryableException);
+      t instanceof RetryableException
+          || (t instanceof UncheckedExecutionException
+          && t.getCause() instanceof RetryableException);
 
   private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, DatasetServiceClient> clientCache;

@@ -75,8 +75,8 @@ public class MetadataSearchResultRecord {
       return false;
     }
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-    return Objects.equals(metadataEntity, that.metadataEntity) &&
-        Objects.equals(metadata, that.metadata);
+    return Objects.equals(metadataEntity, that.metadataEntity)
+        && Objects.equals(metadata, that.metadata);
   }
 
   @Override
@@ -86,9 +86,9 @@ public class MetadataSearchResultRecord {
 
   @Override
   public String toString() {
-    return "MetadataSearchResultRecord{" +
-        "metadataEntity=" + metadataEntity +
-        ", metadata=" + metadata +
-        '}';
+    return "MetadataSearchResultRecord{"
+        + "metadataEntity=" + metadataEntity
+        + ", metadata=" + metadata
+        + '}';
   }
 }

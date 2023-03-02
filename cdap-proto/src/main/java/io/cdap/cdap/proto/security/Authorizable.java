@@ -141,8 +141,8 @@ public class Authorizable {
     }
     String entity = entityId.toString();
     // drop the version for artifact or application
-    if (entityId.getEntityType().equals(EntityType.ARTIFACT) ||
-        entityId.getEntityType().equals(EntityType.APPLICATION) || entityId.getEntityType()
+    if (entityId.getEntityType().equals(EntityType.ARTIFACT)
+        || entityId.getEntityType().equals(EntityType.APPLICATION) || entityId.getEntityType()
         .equals(EntityType.PROGRAM)) {
       int versionStartIndex = entity.indexOf(EntityId.IDSTRING_PART_SEPARATOR,
           entity.indexOf(EntityId.IDSTRING_PART_SEPARATOR) + 1);
@@ -235,8 +235,8 @@ public class Authorizable {
       case KERBEROSPRINCIPAL:
         if (parts.size() != 1 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException(
-              "Entity value is missing some parts or containing more parts. " +
-                  "Expected: <entity-name>, given entity: " + parts);
+              "Entity value is missing some parts or containing more parts. "
+                  + "Expected: <entity-name>, given entity: " + parts);
         }
         entityParts.put(entityType, parts.get(index));
         break;
@@ -247,14 +247,14 @@ public class Authorizable {
         // reached here through recursive call on program
         if (parts.size() > 2 && index == (parts.size() - 1)) {
           throw new UnsupportedOperationException(
-              "Privilege can only be granted at the artifact/application level. " +
-                  "If you are including version please remove it. Given entity: " +
-                  parts);
+              "Privilege can only be granted at the artifact/application level. "
+                  + "If you are including version please remove it. Given entity: "
+                  + parts);
         }
         if (parts.size() < 2 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException(
-              "Entity value is missing some parts or containing more parts. " +
-                  "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
+              "Entity value is missing some parts or containing more parts. "
+                  + "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
         }
         checkParts(EntityType.NAMESPACE, parts, index - 1, entityParts);
         entityParts.put(entityType, parts.get(index));
@@ -266,8 +266,8 @@ public class Authorizable {
       case PROFILE:
         if (parts.size() != 2 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException(
-              "Entity value is missing some parts or containing more parts. " +
-                  "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
+              "Entity value is missing some parts or containing more parts. "
+                  + "Expected: <namespace-name>.<entity-name>, given entity: " + parts);
         }
         checkParts(EntityType.NAMESPACE, parts, index - 1, entityParts);
         entityParts.put(entityType, parts.get(index));
@@ -278,23 +278,23 @@ public class Authorizable {
         // reached here through recursive call on some child of program (future security)
         if (parts.size() > 4 && index == (parts.size() - 1)) {
           throw new UnsupportedOperationException(
-              "Privilege can only be granted at the artifact/application level. " +
-                  "If you are including version please remove it. Given entity: " +
-                  parts);
+              "Privilege can only be granted at the artifact/application level. "
+                  + "If you are including version please remove it. Given entity: "
+                  + parts);
         }
         if (parts.size() < 3 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException(
-              "Entity value is missing some parts or containing more parts. " +
-                  "Expected: <namespace-name>.<app-name>.* or " +
-                  "<namespace-name>.<app-name>.<program-type>.<program-name>, " +
-                  "given entity: " + parts);
+              "Entity value is missing some parts or containing more parts. "
+                  + "Expected: <namespace-name>.<app-name>.* or "
+                  + "<namespace-name>.<app-name>.<program-type>.<program-name>, "
+                  + "given entity: " + parts);
         }
 
         if (parts.size() == 3 && index == (parts.size() - 1)) {
           String program = parts.get(index);
           if (!"*".equals(program)) {
-            throw new UnsupportedOperationException("When program type is not given, " +
-                "a program name can only contain a *");
+            throw new UnsupportedOperationException("When program type is not given, "
+                + "a program name can only contain a *");
           }
           checkParts(EntityType.APPLICATION, parts, index - 1, entityParts);
           entityParts.put(entityType, parts.get(index));
@@ -306,10 +306,10 @@ public class Authorizable {
       case SYSTEM_APP_ENTITY:
         if (parts.size() != 4 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException(
-              "Entity value is missing some parts or containing more parts. " +
-                  "Expected: <namespace-name>.<app-name>.* or " +
-                  "<namespace-name>.<app-name>.<entity-type>.<entity-name>, " +
-                  "given entity: " + parts);
+              "Entity value is missing some parts or containing more parts. "
+                  + "Expected: <namespace-name>.<app-name>.* or "
+                  + "<namespace-name>.<app-name>.<entity-type>.<entity-name>, "
+                  + "given entity: " + parts);
         }
         checkParts(EntityType.NAMESPACE, parts, index - 3, entityParts);
         entityParts.put(entityType,

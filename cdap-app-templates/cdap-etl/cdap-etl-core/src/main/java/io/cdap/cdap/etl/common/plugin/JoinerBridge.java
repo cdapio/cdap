@@ -59,11 +59,11 @@ public class JoinerBridge<INPUT_RECORD> extends
   public JoinerBridge(String stageName, BatchAutoJoiner autoJoiner, JoinDefinition joinDefinition) {
     // if this is not an inner join and the output schema is not set,
     // we have no way of determining what the output schema should be and need to error out.
-    if (joinDefinition.getOutputSchema() == null &&
-        joinDefinition.getStages().stream().anyMatch(s -> !s.isRequired())) {
+    if (joinDefinition.getOutputSchema() == null
+        && joinDefinition.getStages().stream().anyMatch(s -> !s.isRequired())) {
       throw new IllegalArgumentException(
-          String.format("An output schema could not be generated for joiner stage '%s'. " +
-              "Provide the expected output schema directly.", stageName));
+          String.format("An output schema could not be generated for joiner stage '%s'. "
+              + "Provide the expected output schema directly.", stageName));
     }
     this.autoJoiner = autoJoiner;
     this.joinDefinition = joinDefinition;
@@ -120,8 +120,8 @@ public class JoinerBridge<INPUT_RECORD> extends
       throw new IllegalArgumentException(
           String.format(
               "Received data from stage '%s', but the stage was not included as part of the join. "
-                  +
-                  "Check the plugin to make sure it is including all input stages.", stageName));
+
+                  + "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
     StructuredRecord inputRecord = (StructuredRecord) input;
@@ -150,8 +150,8 @@ public class JoinerBridge<INPUT_RECORD> extends
       throw new IllegalArgumentException(
           String.format(
               "Received data from stage '%s', but the stage was not included as part of the join. "
-                  +
-                  "Check the plugin to make sure it is including all input stages.", stageName));
+
+                  + "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
     StructuredRecord inputRecord = (StructuredRecord) record;

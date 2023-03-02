@@ -92,8 +92,8 @@ public class PipelinePlan {
 
     PipelinePlan that = (PipelinePlan) o;
 
-    return Objects.equals(phases, that.phases) &&
-        Objects.equals(phaseConnections, that.phaseConnections);
+    return Objects.equals(phases, that.phases)
+        && Objects.equals(phaseConnections, that.phaseConnections);
   }
 
   @Override
@@ -103,9 +103,9 @@ public class PipelinePlan {
 
   @Override
   public String toString() {
-    return "PipelinePlan{" +
-        "phases=" + phases +
-        ", phaseConnections=" + phaseConnections +
-        '}';
+    return "PipelinePlan{"
+        + "phases=" + phases
+        + ", phaseConnections=" + phaseConnections
+        + '}';
   }
 }

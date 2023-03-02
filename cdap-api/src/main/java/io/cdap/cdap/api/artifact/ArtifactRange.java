@@ -73,12 +73,12 @@ public class ArtifactRange extends ArtifactVersionRange {
 
     ArtifactRange that = (ArtifactRange) o;
 
-    return Objects.equals(namespace, that.namespace) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(lower, that.lower) &&
-        Objects.equals(upper, that.upper) &&
-        isLowerInclusive == that.isLowerInclusive &&
-        isUpperInclusive == that.isUpperInclusive;
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(name, that.name)
+        && Objects.equals(lower, that.lower)
+        && Objects.equals(upper, that.upper)
+        && isLowerInclusive == that.isLowerInclusive
+        && isUpperInclusive == that.isUpperInclusive;
   }
 
   @Override

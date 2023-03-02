@@ -159,9 +159,9 @@ public class FieldLineageInfo {
     for (Operation operation : operations) {
       if (operationsMap.containsKey(operation.getName())) {
         throw new IllegalArgumentException(
-            String.format("All operations provided for creating field " +
-                "level lineage info must have unique names. " +
-                "Operation name '%s' is repeated.", operation.getName()));
+            String.format("All operations provided for creating field "
+                + "level lineage info must have unique names. "
+                + "Operation name '%s' is repeated.", operation.getName()));
 
       }
 
@@ -173,8 +173,8 @@ public class FieldLineageInfo {
           EndPoint source = read.getSource();
           if (source == null) {
             throw new IllegalArgumentException(
-                String.format("Source endpoint cannot be null for the read " +
-                    "operation '%s'.", read.getName()));
+                String.format("Source endpoint cannot be null for the read "
+                    + "operation '%s'.", read.getName()));
           }
           readOperations.add(read);
           break;
@@ -198,8 +198,8 @@ public class FieldLineageInfo {
           EndPoint destination = write.getDestination();
           if (destination == null) {
             throw new IllegalArgumentException(
-                String.format("Destination endpoint cannot be null for the write " +
-                    "operation '%s'.", write.getName()));
+                String.format("Destination endpoint cannot be null for the write "
+                    + "operation '%s'.", write.getName()));
           }
 
           origins = write.getInputs().stream().map(InputField::getOrigin)
@@ -562,8 +562,8 @@ public class FieldLineageInfo {
 
     Set<Operation> visitedOperations = new HashSet<>();
     for (ReadOperation readOperation : readOperations) {
-      if (!(readOperation.getSource().equals(sourceField.getEndPoint()) &&
-          readOperation.getOutputs().contains(sourceField.getField()))) {
+      if (!(readOperation.getSource().equals(sourceField.getEndPoint())
+          && readOperation.getOutputs().contains(sourceField.getField()))) {
         continue;
       }
       // the read operation is for the dataset to which the sourceField belong and it did read the sourceField for

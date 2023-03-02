@@ -118,8 +118,8 @@ public class ProvisionTask extends ProvisioningTask {
     return new ClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
       if (!Objects.equals(provisionerContext.getCDAPVersionInfo(),
           provisionerContext.getAppCDAPVersionInfo())) {
-        USERLOG.info("Starting a pipeline created with a previous version. " +
-            "Please consider upgrading the pipeline to employ all the enhancements");
+        USERLOG.info("Starting a pipeline created with a previous version. "
+            + "Please consider upgrading the pipeline to employ all the enhancements");
         LOG.debug(
             "Starting a pipeline created with a previous version. Pipeline version {}, platform version {}",
             provisionerContext.getAppCDAPVersionInfo(), provisionerContext.getCDAPVersionInfo());
@@ -127,8 +127,8 @@ public class ProvisionTask extends ProvisioningTask {
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.
-        LOG.warn("Provisioner {} returned an invalid null cluster. " +
-            "Sending notification to de-provision it.", provisioner.getSpec().getName());
+        LOG.warn("Provisioner {} returned an invalid null cluster. "
+            + "Sending notification to de-provision it.", provisioner.getSpec().getName());
         notifyFailed(new IllegalStateException("Provisioner returned an invalid null cluster."));
         // RequestingCreate --> Failed
         return Optional.of(ProvisioningOp.Status.FAILED);

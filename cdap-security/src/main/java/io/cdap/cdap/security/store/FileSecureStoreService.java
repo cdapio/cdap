@@ -389,8 +389,8 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
       throw new IOException("The underlying java key store has not been initialized.", e);
     } catch (NoSuchAlgorithmException e) {
       throw new IOException(
-          "The appropriate data integrity algorithm for the underlying java key store could not " +
-              "be found", e);
+          "The appropriate data integrity algorithm for the underlying java key store could not "
+              + "be found", e);
     } catch (CertificateException e) {
       // Should not happen as we are not storing certificates in the keystore.
       throw new IOException("Failed to store the certificates included in the keystore data.", e);

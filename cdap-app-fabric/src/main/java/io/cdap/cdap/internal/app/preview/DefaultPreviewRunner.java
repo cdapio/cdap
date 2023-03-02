@@ -350,8 +350,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
           PreviewStatus status = new PreviewStatus(
               PreviewStatus.Status.KILLED_BY_EXCEEDING_MEMORY_LIMIT, submitTimeMillis,
               new BasicThrowable(new Exception(
-                  "Preview runner container killed possibly because of out of memory. " +
-                      "Please try running preview again.")),
+                  "Preview runner container killed possibly because of out of memory. "
+                      + "Please try running preview again.")),
               null, null);
           previewTerminated(programId, status);
         } catch (IOException e) {

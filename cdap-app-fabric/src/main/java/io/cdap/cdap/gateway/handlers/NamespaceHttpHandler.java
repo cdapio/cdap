@@ -136,8 +136,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-          String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. " +
-                  "Please enable it and restart CDAP Master.",
+          String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. "
+                  + "Please enable it and restart CDAP Master.",
               namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
@@ -154,8 +154,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
           String.format(
-              "All datasets in namespace %s cannot be deleted because '%s' is not enabled." +
-                  " Please enable it and restart CDAP Master.",
+              "All datasets in namespace %s cannot be deleted because '%s' is not enabled."
+                  + " Please enable it and restart CDAP Master.",
               namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }

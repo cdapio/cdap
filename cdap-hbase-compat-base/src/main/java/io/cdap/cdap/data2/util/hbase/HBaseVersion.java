@@ -307,16 +307,16 @@ public class HBaseVersion {
 
   private static Version getHBase12VersionFromVersion(VersionNumber ver) {
     if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-      if (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-          // CDH 5.7 compat module can be re-used with CDH 5.[8-14].x
-          ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH511_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH512_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH513_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH514_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH515_CLASSIFIER)) {
+      if (ver.getClassifier().startsWith(CDH57_CLASSIFIER)
+          || // CDH 5.7 compat module can be re-used with CDH 5.[8-14].x
+          ver.getClassifier().startsWith(CDH58_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH59_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH510_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH511_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH512_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH513_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH514_CLASSIFIER)
+          || ver.getClassifier().startsWith(CDH515_CLASSIFIER)) {
         return Version.HBASE_12_CDH57;
       }
       return Version.UNKNOWN_CDH;

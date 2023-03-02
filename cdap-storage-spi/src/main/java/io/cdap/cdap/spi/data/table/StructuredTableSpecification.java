@@ -100,10 +100,10 @@ public final class StructuredTableSpecification {
       return false;
     }
     StructuredTableSpecification that = (StructuredTableSpecification) o;
-    return Objects.equals(tableId, that.tableId) &&
-        Objects.equals(fieldTypes, that.fieldTypes) &&
-        Objects.equals(primaryKeys, that.primaryKeys) &&
-        Objects.equals(indexes, that.indexes);
+    return Objects.equals(tableId, that.tableId)
+        && Objects.equals(fieldTypes, that.fieldTypes)
+        && Objects.equals(primaryKeys, that.primaryKeys)
+        && Objects.equals(indexes, that.indexes);
   }
 
   @Override
@@ -113,12 +113,12 @@ public final class StructuredTableSpecification {
 
   @Override
   public String toString() {
-    return "StructuredTableSpecification{" +
-        "tableId='" + tableId + '\'' +
-        ", fieldTypes=" + fieldTypes +
-        ", primaryKeys=" + primaryKeys +
-        ", indexes=" + indexes +
-        '}';
+    return "StructuredTableSpecification{"
+        + "tableId='" + tableId + '\''
+        + ", fieldTypes=" + fieldTypes
+        + ", primaryKeys=" + primaryKeys
+        + ", indexes=" + indexes
+        + '}';
   }
 
   /**
@@ -236,8 +236,8 @@ public final class StructuredTableSpecification {
         if (!IDENTIFIER_NAME_PATTERN.matcher(fieldType.getName()).matches()) {
           throw new IllegalArgumentException(
               String.format(
-                  "Invalid field name %s. Only alphanumeric and _ characters allowed, " +
-                    "and should begin with an alphabet",
+                  "Invalid field name %s. Only alphanumeric and _ characters allowed, "
+                      + "and should begin with an alphabet",
                   fieldType.getName()));
         }
       }

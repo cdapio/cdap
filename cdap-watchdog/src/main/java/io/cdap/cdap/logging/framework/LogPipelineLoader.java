@@ -119,8 +119,8 @@ public class LogPipelineLoader {
         if (existingSpec != null) {
           if (!ignoreOnError) {
             throw new InvalidPipelineException(
-                "Duplicate pipeline with name " + spec.getName() + " at " + configURL +
-                    ". It was already defined at " + existingSpec.getSource());
+                "Duplicate pipeline with name " + spec.getName() + " at " + configURL
+                    + ". It was already defined at " + existingSpec.getSource());
           }
           LOG.warn("Pipeline {} already defined in {}. Ignoring the duplicated one from {}.",
               spec.getName(), existingSpec.getSource(), configURL);
@@ -153,8 +153,8 @@ public class LogPipelineLoader {
     }
 
     Preconditions.checkState(result.containsKey(SYSTEM_LOG_PIPELINE_NAME),
-        "The CDAP system log processing pipeline is missing. " +
-            "Please check and fix any configuration error shown earlier in the log.");
+        "The CDAP system log processing pipeline is missing. "
+            + "Please check and fix any configuration error shown earlier in the log.");
     return result;
   }
 

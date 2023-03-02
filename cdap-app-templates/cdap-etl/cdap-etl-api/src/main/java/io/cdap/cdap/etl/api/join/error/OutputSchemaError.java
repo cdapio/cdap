@@ -59,8 +59,8 @@ public class OutputSchemaError extends JoinError {
       return false;
     }
     OutputSchemaError that = (OutputSchemaError) o;
-    return Objects.equals(field, that.field) &&
-        Objects.equals(expectedType, that.expectedType);
+    return Objects.equals(field, that.field)
+        && Objects.equals(expectedType, that.expectedType);
   }
 
   @Override

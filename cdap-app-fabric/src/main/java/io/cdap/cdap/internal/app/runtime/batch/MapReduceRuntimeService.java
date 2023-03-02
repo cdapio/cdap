@@ -639,9 +639,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (!firstMapperClassOutputTypes.getKey().equals(mapperOutputKeyValueTypes.getKey())
         || !firstMapperClassOutputTypes.getValue().equals(mapperOutputKeyValueTypes.getValue())) {
       throw new IllegalArgumentException(
-          String.format("Type mismatch in output type of mappers: %s and %s. " +
-                  "Map output key types: %s and %s. " +
-                  "Map output value types: %s and %s.",
+          String.format("Type mismatch in output type of mappers: %s and %s. "
+                  + "Map output key types: %s and %s. "
+                  + "Map output value types: %s and %s.",
               firstMapperClass, secondMapperClass,
               firstMapperClassOutputTypes.getKey(), mapperOutputKeyValueTypes.getKey(),
               firstMapperClassOutputTypes.getValue(), mapperOutputKeyValueTypes.getValue()));
@@ -737,8 +737,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (mustFixUmasks) {
         LOG.info(
             "Overriding permissions of outputs {} because a umask of {} was set programmatically in the job "
-                +
-                "configuration.", outputsWithUmask, jobConfUmask);
+
+                + "configuration.", outputsWithUmask, jobConfUmask);
       }
     } else if (allOutputsHaveUmask && allOutputsAgree) {
       // case 2: no programmatic umask in job conf, all outputs want the same umask: set it in job conf
@@ -752,8 +752,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (mustFixUmasks) {
         LOG.warn(
             "Overriding permissions of outputs {} because they configure different permissions. Falling back "
-                +
-                "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
+
+                + "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
       }
     }
 
@@ -1174,8 +1174,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       int reservedMemory = cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB);
       double minHeapRatio = cConf.getDouble(Configs.Keys.HEAP_RESERVED_MIN_RATIO);
       String maxHeapSource =
-          "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB +
-              " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
+          "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB
+              + " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
 
       // Optionally overrides the settings from the runtime arguments
       Map<String, String> configs = SystemArguments.getTwillContainerConfigs(runtimeArgs, memoryMB);
@@ -1200,8 +1200,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           : conf.get(javaOptsKey, "") + " " + jvmOpts;
       conf.set(javaOptsKey, jvmOpts.trim());
 
-      LOG.debug("MapReduce {} task container memory is {}MB, set {}. " +
-              "Maximum heap memory size of {}MB, set {}.{}",
+      LOG.debug("MapReduce {} task container memory is {}MB, set {}. "
+              + "Maximum heap memory size of {}MB, set {}.{}",
           name().toLowerCase(), memoryMB, memorySource, maxHeapSize, maxHeapSource,
           vcores > 0 ? " Virtual cores is " + vcores + ", set " + vcoreSource + "." : ".");
     }

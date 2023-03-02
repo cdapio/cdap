@@ -53,9 +53,9 @@ public class DraftId {
       return false;
     }
     DraftId draftId = (DraftId) o;
-    return Objects.equals(namespace, draftId.namespace) &&
-      Objects.equals(id, draftId.id) &&
-      Objects.equals(owner, draftId.owner);
+    return Objects.equals(namespace, draftId.namespace)
+      && Objects.equals(id, draftId.id)
+      && Objects.equals(owner, draftId.owner);
   }
 
   @Override

@@ -66,8 +66,8 @@ public class InvalidPluginProperty {
 
     InvalidPluginProperty that = (InvalidPluginProperty) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage) &&
-        Objects.equals(cause, that.cause);
+    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage)
+        && Objects.equals(cause, that.cause);
   }
 
   @Override

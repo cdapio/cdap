@@ -67,8 +67,8 @@ public final class RuntimeMonitors {
             int totalTopicCount = Integer.parseInt(key.substring(idx + 1));
             if (totalTopicCount <= 0) {
               throw new IllegalArgumentException(
-                  "Total topic number must be positive for system topic config '" +
-                      key + "'.");
+                  "Total topic number must be positive for system topic config '"
+                      + key + "'.");
             }
             // For metrics, We make an assumption that number of metrics topics on runtime are not different than
             // cdap system. So, we will add same number of topic configs as number of metrics topics so that we can

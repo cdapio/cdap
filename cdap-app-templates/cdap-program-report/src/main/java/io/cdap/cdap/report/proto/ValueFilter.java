@@ -84,11 +84,11 @@ public class ValueFilter<T> extends Filter<T> {
 
   @Override
   public String toString() {
-    return "ValueFilter{" +
-        "fieldName=" + getFieldName() +
-        ", whitelist=" + whitelist +
-        ", blacklist=" + blacklist +
-        '}';
+    return "ValueFilter{"
+        + "fieldName=" + getFieldName()
+        + ", whitelist=" + whitelist
+        + ", blacklist=" + blacklist
+        + '}';
   }
 
   @Override
@@ -110,7 +110,7 @@ public class ValueFilter<T> extends Filter<T> {
     }
 
     ValueFilter that = (ValueFilter) o;
-    return Objects.equals(this.whitelist, that.whitelist) &&
-        Objects.equals(this.blacklist, that.blacklist);
+    return Objects.equals(this.whitelist, that.whitelist)
+        && Objects.equals(this.blacklist, that.blacklist);
   }
 }

@@ -64,9 +64,9 @@ public class DurationStats {
     }
 
     DurationStats that = (DurationStats) o;
-    return Objects.equal(min, that.min) &&
-        Objects.equal(max, that.max) &&
-        Objects.equal(average, that.average);
+    return Objects.equal(min, that.min)
+        && Objects.equal(max, that.max)
+        && Objects.equal(average, that.average);
   }
 
   @Override

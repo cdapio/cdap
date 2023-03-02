@@ -113,9 +113,9 @@ public class ProgramReference extends NamespacedEntityId implements
       return false;
     }
     ProgramReference programRef = (ProgramReference) o;
-    return Objects.equals(getParent(), programRef.getParent()) &&
-        Objects.equals(type, programRef.type) &&
-        Objects.equals(program, programRef.program);
+    return Objects.equals(getParent(), programRef.getParent())
+        && Objects.equals(type, programRef.type)
+        && Objects.equals(program, programRef.program);
   }
 
   @Override

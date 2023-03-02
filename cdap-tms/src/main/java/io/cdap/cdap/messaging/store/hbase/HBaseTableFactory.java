@@ -322,8 +322,8 @@ public final class HBaseTableFactory implements TableFactory {
         // it has been disabled by the upgrade tool, and return
         LOG.info(
             "Table '{}' has not changed and its version '{}' is same or greater than current CDAP version '{}'."
-                +
-                " The underlying HBase version {} has also not changed.",
+
+                + " The underlying HBase version {} has also not changed.",
             tableId, version, ProjectInfo.getVersion(), hbaseVersion);
         enableTable(ddlExecutor, tableId);
         return;

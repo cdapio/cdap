@@ -128,8 +128,8 @@ public class TetheringHandler extends AbstractHttpHandler {
           new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer, true));
       if (!tetheringProfiles.isEmpty()) {
         throw new BadRequestException(
-            String.format("Cannot delete tethering as it's in use by compute profiles: %s." +
-                    " Delete these profiles before deleting this tethering.",
+            String.format("Cannot delete tethering as it's in use by compute profiles: %s."
+                    + " Delete these profiles before deleting this tethering.",
                 tetheringProfiles.stream().map(Profile::getName)
                     .collect(Collectors.toList())));
       }

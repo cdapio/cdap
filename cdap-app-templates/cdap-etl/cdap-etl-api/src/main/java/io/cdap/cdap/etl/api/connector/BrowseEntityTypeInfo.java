@@ -52,8 +52,8 @@ public class BrowseEntityTypeInfo {
     }
 
     BrowseEntityTypeInfo that = (BrowseEntityTypeInfo) o;
-    return Objects.equals(type, that.type) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override

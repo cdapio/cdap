@@ -63,9 +63,9 @@ public final class MetricTimeSeries {
 
     MetricTimeSeries that = (MetricTimeSeries) o;
 
-    return Objects.equals(metricName, that.metricName) &&
-        Objects.equals(tagValues, that.tagValues) &&
-        Objects.equals(timeValues, that.timeValues);
+    return Objects.equals(metricName, that.metricName)
+        && Objects.equals(tagValues, that.tagValues)
+        && Objects.equals(timeValues, that.timeValues);
   }
 
   @Override
@@ -75,10 +75,10 @@ public final class MetricTimeSeries {
 
   @Override
   public String toString() {
-    return "MetricTimeSeries{" +
-        "metricName='" + metricName + '\'' +
-        ", tagValues=" + tagValues +
-        ", timeValues=" + timeValues +
-        '}';
+    return "MetricTimeSeries{"
+        + "metricName='" + metricName + '\''
+        + ", tagValues=" + tagValues
+        + ", timeValues=" + timeValues
+        + '}';
   }
 }

@@ -527,11 +527,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // A pending job will be created, but it won't run
     Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
                       Iterables.any(getAllJobs(), job -> {
-                        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+                        if (!(job.getSchedule()
+                            .getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
                           return false;
                         }
-                        return scheduleId2.equals(job.getJobKey().getScheduleId()) &&
-                          job.getState() == Job.State.PENDING_TRIGGER;
+                        return scheduleId2.equals(job.getJobKey().getScheduleId())
+                            && job.getState() == Job.State.PENDING_TRIGGER;
 
                       }));
 
@@ -567,11 +568,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Again, a pending job will be created, but it won't run since updating the schedule would remove pending trigger
     Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
                       Iterables.any(getAllJobs(), job -> {
-                        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+                        if (!(job.getSchedule()
+                            .getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
                           return false;
                         }
-                        return scheduleId2.equals(job.getJobKey().getScheduleId()) &&
-                          job.getState() == Job.State.PENDING_TRIGGER;
+                        return scheduleId2.equals(job.getJobKey().getScheduleId())
+                            && job.getState() == Job.State.PENDING_TRIGGER;
                       }));
 
     Assert.assertEquals(runs, getRuns(workflow2, ProgramRunStatus.ALL));

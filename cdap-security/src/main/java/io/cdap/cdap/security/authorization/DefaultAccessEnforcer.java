@@ -279,14 +279,14 @@ public class DefaultAccessEnforcer extends AbstractAccessEnforcer {
 
 
   private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {
-    return entityId instanceof NamespacedEntityId &&
-        ((NamespacedEntityId) entityId).getNamespaceId().equals(NamespaceId.SYSTEM)
+    return entityId instanceof NamespacedEntityId
+        && ((NamespacedEntityId) entityId).getNamespaceId().equals(NamespaceId.SYSTEM)
         && principal.equals(masterUser);
   }
 
   private boolean isEnforcingOnSamePrincipalId(EntityId entityId, Principal principal) {
-    return entityId.getEntityType().equals(EntityType.KERBEROSPRINCIPAL) &&
-        principal.getName().equals(entityId.getEntityName());
+    return entityId.getEntityType().equals(EntityType.KERBEROSPRINCIPAL)
+        && principal.getName().equals(entityId.getEntityName());
   }
 
   /**

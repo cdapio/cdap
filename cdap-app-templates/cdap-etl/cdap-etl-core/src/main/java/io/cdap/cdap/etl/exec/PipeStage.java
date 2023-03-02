@@ -52,8 +52,8 @@ public abstract class PipeStage<T> implements Destroyable {
       throw new StageFailureException(
           String.format(
               "Failed to execute pipeline stage '%s' with the error: %s. Please review your pipeline "
-                  +
-                  "configuration and check the system logs for more details.", stageName,
+
+                  + "configuration and check the system logs for more details.", stageName,
               rootCause.getMessage()),
           rootCause);
     }

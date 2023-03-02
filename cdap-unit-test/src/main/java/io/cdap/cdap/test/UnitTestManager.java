@@ -480,9 +480,9 @@ public class UnitTestManager extends AbstractTestManager {
         return false;
       }
       AppArtifactKey that = (AppArtifactKey) o;
-      return Objects.equals(appClass, that.appClass) &&
-          Objects.equals(manifest, that.manifest) &&
-          Objects.equals(bundleEmbeddedJars, that.bundleEmbeddedJars);
+      return Objects.equals(appClass, that.appClass)
+          && Objects.equals(manifest, that.manifest)
+          && Objects.equals(bundleEmbeddedJars, that.bundleEmbeddedJars);
     }
 
     @Override
@@ -513,8 +513,8 @@ public class UnitTestManager extends AbstractTestManager {
         return false;
       }
       PluginArtifactKey that = (PluginArtifactKey) o;
-      return Objects.equals(pluginClass, that.pluginClass) &&
-          Objects.equals(pluginClasses, that.pluginClasses);
+      return Objects.equals(pluginClass, that.pluginClass)
+          && Objects.equals(pluginClasses, that.pluginClasses);
     }
 
     @Override

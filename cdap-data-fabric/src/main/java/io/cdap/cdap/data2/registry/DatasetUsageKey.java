@@ -51,8 +51,8 @@ public class DatasetUsageKey {
       return false;
     }
     DatasetUsageKey that = (DatasetUsageKey) o;
-    return Objects.equal(dataset, that.dataset) &&
-        Objects.equal(owner, that.owner);
+    return Objects.equal(dataset, that.dataset)
+        && Objects.equal(owner, that.owner);
   }
 
   @Override

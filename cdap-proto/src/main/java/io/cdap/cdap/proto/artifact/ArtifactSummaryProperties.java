@@ -64,8 +64,8 @@ public class ArtifactSummaryProperties extends ArtifactSummary {
 
   @Override
   public String toString() {
-    return "ArtifactSummaryProperties{" +
-        "properties=" + properties +
-        "} " + super.toString();
+    return "ArtifactSummaryProperties{"
+        + "properties=" + properties
+        + "} " + super.toString();
   }
 }

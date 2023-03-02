@@ -153,15 +153,15 @@ public class DatasetModuleMeta {
 
   @Override
   public String toString() {
-    return "DatasetModuleMeta{" +
-        "name='" + name + '\'' +
-        ", className='" + className + '\'' +
-        ", jarLocation=" + jarLocation +
-        ", jarLocationPath=" + jarLocationPath +
-        ", types=" + types +
-        ", usesModules=" + usesModules +
-        ", usedByModules=" + usedByModules +
-        '}';
+    return "DatasetModuleMeta{"
+        + "name='" + name + '\''
+        + ", className='" + className + '\''
+        + ", jarLocation=" + jarLocation
+        + ", jarLocationPath=" + jarLocationPath
+        + ", types=" + types
+        + ", usesModules=" + usesModules
+        + ", usedByModules=" + usedByModules
+        + '}';
   }
 
   @Override
@@ -173,11 +173,11 @@ public class DatasetModuleMeta {
       return false;
     }
     DatasetModuleMeta that = (DatasetModuleMeta) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(className, that.className) &&
-        Objects.equals(types, that.types) &&
-        Objects.equals(usesModules, that.usesModules) &&
-        Objects.equals(usedByModules, that.usedByModules);
+    return Objects.equals(name, that.name)
+        && Objects.equals(className, that.className)
+        && Objects.equals(types, that.types)
+        && Objects.equals(usesModules, that.usesModules)
+        && Objects.equals(usedByModules, that.usedByModules);
   }
 
   @Override

@@ -42,8 +42,8 @@ final class OperationalStatsLoader extends
       OperationalStats operationalStats) {
     OperationalExtensionId operationalExtensionId = OperationalStatsUtils.getOperationalExtensionId(
         operationalStats);
-    return operationalExtensionId == null ?
-        Collections.<OperationalExtensionId>emptySet() :
+    return operationalExtensionId == null
+        ? Collections.<OperationalExtensionId>emptySet() :
         Collections.singleton(operationalExtensionId);
   }
 }

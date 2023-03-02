@@ -83,12 +83,12 @@ public class AuditMessage {
       return false;
     }
     AuditMessage that = (AuditMessage) o;
-    return Objects.equals(version, that.version) &&
-        Objects.equals(time, that.time) &&
-        Objects.equals(metadataEntity, that.metadataEntity) &&
-        Objects.equals(user, that.user) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(payload, that.payload);
+    return Objects.equals(version, that.version)
+        && Objects.equals(time, that.time)
+        && Objects.equals(metadataEntity, that.metadataEntity)
+        && Objects.equals(user, that.user)
+        && Objects.equals(type, that.type)
+        && Objects.equals(payload, that.payload);
   }
 
   @Override
@@ -98,13 +98,13 @@ public class AuditMessage {
 
   @Override
   public String toString() {
-    return "AuditMessage{" +
-        "version=" + version +
-        ", time=" + time +
-        ", metadataEntity=" + metadataEntity +
-        ", user='" + user + '\'' +
-        ", type=" + type +
-        ", payload=" + payload +
-        '}';
+    return "AuditMessage{"
+        + "version=" + version
+        + ", time=" + time
+        + ", metadataEntity=" + metadataEntity
+        + ", user='" + user + '\''
+        + ", type=" + type
+        + ", payload=" + payload
+        + '}';
   }
 }

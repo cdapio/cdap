@@ -95,8 +95,8 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
       return false;
     }
     ProgramRunId that = (ProgramRunId) o;
-    return Objects.equals(getParent(), that.getParent()) &&
-        Objects.equals(run, that.run);
+    return Objects.equals(getParent(), that.getParent())
+        && Objects.equals(run, that.run);
   }
 
   @Override

@@ -171,8 +171,8 @@ public class AppFabricServiceManager implements MasterServiceManager {
   private LoggerContext getLoggerContext() {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof LoggerContext)) {
-      LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
-          "Logback might not be in the classpath");
+      LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. "
+          + "Logback might not be in the classpath");
       return null;
     }
     return (LoggerContext) loggerFactory;

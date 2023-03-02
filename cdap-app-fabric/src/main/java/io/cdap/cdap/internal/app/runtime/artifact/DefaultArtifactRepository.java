@@ -376,8 +376,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
         try {
           // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
-          ArtifactConfig artifactConfig = configFile.isFile() ?
-              configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
+          ArtifactConfig artifactConfig = configFile.isFile()
+              ? configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
 
           validateParentSet(artifactId, artifactConfig.getParents());
           validatePluginSet(artifactConfig.getPlugins());
@@ -686,9 +686,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       Set<ArtifactRange> grandparentRanges = parent.getMeta().getUsableBy();
       for (ArtifactRange grandparentRange : grandparentRanges) {
         // if the parent as the child as a parent (cyclic dependency)
-        if (grandparentRange.getNamespace().equals(artifactId.getNamespace().getId()) &&
-            grandparentRange.getName().equals(artifactId.getName()) &&
-            grandparentRange.versionIsInRange(artifactId.getVersion())) {
+        if (grandparentRange.getNamespace().equals(artifactId.getNamespace().getId())
+            && grandparentRange.getName().equals(artifactId.getName())
+            && grandparentRange.versionIsInRange(artifactId.getVersion())) {
           throw new InvalidArtifactException(String.format(
               "Invalid artifact '%s': cyclic dependency. Parent '%s' has artifact '%s' as a parent.",
               artifactId, parent.getDescriptor().getArtifactId(), artifactId));
@@ -786,8 +786,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
         dupes.add(parentName);
         isInvalid = true;
       }
-      if (artifactId.getName().equals(parentName) &&
-          artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
+      if (artifactId.getName().equals(parentName)
+          && artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
             "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent,
             artifactId));

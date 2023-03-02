@@ -147,8 +147,8 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   private void put(String key, Value value, Scope scope) {
     if (!putAllowed) {
       String msg = String.format(
-          "Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
-              "allowed from the Mapper and Reducer classes and from Spark executor.", key,
+          "Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not "
+              + "allowed from the Mapper and Reducer classes and from Spark executor.", key,
           nodeName);
       throw new UnsupportedOperationException(msg);
     }
@@ -321,10 +321,10 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     left = (left < 0 || index >= 0) ? left : left - key.length();
     if (left < 0) {
       throw new IllegalStateException(
-          String.format("Exceeded maximum permitted size of workflow token '%sMB' while " +
-                  "adding key '%s' with value '%s'. Current size is '%sMB'. " +
-                  "Please increase the maximum permitted size by setting the " +
-                  "parameter '%s' in cdap-site.xml to add more values.",
+          String.format("Exceeded maximum permitted size of workflow token '%sMB' while "
+                  + "adding key '%s' with value '%s'. Current size is '%sMB'. "
+                  + "Please increase the maximum permitted size by setting the "
+                  + "parameter '%s' in cdap-site.xml to add more values.",
               maxSizeBytes / (1024 * 1024), key, nodeValue,
               (maxSizeBytes - bytesLeft) / (1024 * 1024),
               Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));

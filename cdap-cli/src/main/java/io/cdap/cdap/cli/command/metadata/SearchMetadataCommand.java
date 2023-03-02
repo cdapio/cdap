@@ -69,9 +69,9 @@ public class SearchMetadataCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Searches CDAP entities based on the metadata annotated on them. " +
-        "The search can be restricted by adding a comma-separated list of target types: " +
-        "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.";
+    return "Searches CDAP entities based on the metadata annotated on them. "
+        + "The search can be restricted by adding a comma-separated list of target types: "
+        + "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.";
   }
 
   private Set<String> parseTargetType(String typeString) {

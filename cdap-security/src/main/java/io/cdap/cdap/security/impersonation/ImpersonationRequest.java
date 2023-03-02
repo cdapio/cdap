@@ -73,12 +73,12 @@ public class ImpersonationRequest {
 
   @Override
   public String toString() {
-    return "ImpersonationRequest{" +
-        "entityId=" + entityId +
-        ", impersonatedOpType=" + impersonatedOpType +
-        ", principal=" + principal +
-        ", keytabURI=" + keytabURI +
-        '}';
+    return "ImpersonationRequest{"
+        + "entityId=" + entityId
+        + ", impersonatedOpType=" + impersonatedOpType
+        + ", principal=" + principal
+        + ", keytabURI=" + keytabURI
+        + '}';
   }
 
   @Override
@@ -90,10 +90,10 @@ public class ImpersonationRequest {
       return false;
     }
     ImpersonationRequest that = (ImpersonationRequest) o;
-    return Objects.equals(entityId, that.entityId) &&
-        impersonatedOpType == that.impersonatedOpType &&
-        Objects.equals(principal, that.principal) &&
-        Objects.equals(keytabURI, that.keytabURI);
+    return Objects.equals(entityId, that.entityId)
+        && impersonatedOpType == that.impersonatedOpType
+        && Objects.equals(principal, that.principal)
+        && Objects.equals(keytabURI, that.keytabURI);
   }
 
   @Override

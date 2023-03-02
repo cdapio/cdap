@@ -69,9 +69,9 @@ public class ProvisionerPropertyValue {
 
     ProvisionerPropertyValue that = (ProvisionerPropertyValue) o;
 
-    return Objects.equals(isEditable, that.isEditable) &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(value, that.value);
+    return Objects.equals(isEditable, that.isEditable)
+        && Objects.equals(name, that.name)
+        && Objects.equals(value, that.value);
   }
 
   @Override
@@ -81,10 +81,10 @@ public class ProvisionerPropertyValue {
 
   @Override
   public String toString() {
-    return "ProvisionerPropertyValue{" +
-        "name='" + name + '\'' +
-        ", value='" + value + '\'' +
-        ", isEditable=" + isEditable +
-        '}';
+    return "ProvisionerPropertyValue{"
+        + "name='" + name + '\''
+        + ", value='" + value + '\''
+        + ", isEditable=" + isEditable
+        + '}';
   }
 }

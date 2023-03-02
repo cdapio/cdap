@@ -459,24 +459,24 @@ public class MacroParserTest {
       .put("o", "o")
       .put("c", "c")
       .put("a", "a")
-      .put("hostSuffix", "host")
-      .put("two", "${filename${fileTypeMacro}}")
-      .put("three", "${firstPortDigit}${secondPortDigit}")
-      .put("filename", "index")
-      .put("fileTypeMacro", "-html")
-      .put("filename-html", "index.html")
-      .put("filename-php", "index.php")
-      .put("firstPortDigit", "8")
-      .put("secondPortDigit", "0")
-      .build();
-    assertSubstitution("${simpleHostnameTree}${simpleHostnameTree}${simpleHostnameTree}" +
-                       "${advancedHostnameTree}${advancedHostnameTree}${advancedHostnameTree}" +
-                       "${expansiveHostnameTree}${expansiveHostnameTree}${expansiveHostnameTree}" +
-                       "${simpleHostnameTree}${advancedHostnameTree}${expansiveHostnameTree}",
-                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
-                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80" +
-                       "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80",
-                       properties, new HashMap<>());
+        .put("hostSuffix", "host")
+        .put("two", "${filename${fileTypeMacro}}")
+        .put("three", "${firstPortDigit}${secondPortDigit}")
+        .put("filename", "index")
+        .put("fileTypeMacro", "-html")
+        .put("filename-html", "index.html")
+        .put("filename-php", "index.php")
+        .put("firstPortDigit", "8")
+        .put("secondPortDigit", "0")
+        .build();
+    assertSubstitution("${simpleHostnameTree}${simpleHostnameTree}${simpleHostnameTree}"
+            + "${advancedHostnameTree}${advancedHostnameTree}${advancedHostnameTree}"
+            + "${expansiveHostnameTree}${expansiveHostnameTree}${expansiveHostnameTree}"
+            + "${simpleHostnameTree}${advancedHostnameTree}${expansiveHostnameTree}",
+        "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80"
+            + "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80"
+            + "localhost/index.html:80localhost/index.html:80localhost/index.html:80localhost/index.html:80",
+        properties, new HashMap<>());
   }
 
   @Test

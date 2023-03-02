@@ -58,9 +58,9 @@ public class NamespaceAllocation {
       return false;
     }
     NamespaceAllocation that = (NamespaceAllocation) other;
-    return Objects.equals(this.namespace, that.namespace) &&
-        Objects.equals(this.cpuLimit, that.cpuLimit) &&
-        Objects.equals(this.memoryLimit, that.memoryLimit);
+    return Objects.equals(this.namespace, that.namespace)
+        && Objects.equals(this.cpuLimit, that.cpuLimit)
+        && Objects.equals(this.memoryLimit, that.memoryLimit);
   }
 
   @Override

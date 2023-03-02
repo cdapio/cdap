@@ -56,8 +56,8 @@ public class DatasetField {
       return false;
     }
     DatasetField that = (DatasetField) o;
-    return Objects.equals(dataset, that.dataset) &&
-        Objects.equals(fields, that.fields);
+    return Objects.equals(dataset, that.dataset)
+        && Objects.equals(fields, that.fields);
   }
 
   @Override

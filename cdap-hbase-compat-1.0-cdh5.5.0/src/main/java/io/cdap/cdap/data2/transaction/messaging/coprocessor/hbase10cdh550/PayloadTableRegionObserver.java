@@ -148,9 +148,9 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
           MessagingUtils.getTopicLengthPayloadEntry(sizeOfRowKey) - Bytes.SIZEOF_INT;
       int generationId = Bytes.toInt(cell.getRowArray(), rowKeyOffset + topicIdLength);
 
-      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null ||
-          (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
-              cell.getRowArray(), rowKeyOffset, topicIdLength))) {
+      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null
+          || (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
+          cell.getRowArray(), rowKeyOffset, topicIdLength))) {
         prevTopicIdBytes = Arrays.copyOfRange(cell.getRowArray(), rowKeyOffset,
             rowKeyOffset + topicIdLength);
         Map<String, String> properties = metadataCache.getTopicMetadata(

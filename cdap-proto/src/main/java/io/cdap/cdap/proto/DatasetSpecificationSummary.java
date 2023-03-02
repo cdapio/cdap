@@ -71,10 +71,10 @@ public class DatasetSpecificationSummary {
       return false;
     }
     DatasetSpecificationSummary that = (DatasetSpecificationSummary) o;
-    return Objects.equals(name, that.name) &&
-        Objects.equals(type, that.type) &&
-        Objects.equals(description, that.description) &&
-        Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(description, that.description)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -84,11 +84,11 @@ public class DatasetSpecificationSummary {
 
   @Override
   public String toString() {
-    return "DatasetSpecificationSummary{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", description='" + description + '\'' +
-        ", properties=" + properties +
-        '}';
+    return "DatasetSpecificationSummary{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", description='" + description + '\''
+        + ", properties=" + properties
+        + '}';
   }
 }

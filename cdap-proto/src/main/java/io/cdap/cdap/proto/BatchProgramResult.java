@@ -80,8 +80,8 @@ public class BatchProgramResult extends BatchProgram {
 
     BatchProgramResult that = (BatchProgramResult) o;
 
-    return Objects.equals(statusCode, that.statusCode) &&
-        Objects.equals(error, that.error);
+    return Objects.equals(statusCode, that.statusCode)
+        && Objects.equals(error, that.error);
   }
 
   @Override

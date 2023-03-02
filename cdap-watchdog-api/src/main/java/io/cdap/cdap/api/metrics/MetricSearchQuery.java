@@ -69,12 +69,12 @@ public class MetricSearchQuery {
 
   @Override
   public String toString() {
-    return "MetricSearchQuery{" +
-        "startTs=" + startTs +
-        ", endTs=" + endTs +
-        ", resolution=" + resolution +
-        ", limit=" + limit +
-        ", tagValues=" + tagValues +
-        '}';
+    return "MetricSearchQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", resolution=" + resolution
+        + ", limit=" + limit
+        + ", tagValues=" + tagValues
+        + '}';
   }
 }

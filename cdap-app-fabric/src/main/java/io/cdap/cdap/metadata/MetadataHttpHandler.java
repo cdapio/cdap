@@ -434,11 +434,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
           // this cannot happen because UTF_8 is always supported
           throw new IllegalStateException(e);
         }
-        if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sorting.getKey()) &&
-            !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sorting.getKey())) {
-          throw new IllegalArgumentException("Sorting is only supported on fields: " +
-              MetadataConstants.ENTITY_NAME_KEY + ", " +
-              MetadataConstants.CREATION_TIME_KEY);
+        if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sorting.getKey())
+            && !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sorting.getKey())) {
+          throw new IllegalArgumentException("Sorting is only supported on fields: "
+              + MetadataConstants.ENTITY_NAME_KEY + ", "
+              + MetadataConstants.CREATION_TIME_KEY);
         }
         builder.setSorting(sorting);
       }
@@ -467,8 +467,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String entityType,
       String suffix) {
-    String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
-        Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
+    String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3)
+        + Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
     MetadataEntity.Builder builder = MetadataEntity.builder();
 
     int curIndex = 0;
@@ -511,9 +511,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(),
             false)
         .collect(Collectors.toList());
-    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION) &&
-        (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT) ||
-            entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
+    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION)
+        && (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT)
+        || entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
       // this is artifact or application so update the builder
       MetadataEntity.Builder actualEntityBuilder = MetadataEntity.builder();
       // namespace
@@ -605,9 +605,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       return EntityScope.valueOf(entityScope.toUpperCase());
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(
-          String.format("Invalid entity scope '%s'. Expected '%s' or '%s' for entities " +
-                  "from specified scope, or just omit the parameter to get " +
-                  "entities from both scopes",
+          String.format("Invalid entity scope '%s'. Expected '%s' or '%s' for entities "
+                  + "from specified scope, or just omit the parameter to get "
+                  + "entities from both scopes",
               entityScope, EntityScope.USER, EntityScope.SYSTEM));
     }
   }

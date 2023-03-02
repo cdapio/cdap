@@ -572,12 +572,14 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     Assert.assertEquals(
       ImmutableMap.builder()
-        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR.NAME,
-             AllProgramsApp.NoOpMR.NAME)
-        .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpMR2.NAME,
-             AllProgramsApp.NoOpMR2.NAME)
-        .put(ProgramType.SERVICE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR +
-               AllProgramsApp.NoOpService.NAME, AllProgramsApp.NoOpService.NAME)
+          .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR
+                  + AllProgramsApp.NoOpMR.NAME,
+              AllProgramsApp.NoOpMR.NAME)
+          .put(ProgramType.MAPREDUCE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR
+                  + AllProgramsApp.NoOpMR2.NAME,
+              AllProgramsApp.NoOpMR2.NAME)
+          .put(ProgramType.SERVICE.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR
+              + AllProgramsApp.NoOpService.NAME, AllProgramsApp.NoOpService.NAME)
         .put(ProgramType.SPARK.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpSpark.NAME,
              AllProgramsApp.NoOpSpark.NAME)
         .put(ProgramType.WORKER.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.NoOpWorker.NAME,
@@ -751,22 +753,22 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     URL url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
                                                   "apps/" + AllProgramsApp.NAME + "/metadata?scope=system");
     Assert.assertEquals(
-      HttpResponseStatus.OK.code(),
-      restClient.execute(HttpRequest.get(url).build()).getResponseCode()
+        HttpResponseStatus.OK.code(),
+        restClient.execute(HttpRequest.get(url).build()).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
-                                              "datasets/" + AllProgramsApp.DATASET_NAME +
-                                                "/metadata/properties?scope=SySTeM");
+        "datasets/" + AllProgramsApp.DATASET_NAME
+            + "/metadata/properties?scope=SySTeM");
     Assert.assertEquals(
-      HttpResponseStatus.OK.code(),
-      restClient.execute(HttpRequest.get(url).build()).getResponseCode()
+        HttpResponseStatus.OK.code(),
+        restClient.execute(HttpRequest.get(url).build()).getResponseCode()
     );
     url = clientConfig.resolveNamespacedURLV3(NamespaceId.DEFAULT,
-                                              "apps/" + AllProgramsApp.NAME + "/services/" +
-                                                AllProgramsApp.NoOpService.NAME + "/metadata/tags?scope=USER");
+        "apps/" + AllProgramsApp.NAME + "/services/"
+            + AllProgramsApp.NoOpService.NAME + "/metadata/tags?scope=USER");
     Assert.assertEquals(
-      HttpResponseStatus.OK.code(),
-      restClient.execute(HttpRequest.get(url).build()).getResponseCode()
+        HttpResponseStatus.OK.code(),
+        restClient.execute(HttpRequest.get(url).build()).getResponseCode()
     );
     ApplicationDetail appDetail = appClient.get(app);
     app = new ApplicationId(app.getNamespace(), app.getApplication(), appDetail.getAppVersion());

@@ -151,8 +151,8 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   private void initializeSecretManager() {
     if (this.secretManager == null) {
       LOG.error(
-          String.format("Secure store extension %s was not loaded. Make sure the name of the " +
-              "implementation matches %s property.", type, Constants.Security.Store.PROVIDER));
+          String.format("Secure store extension %s was not loaded. Make sure the name of the "
+              + "implementation matches %s property.", type, Constants.Security.Store.PROVIDER));
       return;
     }
 

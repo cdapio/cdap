@@ -1031,8 +1031,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     try {
       return Pattern.compile(valString);
     } catch (PatternSyntaxException pse) {
-      LOG.warn("Regular expression '" + valString + "' for property '" +
-          name + "' not valid. Using default", pse);
+      LOG.warn("Regular expression '" + valString + "' for property '"
+          + name + "' not valid. Using default", pse);
       return defaultValue;
     }
   }
@@ -1158,8 +1158,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         String rng = itr.nextToken().trim();
         String[] parts = rng.split("-", 3);
         if (parts.length < 1 || parts.length > 2) {
-          throw new IllegalArgumentException("integer range badly formed: " +
-              rng);
+          throw new IllegalArgumentException("integer range badly formed: "
+              + rng);
         }
         Range r = new Range();
         r.start = convertToInt(parts[0], 0);
@@ -1169,8 +1169,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           r.end = r.start;
         }
         if (r.start > r.end) {
-          throw new IllegalArgumentException("IntegerRange from " + r.start +
-              " to " + r.end + " is invalid");
+          throw new IllegalArgumentException("IntegerRange from " + r.start
+              + " to " + r.end + " is invalid");
         }
         ranges.add(r);
       }
@@ -1975,8 +1975,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     Matcher m;
 
     for (Map.Entry<Object, Object> item : getProps().entrySet()) {
-      if (item.getKey() instanceof String &&
-          item.getValue() instanceof String) {
+      if (item.getKey() instanceof String
+          && item.getValue() instanceof String) {
         m = p.matcher((String) item.getKey());
         if (m.find()) { // match
           result.put((String) item.getKey(), (String) item.getValue());
