@@ -17,21 +17,18 @@
 package io.cdap.cdap.proto.sourcecontrol;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * The source control metadata for an application.
  */
 public class SourceControlMeta {
 
-  @Nullable
   private final String fileHash;
 
-  public SourceControlMeta(@Nullable String fileHash) {
+  public SourceControlMeta(String fileHash) {
     this.fileHash = fileHash;
   }
 
-  @Nullable
   public String getFileHash() {
     return fileHash;
   }

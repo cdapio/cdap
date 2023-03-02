@@ -17,7 +17,6 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Encapsulates the information generated from a single application push
@@ -25,10 +24,9 @@ import javax.annotation.Nullable;
 public class PushAppResponse {
   private final String name;
   private final String version;
-  @Nullable
   private final String fileHash;
 
-  public PushAppResponse(String name, String version, @Nullable String fileHash) {
+  public PushAppResponse(String name, String version, String fileHash) {
     this.name = name;
     this.version = version;
     this.fileHash = fileHash;
@@ -38,7 +36,6 @@ public class PushAppResponse {
     return name;
   }
 
-  @Nullable
   public String getFileHash() {
     return fileHash;
   }
