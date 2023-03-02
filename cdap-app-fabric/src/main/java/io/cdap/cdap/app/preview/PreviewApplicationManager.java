@@ -66,13 +66,13 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   PreviewApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
-                            Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
-                            @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                            UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                            AuthenticationContext authenticationContext, Impersonator impersonator,
-                            AccessEnforcer accessEnforcer,
-                            CapabilityReader capabilityReader,
-                            ConfiguratorFactory configuratorFactory) {
+      Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
+      @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
+      UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
+      AuthenticationContext authenticationContext, Impersonator impersonator,
+      AccessEnforcer accessEnforcer,
+      CapabilityReader capabilityReader,
+      ConfiguratorFactory configuratorFactory) {
     this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -91,15 +91,19 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
-                                                  capabilityReader, configuratorFactory));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
-                                                   authenticationContext, artifactRepository, impersonator));
-    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(
+        new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
+            capabilityReader, configuratorFactory));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin,
+        authenticationContext));
+    pipeline.addLast(
+        new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
+            authenticationContext, artifactRepository, impersonator));
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
+        authenticationContext));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin,
-                                                      new NoOpMetricsCollectionService()));
+        new NoOpMetricsCollectionService()));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);
   }

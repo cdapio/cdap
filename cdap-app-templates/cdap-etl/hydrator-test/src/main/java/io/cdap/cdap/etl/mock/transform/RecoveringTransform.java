@@ -38,7 +38,8 @@ public class RecoveringTransform extends Transform<StructuredRecord, StructuredR
   private static AtomicInteger exceptionCounter = new AtomicInteger(0);
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     if (exceptionCounter.getAndIncrement() < 3) {
       throw new RuntimeException("Exception in transform");
     }
@@ -51,12 +52,12 @@ public class RecoveringTransform extends Transform<StructuredRecord, StructuredR
 
   private static PluginClass getPluginClass() {
     return PluginClass.builder()
-      .setName(NAME)
-      .setType(Transform.PLUGIN_TYPE)
-      .setDescription("")
-      .setClassName(RecoveringTransform.class.getName())
-      .setProperties(Collections.emptyMap())
-      .build();
+        .setName(NAME)
+        .setType(Transform.PLUGIN_TYPE)
+        .setDescription("")
+        .setClassName(RecoveringTransform.class.getName())
+        .setProperties(Collections.emptyMap())
+        .build();
   }
 
   /**

@@ -23,6 +23,7 @@ import java.util.Objects;
  * Information about a profile.
  */
 public class ProfileCreateRequest {
+
   private final String label;
   private final String description;
   private final ProvisionerInfo provisioner;
@@ -46,7 +47,8 @@ public class ProfileCreateRequest {
   }
 
   /**
-   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   * Validate this is a valid object. Should be called when this is created through deserialization
+   * of user input.
    *
    * @throws IllegalArgumentException if the object is invalid
    */
@@ -67,8 +69,8 @@ public class ProfileCreateRequest {
     }
     ProfileCreateRequest that = (ProfileCreateRequest) o;
     return Objects.equals(label, that.label) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(provisioner, that.provisioner);
+        Objects.equals(description, that.description) &&
+        Objects.equals(provisioner, that.provisioner);
   }
 
   @Override

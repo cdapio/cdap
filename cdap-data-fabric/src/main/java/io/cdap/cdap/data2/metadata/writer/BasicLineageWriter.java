@@ -32,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Basic implementation of {@link LineageWriter} and {@link FieldLineageWriter}.
- * Implementation of LineageWriter write to the {@link LineageTable} where as
- * implementation of FieldLineageWriter writes to the {@link FieldLineageTable} directly.
+ * Basic implementation of {@link LineageWriter} and {@link FieldLineageWriter}. Implementation of
+ * LineageWriter write to the {@link LineageTable} where as implementation of FieldLineageWriter
+ * writes to the {@link FieldLineageTable} directly.
  */
 public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
 
@@ -50,15 +50,15 @@ public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
 
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetId, AccessType accessType,
-                        @Nullable NamespacedEntityId namespacedEntityId) {
+      @Nullable NamespacedEntityId namespacedEntityId) {
     long accessTime = System.currentTimeMillis();
     LOG.trace("Writing access for run {}, dataset {}, accessType {}, accessTime = {}",
-              run, datasetId, accessType, accessTime);
+        run, datasetId, accessType, accessTime);
 
     TransactionRunners.run(transactionRunner, context -> {
       LineageTable
-        .create(context)
-        .addAccess(run, datasetId, accessType, accessTime);
+          .create(context)
+          .addAccess(run, datasetId, accessType, accessTime);
     });
   }
 

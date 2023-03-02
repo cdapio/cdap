@@ -47,11 +47,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Mock sink that writes records to a Table and has a utility method for getting all records written.
+ * Mock sink that writes records to a Table and has a utility method for getting all records
+ * written.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MockExternalSink.PLUGIN_NAME)
 public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, String> {
+
   public static final Logger LOG = LoggerFactory.getLogger(MockExternalSink.class);
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String PLUGIN_NAME = "MockExternalSink";
@@ -65,6 +67,7 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+
     @Nullable
     private String name;
     private String alias;
@@ -89,7 +92,8 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
       context.addOutput(Output.of(config.alias, outputFormatProvider));
     }
     if (config.name2 != null) {
-      context.addOutput(Output.of(config.name2, new Provider(config.dirName2)).alias(config.alias2));
+      context.addOutput(
+          Output.of(config.name2, new Provider(config.dirName2)).alias(config.alias2));
     } else if (config.alias2 != null) {
       context.addOutput(Output.of(config.alias2, new Provider(config.dirName2)));
     }
@@ -97,14 +101,16 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, String>> emitter)
-    throws Exception {
-    emitter.emit(new KeyValue<>(NullWritable.get(), StructuredRecordStringConverter.toJsonString(input)));
+      throws Exception {
+    emitter.emit(
+        new KeyValue<>(NullWritable.get(), StructuredRecordStringConverter.toJsonString(input)));
   }
 
   /**
    * Output format provider that uses TextOutputFormat to write to a given directory.
    */
   public static class Provider implements OutputFormatProvider {
+
     private final String dirName;
 
 
@@ -143,10 +149,11 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
 
 
   /**
-   * Returns {@link ETLPlugin} for MockExternalSink that writes the data to two different directories.
+   * Returns {@link ETLPlugin} for MockExternalSink that writes the data to two different
+   * directories.
    */
   public static ETLPlugin getPlugin(String name1, String alias1, String dir1,
-                                    String name2, String alias2, String dir2) {
+      String name2, String alias2, String dir2) {
     Map<String, String> properties = new HashMap<>();
     properties.put("name", name1);
     properties.put("alias", alias1);
@@ -194,7 +201,7 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     properties.put("alias2", new PluginPropertyField("alias2", "", "string", false, false));
     properties.put("dirName2", new PluginPropertyField("dirName2", "", "string", false, false));
     return PluginClass.builder().setName(PLUGIN_NAME).setType(BatchSink.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockExternalSink.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockExternalSink.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

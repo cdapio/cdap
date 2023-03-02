@@ -39,8 +39,9 @@ public enum RetryStrategyType {
       case "exponential.backoff":
         return EXPONENTIAL_BACKOFF;
       default:
-        throw new IllegalArgumentException(String.format("Unknown RetryStrategyType %s. Must be one of %s.",
-                                                         str, "none, fixed.delay, or exponential.backoff"));
+        throw new IllegalArgumentException(
+            String.format("Unknown RetryStrategyType %s. Must be one of %s.",
+                str, "none, fixed.delay, or exponential.backoff"));
     }
   }
 

@@ -20,12 +20,15 @@ import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.etl.api.FromKeyValueTransform;
 
 /**
- * SQL Dataset which exposes an {@link InputFormatProvider} and {@link FromKeyValueTransform} used to pull records
- * from the SQL engine.
+ * SQL Dataset which exposes an {@link InputFormatProvider} and {@link FromKeyValueTransform} used
+ * to pull records from the SQL engine.
  *
  * @param <T> the type of the records to push to the SQL engine
  * @param <K> Type for output key when mapping records using the {@link FromKeyValueTransform}
- * @param <V> Type for output value when mapping records using the {@link FromKeyValueTransform}
+ * @param <V> Type for output value when mapping records using the {@link
+ *     FromKeyValueTransform}
  */
-public interface SQLPullDataset<T, K, V> extends SQLDataset, InputFormatProvider, FromKeyValueTransform<T, K, V> {
+public interface SQLPullDataset<T, K, V> extends SQLDataset, InputFormatProvider,
+    FromKeyValueTransform<T, K, V> {
+
 }

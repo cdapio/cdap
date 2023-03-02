@@ -55,8 +55,8 @@ import javax.annotation.Nullable;
 public interface AutoJoiner {
 
   /**
-   * @return definition about what type of join to execute, or null if the definition cannot be created due to
-   *   macro values not being evaluated yet.
+   * @return definition about what type of join to execute, or null if the definition cannot be
+   *     created due to macro values not being evaluated yet.
    */
   @Nullable
   JoinDefinition define(AutoJoinerContext context);

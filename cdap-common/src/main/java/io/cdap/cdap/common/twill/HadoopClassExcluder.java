@@ -34,7 +34,7 @@ public class HadoopClassExcluder extends ClassAcceptor {
         // exclude tracing dependencies of classes that have dependencies on commons-logging implementation classes
         // so that commons-logging jar is not packaged (this is required so that slf4j is used for log collection)
         return !(className.startsWith("org.apache.hadoop.hbase.http.log.LogLevel")
-          || className.startsWith("org.apache.hadoop.hbase.http.HttpRequestLog"));
+            || className.startsWith("org.apache.hadoop.hbase.http.HttpRequestLog"));
       } else {
         return false;
       }

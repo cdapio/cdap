@@ -21,8 +21,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 /**
- * A {@link MethodVisitor} that wraps method call with {@code try-finally} block.
- * Sub-class can override the {@link #onFinally(int)} method to insert custom code in the finally block.
+ * A {@link MethodVisitor} that wraps method call with {@code try-finally} block. Sub-class can
+ * override the {@link #onFinally(int)} method to insert custom code in the finally block.
  */
 public class FinallyAdapter extends AdviceAdapter {
 
@@ -34,10 +34,10 @@ public class FinallyAdapter extends AdviceAdapter {
 
   @Override
   public void visitMaxs(int maxStack,
-                        int maxLocals) {
+      int maxLocals) {
     Label endFinally = new Label();
     mv.visitTryCatchBlock(startFinally,
-                          endFinally, endFinally, null);
+        endFinally, endFinally, null);
     mv.visitLabel(endFinally);
 
     // this is essentially catching exception, invoke the finally code block and rethrow the exception

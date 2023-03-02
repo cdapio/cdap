@@ -24,7 +24,8 @@ import java.lang.reflect.Type;
 public abstract class MethodVisitor implements Visitor {
 
   @Override
-  public final void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+  public final void visit(Object instance, Type inspectType, Type declareType, Field field)
+      throws Exception {
     // no-op
   }
 }

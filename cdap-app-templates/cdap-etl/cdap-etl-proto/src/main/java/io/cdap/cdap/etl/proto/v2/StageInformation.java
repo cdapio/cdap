@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.proto.v2;
  * Class for holding additional information about an ETLStage
  */
 public class StageInformation {
+
   private final StageComments comments;
 
   public StageInformation(StageComments comments) {

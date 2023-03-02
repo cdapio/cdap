@@ -31,10 +31,11 @@ public interface MessagingAdmin {
    * Creates a new topic with the default topic properties.
    *
    * @param topic name of the topic
-   * @throws IOException if there was a failure to communicate with the messaging system. Caller may retry this call or
-   *                     use the {@link #getTopicProperties(String)} method to verify that the topic has been created.
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system. Caller
+   *     may retry this call or use the {@link #getTopicProperties(String)} method to verify that
+   *     the topic has been created.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws TopicAlreadyExistsException if the topic already exists
    * @throws AccessException if caller do not have proper access to the topic
    */
@@ -45,15 +46,16 @@ public interface MessagingAdmin {
    *
    * @param topic name of the topic
    * @param properties properties for the topic
-   * @throws IOException if there was a failure to communicate with the messaging system. Caller may retry this call or
-   *                     use the {@link #getTopicProperties(String)} method to verify that the topic has been created.
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system. Caller
+   *     may retry this call or use the {@link #getTopicProperties(String)} method to verify that
+   *     the topic has been created.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws TopicAlreadyExistsException if the topic already exists
    * @throws AccessException if caller do not have proper access to the topic
    */
   void createTopic(String topic, Map<String, String> properties)
-    throws TopicAlreadyExistsException, IOException, AccessException;
+      throws TopicAlreadyExistsException, IOException, AccessException;
 
   /**
    * Returns the properties of a topic.
@@ -61,36 +63,39 @@ public interface MessagingAdmin {
    * @param topic name of the topic
    * @return the topic properties
    * @throws IOException if failed to communicate with the messaging system.
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
    * @throws AccessException if caller do not have proper access to the topic
    */
-  Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException, AccessException;
+  Map<String, String> getTopicProperties(String topic)
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Updates the properties of a topic.
    *
    * @param topic name of the topic
    * @param properties the topic properties. This will overwrite the existing properties.
-   * @throws IOException if there was a failure to communicate with the messaging system. Caller may use
-   *                     the {@link #getTopicProperties(String)} method to verify that the properties have been updated.
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system. Caller
+   *     may use the {@link #getTopicProperties(String)} method to verify that the properties have
+   *     been updated.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
    * @throws AccessException if caller do not have proper access to the topic
    */
   void updateTopic(String topic, Map<String, String> properties)
-    throws TopicNotFoundException, IOException, AccessException;
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Deletes a topic.
    *
    * @param topic name of the topic
-   * @throws IOException if there was a failure to communicate with the messaging system. Caller may retry this call or
-   *                     use the {@link #getTopicProperties(String)} method to verify that the topic has been deleted.
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IOException if there was a failure to communicate with the messaging system. Caller
+   *     may retry this call or use the {@link #getTopicProperties(String)} method to verify that
+   *     the topic has been deleted.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws TopicNotFoundException if the topic does not exist
    * @throws AccessException if caller do not have proper access to the topic
    */

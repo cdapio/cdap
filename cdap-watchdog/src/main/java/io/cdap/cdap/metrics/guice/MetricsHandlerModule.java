@@ -30,13 +30,14 @@ import io.cdap.http.HttpHandler;
  * Metrics http handlers.
  */
 public class MetricsHandlerModule extends PrivateModule {
+
   @Override
   protected void configure() {
     bind(MetricsQueryService.class).in(Scopes.SINGLETON);
     expose(MetricsQueryService.class);
 
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named(Constants.Service.METRICS));
+        Names.named(Constants.Service.METRICS));
     handlerBinder.addBinding().to(MetricsHandler.class);
     CommonHandlers.add(handlerBinder);
   }

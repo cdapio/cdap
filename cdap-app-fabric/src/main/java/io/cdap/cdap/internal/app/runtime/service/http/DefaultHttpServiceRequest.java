@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Implementation of {@link HttpServiceRequest} which delegates calls to
- * the HttpServiceRequest's methods to the matching methods for a {@link HttpRequest}.
+ * Implementation of {@link HttpServiceRequest} which delegates calls to the HttpServiceRequest's
+ * methods to the matching methods for a {@link HttpRequest}.
  */
 final class DefaultHttpServiceRequest implements HttpServiceRequest {
 
@@ -48,11 +48,13 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    */
   DefaultHttpServiceRequest(HttpRequest request) {
     this.request = request;
-    this.content = request instanceof FullHttpRequest ? ((FullHttpRequest) request).content() : Unpooled.EMPTY_BUFFER;
+    this.content = request instanceof FullHttpRequest ? ((FullHttpRequest) request).content()
+        : Unpooled.EMPTY_BUFFER;
 
     Map<String, List<String>> headers = new HashMap<>();
     for (String name : request.headers().names()) {
-      headers.put(name, Collections.unmodifiableList(new ArrayList<>(request.headers().getAll(name))));
+      headers.put(name,
+          Collections.unmodifiableList(new ArrayList<>(request.headers().getAll(name))));
     }
     this.headers = Collections.unmodifiableMap(headers);
   }
@@ -102,8 +104,8 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
    * Returns the first value for the specified header.
    *
    * @param key the header to find
-   * @return the value of the specified header; if the header maps to multiple values,
-   * then the first value is returned
+   * @return the value of the specified header; if the header maps to multiple values, then the
+   *     first value is returned
    */
   @Override
   public String getHeader(String key) {

@@ -28,7 +28,9 @@ import java.lang.reflect.Type;
  */
 abstract class TypeCapture<T> {
 
-  /** Returns the captured type. */
+  /**
+   * Returns the captured type.
+   */
   final Type capture() {
     Type superclass = getClass().getGenericSuperclass();
     Preconditions.checkArgument(superclass instanceof ParameterizedType,

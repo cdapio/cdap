@@ -45,6 +45,7 @@ public final class MonitorSchemas {
      * Contains schema for monitor consume request.
      */
     public static final class MonitorConsumeRequest {
+
       public static final Schema SCHEMA = loadSchema(MonitorSchemas.V1.MonitorConsumeRequest.class);
     }
 
@@ -52,6 +53,7 @@ public final class MonitorSchemas {
      * Contains schema for monitor response.
      */
     public static final class MonitorResponse {
+
       public static final Schema SCHEMA = loadSchema(MonitorSchemas.V1.MonitorResponse.class);
     }
   }
@@ -65,6 +67,7 @@ public final class MonitorSchemas {
      * Contains schema for monitor request.
      */
     public static final class MonitorRequest {
+
       public static final Schema SCHEMA = loadSchema(MonitorSchemas.V2.MonitorRequest.class);
     }
   }
@@ -76,8 +79,8 @@ public final class MonitorSchemas {
   private static Schema loadSchema(Class<?> cls) {
     // The schema file is part of the classloader resource.
     String resourceName = String.format("schema/%s/%s.avsc",
-                                        cls.getDeclaringClass().getSimpleName().toLowerCase(),
-                                        cls.getSimpleName());
+        cls.getDeclaringClass().getSimpleName().toLowerCase(),
+        cls.getSimpleName());
     URL resource = cls.getClassLoader().getResource(resourceName);
     if (resource == null) {
       // Shouldn't happen

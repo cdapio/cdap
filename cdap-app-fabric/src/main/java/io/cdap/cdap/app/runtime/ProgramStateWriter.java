@@ -27,8 +27,8 @@ import javax.annotation.Nullable;
 public interface ProgramStateWriter {
 
   /**
-   * Updates the program run's status to be {@link ProgramRunStatus#STARTING} at the start time given by the
-   * {@link ProgramRunId}
+   * Updates the program run's status to be {@link ProgramRunStatus#STARTING} at the start time
+   * given by the {@link ProgramRunId}
    *
    * @param programRunId the id of the program run
    * @param programOptions the program options
@@ -36,10 +36,11 @@ public interface ProgramStateWriter {
    * @param programDescriptor the program descriptor
    */
   void start(ProgramRunId programRunId, ProgramOptions programOptions, @Nullable String twillRunId,
-             ProgramDescriptor programDescriptor);
+      ProgramDescriptor programDescriptor);
 
   /**
-   * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time in seconds
+   * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time
+   * in seconds
    *
    * @param programRunId the id of the program run
    * @param twillRunId the run id of the twill application
@@ -47,13 +48,13 @@ public interface ProgramStateWriter {
   void running(ProgramRunId programRunId, @Nullable String twillRunId);
 
   /**
-   * Updates the program run's status to be {@link ProgramRunStatus#STOPPING} at the start time given by the
-   * {@link ProgramRunId}
+   * Updates the program run's status to be {@link ProgramRunStatus#STOPPING} at the start time
+   * given by the {@link ProgramRunId}
    *
    * @param programRunId the id of the program run
    * @param gracefulShutdownSecs time duration in seconds to wait for program to be terminated
-   *                             on its own before issuing kill. The value should be Integer.MAX_VALUE
-   *                             if kill shouldn't be issued.
+   *     on its own before issuing kill. The value should be Integer.MAX_VALUE if kill shouldn't be
+   *     issued.
    */
   void stop(ProgramRunId programRunId, int gracefulShutdownSecs);
 
@@ -102,6 +103,7 @@ public interface ProgramStateWriter {
    * @param userId the user that attempted to run the program
    * @param cause the cause of the failure
    */
-  void reject(ProgramRunId programRunId, ProgramOptions programOptions, ProgramDescriptor programDescriptor,
-              String userId, Throwable cause);
+  void reject(ProgramRunId programRunId, ProgramOptions programOptions,
+      ProgramDescriptor programDescriptor,
+      String userId, Throwable cause);
 }

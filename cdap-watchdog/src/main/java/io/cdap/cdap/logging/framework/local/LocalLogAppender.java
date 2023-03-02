@@ -66,7 +66,7 @@ public class LocalLogAppender extends LogAppender {
 
   @Inject
   LocalLogAppender(CConfiguration cConf, TransactionRunner transactionRunner,
-                   LocationFactory locationFactory, MetricsCollectionService metricsCollectionService) {
+      LocationFactory locationFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
@@ -81,7 +81,8 @@ public class LocalLogAppender extends LogAppender {
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
     Map<String, LogPipelineSpecification<AppenderContext>> specs =
-      pipelineLoader.load(() -> new LocalAppenderContext(transactionRunner, locationFactory, metricsCollectionService));
+        pipelineLoader.load(() -> new LocalAppenderContext(transactionRunner, locationFactory,
+            metricsCollectionService));
 
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
@@ -91,9 +92,10 @@ public class LocalLogAppender extends LogAppender {
 
     for (LogPipelineSpecification<AppenderContext> spec : specs.values()) {
       LogProcessorPipelineContext context =
-        new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext(),
-                                        spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
-      LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context, syncIntervalMillis);
+          new LogProcessorPipelineContext(cConf, spec.getName(), spec.getContext(),
+              spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
+      LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context,
+          syncIntervalMillis);
       pipeline.startAndWait();
       pipelineThreads.add(pipeline.getAppenderThread());
       pipelines.add(pipeline);
@@ -151,7 +153,8 @@ public class LocalLogAppender extends LogAppender {
     private long lastSyncTime;
     private Thread appenderThread;
 
-    private LocalLogProcessorPipeline(LogProcessorPipelineContext context, long syncIntervalMillis) {
+    private LocalLogProcessorPipeline(LogProcessorPipelineContext context,
+        long syncIntervalMillis) {
       this.context = context;
       this.syncIntervalMillis = syncIntervalMillis;
       this.eventQueue = new ArrayBlockingQueue<>(EVENT_QUEUE_SIZE);
@@ -259,7 +262,7 @@ public class LocalLogAppender extends LogAppender {
         logger.callAppenders(event);
       } catch (Throwable t) {
         addError("Exception raised when appending to logger " + logger.getName() +
-                   " with message " + event.getFormattedMessage(), t);
+            " with message " + event.getFormattedMessage(), t);
       }
     }
 

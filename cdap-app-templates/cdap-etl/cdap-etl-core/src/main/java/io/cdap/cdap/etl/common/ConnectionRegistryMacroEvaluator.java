@@ -24,9 +24,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Connection macro evaluator to register connection usage. It shouldn't be used if for real macro evaluation
+ * Connection macro evaluator to register connection usage. It shouldn't be used if for real macro
+ * evaluation
  */
 public class ConnectionRegistryMacroEvaluator implements MacroEvaluator {
+
   public static final String FUNCTION_NAME = "conn";
 
   private final Set<String> connectionNames;
@@ -38,21 +40,22 @@ public class ConnectionRegistryMacroEvaluator implements MacroEvaluator {
   @Override
   public String lookup(String property) throws InvalidMacroException {
     throw new InvalidMacroException("The '" + FUNCTION_NAME
-                                      + "' macro function doesn't support direct property lookup for property '"
-                                      + property + "'");
+        + "' macro function doesn't support direct property lookup for property '"
+        + property + "'");
   }
 
   @Override
   public String evaluate(String macroFunction, String... args) throws InvalidMacroException {
     if (args.length != 1) {
-      throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
+      throw new InvalidMacroException(
+          "Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
 
     connectionNames.add(ConnectionId.getConnectionId(args[0]));
 
     throw new InvalidMacroException("The '" + FUNCTION_NAME
-                                      + "' macro function doesn't support evaluating the connection macro " +
-                                      "for connection '" + args[0] + "'");
+        + "' macro function doesn't support evaluating the connection macro " +
+        "for connection '" + args[0] + "'");
   }
 
   public Set<String> getUsedConnections() {

@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ClassLoader that implements bundle jar feature, in which the application jar contains
- * its dependency jars inside.
+ * ClassLoader that implements bundle jar feature, in which the application jar contains its
+ * dependency jars inside.
  */
 public class ProgramClassLoader extends DirectoryClassLoader {
 
@@ -75,7 +75,8 @@ public class ProgramClassLoader extends DirectoryClassLoader {
   @Override
   protected boolean needIntercept(String className) {
     try {
-      return Classes.isSubTypeOf(className, Dataset.class.getName(), classResourceLookup, datasetClassCache);
+      return Classes.isSubTypeOf(className, Dataset.class.getName(), classResourceLookup,
+          datasetClassCache);
     } catch (Exception e) {
       // This shouldn't happen. Won't propagate the exception since this call happen during classloading.
       // If there is IOException in reading class resource, the classloading should fail by itself.

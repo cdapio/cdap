@@ -50,13 +50,14 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
-          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-          .to(RemoteDatasetFramework.class);
+            .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+            .to(RemoteDatasetFramework.class);
 
-        bind(PreviewRequestFetcher.class).to(DirectPreviewRequestFetcher.class).in(Scopes.SINGLETON);
+        bind(PreviewRequestFetcher.class).to(DirectPreviewRequestFetcher.class)
+            .in(Scopes.SINGLETON);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunStopper.class).to(DefaultPreviewRunnerManager.class);
@@ -65,8 +66,8 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         expose(PreviewRunnerManager.class);
 
         install(new FactoryModuleBuilder()
-                  .implement(PreviewRunnerService.class, PreviewRunnerService.class)
-                  .build(PreviewRunnerServiceFactory.class));
+            .implement(PreviewRunnerService.class, PreviewRunnerService.class)
+            .build(PreviewRunnerServiceFactory.class));
       }
     };
   }
@@ -77,21 +78,22 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
-          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-          .to(RemoteDatasetFramework.class);
+            .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+            .to(RemoteDatasetFramework.class);
 
-        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class).in(Scopes.SINGLETON);
+        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class)
+            .in(Scopes.SINGLETON);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
         expose(PreviewRunnerManager.class);
 
         install(new FactoryModuleBuilder()
-                  .implement(PreviewRunnerService.class, PreviewRunnerService.class)
-                  .build(PreviewRunnerServiceFactory.class));
+            .implement(PreviewRunnerService.class, PreviewRunnerService.class)
+            .build(PreviewRunnerServiceFactory.class));
       }
     };
   }

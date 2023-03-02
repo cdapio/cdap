@@ -27,16 +27,19 @@ import java.util.EnumSet;
  * A Trigger builder that builds a {@link ProgramStatusTrigger}.
  */
 public class ProgramStatusTriggerBuilder implements TriggerBuilder {
+
   private final ProgramType programType;
   private final String programName;
   private final EnumSet<ProgramStatus> programStatuses;
 
-  public ProgramStatusTriggerBuilder(String programType, String programName, ProgramStatus... programStatuses) {
+  public ProgramStatusTriggerBuilder(String programType, String programName,
+      ProgramStatus... programStatuses) {
     this.programType = ProgramType.valueOf(programType);
     this.programName = programName;
 
     // User can not specify any program statuses, or specify null, which is an array of length 1 containing null
-    if (programStatuses.length == 0 || (programStatuses.length == 1 && programStatuses[0] == null)) {
+    if (programStatuses.length == 0 || (programStatuses.length == 1
+        && programStatuses[0] == null)) {
       throw new IllegalArgumentException("Must set a program state for the triggering program");
     }
     this.programStatuses = EnumSet.of(programStatuses[0], programStatuses);
@@ -48,10 +51,12 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   }
 
   @Override
-  public ProgramStatusTrigger build(String namespace, String applicationName, String applicationVersion) {
+  public ProgramStatusTrigger build(String namespace, String applicationName,
+      String applicationVersion) {
     // Inherit environment attributes from the deployed application
-    ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(programType,
-                                                                                                    programName);
+    ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(
+        programType,
+        programName);
     return new ProgramStatusTrigger(programId, programStatuses);
   }
 }

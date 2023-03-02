@@ -31,7 +31,7 @@ import java.util.Objects;
  * ETL Batch Configuration. Public constructors are deprecated. Use the builder instead.
  */
 public final class ETLBatchConfig extends ETLConfig
-  implements UpgradeableConfig<io.cdap.cdap.etl.proto.v2.ETLBatchConfig> {
+    implements UpgradeableConfig<io.cdap.cdap.etl.proto.v2.ETLBatchConfig> {
 
   /**
    * Enum for the execution engine to use.
@@ -46,10 +46,10 @@ public final class ETLBatchConfig extends ETLConfig
   private final Resources driverResources;
 
   private ETLBatchConfig(Engine engine, String schedule,
-                         ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                         List<Connection> connections, Resources resources,
-                         Resources driverResources,
-                         List<ETLStage> actions) {
+      ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+      List<Connection> connections, Resources resources,
+      Resources driverResources,
+      List<ETLStage> actions) {
     super(source, sinks, transforms, connections, resources, true);
     this.engine = engine;
     this.schedule = schedule;
@@ -81,11 +81,12 @@ public final class ETLBatchConfig extends ETLConfig
   @Override
   public io.cdap.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
     io.cdap.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
-      io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
-        .setEngine(io.cdap.cdap.etl.api.Engine.valueOf(getEngine().name()))
-        .setDriverResources(getDriverResources());
+        io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
+            .setEngine(io.cdap.cdap.etl.api.Engine.valueOf(getEngine().name()))
+            .setDriverResources(getDriverResources());
 
-    return upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE).build();
+    return upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE,
+        BatchSink.PLUGIN_TYPE).build();
   }
 
   @Override
@@ -103,7 +104,7 @@ public final class ETLBatchConfig extends ETLConfig
     ETLBatchConfig that = (ETLBatchConfig) o;
 
     return Objects.equals(schedule, that.schedule) &&
-      Objects.equals(actions, that.actions);
+        Objects.equals(actions, that.actions);
   }
 
   @Override
@@ -114,11 +115,11 @@ public final class ETLBatchConfig extends ETLConfig
   @Override
   public String toString() {
     return "ETLBatchConfig{" +
-      "engine=" + engine +
-      ", schedule='" + schedule + '\'' +
-      ", actions=" + actions +
-      ", driverResources=" + driverResources +
-      "} " + super.toString();
+        "engine=" + engine +
+        ", schedule='" + schedule + '\'' +
+        ", actions=" + actions +
+        ", driverResources=" + driverResources +
+        "} " + super.toString();
   }
 
   public static Builder builder(String schedule) {
@@ -129,6 +130,7 @@ public final class ETLBatchConfig extends ETLConfig
    * Builder for creating configs.
    */
   public static class Builder extends ETLConfig.Builder<Builder> {
+
     private final String schedule;
     private Engine engine;
     private List<ETLStage> actions;
@@ -163,7 +165,7 @@ public final class ETLBatchConfig extends ETLConfig
 
     public ETLBatchConfig build() {
       return new ETLBatchConfig(engine, schedule, source, sinks, transforms,
-                                connections, resources, driverResources, actions);
+          connections, resources, driverResources, actions);
     }
   }
 }

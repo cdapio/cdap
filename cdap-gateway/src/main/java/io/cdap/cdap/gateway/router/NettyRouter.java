@@ -78,6 +78,7 @@ import org.slf4j.LoggerFactory;
  * Proxies request to a set of servers. Experimental.
  */
 public class NettyRouter extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouter.class);
 
   private final CConfiguration cConf;
@@ -100,10 +101,11 @@ public class NettyRouter extends AbstractIdleService {
   private ScheduledExecutorService scheduledExecutorService;
 
   @Inject
-  public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
-                     RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
-                     UserIdentityExtractor userIdentityExtractor,
-                     DiscoveryServiceClient discoveryServiceClient) {
+  public NettyRouter(CConfiguration cConf, SConfiguration sConf,
+      @Named(Constants.Router.ADDRESS) InetAddress hostname,
+      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
+      UserIdentityExtractor userIdentityExtractor,
+      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS);
@@ -117,13 +119,13 @@ public class NettyRouter extends AbstractIdleService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     this.port = sslEnabled
-      ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT)
-      : cConf.getInt(Constants.Router.ROUTER_PORT);
+        ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT)
+        : cConf.getInt(Constants.Router.ROUTER_PORT);
   }
 
   /**
-   * Returns an {@link Optional} {@link InetSocketAddress} that this router is bound to. If the router is not
-   * running, an empty {@link Optional} will be returned.
+   * Returns an {@link Optional} {@link InetSocketAddress} that this router is bound to. If the
+   * router is not running, an empty {@link Optional} will be returned.
    */
   public Optional<InetSocketAddress> getBoundAddress() {
     return Optional.ofNullable(boundAddress);
@@ -165,13 +167,16 @@ public class NettyRouter extends AbstractIdleService {
   }
 
   private EventLoopGroup createEventLoopGroup(int size, String nameFormat) {
-    ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true).setNameFormat(nameFormat).build();
+    ThreadFactory threadFactory = new ThreadFactoryBuilder().setDaemon(true)
+        .setNameFormat(nameFormat).build();
     return new NioEventLoopGroup(size, threadFactory);
   }
 
   private ServerBootstrap createServerBootstrap(final ChannelGroup channelGroup) {
-    EventLoopGroup bossGroup = createEventLoopGroup(serverBossThreadPoolSize, "router-server-boss-thread-%d");
-    EventLoopGroup workerGroup = createEventLoopGroup(serverWorkerThreadPoolSize, "router-server-worker-thread-%d");
+    EventLoopGroup bossGroup = createEventLoopGroup(serverBossThreadPoolSize,
+        "router-server-boss-thread-%d");
+    EventLoopGroup workerGroup = createEventLoopGroup(serverWorkerThreadPoolSize,
+        "router-server-worker-thread-%d");
 
     SSLHandlerFactory sslHandlerFactory = null;
     if (sslEnabled) {
@@ -181,58 +186,64 @@ public class NettyRouter extends AbstractIdleService {
 
       if (!Strings.isNullOrEmpty(keyStorePath)) {
         SSLConfig sslConfig = SSLConfig
-          .builder(new File(keyStorePath), sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD))
-          .setCertificatePassword(sConf.get(Constants.Security.Router.SSL_KEYPASSWORD))
-          .build();
+            .builder(new File(keyStorePath),
+                sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD))
+            .setCertificatePassword(sConf.get(Constants.Security.Router.SSL_KEYPASSWORD))
+            .build();
         sslHandlerFactory = new SSLHandlerFactory(sslConfig);
       } else if (!Strings.isNullOrEmpty(certFilePath)) {
         String password = sConf.get(Constants.Security.Router.SSL_CERT_PASSWORD, "");
         KeyStore keyStore = KeyStores.createKeyStore(Paths.get(certFilePath), password);
-        sslHandlerFactory = new HttpsEnabler().setKeyStore(keyStore, password::toCharArray).createSSLHandlerFactory();
+        sslHandlerFactory = new HttpsEnabler().setKeyStore(keyStore, password::toCharArray)
+            .createSSLHandlerFactory();
       }
 
       if (sslHandlerFactory == null) {
-        throw new RuntimeException("SSL is enabled but there is no keystore file nor certificate file being " +
-                                     "configured. Please ensure either '" + Constants.Security.Router.SSL_KEYSTORE_PATH
-                                     + "' is set in cdap-security.xml or '" + Constants.Security.Router.SSL_CERT_PATH
-                                     + "' is set in cdap-site.xml file.");
+        throw new RuntimeException(
+            "SSL is enabled but there is no keystore file nor certificate file being " +
+                "configured. Please ensure either '" + Constants.Security.Router.SSL_KEYSTORE_PATH
+                + "' is set in cdap-security.xml or '" + Constants.Security.Router.SSL_CERT_PATH
+                + "' is set in cdap-site.xml file.");
       }
     }
 
     SSLHandlerFactory finalSSLHandlerFactory = sslHandlerFactory;
     return new ServerBootstrap()
-      .group(bossGroup, workerGroup)
-      .channel(NioServerSocketChannel.class)
-      .option(ChannelOption.SO_BACKLOG, serverConnectionBacklog)
-      .childHandler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        protected void initChannel(SocketChannel ch) {
-          channelGroup.add(ch);
-          ChannelPipeline pipeline = ch.pipeline();
-          if (finalSSLHandlerFactory != null) {
-            pipeline.addLast("ssl", finalSSLHandlerFactory.create(ch.alloc()));
+        .group(bossGroup, workerGroup)
+        .channel(NioServerSocketChannel.class)
+        .option(ChannelOption.SO_BACKLOG, serverConnectionBacklog)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+          @Override
+          protected void initChannel(SocketChannel ch) {
+            channelGroup.add(ch);
+            ChannelPipeline pipeline = ch.pipeline();
+            if (finalSSLHandlerFactory != null) {
+              pipeline.addLast("ssl", finalSSLHandlerFactory.create(ch.alloc()));
+            }
+            pipeline.addLast("http-codec", new HttpServerCodec());
+            pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
+            if (securityEnabled) {
+              pipeline.addLast("access-token-authenticator",
+                  new AuthenticationHandler(cConf, sConf, discoveryServiceClient,
+                      userIdentityExtractor));
+            }
+            if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
+              pipeline.addLast("audit-log", new AuditLogHandler());
+            }
+            // Will block inbound requests if config for blocking the requests is enabled
+            pipeline.addLast("config-based-request-blocking-handler",
+                new ConfigBasedRequestBlockingHandler(cConf));
+            // Always let the client to continue sending the request body after the authentication passed
+            pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
+            // for now there's only one hardcoded rule, but if there will be more,
+            // we may want it generic and configurable
+            pipeline.addLast("http-request-handler", new HttpRequestRouter(cConf, serviceLookup));
           }
-          pipeline.addLast("http-codec", new HttpServerCodec());
-          pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
-          if (securityEnabled) {
-            pipeline.addLast("access-token-authenticator",
-                             new AuthenticationHandler(cConf, sConf, discoveryServiceClient, userIdentityExtractor));
-          }
-          if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
-            pipeline.addLast("audit-log", new AuditLogHandler());
-          }
-          // Will block inbound requests if config for blocking the requests is enabled
-          pipeline.addLast("config-based-request-blocking-handler", new ConfigBasedRequestBlockingHandler(cConf));
-          // Always let the client to continue sending the request body after the authentication passed
-          pipeline.addLast("expect-continue", new HttpServerExpectContinueHandler());
-          // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
-          pipeline.addLast("http-request-handler", new HttpRequestRouter(cConf, serviceLookup));
-        }
-      });
+        });
   }
 
   private Cancellable startServer(final ServerBootstrap serverBootstrap,
-                                  final ChannelGroup channelGroup) throws Exception {
+      final ChannelGroup channelGroup) throws Exception {
     // Start listening on ports.
     InetSocketAddress bindAddress = new InetSocketAddress(hostname, port);
     LOG.info("Starting Netty Router on address {}...", bindAddress);
@@ -267,16 +278,19 @@ public class NettyRouter extends AbstractIdleService {
    */
   private void scheduleConfigReloadThread() {
     if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {
-      long cConfReloadIntervalSeconds = cConf.getLong(Constants.Router.CCONF_RELOAD_INTERVAL_SECONDS);
+      long cConfReloadIntervalSeconds = cConf.getLong(
+          Constants.Router.CCONF_RELOAD_INTERVAL_SECONDS);
       if (cConfReloadIntervalSeconds > 0) { // Schedule only if a positive interval is provided
         scheduledExecutorService =
-          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("router-config-reload"));
-        LOG.debug("Starting CConfiguration-reload thread with period of {} seconds", cConfReloadIntervalSeconds);
+            Executors.newSingleThreadScheduledExecutor(
+                Threads.createDaemonThreadFactory("router-config-reload"));
+        LOG.debug("Starting CConfiguration-reload thread with period of {} seconds",
+            cConfReloadIntervalSeconds);
         scheduledExecutorService.scheduleAtFixedRate(
-          () -> {
-            cConf.reloadConfiguration();
-            LOG.trace("CConfiguration reloaded");
-          }, cConfReloadIntervalSeconds, cConfReloadIntervalSeconds, TimeUnit.SECONDS);
+            () -> {
+              cConf.reloadConfiguration();
+              LOG.trace("CConfiguration reloaded");
+            }, cConfReloadIntervalSeconds, cConfReloadIntervalSeconds, TimeUnit.SECONDS);
       }
     }
   }

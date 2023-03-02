@@ -65,14 +65,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A service that periodically relay messages from local TMS to the runtime server.
- * This service runs in the remote runtime.
+ * A service that periodically relay messages from local TMS to the runtime server. This service
+ * runs in the remote runtime.
  */
 public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeClientService.class);
   private static final Logger OUTAGE_LOG = Loggers.sampling(
-    LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
+      LOG, LogSamplers.all(LogSamplers.skipFirstN(5),
+          LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
   private static final Gson GSON = new Gson();
 
   private final List<TopicRelayer> topicRelayers;
@@ -86,7 +87,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   @Inject
   RuntimeClientService(CConfiguration cConf, MessagingService messagingService,
-                       RuntimeClient runtimeClient, ProgramRunId programRunId) {
+      RuntimeClient runtimeClient, ProgramRunId programRunId) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
@@ -96,7 +97,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.programFinishTime = new AtomicLong(-1L);
     this.topicRelayers = RuntimeMonitors.createTopicNameList(cConf)
-      .stream().map(name -> createTopicRelayer(cConf, name)).collect(Collectors.toList());
+        .stream().map(name -> createTopicRelayer(cConf, name)).collect(Collectors.toList());
   }
 
   @Override
@@ -115,7 +116,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       // If the nextPollDelay returned by all topicRelays equals to the pollTimeMillis,
       // that means all of them fetched till the end of the corresponding topic in the latest fetch.
       long now = System.currentTimeMillis();
-      if ((nextPollDelay == pollTimeMillis && now - (gracefulShutdownMillis >> 1) > getProgramFinishTime())
+      if ((nextPollDelay == pollTimeMillis
+          && now - (gracefulShutdownMillis >> 1) > getProgramFinishTime())
           || (now - gracefulShutdownMillis > getProgramFinishTime())) {
         LOG.debug("Program {} terminated. Shutting down runtime client service.", programRunId);
         stop();
@@ -134,8 +136,9 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @Override
   protected void doShutdown() throws Exception {
     // Keep polling until it sees the program completion
-    RetryStrategy retryStrategy = RetryStrategies.timeLimit(gracefulShutdownMillis, TimeUnit.MILLISECONDS,
-                                                            getRetryStrategy());
+    RetryStrategy retryStrategy = RetryStrategies.timeLimit(gracefulShutdownMillis,
+        TimeUnit.MILLISECONDS,
+        getRetryStrategy());
     Retries.runWithRetries(() -> {
       for (TopicRelayer topicRelayer : topicRelayers) {
         topicRelayer.prepareClose();
@@ -162,13 +165,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @VisibleForTesting
   Collection<String> getTopicNames() {
     return topicRelayers.stream()
-      .map(topicRelayer -> topicRelayer.getTopicId().getTopic())
-      .collect(Collectors.toList());
+        .map(topicRelayer -> topicRelayer.getTopicId().getTopic())
+        .collect(Collectors.toList());
   }
 
   /**
    * Accepts a Runnable and passes it to RuntimeClient
-   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the argument
+   *
+   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the
+   *     argument
    */
   public void onProgramStopRequested(LongConsumer stopper) {
     runtimeClient.onProgramStopRequested(stopper);
@@ -192,7 +197,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
    */
   private class TopicRelayer implements Closeable {
 
-    private final Logger progressLog = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+    private final Logger progressLog = Loggers.sampling(LOG,
+        LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
     protected final TopicId topicId;
     private String lastMessageId;
@@ -209,14 +215,16 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     /**
-     * Fetches messages from the {@link MessagingContext} and publish them using {@link RuntimeClient}.
+     * Fetches messages from the {@link MessagingContext} and publish them using {@link
+     * RuntimeClient}.
      *
      * @return delay in milliseconds till the next poll
      * @throws TopicNotFoundException if the TMS topic to fetch from does not exist
      * @throws IOException if failed to read from TMS or write to RuntimeClient
      * @throws GoneException if run already finished
      */
-    long publishMessages() throws TopicNotFoundException, IOException, BadRequestException, GoneException {
+    long publishMessages()
+        throws TopicNotFoundException, IOException, BadRequestException, GoneException {
       long currentTimeMillis = System.currentTimeMillis();
 
       // Not too publish more than necessary in one topic.
@@ -225,10 +233,11 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         return nextPublishTimeMillis - currentTimeMillis;
       }
 
-      try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher().fetch(topicId.getNamespace(),
-                                                                                            topicId.getTopic(),
-                                                                                            fetchLimit,
-                                                                                            lastMessageId)) {
+      try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher()
+          .fetch(topicId.getNamespace(),
+              topicId.getTopic(),
+              fetchLimit,
+              lastMessageId)) {
         AtomicInteger messageCount = new AtomicInteger();
         if (iterator.hasNext()) {
           String[] messageId = new String[1];
@@ -263,9 +272,11 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     /**
-     * Processes the give list of {@link Message}. By default it sends them through the {@link RuntimeClient}.
+     * Processes the give list of {@link Message}. By default it sends them through the {@link
+     * RuntimeClient}.
      */
-    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException, GoneException {
+    protected void processMessages(Iterator<Message> iterator)
+        throws IOException, BadRequestException, GoneException {
       runtimeClient.sendMessages(programRunId, topicId, iterator);
     }
 
@@ -297,24 +308,27 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         // So just log the cause for debugging.
         LOG.error("Failed to publish messages on close for topic {}", topicId, e);
       } catch (GoneException e) {
-        LOG.warn("Failed to publish final messages on topic {} since the run is already marked completed",
-                 topicId, e);
+        LOG.warn(
+            "Failed to publish final messages on topic {} since the run is already marked completed",
+            topicId, e);
       } catch (Exception e) {
-        LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId, e);
+        LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId,
+            e);
       }
     }
   }
 
   /**
-   * A {@link TopicRelayer} specifically for handling program state events.
-   * We need special handling for program state to delay the relaying of terminal program status
-   * to give a grace period for messages in other topics to send out.
+   * A {@link TopicRelayer} specifically for handling program state events. We need special handling
+   * for program state to delay the relaying of terminal program status to give a grace period for
+   * messages in other topics to send out.
    */
   private class ProgramStatusTopicRelayer extends TopicRelayer {
 
     private final List<Message> lastProgramStateMessages;
     /**
-     * Tell if program finish was detected by this relayer. In this case we hold off sending final status messages
+     * Tell if program finish was detected by this relayer. In this case we hold off sending final
+     * status messages
      */
     private boolean detectedProgramFinish;
 
@@ -325,15 +339,18 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     @Override
-    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException, GoneException {
-      List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
-        .collect(Collectors.toList());
+    protected void processMessages(Iterator<Message> iterator)
+        throws IOException, BadRequestException, GoneException {
+      List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0),
+              false)
+          .collect(Collectors.toList());
 
       if (programFinishTime.get() == -1L) {
         long finishTime = findProgramFinishTime(message);
         if (finishTime >= 0) {
           detectedProgramFinish = true;
-          LOG.trace("Detected program {} finish time {} in topic {}", programRunId, finishTime,  topicId.getTopic());
+          LOG.trace("Detected program {} finish time {} in topic {}", programRunId, finishTime,
+              topicId.getTopic());
         }
         programFinishTime.compareAndSet(-1L, finishTime);
       }
@@ -364,31 +381,36 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       if (!lastProgramStateMessages.isEmpty()) {
         try {
           LOG.debug("Sending {} program completion messages to {}",
-                    lastProgramStateMessages.size(), topicId);
+              lastProgramStateMessages.size(), topicId);
           Retries.runWithRetries(() -> super.processMessages(lastProgramStateMessages.iterator()),
-                                 getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
+              getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
         } catch (BadRequestException e) {
           // This shouldn't happen. If it does, that means the server thinks this program is no longer running.
           // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
           // on the cluster.
-          LOG.warn("Bad request when program state messages to runtime server: {}", lastProgramStateMessages, e);
+          LOG.warn("Bad request when program state messages to runtime server: {}",
+              lastProgramStateMessages, e);
         } catch (GoneException e) {
-          LOG.warn("Failed to publish program state messages to {} since the run id already marked completed",
-                   topicId, e);
+          LOG.warn(
+              "Failed to publish program state messages to {} since the run id already marked completed",
+              topicId, e);
         } catch (Exception e) {
-          LOG.error("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
+          LOG.error("Failed to send program state messages to runtime server: {}",
+              lastProgramStateMessages, e);
         }
         lastProgramStateMessages.clear();
       }
     }
 
     /**
-     * Returns the time where the program finished, meaning it reaches one of the terminal states. If the given
-     * list of {@link Message} doesn't contain such information, {@code -1L} is returned.
+     * Returns the time where the program finished, meaning it reaches one of the terminal states.
+     * If the given list of {@link Message} doesn't contain such information, {@code -1L} is
+     * returned.
      */
     private long findProgramFinishTime(List<Message> messages) {
       for (Message message : messages) {
-        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
+        Notification notification = message.decodePayload(
+            r -> GSON.fromJson(r, Notification.class));
         if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
           continue;
         }

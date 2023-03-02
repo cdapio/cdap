@@ -27,7 +27,8 @@ public interface MultiOutputPipelineConfigurable {
   /**
    * Configure a pipeline, adding datasets and streams that the stage needs.
    *
-   * @param multiOutputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiOutputPipelineConfigurer the configurer used to add required datasets and
+   *     streams
    * @throws IllegalArgumentException if the given config is invalid
    */
   void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer);

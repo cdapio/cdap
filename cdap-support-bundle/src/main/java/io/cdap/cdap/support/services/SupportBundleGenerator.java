@@ -81,7 +81,7 @@ public class SupportBundleGenerator {
 
   @Inject
   SupportBundleGenerator(CConfiguration cConf, RemoteNamespaceQueryClient namespaceQueryClient,
-                         @Named(Constants.SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> taskFactories) {
+      @Named(Constants.SupportBundle.TASK_FACTORY) Set<SupportBundleTaskFactory> taskFactories) {
     this.cConf = cConf;
     this.namespaceQueryClient = namespaceQueryClient;
     this.localDir = cConf.get(Constants.SupportBundle.LOCAL_DATA_DIR);
@@ -91,13 +91,16 @@ public class SupportBundleGenerator {
   /**
    * Generates support bundle
    */
-  public String generate(SupportBundleConfiguration config, ExecutorService executorService) throws Exception {
-    NamespaceId namespace = Optional.ofNullable(config.getNamespace()).map(NamespaceId::new).orElse(null);
+  public String generate(SupportBundleConfiguration config, ExecutorService executorService)
+      throws Exception {
+    NamespaceId namespace = Optional.ofNullable(config.getNamespace()).map(NamespaceId::new)
+        .orElse(null);
     List<NamespaceId> namespaces = new ArrayList<>();
 
     if (namespace == null) {
       namespaces.addAll(
-        namespaceQueryClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList()));
+          namespaceQueryClient.list().stream().map(NamespaceMeta::getNamespaceId)
+              .collect(Collectors.toList()));
     } else {
       namespaces.add(validNamespace(namespace));
     }
@@ -111,27 +114,28 @@ public class SupportBundleGenerator {
     DirUtils.mkdirs(uuidPath);
 
     SupportBundleStatus supportBundleStatus = SupportBundleStatus.builder()
-      .setBundleId(uuid)
-      .setStartTimestamp(System.currentTimeMillis())
-      .setStatus(CollectionState.IN_PROGRESS)
-      .setParameters(config)
-      .build();
+        .setBundleId(uuid)
+        .setStartTimestamp(System.currentTimeMillis())
+        .setStatus(CollectionState.IN_PROGRESS)
+        .setParameters(config)
+        .build();
     addToStatus(supportBundleStatus, uuidPath.getPath());
 
     SupportBundleJob supportBundleJob =
-      new SupportBundleJob(taskFactories, executorService, cConf, supportBundleStatus);
+        new SupportBundleJob(taskFactories, executorService, cConf, supportBundleStatus);
     SupportBundleTaskConfiguration supportBundleTaskConfiguration =
-      new SupportBundleTaskConfiguration(config, uuid, uuidPath, namespaces, supportBundleJob);
+        new SupportBundleTaskConfiguration(config, uuid, uuidPath, namespaces, supportBundleJob);
 
     try {
-      executorService.execute(() -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
+      executorService.execute(
+          () -> supportBundleJob.generateBundle(supportBundleTaskConfiguration));
     } catch (Exception e) {
       LOG.error("Failed to finish execute tasks", e);
       SupportBundleStatus failedBundleStatus = SupportBundleStatus.builder(supportBundleStatus)
-        .setStatus(CollectionState.FAILED)
-        .setFinishTimestamp(System.currentTimeMillis())
-        .setStatusDetails(e.getMessage())
-        .build();
+          .setStatus(CollectionState.FAILED)
+          .setFinishTimestamp(System.currentTimeMillis())
+          .setStatusDetails(e.getMessage())
+          .build();
       addToStatus(failedBundleStatus, uuidPath.getPath());
     }
 
@@ -148,7 +152,8 @@ public class SupportBundleGenerator {
       return null;
     }
     SupportBundleStatus supportBundleStatus = getBundleStatus(latestDirectory);
-    if (supportBundleStatus != null && supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
+    if (supportBundleStatus != null
+        && supportBundleStatus.getStatus() == CollectionState.IN_PROGRESS) {
       return supportBundleStatus.getBundleId();
     }
     return null;
@@ -202,18 +207,21 @@ public class SupportBundleGenerator {
 
     File statusFile = new File(uuidFile, "status.json");
     if (!statusFile.exists()) {
-      throw new NotFoundException(String.format("The status for this bundle: %s is not found.", uuid));
+      throw new NotFoundException(
+          String.format("The status for this bundle: %s is not found.", uuid));
     }
     SupportBundleStatus bundleStatus = getBundleStatus(uuidFile);
     Set<SupportBundleTaskStatus> supportBundleTaskStatusSet = bundleStatus.getTasks();
-    return new SupportBundleOperationStatus(uuidFile.getName(), bundleStatus.getStatus(), supportBundleTaskStatusSet);
+    return new SupportBundleOperationStatus(uuidFile.getName(), bundleStatus.getStatus(),
+        supportBundleTaskStatusSet);
   }
 
   /**
    * Archive support bundle into zip file
    */
-  public String createBundleZipByRequest(String uuid, Path tmpPath, SupportBundleRequestFileList bundleRequestFileList)
-    throws IOException, NotFoundException, NoSuchAlgorithmException {
+  public String createBundleZipByRequest(String uuid, Path tmpPath,
+      SupportBundleRequestFileList bundleRequestFileList)
+      throws IOException, NotFoundException, NoSuchAlgorithmException {
     File uuidFile = getUUIDFile(uuid);
     if (!uuidFile.exists()) {
       throw new NotFoundException(String.format("This bundle id %s is not existed", uuid));
@@ -222,7 +230,8 @@ public class SupportBundleGenerator {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
     try (ZipOutputStream zipOut = new ZipOutputStream(
-      new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
+        new DigestOutputStream(Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING),
+            digest))) {
       if (bundleRequestFileList.getFiles().isEmpty()) {
         // If file path is empty string which means we want to zip the whole bundle id folder
         BundleJarUtil.addToArchive(uuidFile, true, zipOut);
@@ -239,7 +248,7 @@ public class SupportBundleGenerator {
       }
     }
     return String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
-                         Base64.getEncoder().encodeToString(digest.digest()));
+        Base64.getEncoder().encodeToString(digest.digest()));
   }
 
   /**
@@ -254,19 +263,20 @@ public class SupportBundleGenerator {
     List<SupportBundleOperationStatus> operationStatusList = new ArrayList<>();
 
     DirUtils.listFiles(baseDirectory)
-      .stream()
-      .filter(file -> !file.isHidden() && file.isDirectory())
-      .forEach(uuidFile -> {
-        SupportBundleOperationStatus operationStatus = new SupportBundleOperationStatus(uuidFile.getName(),
-                                                                                              CollectionState.NOT_FOUND,
-                                                                                              new HashSet<>());
-        try {
-          operationStatus = getBundle(uuidFile.getName());
-        } catch (Exception e) {
-          LOG.debug("Can not find status json: {}", uuidFile.getName());
-        }
-        operationStatusList.add(operationStatus);
-      });
+        .stream()
+        .filter(file -> !file.isHidden() && file.isDirectory())
+        .forEach(uuidFile -> {
+          SupportBundleOperationStatus operationStatus = new SupportBundleOperationStatus(
+              uuidFile.getName(),
+              CollectionState.NOT_FOUND,
+              new HashSet<>());
+          try {
+            operationStatus = getBundle(uuidFile.getName());
+          } catch (Exception e) {
+            LOG.debug("Can not find status json: {}", uuidFile.getName());
+          }
+          operationStatusList.add(operationStatus);
+        });
     return operationStatusList;
   }
 
@@ -283,9 +293,9 @@ public class SupportBundleGenerator {
    */
   private File getOldestFolder(File baseDirectory) {
     List<File> uuidFiles = DirUtils.listFiles(baseDirectory)
-      .stream()
-      .filter(file -> !file.isHidden() && file.isDirectory())
-      .collect(Collectors.toList());
+        .stream()
+        .filter(file -> !file.isHidden() && file.isDirectory())
+        .collect(Collectors.toList());
     return Collections.min(uuidFiles, Comparator.<File, Boolean>comparing(f1 -> {
       try {
         return getBundleStatus(f1).getStatus() != CollectionState.FAILED;
@@ -304,8 +314,8 @@ public class SupportBundleGenerator {
       return null;
     }
     List<File> uuidFiles = DirUtils.listFiles(baseDirectory).stream()
-      .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
-      .collect(Collectors.toList());
+        .filter(file -> !file.getName().startsWith(".") && !file.isHidden() && file.isDirectory())
+        .collect(Collectors.toList());
     return Collections.max(uuidFiles, Comparator.comparing(File::lastModified));
   }
 
@@ -313,7 +323,8 @@ public class SupportBundleGenerator {
    * Update status file
    */
   private void addToStatus(SupportBundleStatus bundleStatus, String basePath) throws IOException {
-    try (FileWriter statusFile = new FileWriter(new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
+    try (FileWriter statusFile = new FileWriter(
+        new File(basePath, SupportBundleFileNames.STATUS_FILE_NAME))) {
       GSON.toJson(bundleStatus, statusFile);
     }
   }

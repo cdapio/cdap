@@ -20,7 +20,8 @@ import io.netty.channel.ChannelHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * A {@link ChannelHandler} for handling SOCKS handshake requests for the {@link ServiceSocksProxy}.
+ * A {@link ChannelHandler} for handling SOCKS handshake requests for the {@link
+ * ServiceSocksProxy}.
  */
 final class ServiceSocksServerHandler extends AbstractSocksServerHandler {
 
@@ -28,7 +29,7 @@ final class ServiceSocksServerHandler extends AbstractSocksServerHandler {
   private final ServiceSocksProxyAuthenticator authenticator;
 
   ServiceSocksServerHandler(DiscoveryServiceClient discoveryServiceClient,
-                            ServiceSocksProxyAuthenticator authenticator) {
+      ServiceSocksProxyAuthenticator authenticator) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.authenticator = authenticator;
   }

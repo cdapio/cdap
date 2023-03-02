@@ -27,6 +27,7 @@ import io.cdap.cdap.api.dataset.table.Table;
  * {@link DatasetModule} for {@link ObjectMappedTable}.
  */
 public class ObjectMappedTableModule implements DatasetModule {
+
   public static final String SHORT_NAME = ObjectMappedTable.TYPE;
   public static final String FULL_NAME = ObjectMappedTable.class.getName();
 

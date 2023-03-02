@@ -25,6 +25,7 @@ import java.util.List;
  * Represents an And Filter where all sub expressions are and-ed together.
  */
 public class AndFilter implements Filter {
+
   private final List<? extends Filter> expressions;
 
   public AndFilter(List<? extends Filter> expressions) {
@@ -44,7 +45,7 @@ public class AndFilter implements Filter {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("expressions", expressions)
-      .toString();
+        .add("expressions", expressions)
+        .toString();
   }
 }

@@ -42,13 +42,15 @@ import org.slf4j.LoggerFactory;
  * NoSQL implementation of StructuredTableRegistry.
  */
 public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
+
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTableAdmin.class);
-  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(
+      NamespaceId.SYSTEM.getNamespace());
 
   private static final String ENTITY_REGISTRY = "entity.registry";
   private static final byte[] TABLE_ROWKEY_PREFIX = {'t'};
   private static final byte[] SCHEMA_COL_BYTES = Bytes.toBytes("schema");
-  private static final byte[][] SCHEMA_COL_BYTES_ARRAY = new byte[][] {SCHEMA_COL_BYTES};
+  private static final byte[][] SCHEMA_COL_BYTES_ARRAY = new byte[][]{SCHEMA_COL_BYTES};
   private static final Gson GSON = new Gson();
 
   private final NoSqlStructuredTableDatasetDefinition tableDefinition;
@@ -73,7 +75,8 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
 
       DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityRegistrySpec, null);
       if (!admin.exists()) {
-        LOG.info("Creating dataset table {} in namespace {}", entityRegistrySpec.getName(), NamespaceId.SYSTEM);
+        LOG.info("Creating dataset table {} in namespace {}", entityRegistrySpec.getName(),
+            NamespaceId.SYSTEM);
         admin.create();
       }
       initialized = true;
@@ -105,7 +108,8 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     MetricsTable table = getRegistryTable();
     try {
       byte[] serialized = table.get(getRowKeyBytes(tableId), SCHEMA_COL_BYTES);
-      return serialized == null ? null : GSON.fromJson(Bytes.toString(serialized), StructuredTableSpecification.class);
+      return serialized == null ? null
+          : GSON.fromJson(Bytes.toString(serialized), StructuredTableSpecification.class);
     } finally {
       closeRegistryTable(table);
     }
@@ -126,7 +130,8 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   public boolean isEmpty() {
     MetricsTable table = getRegistryTable();
     try {
-      try (Scanner scanner = table.scan(TABLE_ROWKEY_PREFIX, Bytes.stopKeyForPrefix(TABLE_ROWKEY_PREFIX), null)) {
+      try (Scanner scanner = table.scan(TABLE_ROWKEY_PREFIX,
+          Bytes.stopKeyForPrefix(TABLE_ROWKEY_PREFIX), null)) {
         return scanner.next() == null;
       }
     } finally {
@@ -135,17 +140,19 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   }
 
   private static byte[] getRowKeyBytes(StructuredTableId tableId) {
-   return Bytes.concat(TABLE_ROWKEY_PREFIX, Bytes.toBytes(tableId.getName()));
+    return Bytes.concat(TABLE_ROWKEY_PREFIX, Bytes.toBytes(tableId.getName()));
   }
 
   private <T extends Dataset> T getRegistryTable() {
     try {
       initIfNeeded();
       //noinspection unchecked
-      return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityRegistrySpec, Collections.emptyMap(), null);
+      return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityRegistrySpec,
+          Collections.emptyMap(), null);
     } catch (IOException e) {
       throw new DatasetInstantiationException(
-        String.format("Cannot instantiate entity registry table %s", entityRegistrySpec.getName()), e);
+          String.format("Cannot instantiate entity registry table %s",
+              entityRegistrySpec.getName()), e);
     }
   }
 

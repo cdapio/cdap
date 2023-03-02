@@ -20,22 +20,22 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.Dataset;
 
 /**
- * A callable that provides a {@link DatasetContext} to programs which may be used to get
- * access to and use datasets.
+ * A callable that provides a {@link DatasetContext} to programs which may be used to get access to
+ * and use datasets.
  *
  * @param <V> type of the return value from the {@link #call(DatasetContext)}.
- *
  */
 @FunctionalInterface
 public interface TxCallable<V> {
+
   /**
    * Provides a {@link DatasetContext} to get instances of {@link Dataset}s.
    *
    * <p>
-   *   Operations executed on a dataset within the execution of this method are committed as a single transaction.
-   *   The transaction is started before this method is invoked and is committed upon successful execution.
-   *   Exceptions thrown while committing the transaction or thrown by user-code result in a rollback of the
-   *   transaction.
+   * Operations executed on a dataset within the execution of this method are committed as a single
+   * transaction. The transaction is started before this method is invoked and is committed upon
+   * successful execution. Exceptions thrown while committing the transaction or thrown by user-code
+   * result in a rollback of the transaction.
    * </p>
    *
    * @param context to get datasets from

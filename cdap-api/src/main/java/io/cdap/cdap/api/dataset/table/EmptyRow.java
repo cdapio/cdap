@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Represents an empty row (a row with no columns).
  */
 public class EmptyRow implements Row {
+
   private final byte[] row;
 
   private static final Map<byte[], byte[]> EMPTY_COLUMNS = Collections.emptyMap();

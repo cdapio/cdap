@@ -30,9 +30,11 @@ import java.util.Base64;
 import javax.annotation.Nullable;
 
 /**
- * Tink cipher that allows encrypting and decrypting data using keyset stored in {@link SConfiguration}
+ * Tink cipher that allows encrypting and decrypting data using keyset stored in {@link
+ * SConfiguration}
  */
 public class TinkCipher {
+
   /**
    * Wraps a keyset with some additional parameters and metadata.
    */
@@ -46,7 +48,8 @@ public class TinkCipher {
   /**
    * Default associated data to use if none is specified
    */
-  private static final byte[] DEFAULT_ASSOCIATED_DATA = "DefaultAssociatedData".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] DEFAULT_ASSOCIATED_DATA = "DefaultAssociatedData".getBytes(
+      StandardCharsets.UTF_8);
 
   public TinkCipher(SConfiguration sConf) throws CipherException {
     try {
@@ -54,7 +57,8 @@ public class TinkCipher {
       AeadConfig.register();
 
       // Load keyset from sConf
-      String jsonKeyset = sConf.get(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_KEYSET);
+      String jsonKeyset = sConf.get(
+          Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_KEYSET);
       this.keysetHandle = CleartextKeysetHandle.read(JsonKeysetReader.withString(jsonKeyset));
 
       this.aead = keysetHandle.getPrimitive(Aead.class);
@@ -92,7 +96,8 @@ public class TinkCipher {
    * @return encrypted data in base64 encoded form
    * @throws CipherException if encryption fails
    */
-  public String encryptStringToBase64(String plainData, @Nullable byte[] associatedData) throws CipherException {
+  public String encryptStringToBase64(String plainData, @Nullable byte[] associatedData)
+      throws CipherException {
     return Base64.getEncoder().encodeToString(encrypt(plainData.getBytes(), associatedData));
   }
 
@@ -104,7 +109,8 @@ public class TinkCipher {
    * @return encrypted data in base64 encoded form
    * @throws CipherException if encryption fails
    */
-  public String encryptToBase64(byte[] plainData, @Nullable byte[] associatedData) throws CipherException {
+  public String encryptToBase64(byte[] plainData, @Nullable byte[] associatedData)
+      throws CipherException {
     return Base64.getEncoder().encodeToString(encrypt(plainData, associatedData));
   }
 
@@ -112,7 +118,8 @@ public class TinkCipher {
    * Decrypt the cipher data.
    *
    * @param cipherData data to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
+   * @param associatedData used for integrity checking, must be the same as that used during
+   *     encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
@@ -131,7 +138,8 @@ public class TinkCipher {
    * Decrypt the cipher data that was base64 encoded.
    *
    * @param cipherData data in base64 encoded form that needs to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
+   * @param associatedData used for integrity checking, must be the same as that used during
+   *     encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
@@ -143,12 +151,15 @@ public class TinkCipher {
    * Decrypt the cipher data that was encrypted and base-encoded from a string.
    *
    * @param cipherData data in base64 encoded form that needs to be decrypted
-   * @param associatedData used for integrity checking, must be the same as that used during encryption.
+   * @param associatedData used for integrity checking, must be the same as that used during
+   *     encryption.
    * @return decrypted data
    * @throws CipherException if decryption fails
    */
-  public String decryptStringFromBase64(String cipherData, byte[] associatedData) throws CipherException {
-    return new String(decrypt(Base64.getDecoder().decode(cipherData), associatedData), StandardCharsets.UTF_8);
+  public String decryptStringFromBase64(String cipherData, byte[] associatedData)
+      throws CipherException {
+    return new String(decrypt(Base64.getDecoder().decode(cipherData), associatedData),
+        StandardCharsets.UTF_8);
   }
 }
 

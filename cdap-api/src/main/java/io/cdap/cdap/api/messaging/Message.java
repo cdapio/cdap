@@ -58,13 +58,14 @@ public interface Message {
   /**
    * Decodes the message payload.
    *
-   * @param decoder a {@link Function} to decode the object from a provided {@link Reader} that reads the payload
-   *                as {@link StandardCharsets#UTF_8} string.
+   * @param decoder a {@link Function} to decode the object from a provided {@link Reader} that
+   *     reads the payload as {@link StandardCharsets#UTF_8} string.
    * @param <T> the instance type of the decoded object
    * @return the decoded object
    */
   default <T> T decodePayload(Function<Reader, T> decoder) {
-    try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getPayload()), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteArrayInputStream(getPayload()),
+        StandardCharsets.UTF_8)) {
       return decoder.apply(reader);
     } catch (IOException e) {
       // This should never happen as we are reading from byte[]

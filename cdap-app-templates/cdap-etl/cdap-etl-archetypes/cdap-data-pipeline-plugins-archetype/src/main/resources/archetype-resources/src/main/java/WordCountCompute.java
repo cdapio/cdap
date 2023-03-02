@@ -32,17 +32,19 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
 
 /**
- * SparkCompute plugin that counts how many times each word appears in records input to the compute stage.
+ * SparkCompute plugin that counts how many times each word appears in records input to the compute
+ * stage.
  */
 @Plugin(type = SparkCompute.PLUGIN_TYPE)
 @Name(WordCountCompute.NAME)
 @Description("Counts how many times each word appears in all records input to the aggregator.")
 public class WordCountCompute extends SparkCompute<StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "WordCount";
   public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
-    "wordCount",
-    Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("count", Schema.of(Schema.Type.LONG))
+      "wordCount",
+      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
   );
   private final Conf config;
 
@@ -50,6 +52,7 @@ public class WordCountCompute extends SparkCompute<StructuredRecord, StructuredR
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     @Description("The field from the input records containing the words to count.")
     private String field;
   }
@@ -72,20 +75,22 @@ public class WordCountCompute extends SparkCompute<StructuredRecord, StructuredR
   }
 
   @Override
-  public JavaRDD<StructuredRecord> transform(SparkExecutionPluginContext sparkExecutionPluginContext,
-                                             JavaRDD<StructuredRecord> javaRDD) throws Exception {
+  public JavaRDD<StructuredRecord> transform(
+      SparkExecutionPluginContext sparkExecutionPluginContext,
+      JavaRDD<StructuredRecord> javaRDD) throws Exception {
     WordCount wordCount = new WordCount(config.field);
     return wordCount.countWords(javaRDD)
-      .flatMap(new FlatMapFunction<Tuple2<String, Long>, StructuredRecord>() {
-        @Override
-        public Iterable<StructuredRecord> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
-          List<StructuredRecord> output = new ArrayList<>();
-          output.add(StructuredRecord.builder(OUTPUT_SCHEMA)
-                       .set("word", stringLongTuple2._1())
-                       .set("count", stringLongTuple2._2())
-                       .build());
-          return output;
-        }
-      });
+        .flatMap(new FlatMapFunction<Tuple2<String, Long>, StructuredRecord>() {
+          @Override
+          public Iterable<StructuredRecord> call(Tuple2<String, Long> stringLongTuple2)
+              throws Exception {
+            List<StructuredRecord> output = new ArrayList<>();
+            output.add(StructuredRecord.builder(OUTPUT_SCHEMA)
+                .set("word", stringLongTuple2._1())
+                .set("count", stringLongTuple2._2())
+                .build());
+            return output;
+          }
+        });
   }
 }

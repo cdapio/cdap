@@ -26,21 +26,20 @@ import java.util.TimeZone;
 
 /**
  * LogicalStartTimeMacro macros use the logical start time of a run to perform substitution.
- * LogicalStartTimeMacro macros follow the syntax ${logicalStartTime(arguments)}. Arguments are expected to be either:
+ * LogicalStartTimeMacro macros follow the syntax ${logicalStartTime(arguments)}. Arguments are
+ * expected to be either:
  *
- * empty string
- * format
- * format,offset
- * format,offset,timezone
+ * empty string format format,offset format,offset,timezone
  *
- * If no format is given, the runtime in milliseconds will be used.
- * Otherwise, the format is expected to be a SimpleDateFormat that will be used to format the runtime.
- * The offset can be used to specify some amount of time to subtract from the runtime before formatting it.
- * The offset must be parse-able by {@link TimeParser}, which allows some simple math expressions.
- * For example, suppose the logical start time of the run is 2016-01-01T00:00:00 and we have macro
- * ${logicalStartTime(yyyy-MM-dd'T'HH-mm-ss,1d-4h)}. The format is yyyy-MM-dd'T'HH-mm-ss and the offset is 1d-4h+30m.
- * This means the macro will be replaced with 2015-12-31T03:30:00, since the offset translates to 20.5 hours, so
- * the whole macro evaluates to 20.5 hours before midnight of new years 2016.
+ * If no format is given, the runtime in milliseconds will be used. Otherwise, the format is
+ * expected to be a SimpleDateFormat that will be used to format the runtime. The offset can be used
+ * to specify some amount of time to subtract from the runtime before formatting it. The offset must
+ * be parse-able by {@link TimeParser}, which allows some simple math expressions. For example,
+ * suppose the logical start time of the run is 2016-01-01T00:00:00 and we have macro
+ * ${logicalStartTime(yyyy-MM-dd'T'HH-mm-ss,1d-4h)}. The format is yyyy-MM-dd'T'HH-mm-ss and the
+ * offset is 1d-4h+30m. This means the macro will be replaced with 2015-12-31T03:30:00, since the
+ * offset translates to 20.5 hours, so the whole macro evaluates to 20.5 hours before midnight of
+ * new years 2016.
  */
 public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
 
@@ -62,8 +61,8 @@ public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
   @Override
   public String lookup(String property) throws InvalidMacroException {
     throw new InvalidMacroException("The '" + FUNCTION_NAME
-                                      + "' macro function doesn't support direct property lookup for property '"
-                                      + property + "'");
+        + "' macro function doesn't support direct property lookup for property '"
+        + property + "'");
   }
 
   @Override
@@ -71,7 +70,7 @@ public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
     if (!FUNCTION_NAME.equals(macroFunction)) {
       // This shouldn't happen
       throw new IllegalArgumentException("Invalid function name " + macroFunction
-                                           + ". Expecting " + FUNCTION_NAME);
+          + ". Expecting " + FUNCTION_NAME);
     }
 
     if (arguments.length == 1 && arguments[0].isEmpty()) {
@@ -83,8 +82,9 @@ public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
     TimeZone timeZone = defaultTimeZone;
 
     if (arguments.length > 3) {
-      throw new IllegalArgumentException("runtime macro supports at most 3 arguments - format, offset, and timezone. " +
-                                           "Formats containing a comma are not supported.");
+      throw new IllegalArgumentException(
+          "runtime macro supports at most 3 arguments - format, offset, and timezone. " +
+              "Formats containing a comma are not supported.");
     }
 
     dateFormat = new SimpleDateFormat(arguments[0]);

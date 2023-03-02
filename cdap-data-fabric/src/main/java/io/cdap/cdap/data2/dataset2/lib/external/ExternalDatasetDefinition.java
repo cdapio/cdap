@@ -26,7 +26,8 @@ import java.util.Map;
 /**
  * Dataset definition for {@link ExternalDataset}.
  */
-public class ExternalDatasetDefinition implements DatasetDefinition<ExternalDataset, ExternalDatasetAdmin> {
+public class ExternalDatasetDefinition implements
+    DatasetDefinition<ExternalDataset, ExternalDatasetAdmin> {
 
   private final String name;
 
@@ -42,19 +43,19 @@ public class ExternalDatasetDefinition implements DatasetDefinition<ExternalData
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public ExternalDatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                       ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new ExternalDatasetAdmin();
   }
 
   @Override
   public ExternalDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new ExternalDataset(arguments);
   }
 }

@@ -43,6 +43,7 @@ import org.apache.twill.filesystem.LocationFactory;
  * class to read log meta data table
  */
 public class FileMetaDataReader {
+
   private static final Comparator<LogLocation> LOG_LOCATION_COMPARATOR = (o1, o2) -> {
     int cmp = Longs.compare(o1.getEventTimeMs(), o2.getEventTimeMs());
     if (cmp != 0) {
@@ -57,7 +58,8 @@ public class FileMetaDataReader {
   private final Impersonator impersonator;
 
   @Inject
-  FileMetaDataReader(TransactionRunner transactionRunner, LocationFactory locationFactory, Impersonator impersonator) {
+  FileMetaDataReader(TransactionRunner transactionRunner, LocationFactory locationFactory,
+      Impersonator impersonator) {
     this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
     this.impersonator = impersonator;
@@ -67,32 +69,34 @@ public class FileMetaDataReader {
    * Returns a list of log files for a logging context.
    *
    * @param logPathIdentifier logging context identifier.
-   * @param startTimestampMs  starting timestamp in milli seconds
-   * @param endTimestampMs    ending timestamp in milli seconds
+   * @param startTimestampMs starting timestamp in milli seconds
+   * @param endTimestampMs ending timestamp in milli seconds
    * @return List of {@link LogLocation}
    */
   public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier,
-                                     final long startTimestampMs, final long endTimestampMs) throws IOException {
-    List<LogLocation> endTimestampFilteredList = TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
-      // get add files from new format
-      return getFiles(table, logPathIdentifier, endTimestampMs);
-    }, IOException.class);
+      final long startTimestampMs, final long endTimestampMs) throws IOException {
+    List<LogLocation> endTimestampFilteredList = TransactionRunners.run(transactionRunner,
+        context -> {
+          StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
+          // get add files from new format
+          return getFiles(table, logPathIdentifier, endTimestampMs);
+        }, IOException.class);
 
     // performing extra filtering (based on start timestamp) outside the transaction
     return getFilesInRange(endTimestampFilteredList, startTimestampMs);
   }
 
   private List<LogLocation> getFiles(StructuredTable metaTable, LogPathIdentifier logPathIdentifier,
-                                     long endTimestampMs) throws IOException {
+      long endTimestampMs) throws IOException {
     // create scanner with
     // start rowkey prefix:context:event-time(0):create-time(0)
     // end rowkey  prefix:context:event-time(endTimestamp):0(create-time doesn't matter for get files)
     // add these files to the list
     List<LogLocation> files = new ArrayList<>();
-    Range scanRange = Range.create(getKeyFields(logPathIdentifier.getRowkey(), 0L, 0L), Range.Bound.INCLUSIVE,
-                                   getPartialKey(logPathIdentifier.getRowkey(), endTimestampMs),
-                                   Range.Bound.INCLUSIVE);
+    Range scanRange = Range.create(getKeyFields(logPathIdentifier.getRowkey(), 0L, 0L),
+        Range.Bound.INCLUSIVE,
+        getPartialKey(logPathIdentifier.getRowkey(), endTimestampMs),
+        Range.Bound.INCLUSIVE);
 
     try (CloseableIterator<StructuredRow> iter = metaTable.scan(scanRange, Integer.MAX_VALUE)) {
       while (iter.hasNext()) {
@@ -106,11 +110,11 @@ public class FileMetaDataReader {
   @SuppressWarnings("ConstantConditions")
   private LogLocation fromRow(StructuredRow row, String namespace) {
     return new LogLocation(LogLocation.VERSION_1,
-                           row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
-                           row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
-                           Locations.getLocationFromAbsolutePath(
-                             locationFactory, row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)),
-                           namespace, impersonator);
+        row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
+        row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
+        Locations.getLocationFromAbsolutePath(
+            locationFactory, row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)),
+        namespace, impersonator);
   }
 
   private List<LogLocation> getFilesInRange(List<LogLocation> files, long startTimeInMs) {
@@ -140,14 +144,15 @@ public class FileMetaDataReader {
 
   @SuppressWarnings("SameParameterValue")
   private List<Field<?>> getKeyFields(String identifier, long eventTime, long currentTime) {
-    return ImmutableList.of(Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
-                            Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, eventTime),
-                            Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD, currentTime));
+    return ImmutableList.of(
+        Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
+        Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, eventTime),
+        Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD, currentTime));
   }
 
   private ImmutableList<Field<?>> getPartialKey(String identifier, long endTimestampMs) {
     return ImmutableList.of(
-      Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
-      Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, endTimestampMs));
+        Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
+        Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, endTimestampMs));
   }
 }

@@ -23,17 +23,21 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
  * Class used to deserialize artifactId from ProgramDescriptor
  */
 public class ProgramDescriptor {
+
   // since we are interested in artifactId only have artifactId field
-  private  ArtifactId artifactId;
+  private ArtifactId artifactId;
 
   class ArtifactId {
+
     String artifact;
     String version;
     String namespace;
   }
-  public  io.cdap.cdap.api.artifact.ArtifactId getArtifactId() {
-    return new io.cdap.cdap.api.artifact.ArtifactId(artifactId.artifact, new ArtifactVersion(artifactId.version),
-                                                    "SYSTEM".equals(artifactId.namespace)
-                                                      ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+
+  public io.cdap.cdap.api.artifact.ArtifactId getArtifactId() {
+    return new io.cdap.cdap.api.artifact.ArtifactId(artifactId.artifact,
+        new ArtifactVersion(artifactId.version),
+        "SYSTEM".equals(artifactId.namespace)
+            ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }
 }

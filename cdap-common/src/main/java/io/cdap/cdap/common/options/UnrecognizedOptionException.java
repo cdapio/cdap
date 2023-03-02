@@ -16,10 +16,10 @@
 package io.cdap.cdap.common.options;
 
 /**
- * Raised when the option is present on command line, but not
- * declared.
+ * Raised when the option is present on command line, but not declared.
  */
 public class UnrecognizedOptionException extends RuntimeException {
+
   public UnrecognizedOptionException(String name) {
     super("Option " + name + " was never declared");
   }

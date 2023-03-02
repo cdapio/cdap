@@ -22,9 +22,11 @@ import javax.annotation.Nullable;
  * Array components of the batch status request to POST /namespaces/{namespace}/instances.
  */
 public class BatchRunnable extends BatchProgram {
+
   protected final String runnableId;
 
-  public BatchRunnable(String appId, ProgramType programType, String programId, @Nullable String runnableId) {
+  public BatchRunnable(String appId, ProgramType programType, String programId,
+      @Nullable String runnableId) {
     super(appId, programType, programId);
     this.runnableId = runnableId;
   }

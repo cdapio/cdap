@@ -44,11 +44,13 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 
 /**
- * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
+ * Mock source that can be used to write a list of records in a Table and reads them out in a
+ * pipeline run.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(MockExternalSource.PLUGIN_NAME)
 public class MockExternalSource extends BatchSource<LongWritable, Text, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String PLUGIN_NAME = "MockExternalSource";
   private static final Gson GSON = new Gson();
@@ -62,12 +64,14 @@ public class MockExternalSource extends BatchSource<LongWritable, Text, Structur
    * Config for the source.
    */
   public static class Config extends PluginConfig {
+
     private String name;
     private String dirName;
   }
 
   @Override
-  public void transform(KeyValue<LongWritable, Text> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<LongWritable, Text> input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     emitter.emit(GSON.fromJson(input.getValue().toString(), StructuredRecord.class));
   }
 
@@ -94,20 +98,21 @@ public class MockExternalSource extends BatchSource<LongWritable, Text, Structur
   }
 
   /**
-   * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
+   * Used to write the input records for the pipeline run. Should be called after the pipeline has
+   * been created.
    *
    * @param fileName file to write the records into
    * @param records records that should be the input for the pipeline
    */
   public static void writeInput(String fileName,
-                                Iterable<StructuredRecord> records) throws Exception {
+      Iterable<StructuredRecord> records) throws Exception {
     String output = Joiner.on("\n").join(Iterables.transform(records,
-                                                             new Function<StructuredRecord, String>() {
-                                                               @Override
-                                                               public String apply(StructuredRecord input) {
-                                                                 return GSON.toJson(input);
-                                                               }
-                                                             })
+        new Function<StructuredRecord, String>() {
+          @Override
+          public String apply(StructuredRecord input) {
+            return GSON.toJson(input);
+          }
+        })
     );
     Files.write(output, new File(fileName), Charsets.UTF_8);
   }
@@ -117,7 +122,8 @@ public class MockExternalSource extends BatchSource<LongWritable, Text, Structur
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
     properties.put("dirName", new PluginPropertyField("dirName", "", "string", true, false));
     return PluginClass.builder().setName(PLUGIN_NAME).setType(BatchSource.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockExternalSource.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockExternalSource.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

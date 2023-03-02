@@ -39,46 +39,49 @@ import org.apache.twill.api.RunId;
  * Serializes {@link Lineage} into a {@link LineageRecord}.
  */
 public final class LineageSerializer {
+
   private static final Function<NamespacedEntityId, String> ID_STRING_FUNCTION =
-    new Function<NamespacedEntityId, String>() {
-      @Override
-      public String apply(NamespacedEntityId input) {
-        return input.getEntityName();
-      }
-    };
+      new Function<NamespacedEntityId, String>() {
+        @Override
+        public String apply(NamespacedEntityId input) {
+          return input.getEntityName();
+        }
+      };
 
   private static final Function<RunId, String> RUN_ID_STRING_FUNCTION =
-    new Function<RunId, String>() {
-      @Override
-      public String apply(RunId input) {
-        return input.getId();
-      }
-    };
+      new Function<RunId, String>() {
+        @Override
+        public String apply(RunId input) {
+          return input.getId();
+        }
+      };
 
   private static final Function<AccessType, String> ACCESS_TYPE_STRING_FUNCTION =
-    new Function<AccessType, String>() {
-      @Override
-      public String apply(AccessType input) {
-        return input.toString().toLowerCase();
-      }
-    };
+      new Function<AccessType, String>() {
+        @Override
+        public String apply(AccessType input) {
+          return input.toString().toLowerCase();
+        }
+      };
 
-  private LineageSerializer() {}
+  private LineageSerializer() {
+  }
 
-  public static LineageRecord toLineageRecord(long start, long end, Lineage lineage, Set<CollapseType> collapseTypes) {
+  public static LineageRecord toLineageRecord(long start, long end, Lineage lineage,
+      Set<CollapseType> collapseTypes) {
     Set<RelationRecord> relationBuilder = new HashSet<>();
     Map<String, ProgramRecord> programBuilder = new HashMap<>();
     Map<String, DataRecord> dataBuilder = new HashMap<>();
 
     Set<CollapsedRelation> collapsedRelations =
-      LineageCollapser.collapseRelations(lineage.getRelations(), collapseTypes);
+        LineageCollapser.collapseRelations(lineage.getRelations(), collapseTypes);
     for (CollapsedRelation relation : collapsedRelations) {
       String dataKey = makeDataKey(relation.getData());
       String programKey = makeProgramKey(relation.getProgram());
       RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
-                                                         convertAccessType(relation.getAccess()),
-                                                         convertRuns(relation.getRuns()),
-                                                         convertComponents(relation.getComponents()));
+          convertAccessType(relation.getAccess()),
+          convertRuns(relation.getRuns()),
+          convertComponents(relation.getComponents()));
       relationBuilder.add(relationRecord);
       programBuilder.put(programKey, new ProgramRecord(relation.getProgram()));
       dataBuilder.put(dataKey, new DataRecord(relation.getData()));
@@ -99,8 +102,9 @@ public final class LineageSerializer {
   }
 
   private static String makeProgramKey(ProgramId program) {
-    return Joiner.on('.').join(program.getType().getCategoryName().toLowerCase(), program.getNamespace(),
-                               program.getApplication(), program.getEntityName());
+    return Joiner.on('.')
+        .join(program.getType().getCategoryName().toLowerCase(), program.getNamespace(),
+            program.getApplication(), program.getEntityName());
   }
 
   private static String makeDataKey(NamespacedEntityId data) {
@@ -111,6 +115,7 @@ public final class LineageSerializer {
   }
 
   private static String makeDatasetKey(DatasetId datasetInstance) {
-    return Joiner.on('.').join("dataset", datasetInstance.getNamespace(), datasetInstance.getEntityName());
+    return Joiner.on('.')
+        .join("dataset", datasetInstance.getNamespace(), datasetInstance.getEntityName());
   }
 }

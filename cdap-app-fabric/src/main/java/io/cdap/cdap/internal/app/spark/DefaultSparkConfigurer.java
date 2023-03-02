@@ -54,10 +54,11 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
   private Resources executorResources;
 
   public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
@@ -104,11 +105,11 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
     Set<String> datasets = new HashSet<>();
     // Grab all @Property and @Dataset fields
     Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties),
-                      new DataSetFieldExtractor(datasets));
+        new DataSetFieldExtractor(datasets));
 
     return new SparkSpecification(spark.getClass().getName(), name, description,
-                                  mainClassName, datasets, properties,
-                                  clientResources, driverResources, executorResources, getHandlers(), getPlugins());
+        mainClassName, datasets, properties,
+        clientResources, driverResources, executorResources, getHandlers(), getPlugins());
   }
 
   /**

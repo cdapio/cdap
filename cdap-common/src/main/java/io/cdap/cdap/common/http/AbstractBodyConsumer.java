@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An abstract implementation of {@link BodyConsumer} that preserves data to a
- * {@link File}. The file will be automatically cleanup when the processing completed.
+ * An abstract implementation of {@link BodyConsumer} that preserves data to a {@link File}. The
+ * file will be automatically cleanup when the processing completed.
  */
 public abstract class AbstractBodyConsumer extends BodyConsumer {
 

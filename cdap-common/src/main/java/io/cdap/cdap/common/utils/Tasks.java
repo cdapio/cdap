@@ -28,11 +28,12 @@ import javax.annotation.Nullable;
  */
 public final class Tasks {
 
-  private Tasks() { }
+  private Tasks() {
+  }
 
   /**
-   * Calls callable, waiting sleepDelay between each call,
-   * until it returns the desiredValue or the timeout has passed.
+   * Calls callable, waiting sleepDelay between each call, until it returns the desiredValue or the
+   * timeout has passed.
    *
    * @param desiredValue the desired value to get from callable
    * @param callable the callable to check
@@ -46,9 +47,10 @@ public final class Tasks {
    * @throws InterruptedException if something interrupted this waiting operation
    * @throws ExecutionException if there was an exception in calling the callable
    */
-  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit,
-                                 long sleepDelay, TimeUnit sleepDelayUnit, @Nullable String message)
-    throws TimeoutException, InterruptedException, ExecutionException {
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout,
+      TimeUnit timeoutUnit,
+      long sleepDelay, TimeUnit sleepDelayUnit, @Nullable String message)
+      throws TimeoutException, InterruptedException, ExecutionException {
 
     long sleepDelayMs = sleepDelayUnit.toMillis(sleepDelay);
     long startTime = System.currentTimeMillis();
@@ -66,14 +68,15 @@ public final class Tasks {
       Thread.sleep(sleepDelayMs);
     }
     if (message == null) {
-      message = String.format("Timeout occurred. Expected %s but found %s.", desiredValue, actualValue);
+      message = String.format("Timeout occurred. Expected %s but found %s.", desiredValue,
+          actualValue);
     }
     throw new TimeoutException(message);
   }
 
   /**
-   * Calls callable, waiting sleepDelay between each call,
-   * until it returns the desiredValue or the timeout has passed.
+   * Calls callable, waiting sleepDelay between each call, until it returns the desiredValue or the
+   * timeout has passed.
    *
    * @param desiredValue the desired value to get from callable
    * @param callable the callable to check
@@ -86,16 +89,17 @@ public final class Tasks {
    * @throws InterruptedException if something interrupted this waiting operation
    * @throws ExecutionException if there was an exception in calling the callable
    */
-  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit,
-                                 long sleepDelay, TimeUnit sleepDelayUnit)
-    throws TimeoutException, InterruptedException, ExecutionException {
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout,
+      TimeUnit timeoutUnit,
+      long sleepDelay, TimeUnit sleepDelayUnit)
+      throws TimeoutException, InterruptedException, ExecutionException {
     waitFor(desiredValue, callable, timeout, timeoutUnit, sleepDelay, sleepDelayUnit, null);
   }
 
 
   /**
-   * Calls callable, waiting 50 milliseconds between each call,
-   * until it returns the desiredValue or the timeout has passed.
+   * Calls callable, waiting 50 milliseconds between each call, until it returns the desiredValue or
+   * the timeout has passed.
    *
    * @param desiredValue the desired value to get from callable
    * @param callable the callable to check
@@ -107,15 +111,16 @@ public final class Tasks {
    * @throws InterruptedException if something interrupted this waiting operation
    * @throws ExecutionException if there was an exception in calling the callable
    */
-  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit,
-                                 @Nullable String message)
-    throws TimeoutException, InterruptedException, ExecutionException {
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout,
+      TimeUnit timeoutUnit,
+      @Nullable String message)
+      throws TimeoutException, InterruptedException, ExecutionException {
     waitFor(desiredValue, callable, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS, message);
   }
 
   /**
-   * Calls callable, waiting 50 milliseconds between each call,
-   * until it returns the desiredValue or the timeout has passed.
+   * Calls callable, waiting 50 milliseconds between each call, until it returns the desiredValue or
+   * the timeout has passed.
    *
    * @param desiredValue the desired value to get from callable
    * @param callable the callable to check
@@ -126,8 +131,9 @@ public final class Tasks {
    * @throws InterruptedException if something interrupted this waiting operation
    * @throws ExecutionException if there was an exception in calling the callable
    */
-  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit)
-    throws TimeoutException, InterruptedException, ExecutionException {
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout,
+      TimeUnit timeoutUnit)
+      throws TimeoutException, InterruptedException, ExecutionException {
     waitFor(desiredValue, callable, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS);
   }
 }

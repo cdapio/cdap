@@ -42,38 +42,44 @@ import javax.annotation.Nullable;
  */
 public final class MetadataCompatibility {
 
-  private MetadataCompatibility() { }
+  private MetadataCompatibility() {
+  }
 
   /**
    * Convert a {@link SearchResponse} to 5.x {@link MetadataSearchResponse}.
    *
    * The 5.x convention was that the results only contain non-empty records.
    */
-  public static MetadataSearchResponse toV5Response(SearchResponse response, @Nullable String scope) {
+  public static MetadataSearchResponse toV5Response(SearchResponse response,
+      @Nullable String scope) {
     Sorting sorting = response.getRequest().getSorting();
-    return new MetadataSearchResponse(sorting != null ? sorting.toString() : SortInfo.DEFAULT.toString(),
-                                      response.getOffset(), response.getLimit(),
-                                      response.getCursor() == null ? 0 : 1,
-                                      response.getTotalResults(),
-                                      toV5Results(response.getResults()),
-                                      response.getCursor() == null ? Collections.emptyList()
-                                        : Collections.singletonList(response.getCursor()),
-                                      response.getRequest().isShowHidden(),
-                                      scope == null ? EnumSet.allOf(EntityScope.class)
-                                        : EnumSet.of(EntityScope.valueOf(scope)));
+    return new MetadataSearchResponse(
+        sorting != null ? sorting.toString() : SortInfo.DEFAULT.toString(),
+        response.getOffset(), response.getLimit(),
+        response.getCursor() == null ? 0 : 1,
+        response.getTotalResults(),
+        toV5Results(response.getResults()),
+        response.getCursor() == null ? Collections.emptyList()
+            : Collections.singletonList(response.getCursor()),
+        response.getRequest().isShowHidden(),
+        scope == null ? EnumSet.allOf(EntityScope.class)
+            : EnumSet.of(EntityScope.valueOf(scope)));
   }
 
   /**
-   * Convert a list of {@link MetadataRecord}s to an ordered set of 5.x {@link MetadataSearchResultRecord}s.
+   * Convert a list of {@link MetadataRecord}s to an ordered set of 5.x {@link
+   * MetadataSearchResultRecord}s.
    *
    * The 5.x convention was that the results only contain non-empty records.
    */
   private static Set<MetadataSearchResultRecord> toV5Results(List<MetadataRecord> results) {
     Set<MetadataSearchResultRecord> records = new LinkedHashSet<>();
     for (MetadataRecord record : results) {
-     Map<MetadataScope, io.cdap.cdap.api.metadata.Metadata> map = toV5Metadata(record.getMetadata());
-     records.add(new MetadataSearchResultRecord(record.getEntity(), Maps.filterValues(
-       map, meta -> meta != null && !(meta.getProperties().isEmpty() && meta.getTags().isEmpty()))));
+      Map<MetadataScope, io.cdap.cdap.api.metadata.Metadata> map = toV5Metadata(
+          record.getMetadata());
+      records.add(new MetadataSearchResultRecord(record.getEntity(), Maps.filterValues(
+          map,
+          meta -> meta != null && !(meta.getProperties().isEmpty() && meta.getTags().isEmpty()))));
     }
     return records;
   }
@@ -83,16 +89,20 @@ public final class MetadataCompatibility {
    *
    * The 5.x convention was that the map contains all scopes even if their metadata is empty.
    */
-  public static Map<MetadataScope, io.cdap.cdap.api.metadata.Metadata> toV5Metadata(Metadata metadata) {
+  public static Map<MetadataScope, io.cdap.cdap.api.metadata.Metadata> toV5Metadata(
+      Metadata metadata) {
     return MetadataScope.ALL.stream().collect(Collectors.toMap(
-      scope -> scope, scope -> toV5Metadata(metadata, scope)));
+        scope -> scope, scope -> toV5Metadata(metadata, scope)));
   }
 
   /**
-   * Convert a {@link Metadata} to a 5.x {@link io.cdap.cdap.api.metadata.Metadata} for a given scope.
+   * Convert a {@link Metadata} to a 5.x {@link io.cdap.cdap.api.metadata.Metadata} for a given
+   * scope.
    */
-  public static io.cdap.cdap.api.metadata.Metadata toV5Metadata(Metadata metadata, MetadataScope scope) {
-    return new io.cdap.cdap.api.metadata.Metadata(metadata.getProperties(scope), metadata.getTags(scope));
+  public static io.cdap.cdap.api.metadata.Metadata toV5Metadata(Metadata metadata,
+      MetadataScope scope) {
+    return new io.cdap.cdap.api.metadata.Metadata(metadata.getProperties(scope),
+        metadata.getTags(scope));
   }
 
   /**
@@ -105,7 +115,8 @@ public final class MetadataCompatibility {
       if (requestedScope == null || scope.name().equalsIgnoreCase(requestedScope)) {
         Set<String> tags = metadata.getTags(scope);
         Map<String, String> properties = metadata.getProperties(scope);
-        result.add(new io.cdap.cdap.common.metadata.MetadataRecord(entity, scope, properties, tags));
+        result.add(
+            new io.cdap.cdap.common.metadata.MetadataRecord(entity, scope, properties, tags));
       }
     }
     return result;

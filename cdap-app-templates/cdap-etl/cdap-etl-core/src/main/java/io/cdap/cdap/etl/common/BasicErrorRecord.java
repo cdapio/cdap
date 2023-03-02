@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * @param <T> the type of error record
  */
 public class BasicErrorRecord<T> implements ErrorRecord<T>, Serializable {
+
   private static final long serialVersionUID = 3026318232156561080L;
   private final T record;
   private final String stageName;

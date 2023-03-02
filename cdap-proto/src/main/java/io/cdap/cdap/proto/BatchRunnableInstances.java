@@ -19,16 +19,18 @@ package io.cdap.cdap.proto;
 import javax.annotation.Nullable;
 
 /**
- * Describes the instances of a program, as returned by the batch instances endpoint
- * POST /namespaces/{namespace}/instances.
+ * Describes the instances of a program, as returned by the batch instances endpoint POST
+ * /namespaces/{namespace}/instances.
  */
 public class BatchRunnableInstances extends BatchRunnable {
+
   private final int statusCode;
   private final Integer provisioned;
   private final Integer requested;
   private final String error;
 
-  public BatchRunnableInstances(BatchRunnable runnable, int statusCode, int provisioned, int requested) {
+  public BatchRunnableInstances(BatchRunnable runnable, int statusCode, int provisioned,
+      int requested) {
     super(runnable.appId, runnable.programType, runnable.programId, runnable.runnableId);
     this.statusCode = statusCode;
     this.provisioned = provisioned;

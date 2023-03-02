@@ -24,8 +24,10 @@ import io.cdap.cdap.api.annotation.Beta;
 // todo: consider unifying with Metrics interface
 @Beta
 public interface MetricsCollector {
+
   /**
    * Increment a metric value at the current time.
+   *
    * @param metricName Name of the metric.
    * @param value value of the metric.
    */
@@ -33,6 +35,7 @@ public interface MetricsCollector {
 
   /**
    * Gauge a metric value at the current time.
+   *
    * @param metricName Name of the metric.
    * @param value value of the metric.
    */

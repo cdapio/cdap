@@ -47,7 +47,8 @@ public class KafkaCheckpointManager extends AbstractCheckpointManager<KafkaOffse
   }
 
   @Override
-  protected Checkpoint<KafkaOffset> deserializeCheckpoint(@Nullable byte[] checkpoint) throws IOException {
+  protected Checkpoint<KafkaOffset> deserializeCheckpoint(@Nullable byte[] checkpoint)
+      throws IOException {
     if (checkpoint == null) {
       return new Checkpoint<>(new KafkaOffset(-1, -1), -1);
     }

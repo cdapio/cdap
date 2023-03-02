@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * Result for getting run records for a program.
  */
 public class ProgramHistory {
+
   private final ProgramId programId;
   private final List<RunRecord> runs;
   private final Exception exception;
@@ -60,8 +61,8 @@ public class ProgramHistory {
 
     ProgramHistory that = (ProgramHistory) o;
     return Objects.equals(programId, that.programId) &&
-      Objects.equals(runs, that.runs) &&
-      Objects.equals(exception, that.exception);
+        Objects.equals(runs, that.runs) &&
+        Objects.equals(exception, that.exception);
   }
 
   @Override

@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class ChangeSummary {
+
   @Nullable
   protected final String description;
   @Nullable
@@ -56,7 +57,8 @@ public class ChangeSummary {
 
     ChangeSummary that = (ChangeSummary) o;
 
-    return Objects.equals(description, that.description) && Objects.equals(parentVersion, that.parentVersion);
+    return Objects.equals(description, that.description) && Objects.equals(parentVersion,
+        that.parentVersion);
   }
 
   @Override
@@ -67,8 +69,8 @@ public class ChangeSummary {
   @Override
   public String toString() {
     return "ChangeSummary{" +
-      "description='" + description + '\'' +
-      ", parentVersion=" + parentVersion +
-      '}';
+        "description='" + description + '\'' +
+        ", parentVersion=" + parentVersion +
+        '}';
   }
 }

@@ -32,14 +32,17 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A configurer that is used for validation purposes. It can still instantiate plugins, but dataset operations
- * are ignored.
+ * A configurer that is used for validation purposes. It can still instantiate plugins, but dataset
+ * operations are ignored.
  */
-public class ValidatingConfigurer implements PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
+public class ValidatingConfigurer implements PluginConfigurer, DatasetConfigurer,
+    FeatureFlagsProvider {
+
   private final PluginConfigurer delegate;
   private final FeatureFlagsProvider featureFlagsProvider;
 
-  public ValidatingConfigurer(PluginConfigurer delegate, FeatureFlagsProvider featureFlagsProvider) {
+  public ValidatingConfigurer(PluginConfigurer delegate,
+      FeatureFlagsProvider featureFlagsProvider) {
     this.delegate = delegate;
     this.featureFlagsProvider = featureFlagsProvider;
   }
@@ -70,7 +73,8 @@ public class ValidatingConfigurer implements PluginConfigurer, DatasetConfigurer
   }
 
   @Override
-  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
+      DatasetProperties props) {
     // no-op
   }
 
@@ -81,21 +85,24 @@ public class ValidatingConfigurer implements PluginConfigurer, DatasetConfigurer
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                         PluginSelector selector) {
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
     return delegate.usePlugin(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Nullable
   @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                                     PluginSelector selector) {
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
     return delegate.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Override
-  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
+  public Map<String, String> evaluateMacros(Map<String, String> properties,
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException {
     return delegate.evaluateMacros(properties, evaluator, options);
   }
 }

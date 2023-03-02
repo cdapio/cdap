@@ -20,12 +20,14 @@ package io.cdap.cdap.api.dataset.lib.cube;
  * A single measurement in the {@link CubeFact}.
  */
 public class Measurement {
+
   private final String name;
   private final MeasureType type;
   private final long value;
 
   /**
    * Creates a {@link Measurement}.
+   *
    * @param name name of the measurement
    * @param type type of the measurement
    * @param value value of the measurement
@@ -38,6 +40,7 @@ public class Measurement {
 
   /**
    * Creates a {@link Measurement}.
+   *
    * @param measurement existing measurement
    * @param name name of the measurement
    */

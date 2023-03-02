@@ -39,7 +39,8 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
   private final Provider<WorkerProgramRunner> workerProgramRunnerProvider;
 
   @Inject
-  InMemoryWorkerRunner(CConfiguration cConf, Provider<WorkerProgramRunner> workerProgramRunnerProvider) {
+  InMemoryWorkerRunner(CConfiguration cConf,
+      Provider<WorkerProgramRunner> workerProgramRunnerProvider) {
     super(cConf);
     this.workerProgramRunnerProvider = workerProgramRunnerProvider;
   }
@@ -52,18 +53,20 @@ public class InMemoryWorkerRunner extends AbstractInMemoryProgramRunner {
 
     ProgramType type = program.getType();
     Preconditions.checkNotNull(type, "Missing processor type.");
-    Preconditions.checkArgument(type == ProgramType.WORKER, "Only WORKER process type is supported.");
+    Preconditions.checkArgument(type == ProgramType.WORKER,
+        "Only WORKER process type is supported.");
 
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
 
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
-                                                        String.valueOf(workerSpec.getInstances()));
+        String.valueOf(workerSpec.getInstances()));
 
-    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
-                                                                workerSpec.getDescription(), workerSpec.getProperties(),
-                                                                workerSpec.getDatasets(), workerSpec.getResources(),
-                                                                Integer.valueOf(instances), workerSpec.getPlugins());
+    WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(),
+        workerSpec.getName(),
+        workerSpec.getDescription(), workerSpec.getProperties(),
+        workerSpec.getDatasets(), workerSpec.getResources(),
+        Integer.valueOf(instances), workerSpec.getPlugins());
     return startAll(program, options, newWorkerSpec.getInstances());
   }
 

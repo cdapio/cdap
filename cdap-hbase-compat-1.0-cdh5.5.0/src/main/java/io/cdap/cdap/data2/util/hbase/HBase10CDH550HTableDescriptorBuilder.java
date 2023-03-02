@@ -63,7 +63,7 @@ public class HBase10CDH550HTableDescriptorBuilder extends HTableDescriptorBuilde
 
   @Override
   public HTableDescriptorBuilder addCoprocessor(String className, Path jarFilePath, int priority,
-                                                Map<String, String> keyValues) throws IOException {
+      Map<String, String> keyValues) throws IOException {
     instance.addCoprocessor(className, jarFilePath, priority, keyValues);
     return this;
   }

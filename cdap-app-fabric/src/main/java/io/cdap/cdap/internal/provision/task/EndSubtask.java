@@ -24,6 +24,7 @@ import java.util.Optional;
  * An end state.
  */
 public class EndSubtask extends ProvisioningSubtask {
+
   public static final EndSubtask INSTANCE = new EndSubtask();
 
   private EndSubtask() {

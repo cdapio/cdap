@@ -25,8 +25,8 @@ import io.cdap.cdap.etl.common.TypeChecker;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link BatchReducibleAggregator} that makes sure logging, classloading, and other pipeline
- * capabilities are setup correctly.
+ * Wrapper around {@link BatchReducibleAggregator} that makes sure logging, classloading, and other
+ * pipeline capabilities are setup correctly.
  *
  * @param <GROUP_KEY> group key type. Must be a supported type
  * @param <GROUP_VALUE> group value type. Must be a supported type
@@ -34,14 +34,16 @@ import java.util.concurrent.Callable;
  * @param <OUT> output object type
  */
 public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
-  extends BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
-  implements PluginWrapper<BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>> {
+    extends BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
+    implements PluginWrapper<BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>> {
+
   private final BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
-  public WrappedReduceAggregator(BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator,
-                                 Caller caller, OperationTimer operationTimer) {
+  public WrappedReduceAggregator(
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator,
+      Caller caller, OperationTimer operationTimer) {
     this.aggregator = aggregator;
     this.caller = caller;
     this.operationTimer = operationTimer;
@@ -133,7 +135,8 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
   }
 
   @Override
-  public void finalize(GROUP_KEY groupKey, AGG_VALUE groupValue, Emitter<OUT> emitter) throws Exception {
+  public void finalize(GROUP_KEY groupKey, AGG_VALUE groupValue, Emitter<OUT> emitter)
+      throws Exception {
     operationTimer.start();
     try {
       caller.call((Callable<Void>) () -> {

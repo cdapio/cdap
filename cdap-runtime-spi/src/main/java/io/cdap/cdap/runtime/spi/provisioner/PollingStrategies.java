@@ -36,15 +36,16 @@ public class PollingStrategies {
   }
 
   /**
-   * A {@link PollingStrategy} that will wait for a specified amount of time before performing the first poll.
-   * Every subsequent poll will be determined by the specified polling strategy.
+   * A {@link PollingStrategy} that will wait for a specified amount of time before performing the
+   * first poll. Every subsequent poll will be determined by the specified polling strategy.
    *
    * @param strategy polling strategy to use after the first poll
    * @param duration time to wait before the first poll
    * @param timeUnit time unit of the wait
    * @return a polling strategy that has an initial delay added in
    */
-  public static PollingStrategy initialDelay(PollingStrategy strategy, long duration, TimeUnit timeUnit) {
+  public static PollingStrategy initialDelay(PollingStrategy strategy, long duration,
+      TimeUnit timeUnit) {
     return (numPolls, startTime) -> {
       if (numPolls == 0) {
         return timeUnit.toMillis(duration);
@@ -54,8 +55,9 @@ public class PollingStrategies {
   }
 
   /**
-   * A {@link PollingStrategy} that will wait for a specified base amount of time plus some random jitter time
-   * before performing the first poll. Every subsequent poll will be determined by the specified polling strategy.
+   * A {@link PollingStrategy} that will wait for a specified base amount of time plus some random
+   * jitter time before performing the first poll. Every subsequent poll will be determined by the
+   * specified polling strategy.
    *
    * @param strategy polling strategy to use after the first poll
    * @param baseDuration wait at least this amount of time before the first poll
@@ -63,8 +65,9 @@ public class PollingStrategies {
    * @param timeUnit time unit of the wait
    * @return a polling strategy that has a random amount of initial delay added in
    */
-  public static PollingStrategy initialDelay(PollingStrategy strategy, long baseDuration, long jitterDuration,
-                                             TimeUnit timeUnit) {
+  public static PollingStrategy initialDelay(PollingStrategy strategy, long baseDuration,
+      long jitterDuration,
+      TimeUnit timeUnit) {
     return (numPolls, startTime) -> {
       if (numPolls == 0) {
         return timeUnit.toMillis((long) (baseDuration + Math.random() * jitterDuration));

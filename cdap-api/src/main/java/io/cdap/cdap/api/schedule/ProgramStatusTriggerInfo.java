@@ -49,12 +49,14 @@ public interface ProgramStatusTriggerInfo extends TriggerInfo {
   String getProgram();
 
   /**
-   * @return The program run Id of the triggering program run that can satisfy the program status trigger.
+   * @return The program run Id of the triggering program run that can satisfy the program status
+   *     trigger.
    */
   RunId getRunId();
 
   /**
-   * @return The program status of the triggering program run that can satisfy the program status trigger.
+   * @return The program status of the triggering program run that can satisfy the program status
+   *     trigger.
    */
   ProgramStatus getProgramStatus();
 
@@ -66,7 +68,7 @@ public interface ProgramStatusTriggerInfo extends TriggerInfo {
 
   /**
    * @return An immutable map of the runtime arguments of the triggering program run that can
-   *         satisfy the program status trigger.
+   *     satisfy the program status trigger.
    */
   Map<String, String> getRuntimeArguments();
 }

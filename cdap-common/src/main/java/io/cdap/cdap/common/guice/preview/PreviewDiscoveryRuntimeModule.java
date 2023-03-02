@@ -26,6 +26,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
  * Provides Guice bindings for DiscoveryService and DiscoveryServiceClient for preview mode.
  */
 public class PreviewDiscoveryRuntimeModule extends AbstractModule {
+
   public static final String ACTUAL_DISCOVERY_CLIENT = "actualDiscoveryClient";
 
   private final DiscoveryServiceClient actualDiscoveryClient;
@@ -37,7 +38,7 @@ public class PreviewDiscoveryRuntimeModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(DiscoveryServiceClient.class).annotatedWith(
-      Names.named(ACTUAL_DISCOVERY_CLIENT)).toInstance(actualDiscoveryClient);
+        Names.named(ACTUAL_DISCOVERY_CLIENT)).toInstance(actualDiscoveryClient);
     bind(DiscoveryService.class).to(PreviewDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(PreviewDiscoveryService.class);
     bind(PreviewDiscoveryService.class).in(Scopes.SINGLETON);

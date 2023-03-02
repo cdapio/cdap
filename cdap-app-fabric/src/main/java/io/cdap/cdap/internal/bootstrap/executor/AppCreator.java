@@ -39,6 +39,7 @@ import java.util.Collections;
  * Creates an application if it doesn't already exist.
  */
 public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
+
   private static final Gson GSON = new Gson();
   private final ApplicationLifecycleService appLifecycleService;
 
@@ -57,16 +58,19 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
     }
 
     KerberosPrincipalId ownerPrincipalId =
-      arguments.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(arguments.getOwnerPrincipal());
+        arguments.getOwnerPrincipal() == null ? null
+            : new KerberosPrincipalId(arguments.getOwnerPrincipal());
 
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
 
     try {
-      appLifecycleService.deployApp(appRef.getParent(), appRef.getApplication(), ApplicationId.DEFAULT_VERSION,
-                                    artifactSummary, configString, arguments.getChange(), null, x -> { },
-                                    ownerPrincipalId, arguments.canUpdateSchedules(), false,
-                                    Collections.emptyMap());
+      appLifecycleService.deployApp(appRef.getParent(), appRef.getApplication(),
+          ApplicationId.DEFAULT_VERSION,
+          artifactSummary, configString, arguments.getChange(), null, x -> {
+          },
+          ownerPrincipalId, arguments.canUpdateSchedules(), false,
+          Collections.emptyMap());
     } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
       // these exceptions are for sure not retry-able. It's hard to tell if the others are, so we just try retrying
       // up to the default time limit
@@ -95,13 +99,15 @@ public class AppCreator extends BaseStepExecutor<AppCreator.Arguments> {
    * Arguments required to create an application
    */
   static class Arguments extends AppRequest<JsonObject> implements Validatable {
+
     private String namespace;
     private String name;
     private boolean overwrite;
 
     Arguments(AppRequest<JsonObject> appRequest, String namespace, String name, boolean overwrite) {
-      super(appRequest.getArtifact(), appRequest.getConfig(), appRequest.getPreview(), appRequest.getOwnerPrincipal(),
-            appRequest.canUpdateSchedules());
+      super(appRequest.getArtifact(), appRequest.getConfig(), appRequest.getPreview(),
+          appRequest.getOwnerPrincipal(),
+          appRequest.canUpdateSchedules());
       this.namespace = namespace;
       this.name = name;
       this.overwrite = overwrite;

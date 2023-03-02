@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.proto.validation.SimpleFailureCollector;
  * Mock context for connector
  */
 public class MockConnectorContext implements ConnectorContext {
+
   private final FailureCollector failureCollector;
   private final PluginConfigurer pluginConfigurer;
 

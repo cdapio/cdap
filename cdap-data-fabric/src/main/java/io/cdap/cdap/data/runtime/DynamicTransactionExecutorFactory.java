@@ -28,8 +28,8 @@ import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * Implementation of {@link TransactionExecutorFactory} that supports dynamic creation of {@link TransactionContext}
- * to be used for the transactional execution.
+ * Implementation of {@link TransactionExecutorFactory} that supports dynamic creation of {@link
+ * TransactionContext} to be used for the transactional execution.
  */
 public class DynamicTransactionExecutorFactory implements TransactionExecutorFactory {
 

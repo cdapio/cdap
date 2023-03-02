@@ -23,6 +23,7 @@ import java.util.Objects;
  * Creation request for a connection
  */
 public class ConnectionCreationRequest {
+
   private final String description;
   // flag indicating whether the creation request should overwrite an existing connection with same connection id
   // but different connection name, i.e, a b and a.b both convert to id a_b
@@ -63,8 +64,8 @@ public class ConnectionCreationRequest {
 
     ConnectionCreationRequest that = (ConnectionCreationRequest) o;
     return overWrite == that.overWrite &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(plugin, that.plugin);
+        Objects.equals(description, that.description) &&
+        Objects.equals(plugin, that.plugin);
   }
 
   @Override

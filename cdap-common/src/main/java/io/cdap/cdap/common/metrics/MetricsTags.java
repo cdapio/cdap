@@ -42,16 +42,16 @@ public final class MetricsTags {
 
   public static Map<String, String> service(ServiceId serviceId) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, serviceId.getNamespace(),
-      Constants.Metrics.Tag.APP, serviceId.getApplication(),
-      Constants.Metrics.Tag.SERVICE, serviceId.getProgram());
+        Constants.Metrics.Tag.NAMESPACE, serviceId.getNamespace(),
+        Constants.Metrics.Tag.APP, serviceId.getApplication(),
+        Constants.Metrics.Tag.SERVICE, serviceId.getProgram());
   }
 
   public static Map<String, String> serviceHandler(ServiceId id, String handlerId) {
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
-      Constants.Metrics.Tag.APP, id.getApplication(),
-      Constants.Metrics.Tag.SERVICE, id.getProgram(),
-      Constants.Metrics.Tag.HANDLER, handlerId);
+        Constants.Metrics.Tag.NAMESPACE, id.getNamespace(),
+        Constants.Metrics.Tag.APP, id.getApplication(),
+        Constants.Metrics.Tag.SERVICE, id.getProgram(),
+        Constants.Metrics.Tag.HANDLER, handlerId);
   }
 }

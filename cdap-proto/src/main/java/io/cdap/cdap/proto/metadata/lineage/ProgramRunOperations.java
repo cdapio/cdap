@@ -25,6 +25,7 @@ import java.util.Set;
  * Represents a set of program runs that performed the same set of field operations.
  */
 public class ProgramRunOperations {
+
   private final Set<ProgramRunId> programRunIds;
   private final Set<Operation> operations;
 
@@ -51,7 +52,7 @@ public class ProgramRunOperations {
     }
     ProgramRunOperations that = (ProgramRunOperations) o;
     return Objects.equals(programRunIds, that.programRunIds) &&
-            Objects.equals(operations, that.operations);
+        Objects.equals(operations, that.operations);
   }
 
   @Override

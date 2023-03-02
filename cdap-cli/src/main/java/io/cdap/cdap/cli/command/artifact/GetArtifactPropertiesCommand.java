@@ -39,6 +39,7 @@ import java.util.Map;
  * Gets properties for an artifact.
  */
 public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
+
   private final ArtifactClient artifactClient;
 
   @Inject
@@ -66,30 +67,31 @@ public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
     List<Map.Entry<String, String>> rows = new ArrayList<>(info.getProperties().size());
     rows.addAll(info.getProperties().entrySet());
     Table table = Table.builder()
-      .setHeader("key", "value")
-      .setRows(rows, new RowMaker<Map.Entry<String, String>>() {
-        @Override
-        public List<String> makeRow(Map.Entry<String, String> entry) {
-          List<String> columns = new ArrayList<>(2);
-          columns.add(entry.getKey());
-          columns.add(entry.getValue());
-          return columns;
-        }
-      })
-      .build();
+        .setHeader("key", "value")
+        .setRows(rows, new RowMaker<Map.Entry<String, String>>() {
+          @Override
+          public List<String> makeRow(Map.Entry<String, String> entry) {
+            List<String> columns = new ArrayList<>(2);
+            columns.add(entry.getKey());
+            columns.add(entry.getValue());
+            return columns;
+          }
+        })
+        .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
     return String.format("get artifact properties <%s> <%s> [<%s>]",
-                         ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
+        ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the properties of %s. If no scope is provided, properties are looked for first in " +
-                         "the 'SYSTEM' and then in the 'USER' scope.",
-                         Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+    return String.format(
+        "Gets the properties of %s. If no scope is provided, properties are looked for first in " +
+            "the 'SYSTEM' and then in the 'USER' scope.",
+        Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

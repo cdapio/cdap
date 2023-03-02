@@ -25,6 +25,7 @@ import java.util.List;
  * Parses a SQL like schema into a {@link Schema}.
  */
 public final class SQLSchemaParser {
+
   private String schema;
   private int pos;
   private int end;
@@ -196,7 +197,7 @@ public final class SQLSchemaParser {
     char currChar = schema.charAt(pos);
     int endPos = pos;
     while (!(Character.isWhitespace(currChar) ||
-      currChar == ':' || currChar == ',' || currChar == '<' || currChar == '>')) {
+        currChar == ':' || currChar == ',' || currChar == '<' || currChar == '>')) {
       endPos++;
       if (endPos == end) {
         break;

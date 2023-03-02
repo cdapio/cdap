@@ -55,7 +55,7 @@ public class SourceControlMeta {
   @Override
   public String toString() {
     return "SourceControlMeta{" +
-             "fileHash='" + fileHash + '\'' +
-             '}';
+        "fileHash='" + fileHash + '\'' +
+        '}';
   }
 }

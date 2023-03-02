@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
  * @see TestBase
  */
 public class SystemAppTestBase extends TestBase {
+
   private static TransactionRunner transactionRunner;
   private static StructuredTableAdmin tableAdmin;
 

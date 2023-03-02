@@ -42,9 +42,10 @@ import org.apache.twill.discovery.Discoverable;
 public final class Networks {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
-    .create();
-  private static final Type DISCOVERABLE_SET = new TypeToken<Set<Discoverable>>() { }.getType();
+      .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
+      .create();
+  private static final Type DISCOVERABLE_SET = new TypeToken<Set<Discoverable>>() {
+  }.getType();
 
   /**
    * Resolves the given hostname into {@link InetAddress}.
@@ -67,6 +68,7 @@ public final class Networks {
 
   /**
    * Find a random free port in localhost for binding.
+   *
    * @return A port number or -1 for failure.
    */
   public static int getRandomPort() {
@@ -97,8 +99,8 @@ public final class Networks {
   }
 
   /**
-   * Adds the {@link Discoverable} into the given {@link CConfiguration} with the given key.
-   * It is expected to be read back by the {@link #getDiscoverables(CConfiguration, String)} method.
+   * Adds the {@link Discoverable} into the given {@link CConfiguration} with the given key. It is
+   * expected to be read back by the {@link #getDiscoverables(CConfiguration, String)} method.
    *
    * @param cConf the configuration to set to
    * @param key the configuration key
@@ -111,19 +113,21 @@ public final class Networks {
   }
 
   /**
-   * Removes the given {@link Discoverable} from the given {@link CConfiguration} stored with the given key.
+   * Removes the given {@link Discoverable} from the given {@link CConfiguration} stored with the
+   * given key.
    *
    * @param cConf the configuration to remove from
    * @param key the configuration key
    * @param discoverable the {@link Discoverable} to remove
    */
-  public static void removeDiscoverable(CConfiguration cConf, String key, Discoverable discoverable) {
+  public static void removeDiscoverable(CConfiguration cConf, String key,
+      Discoverable discoverable) {
     Set<Discoverable> currentSet = parseDiscoverables(cConf, key);
     // TODO: A workaround for TWILL-264. Need to wait for 0.14 release of Twill.
     currentSet.removeIf(
-      d -> Objects.equals(d.getName(), discoverable.getName())
-        && Objects.equals(d.getSocketAddress(), discoverable.getSocketAddress())
-        && Arrays.equals(d.getPayload(), discoverable.getPayload()));
+        d -> Objects.equals(d.getName(), discoverable.getName())
+            && Objects.equals(d.getSocketAddress(), discoverable.getSocketAddress())
+            && Arrays.equals(d.getPayload(), discoverable.getPayload()));
 
     if (currentSet.isEmpty()) {
       cConf.unset(key);
@@ -133,9 +137,9 @@ public final class Networks {
   }
 
   /**
-   * Gets a set of {@link Discoverable}es from the given {@link CConfiguration} with the given key. It expects
-   * the value is set by the {@link #addDiscoverable(CConfiguration, String, Discoverable)} method.
-   * The returned addresses are not resolved.
+   * Gets a set of {@link Discoverable}es from the given {@link CConfiguration} with the given key.
+   * It expects the value is set by the {@link #addDiscoverable(CConfiguration, String,
+   * Discoverable)} method. The returned addresses are not resolved.
    *
    * @param cConf the configuration to read from
    * @param key the configuration key
@@ -148,8 +152,8 @@ public final class Networks {
   }
 
   /**
-   * Sets the {@link InetSocketAddress} into the given {@link CConfiguration} with the given key.
-   * It is expected to be read back by the {@link #getAddress(CConfiguration, String)} method.
+   * Sets the {@link InetSocketAddress} into the given {@link CConfiguration} with the given key. It
+   * is expected to be read back by the {@link #getAddress(CConfiguration, String)} method.
    *
    * @param cConf the configuration to set to
    * @param key the configuration key
@@ -160,8 +164,8 @@ public final class Networks {
   }
 
   /**
-   * Gets a {@link InetSocketAddress} from the given {@link CConfiguration} with the given key. It expects
-   * the value in the format of {@code host:port}. The returned address is not resolved.
+   * Gets a {@link InetSocketAddress} from the given {@link CConfiguration} with the given key. It
+   * expects the value in the format of {@code host:port}. The returned address is not resolved.
    *
    * @param cConf the configuration to read from
    * @param key the configuration key
@@ -196,11 +200,12 @@ public final class Networks {
     int idx = value.lastIndexOf(':');
     if (idx < 0) {
       throw new IllegalArgumentException("Failed to parse address from " + value
-                                           + ". Expected to be in the format of host:port.");
+          + ". Expected to be in the format of host:port.");
     }
 
     // Parse and return the address
-    return InetSocketAddress.createUnresolved(value.substring(0, idx), Integer.parseInt(value.substring(idx + 1)));
+    return InetSocketAddress.createUnresolved(value.substring(0, idx),
+        Integer.parseInt(value.substring(idx + 1)));
   }
 
   private Networks() {

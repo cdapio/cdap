@@ -37,7 +37,8 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -55,15 +56,16 @@ public class GetProgramStatusCommand extends AbstractAuthCommand {
     String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
     String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
     ProgramId programId = cliConfig.getCurrentNamespace().app(appId, appVersion)
-      .program(elementType.getProgramType(), programName);
+        .program(elementType.getProgramType(), programName);
     String status = programClient.getStatus(programId);
     output.println(status);
   }
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s> [version <%s>]", elementType.getShortName(), elementType.getArgumentName(),
-                         ArgumentName.APP_VERSION);
+    return String.format("get %s status <%s> [version <%s>]", elementType.getShortName(),
+        elementType.getArgumentName(),
+        ArgumentName.APP_VERSION);
   }
 
   @Override

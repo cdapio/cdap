@@ -19,9 +19,11 @@ package io.cdap.cdap.report.proto;
 import javax.annotation.Nullable;
 
 /**
- * Represents the meta information of a report shared by {@link ReportStatusInfo} and {@link ReportGenerationInfo}
+ * Represents the meta information of a report shared by {@link ReportStatusInfo} and {@link
+ * ReportGenerationInfo}
  */
 public class ReportMetaInfo {
+
   private final String name;
   @Nullable
   private final String description;
@@ -30,7 +32,8 @@ public class ReportMetaInfo {
   private final Long expiry;
   private final ReportStatus status;
 
-  public ReportMetaInfo(String name, String description, long created, Long expiry, ReportStatus status) {
+  public ReportMetaInfo(String name, String description, long created, Long expiry,
+      ReportStatus status) {
     this.name = name;
     this.description = description;
     this.created = created;
@@ -61,7 +64,8 @@ public class ReportMetaInfo {
   }
 
   /**
-   * @return the expiry time of the report in seconds or {@code null} if the report is saved and will never expire
+   * @return the expiry time of the report in seconds or {@code null} if the report is saved and
+   *     will never expire
    */
   @Nullable
   public Long getExpiry() {

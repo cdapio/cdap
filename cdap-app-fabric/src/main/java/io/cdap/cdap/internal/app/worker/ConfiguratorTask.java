@@ -50,25 +50,26 @@ import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 /**
  * ConfiguratorTask is a RunnableTask for performing the configurator config.
  */
 public class ConfiguratorTask implements RunnableTask {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
-    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
-    .create();
+
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .create();
   private static final Logger LOG = LoggerFactory.getLogger(ConfiguratorTask.class);
 
   private final CConfiguration cConf;
@@ -77,8 +78,8 @@ public class ConfiguratorTask implements RunnableTask {
 
   @Inject
   ConfiguratorTask(CConfiguration cConf,
-                   DiscoveryService discoveryService,
-                   DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -86,15 +87,15 @@ public class ConfiguratorTask implements RunnableTask {
 
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf,
-                                        DiscoveryService discoveryService,
-                                        DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient) {
     return Guice.createInjector(
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new LocalLocationModule(),
-      new ConfiguratorTaskModule(),
-      new AuthenticationContextModules().getMasterWorkerModule(),
-      new RunnableTaskModule(discoveryService, discoveryServiceClient)
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new LocalLocationModule(),
+        new ConfiguratorTaskModule(),
+        new AuthenticationContextModules().getMasterWorkerModule(),
+        new RunnableTaskModule(discoveryService, discoveryServiceClient)
     );
   }
 
@@ -103,16 +104,17 @@ public class ConfiguratorTask implements RunnableTask {
     AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
 
     Injector injector = createInjector(cConf, discoveryService, discoveryServiceClient);
-    ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class).configure(deploymentInfo);
+    ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class)
+        .configure(deploymentInfo);
     AppSpecInfo appSpecInfo = result.getAppSpecInfo();
 
     // If configuration succeeded and if only system artifacts are involved, no need to restart the task
     if (result.getExitCode() == 0 && appSpecInfo != null
         && NamespaceId.SYSTEM.equals(deploymentInfo.getArtifactId().getNamespaceId())) {
       boolean hasUserPlugins = appSpecInfo.getAppSpec().getPlugins().values().stream()
-        .map(Plugin::getArtifactId)
-        .map(ArtifactId::getScope)
-        .anyMatch(ArtifactScope.USER::equals);
+          .map(Plugin::getArtifactId)
+          .map(ArtifactId::getScope)
+          .anyMatch(ArtifactScope.USER::equals);
 
       context.setTerminateOnComplete(hasUserPlugins);
     }
@@ -125,6 +127,7 @@ public class ConfiguratorTask implements RunnableTask {
    */
   @VisibleForTesting
   static class ConfiguratorTaskRunner {
+
     private final Impersonator impersonator;
     private final PluginFinder pluginFinder;
     private final ArtifactRepository artifactRepository;
@@ -134,8 +137,8 @@ public class ConfiguratorTask implements RunnableTask {
 
     @Inject
     ConfiguratorTaskRunner(Impersonator impersonator, PluginFinder pluginFinder,
-                           ArtifactRepository artifactRepository, CConfiguration cConf,
-                           ArtifactLocalizerClient artifactLocalizerClient, RemoteClientFactory remoteClientFactory) {
+        ArtifactRepository artifactRepository, CConfiguration cConf,
+        ArtifactLocalizerClient artifactLocalizerClient, RemoteClientFactory remoteClientFactory) {
       this.impersonator = impersonator;
       this.pluginFinder = pluginFinder;
       this.artifactRepository = artifactRepository;
@@ -146,16 +149,19 @@ public class ConfiguratorTask implements RunnableTask {
 
     public ConfigResponse configure(AppDeploymentInfo info) throws Exception {
       // Getting the pipeline app from appfabric
-      LOG.debug("Fetching artifact '{}' from app-fabric to create artifact class loader.", info.getArtifactId());
+      LOG.debug("Fetching artifact '{}' from app-fabric to create artifact class loader.",
+          info.getArtifactId());
 
       Location artifactLocation = Locations
-        .toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(info.getArtifactId()));
+          .toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(info.getArtifactId()));
 
       // Creates a new deployment info with the newly fetched artifact
-      AppDeploymentInfo deploymentInfo = AppDeploymentInfo.copyFrom(info).setArtifactLocation(artifactLocation).build();
-      InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
-                                                                   artifactRepository, remoteClientFactory,
-                                                                   deploymentInfo);
+      AppDeploymentInfo deploymentInfo = AppDeploymentInfo.copyFrom(info)
+          .setArtifactLocation(artifactLocation).build();
+      InMemoryConfigurator configurator = new InMemoryConfigurator(cConf, pluginFinder,
+          impersonator,
+          artifactRepository, remoteClientFactory,
+          deploymentInfo);
       try {
         return configurator.config().get(120, TimeUnit.SECONDS);
       } catch (ExecutionException e) {

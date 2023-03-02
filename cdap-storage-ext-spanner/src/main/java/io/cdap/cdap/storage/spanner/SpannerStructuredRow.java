@@ -118,7 +118,8 @@ public class SpannerStructuredRow implements StructuredRow {
             // this should never happen since all the keys are from the table schema
             // and should never contain other types
             throw new IllegalStateException(
-              String.format("The type %s of the primary key %s is not a valid key type", type, key));
+                String.format("The type %s of the primary key %s is not a valid key type", type,
+                    key));
         }
       }
 
@@ -130,8 +131,8 @@ public class SpannerStructuredRow implements StructuredRow {
   @Override
   public String toString() {
     return "SpannerStructuredRow{" +
-      "struct=" + struct +
-      '}';
+        "struct=" + struct +
+        '}';
   }
 
   private boolean isNull(String fieldName) {

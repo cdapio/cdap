@@ -25,38 +25,43 @@ import java.util.Set;
 
 /**
  * Interface for managing privileges on {@link EntityId entities}.
+ *
  * @deprecated use {@link PermissionManager}
  */
 @Deprecated
 public interface PrivilegesManager {
 
   /**
-   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on {@link EntityId}
-   * represented by the {@link Authorizable}
-   * Note: this grant is used to support wildcard privilege management
+   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on {@link
+   * EntityId} represented by the {@link Authorizable} Note: this grant is used to support wildcard
+   * privilege management
    *
    * @param authorizable The {@link Authorizable} on which the {@link Action} are to be granted
-   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
+   * @param principal the {@link Principal} that performs the actions. This could be a user, or
+   *     role
    * @param actions the set of {@link Action actions} to grant.
    */
   void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
 
   /**
-   * Revokes a {@link Principal} authorization to perform a set of {@link Action actions} on {@link EntityId}
-   * represented by the {@link Authorizable}
-   * Note: this revoke is used to support wildcard privilege management.
+   * Revokes a {@link Principal} authorization to perform a set of {@link Action actions} on {@link
+   * EntityId} represented by the {@link Authorizable} Note: this revoke is used to support wildcard
+   * privilege management.
    *
-   * @param authorizable the {@link Authorizable} whose {@link Action actions} are to be revoked
-   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
+   * @param authorizable the {@link Authorizable} whose {@link Action actions} are to be
+   *     revoked
+   * @param principal the {@link Principal} that performs the actions. This could be a user,
+   *     group or role
    * @param actions the set of {@link Action actions} to revoke
    */
   void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
 
   /**
-   * Revokes all {@link Principal}s authorization to perform any set of {@link Action actions} on {@link EntityId}
-   * represented by the {@link Authorizable}
+   * Revokes all {@link Principal}s authorization to perform any set of {@link Action actions} on
+   * {@link EntityId} represented by the {@link Authorizable}
    *
-   * @param authorizable the {@link Authorizable} on which all {@link Action actions} are to be revoked
+   * @param authorizable the {@link Authorizable} on which all {@link Action actions} are to be
+   *     revoked
    */
   void revoke(Authorizable authorizable) throws Exception;
 

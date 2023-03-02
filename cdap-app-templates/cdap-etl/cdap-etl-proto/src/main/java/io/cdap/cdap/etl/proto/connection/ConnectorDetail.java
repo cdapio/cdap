@@ -24,15 +24,17 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Response for the spec endpoint. The schema and properties are set on each available plugins.
- * This looks duplicated but it is our standard way on representing a plugin.
- * Detail information about a connector, contains all the plugins related to the connector and their versions.
+ * Response for the spec endpoint. The schema and properties are set on each available plugins. This
+ * looks duplicated but it is our standard way on representing a plugin. Detail information about a
+ * connector, contains all the plugins related to the connector and their versions.
  */
 public class ConnectorDetail {
+
   private final Set<PluginDetail> relatedPlugins;
   private final Set<SampleType> supportedSampleTypes;
 
-  public ConnectorDetail(Set<PluginDetail> relatedPlugins, @Nullable Set<SampleType> supportedSampleTypes) {
+  public ConnectorDetail(Set<PluginDetail> relatedPlugins,
+      @Nullable Set<SampleType> supportedSampleTypes) {
     this.relatedPlugins = relatedPlugins;
     if (supportedSampleTypes != null) {
       this.supportedSampleTypes = supportedSampleTypes;
@@ -65,7 +67,7 @@ public class ConnectorDetail {
 
     ConnectorDetail that = (ConnectorDetail) o;
     return Objects.equals(relatedPlugins, that.relatedPlugins)
-            && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
+        && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
   }
 
   @Override

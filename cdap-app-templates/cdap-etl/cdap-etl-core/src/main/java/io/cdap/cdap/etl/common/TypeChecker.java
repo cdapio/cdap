@@ -56,7 +56,7 @@ public class TypeChecker {
 
   public static Class getParameterClass(Object instance, Class instanceClass, int parameterNumber) {
     return TypeToken.of(instance.getClass())
-      .resolveType(instanceClass.getTypeParameters()[parameterNumber]).getRawType();
+        .resolveType(instanceClass.getTypeParameters()[parameterNumber]).getRawType();
   }
 
   public static boolean groupKeyIsStructuredRecord(Aggregator aggregator) {

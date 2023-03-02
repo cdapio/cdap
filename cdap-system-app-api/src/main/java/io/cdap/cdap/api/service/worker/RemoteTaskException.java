@@ -26,11 +26,13 @@ public class RemoteTaskException extends Exception {
   private final String remoteExceptionClassName;
 
   /**
-   * @param remoteExceptionClassName the Exception class name that was thrown from the remote task
+   * @param remoteExceptionClassName the Exception class name that was thrown from the remote
+   *     task
    * @param message String message for the exception
    * @param cause {@link Throwable} cause for the exception, is nullable.
    */
-  public RemoteTaskException(String remoteExceptionClassName, String message, @Nullable Throwable cause) {
+  public RemoteTaskException(String remoteExceptionClassName, String message,
+      @Nullable Throwable cause) {
     super(message, cause);
     this.remoteExceptionClassName = remoteExceptionClassName;
   }

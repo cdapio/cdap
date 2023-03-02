@@ -86,11 +86,11 @@ public class GenerateClientUsageExample {
 
     // Get only the preferences of MyApp application which is deployed in the Dev namespace
     Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(
-      new ApplicationId("Dev", "MyApp"), false);
+        new ApplicationId("Dev", "MyApp"), false);
 
     // Get the resolved preferences (collapsed with higher level(s) of preferences)
     Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(
-      new ApplicationId("Dev", "MyApp"), true);
+        new ApplicationId("Dev", "MyApp"), true);
   }
 
   public void programClient() throws Exception {
@@ -106,7 +106,8 @@ public class GenerateClientUsageExample {
     programClient.getLiveInfo(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
 
     // Fetch program logs in the WordCount example
-    programClient.getProgramLogs(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"), 0, Long.MAX_VALUE);
+    programClient.getProgramLogs(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"), 0,
+        Long.MAX_VALUE);
 
     // Scale a service in the HelloWorld example
     programClient.setServiceInstances(NamespaceId.DEFAULT.app("HelloWorld").service("greet"), 3);
@@ -154,7 +155,8 @@ public class GenerateClientUsageExample {
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
     // Fetch the dataset type information using the type name
-    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(NamespaceId.DEFAULT.datasetType("someDatasetType"));
+    DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(
+        NamespaceId.DEFAULT.datasetType("someDatasetType"));
 
     // Fetch the dataset type information using the classname
     datasetTypeClient.get(NamespaceId.DEFAULT.datasetType(SomeDataset.class.getName()));
@@ -166,7 +168,7 @@ public class GenerateClientUsageExample {
 
     // Fetch service information using the service in the PurchaseApp example
     ServiceSpecification serviceSpec = serviceClient.get(
-      NamespaceId.DEFAULT.app("PurchaseApp").service("CatalogLookup"));
+        NamespaceId.DEFAULT.app("PurchaseApp").service("CatalogLookup"));
   }
 
   public void monitorClient() throws Exception {

@@ -29,37 +29,44 @@ public interface ServiceConfigurer extends PluginConfigurer, DatasetConfigurer {
 
   /**
    * Set name of the service.
+   *
    * @param name of the service.
    */
   void setName(String name);
 
   /**
    * Set description of the Service.
+   *
    * @param description to set for the Service.
    */
   void setDescription(String description);
 
   /**
    * Add a a list of request handlers to the Service.
+   *
    * @param handlers to serve requests.
    */
   void addHandlers(Iterable<? extends HttpServiceHandler> handlers);
 
   /**
-   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of
+   * this Service.
+   *
    * @param resources The requirements.
    */
   void setResources(Resources resources);
 
   /**
-   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of
+   * this Service.
+   *
    * @param instances Number of instances, must be > 0.
    */
   void setInstances(int instances);
 
   /**
-   * Sets a set of properties that will be available through the {@link ServiceSpecification#getProperties()}
-   * at runtime.
+   * Sets a set of properties that will be available through the {@link
+   * ServiceSpecification#getProperties()} at runtime.
    *
    * @param properties the properties to set
    */

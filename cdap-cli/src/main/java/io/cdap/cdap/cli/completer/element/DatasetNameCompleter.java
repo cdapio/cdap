@@ -39,21 +39,22 @@ public class DatasetNameCompleter extends StringsCompleter {
 
   @Inject
   public DatasetNameCompleter(final DatasetClient datasetClient,
-                              final CLIConfig cliConfig) {
+      final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
-          List<DatasetSpecificationSummary> list = datasetClient.list(cliConfig.getCurrentNamespace());
+          List<DatasetSpecificationSummary> list = datasetClient.list(
+              cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetSpecificationSummary, String>() {
-              @Override
-              public String apply(DatasetSpecificationSummary input) {
-                // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
-                String[] tokens = input.getName().split("\\.");
-                return tokens[tokens.length - 1];
-              }
-            })
+              Iterables.transform(list, new Function<DatasetSpecificationSummary, String>() {
+                @Override
+                public String apply(DatasetSpecificationSummary input) {
+                  // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
+                  String[] tokens = input.getName().split("\\.");
+                  return tokens[tokens.length - 1];
+                }
+              })
           );
         } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
           return new ArrayList<>();

@@ -30,23 +30,26 @@ import java.util.Map;
  * {@link io.cdap.cdap.api.dataset.DatasetDefinition} for {@link CounterTimeseriesTable}.
  */
 @Beta
-public class CounterTimeseriesTableDefinition extends CompositeDatasetDefinition<CounterTimeseriesTable> {
+public class CounterTimeseriesTableDefinition extends
+    CompositeDatasetDefinition<CounterTimeseriesTable> {
 
-  public CounterTimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+  public CounterTimeseriesTableDefinition(String name,
+      DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, "ts", tableDef);
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     TimeseriesTableDefinition.validateNewIntervalSize(newProperties, currentSpec);
     return super.reconfigure(instanceName, newProperties, currentSpec);
   }
 
   @Override
   public CounterTimeseriesTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new CounterTimeseriesTable(spec, this.<Table>getDataset(datasetContext, "ts", spec, arguments, classLoader));
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    return new CounterTimeseriesTable(spec,
+        this.<Table>getDataset(datasetContext, "ts", spec, arguments, classLoader));
   }
 }

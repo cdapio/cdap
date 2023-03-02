@@ -18,10 +18,12 @@ package io.cdap.cdap.api.data.batch;
 
 /**
  * Interface for the dataset that a batch job can output to.
+ *
  * @param <KEY> The key type.
  * @param <VALUE> The value type.
  */
 public interface BatchWritable<KEY, VALUE> {
+
   /**
    * Writes the {key, value} record into a dataset.
    *

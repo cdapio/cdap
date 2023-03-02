@@ -35,12 +35,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Transform that drops a configurable field from all input records if it has a null value.
- * The the value is not null, it is emitted as an error
+ * Transform that drops a configurable field from all input records if it has a null value. The the
+ * value is not null, it is emitted as an error
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("DropField")
 public class DropNullTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
@@ -58,7 +59,8 @@ public class DropNullTransform extends Transform<StructuredRecord, StructuredRec
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     StructuredRecord.Builder builder = StructuredRecord.builder(getOutputSchema(input.getSchema()));
     for (Schema.Field field : input.getSchema().getFields()) {
       String fieldName = field.getName();
@@ -87,6 +89,7 @@ public class DropNullTransform extends Transform<StructuredRecord, StructuredRec
    * Config for the transform.
    */
   public static class Config extends PluginConfig {
+
     private String field;
   }
 
@@ -100,7 +103,8 @@ public class DropNullTransform extends Transform<StructuredRecord, StructuredRec
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
     return PluginClass.builder().setName("DropField").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(DropNullTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(DropNullTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

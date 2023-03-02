@@ -33,10 +33,10 @@ public enum CoreExpressionCapabilities implements Capability {
    */
   CAN_GET_QUALIFIED_COLUMN_NAME,
   /**
-   * Set if expression factory automatically calculates lineage for it's expressions.
-   * As soon as transformations are done using factory that implements this capability, plugin does not
-   * need to provide lineage information by itself.
-   * Note: TODO CDAP-18609: currently no factories have this capability
+   * Set if expression factory automatically calculates lineage for it's expressions. As soon as
+   * transformations are done using factory that implements this capability, plugin does not need to
+   * provide lineage information by itself. Note: TODO CDAP-18609: currently no factories have this
+   * capability
    */
   CALCULATES_LINEAGE
 }

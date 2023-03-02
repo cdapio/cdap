@@ -45,21 +45,21 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
   @Inject
   public DatasetCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(ListDatasetInstancesCommand.class))
-        .add(injector.getInstance(ListDatasetModulesCommand.class))
-        .add(injector.getInstance(ListDatasetTypesCommand.class))
-        .add(injector.getInstance(DescribeDatasetInstanceCommand.class))
-        .add(injector.getInstance(GetDatasetInstancePropertiesCommand.class))
-        .add(injector.getInstance(SetDatasetInstancePropertiesCommand.class))
-        .add(injector.getInstance(CreateDatasetInstanceCommand.class))
-        .add(injector.getInstance(DeleteDatasetInstanceCommand.class))
-        .add(injector.getInstance(TruncateDatasetInstanceCommand.class))
-        .add(injector.getInstance(DescribeDatasetModuleCommand.class))
-        .add(injector.getInstance(DeployDatasetModuleCommand.class))
-        .add(injector.getInstance(DeleteDatasetModuleCommand.class))
-        .add(injector.getInstance(DescribeDatasetTypeCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(ListDatasetInstancesCommand.class))
+            .add(injector.getInstance(ListDatasetModulesCommand.class))
+            .add(injector.getInstance(ListDatasetTypesCommand.class))
+            .add(injector.getInstance(DescribeDatasetInstanceCommand.class))
+            .add(injector.getInstance(GetDatasetInstancePropertiesCommand.class))
+            .add(injector.getInstance(SetDatasetInstancePropertiesCommand.class))
+            .add(injector.getInstance(CreateDatasetInstanceCommand.class))
+            .add(injector.getInstance(DeleteDatasetInstanceCommand.class))
+            .add(injector.getInstance(TruncateDatasetInstanceCommand.class))
+            .add(injector.getInstance(DescribeDatasetModuleCommand.class))
+            .add(injector.getInstance(DeployDatasetModuleCommand.class))
+            .add(injector.getInstance(DeleteDatasetModuleCommand.class))
+            .add(injector.getInstance(DescribeDatasetTypeCommand.class))
+            .build());
   }
 
   @Override

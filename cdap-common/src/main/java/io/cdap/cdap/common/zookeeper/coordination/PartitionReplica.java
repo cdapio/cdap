@@ -83,8 +83,8 @@ public final class PartitionReplica {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("partition", name)
-      .add("replica", replicaId)
-      .toString();
+        .add("partition", name)
+        .add("replica", replicaId)
+        .toString();
   }
 }

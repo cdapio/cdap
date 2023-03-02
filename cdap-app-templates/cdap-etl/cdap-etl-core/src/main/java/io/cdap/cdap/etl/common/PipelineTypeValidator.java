@@ -34,15 +34,15 @@ import java.util.List;
 public class PipelineTypeValidator {
 
   /**
-   * Takes in an unresolved type list and resolves the types and verifies if the types are assignable.
-   * Ex: An unresolved type could be : String, T, List<T>, List<String>
-   *     The above will resolve to   : String, String, List<String>, List<String>
-   *     And the assignability will be checked : String --> String && List<String> --> List<String>
-   *     which is true in the case above.
+   * Takes in an unresolved type list and resolves the types and verifies if the types are
+   * assignable. Ex: An unresolved type could be : String, T, List<T>, List<String> The above will
+   * resolve to   : String, String, List<String>, List<String> And the assignability will be checked
+   * : String --> String && List<String> --> List<String> which is true in the case above.
    */
   @VisibleForTesting
   static void validateTypes(List<Type> unresTypeList) {
-    Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
+    Preconditions.checkArgument(unresTypeList.size() % 2 == 0,
+        "ETL Stages validation expects even number of types");
     List<Type> resTypeList = Lists.newArrayListWithCapacity(unresTypeList.size());
 
     // Add the source output to resolved type list as the first resolved type.
@@ -50,7 +50,7 @@ public class PipelineTypeValidator {
     try {
       // Resolve the second type using just the first resolved type.
       Type nType = (new TypeResolver()).where(unresTypeList.get(1), resTypeList.get(0)).resolveType(
-        unresTypeList.get(1));
+          unresTypeList.get(1));
       resTypeList.add(nType);
     } catch (IllegalArgumentException e) {
       // If unable to resolve type, add the second type as is, to the resolved list.
@@ -70,8 +70,10 @@ public class PipelineTypeValidator {
         // using just the previous resolved type.
         // Ex: Actual = List<String> ; Formal = List<T> ; ToResolve = T ==> newType = String which is not correct;
         // newType should be List<String>. Hence resolve only from the previous resolved type (Actual)
-        if ((toResolveType instanceof TypeVariable) || (toResolveType instanceof GenericArrayType)) {
-          newType = (new TypeResolver()).where(toResolveType, actualType).resolveType(toResolveType);
+        if ((toResolveType instanceof TypeVariable)
+            || (toResolveType instanceof GenericArrayType)) {
+          newType = (new TypeResolver()).where(toResolveType, actualType)
+              .resolveType(toResolveType);
         } else {
           newType = (new TypeResolver()).where(formalType, actualType).resolveType(toResolveType);
         }
@@ -89,8 +91,8 @@ public class PipelineTypeValidator {
       Type secondType = resTypeList.get(i + 1);
       // Check if secondType can accept firstType
       Preconditions.checkArgument(TypeToken.of(secondType).isAssignableFrom(firstType),
-                                  "Types between stages didn't match. Mismatch between %s -> %s",
-                                  firstType, secondType);
+          "Types between stages didn't match. Mismatch between %s -> %s",
+          firstType, secondType);
     }
   }
 }

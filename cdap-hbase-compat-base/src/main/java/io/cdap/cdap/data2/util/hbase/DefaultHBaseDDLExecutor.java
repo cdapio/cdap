@@ -94,7 +94,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       return false;
     }
     NamespaceDescriptor namespaceDescriptor =
-      NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
+        NamespaceDescriptor.create(encodeHBaseEntity(name)).build();
     admin.createNamespace(namespaceDescriptor);
     return true;
   }
@@ -113,7 +113,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
 
   @Override
   public void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
-    throws IOException {
+      throws IOException {
     HTableDescriptor htd = getHTableDescriptor(descriptor);
     if (admin.tableExists(htd.getName())) {
       return;
@@ -121,7 +121,8 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
 
     boolean tableExistsFailure = false;
     try {
-      LOG.debug("Attempting to create table '{}' if it does not exist", Bytes.toString(htd.getName()));
+      LOG.debug("Attempting to create table '{}' if it does not exist",
+          Bytes.toString(htd.getName()));
       admin.createTable(htd, splitKeys);
     } catch (TableExistsException e) {
       // table may exist because someone else is creating it at the same
@@ -139,8 +140,9 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       do {
         if (admin.tableExists(htd.getName())) {
           if (tableExistsFailure) {
-            LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
-                     Bytes.toString(htd.getName()));
+            LOG.info(
+                "Table '{}' exists now. Assuming that another process concurrently created it.",
+                Bytes.toString(htd.getName()));
           } else {
             LOG.info("Table '{}' created.", Bytes.toString(htd.getName()));
           }
@@ -152,8 +154,9 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     } catch (InterruptedException e) {
       LOG.warn("Sleeping thread interrupted.");
     }
-    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.", Bytes.toString(htd.getName()),
-              MAX_CREATE_TABLE_WAIT);
+    LOG.error("Table '{}' does not exist after waiting {} ms. Giving up.",
+        Bytes.toString(htd.getName()),
+        MAX_CREATE_TABLE_WAIT);
   }
 
   @Override
@@ -176,13 +179,14 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     try {
       admin.disableTable(TableName.valueOf(namespace, encodeHBaseEntity(name)));
     } catch (TableNotEnabledException e) {
-      LOG.debug("Attempt to disable already disabled table {} in the namespace {}.", name, namespace);
+      LOG.debug("Attempt to disable already disabled table {} in the namespace {}.", name,
+          namespace);
     }
   }
 
   @Override
   public void modifyTable(String namespace, String name, TableDescriptor descriptor)
-    throws IOException {
+      throws IOException {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
     Preconditions.checkArgument(descriptor != null, "Descriptor should not be null.");
@@ -196,7 +200,8 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null");
     Preconditions.checkArgument(name != null, "Table name should not be null.");
 
-    HTableDescriptor descriptor = admin.getTableDescriptor(TableName.valueOf(namespace, encodeHBaseEntity(name)));
+    HTableDescriptor descriptor = admin.getTableDescriptor(
+        TableName.valueOf(namespace, encodeHBaseEntity(name)));
     TableDescriptor tbd = getTableDescriptor(descriptor);
     disableTableIfEnabled(namespace, name);
     deleteTableIfExists(namespace, name);
@@ -218,10 +223,11 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   }
 
   protected abstract void doGrantPermissions(String namespace, @Nullable String table,
-                                             Map<String, Permission.Action[]> permissions) throws IOException;
+      Map<String, Permission.Action[]> permissions) throws IOException;
 
   @Override
-  public void grantPermissions(String namespace, String table, Map<String, String> permissions) throws IOException {
+  public void grantPermissions(String namespace, String table, Map<String, String> permissions)
+      throws IOException {
     Map<String, Permission.Action[]> privilegesToGrant = new HashMap<>(permissions.size());
     for (Map.Entry<String, String> entry : permissions.entrySet()) {
       String user = entry.getKey();
@@ -229,10 +235,11 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       try {
         privilegesToGrant.put(user, toActions(actionsForUser));
       } catch (IllegalArgumentException e) {
-        String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
+        String entity =
+            table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
         String userOrGroup = user.startsWith("@") ? "group " + user.substring(1) : "user " + user;
         throw new IOException(String.format("Error granting permissions '%s' for %s to %s: %s",
-                                            actionsForUser, entity, userOrGroup, e.getMessage()));
+            actionsForUser, entity, userOrGroup, e.getMessage()));
       }
     }
     doGrantPermissions(namespace, table, privilegesToGrant);

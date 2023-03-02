@@ -34,6 +34,7 @@ public final class LogSchema {
    * Contains {@link Schema} for logging event.
    */
   public static final class LoggingEvent {
+
     public static final Schema SCHEMA = loadSchema("logging/schema/LoggingEvent.avsc");
   }
 

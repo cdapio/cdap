@@ -27,9 +27,10 @@ public interface UGIProvider {
   /**
    * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationRequest}.
    *
-   * @param impersonationRequest information specifying the entity on which the impersonation is being performed and
-   *                            the type of the operation
+   * @param impersonationRequest information specifying the entity on which the impersonation is
+   *     being performed and the type of the operation
    * @return the {@link UGIWithPrincipal} for the configured user
    */
-  UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws AccessException;
+  UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest)
+      throws AccessException;
 }

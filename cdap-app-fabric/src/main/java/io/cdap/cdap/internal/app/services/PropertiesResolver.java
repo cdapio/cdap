@@ -43,6 +43,7 @@ import java.util.Map;
  * Used to provide default user and system properties that can be used while starting a Program.
  */
 public class PropertiesResolver {
+
   private final PreferencesFetcher preferencesFetcher;
   private final CConfiguration cConf;
   private final OwnerAdmin ownerAdmin;
@@ -51,9 +52,9 @@ public class PropertiesResolver {
 
   @Inject
   PropertiesResolver(PreferencesFetcher preferencesFetcher, CConfiguration cConf,
-                     OwnerAdmin ownerAdmin,
-                     SchedulerQueueResolver schedulerQueueResolver,
-                     NamespaceQueryAdmin namespaceQueryAdmin) {
+      OwnerAdmin ownerAdmin,
+      SchedulerQueueResolver schedulerQueueResolver,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.ownerAdmin = ownerAdmin;
@@ -62,29 +63,31 @@ public class PropertiesResolver {
   }
 
   public Map<String, String> getUserProperties(ProgramId id)
-    throws IOException, NotFoundException, UnauthorizedException {
+      throws IOException, NotFoundException, UnauthorizedException {
     PreferencesDetail preferencesDetail = preferencesFetcher.get(id, true);
     Map<String, String> userArgs = new HashMap<>(preferencesDetail.getProperties());
-    userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
+    userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME,
+        Long.toString(System.currentTimeMillis()));
     return userArgs;
   }
 
   public Map<String, String> getSystemProperties(ProgramId id)
-    throws IOException, NamespaceNotFoundException, AccessException {
+      throws IOException, NamespaceNotFoundException, AccessException {
     Map<String, String> systemArgs = new HashMap<>();
     systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
     addNamespaceConfigs(systemArgs, id.getNamespaceId());
     if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id);
+      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
+          id);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.APP_PRINCIPAL_EXISTS,
-                     String.valueOf(ownerAdmin.exists(id.getParent())));
+          String.valueOf(ownerAdmin.exists(id.getParent())));
     }
     return systemArgs;
   }
 
   private void addNamespaceConfigs(Map<String, String> args,
-                                   NamespaceId namespaceId) throws NamespaceNotFoundException, IOException {
+      NamespaceId namespaceId) throws NamespaceNotFoundException, IOException {
     if (NamespaceId.isReserved(namespaceId.getNamespace())) {
       return;
     }

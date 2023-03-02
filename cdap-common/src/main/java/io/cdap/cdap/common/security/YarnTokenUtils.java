@@ -39,11 +39,12 @@ import org.slf4j.LoggerFactory;
  * Helper class for getting Yarn security delegation token.
  */
 public final class YarnTokenUtils {
+
   private static final Logger LOG = LoggerFactory.getLogger(YarnTokenUtils.class);
 
   /**
-   * Gets a Yarn delegation token and stores it in the given Credentials.
-   * Also gets Yarn App Timeline Server, if it is enabled.
+   * Gets a Yarn delegation token and stores it in the given Credentials. Also gets Yarn App
+   * Timeline Server, if it is enabled.
    *
    * @return the same Credentials instance as the one given in parameter.
    */
@@ -59,7 +60,8 @@ public final class YarnTokenUtils {
 
       try {
         Text renewer = new Text(UserGroupInformation.getCurrentUser().getShortUserName());
-        org.apache.hadoop.yarn.api.records.Token rmDelegationToken = yarnClient.getRMDelegationToken(renewer);
+        org.apache.hadoop.yarn.api.records.Token rmDelegationToken = yarnClient.getRMDelegationToken(
+            renewer);
 
         // TODO: The following logic should be replaced with call to ClientRMProxy.getRMDelegationTokenService after
         // CDAP-4825 is resolved
@@ -72,15 +74,17 @@ public final class YarnTokenUtils {
           for (String rmId : HAUtil.getRMHAIds(configuration)) {
             yarnConf.set(YarnConfiguration.RM_HA_ID, rmId);
             InetSocketAddress address = yarnConf.getSocketAddr(YarnConfiguration.RM_ADDRESS,
-                                                               YarnConfiguration.DEFAULT_RM_ADDRESS,
-                                                               YarnConfiguration.DEFAULT_RM_PORT);
+                YarnConfiguration.DEFAULT_RM_ADDRESS,
+                YarnConfiguration.DEFAULT_RM_PORT);
             services.add(SecurityUtil.buildTokenService(address).toString());
           }
         } else {
-          services.add(SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
+          services.add(
+              SecurityUtil.buildTokenService(YarnUtils.getRMAddress(configuration)).toString());
         }
 
-        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken, (InetSocketAddress) null);
+        Token<TokenIdentifier> token = ConverterUtils.convertFromYarn(rmDelegationToken,
+            (InetSocketAddress) null);
         token.setService(new Text(Joiner.on(',').join(services)));
         credentials.addToken(new Text(token.getService()), token);
 

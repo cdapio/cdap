@@ -17,10 +17,11 @@
 package io.cdap.cdap.security.auth;
 
 /**
- * Contains the {@link UserIdentityExtractionState} and {@link UserIdentityPair} if extraction was successful or an
- * extended error message if the extraction failed.
+ * Contains the {@link UserIdentityExtractionState} and {@link UserIdentityPair} if extraction was
+ * successful or an extended error message if the extraction failed.
  */
 public class UserIdentityExtractionResponse {
+
   private final UserIdentityExtractionState state;
   private final UserIdentityPair identityPair;
   private final String errorDescription;
@@ -29,12 +30,14 @@ public class UserIdentityExtractionResponse {
     this(UserIdentityExtractionState.SUCCESS, identityPair, null);
   }
 
-  public UserIdentityExtractionResponse(UserIdentityExtractionState state, String errorDescription) {
+  public UserIdentityExtractionResponse(UserIdentityExtractionState state,
+      String errorDescription) {
     this(state, null, errorDescription);
   }
 
-  public UserIdentityExtractionResponse(UserIdentityExtractionState state, UserIdentityPair identityPair,
-                                        String errorDescription) {
+  public UserIdentityExtractionResponse(UserIdentityExtractionState state,
+      UserIdentityPair identityPair,
+      String errorDescription) {
     this.state = state;
     this.identityPair = identityPair;
     this.errorDescription = errorDescription;

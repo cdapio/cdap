@@ -81,7 +81,8 @@ public abstract class InterceptableClassLoader extends URLClassLoader implements
   protected abstract boolean needIntercept(String className);
 
   /**
-   * Returns the package name of the given class name or return {@code null} if the given class is in default package.
+   * Returns the package name of the given class name or return {@code null} if the given class is
+   * in default package.
    */
   @Nullable
   private String getPackageName(String className) {

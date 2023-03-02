@@ -28,12 +28,12 @@ import org.apache.tephra.TransactionFailureException;
 
 /**
  * Provides message publishing functions of the Transactional Messaging System.
-  * <p>
+ * <p>
  * Note that, for instances acquired through the {@link MessagingContext#getMessagePublisher()}
  * method, when any of the {@code publish} methods are called within a transactional context,
- * exceptions may not be thrown immediately, but rather at the transaction commit time.
- * If a {@link Transactional#execute(TxRunnable)} was used to execute the transaction, exceptions
- * will always be wrapped inside a {@link TransactionFailureException}.
+ * exceptions may not be thrown immediately, but rather at the transaction commit time. If a {@link
+ * Transactional#execute(TxRunnable)} was used to execute the transaction, exceptions will always be
+ * wrapped inside a {@link TransactionFailureException}.
  * </p>
  * <p>If the {@code publish} methods are called outside of a transactional context, the publishing
  * is non-transactional and exceptions will be thrown immediately.
@@ -43,77 +43,81 @@ import org.apache.tephra.TransactionFailureException;
 public interface MessagePublisher {
 
   /**
-   * Publishes messages to the given topic. Identical to calling the method
-   * {@link #publish(String, String, Charset, String...)}
-   * with charset set to {@link StandardCharsets#UTF_8}.
+   * Publishes messages to the given topic. Identical to calling the method {@link #publish(String,
+   * String, Charset, String...)} with charset set to {@link StandardCharsets#UTF_8}.
+   *
    * @throws AccessException if caller do not have proper access to the topic
    */
-  void publish(String namespace, String topic, String...payloads)
-    throws TopicNotFoundException, IOException, AccessException;
+  void publish(String namespace, String topic, String... payloads)
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
-   * Publishes messages to the given topic. Each payload string will be encoded as a byte array using the given
-   * charset.
+   * Publishes messages to the given topic. Each payload string will be encoded as a byte array
+   * using the given charset.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
    * @param charset the {@link Charset} for encoding the payload strings
-   * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @param payloads the payloads to publish. Each element in the array will become a {@link
+   *     Message}
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    * @throws AccessException if caller do not have proper access to the topic
    */
   void publish(String namespace, String topic,
-               Charset charset, String...payloads)
-    throws TopicNotFoundException, IOException, AccessException;
+      Charset charset, String... payloads)
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
-   * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @param payloads the payloads to publish. Each element in the array will become a {@link
+   *     Message}
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if failed to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    * @throws AccessException if caller do not have proper access to the topic
    */
-  void publish(String namespace, String topic, byte[]...payloads)
-    throws TopicNotFoundException, IOException, AccessException;
+  void publish(String namespace, String topic, byte[]... payloads)
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
-   * Publishes messages to the given topic. Each payload string will be encoded as a byte array using the given
-   * charset.
+   * Publishes messages to the given topic. Each payload string will be encoded as a byte array
+   * using the given charset.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
    * @param charset the {@link Charset} for encoding the payload strings
-   * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @param payloads the payloads to publish. Each element in the array will become a {@link
+   *     Message}
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    * @throws AccessException if caller do not have proper access to the topic
    */
   void publish(String namespace, String topic,
-               Charset charset, Iterator<String> payloads)
-    throws TopicNotFoundException, IOException, AccessException;
+      Charset charset, Iterator<String> payloads)
+      throws TopicNotFoundException, IOException, AccessException;
 
   /**
    * Publishes messages to the given topic.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
-   * @param payloads the payloads to publish. Each element in the array will become a {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @param payloads the payloads to publish. Each element in the array will become a {@link
+   *     Message}
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the given topic doesn't exist
    * @throws AccessException if caller do not have proper access to the topic
    */
   void publish(String namespace, String topic, Iterator<byte[]> payloads)
-    throws TopicNotFoundException, IOException, AccessException;
+      throws TopicNotFoundException, IOException, AccessException;
 }

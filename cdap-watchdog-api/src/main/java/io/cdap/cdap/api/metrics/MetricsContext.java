@@ -21,9 +21,11 @@ import java.util.Map;
  * A context of metrics collection.
  */
 public interface MetricsContext extends MetricsCollector {
+
   /**
-   * Creates child {@link MetricsContext} that inherits the metrics context from this one and adds extra context
-   * information.
+   * Creates child {@link MetricsContext} that inherits the metrics context from this one and adds
+   * extra context information.
+   *
    * @param tags tags to add to the child metrics context
    * @return child {@link MetricsContext}
    */
@@ -40,8 +42,8 @@ public interface MetricsContext extends MetricsCollector {
   Map<String, String> getTags();
 
   /**
-   * Capture an event metric. Typically useful
-   * for high frequency metrics Ex. API response times.
+   * Capture an event metric. Typically useful for high frequency metrics Ex. API response times.
+   *
    * @param metricName name of the metric
    * @param value corresponding value
    */

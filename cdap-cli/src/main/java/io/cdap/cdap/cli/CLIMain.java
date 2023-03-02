@@ -79,46 +79,47 @@ public class CLIMain {
 
   @VisibleForTesting
   static final Option HELP_OPTION = new Option(
-    "h", "help", false, "Print the usage message.");
+      "h", "help", false, "Print the usage message.");
 
   private static final Option URI_OPTION = new Option(
-    "u", "uri", true, "(Deprecated. Please use option --link instead). CDAP instance URI to interact with in" +
-    " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
-    " Defaults to \"" + getDefaultURI().toString() + "\".");
+      "u", "uri", true,
+      "(Deprecated. Please use option --link instead). CDAP instance URI to interact with in" +
+          " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
+          " Defaults to \"" + getDefaultURI().toString() + "\".");
 
   private static final Option LINK_OPTION = new Option(
-    "l", "link", true, "CDAP instance URI to interact with in" +
-    " the format \"[http[s]://]<hostname>[:<port>][/<path>]\" ." +
-    " Defaults to \"" + getDefaultURI().toString() + "\".");
+      "l", "link", true, "CDAP instance URI to interact with in" +
+      " the format \"[http[s]://]<hostname>[:<port>][/<path>]\" ." +
+      " Defaults to \"" + getDefaultURI().toString() + "\".");
 
   private static final Option NAMESPACE_OPTION = new Option(
-    "n", "namespace", true, "CDAP Instance Namespace to connect to" +
-    " Defaults to \"" + NamespaceId.DEFAULT.getNamespace() + "\".");
+      "n", "namespace", true, "CDAP Instance Namespace to connect to" +
+      " Defaults to \"" + NamespaceId.DEFAULT.getNamespace() + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
-    "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
-    " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
+      "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
+      " Defaults to \"" + DEFAULT_VERIFY_SSL + "\".");
 
   private static final Option RETRIES_OPTION = new Option(
-    "r", "retries", true,
-    "Set the number of times to retry contacting a service if it is determined to be unavailable."
-      + " Defaults to 0.");
+      "r", "retries", true,
+      "Set the number of times to retry contacting a service if it is determined to be unavailable."
+          + " Defaults to 0.");
 
   @VisibleForTesting
   static final Option AUTOCONNECT_OPTION = new Option(
-    "a", "autoconnect", true, "If \"true\", try provided connection" +
-    " (from " + URI_OPTION.getLongOpt() + ")" +
-    " upon launch or try default connection if none provided." +
-    " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
+      "a", "autoconnect", true, "If \"true\", try provided connection" +
+      " (from " + URI_OPTION.getLongOpt() + ")" +
+      " upon launch or try default connection if none provided." +
+      " Defaults to \"" + DEFAULT_AUTOCONNECT + "\".");
 
   private static final Option DEBUG_OPTION = new Option(
-    "d", "debug", false, "Print exception stack traces.");
+      "d", "debug", false, "Print exception stack traces.");
 
   private static final Option SCRIPT_OPTION = new Option(
-    "s", "script", true, "Execute a file containing a series of CLI commands, line-by-line.");
+      "s", "script", true, "Execute a file containing a series of CLI commands, line-by-line.");
 
   private static final Option TIMEOUT_OPTION = new Option(
-    "t", "timeout", true, "Set HTTP read timeout of the CLI in seconds.");
+      "t", "timeout", true, "Set HTTP read timeout of the CLI in seconds.");
 
   private final CLI cli;
   private final Iterable<CommandSet<Command>> commands;
@@ -128,29 +129,29 @@ public class CLIMain {
   private final FilePathResolver filePathResolver;
 
   public CLIMain(final LaunchOptions options,
-                 final CLIConfig cliConfig) throws URISyntaxException, IOException {
+      final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.options = options;
     this.cliConfig = cliConfig;
 
     injector = Guice.createInjector(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(LaunchOptions.class).toInstance(options);
-          bind(CConfiguration.class).toInstance(CConfiguration.create());
-          bind(PrintStream.class).toInstance(cliConfig.getOutput());
-          bind(CLIConfig.class).toInstance(cliConfig);
-          bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(LaunchOptions.class).toInstance(options);
+            bind(CConfiguration.class).toInstance(CConfiguration.create());
+            bind(PrintStream.class).toInstance(cliConfig.getOutput());
+            bind(CLIConfig.class).toInstance(cliConfig);
+            bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          }
         }
-      }
     );
 
     this.commands = ImmutableList.of(
-      injector.getInstance(DefaultCommands.class),
-      new CommandSet<>(ImmutableList.<Command>of(
-        new HelpCommand(getCommandsSupplier(), cliConfig),
-        new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
-      )));
+        injector.getInstance(DefaultCommands.class),
+        new CommandSet<>(ImmutableList.<Command>of(
+            new HelpCommand(getCommandsSupplier(), cliConfig),
+            new SearchCommandsCommand(getCommandsSupplier(), cliConfig)
+        )));
     filePathResolver = injector.getInstance(FilePathResolver.class);
 
     Map<String, Completer> completers = injector.getInstance(DefaultCompleters.class).get();
@@ -160,10 +161,11 @@ public class CLIMain {
       public boolean handleException(PrintStream output, Exception e, int timesRetried) {
         if (e instanceof SSLHandshakeException) {
           output.printf("To ignore this error, set \"--%s false\" when starting the CLI\n",
-                        VERIFY_SSL_OPTION.getLongOpt());
+              VERIFY_SSL_OPTION.getLongOpt());
         } else if (e instanceof InvalidCommandException) {
           InvalidCommandException ex = (InvalidCommandException) e;
-          output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
+          output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n",
+              ex.getInput());
         } else if (e instanceof DisconnectedException || e instanceof ConnectException) {
           cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
         } else if (e instanceof JsonSyntaxException) {
@@ -202,13 +204,14 @@ public class CLIMain {
       String uri = options.getUri();
       boolean uriParamEmpty = uri == null || uri.isEmpty();
       CLIConnectionConfig connection =
-        uriParamEmpty ?
-          instanceURIParser.parseInstanceURI(options.getInstanceURI(), options.getNamespace()) :
-          instanceURIParser.parse(uri);
+          uriParamEmpty ?
+              instanceURIParser.parseInstanceURI(options.getInstanceURI(), options.getNamespace()) :
+              instanceURIParser.parse(uri);
       if (!uriParamEmpty) {
         cliConfig.getOutput().println("-u option is deprecated. Use -l instead. ");
       }
-      cliConfig.tryConnect(connection, options.isVerifySSL(), cliConfig.getOutput(), options.isDebug());
+      cliConfig.tryConnect(connection, options.isVerifySSL(), cliConfig.getOutput(),
+          options.isDebug());
       return true;
     } catch (Exception e) {
       if (options.isDebug()) {
@@ -217,7 +220,8 @@ public class CLIMain {
         cliConfig.getOutput().println(e.getMessage());
       }
       if (!command.hasOption(URI_OPTION.getOpt())) {
-        cliConfig.getOutput().printf("Specify the CDAP instance URI with the -l command line argument.\n");
+        cliConfig.getOutput()
+            .printf("Specify the CDAP instance URI with the -l command line argument.\n");
       }
       return false;
     }
@@ -279,13 +283,14 @@ public class CLIMain {
       }
 
       LaunchOptions launchOptions = LaunchOptions.builder()
-        .setUri(command.getOptionValue(URI_OPTION.getOpt()))
-        .setInstanceURI(command.getOptionValue(LINK_OPTION.getOpt(), getDefaultURI().toString()))
-        .setNamespace(command.getOptionValue(NAMESPACE_OPTION.getOpt(), NamespaceId.DEFAULT.getNamespace()))
-        .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
-        .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
-        .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
-        .build();
+          .setUri(command.getOptionValue(URI_OPTION.getOpt()))
+          .setInstanceURI(command.getOptionValue(LINK_OPTION.getOpt(), getDefaultURI().toString()))
+          .setNamespace(
+              command.getOptionValue(NAMESPACE_OPTION.getOpt(), NamespaceId.DEFAULT.getNamespace()))
+          .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
+          .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
+          .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
+          .build();
 
       String scriptFile = command.getOptionValue(SCRIPT_OPTION.getOpt(), "");
       boolean hasScriptFile = command.hasOption(SCRIPT_OPTION.getOpt());
@@ -294,11 +299,12 @@ public class CLIMain {
 
       try {
         ClientConfig clientConfig = ClientConfig.builder()
-          .setConnectionConfig(null)
-          .setDefaultReadTimeout(parseIntegerOption(command, TIMEOUT_OPTION, 60) * 1000)
-          .setUnavailableRetryLimit(parseIntegerOption(command, RETRIES_OPTION, 0))
-          .build();
-        final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
+            .setConnectionConfig(null)
+            .setDefaultReadTimeout(parseIntegerOption(command, TIMEOUT_OPTION, 60) * 1000)
+            .setUnavailableRetryLimit(parseIntegerOption(command, RETRIES_OPTION, 0))
+            .build();
+        final CLIConfig cliConfig = new CLIConfig(clientConfig, output,
+            new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();
 
@@ -307,8 +313,8 @@ public class CLIMain {
         }
 
         CLIConnectionConfig connectionConfig = new CLIConnectionConfig(
-          cliConfig.getClientConfig().getConnectionConfig(),
-          cliConfig.getCurrentNamespace(), null);
+            cliConfig.getClientConfig().getConnectionConfig(),
+            cliConfig.getCurrentNamespace(), null);
         cliMain.updateCLIPrompt(connectionConfig);
 
         if (hasScriptFile) {
@@ -330,7 +336,8 @@ public class CLIMain {
           cli.execute(Joiner.on(" ").join(commandArgs), output);
         }
       } catch (DisconnectedException e) {
-        output.printf("Couldn't reach the CDAP instance at '%s'.", e.getConnectionConfig().getURI().toString());
+        output.printf("Couldn't reach the CDAP instance at '%s'.",
+            e.getConnectionConfig().getURI().toString());
       } catch (Exception e) {
         e.printStackTrace(output);
       }
@@ -340,16 +347,17 @@ public class CLIMain {
     }
   }
 
-  private static boolean parseBooleanOption(CommandLine command, Option option, boolean defaultValue) {
+  private static boolean parseBooleanOption(CommandLine command, Option option,
+      boolean defaultValue) {
     return command.hasOption(option.getOpt())
-      ? Boolean.parseBoolean(command.getOptionValue(option.getOpt()))
-      : defaultValue;
+        ? Boolean.parseBoolean(command.getOptionValue(option.getOpt()))
+        : defaultValue;
   }
 
   private static int parseIntegerOption(CommandLine command, Option option, int defaultValue) {
     return command.hasOption(option.getOpt())
-      ? Integer.parseInt(command.getOptionValue(option.getOpt()))
-      : defaultValue;
+        ? Integer.parseInt(command.getOptionValue(option.getOpt()))
+        : defaultValue;
   }
 
   @VisibleForTesting
@@ -379,15 +387,15 @@ public class CLIMain {
     String toolName = "cdap" + (OSDetector.isWindows() ? ".bat " : " ") + TOOL_NAME;
     HelpFormatter formatter = new HelpFormatter();
     String args =
-      "[--autoconnect <true|false>] " +
-        "[--debug] " +
-        "[--help] " +
-        "[--verify-ssl <true|false>] " +
-        "[--uri <uri>] " +
-        "[--link <uri>] " +
-        "[--namespace <namespace>] " +
-        "[--script <script-file>] " +
-        "[-r | --retries N]";
+        "[--autoconnect <true|false>] " +
+            "[--debug] " +
+            "[--help] " +
+            "[--verify-ssl <true|false>] " +
+            "[--uri <uri>] " +
+            "[--link <uri>] " +
+            "[--namespace <namespace>] " +
+            "[--script <script-file>] " +
+            "[-r | --retries N]";
     formatter.printHelp(toolName + " " + args, getOptions());
     System.exit(0);
   }

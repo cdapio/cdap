@@ -31,7 +31,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   private final OutputCommitter rootOutputcommitter;
   private Map<String, OutputCommitter> committers;
 
-  public MultipleOutputsCommitter(OutputCommitter rootOutputCommitter, Map<String, OutputCommitter> committers) {
+  public MultipleOutputsCommitter(OutputCommitter rootOutputCommitter,
+      Map<String, OutputCommitter> committers) {
     this.rootOutputcommitter = rootOutputCommitter;
     this.committers = committers;
   }
@@ -40,7 +41,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void setupJob(JobContext jobContext) throws IOException {
     rootOutputcommitter.setupJob(jobContext);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
+      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext,
+          committer.getKey());
       committer.getValue().setupJob(namedJobContext);
     }
   }
@@ -49,7 +51,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void setupTask(TaskAttemptContext taskContext) throws IOException {
     rootOutputcommitter.setupTask(taskContext);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
+      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext,
+          committer.getKey());
       committer.getValue().setupTask(namedTaskContext);
     }
   }
@@ -61,7 +64,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
       return true;
     }
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
+      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext,
+          committer.getKey());
       if (committer.getValue().needsTaskCommit(namedTaskContext)) {
         return true;
       }
@@ -75,7 +79,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
       rootOutputcommitter.commitTask(taskContext);
     }
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
+      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext,
+          committer.getKey());
       if (committer.getValue().needsTaskCommit(namedTaskContext)) {
         committer.getValue().commitTask(namedTaskContext);
       }
@@ -86,7 +91,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void abortTask(TaskAttemptContext taskContext) throws IOException {
     rootOutputcommitter.abortTask(taskContext);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
+      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext,
+          committer.getKey());
       committer.getValue().abortTask(namedTaskContext);
     }
   }
@@ -95,7 +101,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void commitJob(JobContext jobContext) throws IOException {
     rootOutputcommitter.commitJob(jobContext);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
+      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext,
+          committer.getKey());
       committer.getValue().commitJob(namedJobContext);
     }
   }
@@ -104,7 +111,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
     rootOutputcommitter.abortJob(jobContext, state);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
+      JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext,
+          committer.getKey());
       committer.getValue().abortJob(namedJobContext, state);
     }
   }
@@ -127,7 +135,8 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   public void recoverTask(TaskAttemptContext taskContext) throws IOException {
     rootOutputcommitter.recoverTask(taskContext);
     for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
-      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
+      TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext,
+          committer.getKey());
       committer.getValue().recoverTask(namedTaskContext);
     }
   }

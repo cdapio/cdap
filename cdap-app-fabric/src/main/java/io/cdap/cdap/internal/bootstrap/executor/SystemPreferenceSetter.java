@@ -32,6 +32,7 @@ import java.util.Map;
  * Sets system preferences if they don't already exist.
  */
 public class SystemPreferenceSetter extends BaseStepExecutor<SystemPreferenceSetter.Arguments> {
+
   private final PreferencesService preferencesService;
 
   @Inject
@@ -40,7 +41,8 @@ public class SystemPreferenceSetter extends BaseStepExecutor<SystemPreferenceSet
   }
 
   @Override
-  public void execute(Arguments arguments) throws BadRequestException, NotFoundException, ProfileConflictException {
+  public void execute(Arguments arguments)
+      throws BadRequestException, NotFoundException, ProfileConflictException {
     try {
       preferencesService.addProperties(arguments.getPreferences());
     } catch (RuntimeException e) {
@@ -55,6 +57,7 @@ public class SystemPreferenceSetter extends BaseStepExecutor<SystemPreferenceSet
    * Arguments required to set system preferences
    */
   static class Arguments implements Validatable {
+
     private Map<String, String> preferences;
 
     @VisibleForTesting

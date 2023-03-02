@@ -28,14 +28,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Has methods to set/get objects into Configuration object.
- * Also has methods for prefixing a set of configurations with a name and also for extracting the prefixed parameters.
+ * Has methods to set/get objects into Configuration object. Also has methods for prefixing a set of
+ * configurations with a name and also for extracting the prefixed parameters.
  */
 public final class ConfigurationUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationUtil.class);
 
-  public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
+  public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj)
+      throws IOException {
     byte[] encoded = codec.encode(obj);
     LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
     conf.set(key, Base64.getEncoder().encodeToString(encoded));
@@ -53,7 +54,8 @@ public final class ConfigurationUtil {
     return codec.decode(encoded);
   }
 
-  public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
+  public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj)
+      throws IOException {
     byte[] encoded = codec.encode(obj);
     LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
     conf.put(key, Base64.getEncoder().encodeToString(encoded));
@@ -99,13 +101,15 @@ public final class ConfigurationUtil {
 
 
   /**
-   * Prefixes the specified configurations with the given prefix, and sets them onto the job's configuration.
+   * Prefixes the specified configurations with the given prefix, and sets them onto the job's
+   * configuration.
    *
    * @param conf the Configuration object on which the configurations will be set on
    * @param confKeyPrefix the String to prefix the keys of the configuration
    * @param namedConf the configuration values to be set
    */
-  public static void setNamedConfigurations(Configuration conf, String confKeyPrefix, Map<String, String> namedConf) {
+  public static void setNamedConfigurations(Configuration conf, String confKeyPrefix,
+      Map<String, String> namedConf) {
     for (Map.Entry<String, String> entry : namedConf.entrySet()) {
       conf.set(confKeyPrefix + entry.getKey(), entry.getValue());
     }
@@ -114,13 +118,14 @@ public final class ConfigurationUtil {
   /**
    * Retrieves all configurations that are prefixed with a particular prefix.
    *
-   * @see #setNamedConfigurations(Configuration, String, Map)
-   *
    * @param conf the Configuration from which to get the configurations
    * @param confKeyPrefix the prefix to search for in the keys
-   * @return a map of key-value pairs, representing the requested configurations, after removing the prefix
+   * @return a map of key-value pairs, representing the requested configurations, after removing the
+   *     prefix
+   * @see #setNamedConfigurations(Configuration, String, Map)
    */
-  public static Map<String, String> getNamedConfigurations(Configuration conf, String confKeyPrefix) {
+  public static Map<String, String> getNamedConfigurations(Configuration conf,
+      String confKeyPrefix) {
     Map<String, String> namedConf = new HashMap<>();
     int prefixLength = confKeyPrefix.length();
     // since its a regex match, we want to look for the character '.', and not match any character

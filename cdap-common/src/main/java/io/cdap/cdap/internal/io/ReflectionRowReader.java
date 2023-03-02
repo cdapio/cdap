@@ -28,32 +28,35 @@ import java.util.List;
 
 /**
  * Decodes an object from a {@link Row} object fetched from a {@link Table}. Assumes that objects
- * fetched are records. All fields are columns in the row, with simple types stored as their byte representation.
- * Complex types (arrays, maps, records, enum) are not supported.
+ * fetched are records. All fields are columns in the row, with simple types stored as their byte
+ * representation. Complex types (arrays, maps, records, enum) are not supported.
  *
  * @param <T> the type of object to read
  */
 // suppress warnings that come from unboxing of objects that we validate are not null
 @SuppressWarnings("ConstantConditions")
 public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
+
   private static final Schema NULL_SCHEMA = Schema.of(Schema.Type.NULL);
   private List<String> fieldNames;
   private int index;
 
   public ReflectionRowReader(Schema schema, TypeToken<T> type) {
     super(schema, type);
-    Preconditions.checkArgument(schema.getType() == Schema.Type.RECORD, "Target schema must be a record.");
+    Preconditions.checkArgument(schema.getType() == Schema.Type.RECORD,
+        "Target schema must be a record.");
     for (Schema.Field field : schema.getFields()) {
       Preconditions.checkArgument(
-        field.getSchema().isSimpleOrNullableSimple(),
-        "Target schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
+          field.getSchema().isSimpleOrNullableSimple(),
+          "Target schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
     }
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public T read(Row row, Schema sourceSchema) throws IOException {
-    Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD, "Source schema must be a record.");
+    Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD,
+        "Source schema must be a record.");
     initializeRead(sourceSchema);
     try {
       Object record = create(type);
@@ -66,7 +69,7 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
         }
         FieldAccessor fieldAccessor = getFieldAccessor(type, sourceFieldName);
         fieldAccessor.set(record, read(row, sourceField.getSchema(),
-                                       targetField.getSchema(), TypeToken.of(fieldAccessor.getType())));
+            targetField.getSchema(), TypeToken.of(fieldAccessor.getType())));
       }
       return (T) record;
     } catch (Exception e) {
@@ -145,16 +148,17 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
 
   @Override
   protected Object readEnum(Row row, Schema sourceSchema, Schema targetSchema,
-                            TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     throw new UnsupportedOperationException("Enums are not supported.");
   }
 
   @Override
   protected Object readUnion(Row row, Schema sourceSchema, Schema targetSchema,
-                             TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     // assumption is that unions are only possible if they represent a nullable.
     if (!sourceSchema.isNullable()) {
-      throw new UnsupportedOperationException("Unions that do not represent nullables are not supported.");
+      throw new UnsupportedOperationException(
+          "Unions that do not represent nullables are not supported.");
     }
 
     String name = getCurrentField();
@@ -175,19 +179,19 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
 
   @Override
   protected Object readArray(Row row, Schema sourceSchema, Schema targetSchema,
-                             TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     throw new UnsupportedOperationException("Arrays are not supported.");
   }
 
   @Override
   protected Object readMap(Row row, Schema sourceSchema, Schema targetSchema,
-                           TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     throw new UnsupportedOperationException("Maps are not supported.");
   }
 
   @Override
   protected Object readRecord(Row row, Schema sourceSchema, Schema targetSchema,
-                              TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     throw new UnsupportedOperationException("Records are not supported.");
   }
 

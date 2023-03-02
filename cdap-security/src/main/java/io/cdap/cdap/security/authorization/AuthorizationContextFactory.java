@@ -24,6 +24,7 @@ import java.util.Properties;
  * Guice factory for creating {@link AuthorizationContext} instances
  */
 public interface AuthorizationContextFactory {
+
   /**
    * Creates an {@link AuthorizationContext}.
    *

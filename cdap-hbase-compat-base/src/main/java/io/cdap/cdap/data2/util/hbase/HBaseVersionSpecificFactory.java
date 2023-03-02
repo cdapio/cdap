@@ -25,12 +25,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Common class factory behavior for classes which need specific implementations depending on HBase versions.
- * Specific factories can subclass this class and simply plug in the class names for their implementations.
+ * Common class factory behavior for classes which need specific implementations depending on HBase
+ * versions. Specific factories can subclass this class and simply plug in the class names for their
+ * implementations.
  *
  * @param <T> Version specific class provided by this factory.
  */
 public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
+
   private static final Logger LOG = LoggerFactory.getLogger(HBaseVersionSpecificFactory.class);
 
   protected final CConfiguration cConf;
@@ -43,7 +45,7 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   public T get() {
     T instance = null;
     boolean useLatestVersionForUnsupported = Constants.HBase.HBASE_AUTO_LATEST_VERSION.equals(
-      cConf.get(Constants.HBase.HBASE_VERSION_RESOLUTION_STRATEGY));
+        cConf.get(Constants.HBase.HBASE_VERSION_RESOLUTION_STRATEGY));
     try {
       HBaseVersion.Version hbaseVersion = HBaseVersion.get();
       switch (hbaseVersion) {
@@ -51,7 +53,7 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
         case HBASE_96:
         case HBASE_98:
           throw new ProvisionException("HBase " + hbaseVersion.getMajorVersion()
-                                         + " is no longer supported. Please upgrade to HBase 1.0 or newer.");
+              + " is no longer supported. Please upgrade to HBase 1.0 or newer.");
         case HBASE_10:
           instance = createInstance(getHBase10Classname());
           break;
@@ -71,20 +73,24 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
         case UNKNOWN_CDH:
           if (useLatestVersionForUnsupported) {
             instance = createInstance(getLatestHBaseCDHClassName());
-            LOG.info("CDH HBase version '{}' is unsupported. Continuing with latest CDH HBase version '{}'.",
-                     hbaseVersion.getMajorVersion(), getLatestHBaseCDHClassName());
+            LOG.info(
+                "CDH HBase version '{}' is unsupported. Continuing with latest CDH HBase version '{}'.",
+                hbaseVersion.getMajorVersion(), getLatestHBaseCDHClassName());
             break;
           } else {
-            throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
+            throw new ProvisionException(
+                "Unknown HBase version: " + HBaseVersion.getVersionString());
           }
         case UNKNOWN:
           if (useLatestVersionForUnsupported) {
             instance = createInstance(getLatestHBaseClassName());
-            LOG.info("HBase version '{}' is unsupported. Continuing with latest HBase version '{}'.",
-                     hbaseVersion.getMajorVersion(), getLatestHBaseClassName());
+            LOG.info(
+                "HBase version '{}' is unsupported. Continuing with latest HBase version '{}'.",
+                hbaseVersion.getMajorVersion(), getLatestHBaseClassName());
             break;
           } else {
-            throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
+            throw new ProvisionException(
+                "Unknown HBase version: " + HBaseVersion.getVersionString());
           }
       }
     } catch (ClassNotFoundException cnfe) {
@@ -100,9 +106,13 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   }
 
   protected abstract String getHBase10Classname();
+
   protected abstract String getHBase10CDHClassname();
+
   protected abstract String getHBase11Classname();
+
   protected abstract String getHBase10CHD550ClassName();
+
   protected abstract String getHBase12CHD570ClassName();
 
   /**

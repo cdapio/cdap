@@ -19,10 +19,12 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 import io.cdap.cdap.api.common.Bytes;
 
 /**
- * Represents an incremental write to a datastore for in-memory buffering.  To read the current value, all
- * incremental writes for a field must be summed, along with the most recent {@link PutValue}, if any.
+ * Represents an incremental write to a datastore for in-memory buffering.  To read the current
+ * value, all incremental writes for a field must be summed, along with the most recent {@link
+ * PutValue}, if any.
  */
 public class IncrementValue implements Update<Long> {
+
   private final Long value;
 
   public IncrementValue(Long value) {

@@ -38,7 +38,7 @@ public class DefaultCustomActionSpecification implements CustomActionSpecificati
    * Constructor used by {@link CustomActionConfigurer}.
    */
   public DefaultCustomActionSpecification(String className, String name, String description,
-                                          Map<String, String> properties, Set<String> datasets) {
+      Map<String, String> properties, Set<String> datasets) {
     this.className = className;
     this.name = name;
     this.description = description;

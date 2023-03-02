@@ -31,8 +31,8 @@ import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * A factory class for creating {@link DatumWriter} instance for different data type and schema.
- * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
+ * A factory class for creating {@link DatumWriter} instance for different data type and schema. It
+ * serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
 public final class ASMDatumWriterFactory implements DatumWriterFactory {
 
@@ -46,8 +46,8 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
   }
 
   /**
-   * Creates a {@link DatumWriter} that is able to encode given data type with the given {@link Schema}.
-   * The instance created is thread safe and reusable.
+   * Creates a {@link DatumWriter} that is able to encode given data type with the given {@link
+   * Schema}. The instance created is thread safe and reusable.
    *
    * @param type Type information of the data type to be encoded.
    * @param schema Schema of the data type.
@@ -58,9 +58,10 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
   @Override
   public <T> DatumWriter<T> create(TypeToken<T> type, Schema schema) {
     try {
-      Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(new CacheKey(schema, type));
+      Class<DatumWriter<?>> writerClass = datumWriterClasses.getUnchecked(
+          new CacheKey(schema, type));
       return (DatumWriter<T>) writerClass.getConstructor(Schema.class, FieldAccessorFactory.class)
-                                        .newInstance(schema, fieldAccessorFactory);
+          .newInstance(schema, fieldAccessorFactory);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -76,7 +77,8 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
     @SuppressWarnings("unchecked")
     @Override
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
-      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(), key.getSchema());
+      ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(),
+          key.getSchema());
 
       ByteCodeClassLoader classloader = classloaders.get(key.getType());
       if (classloader == null) {
@@ -86,11 +88,13 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
         classloaders.put(key.getType(), classloader);
       }
 
-      return (Class<DatumWriter<?>>) classloader.addClass(classDef).loadClass(classDef.getClassName());
+      return (Class<DatumWriter<?>>) classloader.addClass(classDef)
+          .loadClass(classDef.getClassName());
     }
   }
 
   private static final class CacheKey {
+
     private final Schema schema;
     private final TypeToken<?> type;
 

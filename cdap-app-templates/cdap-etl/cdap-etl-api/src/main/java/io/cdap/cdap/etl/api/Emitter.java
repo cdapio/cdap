@@ -27,7 +27,9 @@ import io.cdap.cdap.api.annotation.Beta;
 public interface Emitter<T> extends AlertEmitter, ErrorEmitter<T> {
 
   /**
-   * Emit an object. Note that if any further stages has an exception thrown, it will be propagated to this stage.
+   * Emit an object. Note that if any further stages has an exception thrown, it will be propagated
+   * to this stage.
+   *
    * @param value the object to emit
    */
   void emit(T value);

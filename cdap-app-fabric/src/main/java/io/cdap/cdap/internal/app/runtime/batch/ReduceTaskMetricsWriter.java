@@ -24,7 +24,8 @@ import org.apache.hadoop.mapreduce.ReduceContext;
 import org.apache.hadoop.mapreduce.TaskCounter;
 
 /**
- * Gathers statistics from a running reduce task through its counters and writes the data to the metrics system.
+ * Gathers statistics from a running reduce task through its counters and writes the data to the
+ * metrics system.
  */
 public class ReduceTaskMetricsWriter extends TaskMetricsWriter {
 
@@ -34,7 +35,8 @@ public class ReduceTaskMetricsWriter extends TaskMetricsWriter {
 
   @Override
   public Map<String, TaskCounter> getTaskCounters() {
-    return ImmutableMap.of(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS, TaskCounter.REDUCE_INPUT_RECORDS,
-                           MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS, TaskCounter.REDUCE_OUTPUT_RECORDS);
+    return ImmutableMap.of(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS,
+        TaskCounter.REDUCE_INPUT_RECORDS,
+        MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS, TaskCounter.REDUCE_OUTPUT_RECORDS);
   }
 }

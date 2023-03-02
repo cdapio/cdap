@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
  * Represents a package json in the hub.
  */
 public class HubPackage {
+
   private static final Logger LOG = LoggerFactory.getLogger(HubPackage.class);
   private static final Gson GSON = new Gson();
 
@@ -72,9 +73,10 @@ public class HubPackage {
   private transient ArtifactVersionRange versionRange;
   private transient ArtifactVersion artifactVersion;
 
-  public HubPackage(String name, String version, String description, String label, String author, String org,
-                    String cdapVersion, long created, boolean beta, List<String> categories,
-                    boolean paid, String paidLink) throws InvalidArtifactRangeException {
+  public HubPackage(String name, String version, String description, String label, String author,
+      String org,
+      String cdapVersion, long created, boolean beta, List<String> categories,
+      boolean paid, String paidLink) throws InvalidArtifactRangeException {
     this.name = name;
     this.version = version;
     this.artifactVersion = new ArtifactVersion(version);
@@ -127,12 +129,13 @@ public class HubPackage {
    * @param artifactRepository {@link ArtifactRepository} in which the plugin will be installed
    * @param tmpDir temporary directory where plugin jar is downloaded from the hub
    */
-  public void installPlugin(URL url, ArtifactRepository artifactRepository, File tmpDir) throws Exception {
+  public void installPlugin(URL url, ArtifactRepository artifactRepository, File tmpDir)
+      throws Exception {
     // Deserialize spec.json
     URL specURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-                          url.getPath() + "/packages/" + name + "/" + version + "/spec.json");
+        url.getPath() + "/packages/" + name + "/" + version + "/spec.json");
     Spec spec = GSON.fromJson(HttpClients.doGetAsString(specURL), Spec.class);
-    for (Spec.Action action: spec.getActions()) {
+    for (Spec.Action action : spec.getActions()) {
       // Get plugin jar and json names under one_step_deploy_plugin action in the spec
       // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#one_step_deploy_plugin
       if (!action.getType().equals("one_step_deploy_plugin")) {
@@ -145,8 +148,8 @@ public class HubPackage {
         continue;
       }
       URL configURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-                              url.getPath() +
-                                Joiner.on("/").join(Arrays.asList("/packages", name, version, configFilename)));
+          url.getPath() +
+              Joiner.on("/").join(Arrays.asList("/packages", name, version, configFilename)));
       // Download plugin json from hub
       JsonObject jsonObj = GSON.fromJson(HttpClients.doGetAsString(configURL), JsonObject.class);
       List<String> parents = GSON.fromJson(jsonObj.get("parents"), new TypeToken<List<String>>() {
@@ -161,8 +164,8 @@ public class HubPackage {
       File destination = File.createTempFile("artifact-", ".jar", tmpDir);
       FileChannel channel = new FileOutputStream(destination, false).getChannel();
       URL jarURL = new URL(url.getProtocol(), url.getHost(), url.getPort(),
-                           url.getPath() +
-                             Joiner.on("/").join(Arrays.asList("/packages", name, version, jarName)));
+          url.getPath() +
+              Joiner.on("/").join(Arrays.asList("/packages", name, version, jarName)));
       HttpRequest request = HttpRequest.get(jarURL).withContentConsumer(new HttpContentConsumer() {
         @Override
         public boolean onReceived(ByteBuffer buffer) {
@@ -189,7 +192,8 @@ public class HubPackage {
           parentArtifacts.add(ArtifactRanges.parseArtifactRange(parent));
         } catch (InvalidArtifactRangeException e) {
           // if this failed, try parsing as a non-namespaced range like cdap-data-pipeline[6.3 1.1,7.0.0)
-          parentArtifacts.add(ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), parent));
+          parentArtifacts.add(
+              ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(), parent));
         }
       }
 
@@ -198,13 +202,14 @@ public class HubPackage {
       Id.Artifact artifact = Id.Artifact.fromEntityId(artifactId);
       try {
         artifactRepository.addArtifact(artifact,
-                                       destination, parentArtifacts, ImmutableSet.of());
+            destination, parentArtifacts, ImmutableSet.of());
       } catch (ArtifactAlreadyExistsException e) {
         LOG.debug("Artifact artifact {}-{} already exists", name, version);
       }
 
-      Map<String, String> properties = GSON.fromJson(jsonObj.get("properties"), new TypeToken<Map<String, String>>() {
-      }.getType());
+      Map<String, String> properties = GSON.fromJson(jsonObj.get("properties"),
+          new TypeToken<Map<String, String>>() {
+          }.getType());
       artifactRepository.writeArtifactProperties(Id.Artifact.fromEntityId(artifactId), properties);
 
       if (!java.nio.file.Files.deleteIfExists(Paths.get(destination.getPath()))) {
@@ -264,22 +269,22 @@ public class HubPackage {
 
     HubPackage that = (HubPackage) o;
     return Objects.equals(name, that.name)
-      && Objects.equals(version, that.version)
-      && Objects.equals(description, that.description)
-      && Objects.equals(label, that.label)
-      && Objects.equals(author, that.author)
-      && Objects.equals(org, that.org)
-      && Objects.equals(cdapVersion, that.cdapVersion)
-      && Objects.equals(created, that.created)
-      && Objects.equals(beta, that.beta)
-      && Objects.equals(categories, that.categories)
-      && Objects.equals(paid, that.paid)
-      && Objects.equals(paidLink, that.paidLink);
+        && Objects.equals(version, that.version)
+        && Objects.equals(description, that.description)
+        && Objects.equals(label, that.label)
+        && Objects.equals(author, that.author)
+        && Objects.equals(org, that.org)
+        && Objects.equals(cdapVersion, that.cdapVersion)
+        && Objects.equals(created, that.created)
+        && Objects.equals(beta, that.beta)
+        && Objects.equals(categories, that.categories)
+        && Objects.equals(paid, that.paid)
+        && Objects.equals(paidLink, that.paidLink);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, version, description, label, author, org, cdapVersion,
-                        created, beta, categories, paid, paidLink);
+        created, beta, categories, paid, paidLink);
   }
 }

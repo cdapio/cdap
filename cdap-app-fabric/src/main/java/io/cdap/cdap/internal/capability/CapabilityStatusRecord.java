@@ -37,7 +37,7 @@ public class CapabilityStatusRecord {
   private final CapabilityConfig capabilityConfig;
 
   public CapabilityStatusRecord(String capability, CapabilityStatus capabilityStatus,
-                                CapabilityConfig capabilityConfig) {
+      CapabilityConfig capabilityConfig) {
     this.capability = capability;
     this.capabilityStatus = capabilityStatus;
     this.capabilityConfig = capabilityConfig;

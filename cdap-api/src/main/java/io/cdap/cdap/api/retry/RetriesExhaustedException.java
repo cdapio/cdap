@@ -45,6 +45,7 @@ public class RetriesExhaustedException extends RuntimeException implements Retry
 
   /**
    * Return the retry count set
+   *
    * @return int for retry count
    */
   @Override

@@ -31,11 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Abstract implementation of a {@link io.cdap.cdap.app.runtime.ProgramResourceReporter}
- * writes out resource metrics at a fixed rate that defaults to 60 seconds, but can be specified
- * in the constructor.
+ * Abstract implementation of a {@link io.cdap.cdap.app.runtime.ProgramResourceReporter} writes out
+ * resource metrics at a fixed rate that defaults to 60 seconds, but can be specified in the
+ * constructor.
  */
-public abstract class AbstractResourceReporter extends AbstractScheduledService implements ProgramResourceReporter {
+public abstract class AbstractResourceReporter extends AbstractScheduledService implements
+    ProgramResourceReporter {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResourceReporter.class);
   private static final int DEFAULT_REPORT_INTERVAL = 20;
   protected static final String METRIC_CONTAINERS = "resources.used.containers";
@@ -58,13 +60,13 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
     this.metricsContext = metricsContext;
     this.reportInterval = interval;
     this.programMetricsCollectors = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<Map<String, String>, MetricsContext>() {
-        @Override
-        public MetricsContext load(Map<String, String> key) throws Exception {
-          return metricsContext.childContext(key);
-        }
-      });
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build(new CacheLoader<Map<String, String>, MetricsContext>() {
+          @Override
+          public MetricsContext load(Map<String, String> key) throws Exception {
+            return metricsContext.childContext(key);
+          }
+        });
   }
 
   @Override
@@ -86,12 +88,14 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
 
   @Override
   protected final ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("reporter-scheduler"));
+    executor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("reporter-scheduler"));
     return executor;
   }
 
   protected void sendMetrics(Map<String, String> context, int containers, int memory, int vcores) {
-    LOG.trace("Reporting resources: (containers, memory, vcores) = ({}, {}, {})", containers, memory, vcores);
+    LOG.trace("Reporting resources: (containers, memory, vcores) = ({}, {}, {})", containers,
+        memory, vcores);
     MetricsContext metricsContext = programMetricsCollectors.getUnchecked(context);
     metricsContext.gauge(METRIC_CONTAINERS, containers);
     metricsContext.gauge(METRIC_MEMORY_USAGE, memory);

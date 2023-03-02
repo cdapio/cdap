@@ -20,9 +20,9 @@ package io.cdap.cdap.api.retry;
  * Retry count provider interface
  */
 public interface RetryCountProvider {
+
   /**
    * Return the retry count
-   * @return
    */
   int getRetries();
 }

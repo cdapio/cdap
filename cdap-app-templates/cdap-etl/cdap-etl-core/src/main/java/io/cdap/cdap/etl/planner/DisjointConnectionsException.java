@@ -23,6 +23,7 @@ public class DisjointConnectionsException extends RuntimeException {
 
   /**
    * Constructs DisjointConnectionsException with the specified detail message.
+   *
    * @param s the String that contains a detailed message
    */
   public DisjointConnectionsException(String s) {

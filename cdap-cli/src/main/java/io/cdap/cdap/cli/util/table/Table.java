@@ -114,6 +114,7 @@ public class Table {
      * Builder for {@link Table#rows}.
      */
     public static final class Rows {
+
       private List<List<String>> rows = Lists.newArrayList();
 
       public Rows add(List<String> row) {

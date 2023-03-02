@@ -24,8 +24,8 @@ import io.cdap.cdap.internal.app.runtime.ProgramClassLoader;
 public interface ProgramClassLoaderProvider {
 
   /**
-   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of
-   * {@link ProgramClassLoader}.
+   * Creates a {@link ClassLoader} that will be used as the parent {@link ClassLoader} of {@link
+   * ProgramClassLoader}.
    *
    * @return an instance of {@link ClassLoader}
    */

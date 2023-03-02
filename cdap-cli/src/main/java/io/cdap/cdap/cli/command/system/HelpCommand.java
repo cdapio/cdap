@@ -48,7 +48,8 @@ public class HelpCommand implements Command {
 
   private final TableRendererConfig tableRendererConfig;
 
-  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands, TableRendererConfig tableRendererConfig) {
+  public HelpCommand(Supplier<Iterable<CommandSet<Command>>> commands,
+      TableRendererConfig tableRendererConfig) {
     this.commands = commands;
     this.tableRendererConfig = tableRendererConfig;
   }
@@ -60,8 +61,9 @@ public class HelpCommand implements Command {
 
     if (arguments.hasArgument(ArgumentName.COMMAND_CATEGORY.getName())) {
       // help with one category
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
-                                                                         Predicates.<Command>alwaysTrue());
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+          CommandCategory.GENERAL,
+          Predicates.<Command>alwaysTrue());
       String commandCategoryInput = arguments.get(ArgumentName.COMMAND_CATEGORY.getName());
       CommandCategory category = CommandCategory.valueOfNameIgnoreCase(commandCategoryInput);
 
@@ -76,8 +78,9 @@ public class HelpCommand implements Command {
     } else {
       // normal help
 
-      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL,
-                                                                         Predicates.<Command>alwaysTrue());
+      Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+          CommandCategory.GENERAL,
+          Predicates.<Command>alwaysTrue());
       for (CommandCategory category : CommandCategory.values()) {
         List<Command> commandList = Lists.newArrayList(categorizedCommands.get(category.getName()));
         if (commandList.isEmpty()) {
@@ -108,7 +111,7 @@ public class HelpCommand implements Command {
   }
 
   protected Multimap<String, Command> categorizeCommands(Iterable<CommandSet<Command>> commandSets,
-                                                         CommandCategory defaultCategory, Predicate<Command> filter) {
+      CommandCategory defaultCategory, Predicate<Command> filter) {
     Multimap<String, Command> result = HashMultimap.create();
     for (CommandSet<Command> commandSet : commandSets) {
       populate(result, commandSet, getCategory(commandSet), defaultCategory, filter);
@@ -120,8 +123,8 @@ public class HelpCommand implements Command {
    * Recursive helper for {@link #categorizeCommands(Iterable, CommandCategory, Predicate)}.
    */
   private void populate(Multimap<String, Command> result, CommandSet<Command> commandSet,
-                        Optional<String> parentCategory, CommandCategory defaultCategory,
-                        Predicate<Command> filter) {
+      Optional<String> parentCategory, CommandCategory defaultCategory,
+      Predicate<Command> filter) {
 
     for (Command childCommand : Iterables.filter(commandSet.getCommands(), filter)) {
       Optional<String> commandCategory = getCategory(childCommand).or(parentCategory);
@@ -148,12 +151,14 @@ public class HelpCommand implements Command {
 
   @Override
   public String getDescription() {
-    return String.format("Prints this helper text. Optionally, provide <%s> for help for a specific category.",
-                         ArgumentName.COMMAND_CATEGORY);
+    return String.format(
+        "Prints this helper text. Optionally, provide <%s> for help for a specific category.",
+        ArgumentName.COMMAND_CATEGORY);
   }
 
   /**
-   * Prints the given command pattern with text wrapping at the given column width. It prints multiple lines as:
+   * Prints the given command pattern with text wrapping at the given column width. It prints
+   * multiple lines as:
    *
    * <pre>{@code
    * command sub-command <arg1> <arg2>
@@ -227,8 +232,8 @@ public class HelpCommand implements Command {
   }
 
   /**
-   * Prints the given line with text wrapping on spaces at the given column width.
-   * If the line has no spaces within the column width, prints without wrapping.
+   * Prints the given line with text wrapping on spaces at the given column width. If the line has
+   * no spaces within the column width, prints without wrapping.
    *
    * @param line the string (without returns) to print
    * @param output the {@link PrintStream} to write to

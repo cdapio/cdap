@@ -19,7 +19,8 @@
 package io.cdap.cdap.api.macro;
 
 /**
- * An enum about the type of macro evaluation result, currently the supported types are String and map.
+ * An enum about the type of macro evaluation result, currently the supported types are String and
+ * map.
  */
 public enum MacroObjectType {
   STRING,

@@ -25,10 +25,13 @@ import org.apache.twill.api.TwillRunnable;
 public interface DependentTwillPreparer extends TwillPreparer {
 
   /**
-   * Specifies the main runnable name along with its dependent runnables that will go with it in the same pod.
+   * Specifies the main runnable name along with its dependent runnables that will go with it in the
+   * same pod.
+   *
    * @param mainRunnableName name of the main {@link TwillRunnable}
    * @param dependentRunnableName names of dependent {@link TwillRunnable}
    * @return this {@link TwillPreparer}
    */
-  DependentTwillPreparer dependentRunnableNames(String mainRunnableName, String... dependentRunnableName);
+  DependentTwillPreparer dependentRunnableNames(String mainRunnableName,
+      String... dependentRunnableName);
 }

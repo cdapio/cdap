@@ -41,13 +41,13 @@ public class LevelDBTableDefinition extends AbstractTableDefinition<Table, Level
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new LevelDBTable(datasetContext, spec.getName(), service, cConf, spec);
   }
 
   @Override
   public LevelDBTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                    ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new LevelDBTableAdmin(datasetContext, spec, service, cConf);
   }
 }

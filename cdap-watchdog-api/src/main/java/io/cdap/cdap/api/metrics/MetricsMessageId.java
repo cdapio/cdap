@@ -19,12 +19,14 @@ package io.cdap.cdap.api.metrics;
  * Metrics message id
  */
 public class MetricsMessageId {
+
   private final long publishTimestamp;
   private final short sequenceId;
   private final long writeTimestamp;
   private final short payloadSequenceId;
 
-  public MetricsMessageId(long publishTimestamp, short sequenceId, long writeTimestamp, short payloadSequenceId) {
+  public MetricsMessageId(long publishTimestamp, short sequenceId, long writeTimestamp,
+      short payloadSequenceId) {
     this.publishTimestamp = publishTimestamp;
     this.sequenceId = sequenceId;
     this.writeTimestamp = writeTimestamp;

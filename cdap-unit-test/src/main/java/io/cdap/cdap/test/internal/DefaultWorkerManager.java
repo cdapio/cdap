@@ -26,11 +26,13 @@ import io.cdap.cdap.test.WorkerManager;
 /**
  * A default implementation of {@link WorkerManager}
  */
-public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
+public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> implements
+    WorkerManager {
+
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkerManager(Id.Program programId,
-                              AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
+      AppFabricClient appFabricClient, DefaultApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.appFabricClient = appFabricClient;
   }
@@ -39,8 +41,9 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
   public void setInstances(int instances) {
     Preconditions.checkArgument(instances > 0, "Instance count should be > 0.");
     try {
-      appFabricClient.setWorkerInstances(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
-                                         instances);
+      appFabricClient.setWorkerInstances(programId.getNamespace(), programId.getApplication(),
+          programId.getProgram(),
+          instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -49,8 +52,9 @@ public class DefaultWorkerManager extends AbstractProgramManager<WorkerManager> 
   @Override
   public int getInstances() {
     try {
-      return appFabricClient.getWorkerInstances(programId.getNamespace(), programId.getApplication(),
-                                                programId.getProgram()).getInstances();
+      return appFabricClient.getWorkerInstances(programId.getNamespace(),
+          programId.getApplication(),
+          programId.getProgram()).getInstances();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

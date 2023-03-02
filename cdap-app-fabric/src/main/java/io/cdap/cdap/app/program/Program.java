@@ -33,6 +33,7 @@ public interface Program extends Closeable {
 
   /**
    * Loads and returns the main class of the program
+   *
    * @throws ClassNotFoundException If fails to load the class.
    */
   <T> Class<T> getMainClass() throws ClassNotFoundException;

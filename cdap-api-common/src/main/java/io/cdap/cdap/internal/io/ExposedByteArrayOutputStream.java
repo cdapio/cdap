@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 /**
- * A {@link ByteArrayOutputStream} that exposes the written raw buffer as ByteBuffer.
- * The {@link #reset()} must be called before reusing this stream so that a new buffer is created underneath.
+ * A {@link ByteArrayOutputStream} that exposes the written raw buffer as ByteBuffer. The {@link
+ * #reset()} must be called before reusing this stream so that a new buffer is created underneath.
  */
 public final class ExposedByteArrayOutputStream extends ByteArrayOutputStream {
 

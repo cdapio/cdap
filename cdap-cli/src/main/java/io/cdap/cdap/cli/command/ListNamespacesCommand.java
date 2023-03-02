@@ -32,9 +32,8 @@ import java.io.PrintStream;
 import java.util.List;
 
 /**
- * {@link Command} to list namespaces.
- * Uses {@link NamespaceCommandUtils#prettyPrintNamespaceConfigCLI(NamespaceConfig)} to display the
- * {@link NamespaceConfig}.
+ * {@link Command} to list namespaces. Uses {@link NamespaceCommandUtils#prettyPrintNamespaceConfigCLI(NamespaceConfig)}
+ * to display the {@link NamespaceConfig}.
  */
 public class ListNamespacesCommand extends AbstractCommand {
 
@@ -49,14 +48,14 @@ public class ListNamespacesCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Table table = Table.builder()
-      .setHeader("name", "description", "config")
-      .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
-        @Override
-        public List<?> makeRow(NamespaceMeta object) {
-          return Lists.newArrayList(object.getName(), object.getDescription(),
-                                    NamespaceCommandUtils.prettyPrintNamespaceConfigCLI(object.getConfig()));
-        }
-      }).build();
+        .setHeader("name", "description", "config")
+        .setRows(namespaceClient.list(), new RowMaker<NamespaceMeta>() {
+          @Override
+          public List<?> makeRow(NamespaceMeta object) {
+            return Lists.newArrayList(object.getName(), object.getDescription(),
+                NamespaceCommandUtils.prettyPrintNamespaceConfigCLI(object.getConfig()));
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

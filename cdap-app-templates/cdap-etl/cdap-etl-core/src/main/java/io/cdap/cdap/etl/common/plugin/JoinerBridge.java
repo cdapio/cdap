@@ -43,7 +43,9 @@ import java.util.stream.Collectors;
  *
  * @param <INPUT_RECORD> type of input record
  */
-public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, INPUT_RECORD, StructuredRecord> {
+public class JoinerBridge<INPUT_RECORD> extends
+    BatchJoiner<StructuredRecord, INPUT_RECORD, StructuredRecord> {
+
   private static final String SALT_COLUMN = "salt";
   private final BatchAutoJoiner autoJoiner;
   private final JoinDefinition joinDefinition;
@@ -58,17 +60,17 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
     // if this is not an inner join and the output schema is not set,
     // we have no way of determining what the output schema should be and need to error out.
     if (joinDefinition.getOutputSchema() == null &&
-      joinDefinition.getStages().stream().anyMatch(s -> !s.isRequired())) {
+        joinDefinition.getStages().stream().anyMatch(s -> !s.isRequired())) {
       throw new IllegalArgumentException(
-        String.format("An output schema could not be generated for joiner stage '%s'. " +
-                        "Provide the expected output schema directly.", stageName));
+          String.format("An output schema could not be generated for joiner stage '%s'. " +
+              "Provide the expected output schema directly.", stageName));
     }
     this.autoJoiner = autoJoiner;
     this.joinDefinition = joinDefinition;
     this.requiredStages = joinDefinition.getStages().stream()
-      .filter(JoinStage::isRequired)
-      .map(JoinStage::getStageName)
-      .collect(Collectors.toSet());
+        .filter(JoinStage::isRequired)
+        .map(JoinStage::getStageName)
+        .collect(Collectors.toSet());
     JoinCondition condition = joinDefinition.getCondition();
     if (condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
       // will never happen unless we add more join conditions, at which point this needs to be updated.
@@ -76,10 +78,11 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
     }
     JoinCondition.OnKeys onKeys = (JoinCondition.OnKeys) condition;
     this.joinKeys = onKeys.getKeys().stream()
-      .collect(Collectors.toMap(JoinKey::getStageName, JoinKey::getFields));
+        .collect(Collectors.toMap(JoinKey::getStageName, JoinKey::getFields));
     this.stageFields = new HashMap<>();
     for (JoinField field : joinDefinition.getSelectedFields()) {
-      List<JoinField> fields = stageFields.computeIfAbsent(field.getStageName(), k -> new ArrayList<>());
+      List<JoinField> fields = stageFields.computeIfAbsent(field.getStageName(),
+          k -> new ArrayList<>());
       fields.add(field);
     }
     saltGenerator = new Random();
@@ -107,16 +110,18 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       // don't expect this to ever be the case since all existing plugins use StructuredRecord,
       // but it is technically possible.
       throw new IllegalArgumentException(String.format(
-        "Received an input record of unsupported type '%s' from stage '%s'.",
-        input.getClass().getName(), stageName));
+          "Received an input record of unsupported type '%s' from stage '%s'.",
+          input.getClass().getName(), stageName));
     }
 
     List<String> key = joinKeys.get(stageName);
     if (key == null) {
       // this should not happen, it should be caught by the pipeline app at configure or prepare time and failed then
       throw new IllegalArgumentException(
-        String.format("Received data from stage '%s', but the stage was not included as part of the join. " +
-                        "Check the plugin to make sure it is including all input stages.", stageName));
+          String.format(
+              "Received data from stage '%s', but the stage was not included as part of the join. "
+                  +
+                  "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
     StructuredRecord inputRecord = (StructuredRecord) input;
@@ -129,21 +134,24 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
   }
 
   @Override
-  public Collection<StructuredRecord> getJoinKeys(String stageName, INPUT_RECORD record) throws Exception {
+  public Collection<StructuredRecord> getJoinKeys(String stageName, INPUT_RECORD record)
+      throws Exception {
     if (!(record instanceof StructuredRecord)) {
       // don't expect this to ever be the case since all existing plugins use StructuredRecord,
       // but it is technically possible.
       throw new IllegalArgumentException(String.format(
-        "Received an input record of unsupported type '%s' from stage '%s'.",
-        record.getClass().getName(), stageName));
+          "Received an input record of unsupported type '%s' from stage '%s'.",
+          record.getClass().getName(), stageName));
     }
 
     List<String> key = joinKeys.get(stageName);
     if (key == null) {
       // this should not happen, it should be caught by the pipeline app at configure or prepare time and failed then
       throw new IllegalArgumentException(
-        String.format("Received data from stage '%s', but the stage was not included as part of the join. " +
-                        "Check the plugin to make sure it is including all input stages.", stageName));
+          String.format(
+              "Received data from stage '%s', but the stage was not included as part of the join. "
+                  +
+                  "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
     StructuredRecord inputRecord = (StructuredRecord) record;
@@ -180,7 +188,8 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
     return keyRecords;
   }
 
-  private StructuredRecord.Builder getKeyRecordBuilder(List<String> key, StructuredRecord inputRecord) {
+  private StructuredRecord.Builder getKeyRecordBuilder(List<String> key,
+      StructuredRecord inputRecord) {
     StructuredRecord.Builder keyRecord = StructuredRecord.builder(keySchema);
     int fieldNum = 0;
     for (String keyField : key) {
@@ -206,7 +215,7 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       if (fieldSchema == null) {
         // should never happen, this should be checked during validation.
         throw new IllegalStateException(
-          String.format("Key field '%s' does not exist from stage '%s'", keyField, stageName));
+            String.format("Key field '%s' does not exist from stage '%s'", keyField, stageName));
       }
       fieldSchema = fieldSchema.isNullable() ? fieldSchema.getNonNullable() : fieldSchema;
       Schema keyFieldSchema = Schema.nullableOf(Schema.of(fieldSchema.getType()));
@@ -221,7 +230,7 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
 
   @Override
   public StructuredRecord merge(StructuredRecord structuredRecord,
-                                Iterable<JoinElement<INPUT_RECORD>> joinResult) {
+      Iterable<JoinElement<INPUT_RECORD>> joinResult) {
     if (outputSchema == null) {
       outputSchema = joinDefinition.getOutputSchema();
       // can only still be null if this is an inner join, which means we can generate the output schema
@@ -239,7 +248,8 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       List<JoinField> outputFields = stageFields.get(stageName);
       for (JoinField outputField : outputFields) {
         String originalName = outputField.getFieldName();
-        String outputFieldName = outputField.getAlias() == null ? originalName : outputField.getAlias();
+        String outputFieldName =
+            outputField.getAlias() == null ? originalName : outputField.getAlias();
         joined.set(outputFieldName, record.get(originalName));
       }
     }
@@ -262,15 +272,15 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       if (stageSchema == null) {
         // should not be possible, should be validated earlier
         throw new IllegalArgumentException(String.format(
-          "Unable to select field '%s' from stage '%s' because data for the stage could not be found.",
-          originalName, joinField.getStageName()));
+            "Unable to select field '%s' from stage '%s' because data for the stage could not be found.",
+            originalName, joinField.getStageName()));
       }
       Schema.Field stageField = stageSchema.getField(originalName);
       if (stageField == null) {
         // should not be possible, should be validated earlier
         throw new IllegalArgumentException(String.format(
-          "Unable to select field '%s' from stage '%s' because the field for the stage could not be found.",
-          originalName, joinField.getStageName()));
+            "Unable to select field '%s' from stage '%s' because the field for the stage could not be found.",
+            originalName, joinField.getStageName()));
       }
       fields.add(Schema.Field.of(outputName, stageField.getSchema()));
     }

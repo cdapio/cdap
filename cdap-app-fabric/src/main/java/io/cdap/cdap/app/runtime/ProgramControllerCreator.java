@@ -20,16 +20,19 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.TwillController;
 
 /**
- * This interface provides the capability to create {@link ProgramController} from {@link TwillController}.
+ * This interface provides the capability to create {@link ProgramController} from {@link
+ * TwillController}.
  */
 public interface ProgramControllerCreator {
 
   /**
-   * Creates a {@link ProgramController} for the given program that was launched as a Twill application.
+   * Creates a {@link ProgramController} for the given program that was launched as a Twill
+   * application.
    *
    * @param programRunId the program run id of the program being launched
    * @param twillController the {@link TwillController} to interact with the twill application
    * @return a new instance of {@link ProgramController}.
    */
-  ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController);
+  ProgramController createProgramController(ProgramRunId programRunId,
+      TwillController twillController);
 }

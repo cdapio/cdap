@@ -17,7 +17,8 @@
 package io.cdap.cdap.security.auth;
 
 /**
- * Contains various potential states and short error strings for a {@link UserIdentityExtractionResponse}.
+ * Contains various potential states and short error strings for a {@link
+ * UserIdentityExtractionResponse}.
  */
 public enum UserIdentityExtractionState {
   SUCCESS("success"),

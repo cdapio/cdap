@@ -37,7 +37,7 @@ public class CapabilityOperationRecord {
   private final CapabilityConfig capabilityConfig;
 
   public CapabilityOperationRecord(String capability, CapabilityAction actionType,
-                                   CapabilityConfig capabilityConfig) {
+      CapabilityConfig capabilityConfig) {
     this.capability = capability;
     this.actionType = actionType;
     this.capabilityConfig = capabilityConfig;

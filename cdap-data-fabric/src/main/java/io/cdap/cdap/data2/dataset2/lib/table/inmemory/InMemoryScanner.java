@@ -42,8 +42,9 @@ public class InMemoryScanner implements Scanner {
     this(rows, null, null);
   }
 
-  public InMemoryScanner(Iterator<Map.Entry<byte[], NavigableMap<byte[], byte[]>>> rows, FuzzyRowFilter filter,
-                         byte[][] columnsToInclude) {
+  public InMemoryScanner(Iterator<Map.Entry<byte[], NavigableMap<byte[], byte[]>>> rows,
+      FuzzyRowFilter filter,
+      byte[][] columnsToInclude) {
     this.rows = rows;
     this.filter = filter;
     if (columnsToInclude != null) {

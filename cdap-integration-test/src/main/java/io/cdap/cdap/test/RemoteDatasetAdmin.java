@@ -38,7 +38,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   private final DatasetInstanceConfiguration dsConfiguration;
 
   public RemoteDatasetAdmin(DatasetClient datasetClient, DatasetId datasetInstance,
-                            DatasetInstanceConfiguration dsConfiguration) {
+      DatasetInstanceConfiguration dsConfiguration) {
     this.datasetClient = datasetClient;
     this.datasetInstance = datasetInstance;
     this.dsConfiguration = dsConfiguration;
@@ -63,7 +63,7 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
     try {
       datasetClient.create(datasetInstance, dsConfiguration);
     } catch (DatasetTypeNotFoundException | DatasetAlreadyExistsException | UnauthenticatedException
-      | UnauthorizedException e) {
+        | UnauthorizedException e) {
       throw Throwables.propagate(e);
     }
   }
@@ -89,6 +89,6 @@ public final class RemoteDatasetAdmin implements DatasetAdmin {
   @Override
   public void upgrade() throws IOException {
     throw new UnsupportedOperationException(
-      "Dataset upgrade is not supported on " + RemoteDatasetAdmin.class.getSimpleName() + ".");
+        "Dataset upgrade is not supported on " + RemoteDatasetAdmin.class.getSimpleName() + ".");
   }
 }

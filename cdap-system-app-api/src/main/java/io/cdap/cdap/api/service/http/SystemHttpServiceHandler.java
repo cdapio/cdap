@@ -19,11 +19,12 @@ package io.cdap.cdap.api.service.http;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * A System HttpServiceHandler that exposes capabilities beyond those that are not available to user service handlers.
- * System handlers can only be run by applications that run in the system namespace.
+ * A System HttpServiceHandler that exposes capabilities beyond those that are not available to user
+ * service handlers. System handlers can only be run by applications that run in the system
+ * namespace.
  */
 @Beta
 public interface SystemHttpServiceHandler
-  extends HttpServiceHandler<SystemHttpServiceContext, SystemHttpServiceConfigurer> {
+    extends HttpServiceHandler<SystemHttpServiceContext, SystemHttpServiceConfigurer> {
 
 }

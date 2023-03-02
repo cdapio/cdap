@@ -56,7 +56,8 @@ public class ArgumentParser {
         String value = token.substring(firstEquals + 1, token.length());
         result.put(extractValue(key), extractValue(value));
       } else {
-        throw new IllegalArgumentException(description + " must be of the form 'key1=val1 key2=val2'");
+        throw new IllegalArgumentException(
+            description + " must be of the form 'key1=val1 key2=val2'");
       }
     }
     return result.build();
@@ -83,7 +84,7 @@ public class ArgumentParser {
    */
   private static String extractValue(String value) {
     if ((value.startsWith("'") && value.endsWith("'")) ||
-      (value.startsWith("\"") && value.endsWith("\""))) {
+        (value.startsWith("\"") && value.endsWith("\""))) {
       return value.substring(1, value.length() - 1);
     }
     return value;
@@ -125,11 +126,11 @@ public class ArgumentParser {
       String patternPart = patternTokens.get(0);
       String inputPart = inputTokens.get(0);
       if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING))) &&
-        patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
+          patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
         arguments.putAll(parseOptional(inputTokens, getEntry(patternPart)));
       } else {
         if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING))) &&
-          patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
+            patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
           arguments.put(getEntry(patternPart), tryGetInputEntry(inputPart));
         } else if (!patternPart.equals(inputPart)) {
           return Collections.emptyMap();
@@ -161,10 +162,10 @@ public class ArgumentParser {
       String patternPart = splitPattern.get(0);
       String inputPart = tryGetInputEntry(copyInput.get(0));
       if (patternPart.startsWith((Character.toString(MANDATORY_ARG_BEGINNING))) &&
-        patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
+          patternPart.endsWith((Character.toString(MANDATORY_ARG_ENDING)))) {
         args.put(getEntry(patternPart), inputPart);
       } else if (patternPart.startsWith((Character.toString(OPTIONAL_PART_BEGINNING))) &&
-        patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
+          patternPart.endsWith((Character.toString(OPTIONAL_PART_ENDING)))) {
         args.putAll(parseOptional(copyInput, getEntry(patternPart)));
       } else if (!patternPart.equals(inputPart)) {
         return Collections.emptyMap();
@@ -179,8 +180,8 @@ public class ArgumentParser {
   }
 
   /**
-   * Cuts last not fully entered token,
-   * where token is a word or some expression in quotes or double quotes.
+   * Cuts last not fully entered token, where token is a word or some expression in quotes or double
+   * quotes.
    *
    * @param input the input to cut
    * @return cutted input
@@ -198,15 +199,15 @@ public class ArgumentParser {
    */
   private static String tryGetInputEntry(String input) {
     if (input.startsWith("'") && input.endsWith("'") ||
-      input.startsWith("\"") && input.endsWith("\"")) {
+        input.startsWith("\"") && input.endsWith("\"")) {
       return getEntry(input);
     }
     return input;
   }
 
   /**
-   * Retrieves entry from input {@link String}.
-   * For example, for input "<some input>" returns "some input".
+   * Retrieves entry from input {@link String}. For example, for input "<some input>" returns "some
+   * input".
    *
    * @param input the input
    * @return entry {@link String}

@@ -36,16 +36,16 @@ public final class CallerClassSecurityManager extends SecurityManager {
   }
 
   /**
-   * Finds the {@link ClassLoader} of the given type along the caller class chain. It returns {@code null} if it cannot
-   * find any.
+   * Finds the {@link ClassLoader} of the given type along the caller class chain. It returns {@code
+   * null} if it cannot find any.
    */
   @Nullable
   public static ClassLoader findCallerClassLoader(Class<? extends ClassLoader> classloaderType) {
     return Arrays.stream(INSTANCE.getClassContext())
-      .map(Class::getClassLoader)
-      .filter(classloaderType::isInstance)
-      .findFirst()
-      .orElse(null);
+        .map(Class::getClassLoader)
+        .filter(classloaderType::isInstance)
+        .findFirst()
+        .orElse(null);
   }
 
   private CallerClassSecurityManager() {

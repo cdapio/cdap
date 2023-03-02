@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Remote implementation of {@link ServiceManager}.
  */
-public class RemoteServiceManager extends AbstractProgramManager<ServiceManager> implements ServiceManager {
+public class RemoteServiceManager extends AbstractProgramManager<ServiceManager> implements
+    ServiceManager {
 
   private final MetricsClient metricsClient;
   private final ProgramClient programClient;
@@ -43,7 +44,7 @@ public class RemoteServiceManager extends AbstractProgramManager<ServiceManager>
   private final ServiceId serviceId;
 
   public RemoteServiceManager(ServiceId serviceId, ClientConfig clientConfig, RESTClient restClient,
-                              RemoteApplicationManager remoteApplicationManager) {
+      RemoteApplicationManager remoteApplicationManager) {
     super(serviceId, remoteApplicationManager);
     this.serviceId = serviceId;
     this.metricsClient = new MetricsClient(clientConfig, restClient);

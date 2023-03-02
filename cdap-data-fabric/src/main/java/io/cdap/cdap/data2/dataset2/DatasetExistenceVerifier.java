@@ -28,6 +28,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
  * {@link EntityExistenceVerifier} for {@link DatasetId datasets}.
  */
 public class DatasetExistenceVerifier implements EntityExistenceVerifier<DatasetId> {
+
   private final DatasetFramework dsFramework;
 
   @Inject
@@ -36,7 +37,8 @@ public class DatasetExistenceVerifier implements EntityExistenceVerifier<Dataset
   }
 
   @Override
-  public void ensureExists(DatasetId datasetId) throws DatasetNotFoundException, UnauthorizedException {
+  public void ensureExists(DatasetId datasetId)
+      throws DatasetNotFoundException, UnauthorizedException {
     try {
       if (!dsFramework.hasInstance(datasetId)) {
         throw new DatasetNotFoundException(datasetId);

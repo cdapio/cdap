@@ -26,6 +26,7 @@ public interface DatumReaderFactory {
 
   /**
    * Creates a {@link DatumReader} that can decode object of type {@code T}.
+   *
    * @param type The object type to decode.
    * @param schema Schema of the object to decode to.
    * @param <T> Type of the object.

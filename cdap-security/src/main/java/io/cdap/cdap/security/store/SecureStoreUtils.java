@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.Constants;
  * Utility class for secure store.
  */
 public class SecureStoreUtils {
+
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
   private static final String NONE = "none";
@@ -62,7 +63,7 @@ public class SecureStoreUtils {
     } catch (ClassNotFoundException e) {
       // KMSSecureStore could not be loaded
       throw new RuntimeException("CDAP KMS classes could not be loaded. " +
-                                   "Please verify that CDAP is correctly installed");
+          "Please verify that CDAP is correctly installed");
     }
   }
 }

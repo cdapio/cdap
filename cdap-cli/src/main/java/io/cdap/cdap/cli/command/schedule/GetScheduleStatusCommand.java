@@ -42,7 +42,8 @@ public final class GetScheduleStatusCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-    String[] programIdParts = arguments.get(ElementType.SCHEDULE.getArgumentName().toString()).split("\\.");
+    String[] programIdParts = arguments.get(ElementType.SCHEDULE.getArgumentName().toString())
+        .split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }
@@ -61,6 +62,7 @@ public final class GetScheduleStatusCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Gets the status of %s", Fragment.of(Article.A, ElementType.SCHEDULE.getName()));
+    return String.format("Gets the status of %s",
+        Fragment.of(Article.A, ElementType.SCHEDULE.getName()));
   }
 }

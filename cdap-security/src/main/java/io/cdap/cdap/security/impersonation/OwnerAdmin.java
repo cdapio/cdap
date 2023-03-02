@@ -38,25 +38,26 @@ public interface OwnerAdmin {
    * @param kerberosPrincipalId the {@link KerberosPrincipalId} of the {@link EntityId} owner
    * @throws IOException if failed to get the store
    * @throws AlreadyExistsException if the given entity already has an owner
-   * @throws IllegalArgumentException if the given KerberosPrincipalId is not valid or the entity is not of
-   * supported type.
+   * @throws IllegalArgumentException if the given KerberosPrincipalId is not valid or the
+   *     entity is not of supported type.
    */
   void add(NamespacedEntityId entityId, KerberosPrincipalId kerberosPrincipalId)
-    throws IOException, AlreadyExistsException;
+      throws IOException, AlreadyExistsException;
 
   /**
    * <p>Retrieves the owner information for the given {@link EntityId}</p>
-   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
-   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
-   * if its present</p>
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the
+   * system. It only means that no explicit owner principal was specified during entity creation and
+   * it's owned by the system if its present</p>
    *
-   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @return {@link KerberosPrincipalId} of the {@link EntityId} owner if one was explicitly provided during entity
-   * creation or null if
-   * <ol>
-   * <li>the entity does not exists in the system</li>
-   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
-   * </ol>
+   * @param entityId the {@link EntityId} whose owner principal information needs to be
+   *     retrieved
+   * @return {@link KerberosPrincipalId} of the {@link EntityId} owner if one was explicitly
+   *     provided during entity creation or null if
+   *     <ol>
+   *     <li>the entity does not exists in the system</li>
+   *     <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   *     </ol>
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
@@ -64,20 +65,23 @@ public interface OwnerAdmin {
   KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
 
   /**
-   * <p>Delegates to {@link #getOwner(NamespacedEntityId)} to retrieve the owner information for the given
-   * {@link EntityId} and then return the principal of the entity as {@link String} by
-   * calling {@link KerberosPrincipalId#getPrincipal()} on the owner's principal if one exists.</p>
-   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
-   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
-   * if its present</p>
+   * <p>Delegates to {@link #getOwner(NamespacedEntityId)} to retrieve the owner information for the
+   * given
+   * {@link EntityId} and then return the principal of the entity as {@link String} by calling
+   * {@link KerberosPrincipalId#getPrincipal()} on the owner's principal if one exists.</p>
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the
+   * system.
+   * It only means that no explicit owner principal was specified during entity creation and it's
+   * owned by the system if its present</p>
    *
-   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly provided during entity
-   * creation or null if
-   * <ol>
-   * <li>the entity does not exists in the system</li>
-   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
-   * </ol>
+   * @param entityId the {@link EntityId} whose owner principal information needs to be
+   *     retrieved
+   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly
+   *     provided during entity creation or null if
+   *     <ol>
+   *     <li>the entity does not exists in the system</li>
+   *     <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   *     </ol>
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
@@ -85,17 +89,17 @@ public interface OwnerAdmin {
   String getOwnerPrincipal(NamespacedEntityId entityId) throws IOException;
 
   /**
-   * Batch version of the {@link #getOwnerPrincipal(NamespacedEntityId)} method for retrieving principals of multiple
-   * {@link NamespacedEntityId}.
+   * Batch version of the {@link #getOwnerPrincipal(NamespacedEntityId)} method for retrieving
+   * principals of multiple {@link NamespacedEntityId}.
    *
    * @param ids the set of {@link NamespacedEntityId} for getting the owners.
    * @param <T> type of the entity
-   * @return a {@link Map} from the entity id to the owner if one was explicitly provided during entity
-   * creation or no entry if
-   * <ol>
-   * <li>the entity does not exists in the system</li>
-   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
-   * </ol>
+   * @return a {@link Map} from the entity id to the owner if one was explicitly provided during
+   *     entity creation or no entry if
+   *     <ol>
+   *     <li>the entity does not exists in the system</li>
+   *     <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   *     </ol>
    * @throws IOException if failed to get the information
    * @throws IllegalArgumentException if any of the given entities is not of supported type.
    */
@@ -103,14 +107,17 @@ public interface OwnerAdmin {
 
   /**
    * <p>
-   * Retrieves the impersonation information for the given {@link EntityId} by tracing the entity hierarchy.
+   * Retrieves the impersonation information for the given {@link EntityId} by tracing the entity
+   * hierarchy.
    * </p>
    * <p>
    * If an owner is present for this entity id then returns the information of that immediate owner.
-   * If a direct owner is not present then the namespace owner information will be returned if
-   * one is present else returns null.
+   * If a direct owner is not present then the namespace owner information will be returned if one
+   * is present else returns null.
    * </p>
-   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
+   *
+   * @param entityId the {@link EntityId} whose owner principal information needs to be
+   *     retrieved
    * @return {@link ImpersonationInfo} of the effective owner for the given entity.
    * @throws AccessException if  failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
@@ -119,24 +126,27 @@ public interface OwnerAdmin {
   ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws AccessException;
 
   /**
-   * <p>Delegates to {@link #getImpersonationInfo(NamespacedEntityId)}} to retrieve the owner information by tracing
-   * the entity hierarchy for the given {@link EntityId} and then return the principal of the entity as {@link String}
-   * by calling {@link ImpersonationInfo#getPrincipal()}.</p>
+   * <p>Delegates to {@link #getImpersonationInfo(NamespacedEntityId)}} to retrieve the owner
+   * information by tracing
+   * the entity hierarchy for the given {@link EntityId} and then return the principal of the entity
+   * as {@link String} by calling {@link ImpersonationInfo#getPrincipal()}.</p>
    * <p>
    * If an owner is present for this entity id then returns the information of that immediate owner.
-   * If a direct owner is not present then the namespace owner information will be returned if
-   * one is present else returns null.</p>
-   * <p>Note: a null return value does not indicate presence or absence of the given entity in the system.
-   * It only means that no explicit owner principal was specified during entity creation and it's owned by the system
-   * if its present</p>
+   * If a direct owner is not present then the namespace owner information will be returned if one
+   * is present else returns null.</p>
+   * <p>Note: a null return value does not indicate presence or absence of the given entity in the
+   * system.
+   * It only means that no explicit owner principal was specified during entity creation and it's
+   * owned by the system if its present</p>
    *
-   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
-   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly provided during entity
-   * creation or null if
-   * <ol>
-   * <li>the entity does not exists in the system</li>
-   * <li>entity exists in the system but no explicit owner principal was specified during creation</li>
-   * </ol>
+   * @param entityId the {@link EntityId} whose owner principal information needs to be
+   *     retrieved
+   * @return {@link String} the principal of the {@link EntityId} owner if one was explicitly
+   *     provided during entity creation or null if
+   *     <ol>
+   *     <li>the entity does not exists in the system</li>
+   *     <li>entity exists in the system but no explicit owner principal was specified during creation</li>
+   *     </ol>
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
    */
@@ -156,7 +166,8 @@ public interface OwnerAdmin {
 
   /**
    * <p>Deletes the owner principal for the given {@link EntityId} </p>
-   * <p>This call does not throw {@link io.cdap.cdap.common.NotFoundException} if the entity does not
+   * <p>This call does not throw {@link io.cdap.cdap.common.NotFoundException} if the entity does
+   * not
    * exists in the store so it's safe to call without checking its existence</p>
    *
    * @param entityId the entity whose owner principal needs to be deleted

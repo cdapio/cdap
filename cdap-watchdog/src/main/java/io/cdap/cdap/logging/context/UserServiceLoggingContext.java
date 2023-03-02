@@ -26,8 +26,9 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_USER_SERVICE_ID = ".userserviceid";
   public static final String TAG_HANDLER_ID = ".userhandlerid";
 
-  public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId, String handlerId,
-                                   String runId, @Nullable String instanceId) {
+  public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId,
+      String handlerId,
+      String runId, @Nullable String instanceId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_USER_SERVICE_ID, serviceId);
     setSystemTag(TAG_HANDLER_ID, handlerId);

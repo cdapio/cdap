@@ -85,7 +85,8 @@ public class SpannerStorageProvider implements StorageProvider {
     }
 
     SpannerOptions options = builder.build();
-    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance), database);
+    DatabaseId databaseId = DatabaseId.of(InstanceId.of(options.getProjectId(), instance),
+        database);
 
     this.spanner = options.getService();
     this.admin = new SpannerStructuredTableAdmin(spanner, databaseId);

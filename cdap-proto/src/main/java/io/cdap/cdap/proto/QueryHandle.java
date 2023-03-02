@@ -42,6 +42,7 @@ public final class QueryHandle {
 
   /**
    * Create a new QueryHandle.
+   *
    * @param handle handle of the query.
    */
   private QueryHandle(String handle) {
@@ -55,8 +56,8 @@ public final class QueryHandle {
   @Override
   public String toString() {
     return "QueryHandle{" +
-      "handle='" + handle + '\'' +
-      '}';
+        "handle='" + handle + '\'' +
+        '}';
   }
 
   @Override

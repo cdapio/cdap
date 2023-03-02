@@ -73,7 +73,7 @@ import org.slf4j.LoggerFactory;
  * The http handler for handling runtime requests from the program runtime.
  */
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 +
-  "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
+    "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
 public class RuntimeHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeHandler.class);
@@ -88,14 +88,15 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
-                 RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
-                 LocationFactory locationFactory) {
+      RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
+      LocationFactory locationFactory) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
     this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
-    this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
+    this.eventLogsBaseLocation = locationFactory.create(
+        cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
     this.allowedTopics = new HashSet<>(RuntimeMonitors.createTopicNameList(cConf));
   }
 
@@ -108,7 +109,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
     if (schema == null) {
       throw new IllegalStateException("Missing MonitorRequest schema");
     }
-    if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
+    if (schema.getType() != Schema.Type.ARRAY
+        || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
     }
 
@@ -116,25 +118,26 @@ public class RuntimeHandler extends AbstractHttpHandler {
       try {
         eventLogsBaseLocation.mkdirs();
       } catch (IOException e) {
-        throw new RuntimeException("Failed to create the spark event logs directory " + eventLogsBaseLocation, e);
+        throw new RuntimeException(
+            "Failed to create the spark event logs directory " + eventLogsBaseLocation, e);
       }
     }
   }
 
   /**
-   * Handles call for writing to TMS from the program runtime for a given program run. The POST body is an
-   * avro array of bytes.
+   * Handles call for writing to TMS from the program runtime for a given program run. The POST body
+   * is an avro array of bytes.
    */
   @Path("/topics/{topic}")
   @POST
   public BodyConsumer writeMessages(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace") String namespace,
-                                    @PathParam("app") String app,
-                                    @PathParam("version") String version,
-                                    @PathParam("program-type") String programType,
-                                    @PathParam("program") String program,
-                                    @PathParam("run") String run,
-                                    @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app") String app,
+      @PathParam("version") String version,
+      @PathParam("program-type") String programType,
+      @PathParam("program") String program,
+      @PathParam("run") String run,
+      @PathParam("topic") String topic) throws Exception {
 
     if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only avro/binary content type is supported.");
@@ -142,8 +145,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     ApplicationId appId = new NamespaceId(namespace).app(app, version);
     ProgramRunId programRunId = new ProgramRunId(appId,
-                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
-                                                 program, run);
+        ProgramType.valueOfCategoryName(programType, BadRequestException::new),
+        program, run);
     ProgramRunInfo programRunInfo = requestValidator.getProgramRunStatus(programRunId, request);
 
     if (!allowedTopics.contains(topic)) {
@@ -158,7 +161,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
     return new MessageBodyConsumer(topicId, payloads -> {
       try {
         messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
-                                                             topicId.getTopic(), payloads);
+            topicId.getTopic(), payloads);
       } catch (TopicNotFoundException e) {
         throw new BadRequestException(e);
       }
@@ -171,27 +174,29 @@ public class RuntimeHandler extends AbstractHttpHandler {
   @Path("/spark-event-logs/{id}")
   @POST
   public BodyConsumer writeSparkEventLogs(HttpRequest request, HttpResponder responder,
-                                          @PathParam("namespace") String namespace,
-                                          @PathParam("app") String app,
-                                          @PathParam("version") String version,
-                                          @PathParam("program-type") String programType,
-                                          @PathParam("program") String program,
-                                          @PathParam("run") String run,
-                                          @PathParam("id") String id) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app") String app,
+      @PathParam("version") String version,
+      @PathParam("program-type") String programType,
+      @PathParam("program") String program,
+      @PathParam("run") String run,
+      @PathParam("id") String id) throws Exception {
     if (!eventLogsEnabled) {
       throw new UnsupportedOperationException("Spark event logs collection is not enabled");
     }
 
-    if (!MediaType.APPLICATION_OCTET_STREAM.equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
+    if (!MediaType.APPLICATION_OCTET_STREAM.equals(
+        request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only application/octet-stream content type is supported.");
     }
     ApplicationId appId = new NamespaceId(namespace).app(app, version);
     ProgramRunId programRunId = new ProgramRunId(appId,
-                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
-                                                 program, run);
+        ProgramType.valueOfCategoryName(programType, BadRequestException::new),
+        program, run);
     requestValidator.getProgramRunStatus(programRunId, request);
 
-    Location location = eventLogsBaseLocation.append(String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
+    Location location = eventLogsBaseLocation.append(
+        String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
     if (location.exists()) {
       LOG.debug("Deleting event logs location {} for program run {}", location, programRunId);
       location.delete(true);
@@ -214,7 +219,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
           os.close();
           responder.sendStatus(HttpResponseStatus.OK);
         } catch (IOException e) {
-          throw new RuntimeException("Failed to close spark event logs output stream for " + location, e);
+          throw new RuntimeException(
+              "Failed to close spark event logs output stream for " + location, e);
         }
       }
 
@@ -232,8 +238,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
   }
 
   /**
-   * A {@link BodyConsumer} to consume request from program runtime for writing messages to TMS.
-   * It decodes and write messages to TMS in a streaming micro-batching fashion.
+   * A {@link BodyConsumer} to consume request from program runtime for writing messages to TMS. It
+   * decodes and write messages to TMS in a streaming micro-batching fashion.
    */
   private static final class MessageBodyConsumer extends BodyConsumer {
 
@@ -247,9 +253,10 @@ public class RuntimeHandler extends AbstractHttpHandler {
     private long items;
     private final ProgramRunInfo programRunInfo;
     private static final Gson GSON = new GsonBuilder()
-      .create();
+        .create();
 
-    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor, ProgramRunInfo programRunInfo) {
+    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor,
+        ProgramRunInfo programRunInfo) {
       this.topicId = topicId;
       this.payloadProcessor = payloadProcessor;
       this.buffer = Unpooled.compositeBuffer();
@@ -313,7 +320,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
         }
       } catch (IOException | BadRequestException | AccessException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             "Failed to process request due to exception " + e.getMessage());
+            "Failed to process request due to exception " + e.getMessage());
         throw new RuntimeException(e);
       }
     }
@@ -322,19 +329,21 @@ public class RuntimeHandler extends AbstractHttpHandler {
     public void finished(HttpResponder responder) {
       try {
         if (payloads.isEmpty()) {
-          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(programRunInfo, ProgramRunInfo.class));
+          responder.sendJson(HttpResponseStatus.OK,
+              GSON.toJson(programRunInfo, ProgramRunInfo.class));
           return;
         }
         try {
           payloadProcessor.process(payloads.iterator());
-          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(programRunInfo, ProgramRunInfo.class));
+          responder.sendJson(HttpResponseStatus.OK,
+              GSON.toJson(programRunInfo, ProgramRunInfo.class));
         } catch (BadRequestException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (UnauthorizedException e) {
           responder.sendString(HttpResponseStatus.FORBIDDEN, e.getMessage());
         } catch (IOException | AccessException e) {
           responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                               "Failed to process all messages due to " + e.getMessage());
+              "Failed to process all messages due to " + e.getMessage());
         }
       } finally {
         Closeables.closeQuietly(inputStream);
@@ -344,7 +353,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     @Override
     public void handleError(Throwable cause) {
-      LOG.error("Exception raised when processing message body for publishing to topic {}", topicId, cause);
+      LOG.error("Exception raised when processing message body for publishing to topic {}", topicId,
+          cause);
     }
   }
 
@@ -364,9 +374,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
   }
 
   /**
-   * An internal interface for processing payloads received from the
-   * {@link #writeMessages(HttpRequest, HttpResponder, String, String, String, String, String, String, String)}
-   * call.
+   * An internal interface for processing payloads received from the {@link
+   * #writeMessages(HttpRequest, HttpResponder, String, String, String, String, String, String,
+   * String)} call.
    */
   private interface PayloadProcessor {
 
@@ -376,6 +386,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
      * @throws IOException if there is error when processing the payload
      * @throws BadRequestException if the request is invalid
      */
-    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException, AccessException;
+    void process(Iterator<byte[]> payloads)
+        throws IOException, BadRequestException, AccessException;
   }
 }

@@ -20,6 +20,7 @@ package io.cdap.cdap.proto.sourcecontrol;
  * Throw an exception when the validation of connecting to a remote repository fails.
  */
 public class RemoteRepositoryValidationException extends Exception {
+
   public RemoteRepositoryValidationException(String message) {
     super(message);
   }

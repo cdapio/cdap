@@ -55,7 +55,8 @@ public class StringsCompleter implements Completer {
   }
 
   @Override
-  public int complete(@Nullable final String buffer, final int cursor, final List<CharSequence> candidates) {
+  public int complete(@Nullable final String buffer, final int cursor,
+      final List<CharSequence> candidates) {
     checkNotNull(candidates);
 
     TreeSet<String> strings = getStrings();

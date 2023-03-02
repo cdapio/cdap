@@ -33,12 +33,14 @@ import java.util.Map;
  * Abstract Class for getting preferences for instance, namespace, application, program.
  */
 public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
+
   private final PreferencesClient client;
   private final ElementType type;
   private final boolean resolved;
 
-  protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig,
-                                          boolean resolved) {
+  protected AbstractGetPreferencesCommand(ElementType type, PreferencesClient client,
+      CLIConfig cliConfig,
+      boolean resolved) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -66,19 +68,20 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("%s %s preferences <%s>", action, type.getShortName(), type.getArgumentName());
+        return String.format("%s %s preferences <%s>", action, type.getShortName(),
+            type.getArgumentName());
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
 
   private Map<String, String> parsePreferences(Arguments arguments)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
     String[] programIdParts = new String[0];
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
     }
-    switch(type) {
+    switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
         return client.getInstancePreferences();
@@ -93,7 +96,8 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case SPARK:
         return client.getProgramPreferences(parseProgramId(arguments, type), resolved);
       default:
-        throw new IllegalArgumentException("Unrecognized element type for preferences: "  + type.getShortName());
+        throw new IllegalArgumentException(
+            "Unrecognized element type for preferences: " + type.getShortName());
     }
   }
 }

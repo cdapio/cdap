@@ -23,6 +23,7 @@ import java.util.Objects;
  * Information about a namespace.
  */
 public class NamespaceSummary {
+
   private final String name;
   private final String description;
   private final long generation;
@@ -48,8 +49,8 @@ public class NamespaceSummary {
   }
 
   /**
-   * Get the namespace generation. The generation is set when the namespace is created. If the namespace is deleted
-   * and then created again, it will have a higher generation.
+   * Get the namespace generation. The generation is set when the namespace is created. If the
+   * namespace is deleted and then created again, it will have a higher generation.
    *
    * @return the namespace generation
    */
@@ -67,8 +68,8 @@ public class NamespaceSummary {
     }
     NamespaceSummary that = (NamespaceSummary) o;
     return generation == that.generation &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(description, that.description);
+        Objects.equals(name, that.name) &&
+        Objects.equals(description, that.description);
   }
 
   @Override
@@ -79,9 +80,9 @@ public class NamespaceSummary {
   @Override
   public String toString() {
     return "NamespaceSummary{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", generation=" + generation +
-      '}';
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", generation=" + generation +
+        '}';
   }
 }

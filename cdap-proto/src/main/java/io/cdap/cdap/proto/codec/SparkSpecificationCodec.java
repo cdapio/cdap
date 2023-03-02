@@ -38,7 +38,8 @@ import javax.annotation.Nullable;
 public final class SparkSpecificationCodec extends AbstractSpecificationCodec<SparkSpecification> {
 
   @Override
-  public JsonElement serialize(SparkSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(SparkSpecification src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
@@ -55,40 +56,45 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     serializeResources(jsonObj, "driver", context, src.getDriverResources());
     serializeResources(jsonObj, "executor", context, src.getExecutorResources());
 
-    jsonObj.add("handlers", serializeList(src.getHandlers(), context, SparkHttpServiceHandlerSpecification.class));
+    jsonObj.add("handlers",
+        serializeList(src.getHandlers(), context, SparkHttpServiceHandlerSpecification.class));
 
     return jsonObj;
   }
 
   @Override
-  public SparkSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public SparkSpecification deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
-    String mainClassName = jsonObj.has("mainClassName") ? jsonObj.get("mainClassName").getAsString() : null;
+    String mainClassName =
+        jsonObj.has("mainClassName") ? jsonObj.get("mainClassName").getAsString() : null;
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
 
     Resources clientResources = deserializeResources(jsonObj, "client", context);
     Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources executorResources = deserializeResources(jsonObj, "executor", context);
 
-    List<SparkHttpServiceHandlerSpecification> handlers = deserializeList(jsonObj.get("handlers"), context,
-                                                                          SparkHttpServiceHandlerSpecification.class);
+    List<SparkHttpServiceHandlerSpecification> handlers = deserializeList(jsonObj.get("handlers"),
+        context,
+        SparkHttpServiceHandlerSpecification.class);
 
     return new SparkSpecification(className, name, description, mainClassName, datasets,
-                                  properties, clientResources, driverResources, executorResources, handlers, plugins);
+        properties, clientResources, driverResources, executorResources, handlers, plugins);
   }
 
   /**
    * Serialize the {@link Resources} object if it is not null.
    */
   private void serializeResources(JsonObject jsonObj, String prefix,
-                                  JsonSerializationContext context, @Nullable Resources resources) {
+      JsonSerializationContext context, @Nullable Resources resources) {
     if (resources == null) {
       return;
     }
@@ -101,7 +107,8 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
    * A {@code null} value will be returned if no such property exist.
    */
   @Nullable
-  private Resources deserializeResources(JsonObject jsonObj, String prefix, JsonDeserializationContext context) {
+  private Resources deserializeResources(JsonObject jsonObj, String prefix,
+      JsonDeserializationContext context) {
     String name = prefix + "Resources";
     JsonElement element = jsonObj.get(name);
     return element == null ? null : (Resources) context.deserialize(element, Resources.class);

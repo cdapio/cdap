@@ -36,6 +36,7 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class ProvisionerHttpHandler extends AbstractHttpHandler {
+
   private static final Gson GSON = new GsonBuilder().create();
   private final ProvisioningService provisioningService;
 
@@ -47,13 +48,14 @@ public class ProvisionerHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/provisioners")
   public void getProvisioners(HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(provisioningService.getProvisionerDetails()));
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(provisioningService.getProvisionerDetails()));
   }
 
   @GET
   @Path("/provisioners/{provisioner-name}")
   public void getProvisioner(HttpRequest request, HttpResponder responder,
-                             @PathParam("provisioner-name") String provisionerName) throws NotFoundException {
+      @PathParam("provisioner-name") String provisionerName) throws NotFoundException {
     ProvisionerDetail provisionerDetail = provisioningService.getProvisionerDetail(provisionerName);
     if (provisionerDetail == null) {
       throw new NotFoundException(String.format("Provisioner %s not found", provisionerName));

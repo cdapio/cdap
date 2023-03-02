@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
  * TwillRunnable to run Transaction Service through twill.
  */
 public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceTwillRunnable.class);
 
   private Injector injector;
@@ -72,16 +73,19 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
 
   @Override
   protected Injector doInit(TwillContext context) {
-    getCConfiguration().set(Constants.Transaction.Container.ADDRESS, context.getHost().getCanonicalHostName());
+    getCConfiguration().set(Constants.Transaction.Container.ADDRESS,
+        context.getHost().getCanonicalHostName());
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.TRANSACTION, context.getInstanceId());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.TRANSACTION,
+        context.getInstanceId());
     injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.TRANSACTION));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.TRANSACTION));
     return injector;
   }
 
@@ -91,37 +95,39 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     services.add(injector.getInstance(TransactionHttpService.class));
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
+      String txClientId) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MessagingClientModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new KafkaLogAppenderModule(),
-      new AuditModule(),
-      // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MessagingClientModule(),
+        new DataFabricModules(txClientId).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new KafkaLogAppenderModule(),
+        new AuditModule(),
+        // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
 
-          // configure common handlers
-          Multibinder<HttpHandler> handlerBinder =
-            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Service.TRANSACTION_HTTP));
-          handlerBinder.addBinding().to(TransactionPingHandler.class);
+            // configure common handlers
+            Multibinder<HttpHandler> handlerBinder =
+                Multibinder.newSetBinder(binder(), HttpHandler.class,
+                    Names.named(Constants.Service.TRANSACTION_HTTP));
+            handlerBinder.addBinding().to(TransactionPingHandler.class);
+          }
         }
-      }
     );
   }
 }

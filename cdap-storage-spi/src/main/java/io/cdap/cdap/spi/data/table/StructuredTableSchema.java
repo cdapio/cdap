@@ -30,10 +30,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Class for the table schema, which provides convenient way to fetch for fields, primary key and index.
+ * Class for the table schema, which provides convenient way to fetch for fields, primary key and
+ * index.
  */
 @Beta
 public class StructuredTableSchema {
+
   private final StructuredTableId tableId;
   private final Map<String, FieldType.Type> fields;
   // primary keys have to be ordered as defined in the table schema
@@ -45,10 +47,10 @@ public class StructuredTableSchema {
   }
 
   public StructuredTableSchema(StructuredTableId tableId, List<FieldType> fields,
-                               List<String> primaryKeys, Collection<String> indexes) {
+      List<String> primaryKeys, Collection<String> indexes) {
     this.tableId = tableId;
     this.fields = Collections.unmodifiableMap(fields.stream().collect(
-      Collectors.toMap(FieldType::getName, FieldType::getType)));
+        Collectors.toMap(FieldType::getName, FieldType::getType)));
     this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(primaryKeys));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
@@ -120,9 +122,9 @@ public class StructuredTableSchema {
     }
     StructuredTableSchema that = (StructuredTableSchema) other;
     return Objects.equals(tableId, that.tableId)
-      && Objects.equals(fields, that.fields)
-      && Objects.equals(primaryKeys, that.primaryKeys)
-      && Objects.equals(indexes, that.indexes);
+        && Objects.equals(fields, that.fields)
+        && Objects.equals(primaryKeys, that.primaryKeys)
+        && Objects.equals(indexes, that.indexes);
   }
 
   @Override
@@ -131,7 +133,8 @@ public class StructuredTableSchema {
   }
 
   /**
-   * Checks if this schema is compatible with the given {@link StructuredTableSpecification}. They are compatible if
+   * Checks if this schema is compatible with the given {@link StructuredTableSpecification}. They
+   * are compatible if
    *
    * <ol>
    *   <li>
@@ -149,14 +152,16 @@ public class StructuredTableSchema {
    * </ol>
    *
    * @param spec the {@link StructuredTableSpecification} to check for compatibility
-   * @return {@code true} if this schema is compatible with the given specification, otherwise return {@code false}
+   * @return {@code true} if this schema is compatible with the given specification, otherwise
+   *     return {@code false}
    */
   public boolean isCompatible(StructuredTableSpecification spec) {
     return isCompatible(new StructuredTableSchema(spec));
   }
 
   /**
-   * Checks if this schema is compatible with the given {@link StructuredTableSchema}. They are compatible if
+   * Checks if this schema is compatible with the given {@link StructuredTableSchema}. They are
+   * compatible if
    *
    * <ol>
    *   <li>
@@ -174,7 +179,8 @@ public class StructuredTableSchema {
    * </ol>
    *
    * @param schema the {@link StructuredTableSchema} to check for compatibility
-   * @return {@code true} if this schema is compatible with the given schema, otherwise return {@code false}
+   * @return {@code true} if this schema is compatible with the given schema, otherwise return
+   *     {@code false}
    */
   public boolean isCompatible(StructuredTableSchema schema) {
     for (String field : getFieldNames()) {
@@ -185,6 +191,6 @@ public class StructuredTableSchema {
     }
 
     return getPrimaryKeys().equals(schema.getPrimaryKeys())
-      && schema.getIndexes().containsAll(getIndexes());
+        && schema.getIndexes().containsAll(getIndexes());
   }
 }

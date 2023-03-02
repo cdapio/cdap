@@ -52,8 +52,8 @@ public final class HttpsEnabler {
   private volatile SSLSocketFactory sslSocketFactory;
 
   /**
-   * Configures keystore to use based on the given configurations. This method is intended for service to use
-   * to enable https server.
+   * Configures keystore to use based on the given configurations. This method is intended for
+   * service to use to enable https server.
    *
    * @param cConf the configuration for looking up certificate location
    * @param sConf the security configuration for looking up certificate password
@@ -63,19 +63,19 @@ public final class HttpsEnabler {
     String path = cConf.get(Constants.Security.SSL.INTERNAL_CERT_PATH);
 
     String password = Strings.isNullOrEmpty(path)
-      ? KeyStores.generateRandomPassword()
-      : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
+        ? KeyStores.generateRandomPassword()
+        : sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, "");
     KeyStore keyStore = Strings.isNullOrEmpty(path)
-      ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
-      : KeyStores.createKeyStore(Paths.get(path), password);
+        ? KeyStores.generatedCertKeyStore(KeyStores.VALIDITY, password)
+        : KeyStores.createKeyStore(Paths.get(path), password);
 
     return setKeyStore(keyStore, password::toCharArray);
   }
 
   /**
-   * Configures a trust store to use based on the given configuration. This method is intended for client to use
-   * to trust a https service configured with the same configuration. If there is no certificate information
-   * in the given configurations, no trust store will be configured.
+   * Configures a trust store to use based on the given configuration. This method is intended for
+   * client to use to trust a https service configured with the same configuration. If there is no
+   * certificate information in the given configurations, no trust store will be configured.
    *
    * @param cConf the configuration for looking up certificate location
    * @param sConf the security configuration for looking up certificate password
@@ -88,19 +88,22 @@ public final class HttpsEnabler {
     }
 
     return setTrustStore(KeyStores.createTrustStore(
-      KeyStores.createKeyStore(Paths.get(path), sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, ""))));
+        KeyStores.createKeyStore(Paths.get(path),
+            sConf.get(Constants.Security.SSL.INTERNAL_CERT_PASSWORD, ""))));
   }
 
   /**
-   * Sets the keystore to use for encryption.
-   * For server side HTTPS enabling via the {@link #enable(NettyHttpService.Builder)} method, this must be set.
-   * This is optional for client side and if it is set, then client side authentication will be enabled.
+   * Sets the keystore to use for encryption. For server side HTTPS enabling via the {@link
+   * #enable(NettyHttpService.Builder)} method, this must be set. This is optional for client side
+   * and if it is set, then client side authentication will be enabled.
    *
    * @param keyStore the {@link KeyStore} to use
-   * @param keystorePasswordSupplier a {@link Supplier} to provide the password for the keystore
+   * @param keystorePasswordSupplier a {@link Supplier} to provide the password for the
+   *     keystore
    * @return this instance
    */
-  public synchronized HttpsEnabler setKeyStore(KeyStore keyStore, Supplier<char[]> keystorePasswordSupplier) {
+  public synchronized HttpsEnabler setKeyStore(KeyStore keyStore,
+      Supplier<char[]> keystorePasswordSupplier) {
     try {
       keyManagerFactory = createKeyManagerFactory(keyStore, keystorePasswordSupplier);
       sslSocketFactory = null;
@@ -111,11 +114,10 @@ public final class HttpsEnabler {
   }
 
   /**
-   * Sets the trust store to use for verification.
-   * If a trust store is provided for server side HTTPS, the server will authenticate the client based on
-   * the trust store, otherwise it will accept all clients.
-   * If a trust store is provided for client side HTTPS, the client will verify the server identify based on
-   * the trust store, otherwise it will trust any server.
+   * Sets the trust store to use for verification. If a trust store is provided for server side
+   * HTTPS, the server will authenticate the client based on the trust store, otherwise it will
+   * accept all clients. If a trust store is provided for client side HTTPS, the client will verify
+   * the server identify based on the trust store, otherwise it will trust any server.
    *
    * @param trustStore the {@link KeyStore} containing certificates to be trusted.
    * @return this instance
@@ -133,9 +135,9 @@ public final class HttpsEnabler {
   /**
    * Sets to have the client trust all servers.
    *
-   * @param trustAny if {@link true} it will trust any server;
-   *                 otherwise it will based on the trust store if it is set through {@link #setTrustStore(KeyStore)},
-   *                 or use the default trust chain.
+   * @param trustAny if {@link true} it will trust any server; otherwise it will based on the
+   *     trust store if it is set through {@link #setTrustStore(KeyStore)}, or use the default trust
+   *     chain.
    * @return this instance
    */
   public synchronized HttpsEnabler setTrustAll(boolean trustAny) {
@@ -147,7 +149,8 @@ public final class HttpsEnabler {
   }
 
   /**
-   * Enables HTTPS for the given {@link HttpsURLConnection} based on the configuration in this class
+   * Enables HTTPS for the given {@link HttpsURLConnection} based on the configuration in this
+   * class
    *
    * @param urlConn the {@link HttpsURLConnection} to update
    * @return the urlConn from the parameter
@@ -164,7 +167,8 @@ public final class HttpsEnabler {
   }
 
   /**
-   * Enables HTTPS for the given {@link NettyHttpService.Builder} based on the configuration in this class.
+   * Enables HTTPS for the given {@link NettyHttpService.Builder} based on the configuration in this
+   * class.
    *
    * @param builder the builder to update
    * @param <T> type of the builder
@@ -186,7 +190,8 @@ public final class HttpsEnabler {
   public SSLHandlerFactory createSSLHandlerFactory() {
     KeyManagerFactory kmf = keyManagerFactory;
     if (kmf == null) {
-      throw new IllegalArgumentException("Missing keystore to create SslContext for netty http server.");
+      throw new IllegalArgumentException(
+          "Missing keystore to create SslContext for netty http server.");
     }
 
     // Initialize the SslContext to work with our key managers.
@@ -208,12 +213,13 @@ public final class HttpsEnabler {
    * Returns a {@link KeyManagerFactory} created from the given {@link KeyStore}.
    *
    * @param keyStore the {@link KeyStore} to use
-   * @param passwordSupplier a {@link Supplier} to provide password for the given {@link KeyStore}.
+   * @param passwordSupplier a {@link Supplier} to provide password for the given {@link
+   *     KeyStore}.
    * @return a {@link KeyManagerFactory}
    */
   private KeyManagerFactory createKeyManagerFactory(KeyStore keyStore,
-                                                    Supplier<char[]> passwordSupplier) throws UnrecoverableKeyException,
-    NoSuchAlgorithmException, KeyStoreException {
+      Supplier<char[]> passwordSupplier) throws UnrecoverableKeyException,
+      NoSuchAlgorithmException, KeyStoreException {
 
     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     kmf.init(keyStore, passwordSupplier.get());
@@ -226,10 +232,12 @@ public final class HttpsEnabler {
    * @param trustStore the {@link KeyStore} to use
    * @return a {@link TrustManagerFactory}
    */
-  private TrustManagerFactory createTrustManagerFactory(KeyStore trustStore) throws NoSuchAlgorithmException,
-    KeyStoreException {
+  private TrustManagerFactory createTrustManagerFactory(KeyStore trustStore)
+      throws NoSuchAlgorithmException,
+      KeyStoreException {
 
-    TrustManagerFactory tmfFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    TrustManagerFactory tmfFactory = TrustManagerFactory.getInstance(
+        TrustManagerFactory.getDefaultAlgorithm());
     tmfFactory.init(trustStore);
     return tmfFactory;
   }
@@ -239,7 +247,8 @@ public final class HttpsEnabler {
    *
    * @return a {@link SSLSocketFactory}
    */
-  private SSLSocketFactory getSSLSocketFactory() throws NoSuchAlgorithmException, KeyManagementException {
+  private SSLSocketFactory getSSLSocketFactory()
+      throws NoSuchAlgorithmException, KeyManagementException {
     SSLSocketFactory factory = sslSocketFactory;
     if (factory != null) {
       return factory;
@@ -255,8 +264,8 @@ public final class HttpsEnabler {
       TrustManagerFactory tmf = trustManagerFactory;
 
       sslContext.init(kmf == null ? null : kmf.getKeyManagers(),
-                      tmf == null ? null : tmf.getTrustManagers(),
-                      new SecureRandom());
+          tmf == null ? null : tmf.getTrustManagers(),
+          new SecureRandom());
 
       sslSocketFactory = factory = sslContext.getSocketFactory();
       return factory;
@@ -264,8 +273,8 @@ public final class HttpsEnabler {
   }
 
   /**
-   * Private class for overriding the {@link SSLHandlerFactory#create(ByteBufAllocator)} method in order to
-   * enable client side authentication.
+   * Private class for overriding the {@link SSLHandlerFactory#create(ByteBufAllocator)} method in
+   * order to enable client side authentication.
    */
   private static final class CustomSSLHandlerFactory extends SSLHandlerFactory {
 

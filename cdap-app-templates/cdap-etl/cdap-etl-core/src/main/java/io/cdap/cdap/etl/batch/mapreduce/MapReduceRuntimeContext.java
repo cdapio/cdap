@@ -32,16 +32,18 @@ import java.util.concurrent.Callable;
 
 /**
  * Batch runtime context that delegates most operations to MapReduceTaskContext. It also extends
- * {@link AbstractTransformContext} in order to provide plugin isolation between pipeline plugins. This means sources,
- * transforms, and sinks don't need to worry that plugins they use conflict with plugins other sources, transforms,
- * or sinks use.
+ * {@link AbstractTransformContext} in order to provide plugin isolation between pipeline plugins.
+ * This means sources, transforms, and sinks don't need to worry that plugins they use conflict with
+ * plugins other sources, transforms, or sinks use.
  */
 public class MapReduceRuntimeContext extends AbstractTransformContext
-  implements BatchRuntimeContext, BatchJoinerRuntimeContext {
+    implements BatchRuntimeContext, BatchJoinerRuntimeContext {
+
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final MapReduceTaskContext context;
 
-  public MapReduceRuntimeContext(MapReduceTaskContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+  public MapReduceRuntimeContext(MapReduceTaskContext context, PipelineRuntime pipelineRuntime,
+      StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(context));
     this.context = context;
   }
@@ -68,7 +70,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
@@ -79,7 +81,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public <T extends Dataset> T getDataset(final String name,
-                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+      final Map<String, String> arguments) throws DatasetInstantiationException {
     return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
@@ -90,7 +92,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
-                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+      final Map<String, String> arguments) throws DatasetInstantiationException {
     return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {

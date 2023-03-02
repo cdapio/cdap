@@ -54,9 +54,9 @@ public class TableSplit extends Split {
   @Override
   public String toString() {
     return "TableSplit{" +
-      "start=" + Bytes.toStringBinary(start) +
-      ", stop=" + Bytes.toStringBinary(stop) +
-      '}';
+        "start=" + Bytes.toStringBinary(start) +
+        ", stop=" + Bytes.toStringBinary(stop) +
+        '}';
   }
 
   @Override

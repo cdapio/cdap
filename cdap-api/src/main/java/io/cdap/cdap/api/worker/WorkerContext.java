@@ -30,7 +30,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
  * Context for {@link Worker}.
  */
 public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, MessagingContext,
-  DatasetContext, PluginContext, Transactional, SecureStore, MetadataReader, MetadataWriter {
+    DatasetContext, PluginContext, Transactional, SecureStore, MetadataReader, MetadataWriter {
 
   /**
    * Returns the specification used to configure {@link Worker} bounded to this context.

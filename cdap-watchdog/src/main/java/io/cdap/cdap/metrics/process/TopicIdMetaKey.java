@@ -24,6 +24,7 @@ import java.util.Arrays;
  * Topic id meta key
  */
 public final class TopicIdMetaKey implements MetricsMetaKey {
+
   private final TopicId topicId;
   private final byte[] key;
 

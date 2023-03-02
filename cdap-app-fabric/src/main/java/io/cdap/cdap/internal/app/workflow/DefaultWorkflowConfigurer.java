@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
  * Default implementation of {@link WorkflowConfigurer}.
  */
 public class DefaultWorkflowConfigurer extends AbstractConfigurer
-  implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
+    implements WorkflowConfigurer, WorkflowForkJoiner, WorkflowConditionAdder {
 
   private final String className;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs = new HashMap<>();
@@ -74,11 +74,12 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
-                                   Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                   @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                   FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+      Id.Namespace deployNamespace, Id.Artifact artifactId,
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
@@ -107,7 +108,8 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   @Override
   public void addMapReduce(String mapReduce) {
-    nodes.add(WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
+    nodes.add(
+        WorkflowNodeCreator.createWorkflowActionNode(mapReduce, SchedulableProgramType.MAPREDUCE));
   }
 
   @Override
@@ -117,38 +119,42 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   @Override
   public void addAction(CustomAction action) {
-    nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 pluginFinder, pluginInstantiator, 
-                                                                 runtimeInfo, getFeatureFlagsProvider()));
+    nodes.add(
+        WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
+            pluginFinder, pluginInstantiator,
+            runtimeInfo, getFeatureFlagsProvider()));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
     return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, pluginFinder,
-                                               pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+        pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
   @Override
-  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
+  public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
+      Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate, this, deployNamespace, artifactId,
-                                                    pluginFinder, pluginInstantiator, runtimeInfo,
-                                                    getFeatureFlagsProvider());
+        pluginFinder, pluginInstantiator, runtimeInfo,
+        getFeatureFlagsProvider());
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
-    return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, pluginFinder,
-                                                    pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+    return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId,
+        pluginFinder,
+        pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
   }
 
-  private void checkArgument(boolean condition, String template, Object...args) {
+  private void checkArgument(boolean condition, String template, Object... args) {
     if (!condition) {
       throw new IllegalArgumentException(String.format(template, args));
     }
   }
 
   @Override
-  public void createLocalDataset(String datasetName, String typeName, DatasetProperties properties) {
+  public void createLocalDataset(String datasetName, String typeName,
+      DatasetProperties properties) {
     checkArgument(datasetName != null, "Dataset instance name cannot be null.");
     checkArgument(typeName != null, "Dataset type name cannot be null.");
     checkArgument(properties != null, "Instance properties name cannot be null.");
@@ -156,23 +162,26 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
     DatasetCreationSpec spec = new DatasetCreationSpec(datasetName, typeName, properties);
     DatasetCreationSpec existingSpec = localDatasetSpecs.get(datasetName);
     if (existingSpec != null && !existingSpec.equals(spec)) {
-      throw new IllegalArgumentException(String.format("DatasetInstance '%s' was added multiple times with" +
-                                                         " different specifications. Please resolve the conflict so" +
-                                                         " that there is only one specification for the local dataset" +
-                                                         " instance in the Workflow.", datasetName));
+      throw new IllegalArgumentException(
+          String.format("DatasetInstance '%s' was added multiple times with" +
+              " different specifications. Please resolve the conflict so" +
+              " that there is only one specification for the local dataset" +
+              " instance in the Workflow.", datasetName));
     }
     localDatasetSpecs.put(datasetName, spec);
   }
 
   @Override
-  public void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+  public void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass,
+      DatasetProperties props) {
     createLocalDataset(datasetName, datasetClass.getName(), props);
     datasetConfigurer.addDatasetType(datasetClass);
   }
 
   public WorkflowSpecification createSpecification() {
-    return new WorkflowSpecification(className, name, description, properties, createNodesWithId(nodes),
-                                     localDatasetSpecs, getPlugins());
+    return new WorkflowSpecification(className, name, description, properties,
+        createNodesWithId(nodes),
+        localDatasetSpecs, getPlugins());
   }
 
   private List<WorkflowNode> createNodesWithId(List<WorkflowNode> nodes) {
@@ -229,20 +238,22 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   }
 
   @Override
-  public void addWorkflowConditionNode(Predicate<WorkflowContext> predicate, List<WorkflowNode> ifBranch,
-                                       List<WorkflowNode> elseBranch) {
+  public void addWorkflowConditionNode(Predicate<WorkflowContext> predicate,
+      List<WorkflowNode> ifBranch,
+      List<WorkflowNode> elseBranch) {
     ConditionSpecification spec = new DefaultConditionSpecification(predicate.getClass().getName(),
-                                                                    predicate.getClass().getSimpleName(), "",
-                                                                    new HashMap<String, String>(),
-                                                                    new HashSet<String>());
+        predicate.getClass().getSimpleName(), "",
+        new HashMap<String, String>(),
+        new HashSet<String>());
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }
 
   @Override
   public void addWorkflowConditionNode(Condition condition, List<WorkflowNode> ifBranch,
-                                       List<WorkflowNode> elseBranch) {
+      List<WorkflowNode> elseBranch) {
     Preconditions.checkArgument(condition != null, "Condition is null.");
-    ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition, deployNamespace,
+    ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition,
+        deployNamespace,
         artifactId, pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }

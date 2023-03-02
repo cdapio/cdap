@@ -35,6 +35,7 @@ import javax.inject.Inject;
  */
 @Beta
 public class NamespaceClient extends AbstractNamespaceClient {
+
   private final RESTClient restClient;
   private final ClientConfig config;
 
@@ -50,12 +51,12 @@ public class NamespaceClient extends AbstractNamespaceClient {
 
   @Override
   protected HttpResponse execute(HttpRequest request)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     // the allowed codes are the ones that AbstractNamespaceClient expects to be able to handle
     return restClient.execute(request, config.getAccessToken(),
-                              HttpURLConnection.HTTP_BAD_REQUEST,
-                              HttpURLConnection.HTTP_NOT_FOUND,
-                              HttpURLConnection.HTTP_FORBIDDEN);
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        HttpURLConnection.HTTP_NOT_FOUND,
+        HttpURLConnection.HTTP_FORBIDDEN);
   }
 
   @Override

@@ -49,16 +49,16 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   private final NamespacePathLocator namespacePathLocator;
 
   FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
-               LocationFactory locationFactory,
-               NamespacePathLocator namespacePathLocator,
-               DatasetSpecification spec) throws IOException {
+      LocationFactory locationFactory,
+      NamespacePathLocator namespacePathLocator,
+      DatasetSpecification spec) throws IOException {
 
     this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
     this.useExisting = FileSetProperties.isUseExisting(spec.getProperties());
     this.possessExisting = FileSetProperties.isPossessExisting(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
-                                                             locationFactory, namespacePathLocator);
+        locationFactory, namespacePathLocator);
     this.datasetContext = datasetContext;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
@@ -81,7 +81,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     } else {
       if (exists()) {
         throw new IOException(String.format(
-          "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
+            "Base location for file set '%s' at %s already exists", spec.getName(), baseLocation));
       }
       String permissions = FileSetProperties.getFilePermissions(spec.getProperties());
       String group = FileSetProperties.getFileGroup(spec.getProperties());
@@ -111,8 +111,9 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
           try {
             firstDirToCreate.setGroup(group);
           } catch (Exception e) {
-            LOG.warn("Failed to set group {} for base location {} of file set {}: {}. Please set it manually.",
-                     group, firstDirToCreate.toURI().toString(), spec.getName(), e.getMessage());
+            LOG.warn(
+                "Failed to set group {} for base location {} of file set {}: {}. Please set it manually.",
+                group, firstDirToCreate.toURI().toString(), spec.getName(), e.getMessage());
           }
         }
         // all following directories are created with the same group id as their parent
@@ -128,8 +129,8 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   private void validateExists(String property) throws IOException {
     if (!exists()) {
       throw new IOException(String.format(
-        "Property '%s' for file set '%s' is true, but base location at %s does not exist",
-        property, spec.getName(), baseLocation));
+          "Property '%s' for file set '%s' is true, but base location at %s does not exist",
+          property, spec.getName(), baseLocation));
     }
   }
 
@@ -171,7 +172,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     // all we need to do is therefore to move it to the new base location if that location has changed
     if (isExternal && !FileSetProperties.isDataExternal(oldSpec.getProperties())) {
       Location oldBaseLocation = FileSetDataset.determineBaseLocation(
-        datasetContext, cConf, oldSpec, locationFactory, namespacePathLocator);
+          datasetContext, cConf, oldSpec, locationFactory, namespacePathLocator);
       if (!baseLocation.equals(oldBaseLocation)) {
         oldBaseLocation.renameTo(baseLocation);
       }

@@ -76,54 +76,56 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new MessagingClientModule(),
-      getDataFabricModule(),
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new LocalLocationModule(),
-      // log handler is co-located with log saver
-      new LogQueryRuntimeModule().getDistributedModules(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          // Current impersonation is not supported
-          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-          bind(LogReader.class).to(FileLogReader.class);
-          expose(LogReader.class);
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new MessagingClientModule(),
+        getDataFabricModule(),
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        new DataSetsModules().getStandaloneModules(),
+        new LocalLocationModule(),
+        // log handler is co-located with log saver
+        new LogQueryRuntimeModule().getDistributedModules(),
+        new PrivateModule() {
+          @Override
+          protected void configure() {
+            // Current impersonation is not supported
+            bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+            bind(LogReader.class).to(FileLogReader.class);
+            expose(LogReader.class);
 
-          bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID))
-            .toInstance(0);
-          bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT))
-            .toInstance(1);
-          bind(AppenderContext.class).to(DistributedAppenderContext.class);
+            bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID))
+                .toInstance(0);
+            bind(Integer.class).annotatedWith(
+                    Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT))
+                .toInstance(1);
+            bind(AppenderContext.class).to(DistributedAppenderContext.class);
 
-          // Bind the log buffer as the log saver service
-          Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-            (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
-          CommonHandlers.add(handlerBinder);
+            // Bind the log buffer as the log saver service
+            Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
+                (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
+            CommonHandlers.add(handlerBinder);
 
-          bind(LogBufferService.class).in(Scopes.SINGLETON);
-          expose(LogBufferService.class);
+            bind(LogBufferService.class).in(Scopes.SINGLETON);
+            expose(LogBufferService.class);
+          }
         }
-      }
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
-                             MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
+      MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
     // log saver
     services.add(injector.getInstance(LogBufferService.class));
     // log handler
     services.add(injector.getInstance(LogQueryService.class));
     // ZK client service
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -133,8 +135,8 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.LOGSAVER);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.LOGSAVER);
   }
 
   @Override
@@ -156,7 +158,8 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
     protected void appendEvent(LogMessage logMessage) {
       ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
       if (loggerFactory instanceof LoggerContext) {
-        ch.qos.logback.classic.Logger logger = ((LoggerContext) loggerFactory).getLogger(logMessage.getLoggerName());
+        ch.qos.logback.classic.Logger logger = ((LoggerContext) loggerFactory).getLogger(
+            logMessage.getLoggerName());
         Iterator<Appender<ILoggingEvent>> iterator = logger.iteratorForAppenders();
         while (iterator.hasNext()) {
           Appender<ILoggingEvent> appender = iterator.next();

@@ -47,7 +47,8 @@ public final class InMemoryElectionRegistry {
     // It has to be a linked hash multimap as the order of addition determine who is the leader.
     this.registry = LinkedHashMultimap.create();
     // Creates a single thread executor using daemon threads. No need to worry about shutdown.
-    this.executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("memory-leader-election"));
+    this.executor = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("memory-leader-election"));
   }
 
   /**
@@ -137,7 +138,9 @@ public final class InMemoryElectionRegistry {
       try {
         delegate.leader();
       } catch (Throwable t) {
-        LOG.warn("Exception thrown from ElectionHandler.leader(). Withdraw from leader election process.", t);
+        LOG.warn(
+            "Exception thrown from ElectionHandler.leader(). Withdraw from leader election process.",
+            t);
         registry.remove(name, this);
         leader = false;
       }
@@ -149,7 +152,9 @@ public final class InMemoryElectionRegistry {
       try {
         delegate.follower();
       } catch (Throwable t) {
-        LOG.warn("Exception thrown from ElectionHandler.follower(). Withdraw from leader election process.", t);
+        LOG.warn(
+            "Exception thrown from ElectionHandler.follower(). Withdraw from leader election process.",
+            t);
         registry.remove(name, this);
       }
     }

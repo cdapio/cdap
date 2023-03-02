@@ -42,7 +42,6 @@ public enum TokenState {
   }
 
   /**
-   *
    * @return the message associated with this token state describing the cause to be in this state
    */
   public String getMsg() {
@@ -50,7 +49,6 @@ public enum TokenState {
   }
 
   /**
-   *
    * @return {@code true} if this token state is valid, {@code false} otherwise
    */
   public boolean isValid() {

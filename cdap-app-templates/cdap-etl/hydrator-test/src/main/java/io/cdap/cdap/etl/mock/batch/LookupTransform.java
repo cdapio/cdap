@@ -36,17 +36,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Transform used to test lookup functionality. Takes a field name whose value will be used as the key in a lookup.
- * If the lookup is from a Table, the value of the lookup will be a Row, and the columns of the Row will be added as
- * individual fields of the output StructuredRecord.
- * If the lookup is from a KeyValueTable, the value of the lookup will be a String, and the 'destinationField' will
- * be used to determine where in the output StructuredRecord to place the value.
+ * Transform used to test lookup functionality. Takes a field name whose value will be used as the
+ * key in a lookup. If the lookup is from a Table, the value of the lookup will be a Row, and the
+ * columns of the Row will be added as individual fields of the output StructuredRecord. If the
+ * lookup is from a KeyValueTable, the value of the lookup will be a String, and the
+ * 'destinationField' will be used to determine where in the output StructuredRecord to place the
+ * value.
  *
  * @param <T> The type of object that will be returned for the lookup.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name(LookupTransform.NAME)
 public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "Lookup";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -63,7 +65,8 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
@@ -106,6 +109,7 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
    * Config for the source.
    */
   public static class Config extends PluginConfig {
+
     private String lookupKey;
     private String destinationField;
     private String lookupName;
@@ -123,10 +127,11 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("lookupKey", new PluginPropertyField("lookupKey", "", "string", true, false));
-    properties.put("destinationField", new PluginPropertyField("destinationField", "", "string", true, false));
+    properties.put("destinationField",
+        new PluginPropertyField("destinationField", "", "string", true, false));
     properties.put("lookupName", new PluginPropertyField("lookupName", "", "string", true, false));
     return PluginClass.builder().setName(NAME).setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(LookupTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(LookupTransform.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

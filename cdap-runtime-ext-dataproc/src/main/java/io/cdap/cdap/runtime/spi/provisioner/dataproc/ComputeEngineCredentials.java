@@ -42,9 +42,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Provides ComputeEngineCredentials either locally if no endpoint is provided, or remotely if endpoint is provided.
+ * Provides ComputeEngineCredentials either locally if no endpoint is provided, or remotely if
+ * endpoint is provided.
  */
 public final class ComputeEngineCredentials extends GoogleCredentials {
+
   private static final Logger LOG = LoggerFactory.getLogger(ComputeEngineCredentials.class);
   private static final Gson GSON = new Gson();
 
@@ -52,7 +54,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   private static final String EXPIRES_IN_KEY = "expires_in";
   private static final String LOCAL_COMPUTE_ENGINE_CREDENTIALS = "local";
   private static final ConcurrentHashMap<String, ComputeEngineCredentials> cachedComputeEngineCredentials =
-    new ConcurrentHashMap<>();
+      new ConcurrentHashMap<>();
 
   /**
    * Time (in millisecond) to refresh the credentials before it expires.
@@ -71,9 +73,9 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
    * Return a ComputeEngineCredentials with the provided endpoint if it has already been created.
    * Otherwise, it instantiates one, and returns it.
    *
-   * @param endpoint endpoint for fetching the token from. A null endpoint results in fetching the token locally.
+   * @param endpoint endpoint for fetching the token from. A null endpoint results in fetching
+   *     the token locally.
    * @return ComputeEngineCredentials
-   * @throws IOException
    */
   public static ComputeEngineCredentials getOrCreate(@Nullable String endpoint) throws IOException {
     String key = endpoint != null ? endpoint : LOCAL_COMPUTE_ENGINE_CREDENTIALS;
@@ -96,7 +98,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
       return googleCredentials.refreshAccessToken();
     } catch (IOException e) {
       throw new IOException("Unable to get credentials from the environment. "
-                              + "Please explicitly set the account key.", e);
+          + "Please explicitly set the account key.", e);
     }
   }
 
@@ -135,7 +137,8 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
       disableVerifySSL(((HttpsURLConnection) connection));
     }
     connection.connect();
-    try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(connection.getInputStream(),
+        StandardCharsets.UTF_8)) {
       if (connection.getResponseCode() != HttpResponseStatus.OK.code()) {
         throw new IOException(CharStreams.toString(reader));
       }
@@ -148,7 +151,7 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
       String key = token.get(ACCESS_TOKEN_KEY).toString();
       Double expiration = Double.parseDouble(token.get(EXPIRES_IN_KEY).toString());
       long expiresAtMilliseconds = System.currentTimeMillis() +
-        expiration.longValue() * 1000;
+          expiration.longValue() * 1000;
 
       return new AccessToken(key, new Date(expiresAtMilliseconds));
     } finally {
@@ -159,8 +162,8 @@ public final class ComputeEngineCredentials extends GoogleCredentials {
   @Override
   public AccessToken refreshAccessToken() throws IOException {
     ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
-      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+        .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+        .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
 
     Exception exception = null;
     int counter = 0;

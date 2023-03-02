@@ -29,15 +29,16 @@ import org.apache.twill.filesystem.LocationFactory;
  * A {@link AppenderContext} used in distributed mode.
  */
 public class DistributedAppenderContext extends AbstractAppenderContext {
+
   private final int instanceId;
   private final int instanceCount;
 
   @Inject
   DistributedAppenderContext(TransactionRunner transactionRunner,
-                             LocationFactory locationFactory,
-                             MetricsCollectionService metricsCollectionService,
-                             @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID) Integer instanceId,
-                             @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT) Integer instanceCount) {
+      LocationFactory locationFactory,
+      MetricsCollectionService metricsCollectionService,
+      @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID) Integer instanceId,
+      @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT) Integer instanceCount) {
     super(transactionRunner, locationFactory, metricsCollectionService);
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;

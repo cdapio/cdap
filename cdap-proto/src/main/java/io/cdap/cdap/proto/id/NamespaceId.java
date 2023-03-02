@@ -122,7 +122,7 @@ public class NamespaceId extends NamespacedEntityId {
 
   public static boolean isReserved(String namespaceId) {
     return DEFAULT.getNamespace().equals(namespaceId) ||
-      SYSTEM.getNamespace().equals(namespaceId) ||
-      CDAP.getNamespace().equals(namespaceId);
+        SYSTEM.getNamespace().equals(namespaceId) ||
+        CDAP.getNamespace().equals(namespaceId);
   }
 }

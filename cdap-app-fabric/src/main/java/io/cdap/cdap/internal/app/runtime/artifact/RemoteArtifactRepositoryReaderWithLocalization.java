@@ -27,29 +27,32 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * {@link RemoteArtifactRepositoryReaderWithLocalization} is an extension of {@link RemoteArtifactRepositoryReader}
- * that localizes artifacts and use their local locations in returned value.
+ * {@link RemoteArtifactRepositoryReaderWithLocalization} is an extension of {@link
+ * RemoteArtifactRepositoryReader} that localizes artifacts and use their local locations in
+ * returned value.
  *
- * This implementation uses {@link ArtifactLocalizerClient} to fetch and cache the given artifact on the local
- * file system.
+ * This implementation uses {@link ArtifactLocalizerClient} to fetch and cache the given artifact on
+ * the local file system.
  */
 public class RemoteArtifactRepositoryReaderWithLocalization extends RemoteArtifactRepositoryReader {
+
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   RemoteArtifactRepositoryReaderWithLocalization(LocationFactory locationFactory,
-                                                 RemoteClientFactory remoteClientFactory,
-                                                 ArtifactLocalizerClient artifactLocalizerClient) {
+      RemoteClientFactory remoteClientFactory,
+      ArtifactLocalizerClient artifactLocalizerClient) {
     super(locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   @Override
-  protected Location getArtifactLocation(ArtifactDescriptor descriptor) throws IOException, ArtifactNotFoundException {
+  protected Location getArtifactLocation(ArtifactDescriptor descriptor)
+      throws IOException, ArtifactNotFoundException {
     return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(
-      new ArtifactId(descriptor.getNamespace(),
-                     descriptor.getArtifactId().getName(),
-                     descriptor.getArtifactId().getVersion().getVersion())));
+        new ArtifactId(descriptor.getNamespace(),
+            descriptor.getArtifactId().getName(),
+            descriptor.getArtifactId().getVersion().getVersion())));
   }
 }
 

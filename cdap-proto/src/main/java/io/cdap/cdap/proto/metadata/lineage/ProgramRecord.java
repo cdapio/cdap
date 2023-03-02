@@ -23,6 +23,7 @@ import java.util.Objects;
  * Class to serialize program in {@link LineageRecord}.
  */
 public class ProgramRecord {
+
   private final NamespacedEntityId entityId;
 
   public ProgramRecord(NamespacedEntityId entityId) {
@@ -49,7 +50,7 @@ public class ProgramRecord {
   @Override
   public String toString() {
     return "ProgramRecord{" +
-      "entityId=" + entityId +
-      '}';
+        "entityId=" + entityId +
+        '}';
   }
 }

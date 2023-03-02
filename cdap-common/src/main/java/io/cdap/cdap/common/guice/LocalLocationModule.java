@@ -26,7 +26,8 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * A guice module to providing binding for {@link LocationFactory} that uses local file system as the storage.
+ * A guice module to providing binding for {@link LocationFactory} that uses local file system as
+ * the storage.
  */
 public class LocalLocationModule extends AbstractModule {
 

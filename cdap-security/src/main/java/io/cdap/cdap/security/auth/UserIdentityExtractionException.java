@@ -17,10 +17,11 @@
 package io.cdap.cdap.security.auth;
 
 /**
- * Exception thrown if the {@link UserIdentityExtractor} fails to extract a user identity from an HTTP request due to
- * factors outside of the user's control.
+ * Exception thrown if the {@link UserIdentityExtractor} fails to extract a user identity from an
+ * HTTP request due to factors outside of the user's control.
  */
 public class UserIdentityExtractionException extends Exception {
+
   public UserIdentityExtractionException(String message, Exception cause) {
     super(message, cause);
   }

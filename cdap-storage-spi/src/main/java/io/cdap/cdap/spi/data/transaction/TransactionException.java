@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public class TransactionException extends Exception {
+
   public TransactionException(String message, Throwable cause) {
     super(message, cause);
   }

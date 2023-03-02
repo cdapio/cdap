@@ -27,23 +27,18 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
- * Applies given interpolator to a given time series,
- * Given a timeseries, interpolates the values at each timestamp between the earliest and
- * latest data points if there is no data point available at that timestamp
- * and the value at the timestamp can be interpolated.
+ * Applies given interpolator to a given time series, Given a timeseries, interpolates the values at
+ * each timestamp between the earliest and latest data points if there is no data point available at
+ * that timestamp and the value at the timestamp can be interpolated.
  *
- * Interpolating the data just means we're filling in the missing points with something that
- * is reasonably likely to have been the true value at that point.
+ * Interpolating the data just means we're filling in the missing points with something that is
+ * reasonably likely to have been the true value at that point.
  *
- * With linear interpolation, the individual time series get transformed into:
- *   t1  t2  t3  t4  t5
- *   5   -   -   -   3
- *   5   5   4   4   3
+ * With linear interpolation, the individual time series get transformed into: t1  t2  t3  t4  t5 5
+ * -   -   -   3 5   5   4   4   3
  *
- * With step interpolation, the time series get transformed into:
- *   t1  t2  t3  t4  t5
- *   5   -   -   -   3
- *   5   5   5   5   3
+ * With step interpolation, the time series get transformed into: t1  t2  t3  t4  t5 5   -   -   - 3
+ * 5   5   5   5   3
  */
 class TimeSeriesInterpolator implements Iterable<TimeValue> {
 
@@ -52,7 +47,8 @@ class TimeSeriesInterpolator implements Iterable<TimeValue> {
   private final Interpolator interpolator;
   private final int resolution;
 
-  TimeSeriesInterpolator(Collection<TimeValue> timeValues, @Nullable Interpolator interpolator, int resolution) {
+  TimeSeriesInterpolator(Collection<TimeValue> timeValues, @Nullable Interpolator interpolator,
+      int resolution) {
     this.timeSeries = ImmutableList.copyOf(timeValues);
     this.interpolator = interpolator;
     this.resolution = resolution;
@@ -69,7 +65,8 @@ class TimeSeriesInterpolator implements Iterable<TimeValue> {
     BiDirectionalPeekingIterator timeseries;
 
     InterpolatedAggregatorIterator() {
-      timeseries = new BiDirectionalPeekingIterator(Iterators.peekingIterator(timeSeries.iterator()));
+      timeseries = new BiDirectionalPeekingIterator(
+          Iterators.peekingIterator(timeSeries.iterator()));
       if (timeseries.hasNext()) {
         currentTs = timeseries.peek().getTimestamp();
       }
@@ -89,22 +86,26 @@ class TimeSeriesInterpolator implements Iterable<TimeValue> {
         timeseries.next();
       } else if (interpolator != null && timeseries.peekBefore() != null) {
         // don't interpolate unless we're in between data points
-        currentTsValue += interpolator.interpolate(timeseries.peekBefore(), timeseries.peek(), currentTs);
+        currentTsValue += interpolator.interpolate(timeseries.peekBefore(), timeseries.peek(),
+            currentTs);
       }
 
       TimeValue output = new TimeValue(currentTs, currentTsValue);
       if (timeseries.hasNext()) {
         // increment the currentTs by resolution to get the next data point.
-        currentTs = (interpolator == null) ? timeseries.peek().getTimestamp() : currentTs + resolution;
+        currentTs =
+            (interpolator == null) ? timeseries.peek().getTimestamp() : currentTs + resolution;
       }
       return output;
     }
 
     /**
-     * Iterator that allows peeking on the next value and also retrieving the last value, which will be null
-     * if there was no last value.  Used to allow interpolating between two datapoints in a timeseries.
+     * Iterator that allows peeking on the next value and also retrieving the last value, which will
+     * be null if there was no last value.  Used to allow interpolating between two datapoints in a
+     * timeseries.
      */
     public final class BiDirectionalPeekingIterator implements PeekingIterator<TimeValue> {
+
       PeekingIterator<TimeValue> iter;
       TimeValue lastValue;
 

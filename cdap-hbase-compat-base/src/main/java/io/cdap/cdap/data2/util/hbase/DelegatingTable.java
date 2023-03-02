@@ -42,7 +42,8 @@ import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 
 /**
- * A concrete class implementation that delegate all {@link Table} operations to another {@link Table}.
+ * A concrete class implementation that delegate all {@link Table} operations to another {@link
+ * Table}.
  */
 public class DelegatingTable implements Table {
 
@@ -85,7 +86,8 @@ public class DelegatingTable implements Table {
   }
 
   @Override
-  public void batch(List<? extends Row> actions, Object[] results) throws IOException, InterruptedException {
+  public void batch(List<? extends Row> actions, Object[] results)
+      throws IOException, InterruptedException {
     getDelegate().batch(actions, results);
   }
 
@@ -97,14 +99,14 @@ public class DelegatingTable implements Table {
 
   @Override
   public <R> void batchCallback(List<? extends Row> actions, Object[] results,
-                                Batch.Callback<R> callback) throws IOException, InterruptedException {
+      Batch.Callback<R> callback) throws IOException, InterruptedException {
     getDelegate().batchCallback(actions, results, callback);
   }
 
   @Override
   @Deprecated
   public <R> Object[] batchCallback(List<? extends Row> actions,
-                                    Batch.Callback<R> callback) throws IOException, InterruptedException {
+      Batch.Callback<R> callback) throws IOException, InterruptedException {
     return getDelegate().batchCallback(actions, callback);
   }
 
@@ -144,13 +146,14 @@ public class DelegatingTable implements Table {
   }
 
   @Override
-  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put) throws IOException {
+  public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier, byte[] value, Put put)
+      throws IOException {
     return getDelegate().checkAndPut(row, family, qualifier, value, put);
   }
 
   @Override
   public boolean checkAndPut(byte[] row, byte[] family, byte[] qualifier,
-                             CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
+      CompareFilter.CompareOp compareOp, byte[] value, Put put) throws IOException {
     return getDelegate().checkAndPut(row, family, qualifier, compareOp, value, put);
   }
 
@@ -166,13 +169,13 @@ public class DelegatingTable implements Table {
 
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family,
-                                byte[] qualifier, byte[] value, Delete delete) throws IOException {
+      byte[] qualifier, byte[] value, Delete delete) throws IOException {
     return getDelegate().checkAndDelete(row, family, qualifier, value, delete);
   }
 
   @Override
   public boolean checkAndDelete(byte[] row, byte[] family, byte[] qualifier,
-                                CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
+      CompareFilter.CompareOp compareOp, byte[] value, Delete delete) throws IOException {
     return getDelegate().checkAndDelete(row, family, qualifier, compareOp, value, delete);
   }
 
@@ -192,13 +195,14 @@ public class DelegatingTable implements Table {
   }
 
   @Override
-  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount) throws IOException {
+  public long incrementColumnValue(byte[] row, byte[] family, byte[] qualifier, long amount)
+      throws IOException {
     return getDelegate().incrementColumnValue(row, family, qualifier, amount);
   }
 
   @Override
   public long incrementColumnValue(byte[] row, byte[] family,
-                                   byte[] qualifier, long amount, Durability durability) throws IOException {
+      byte[] qualifier, long amount, Durability durability) throws IOException {
     return getDelegate().incrementColumnValue(row, family, qualifier, amount, durability);
   }
 
@@ -213,15 +217,17 @@ public class DelegatingTable implements Table {
   }
 
   @Override
-  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
-                                                                  Batch.Call<T, R> callable) throws Throwable {
+  public <T extends Service, R> Map<byte[], R> coprocessorService(Class<T> service, byte[] startKey,
+      byte[] endKey,
+      Batch.Call<T, R> callable) throws Throwable {
     return getDelegate().coprocessorService(service, startKey, endKey, callable);
   }
 
   @Override
-  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey, byte[] endKey,
-                                                        Batch.Call<T, R> callable,
-                                                        Batch.Callback<R> callback) throws Throwable {
+  public <T extends Service, R> void coprocessorService(Class<T> service, byte[] startKey,
+      byte[] endKey,
+      Batch.Call<T, R> callable,
+      Batch.Callback<R> callback) throws Throwable {
     getDelegate().coprocessorService(service, startKey, endKey, callable, callback);
   }
 
@@ -238,23 +244,28 @@ public class DelegatingTable implements Table {
   }
 
   @Override
-  public <R extends Message> Map<byte[], R> batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor,
-                                                                    Message request, byte[] startKey, byte[] endKey,
-                                                                    R responsePrototype) throws Throwable {
-    return getDelegate().batchCoprocessorService(methodDescriptor, request, startKey, endKey, responsePrototype);
+  public <R extends Message> Map<byte[], R> batchCoprocessorService(
+      Descriptors.MethodDescriptor methodDescriptor,
+      Message request, byte[] startKey, byte[] endKey,
+      R responsePrototype) throws Throwable {
+    return getDelegate().batchCoprocessorService(methodDescriptor, request, startKey, endKey,
+        responsePrototype);
   }
 
   @Override
-  public <R extends Message> void batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor,
-                                                          Message request, byte[] startKey, byte[] endKey,
-                                                          R responsePrototype,
-                                                          Batch.Callback<R> callback) throws Throwable {
-    getDelegate().batchCoprocessorService(methodDescriptor, request, startKey, endKey, responsePrototype, callback);
+  public <R extends Message> void batchCoprocessorService(
+      Descriptors.MethodDescriptor methodDescriptor,
+      Message request, byte[] startKey, byte[] endKey,
+      R responsePrototype,
+      Batch.Callback<R> callback) throws Throwable {
+    getDelegate().batchCoprocessorService(methodDescriptor, request, startKey, endKey,
+        responsePrototype, callback);
   }
 
   @Override
-  public boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier, CompareFilter.CompareOp compareOp,
-                                byte[] value, RowMutations mutation) throws IOException {
+  public boolean checkAndMutate(byte[] row, byte[] family, byte[] qualifier,
+      CompareFilter.CompareOp compareOp,
+      byte[] value, RowMutations mutation) throws IOException {
     return getDelegate().checkAndMutate(row, family, qualifier, compareOp, value, mutation);
   }
 }

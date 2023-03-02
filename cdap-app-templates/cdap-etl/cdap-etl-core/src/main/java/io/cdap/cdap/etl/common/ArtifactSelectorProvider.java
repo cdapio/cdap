@@ -29,28 +29,29 @@ import javax.annotation.Nullable;
  * Provides the {@link ArtifactSelector} from a {@link ArtifactSelectorConfig}.
  */
 public class ArtifactSelectorProvider {
+
   private static final CharMatcher nameMatcher =
-    CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.inRange('0', '9'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.is('.'))
-      .or(CharMatcher.is('-'));
+      CharMatcher.inRange('A', 'Z')
+          .or(CharMatcher.inRange('a', 'z'))
+          .or(CharMatcher.inRange('0', '9'))
+          .or(CharMatcher.is('_'))
+          .or(CharMatcher.is('.'))
+          .or(CharMatcher.is('-'));
 
   /**
-   * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
-   *         match the specified artifact settings using an {@link ArtifactSelector}.
-   *         If not, the default {@link PluginSelector} is returned.
+   * @return the plugin selector for this plugin. If artifact settings have been given, the selector
+   *     will try to match the specified artifact settings using an {@link ArtifactSelector}. If
+   *     not, the default {@link PluginSelector} is returned.
    */
   public PluginSelector getPluginSelector(@Nullable ArtifactSelectorConfig config) {
     return config == null ? new PluginSelector() : getArtifactSelector(config);
   }
 
   /**
-   * Gets the corresponding {@link ArtifactSelector} for this config.
-   * Validates that any given scope, name, and version are all valid or null. The scope must be an
-   * {@link ArtifactScope}, the version must be an {@link ArtifactVersion}, and the name only contains
-   * alphanumeric, '-', or '_'. Also checks that at least one field is non-null.
+   * Gets the corresponding {@link ArtifactSelector} for this config. Validates that any given
+   * scope, name, and version are all valid or null. The scope must be an {@link ArtifactScope}, the
+   * version must be an {@link ArtifactVersion}, and the name only contains alphanumeric, '-', or
+   * '_'. Also checks that at least one field is non-null.
    *
    * @return an {@link ArtifactSelector} using these config settings
    * @throws IllegalArgumentException if any one of the fields are invalid
@@ -59,8 +60,8 @@ public class ArtifactSelectorProvider {
     String name = config.getName();
     if (name != null && !nameMatcher.matchesAllOf(name)) {
       throw new IllegalArgumentException(String.format("'%s' is an invalid artifact name. " +
-                                                         "Must contain only alphanumeric, '-', '.', or '_' characters.",
-                                                       name));
+              "Must contain only alphanumeric, '-', '.', or '_' characters.",
+          name));
     }
 
     String version = config.getVersion();
@@ -69,8 +70,8 @@ public class ArtifactSelectorProvider {
       range = version == null ? null : ArtifactVersionRange.parse(version);
     } catch (InvalidArtifactRangeException e) {
       throw new IllegalArgumentException(String.format("%s is an invalid artifact version." +
-                                                         "Must be an exact version or a version range " +
-                                                         "with a lower and upper bound.", version));
+          "Must be an exact version or a version range " +
+          "with a lower and upper bound.", version));
     }
 
     String scope = config.getScope();

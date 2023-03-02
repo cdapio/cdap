@@ -24,6 +24,7 @@ import io.cdap.cdap.operations.OperationalStatsService;
  * Guice module for operational stats.
  */
 public class OperationalStatsModule extends AbstractModule {
+
   @Override
   protected void configure() {
     bind(OperationalStatsService.class).in(Scopes.SINGLETON);

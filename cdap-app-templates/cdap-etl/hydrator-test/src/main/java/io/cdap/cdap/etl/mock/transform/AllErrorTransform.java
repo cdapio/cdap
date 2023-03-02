@@ -36,6 +36,7 @@ import java.util.Map;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("AllError")
 public class AllErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
@@ -45,7 +46,8 @@ public class AllErrorTransform extends Transform<StructuredRecord, StructuredRec
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     emitter.emitError(new InvalidEntry<>(500, "msg", input));
   }
 
@@ -56,6 +58,7 @@ public class AllErrorTransform extends Transform<StructuredRecord, StructuredRec
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     return PluginClass.builder().setName("AllError").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(AllErrorTransform.class.getName()).setProperties(properties).build();
+        .setDescription("").setClassName(AllErrorTransform.class.getName())
+        .setProperties(properties).build();
   }
 }

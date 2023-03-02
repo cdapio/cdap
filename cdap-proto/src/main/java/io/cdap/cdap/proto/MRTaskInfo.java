@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Simplified (filtered) representation of a MapReduce Task
  */
 public class MRTaskInfo {
+
   private final String taskId;
   private final String state;
   private final Long startTime;
@@ -31,8 +32,9 @@ public class MRTaskInfo {
   private final float progress;
   private final Map<String, Long> counters;
 
-  public MRTaskInfo(String taskId, @Nullable String state, @Nullable Long startTime, @Nullable Long finishTime,
-                    float progress, Map<String, Long> counters) {
+  public MRTaskInfo(String taskId, @Nullable String state, @Nullable Long startTime,
+      @Nullable Long finishTime,
+      float progress, Map<String, Long> counters) {
     this.taskId = taskId;
     this.state = state;
     this.startTime = startTime;

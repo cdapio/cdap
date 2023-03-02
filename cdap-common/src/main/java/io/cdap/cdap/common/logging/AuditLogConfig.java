@@ -22,8 +22,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Audit log content which indicates what additional info is needed for the
- * {@link io.cdap.cdap.common.logging.AuditLogEntry}
+ * Audit log content which indicates what additional info is needed for the {@link
+ * io.cdap.cdap.common.logging.AuditLogEntry}
  */
 public class AuditLogConfig {
 
@@ -33,7 +33,7 @@ public class AuditLogConfig {
   private final Set<String> headerNames;
 
   public AuditLogConfig(HttpMethod httpMethod, boolean logRequestBody, boolean logResponseBody,
-                        Iterable<String> headerNames) {
+      Iterable<String> headerNames) {
     this.httpMethod = httpMethod;
     this.logRequestBody = logRequestBody;
     this.logResponseBody = logResponseBody;
@@ -67,9 +67,9 @@ public class AuditLogConfig {
 
     AuditLogConfig other = (AuditLogConfig) o;
     return Objects.equals(httpMethod, other.getHttpMethod()) &&
-      logRequestBody == other.isLogRequestBody() &&
-      logResponseBody == other.isLogResponseBody() &&
-      Objects.equals(headerNames, other.getHeaderNames());
+        logRequestBody == other.isLogRequestBody() &&
+        logResponseBody == other.isLogResponseBody() &&
+        Objects.equals(headerNames, other.getHeaderNames());
   }
 
   @Override
@@ -80,10 +80,10 @@ public class AuditLogConfig {
   @Override
   public String toString() {
     return "AuditLogContent{" +
-      "httpMethod=" + httpMethod +
-      ", logRequestBody=" + logRequestBody +
-      ", logResponseBody=" + logResponseBody +
-      ", headerNames=" + headerNames +
-      '}';
+        "httpMethod=" + httpMethod +
+        ", logRequestBody=" + logRequestBody +
+        ", logResponseBody=" + logResponseBody +
+        ", headerNames=" + headerNames +
+        '}';
   }
 }

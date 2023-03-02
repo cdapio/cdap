@@ -21,13 +21,14 @@ import io.cdap.cdap.etl.api.InvalidEntry;
 import java.util.Map;
 
 /**
- * An emitter that stops an {@link OperationTimer} when it is emitting something. This is used because when we are
- * timing how long a plugin's method takes, we don't want to include time spent emitting records, especially
- * since the emit call can call subsequent stages before returning.
+ * An emitter that stops an {@link OperationTimer} when it is emitting something. This is used
+ * because when we are timing how long a plugin's method takes, we don't want to include time spent
+ * emitting records, especially since the emit call can call subsequent stages before returning.
  *
  * @param <T> the output type
  */
 public class UntimedEmitter<T> implements Emitter<T> {
+
   private final Emitter<T> delegate;
   private final OperationTimer operationTimer;
 

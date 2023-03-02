@@ -26,12 +26,13 @@ public class WorkflowLoggingContext extends ApplicationLoggingContext {
   /**
    * Constructs ApplicationLoggingContext.
    *
-   * @param namespaceId   namespace id
+   * @param namespaceId namespace id
    * @param applicationId application id
-   * @param workflowId    workflow id
-   * @param runId         run id of the application
+   * @param workflowId workflow id
+   * @param runId run id of the application
    */
-  public WorkflowLoggingContext(String namespaceId, String applicationId, String workflowId, String runId) {
+  public WorkflowLoggingContext(String namespaceId, String applicationId, String workflowId,
+      String runId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_WORKFLOW_ID, workflowId);
   }

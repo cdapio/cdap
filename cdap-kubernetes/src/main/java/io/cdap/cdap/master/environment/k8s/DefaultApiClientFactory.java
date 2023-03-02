@@ -26,6 +26,7 @@ import okhttp3.OkHttpClient;
  * Creates Kubernetes ApiClients.
  */
 public class DefaultApiClientFactory implements ApiClientFactory {
+
   private final long connectTimeoutSec;
   private final long readTimeoutSec;
 
@@ -37,9 +38,9 @@ public class DefaultApiClientFactory implements ApiClientFactory {
   public ApiClient create() throws IOException {
     ApiClient client = Config.defaultClient();
     OkHttpClient httpClient = client.getHttpClient().newBuilder()
-      .connectTimeout(connectTimeoutSec, TimeUnit.SECONDS)
-      .readTimeout(readTimeoutSec, TimeUnit.SECONDS)
-      .build();
+        .connectTimeout(connectTimeoutSec, TimeUnit.SECONDS)
+        .readTimeout(readTimeoutSec, TimeUnit.SECONDS)
+        .build();
     client.setHttpClient(httpClient);
     return client;
   }

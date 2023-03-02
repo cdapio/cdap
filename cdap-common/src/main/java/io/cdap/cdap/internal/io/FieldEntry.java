@@ -20,9 +20,10 @@ import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 
 /**
-*
-*/
+ *
+ */
 final class FieldEntry {
+
   private final TypeToken<?> type;
   private final String fieldName;
 

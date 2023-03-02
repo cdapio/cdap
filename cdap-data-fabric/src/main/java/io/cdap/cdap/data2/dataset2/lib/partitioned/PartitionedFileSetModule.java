@@ -29,15 +29,18 @@ import io.cdap.cdap.data2.dataset2.lib.file.FileSetAdmin;
  * {@link io.cdap.cdap.api.dataset.module.DatasetModule} for {@link io.cdap.cdap.api.dataset.lib.PartitionedFileSet}.
  */
 public class PartitionedFileSetModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
     DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get(FileSet.class.getName());
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
-      registry.get(IndexedTable.class.getName());
+        registry.get(IndexedTable.class.getName());
 
     // file dataset
-    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef, indexedTableDef));
-    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.TYPE, fileSetDef, indexedTableDef));
+    registry.add(new PartitionedFileSetDefinition(PartitionedFileSet.class.getName(), fileSetDef,
+        indexedTableDef));
+    registry.add(
+        new PartitionedFileSetDefinition(PartitionedFileSet.TYPE, fileSetDef, indexedTableDef));
   }
 }

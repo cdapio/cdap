@@ -19,9 +19,10 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
-* Class to identify a routing destination.
-*/
+ * Class to identify a routing destination.
+ */
 final class RouteDestination {
+
   private final String serviceName;
   private final String version;
   private final int hashCode;
@@ -60,7 +61,8 @@ final class RouteDestination {
     }
 
     RouteDestination other = (RouteDestination) o;
-    return Objects.equals(serviceName, other.getServiceName()) && Objects.equals(version, other.getVersion());
+    return Objects.equals(serviceName, other.getServiceName()) && Objects.equals(version,
+        other.getVersion());
   }
 
   @Override

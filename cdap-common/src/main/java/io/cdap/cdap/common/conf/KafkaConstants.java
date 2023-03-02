@@ -25,6 +25,7 @@ public final class KafkaConstants {
    * Keys for configuration parameters.
    */
   public static final class ConfigKeys {
+
     public static final String ZOOKEEPER_NAMESPACE_CONFIG = "kafka.zookeeper.namespace";
     public static final String ZOOKEEPER_QUORUM = "kafka.zookeeper.quorum";
   }

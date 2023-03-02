@@ -23,6 +23,7 @@ import java.util.Map;
  * Tracks the last message id received from and sent to each tethered peer.
  */
 public class SubscriberState {
+
   // Id of the last program status update message that was sent to each tethered peer.
   private final Map<String, String> lastMessageIdsSent;
   // Id of the last control message received from each tethered peer.
@@ -35,8 +36,9 @@ public class SubscriberState {
 
   /**
    * Sets the last message id sent to a tethered peer.
+   *
    * @param peer peer name
-   * @param  messageId message id
+   * @param messageId message id
    */
   void setLastMessageIdSent(String peer, String messageId) {
     lastMessageIdsSent.put(peer, messageId);
@@ -44,8 +46,9 @@ public class SubscriberState {
 
   /**
    * Sets the last message id received from a tethered peer.
+   *
    * @param peer peer name
-   * @param  messageId message id
+   * @param messageId message id
    */
   void setLastMessageIdReceived(String peer, String messageId) {
     lastMessageIdsReceived.put(peer, messageId);
@@ -53,6 +56,7 @@ public class SubscriberState {
 
   /**
    * Returns the last message id sent to a tethered peer.
+   *
    * @param peer peer name
    */
   public String getLastMessageIdSent(String peer) {
@@ -61,6 +65,7 @@ public class SubscriberState {
 
   /**
    * Returns the last message id received from a tethered peer.
+   *
    * @param peer peer name
    */
   public String getLastMessageIdReceived(String peer) {

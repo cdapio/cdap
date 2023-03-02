@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * Extracts a {@link UserIdentity} by directly reading it from request headers.
  */
 public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProxyUserIdentityExtractor.class);
   public static final String NAME = "ProxyUserIdentityExtractor";
 
@@ -44,32 +45,34 @@ public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
   /**
    * Extracts the user identity from the HTTP request.
    *
-   * Expects the user's credential to be in the Authorization header in "Bearer" form.
-   * Expects the user's identity to be in the configuration-specified header.
+   * Expects the user's credential to be in the Authorization header in "Bearer" form. Expects the
+   * user's identity to be in the configuration-specified header.
    *
    * @param request The HTTP Request to extract the user identity from
    * @return The extracted {@link UserIdentityPair}
    */
   @Override
-  public UserIdentityExtractionResponse extract(HttpRequest request) throws UserIdentityExtractionException {
+  public UserIdentityExtractionResponse extract(HttpRequest request)
+      throws UserIdentityExtractionException {
     long now = System.currentTimeMillis();
     if (userIdentityHeader == null) {
       return new UserIdentityExtractionResponse(UserIdentityExtractionState.ERROR_MISSING_IDENTITY,
-                                                "User identity header config missing");
+          "User identity header config missing");
     }
     String userIdentity = request.headers().get(userIdentityHeader);
     if (userIdentity == null) {
       return new UserIdentityExtractionResponse(UserIdentityExtractionState.ERROR_MISSING_IDENTITY,
-                                                "No user identity found");
+          "No user identity found");
     }
 
     UserIdentity identity = new UserIdentity(userIdentity, UserIdentity.IdentifierType.EXTERNAL,
-                                               new LinkedHashSet<>(), now, now + EXPIRATION_SECS);
+        new LinkedHashSet<>(), now, now + EXPIRATION_SECS);
 
     // Parse the access token from authorization header. The header will be in "Bearer" form.
     String auth = request.headers().get(HttpHeaderNames.AUTHORIZATION);
-    LOG.trace("Extracted user identity header '{}' and authorization header length '{}'", userIdentity,
-              auth == null ? "NULL" : String.valueOf(auth.length()));
+    LOG.trace("Extracted user identity header '{}' and authorization header length '{}'",
+        userIdentity,
+        auth == null ? "NULL" : String.valueOf(auth.length()));
     String userCredential = null;
     if (auth != null) {
       int idx = auth.trim().indexOf(' ');

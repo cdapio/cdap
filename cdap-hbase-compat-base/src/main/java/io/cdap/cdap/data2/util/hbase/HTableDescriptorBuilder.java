@@ -24,10 +24,12 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 
 /**
- * Builder for creating an HBase {@code HTableDescriptor} object.  This should be used instead of creating an
- * {@code HTableDescriptor} directly in order to avoid API incompatibilities between HBase versions.
+ * Builder for creating an HBase {@code HTableDescriptor} object.  This should be used instead of
+ * creating an {@code HTableDescriptor} directly in order to avoid API incompatibilities between
+ * HBase versions.
  */
 public class HTableDescriptorBuilder {
+
   protected final HTableDescriptor instance;
 
   HTableDescriptorBuilder(TableName tableName) {
@@ -72,8 +74,9 @@ public class HTableDescriptorBuilder {
     instance.addCoprocessor(className);
     return this;
   }
+
   public HTableDescriptorBuilder addCoprocessor(String className, Path jarFilePath, int priority,
-                                                Map<String, String> keyValues) throws IOException {
+      Map<String, String> keyValues) throws IOException {
     instance.addCoprocessor(className, jarFilePath, priority, keyValues);
     return this;
   }

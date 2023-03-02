@@ -53,9 +53,9 @@ public class GetMetricCommand extends AbstractAuthCommand {
     String end = arguments.getOptional("end", "");
 
     MetricQueryResult result = client.query(
-      tags, ImmutableList.of(metric), ImmutableList.<String>of(),
-      start.isEmpty() ? null : start,
-      end.isEmpty() ? null : end);
+        tags, ImmutableList.of(metric), ImmutableList.<String>of(),
+        start.isEmpty() ? null : start,
+        end.isEmpty() ? null : end);
 
     output.printf("Start time: %d\n", result.getStartTime());
     output.printf("End time: %d\n", result.getEndTime());
@@ -64,16 +64,18 @@ public class GetMetricCommand extends AbstractAuthCommand {
       output.println();
       output.printf("Series: %s\n", series.getMetricName());
       if (!series.getGrouping().isEmpty()) {
-        output.printf("Grouping: %s\n", Joiner.on(",").withKeyValueSeparator("=").join(series.getGrouping()));
+        output.printf("Grouping: %s\n",
+            Joiner.on(",").withKeyValueSeparator("=").join(series.getGrouping()));
       }
       Table table = Table.builder()
-        .setHeader("timestamp", "value")
-        .setRows(ImmutableList.copyOf(series.getData()), new RowMaker<MetricQueryResult.TimeValue>() {
-          @Override
-          public List<?> makeRow(MetricQueryResult.TimeValue object) {
-            return Lists.newArrayList(object.getTime(), object.getValue());
-          }
-        }).build();
+          .setHeader("timestamp", "value")
+          .setRows(ImmutableList.copyOf(series.getData()),
+              new RowMaker<MetricQueryResult.TimeValue>() {
+                @Override
+                public List<?> makeRow(MetricQueryResult.TimeValue object) {
+                  return Lists.newArrayList(object.getTime(), object.getValue());
+                }
+              }).build();
       cliConfig.getTableRenderer().render(cliConfig, output, table);
     }
   }

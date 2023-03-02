@@ -61,9 +61,9 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Inject
   public DefaultApplicationManager(DiscoveryServiceClient discoveryServiceClient,
-                                   AppFabricClient appFabricClient,
-                                   MetricsManager metricsManager,
-                                   @Assisted("applicationId")ApplicationId applicationId) {
+      AppFabricClient appFabricClient,
+      MetricsManager metricsManager,
+      @Assisted("applicationId") ApplicationId applicationId) {
     super(applicationId);
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
@@ -73,7 +73,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public MapReduceManager getMapReduceManager(String programName) {
     Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application),
-                                           ProgramType.MAPREDUCE, programName);
+        ProgramType.MAPREDUCE, programName);
     return new DefaultMapReduceManager(programId, this);
   }
 
@@ -85,19 +85,21 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public WorkflowManager getWorkflowManager(String workflowName) {
     Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application),
-                                           ProgramType.WORKFLOW, workflowName);
+        ProgramType.WORKFLOW, workflowName);
     return new DefaultWorkflowManager(programId, appFabricClient, this);
   }
 
   @Override
   public ServiceManager getServiceManager(String serviceName) {
     ProgramId programId = application.service(serviceName);
-    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this, metricsManager);
+    return new DefaultServiceManager(programId, appFabricClient, discoveryServiceClient, this,
+        metricsManager);
   }
 
   @Override
   public WorkerManager getWorkerManager(String workerName) {
-    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application), ProgramType.WORKER, workerName);
+    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application),
+        ProgramType.WORKER, workerName);
     return new DefaultWorkerManager(programId, appFabricClient, this);
   }
 
@@ -106,7 +108,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       return appFabricClient.getPlugins(application);
     } catch (Exception e) {
-     throw Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -117,13 +119,13 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
       for (ProgramRecord programRecord : appDetail.getPrograms()) {
         try {
           appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
-                                      appDetail.getAppVersion(), programRecord.getName(), programRecord.getType());
+              appDetail.getAppVersion(), programRecord.getName(), programRecord.getType());
         } catch (BadRequestException e) {
           // Ignore this as this will be throw if the program is not running, which is fine as there could
           // be programs in the application that are currently not running.
         }
         waitForStopped(new ProgramId(application.getNamespace(), application.getApplication(),
-                                     appDetail.getAppVersion(), programRecord.getType(), programRecord.getName()));
+            appDetail.getAppVersion(), programRecord.getType(), programRecord.getName()));
       }
     } catch (NamespaceNotFoundException e) {
       // This can be safely ignore if the unit-test already deleted the namespace
@@ -136,8 +138,9 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void stopProgram(ProgramId programId) {
     String programName = programId.getProgram();
     try {
-      appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
-                                  programName, programId.getType());
+      appFabricClient.stopProgram(application.getNamespace(), application.getApplication(),
+          application.getVersion(),
+          programName, programId.getType());
       waitForStopped(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -148,7 +151,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void startProgram(ProgramId programId, Map<String, String> arguments) {
     try {
       appFabricClient.startProgram(application.getNamespace(), application.getApplication(),
-                                   application.getVersion(), programId.getProgram(), programId.getType(), arguments);
+          application.getVersion(), programId.getProgram(), programId.getType(), arguments);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -166,8 +169,9 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   private boolean isInState(ProgramId programId, ProgramStatus status) {
     try {
-      String actual = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
-                                                programId.getVersion(), programId.getProgram(), programId.getType());
+      String actual = appFabricClient.getStatus(application.getNamespace(),
+          programId.getApplication(),
+          programId.getVersion(), programId.getProgram(), programId.getType());
       return status.name().equals(actual);
     } catch (Exception e) {
       throw Throwables.propagate(e);

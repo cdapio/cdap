@@ -22,14 +22,16 @@ import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Interface designed for holding {@link PreviewRequest}s that are in WAITING state.
- * Implementations of this interface are required to be thread safe. {@code poll} and {@code add}
- * methods can be called by multiple threads concurrently.
+ * Interface designed for holding {@link PreviewRequest}s that are in WAITING state. Implementations
+ * of this interface are required to be thread safe. {@code poll} and {@code add} methods can be
+ * called by multiple threads concurrently.
  */
 @ThreadSafe
 public interface PreviewRequestQueue {
+
   /**
    * Poll the next available request in the queue.
+   *
    * @param pollerInfo information about the poller.
    * @return {@code PreviewRequest} if such request is available in the queue
    */
@@ -37,6 +39,7 @@ public interface PreviewRequestQueue {
 
   /**
    * Add a preview request in the queue.
+   *
    * @param previewRequest the request to be added to the waiting queue
    * @throws IllegalStateException if this queue is full
    */
@@ -48,9 +51,10 @@ public interface PreviewRequestQueue {
   PreviewRequestQueueState getState();
 
   /**
-   * Find the position of request with specified application id in the queue.
-   * When used in multi-threaded environment, return value depends on the snapshot
-   * of the queue taken when this method is called.
+   * Find the position of request with specified application id in the queue. When used in
+   * multi-threaded environment, return value depends on the snapshot of the queue taken when this
+   * method is called.
+   *
    * @param applicationId application id
    * @return -1 if application id does not exist
    */

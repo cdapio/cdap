@@ -68,20 +68,22 @@ public class RemoteClient {
   private final RemoteAuthenticator remoteAuthenticator;
 
   RemoteClient(InternalAuthenticator internalAuthenticator, DiscoveryServiceClient discoveryClient,
-               String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
-               RemoteAuthenticator remoteAuthenticator) {
+      String discoverableServiceName, HttpRequestConfig httpRequestConfig, String basePath,
+      RemoteAuthenticator remoteAuthenticator) {
     this.internalAuthenticator = internalAuthenticator;
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
-    this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
+    this.endpointStrategy = new RandomEndpointStrategy(
+        () -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
     this.remoteAuthenticator = remoteAuthenticator;
   }
 
   /**
-   * Create a {@link HttpRequest.Builder} using the specified http method and resource. This client will
-   * discover the service address and combine the specified resource in order to set a URL for the builder.
+   * Create a {@link HttpRequest.Builder} using the specified http method and resource. This client
+   * will discover the service address and combine the specified resource in order to set a URL for
+   * the builder.
    *
    * @param method the request method
    * @param resource the request resource
@@ -91,27 +93,28 @@ public class RemoteClient {
     return HttpRequest.builder(method, resolve(resource));
   }
 
-  private void setAuthHeader(BiConsumer<String, String> headerSetter, String header, String credentialType,
-                             String credentialValue) {
+  private void setAuthHeader(BiConsumer<String, String> headerSetter, String header,
+      String credentialType,
+      String credentialValue) {
     headerSetter.accept(header, String.format("%s %s", credentialType, credentialValue));
   }
 
   /**
-   * Perform the request, returning the response. If there was a ConnectException while making the request,
-   * a ServiceUnavailableException is thrown.
+   * Perform the request, returning the response. If there was a ConnectException while making the
+   * request, a ServiceUnavailableException is thrown.
    *
    * @param request the request to perform
    * @return the response
    * @throws IOException if there was an IOException while performing the request
-   * @throws ServiceUnavailableException if there was a ConnectException while making the request, or if the response
-   *                                     was a 503
+   * @throws ServiceUnavailableException if there was a ConnectException while making the
+   *     request, or if the response was a 503
    */
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
-                                              headers, request.getBody(), request.getBodyLength());
+        headers, request.getBody(), request.getBodyLength());
 
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
@@ -119,21 +122,24 @@ public class RemoteClient {
       // 503 is always retryable. Other 5xx errors are retryable if the request is idempotent (handled in
       // RemoteClient#executeIdempotent(HttpRequest)
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
-        throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
+        throw new ServiceUnavailableException(discoverableServiceName,
+            response.getResponseBodyAsString());
       }
       if (HttpCodes.isRetryable(responseCode)) {
-        String contentType = response.getHeaders().get(HttpHeaders.CONTENT_TYPE).stream().findFirst().orElse(null);
+        String contentType = response.getHeaders().get(HttpHeaders.CONTENT_TYPE).stream()
+            .findFirst().orElse(null);
         String message;
         String jsonDetails = null;
         if ("application/json".equals(contentType)) {
-          message = String.format("Service %s is not available (%d)", discoverableServiceName, responseCode);
+          message = String.format("Service %s is not available (%d)", discoverableServiceName,
+              responseCode);
           jsonDetails = response.getResponseBodyAsString();
         } else {
           message = String.format("Service %s is not available: %s", discoverableServiceName,
-                                  response.getResponseBodyAsString());
+              response.getResponseBodyAsString());
         }
         throw new ServiceException(message, null,
-                                   jsonDetails, HttpResponseStatus.valueOf(responseCode));
+            jsonDetails, HttpResponseStatus.valueOf(responseCode));
       }
       if (responseCode == HttpURLConnection.HTTP_FORBIDDEN) {
         throw new UnauthorizedException(response.getResponseBodyAsString());
@@ -145,14 +151,17 @@ public class RemoteClient {
   }
 
   /**
-   * Perform the request, returning the response. Wraps exceptions from {@link RemoteClient#execute(HttpRequest)} into
-   * {@link RetryableException} that are retryable for idempotent operations.
+   * Perform the request, returning the response. Wraps exceptions from {@link
+   * RemoteClient#execute(HttpRequest)} into {@link RetryableException} that are retryable for
+   * idempotent operations.
    *
    * @param request the request to perform
    * @param idempotency the type of idempotency
    * @return the response
-   * @throws IOException if there was an IOException while performing the non-idempotent request
-   * @throws RetryableException if there was an exception while performing an idempotent request
+   * @throws IOException if there was an IOException while performing the non-idempotent
+   *     request
+   * @throws RetryableException if there was an exception while performing an idempotent
+   *     request
    */
   public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
     switch (idempotency) {
@@ -177,20 +186,22 @@ public class RemoteClient {
   }
 
   /**
-   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link HttpContentConsumer} provided
-   * in the request. It retries on failure.
+   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link
+   * HttpContentConsumer} provided in the request. It retries on failure.
    */
-  public void executeStreamingRequest(HttpRequest request) throws IOException, UnauthorizedException {
+  public void executeStreamingRequest(HttpRequest request)
+      throws IOException, UnauthorizedException {
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
     HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
-                                              request.getBody(), request.getBodyLength(), request.getConsumer());
+        request.getBody(), request.getBodyLength(), request.getConsumer());
     HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException(String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
-                                          httpResponse.getResponseCode()));
+      throw new IOException(
+          String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+              httpResponse.getResponseCode()));
     }
     httpResponse.consumeContent();
   }
@@ -210,8 +221,9 @@ public class RemoteClient {
     if (remoteAuthenticator != null) {
       Credential credential = remoteAuthenticator.getCredentials();
       if (credential != null) {
-        setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
-                      credential.getValue());
+        setAuthHeader(urlConn::setRequestProperty, HttpHeaders.AUTHORIZATION,
+            credential.getType().getQualifiedName(),
+            credential.getValue());
       }
     }
 
@@ -251,7 +263,8 @@ public class RemoteClient {
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
       throw new IllegalStateException(
-        String.format("Discovered service %s, but it announced malformed URL %s", discoverableServiceName, uri), e);
+          String.format("Discovered service %s, but it announced malformed URL %s",
+              discoverableServiceName, uri), e);
     }
   }
 
@@ -264,11 +277,12 @@ public class RemoteClient {
    */
   public String createErrorMessage(HttpRequest request, @Nullable String body) {
     String headers = request.getHeaders() == null ? "null" : Joiner.on(",")
-      .withKeyValueSeparator("=")
-      .join(request.getHeaders().entries());
-    return String.format("Error making request to %s service at %s while doing %s with headers %s%s.",
-                         discoverableServiceName, request.getURL(), request.getMethod(), headers,
-                         body == null ? "" : " and body " + body);
+        .withKeyValueSeparator("=")
+        .join(request.getHeaders().entries());
+    return String.format(
+        "Error making request to %s service at %s while doing %s with headers %s%s.",
+        discoverableServiceName, request.getURL(), request.getMethod(), headers,
+        body == null ? "" : " and body " + body);
   }
 
   /**
@@ -301,11 +315,12 @@ public class RemoteClient {
 
     // Add Authorization header and use a rewritten URL if needed
     if (remoteAuthenticator != null && headers.keySet().stream()
-      .noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+        .noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
       Credential credential = remoteAuthenticator.getCredentials();
       if (credential != null) {
-        setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION, credential.getType().getQualifiedName(),
-                      credential.getValue());
+        setAuthHeader(headers::put, HttpHeaders.AUTHORIZATION,
+            credential.getType().getQualifiedName(),
+            credential.getValue());
       }
     }
 

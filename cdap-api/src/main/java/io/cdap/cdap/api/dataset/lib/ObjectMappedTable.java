@@ -31,21 +31,21 @@ import javax.annotation.Nullable;
 /**
  * A Dataset that stores plain java Objects into a table by mapping object fields to table columns.
  * Objects must be flat and can only contain fields of simple type. A simple type is an Integer,
- * int, Long, long, Float, float, Double, double, String, byte[], ByteBuffer, or UUID.
- * The object itself cannot be a simple type.
+ * int, Long, long, Float, float, Double, double, String, byte[], ByteBuffer, or UUID. The object
+ * itself cannot be a simple type.
  *
- * This Dataset is {@link RecordScannable}, which means it can be explored through Hive. The Hive table
- * for this Dataset will contain one column for each object field and one column for the row key.
- * For example, if you are storing an Object of three fields ("id", "name", and "price"), the corresponding
- * Hive table will have four columns: "rowkey", "id", "name", and "price". If you wish to change the name of
- * the "rowkey" column you can do so by setting a property on the Dataset. See {@link ObjectMappedTableProperties}
- * for more information on properties for this Dataset.
+ * This Dataset is {@link RecordScannable}, which means it can be explored through Hive. The Hive
+ * table for this Dataset will contain one column for each object field and one column for the row
+ * key. For example, if you are storing an Object of three fields ("id", "name", and "price"), the
+ * corresponding Hive table will have four columns: "rowkey", "id", "name", and "price". If you wish
+ * to change the name of the "rowkey" column you can do so by setting a property on the Dataset. See
+ * {@link ObjectMappedTableProperties} for more information on properties for this Dataset.
  *
  * @param <T> the type of objects in the table
  */
 @Beta
 public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
-  BatchWritable<byte[], T>, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
+    BatchWritable<byte[], T>, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
   /**
    * Type name
@@ -89,7 +89,8 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
    * Scans table.
    *
    * @param startRow start row inclusive. {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the
+   *     table
    * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(@Nullable String startRow, @Nullable String stopRow);
@@ -98,7 +99,8 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
    * Scans table.
    *
    * @param startRow start row inclusive. {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the
+   *     table
    * @return {@link CloseableIterator} over {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
@@ -128,9 +130,10 @@ public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
   /**
    * Returns splits for a range of keys in the table.
    *
-   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less than or equal to zero, any number of splits can be returned.
-   * @param start if non-null, the returned splits will only cover keys that are greater or equal
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits
+   *     will be returned. If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or
+   *     equal
    * @param stop if non-null, the returned splits will only cover keys that are less
    * @return list of {@link Split}
    */

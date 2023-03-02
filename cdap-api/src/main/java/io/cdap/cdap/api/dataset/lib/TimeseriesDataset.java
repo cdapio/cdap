@@ -82,8 +82,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   /**
-   * Writes constructed value. This implementation overrides the existing value.
-   * This method can be overridden to apply update logic relevant to the subclass (e.g. increment counter).
+   * Writes constructed value. This implementation overrides the existing value. This method can be
+   * overridden to apply update logic relevant to the subclass (e.g. increment counter).
    *
    * @param row row key to write to
    * @param columnName column name to write to
@@ -120,26 +120,28 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   private int applyLimitOnRowsToRead(long timeIntervalsCount) {
-    return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ) ? MAX_ROWS_TO_SCAN_PER_READ : (int) timeIntervalsCount;
+    return (timeIntervalsCount > MAX_ROWS_TO_SCAN_PER_READ) ? MAX_ROWS_TO_SCAN_PER_READ
+        : (int) timeIntervalsCount;
   }
 
   /**
-   * Returns the value that will be used as the actual row key.
-   * It has the following format:
-   * {@code <key>[<timestamp>/<rowPartitionIntervalSize>]}.
+   * Returns the value that will be used as the actual row key. It has the following format: {@code
+   * <key>[<timestamp>/<rowPartitionIntervalSize>]}.
    *
    * @param key a user-provided entry key value
    * @param timestamp is 8-byte encoded long which defines interval timestamp stamp
-   * @param rowPartitionIntervalSize the size of time interval for partitioning data into rows. Used for performance
-   *                    optimization. Please refer to {@link TimeseriesTable} for more details including how to choose
-   *                    this value.
+   * @param rowPartitionIntervalSize the size of time interval for partitioning data into rows.
+   *     Used for performance optimization. Please refer to {@link TimeseriesTable} for more details
+   *     including how to choose this value.
    * @return a composite value used as the row key
    */
   static byte[] createRow(byte[] key, long timestamp, long rowPartitionIntervalSize) {
-    return Bytes.add(key, Bytes.toBytes(getRowKeyTimestampPart(timestamp, rowPartitionIntervalSize)));
+    return Bytes.add(key,
+        Bytes.toBytes(getRowKeyTimestampPart(timestamp, rowPartitionIntervalSize)));
   }
 
-  private static long getRowKeyTimestampPart(final long timestamp, final long rowPartitionIntervalSize) {
+  private static long getRowKeyTimestampPart(final long timestamp,
+      final long rowPartitionIntervalSize) {
     return timestamp / rowPartitionIntervalSize;
   }
 
@@ -148,14 +150,14 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   /**
-   * Returns the value that will be used as the actual column name.
-   * Column name has the following format: {@code <timestamp><tags>}. Sorting of tags is needed for
-   * efficient filtering based on provided tags during reading
+   * Returns the value that will be used as the actual column name. Column name has the following
+   * format: {@code <timestamp><tags>}. Sorting of tags is needed for efficient filtering based on
+   * provided tags during reading
    *
    * @param timestamp is 8-byte encoded long: user-provided entry timestamp.
-   * @param tags is an encoded user-provided entry tags list. It is formatted as:
-   * {@code [<tag_length><tag_value>]*}, where tag length is the 4-byte encoded int length of the tag and tags
-   *             are sorted in ascending order
+   * @param tags is an encoded user-provided entry tags list. It is formatted as: {@code
+   *     [<tag_length><tag_value>]*}, where tag length is the 4-byte encoded int length of the tag
+   *     and tags are sorted in ascending order
    */
   static byte[] createColumnName(long timestamp, byte[][] tags) {
     // hint: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
@@ -181,17 +183,18 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   static long getTimeIntervalsCount(final long startTime, final long endTime,
-                                    final long rowPartitionIntervalSize) {
+      final long rowPartitionIntervalSize) {
     return (getRowKeyTimestampPart(endTime, rowPartitionIntervalSize) -
-      getRowKeyTimestampPart(startTime, rowPartitionIntervalSize) + 1);
+        getRowKeyTimestampPart(startTime, rowPartitionIntervalSize) + 1);
   }
 
   static byte[] getRowOfKthInterval(final byte[] key,
-                                    final long timeRangeStart,
-                                    // zero-based
-                                    final int intervalIndex,
-                                    final long rowPartitionIntervalSize) {
-    return createRow(key, timeRangeStart + intervalIndex * rowPartitionIntervalSize, rowPartitionIntervalSize);
+      final long timeRangeStart,
+      // zero-based
+      final int intervalIndex,
+      final long rowPartitionIntervalSize) {
+    return createRow(key, timeRangeStart + intervalIndex * rowPartitionIntervalSize,
+        rowPartitionIntervalSize);
   }
 
   static boolean hasTags(final byte[] columnName) {
@@ -204,39 +207,43 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   /**
-   * Reads entries for a given time range and returns an {@code Iterator<Entry>}. This method is intended to be
-   * used by subclasses to define their own public <code>read</code> method.
-   * NOTE: A limit is placed on the max number of time intervals to be scanned during a read, as defined by
+   * Reads entries for a given time range and returns an {@code Iterator<Entry>}. This method is
+   * intended to be used by subclasses to define their own public <code>read</code> method. NOTE: A
+   * limit is placed on the max number of time intervals to be scanned during a read, as defined by
    * {@link #MAX_ROWS_TO_SCAN_PER_READ}.
    *
    * @param key name of the entry to read
    * @param startTime defines start of the time range to read, inclusive
    * @param endTime defines end of the time range to read, inclusive
-   * @param tags defines a set of tags that MUST present in every returned entry.
-   *        NOTE: using tags returns entries containing all tags that were providing during writing
+   * @param tags defines a set of tags that MUST present in every returned entry. NOTE: using
+   *     tags returns entries containing all tags that were providing during writing
    * @return an iterator over entries that satisfy provided conditions
    */
   @ReadOnly
   final Iterator<Entry> readInternal(byte[] key, long startTime, long endTime, byte[]... tags) {
     // validating params
     if (startTime > endTime) {
-      throw new IllegalArgumentException("Provided time range condition is incorrect: startTime > endTime");
+      throw new IllegalArgumentException(
+          "Provided time range condition is incorrect: startTime > endTime");
     }
 
     return new EntryScanner(key, startTime, endTime, tags);
   }
 
   /**
-   * Create Entry. Checking if filter tags are contained in columnName and parsing tags in one pass.
+   * Create Entry. Checking if filter tags are contained in columnName and parsing tags in one
+   * pass.
    *
    * @param key key of the entries to read
    * @param value value of the entries
    * @param columnName columnName of the entries integrated timestamp and tags
    * @param tags the tags to filter entries
-   * @return an Entry by parsing tags from columnName, if the columnName contains sortedTags. Otherwise, return
-   * <code>null</code>
+   * @return an Entry by parsing tags from columnName, if the columnName contains sortedTags.
+   *     Otherwise, return
+   *     <code>null</code>
    */
-  private Entry createEntry(final byte[] key, final byte[] value, final byte[] columnName, final byte[][] tags) {
+  private Entry createEntry(final byte[] key, final byte[] value, final byte[] columnName,
+      final byte[][] tags) {
     // columnName doesn't contain tags.
     if (!hasTags(columnName)) {
       if (tags == null || tags.length == 0) {
@@ -280,7 +287,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
       // tag is encoded in columnName array from curPos and in length of tagLength.
       int tagsMatch;
       tagsMatch = Bytes.compareTo(columnName, tagStartPos, tagLength,
-                                  sortedTags[curTagToCheck], 0, sortedTags[curTagToCheck].length);
+          sortedTags[curTagToCheck], 0, sortedTags[curTagToCheck].length);
       if (tagsMatch == 0) {
         // Tags match, advancing to the next tag to be checked.
         curTagToCheck++;
@@ -295,13 +302,15 @@ abstract class TimeseriesDataset extends AbstractDataset {
       // this means we didn't find all required tags in the entry data
       return null;
     }
-    return new Entry(key, value, parseTimeStamp(columnName), parsedTags.toArray(new byte[parsedTags.size()][]));
+    return new Entry(key, value, parseTimeStamp(columnName),
+        parsedTags.toArray(new byte[parsedTags.size()][]));
   }
 
   /**
    * An iterator over entries.
    */
   public final class EntryScanner extends AbstractCloseableIterator<Entry> {
+
     private final byte[] key;
     private final long startTime;
     private final byte[][] tags;
@@ -316,7 +325,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
     private int rowScanned;
 
     // use an internal iterator to avoid leaking AbstractIterator methods to outside.
-    private Iterator<Map.Entry<byte[], byte[]>>  internalIterator;
+    private Iterator<Map.Entry<byte[], byte[]>> internalIterator;
 
     /**
      * Construct an EntryScanner. Should only be called by TimeseriesTable.
@@ -324,8 +333,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
      * @param key key of the entries to read
      * @param startTime defines start of the time range to read, inclusive
      * @param endTime defines end of the time range to read, inclusive
-     * @param tags defines a set of tags that MUST present in every returned entry.
-     *        NOTE: using tags returns entries containing all tags that were providing during writing
+     * @param tags defines a set of tags that MUST present in every returned entry. NOTE: using
+     *     tags returns entries containing all tags that were providing during writing
      */
     EntryScanner(byte[] key, long startTime, long endTime, byte[][] tags) {
       this.key = key;
@@ -343,12 +352,14 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     @Override
     protected Entry computeNext() {
-      while ((internalIterator == null || !internalIterator.hasNext()) && rowScanned < timeIntervalsCount) {
+      while ((internalIterator == null || !internalIterator.hasNext())
+          && rowScanned < timeIntervalsCount) {
         byte[] row = getRowOfKthInterval(key, startTime, rowScanned, rowPartitionIntervalSize);
         internalIterator = createIterator(row);
         rowScanned++;
       }
-      if (rowScanned <= timeIntervalsCount && internalIterator != null && internalIterator.hasNext()) {
+      if (rowScanned <= timeIntervalsCount && internalIterator != null
+          && internalIterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = internalIterator.next();
         Entry returnValue = createEntry(key, entry.getValue(), entry.getKey(), tags);
         if (returnValue == null) {
@@ -361,14 +372,14 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     private Iterator<Map.Entry<byte[], byte[]>> createIterator(byte[] row) {
       Row currentRow = table.get(row,
-                                 // we only need to set left bound on the first row: others cannot have records
-                                 // with the timestamp less than startTime
-                                 (rowScanned == 0) ? startColumnName : null,
-                                 // we only need to set right bound on the last row: others cannot have records
-                                 // with the timestamp greater than startTime
-                                 (rowScanned == timeIntervalsCount - 1) ? endColumnName : null,
-                                 // read all
-                                 -1);
+          // we only need to set left bound on the first row: others cannot have records
+          // with the timestamp less than startTime
+          (rowScanned == 0) ? startColumnName : null,
+          // we only need to set right bound on the last row: others cannot have records
+          // with the timestamp greater than startTime
+          (rowScanned == timeIntervalsCount - 1) ? endColumnName : null,
+          // read all
+          -1);
 
       if (!currentRow.isEmpty()) {
         return currentRow.getColumns().entrySet().iterator();
@@ -387,6 +398,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
    * Time series DataSet entry.
    */
   static class Entry {
+
     private byte[] key;
     private byte[] value;
     private long timestamp;
@@ -409,6 +421,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Returns the key of the entry.
+     *
      * @return the key of the entry
      */
     public byte[] getKey() {
@@ -417,6 +430,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Returns the count value of the entry.
+     *
      * @return the count value of the entry
      */
     public byte[] getValue() {
@@ -425,6 +439,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Returns the timestamp of the entry.
+     *
      * @return the timestamp of the entry
      */
     public long getTimestamp() {
@@ -433,6 +448,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Returns the tags associated with the entry.
+     *
      * @return the tags associated with the entry
      */
     public byte[][] getTags() {

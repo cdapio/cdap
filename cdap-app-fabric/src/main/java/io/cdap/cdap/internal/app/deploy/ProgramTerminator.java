@@ -19,15 +19,15 @@ package io.cdap.cdap.internal.app.deploy;
 import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * Interface that is responsible to stopping programs. Used while stop programs that are being deleted during
- * re-deploy process.
+ * Interface that is responsible to stopping programs. Used while stop programs that are being
+ * deleted during re-deploy process.
  */
 public interface ProgramTerminator {
 
   /**
    * Method to implement for stopping the programs.
    *
-   * @param programId  Program id.
+   * @param programId Program id.
    */
   void stop(ProgramId programId) throws Exception;
 

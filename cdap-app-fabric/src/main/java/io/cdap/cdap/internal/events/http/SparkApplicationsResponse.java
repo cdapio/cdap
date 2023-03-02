@@ -20,6 +20,7 @@ package io.cdap.cdap.internal.events.http;
  * Model for REST response of the Spark Server's applications method.
  */
 public class SparkApplicationsResponse {
+
   private String id;
   private Attempt[] attempts;
 
@@ -35,6 +36,7 @@ public class SparkApplicationsResponse {
   }
 
   public static class Attempt {
+
     private String attemptId;
     private boolean completed;
     private long endTimeEpoch;

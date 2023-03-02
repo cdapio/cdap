@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
  * The summary about all the field level lineage information about all fields in a dataset.
  */
 public class DatasetFieldLineageSummary {
+
   private final Constants.FieldLineage.Direction direction;
   @SerializedName("start-ts")
   private final long startTs;
@@ -41,22 +42,25 @@ public class DatasetFieldLineageSummary {
   private final Set<FieldLineageRelations> incoming;
   private final Set<FieldLineageRelations> outgoing;
 
-  public DatasetFieldLineageSummary(Constants.FieldLineage.Direction direction, long startTs, long endTs,
-                                    DatasetId datasetId, Set<String> fields,
-                                    Map<DatasetId, Integer> fieldCounts,
-                                    Map<DatasetId, Set<FieldRelation>> incoming,
-                                    Map<DatasetId, Set<FieldRelation>> outgoing) {
+  public DatasetFieldLineageSummary(Constants.FieldLineage.Direction direction, long startTs,
+      long endTs,
+      DatasetId datasetId, Set<String> fields,
+      Map<DatasetId, Integer> fieldCounts,
+      Map<DatasetId, Set<FieldRelation>> incoming,
+      Map<DatasetId, Set<FieldRelation>> outgoing) {
     this.direction = direction;
     this.startTs = startTs;
     this.endTs = endTs;
     this.datasetId = datasetId;
     this.fields = fields;
     this.incoming = incoming.entrySet().stream().map(
-      entry -> new FieldLineageRelations(entry.getKey(), fieldCounts.getOrDefault(entry.getKey(), 0),
-                                         entry.getValue())).collect(Collectors.toSet());
+        entry -> new FieldLineageRelations(entry.getKey(),
+            fieldCounts.getOrDefault(entry.getKey(), 0),
+            entry.getValue())).collect(Collectors.toSet());
     this.outgoing = outgoing.entrySet().stream().map(
-      entry -> new FieldLineageRelations(entry.getKey(), fieldCounts.getOrDefault(entry.getKey(), 0),
-                                         entry.getValue())).collect(Collectors.toSet());
+        entry -> new FieldLineageRelations(entry.getKey(),
+            fieldCounts.getOrDefault(entry.getKey(), 0),
+            entry.getValue())).collect(Collectors.toSet());
   }
 
   public Constants.FieldLineage.Direction getDirection() {
@@ -88,10 +92,12 @@ public class DatasetFieldLineageSummary {
   }
 
   /**
-   * This class represents an aggregation of the field level lineage about an incoming/outgoing dataset. The entityId
-   * represents the dataset. And the relations contains all the field level lineage.
+   * This class represents an aggregation of the field level lineage about an incoming/outgoing
+   * dataset. The entityId represents the dataset. And the relations contains all the field level
+   * lineage.
    */
   public static class FieldLineageRelations {
+
     @SerializedName("entityId")
     private final DatasetId datasetId;
     private final int fieldCount;
@@ -100,7 +106,8 @@ public class DatasetFieldLineageSummary {
     // this datasetId can be nullable to represent the field is not related to any other dataset but still
     // have other operations around itself, i.e, drop or generate
     @VisibleForTesting
-    public FieldLineageRelations(@Nullable DatasetId datasetId, int fieldCount, Set<FieldRelation> relations) {
+    public FieldLineageRelations(@Nullable DatasetId datasetId, int fieldCount,
+        Set<FieldRelation> relations) {
       this.datasetId = datasetId;
       this.fieldCount = fieldCount;
       this.relations = relations;
@@ -118,8 +125,8 @@ public class DatasetFieldLineageSummary {
 
       DatasetFieldLineageSummary.FieldLineageRelations that = (DatasetFieldLineageSummary.FieldLineageRelations) o;
       return Objects.equals(datasetId, that.datasetId) &&
-        Objects.equals(relations, that.relations) &&
-        Objects.equals(fieldCount, that.fieldCount);
+          Objects.equals(relations, that.relations) &&
+          Objects.equals(fieldCount, that.fieldCount);
     }
 
     @Override

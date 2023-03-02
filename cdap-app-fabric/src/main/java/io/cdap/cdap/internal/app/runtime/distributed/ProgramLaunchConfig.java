@@ -50,8 +50,8 @@ public final class ProgramLaunchConfig {
   private ClassAcceptor classAcceptor = new ProgramRuntimeClassAcceptor();
 
   /**
-   * Adds extra system arguments that will be available through the {@link ProgramOptions#getArguments()}
-   * in the program container.
+   * Adds extra system arguments that will be available through the {@link
+   * ProgramOptions#getArguments()} in the program container.
    */
   public ProgramLaunchConfig addExtraSystemArguments(Map<String, String> args) {
     extraSystemArguments.putAll(args);
@@ -79,20 +79,23 @@ public final class ProgramLaunchConfig {
   }
 
   public ProgramLaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
-                                         Map<String, String> args, Resources defaultResource) {
+      Map<String, String> args, Resources defaultResource) {
     return addRunnable(name, runnable, instances, args, defaultResource, null);
   }
 
   public ProgramLaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
-                                         Map<String, String> args, Resources defaultResources,
-                                         @Nullable Integer maxRetries) {
-    ResourceSpecification resourceSpec = createResourceSpec(SystemArguments.getResources(args, defaultResources),
-                                                            instances);
+      Map<String, String> args, Resources defaultResources,
+      @Nullable Integer maxRetries) {
+    ResourceSpecification resourceSpec = createResourceSpec(
+        SystemArguments.getResources(args, defaultResources),
+        instances);
 
-    Map<String, String> configs = SystemArguments.getTwillContainerConfigs(args, resourceSpec.getMemorySize());
+    Map<String, String> configs = SystemArguments.getTwillContainerConfigs(args,
+        resourceSpec.getMemorySize());
     Map<String, Level> logLevels = SystemArguments.getLogLevels(args);
 
-    runnables.put(name, new RunnableDefinition(runnable, resourceSpec, configs, logLevels, maxRetries));
+    runnables.put(name,
+        new RunnableDefinition(runnable, resourceSpec, configs, logLevels, maxRetries));
     return this;
   }
 
@@ -107,7 +110,7 @@ public final class ProgramLaunchConfig {
     return this;
   }
 
-  public ProgramLaunchConfig addExtraDependencies(Class<?>...classes) {
+  public ProgramLaunchConfig addExtraDependencies(Class<?>... classes) {
     return addExtraDependencies(Arrays.asList(classes));
   }
 
@@ -157,13 +160,14 @@ public final class ProgramLaunchConfig {
   }
 
   /**
-   * Returns a {@link ResourceSpecification} created from the given {@link Resources} and number of instances.
+   * Returns a {@link ResourceSpecification} created from the given {@link Resources} and number of
+   * instances.
    */
   private ResourceSpecification createResourceSpec(Resources resources, int instances) {
     return ResourceSpecification.Builder.with()
-      .setVirtualCores(resources.getVirtualCores())
-      .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
+        .setVirtualCores(resources.getVirtualCores())
+        .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+        .setInstances(instances)
+        .build();
   }
 }

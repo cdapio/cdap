@@ -59,9 +59,9 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
   private final Iterable<RunRecord> runRecordList;
 
   public SupportBundleRuntimeInfoTask(File appPath, NamespaceId namespaceId, ApplicationId appId,
-                                      ProgramType programType, ProgramId programName,
-                                      RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                      Iterable<RunRecord> runRecordList) {
+      ProgramType programType, ProgramId programName,
+      RemoteMetricsSystemClient remoteMetricsSystemClient,
+      Iterable<RunRecord> runRecordList) {
     this.namespaceId = namespaceId;
     this.appId = appId;
     this.programType = programType;
@@ -79,8 +79,8 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
         JsonElement jsonElement = GSON.toJsonTree(runRecord);
         JsonObject jsonObject = (JsonObject) jsonElement;
         JsonObject metrics =
-          queryMetrics(runId, runRecord.getStartTs(),
-                       runRecord.getStopTs() != null ? runRecord.getStopTs() : System.currentTimeMillis());
+            queryMetrics(runId, runRecord.getStartTs(),
+                runRecord.getStopTs() != null ? runRecord.getStopTs() : System.currentTimeMillis());
         jsonObject.add("metrics", metrics);
         GSON.toJson(jsonObject, file);
       }
@@ -104,7 +104,8 @@ public class SupportBundleRuntimeInfoTask implements SupportBundleTask {
       }
       Collection<String> metricsNameList = remoteMetricsSystemClient.search(queryTags);
       List<MetricTimeSeries> metricTimeSeriesList = new ArrayList<>(
-        remoteMetricsSystemClient.query(startQueryTime, (int) (stopTs), queryTags, metricsNameList));
+          remoteMetricsSystemClient.query(startQueryTime, (int) (stopTs), queryTags,
+              metricsNameList));
       for (MetricTimeSeries timeSeries : metricTimeSeriesList) {
         if (!metrics.has(timeSeries.getMetricName())) {
           metrics.add(timeSeries.getMetricName(), new JsonArray());

@@ -19,24 +19,24 @@ package io.cdap.cdap.data2.util.hbase;
 import org.apache.hadoop.hbase.client.Delete;
 
 /**
- * Builder for creating {@link Delete}. This builder should be used for cross HBase versions compatibility.
- * All methods on this class are just delegating to calls to {@link Delete} object.
+ * Builder for creating {@link Delete}. This builder should be used for cross HBase versions
+ * compatibility. All methods on this class are just delegating to calls to {@link Delete} object.
  */
 public interface DeleteBuilder {
 
-  DeleteBuilder deleteFamily(byte [] family);
+  DeleteBuilder deleteFamily(byte[] family);
 
-  DeleteBuilder deleteFamily(byte [] family, long timestamp);
+  DeleteBuilder deleteFamily(byte[] family, long timestamp);
 
-  DeleteBuilder deleteFamilyVersion(byte [] family, long timestamp);
+  DeleteBuilder deleteFamilyVersion(byte[] family, long timestamp);
 
-  DeleteBuilder deleteColumns(byte [] family, byte [] qualifier);
+  DeleteBuilder deleteColumns(byte[] family, byte[] qualifier);
 
-  DeleteBuilder deleteColumns(byte [] family, byte [] qualifier, long timestamp);
+  DeleteBuilder deleteColumns(byte[] family, byte[] qualifier, long timestamp);
 
-  DeleteBuilder deleteColumn(byte [] family, byte [] qualifier);
+  DeleteBuilder deleteColumn(byte[] family, byte[] qualifier);
 
-  DeleteBuilder deleteColumn(byte [] family, byte [] qualifier, long timestamp);
+  DeleteBuilder deleteColumn(byte[] family, byte[] qualifier, long timestamp);
 
   DeleteBuilder setTimestamp(long timestamp);
 

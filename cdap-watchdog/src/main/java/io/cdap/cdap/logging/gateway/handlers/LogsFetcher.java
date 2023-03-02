@@ -26,6 +26,7 @@ import java.io.IOException;
  * Interface for fetching Program logs
  */
 public interface LogsFetcher {
+
   /**
    * Gets the run logs of a program.
    *
@@ -35,10 +36,11 @@ public interface LogsFetcher {
    * @param stop end time of the time range of desired logs
    * @param file file for us to write the log into
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   void writeProgramRunLogs(ProgramId program, String runId, long start, long stop, File file)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+      throws IOException, UnauthenticatedException, UnauthorizedException;
 
   /**
    * Gets the logs of a program.
@@ -49,8 +51,9 @@ public interface LogsFetcher {
    * @param stop end time of the time range of desired logs
    * @param file path for the file to write into
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   void writeSystemServiceLog(String componentId, String serviceId, long start, long stop, File file)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+      throws IOException, UnauthenticatedException, UnauthorizedException;
 }

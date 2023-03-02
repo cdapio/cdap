@@ -26,9 +26,10 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * A RecordWriter that can only write to a single partition of a PartitionedFileSet at any given time, but over time
- * can write to multiple partitions. Once it starts writing to a new partition, the previous partition is closed and
- * the previous partition can not be written to after that point.
+ * A RecordWriter that can only write to a single partition of a PartitionedFileSet at any given
+ * time, but over time can write to multiple partitions. Once it starts writing to a new partition,
+ * the previous partition is closed and the previous partition can not be written to after that
+ * point.
  *
  * See {@link PartitionedFileSetArguments#setDynamicPartitionerConcurrency(Map, boolean)}.
  */
@@ -52,8 +53,9 @@ final class SingleWriter<K, V> extends DynamicPartitionerWriterWrapper<K, V> {
       // make sure we haven't written to this partition previously
       if (closedKeys.contains(partitionKey)) {
         throw new IllegalStateException(
-          String.format("Encountered a partition key for which the writer has already been closed: '%s'.",
-                        partitionKey));
+            String.format(
+                "Encountered a partition key for which the writer has already been closed: '%s'.",
+                partitionKey));
       }
 
       // currPartitionKey can be null for the first key value pair, in which case there's no writer to close

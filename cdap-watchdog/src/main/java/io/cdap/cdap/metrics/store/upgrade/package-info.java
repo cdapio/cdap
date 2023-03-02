@@ -15,9 +15,9 @@
  */
 
 /**
- * Used for migrating metrics data from CDAP versions earlier than 2.8 to CDAP-2.8.
- * The Metrics system and the the data-format has changed in CDAP-2.8, In order to port the existing metrics,
- * this package contains classes that reads existing metrics data, parses them and
- * finally adds the metrics data to {@link io.cdap.cdap.api.metrics.MetricStore}.
+ * Used for migrating metrics data from CDAP versions earlier than 2.8 to CDAP-2.8. The Metrics
+ * system and the the data-format has changed in CDAP-2.8, In order to port the existing metrics,
+ * this package contains classes that reads existing metrics data, parses them and finally adds the
+ * metrics data to {@link io.cdap.cdap.api.metrics.MetricStore}.
  */
 package io.cdap.cdap.metrics.store.upgrade;

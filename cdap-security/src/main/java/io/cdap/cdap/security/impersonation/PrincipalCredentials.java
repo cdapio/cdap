@@ -17,9 +17,11 @@
 package io.cdap.cdap.security.impersonation;
 
 /**
- * A wrapper around kerberos principal and credentials file path of a user to allow creating UGI remotely.
+ * A wrapper around kerberos principal and credentials file path of a user to allow creating UGI
+ * remotely.
  */
 public class PrincipalCredentials {
+
   private final String principal;
   private final String credentialsPath;
 
@@ -40,8 +42,8 @@ public class PrincipalCredentials {
   @Override
   public String toString() {
     return "PrincipalCredentials{" +
-      "principal='" + principal + '\'' +
-      ", credentialsPath=" + credentialsPath +
-      '}';
+        "principal='" + principal + '\'' +
+        ", credentialsPath=" + credentialsPath +
+        '}';
   }
 }

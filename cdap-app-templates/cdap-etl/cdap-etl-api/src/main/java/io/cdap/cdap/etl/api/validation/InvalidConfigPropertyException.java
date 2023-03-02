@@ -24,6 +24,7 @@ package io.cdap.cdap.etl.api.validation;
  */
 @Deprecated
 public class InvalidConfigPropertyException extends InvalidStageException {
+
   private final String property;
 
   public InvalidConfigPropertyException(String message, String property) {

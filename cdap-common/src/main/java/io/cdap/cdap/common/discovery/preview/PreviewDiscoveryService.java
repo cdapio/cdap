@@ -30,16 +30,18 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
- * Discovery service that delegates either to in memory discovery service(local) or shared (actual) discovery service.
+ * Discovery service that delegates either to in memory discovery service(local) or shared (actual)
+ * discovery service.
  */
 public class PreviewDiscoveryService implements DiscoveryService, DiscoveryServiceClient {
+
   private final DiscoveryServiceClient actual;
   private final InMemoryDiscoveryService local;
   private final Set<String> registeredLocalServices;
 
   @Inject
   PreviewDiscoveryService(
-    @Named(PreviewDiscoveryRuntimeModule.ACTUAL_DISCOVERY_CLIENT) DiscoveryServiceClient actual) {
+      @Named(PreviewDiscoveryRuntimeModule.ACTUAL_DISCOVERY_CLIENT) DiscoveryServiceClient actual) {
     this.actual = actual;
     this.local = new InMemoryDiscoveryService();
     this.registeredLocalServices = new ConcurrentSet<>();

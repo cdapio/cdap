@@ -82,7 +82,7 @@ public enum EntityType {
     this.idClass = idClass;
     try {
       this.fromIdParts = MethodHandles.lookup()
-        .findStatic(idClass, "fromIdParts", MethodType.methodType(idClass, Iterable.class));
+          .findStatic(idClass, "fromIdParts", MethodType.methodType(idClass, Iterable.class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
       throw new RuntimeException("Failed to initialize EntityType", e);
     }

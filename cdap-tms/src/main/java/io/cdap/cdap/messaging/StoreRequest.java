@@ -20,8 +20,8 @@ import io.cdap.cdap.proto.id.TopicId;
 import java.util.Iterator;
 
 /**
- * This class represents messages to be store to the messaging system.
- * The message payloads are provide through the {@link Iterator}.
+ * This class represents messages to be store to the messaging system. The message payloads are
+ * provide through the {@link Iterator}.
  */
 public abstract class StoreRequest implements Iterable<byte[]> {
 
@@ -47,8 +47,8 @@ public abstract class StoreRequest implements Iterable<byte[]> {
   }
 
   /**
-   * Returns the transaction write pointer if the message is going to be published transactionally, that is
-   * when {@link #isTransactional()} returns {@code true}.
+   * Returns the transaction write pointer if the message is going to be published transactionally,
+   * that is when {@link #isTransactional()} returns {@code true}.
    */
   public long getTransactionWritePointer() {
     return transactionWritePointer;

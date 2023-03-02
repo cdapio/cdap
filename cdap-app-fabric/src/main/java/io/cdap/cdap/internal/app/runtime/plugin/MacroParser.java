@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
  * Provides a parser to validate the syntax of and evaluate macros.
  */
 public class MacroParser {
+
   private static final Pattern ARGUMENT_DELIMITER = Pattern.compile(",");
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
   private static final Gson GSON = new Gson();
@@ -57,11 +58,11 @@ public class MacroParser {
   }
 
   /**
-   * Substitutes the provided string with a given macro evaluator. Expands macros from right-to-left recursively.
-   * If the string passed to parse is null, then null will be returned.
+   * Substitutes the provided string with a given macro evaluator. Expands macros from right-to-left
+   * recursively. If the string passed to parse is null, then null will be returned.
+   *
    * @param str the raw string containing macro syntax
    * @return the original string with all macros expanded and substituted
-   * @throws InvalidMacroException
    */
   @Nullable
   public String parse(@Nullable String str) throws InvalidMacroException {
@@ -73,23 +74,26 @@ public class MacroParser {
   }
 
   /**
-   * Recursive helper method for macro parsing. Expands macros from right-to-left up to a maximum depth.
+   * Recursive helper method for macro parsing. Expands macros from right-to-left up to a maximum
+   * depth.
+   *
    * @param str the raw string containing macro syntax
    * @param depth the current depth of expansion
    * @return the parsed string
-   * @throws InvalidMacroException
    */
   private String parse(String str, int depth) throws InvalidMacroException {
     if (depth > MAX_SUBSTITUTION_DEPTH) {
-      throw new InvalidMacroException(String.format("Failed substituting macro '%s', expansion exceeded %d levels.",
-                                                    str, MAX_SUBSTITUTION_DEPTH));
+      throw new InvalidMacroException(
+          String.format("Failed substituting macro '%s', expansion exceeded %d levels.",
+              str, MAX_SUBSTITUTION_DEPTH));
     }
 
     MacroMetadata macroPosition = findRightmostMacro(str, str.length());
     while (macroPosition != null) {
       // in the case that the MacroEvaluator does not internally handle unspecified macros
       if (macroPosition.substitution == null) {
-        throw new InvalidMacroException(String.format("Unable to substitute macro in string %s.", str));
+        throw new InvalidMacroException(
+            String.format("Unable to substitute macro in string %s.", str));
       }
       String left = str.substring(0, macroPosition.startIndex);
       String right = str.substring(macroPosition.endIndex + 1);
@@ -100,16 +104,17 @@ public class MacroParser {
       str = left + middle + right;
       // if we need to evaluate recursively, we need to search from the end of the string
       // otherwise, we only need to start searching from where the previous macro began
-      int startPos = macroPosition.evaluateRecursively ? str.length() : macroPosition.startIndex - 1;
+      int startPos =
+          macroPosition.evaluateRecursively ? str.length() : macroPosition.startIndex - 1;
       macroPosition = findRightmostMacro(str, startPos);
     }
     return str;
   }
 
   /**
-   * Find the rightmost macro in the specified string. If no macro is found, returns null.
-   * The search will start at the specified position, then move left through the string.
-   * Macros to the right of the specified position will be ignored.
+   * Find the rightmost macro in the specified string. If no macro is found, returns null. The
+   * search will start at the specified position, then move left through the string. Macros to the
+   * right of the specified position will be ignored.
    *
    * @param str the string to find a macro in
    * @param pos the position in the string to begin search for a macro.
@@ -128,7 +133,7 @@ public class MacroParser {
     int endIndex = getFirstUnescapedTokenIndex('}', str, startIndex);
     if (endIndex < 0) {
       throw new InvalidMacroException(String.format("Could not find enclosing '}' for macro '%s'.",
-                                                    str.substring(startIndex)));
+          str.substring(startIndex)));
     } else if (endIndex == startIndex + 2) {
       throw new InvalidMacroException("Macro expression cannot be empty");
     }
@@ -170,8 +175,9 @@ public class MacroParser {
    * @param argsStartIndex the index of start parenthesis
    * @param originalString the original string
    */
-  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr, int argsStartIndex,
-                                                 String originalString) {
+  private MacroMetadata getMacroFunctionMetadata(int startIndex, int endIndex, String macroStr,
+      int argsStartIndex,
+      String originalString) {
     // check for closing ")" and allow escaping "\)" and doubly-escaping "\\)"
     int closingParenIndex = getFirstUnescapedTokenIndex(')', macroStr, 0);
 
@@ -196,25 +202,31 @@ public class MacroParser {
     }
 
     if (closingParenIndex < 0 || !macroStr.endsWith(")")) {
-      throw new InvalidMacroException(String.format("Could not find enclosing ')' for macro arguments in '%s'.",
-                                                    macroStr));
+      throw new InvalidMacroException(
+          String.format("Could not find enclosing ')' for macro arguments in '%s'.",
+              macroStr));
     } else if (closingParenIndex != macroStr.length() - 1) {
-      throw new InvalidMacroException(String.format("Macro arguments in '%s' have extra invalid trailing ')'.",
-                                                    macroStr));
+      throw new InvalidMacroException(
+          String.format("Macro arguments in '%s' have extra invalid trailing ')'.",
+              macroStr));
     }
 
     // arguments and macroFunction are expected to have escapes replaced when being evaluated
-    String arguments = replaceEscapedSyntax(macroStr.substring(argsStartIndex + 1, macroStr.length() - 1));
+    String arguments = replaceEscapedSyntax(
+        macroStr.substring(argsStartIndex + 1, macroStr.length() - 1));
     String macroFunction = replaceEscapedSyntax(macroStr.substring(0, argsStartIndex));
 
-    String[] args = Iterables.toArray(Splitter.on(ARGUMENT_DELIMITER).split(arguments), String.class);
+    String[] args = Iterables.toArray(Splitter.on(ARGUMENT_DELIMITER).split(arguments),
+        String.class);
     // if function evaluation is disabled, or this is not a whitelisted function, don't perform any evaluation.
     // if the whitelist is empty, that means no whitelist was set, so every function should be evaluated.
-    if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(macroFunction))) {
+    if (functionsEnabled && (functionWhitelist.isEmpty() || functionWhitelist.contains(
+        macroFunction))) {
       try {
         switch (macroEvaluator.evaluateAs(macroFunction)) {
           case STRING:
-            return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex, endIndex, true);
+            return new MacroMetadata(macroEvaluator.evaluate(macroFunction, args), startIndex,
+                endIndex, true);
           case MAP:
             // evaluate the macro as map, and evaluate this map
             Map<String, String> properties = macroEvaluator.evaluateMap(macroFunction, args);
@@ -225,7 +237,8 @@ public class MacroParser {
             return new MacroMetadata(GSON.toJson(evaluated), startIndex, endIndex, true);
           default:
             // should not happen
-            throw new IllegalStateException("Unsupported macro object type, the supported types are string and map.");
+            throw new IllegalStateException(
+                "Unsupported macro object type, the supported types are string and map.");
         }
 
       } catch (InvalidMacroException e) {
@@ -241,8 +254,9 @@ public class MacroParser {
   }
 
   /**
-   * Get the start index of a macro in the string, starting from the specified position and searching left.
-   * In other words, the index of the rightmost '${' that is still left of the specified position.
+   * Get the start index of a macro in the string, starting from the specified position and
+   * searching left. In other words, the index of the rightmost '${' that is still left of the
+   * specified position.
    *
    * @param str the string to search for the macro start syntax in
    * @param pos the position in the string to start the backwards search
@@ -267,6 +281,7 @@ public class MacroParser {
   /**
    * Returns whether or not the character at a given index in a string is escaped. Escaped
    * characters have an odd number of preceding backslashes.
+   *
    * @param index the index of the character to check for escaping
    * @param str the string in which the character is located at 'index'
    * @return if the character at the provided index is escaped
@@ -289,6 +304,7 @@ public class MacroParser {
 
   /**
    * Strips all preceding backslash '\' characters.
+   *
    * @param str the string to replace escaped syntax in
    * @return the string with no escaped syntax
    */
@@ -310,12 +326,14 @@ public class MacroParser {
   }
 
   private static final class MacroMetadata {
+
     private final String substitution;
     private final int startIndex;
     private final int endIndex;
     private final boolean evaluateRecursively;
 
-    private MacroMetadata(String substitution, int startIndex, int endIndex, boolean evaluateRecursively) {
+    private MacroMetadata(String substitution, int startIndex, int endIndex,
+        boolean evaluateRecursively) {
       this.substitution = substitution;
       this.startIndex = startIndex;
       this.endIndex = endIndex;

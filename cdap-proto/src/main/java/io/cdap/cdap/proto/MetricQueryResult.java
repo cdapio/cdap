@@ -22,6 +22,7 @@ import java.util.Map;
  * Represents metric query result. This is used for decorating REST API output.
  */
 public final class MetricQueryResult {
+
   private final long startTime;
   private final long endTime;
   private final TimeSeries[] series;
@@ -54,6 +55,7 @@ public final class MetricQueryResult {
    * Represents time series of a metric. This is used for decorating REST API output.
    */
   public static final class TimeSeries {
+
     private final String metricName;
     private final Map<String, String> grouping;
     private final TimeValue[] data;
@@ -81,6 +83,7 @@ public final class MetricQueryResult {
    * Represents time value of a metric. This is used for decorating REST API output.
    */
   public static final class TimeValue {
+
     private final long time;
     private final long value;
 

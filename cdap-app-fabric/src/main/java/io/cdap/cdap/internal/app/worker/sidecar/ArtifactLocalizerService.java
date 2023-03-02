@@ -49,21 +49,23 @@ public class ArtifactLocalizerService extends AbstractIdleService {
 
   @Inject
   ArtifactLocalizerService(CConfiguration cConf,
-                           ArtifactLocalizer artifactLocalizer,
-                           CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      ArtifactLocalizer artifactLocalizer,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.cConf = cConf;
     this.artifactLocalizer = artifactLocalizer;
     this.httpService = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
-      .setHost(InetAddress.getLoopbackAddress().getHostName())
-      .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
-      .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
-      .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer))
-      .build();
+        .setHost(InetAddress.getLoopbackAddress().getHostName())
+        .setPort(cConf.getInt(Constants.ArtifactLocalizer.PORT))
+        .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.BOSS_THREADS))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactLocalizer.WORKER_THREADS))
+        .setHttpHandlers(new ArtifactLocalizerHttpHandlerInternal(artifactLocalizer))
+        .build();
 
-    this.cacheCleanupInterval = cConf.getInt(Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN);
+    this.cacheCleanupInterval = cConf.getInt(
+        Constants.ArtifactLocalizer.CACHE_CLEANUP_INTERVAL_MIN);
     String cacheDir = cConf.get(Constants.CFG_LOCAL_DATA_DIR);
-    this.cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("artifacts"), cacheCleanupInterval);
+    this.cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("artifacts"),
+        cacheCleanupInterval);
   }
 
   @VisibleForTesting
@@ -76,12 +78,14 @@ public class ArtifactLocalizerService extends AbstractIdleService {
     LOG.debug("Starting ArtifactLocalizerService");
     httpService.start();
     scheduledExecutorService = Executors
-      .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-localizer-cleaner"));
-    scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval, cacheCleanupInterval, TimeUnit.MINUTES);
+        .newSingleThreadScheduledExecutor(
+            Threads.createDaemonThreadFactory("artifact-localizer-cleaner"));
+    scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval,
+        cacheCleanupInterval, TimeUnit.MINUTES);
 
     artifactLocalizer.preloadArtifacts(
-      new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS)));
-    
+        new HashSet<>(cConf.getTrimmedStringCollection(Constants.TaskWorker.PRELOAD_ARTIFACTS)));
+
     LOG.debug("Starting ArtifactLocalizerService has completed");
   }
 

@@ -21,10 +21,12 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import org.apache.hadoop.security.UserGroupInformation;
 
 /**
- * An {@link AuthenticationContext} for use in program containers. The authentication details in this context are
- * determined based on the {@link UserGroupInformation} of the user running the program.
+ * An {@link AuthenticationContext} for use in program containers. The authentication details in
+ * this context are determined based on the {@link UserGroupInformation} of the user running the
+ * program.
  */
 class ProgramContainerAuthenticationContext implements AuthenticationContext {
+
   private final Principal principal;
 
   ProgramContainerAuthenticationContext(Principal principal) {

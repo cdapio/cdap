@@ -26,21 +26,22 @@ import io.cdap.cdap.etl.api.TransformContext;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around a {@link Transform} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around a {@link Transform} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  *
  * @param <IN> the type of error record
  * @param <OUT> the type of output record
  */
 public class WrappedErrorTransform<IN, OUT>
-  extends ErrorTransform<IN, OUT>
-  implements PluginWrapper<ErrorTransform<IN, OUT>> {
+    extends ErrorTransform<IN, OUT>
+    implements PluginWrapper<ErrorTransform<IN, OUT>> {
+
   private final ErrorTransform<IN, OUT> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
   public WrappedErrorTransform(ErrorTransform<IN, OUT> transform, Caller caller,
-                               OperationTimer operationTimer) {
+      OperationTimer operationTimer) {
     this.transform = transform;
     this.caller = caller;
     this.operationTimer = operationTimer;

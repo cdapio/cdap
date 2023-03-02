@@ -28,6 +28,7 @@ import javax.crypto.spec.SecretKeySpec;
  * Represents a secret key to use for message signing, plus a unique random number identifying it.
  */
 public final class KeyIdentifier {
+
   private transient SecretKey key;
   private final byte[] encodedKey;
   private final String algorithm;
@@ -35,14 +36,16 @@ public final class KeyIdentifier {
   private final long expiration;
 
   static final class Schemas {
+
     private static final int VERSION = 1;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
+
     static {
       schemas.put(1, Schema.recordOf("KeyIdentifier",
-                                     Schema.Field.of("algorithm", Schema.of(Schema.Type.STRING)),
-                                     Schema.Field.of("encodedKey", Schema.of(Schema.Type.BYTES)),
-                                     Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
-                                     Schema.Field.of("expiration", Schema.of(Schema.Type.LONG))));
+          Schema.Field.of("algorithm", Schema.of(Schema.Type.STRING)),
+          Schema.Field.of("encodedKey", Schema.of(Schema.Type.BYTES)),
+          Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+          Schema.Field.of("expiration", Schema.of(Schema.Type.LONG))));
     }
 
     public static int getVersion() {
@@ -89,9 +92,9 @@ public final class KeyIdentifier {
     if (object instanceof KeyIdentifier) {
       KeyIdentifier other = (KeyIdentifier) object;
       return Arrays.equals(encodedKey, other.encodedKey) &&
-        keyId == other.keyId && algorithm.equals(other.algorithm)
-        && Objects.equal(getKey(), other.getKey())
-        && Objects.equal(expiration, other.expiration);
+          keyId == other.keyId && algorithm.equals(other.algorithm)
+          && Objects.equal(getKey(), other.getKey())
+          && Objects.equal(expiration, other.expiration);
     }
     return false;
   }
@@ -104,8 +107,8 @@ public final class KeyIdentifier {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("keyId", keyId)
-      .add("expiration", expiration)
-      .toString();
+        .add("keyId", keyId)
+        .add("expiration", expiration)
+        .toString();
   }
 }

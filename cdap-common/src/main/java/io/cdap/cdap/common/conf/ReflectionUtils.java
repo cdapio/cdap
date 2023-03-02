@@ -28,11 +28,11 @@ public class ReflectionUtils {
   private static final Class<?>[] EMPTY_ARRAY = new Class[]{};
 
   /**
-   * Cache of constructors for each class. Pins the classes so they
-   * can't be garbage collected until ReflectionUtils can be collected.
+   * Cache of constructors for each class. Pins the classes so they can't be garbage collected until
+   * ReflectionUtils can be collected.
    */
   private static final Map<Class<?>, Constructor<?>> CONSTRUCTOR_CACHE =
-    new ConcurrentHashMap<>();
+      new ConcurrentHashMap<>();
 
   /**
    * Check and set 'configuration' if necessary.
@@ -48,7 +48,8 @@ public class ReflectionUtils {
     }
   }
 
-  /** Create an object for the given class and initialize it from conf.
+  /**
+   * Create an object for the given class and initialize it from conf.
    *
    * @param theClass class of which an object is created
    * @param conf Configuration

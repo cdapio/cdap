@@ -90,8 +90,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and managing
- * it. An instance of this class is created by {@code DataprocProvisioner}.
+ * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc
+ * cluster and managing it. An instance of this class is created by {@code DataprocProvisioner}.
  */
 public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
@@ -129,18 +129,20 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private volatile ClusterControllerClient clusterControllerClient;
   // CDAP specific artifacts which will be cached in GCS.
   private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
-    Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR, Constants.Files.APPLICATION_JAR)
+      Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR,
+          Constants.Files.APPLICATION_JAR)
   );
   private static final int SNAPSHOT_EXPIRE_DAYS = 7;
   private static final int EXPIRE_DAYS = 730;
 
   /**
-   * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
+   * Created by dataproc provisioner with properties that are needed by dataproc runtime job
+   * manager.
    *
    * @param clusterInfo dataproc cluster information
    */
   public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo,
-                                   Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
+      Map<String, String> provisionerProperties, VersionInfo cdapVersionInfo) {
     this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
@@ -172,11 +174,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
       // instantiate a gcs client
       this.storageClient = client = StorageOptions.newBuilder()
-        .setStorageRetryStrategy(StorageRetryStrategy.getDefaultStorageRetryStrategy())
-        .setProjectId(projectId)
-        .setCredentials(credentials)
-        .build()
-        .getService();
+          .setStorageRetryStrategy(StorageRetryStrategy.getDefaultStorageRetryStrategy())
+          .setProjectId(projectId)
+          .setCredentials(credentials)
+          .build()
+          .getService();
     }
     return client;
   }
@@ -199,8 +201,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // instantiate a dataproc job controller client
       CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
       this.jobControllerClient = client = JobControllerClient.create(
-        JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-          .setEndpoint(String.format("%s-%s", region, endpoint)).build());
+          JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
+              .setEndpoint(String.format("%s-%s", region, endpoint)).build());
     }
     return client;
   }
@@ -220,9 +222,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // instantiate a dataproc cluster controller client
       CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
       ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
-        .setCredentialsProvider(credentialsProvider)
-        .setEndpoint(String.format("%s-%s", region, endpoint))
-        .build();
+          .setCredentialsProvider(credentialsProvider)
+          .setEndpoint(String.format("%s-%s", region, endpoint))
+          .build();
       this.clusterControllerClient = client = ClusterControllerClient.create(controllerSettings);
     }
     return client;
@@ -235,39 +237,43 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     // Caching is disabled if it's been explicitly disabled or delete lifecycle is not set on the bucket.
     boolean gcsCacheEnabled = Boolean.parseBoolean(
-      provisionerContext.getProperties().getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"))
-      || !validateDeleteLifecycle(bucket, runInfo.getRun());
+        provisionerContext.getProperties().getOrDefault(DataprocUtils.GCS_CACHE_ENABLED, "true"))
+        || !validateDeleteLifecycle(bucket, runInfo.getRun());
 
-    LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
-              runInfo.getRun(), clusterName, projectId, region, bucket);
+    LOG.debug(
+        "Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
+        runInfo.getRun(), clusterName, projectId, region, bucket);
     if (!gcsCacheEnabled) {
       LOG.warn("Launching run {} without GCS caching. This slows launch time.", runInfo.getRun());
     }
 
     File tempDir = DataprocUtils.CACHE_DIR_PATH.toFile();
     boolean disableLocalCaching = Boolean.parseBoolean(
-      provisionerContext.getProperties().getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED,
-                                                      "false"));
+        provisionerContext.getProperties().getOrDefault(DataprocUtils.LOCAL_CACHE_DISABLED,
+            "false"));
     // In dataproc bucket, the run root will be <bucket>/cdap-job/<runid>/. All the files without _cache_ in their
     // filename for this run will be copied under that base dir.
     String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
     // In dataproc bucket, the shared folder for artifacts will be <bucket>/cdap-job/cached-artifacts.
     // All instances of CacheableLocalFile will be copied to the shared folder if they do not exist.
-    String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
+    String cacheRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT,
+        DataprocUtils.CDAP_CACHED_ARTIFACTS);
     String cdapVersion;
     if (cdapVersionInfo.isSnapshot()) {
-      cdapVersion = String.format("%s.%s.%s-SNAPSHOT", cdapVersionInfo.getMajor(), cdapVersionInfo.getMinor(),
-                                  cdapVersionInfo.getFix());
+      cdapVersion = String.format("%s.%s.%s-SNAPSHOT", cdapVersionInfo.getMajor(),
+          cdapVersionInfo.getMinor(),
+          cdapVersionInfo.getFix());
     } else {
-      cdapVersion = String.format("%s.%s.%s", cdapVersionInfo.getMajor(), cdapVersionInfo.getMinor(),
-                                  cdapVersionInfo.getFix());
+      cdapVersion = String.format("%s.%s.%s", cdapVersionInfo.getMajor(),
+          cdapVersionInfo.getMinor(),
+          cdapVersionInfo.getFix());
     }
 
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       if (disableLocalCaching) {
         LOG.debug("Local caching is disabled, " +
-                    "continuing without caching twill and dataproc launcher jars.");
+            "continuing without caching twill and dataproc launcher jars.");
         tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
       }
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
@@ -276,24 +282,29 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       List<Future<LocalFile>> uploadFutures = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
         boolean cacheable = gcsCacheEnabled && fileToUpload instanceof CacheableLocalFile;
-        String targetFilePath = getPath(cacheable ? cacheRootPath : runRootPath, fileToUpload.getName());
-        String targetFilePathWithVersion = getPath(cacheRootPath, cdapVersion, fileToUpload.getName());
+        String targetFilePath = getPath(cacheable ? cacheRootPath : runRootPath,
+            fileToUpload.getName());
+        String targetFilePathWithVersion = getPath(cacheRootPath, cdapVersion,
+            fileToUpload.getName());
 
         if (gcsCacheEnabled && artifactsCacheablePerCDAPVersion.contains(fileToUpload.getName())) {
           // upload artifacts cacheable per cdap version to <bucket>/cdap-job/cached-artifacts/<cdapVersion>/
           uploadFutures.add(
-            provisionerContext.execute(
-              () -> uploadCacheableFile(bucket, targetFilePathWithVersion, fileToUpload)).toCompletableFuture());
+              provisionerContext.execute(
+                      () -> uploadCacheableFile(bucket, targetFilePathWithVersion, fileToUpload))
+                  .toCompletableFuture());
         } else {
           if (cacheable) {
             // upload cacheable artifacts to <bucket>/cdap-job/cached-artifacts/
             uploadFutures.add(
-              provisionerContext.execute(
-                () -> uploadCacheableFile(bucket, targetFilePath, fileToUpload)).toCompletableFuture());
+                provisionerContext.execute(
+                        () -> uploadCacheableFile(bucket, targetFilePath, fileToUpload))
+                    .toCompletableFuture());
           } else {
             // non-cacheable artifacts to <bucket>/cdap-job/<runid>/
             uploadFutures.add(provisionerContext.execute(
-              () -> uploadFile(bucket, targetFilePath, fileToUpload, false)).toCompletableFuture());
+                    () -> uploadFile(bucket, targetFilePath, fileToUpload, false))
+                .toCompletableFuture());
           }
         }
       }
@@ -309,35 +320,36 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // step 4: submit hadoop job to dataproc
       try {
         Job job = getJobControllerClient().submitJob(request);
-        LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+        LOG.debug("Successfully submitted hadoop job {} to cluster {}.",
+            job.getReference().getJobId(), clusterName);
       } catch (AlreadyExistsException ex) {
         //the job id already exists, ignore the job.
         LOG.warn("The dataproc job {} already exists. Ignoring resubmission of the job.",
-                 request.getJob().getReference().getJobId());
+            request.getJob().getReference().getJobId());
       }
       DataprocUtils.emitMetric(provisionerContext, region,
-                               "provisioner.submitJob.response.count");
+          "provisioner.submitJob.response.count");
     } catch (Exception e) {
       String errorMessage = String.format("Error while launching job %s on cluster %s.",
-        getJobId(runInfo), clusterName);
+          getJobId(runInfo), clusterName);
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       DataprocUtils.emitMetric(provisionerContext, region,
-                               "provisioner.submitJob.response.count", e);
+          "provisioner.submitJob.response.count", e);
       // ResourceExhaustedException indicates Dataproc agent running on master node isn't emitting heartbeat.
       // This usually indicates master VM crashing due to OOM.
       if (e instanceof ResourceExhaustedException) {
         String message = String.format("%s Cluster can't accept jobs presently: %s",
-                                       errorMessage,
-                                       Throwables.getRootCause(e).getMessage());
+            errorMessage,
+            Throwables.getRootCause(e).getMessage());
         String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
             provisionerProperties.getOrDefault(
-              DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
-              DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT));
+                DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
+                DataprocUtils.TROUBLESHOOTING_DOCS_URL_DEFAULT));
 
         String combined = Stream.of(message, helpMessage)
-          .filter(s -> !Strings.isNullOrEmpty(s))
-          .collect(Collectors.joining("\n"));
+            .filter(s -> !Strings.isNullOrEmpty(s))
+            .collect(Collectors.joining("\n"));
 
         throw new DataprocRuntimeException(e, combined, ErrorTagProvider.ErrorTag.USER);
       }
@@ -355,20 +367,21 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     try {
       Job job = getJobControllerClient().getJob(GetJobRequest.newBuilder()
-                                                  .setProjectId(projectId)
-                                                  .setRegion(region)
-                                                  .setJobId(jobId)
-                                                  .build());
+          .setProjectId(projectId)
+          .setRegion(region)
+          .setJobId(jobId)
+          .build());
       return Optional.of(new DataprocRuntimeJobDetail(getProgramRunInfo(job),
-                                                      getRuntimeJobStatus(job),
-                                                      getJobStatusDetails(job)));
+          getRuntimeJobStatus(job),
+          getJobStatusDetails(job)));
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
-                                          jobId, clusterName), e);
+            jobId, clusterName), e);
       }
       // Status is not found if job is finished or manually deleted by the user
-      LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId, region);
+      LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId,
+          region);
     }
     return Optional.empty();
   }
@@ -409,7 +422,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Returns list of runtime local files with twill.jar and launcher.jar added to it.
    */
   private List<LocalFile> getRuntimeLocalFiles(Collection<? extends LocalFile> runtimeLocalFiles,
-                                               File tempDir) throws Exception {
+      File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
     localFiles.add(getTwillJar(locationFactory));
@@ -438,9 +451,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   * Check whether delete lifecycle with days since custom time has been enabled on the bucket or not.
-   * @param bucketName
-   * @param run
+   * Check whether delete lifecycle with days since custom time has been enabled on the bucket or
+   * not.
+   *
    * @return true if delete lifecycle with days since custom time is set on the bucket.
    */
   private boolean validateDeleteLifecycle(String bucketName, String run) {
@@ -448,23 +461,29 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     Bucket bucket = storage.get(bucketName);
     for (BucketInfo.LifecycleRule rule : bucket.getLifecycleRules()) {
       if (rule.getAction() == null || rule.getCondition() == null ||
-        rule.getCondition().getDaysSinceCustomTime() == null) {
+          rule.getCondition().getDaysSinceCustomTime() == null) {
         continue;
       }
       if (rule.getAction() instanceof BucketInfo.LifecycleRule.DeleteLifecycleAction &&
-        rule.getCondition().getDaysSinceCustomTime() > 0) {
-        if (!provisionerContext.getProperties().containsKey(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)) {
-          LOG.warn("ArtifactsHashTimeBucket property not set for {}, ignoring check for it's value being less than " +
-                     "Bucket DeleteLifecycleAction for {}", run, bucketName);
+          rule.getCondition().getDaysSinceCustomTime() > 0) {
+        if (!provisionerContext.getProperties()
+            .containsKey(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS)) {
+          LOG.warn(
+              "ArtifactsHashTimeBucket property not set for {}, ignoring check for it's value being less than "
+                  +
+                  "Bucket DeleteLifecycleAction for {}", run, bucketName);
           return true;
         }
         try {
           int timeBucketDays = Integer.parseInt(
-            provisionerContext.getProperties().get(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS));
+              provisionerContext.getProperties()
+                  .get(DataprocUtils.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS));
           boolean isValid = rule.getCondition().getDaysSinceCustomTime() > timeBucketDays;
           if (!isValid) {
-            LOG.warn("Days since custom time rule of delete lifecycle for bucket {} should be strictly greater than " +
-                       "{} days", bucketName, timeBucketDays);
+            LOG.warn(
+                "Days since custom time rule of delete lifecycle for bucket {} should be strictly greater than "
+                    +
+                    "{} days", bucketName, timeBucketDays);
           }
           return isValid;
         } catch (NumberFormatException e) {
@@ -476,12 +495,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   * Upload cacheable files uploads the file to GCS if the file does not exists. Once uploaded, it also sets custom time
-   * on the object.
+   * Upload cacheable files uploads the file to GCS if the file does not exists. Once uploaded, it
+   * also sets custom time on the object.
    */
   private LocalFile uploadCacheableFile(String bucket, String targetFilePath,
-                                        LocalFile localFile)
-    throws IOException, StorageException {
+      LocalFile localFile)
+      throws IOException, StorageException {
     Storage storage = getStorageClient();
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     Blob blob = storage.get(blobId);
@@ -489,31 +508,32 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     if (blob != null && blob.exists()) {
       if (artifactsCacheablePerCDAPVersion.contains(localFile.getName())
-        && (blob.getUpdateTime() < cdapVersionInfo.getBuildTime())) {
+          && (blob.getUpdateTime() < cdapVersionInfo.getBuildTime())) {
         // if the GCS object modification time is older than the build time, replace the artifact.
         BlobInfo newBlobInfo =
-          blob.toBuilder().setCustomTime(getCustomTime()).build();
+            blob.toBuilder().setCustomTime(getCustomTime()).build();
         try {
           LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{}",
-                    localFile.getSize(), localFile.getURI(), bucket, targetFilePath);
-          uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo, Storage.BlobWriteOption.generationMatch(),
-                          Storage.BlobWriteOption.metagenerationMatch());
+              localFile.getSize(), localFile.getURI(), bucket, targetFilePath);
+          uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo,
+              Storage.BlobWriteOption.generationMatch(),
+              Storage.BlobWriteOption.metagenerationMatch());
         } catch (StorageException e) {
           if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
             throw e;
           }
           // Precondition failed means file has already been replaced, hence ignore it.
           LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
-                    localFile.getURI(), bucket, targetFilePath);
+              localFile.getURI(), bucket, targetFilePath);
         }
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
-                  localFile.getURI(), bucket, targetFilePath);
+            localFile.getURI(), bucket, targetFilePath);
       }
       result = new DefaultLocalFile(localFile.getName(),
-                                    URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
-                                    localFile.getLastModified(), localFile.getSize(),
-                                    localFile.isArchive(), localFile.getPattern());
+          URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+          localFile.getLastModified(), localFile.getSize(),
+          localFile.isArchive(), localFile.getPattern());
     } else {
       result = uploadFile(bucket, targetFilePath, localFile, true);
     }
@@ -525,8 +545,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Uploads files to gcs.
    */
   private LocalFile uploadFile(String bucket, String targetFilePath,
-                               LocalFile localFile, boolean cacheable)
-    throws IOException, StorageException {
+      LocalFile localFile, boolean cacheable)
+      throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     String contentType = "application/octet-stream";
     BlobInfo.Builder blobInfoBuilder = BlobInfo.newBuilder(blobId);
@@ -546,11 +566,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       throw new IOException("GCS bucket '" + bucket + "'does not exists");
     }
 
-    LOG.debug("Uploading a file of size {} bytes from {} to gs://{}/{} of {} bucket type located at {}",
-              localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
-              bucketObj.getLocationType(), bucketObj.getLocation());
+    LOG.debug(
+        "Uploading a file of size {} bytes from {} to gs://{}/{} of {} bucket type located at {}",
+        localFile.getSize(), localFile.getURI(), bucket, targetFilePath,
+        bucketObj.getLocationType(), bucketObj.getLocation());
     try {
-      uploadToGCSUtil(localFile, storage, targetFilePath, blobInfo, Storage.BlobWriteOption.doesNotExist());
+      uploadToGCSUtil(localFile, storage, targetFilePath, blobInfo,
+          Storage.BlobWriteOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
@@ -562,44 +584,47 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // Overwrite the file
         Blob existingBlob = storage.get(blobId);
         BlobInfo newBlobInfo = existingBlob.toBuilder().setContentType(contentType).build();
-        uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo, Storage.BlobWriteOption.generationNotMatch());
+        uploadToGCSUtil(localFile, storage, targetFilePath, newBlobInfo,
+            Storage.BlobWriteOption.generationNotMatch());
       } else {
         LOG.debug("Skip uploading file {} to gs://{}/{} because it exists.",
-                  localFile.getURI(), bucket, targetFilePath);
+            localFile.getURI(), bucket, targetFilePath);
       }
     }
 
-    return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
-                                localFile.getLastModified(), localFile.getSize(),
-                                localFile.isArchive(), localFile.getPattern());
+    return new DefaultLocalFile(localFile.getName(),
+        URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+        localFile.getLastModified(), localFile.getSize(),
+        localFile.isArchive(), localFile.getPattern());
   }
 
   private long getCustomTime() {
     // if the version is SNAPSHOT, set a custom time of buildTime + 7 days for cleanup,
     // otherwise set a custom time of buildTime + 2 years for cleanup.
     return cdapVersionInfo.getBuildTime() +
-      TimeUnit.DAYS.toMillis(cdapVersionInfo.isSnapshot() ? SNAPSHOT_EXPIRE_DAYS : EXPIRE_DAYS);
+        TimeUnit.DAYS.toMillis(cdapVersionInfo.isSnapshot() ? SNAPSHOT_EXPIRE_DAYS : EXPIRE_DAYS);
   }
 
   /**
    * Uploads the file to GCS Bucket.
    */
-  private void uploadToGCSUtil(LocalFile localFile, Storage storage, String targetFilePath, BlobInfo blobInfo,
-                               Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
+  private void uploadToGCSUtil(LocalFile localFile, Storage storage, String targetFilePath,
+      BlobInfo blobInfo,
+      Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     long start = System.nanoTime();
     uploadToGCS(localFile.getURI(), storage, blobInfo, blobWriteOptions);
     long end = System.nanoTime();
     LOG.debug("Successfully uploaded file {} to gs://{}/{} in {} ms.",
-              localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
+        localFile.getURI(), bucket, targetFilePath, TimeUnit.NANOSECONDS.toMillis(end - start));
   }
 
   /**
    * Uploads the file to GCS bucket.
    */
   private void uploadToGCS(java.net.URI localFileUri, Storage storage, BlobInfo blobInfo,
-                           Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
+      Storage.BlobWriteOption... blobWriteOptions) throws IOException, StorageException {
     try (InputStream inputStream = openStream(localFileUri);
-         WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
+        WriteChannel writer = storage.writer(blobInfo, blobWriteOptions)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
   }
@@ -629,20 +654,24 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Creates and returns dataproc job submit request.
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
-                                               List<LocalFile> localFiles) throws IOException {
+      List<LocalFile> localFiles) throws IOException {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     String runId = runInfo.getRun();
 
     // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
     List<String> arguments = new ArrayList<>();
-    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
-    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
+    arguments.add(
+        "--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
+    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat()
+        .getCompat());
     localFiles.stream()
-      .filter(LocalFile::isArchive)
-      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
-      .forEach(arguments::add);
+        .filter(LocalFile::isArchive)
+        .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
+        .forEach(arguments::add);
     for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
-      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
+      arguments.add(
+          "--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue()
+              + "\"");
     }
 
     Map<String, String> properties = new LinkedHashMap<>();
@@ -654,11 +683,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     properties.put(CDAP_RUNTIME_RUNID, runId);
 
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
-      // set main class
-      .setMainClass(DataprocJobMain.class.getName())
-      // set main class arguments
-      .addAllArgs(arguments)
-      .putAllProperties(properties);
+        // set main class
+        .setMainClass(DataprocJobMain.class.getName())
+        // set main class arguments
+        .addAllArgs(arguments)
+        .putAllProperties(properties);
 
     for (LocalFile localFile : localFiles) {
       // add jar file
@@ -671,53 +700,56 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     }
 
     Job.Builder dataprocJobBuilder = Job.newBuilder()
-      // use program run uuid as hadoop job id on dataproc
-      .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
-      // place the job on provisioned cluster
-      .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
-      // add same labels as provisioned cluster
-      .putAllLabels(labels)
-      // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
-      // Since program name and type are class names they should follow that pattern once we remove all
-      // capitals
-      .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
-      .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
-      .setHadoopJob(hadoopJobBuilder.build());
+        // use program run uuid as hadoop job id on dataproc
+        .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
+        // place the job on provisioned cluster
+        .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
+        // add same labels as provisioned cluster
+        .putAllLabels(labels)
+        // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
+        // Since program name and type are class names they should follow that pattern once we remove all
+        // capitals
+        .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
+        .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
+        .setHadoopJob(hadoopJobBuilder.build());
 
     GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
-      .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
+        .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
 
     // if the dataproc cluster has driver pools enabled add the driver scheduling config i.e.
     // the resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob).
     // Other quotas like GetJobRequestsPerMinutePerProjectPerRegion is counted independently of
     // RequestsPerMinutePerProjectPerRegion so this check should not exceed the quota under high load.
-    if (getClusterControllerClient().getCluster(getClusterRequest).getConfig().getAuxiliaryNodeGroupsCount() > 0) {
+    if (getClusterControllerClient().getCluster(getClusterRequest).getConfig()
+        .getAuxiliaryNodeGroupsCount() > 0) {
       dataprocJobBuilder.setDriverSchedulingConfig(
-        DriverSchedulingConfig.newBuilder()
-          .setMemoryMb(Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_MEMORY_MB,
-                                                                           DataprocUtils.DRIVER_MEMORY_MB_DEFAULT)))
-          .setVcores(Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_VCORES,
-                                                                         DataprocUtils.DRIVER_VCORES_DEFAULT)))
-          .build());
+          DriverSchedulingConfig.newBuilder()
+              .setMemoryMb(Integer.parseInt(
+                  provisionerProperties.getOrDefault(DataprocUtils.DRIVER_MEMORY_MB,
+                      DataprocUtils.DRIVER_MEMORY_MB_DEFAULT)))
+              .setVcores(
+                  Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_VCORES,
+                      DataprocUtils.DRIVER_VCORES_DEFAULT)))
+              .build());
     }
 
     return SubmitJobRequest.newBuilder()
-      .setRegion(region)
-      .setProjectId(projectId)
-      .setJob(dataprocJobBuilder.build())
-      .build();
+        .setRegion(region)
+        .setProjectId(projectId)
+        .setJob(dataprocJobBuilder.build())
+        .build();
   }
 
   private ProgramRunInfo getProgramRunInfo(Job job) {
     Map<String, String> jobProperties = job.getHadoopJob().getPropertiesMap();
 
     ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
-      .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
-      .setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION))
-      .setVersion(jobProperties.get(CDAP_RUNTIME_VERSION))
-      .setProgramType(jobProperties.get(CDAP_RUNTIME_PROGRAM_TYPE))
-      .setProgram(jobProperties.get(CDAP_RUNTIME_PROGRAM))
-      .setRun(jobProperties.get(CDAP_RUNTIME_RUNID));
+        .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
+        .setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION))
+        .setVersion(jobProperties.get(CDAP_RUNTIME_VERSION))
+        .setProgramType(jobProperties.get(CDAP_RUNTIME_PROGRAM_TYPE))
+        .setProgram(jobProperties.get(CDAP_RUNTIME_PROGRAM))
+        .setRun(jobProperties.get(CDAP_RUNTIME_RUNID));
     return builder.build();
   }
 
@@ -752,16 +784,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       default:
         // this needed for ATTEMPT_FAILURE state which is a state for restartable job. Currently we do not launch
         // restartable jobs
-        throw new IllegalStateException(String.format("Unsupported job state %s of the dataproc job %s on cluster %s.",
-                                                      job.getStatus().getState(), job.getReference().getJobId(),
-                                                      job.getPlacement().getClusterName()));
+        throw new IllegalStateException(
+            String.format("Unsupported job state %s of the dataproc job %s on cluster %s.",
+                job.getStatus().getState(), job.getReference().getJobId(),
+                job.getPlacement().getClusterName()));
     }
     return runtimeJobStatus;
   }
 
   /**
-   * Returns job state details, such as an error description if the state is ERROR.
-   * For other job states, returns null.
+   * Returns job state details, such as an error description if the state is ERROR. For other job
+   * states, returns null.
    */
   @Nullable
   private String getJobStatusDetails(Job job) {
@@ -778,7 +811,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {
         throw new Exception(String.format("Error occurred while stopping job %s on cluster %s.",
-                                          jobId, clusterName), e);
+            jobId, clusterName), e);
       }
       LOG.debug("Job {} is already stopped on cluster {}.", jobId, clusterName);
     }
@@ -789,9 +822,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   /**
-   * Returns job name from run info.
-   * namespace, application, program, run(36 characters)
-   * Example: namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
+   * Returns job name from run info. namespace, application, program, run(36 characters) Example:
+   * namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
    * <p>
    * The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
    * The maximum length is 100 characters.
@@ -800,12 +832,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   @VisibleForTesting
   public static String getJobId(ProgramRunInfo runInfo) {
-    List<String> parts = ImmutableList.of(runInfo.getNamespace(), runInfo.getApplication(), runInfo.getProgram());
+    List<String> parts = ImmutableList.of(runInfo.getNamespace(), runInfo.getApplication(),
+        runInfo.getProgram());
     String joined = Joiner.on("_").join(parts);
     joined = joined.substring(0, Math.min(joined.length(), 63));
     joined = joined + "_" + runInfo.getRun();
     if (!DATAPROC_JOB_ID_PATTERN.matcher(joined).matches()) {
-      throw new IllegalArgumentException(String.format("Job ID %s is not a valid dataproc job id. ", joined));
+      throw new IllegalArgumentException(
+          String.format("Job ID %s is not a valid dataproc job id. ", joined));
     }
 
     return joined;

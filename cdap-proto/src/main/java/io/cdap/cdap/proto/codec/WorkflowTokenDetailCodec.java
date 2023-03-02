@@ -31,17 +31,19 @@ import java.util.Map;
 public class WorkflowTokenDetailCodec extends AbstractSpecificationCodec<WorkflowTokenDetail> {
 
   @Override
-  public JsonElement serialize(WorkflowTokenDetail src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(WorkflowTokenDetail src, Type typeOfSrc,
+      JsonSerializationContext context) {
     return context.serialize(src.getTokenData());
   }
 
   @Override
   public WorkflowTokenDetail deserialize(JsonElement json, Type typeOfT,
-                                         JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     Map<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData = new HashMap<>();
     for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject().entrySet()) {
-      List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails = deserializeList(entry.getValue(), context,
-                                                                       WorkflowTokenDetail.NodeValueDetail.class);
+      List<WorkflowTokenDetail.NodeValueDetail> nodeValueDetails = deserializeList(entry.getValue(),
+          context,
+          WorkflowTokenDetail.NodeValueDetail.class);
       tokenData.put(entry.getKey(), nodeValueDetails);
     }
     return new WorkflowTokenDetail(tokenData);

@@ -30,7 +30,7 @@ import org.apache.spark.streaming.api.java.JavaDStream;
  */
 @Beta
 public abstract class StreamingSource<T> implements PipelineConfigurable,
-  SubmitterLifecycle<StreamingSourceContext>, Serializable {
+    SubmitterLifecycle<StreamingSourceContext>, Serializable {
 
   public static final String PLUGIN_TYPE = "streamingsource";
 
@@ -61,7 +61,8 @@ public abstract class StreamingSource<T> implements PipelineConfigurable,
 
   /**
    * Get number of required executors for the streaming source. This needs to be overriden in case
-   * {@link JavaDStream} returned in {@link StreamingSource#getStream(StreamingContext)} is a union of multiple streams
+   * {@link JavaDStream} returned in {@link StreamingSource#getStream(StreamingContext)} is a union
+   * of multiple streams
    *
    * @return number of executors required for the streaming source, defaults to 1
    */

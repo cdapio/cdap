@@ -22,13 +22,13 @@ import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
 
 /**
- * Provides a single shared instance of
- * {@link DefaultTransactionStateCache} for use by transaction
+ * Provides a single shared instance of {@link DefaultTransactionStateCache} for use by transaction
  * coprocessors.
  */
 public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
+
   public DefaultTransactionStateCacheSupplier(final String tablePrefix,
-                                              final CoprocessorEnvironment env) {
+      final CoprocessorEnvironment env) {
     super(new Supplier<TransactionStateCache>() {
       @Override
       public TransactionStateCache get() {

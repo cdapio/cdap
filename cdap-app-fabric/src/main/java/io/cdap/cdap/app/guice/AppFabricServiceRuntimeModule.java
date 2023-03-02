@@ -165,6 +165,7 @@ import org.quartz.spi.JobStore;
  * AppFabric Service Runtime Module.
  */
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
+
   public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 
   private final CConfiguration cConf;
@@ -177,134 +178,134 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
-                           new CapabilityModule(),
-                           new NamespaceAdminModule().getInMemoryModules(),
-                           new ConfigStoreModule(),
-                           new SourceControlModule(),
-                           new EntityVerifierModule(),
-                           BootstrapModules.getInMemoryModule(),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
-                               bind(RunRecordCorrectorService.class).to(NoopRunRecordCorrectorService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
-                               bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+        new CapabilityModule(),
+        new NamespaceAdminModule().getInMemoryModules(),
+        new ConfigStoreModule(),
+        new SourceControlModule(),
+        new EntityVerifierModule(),
+        BootstrapModules.getInMemoryModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(RunRecordCorrectorService.class).to(NoopRunRecordCorrectorService.class)
+                .in(Scopes.SINGLETON);
+            bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
+                .in(Scopes.SINGLETON);
+            bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
+            bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
-                               Multibinder<String> servicesNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.services.names"));
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            Multibinder<String> servicesNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.services.names"));
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
-                               // TODO: Uncomment after CDAP-7688 is resolved
-                               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+            // TODO: Uncomment after CDAP-7688 is resolved
+            // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
-                               Multibinder<String> handlerHookNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.handler.hooks"));
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            Multibinder<String> handlerHookNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.handler.hooks"));
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
-                               // TODO: Uncomment after CDAP-7688 is resolved
-                               // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
-                             }
-                           });
+            // TODO: Uncomment after CDAP-7688 is resolved
+            // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+          }
+        });
   }
 
   @Override
   public Module getStandaloneModules() {
 
     return Modules.combine(new AppFabricServiceModule(),
-                           new CapabilityModule(),
-                           new NamespaceAdminModule().getStandaloneModules(),
-                           new ConfigStoreModule(),
-                           new SourceControlModule(),
-                           new EntityVerifierModule(),
-                           new ProvisionerModule(),
-                           BootstrapModules.getFileBasedModule(),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
-                               bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
-                               bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+        new CapabilityModule(),
+        new NamespaceAdminModule().getStandaloneModules(),
+        new ConfigStoreModule(),
+        new SourceControlModule(),
+        new EntityVerifierModule(),
+        new ProvisionerModule(),
+        BootstrapModules.getFileBasedModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
+                .in(Scopes.SINGLETON);
+            bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)
+                .in(Scopes.SINGLETON);
+            bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
+            bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
-                               Multibinder<String> servicesNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.services.names"));
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            Multibinder<String> servicesNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.services.names"));
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
-                               // for PingHandler
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
+            // for PingHandler
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
 
-                               // TODO: Uncomment after CDAP-7688 is resolved
-                               // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+            // TODO: Uncomment after CDAP-7688 is resolved
+            // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
 
-                               Multibinder<String> handlerHookNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.handler.hooks"));
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            Multibinder<String> handlerHookNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.handler.hooks"));
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
 
-                               // for PingHandler
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
+            // for PingHandler
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.METRICS_PROCESSOR);
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.LOGSAVER);
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.TRANSACTION_HTTP);
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.RUNTIME);
 
-                               // TODO: Uncomment after CDAP-7688 is resolved
-                               // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
-                             }
-                           });
+            // TODO: Uncomment after CDAP-7688 is resolved
+            // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+          }
+        });
   }
 
   @Override
   public Module getDistributedModules() {
 
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
-                           new CapabilityModule(),
-                           new NamespaceAdminModule().getDistributedModules(),
-                           new ConfigStoreModule(),
-                           new SourceControlModule(),
-                           new EntityVerifierModule(),
-                           new ProvisionerModule(),
-                           BootstrapModules.getFileBasedModule(),
-                           new AbstractModule() {
-                             @Override
-                             protected void configure() {
-                               bind(RunRecordCorrectorService.class).to(ScheduledRunRecordCorrectorService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class)
-                                 .in(Scopes.SINGLETON);
-                               bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
-                               bind(StorageProviderNamespaceAdmin.class)
-                                 .to(DistributedStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
+        new CapabilityModule(),
+        new NamespaceAdminModule().getDistributedModules(),
+        new ConfigStoreModule(),
+        new SourceControlModule(),
+        new EntityVerifierModule(),
+        new ProvisionerModule(),
+        BootstrapModules.getFileBasedModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(RunRecordCorrectorService.class).to(ScheduledRunRecordCorrectorService.class)
+                .in(Scopes.SINGLETON);
+            bind(TimeSchedulerService.class).to(DistributedTimeSchedulerService.class)
+                .in(Scopes.SINGLETON);
+            bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
+            bind(StorageProviderNamespaceAdmin.class)
+                .to(DistributedStorageProviderNamespaceAdmin.class);
+            bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
-                               bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
-                                 .in(Scopes.SINGLETON);
+            bind(ProgramRunDispatcher.class).to(RemoteProgramRunDispatcher.class)
+                .in(Scopes.SINGLETON);
 
-                               Multibinder<String> servicesNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.services.names"));
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+            Multibinder<String> servicesNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.services.names"));
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
 
-                               Multibinder<String> handlerHookNamesBinder =
-                                 Multibinder.newSetBinder(binder(), String.class,
-                                                          Names.named("appfabric.handler.hooks"));
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
-                             }
-                           });
+            Multibinder<String> handlerHookNamesBinder =
+                Multibinder.newSetBinder(binder(), String.class,
+                    Names.named("appfabric.handler.hooks"));
+            handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+            servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+          }
+        });
   }
 
   /**
@@ -324,30 +325,31 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(PluginFinder.class).to(LocalPluginFinder.class);
       install(
-        new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
-                     },
-                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
-                     })
-          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
-          })
+          new FactoryModuleBuilder()
+              .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                         },
+                  new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                  })
+              .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+              })
       );
 
       install(
-        new FactoryModuleBuilder()
-          .implement(Configurator.class, InMemoryConfigurator.class)
-          .build(Key.get(ConfiguratorFactory.class,
-                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL)))
+          new FactoryModuleBuilder()
+              .implement(Configurator.class, InMemoryConfigurator.class)
+              .build(Key.get(ConfiguratorFactory.class,
+                  Names.named(AppFabric.FACTORY_IMPLEMENTATION_LOCAL)))
       );
       install(
-        new FactoryModuleBuilder()
-          .implement(Configurator.class, RemoteConfigurator.class)
-          .build(Key.get(ConfiguratorFactory.class,
-                         Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
+          new FactoryModuleBuilder()
+              .implement(Configurator.class, RemoteConfigurator.class)
+              .build(Key.get(ConfiguratorFactory.class,
+                  Names.named(AppFabric.FACTORY_IMPLEMENTATION_REMOTE)))
       );
       // Used in InMemoryProgramRunDispatcher, TetheringClientHandler
-      install(RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
-                                                          Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
+      install(RemoteAuthenticatorModules.getDefaultModule(
+          TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+          Constants.Tethering.CLIENT_AUTHENTICATOR_NAME));
 
       bind(ConfiguratorFactory.class).toProvider(ConfiguratorFactoryProvider.class);
 
@@ -372,16 +374,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         protected void configure() {
           // ArtifactRepositoryReader is required by DefaultArtifactRepository.
           // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
-          bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class)
+              .in(Scopes.SINGLETON);
           expose(ArtifactRepositoryReader.class);
 
           bind(ArtifactRepository.class)
-            .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
-            .to(DefaultArtifactRepository.class)
-            .in(Scopes.SINGLETON);
+              .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
+              .to(DefaultArtifactRepository.class)
+              .in(Scopes.SINGLETON);
           expose(ArtifactRepository.class).annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO));
 
-          bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+          bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class)
+              .in(Scopes.SINGLETON);
           expose(ArtifactRepository.class);
         }
       });
@@ -389,14 +393,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
 
       Multibinder<EventPublisher> eventPublishersBinder =
-        Multibinder.newSetBinder(binder(), EventPublisher.class);
+          Multibinder.newSetBinder(binder(), EventPublisher.class);
       eventPublishersBinder.addBinding().to(ProgramStatusEventPublisher.class);
       bind(EventPublishManager.class).in(Scopes.SINGLETON);
       bind(EventWriterProvider.class).to(EventWriterExtensionProvider.class);
       bind(MetricsProvider.class).to(SparkProgramStatusMetricsProvider.class);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-        binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
+          binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
@@ -446,13 +450,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     /**
-     * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done after guice
-     * injection. It returns a singleton of Scheduler.
+     * Provides a supplier of quartz scheduler so that initialization of the scheduler can be done
+     * after guice injection. It returns a singleton of Scheduler.
      */
     @Provides
     @SuppressWarnings("unused")
-    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(final DatasetBasedTimeScheduleStore scheduleStore,
-                                                                    final CConfiguration cConf) {
+    public Supplier<org.quartz.Scheduler> providesSchedulerSupplier(
+        final DatasetBasedTimeScheduleStore scheduleStore,
+        final CConfiguration cConf) {
       return new Supplier<org.quartz.Scheduler>() {
         private org.quartz.Scheduler scheduler;
 
@@ -471,15 +476,15 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     }
 
     /**
-     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore and
-     * turning off check for new versions.
+     * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing
+     * custom jobstore and turning off check for new versions.
      *
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
      */
     private org.quartz.Scheduler getScheduler(JobStore store,
-                                              CConfiguration cConf) throws SchedulerException {
+        CConfiguration cConf) throws SchedulerException {
 
       int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
       ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);

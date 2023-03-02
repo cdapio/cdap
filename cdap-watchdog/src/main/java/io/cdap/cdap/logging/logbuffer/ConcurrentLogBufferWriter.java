@@ -35,8 +35,8 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Class to support writing to log buffer and log processing pipeline(s) with high concurrency.
  *
- * It uses a non-blocking algorithm to batch writes from concurrent threads. The algorithm is the same as
- * the one used in ConcurrentMessageWriter.
+ * It uses a non-blocking algorithm to batch writes from concurrent threads. The algorithm is the
+ * same as the one used in ConcurrentMessageWriter.
  *
  * The algorithm is like this:
  *
@@ -57,6 +57,7 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public class ConcurrentLogBufferWriter implements Closeable {
+
   // concurrent queue to write pending log buffer requests
   private final PendingRequestQueue pendingRequestQueue;
   // WAL writer to buffer log events
@@ -66,11 +67,11 @@ public class ConcurrentLogBufferWriter implements Closeable {
   private final AtomicBoolean closed;
 
   public ConcurrentLogBufferWriter(CConfiguration cConf,
-                                   List<LogBufferProcessorPipeline> pipelines, Runnable cleaner) throws IOException {
+      List<LogBufferProcessorPipeline> pipelines, Runnable cleaner) throws IOException {
     this.pendingRequestQueue = new PendingRequestQueue();
     this.logBufferWriter = new LogBufferWriter(cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR),
-                                               cConf.getLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES),
-                                               cleaner);
+        cConf.getLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES),
+        cleaner);
     this.pipelines = pipelines;
     this.writerFlag = new AtomicBoolean();
     this.closed = new AtomicBoolean();
@@ -91,8 +92,10 @@ public class ConcurrentLogBufferWriter implements Closeable {
     }
 
     if (!pendingLogBufferRequest.isSuccess()) {
-      Throwables.propagateIfInstanceOf(pendingLogBufferRequest.getFailureCause(), IOException.class);
-      throw new IOException("Unable to write log event to log buffer", pendingLogBufferRequest.getFailureCause());
+      Throwables.propagateIfInstanceOf(pendingLogBufferRequest.getFailureCause(),
+          IOException.class);
+      throw new IOException("Unable to write log event to log buffer",
+          pendingLogBufferRequest.getFailureCause());
     }
   }
 
@@ -100,7 +103,7 @@ public class ConcurrentLogBufferWriter implements Closeable {
    * Tries to acquire the writer flag and processes the pending requests.
    *
    * @return {@code true} if acquired the writer flag and called {@link PendingRequestQueue#process(LogBufferRequest)};
-   *         otherwise {@code false} will be returned.
+   *     otherwise {@code false} will be returned.
    */
   private boolean tryWrite() {
     if (!writerFlag.compareAndSet(false, true)) {
@@ -129,8 +132,9 @@ public class ConcurrentLogBufferWriter implements Closeable {
   }
 
   /**
-   * An in memory queue to hold concurrent log requests. Except the {@link #enqueue(PendingLogBufferRequest)} method,
-   * all methods on this class can only be called while holding the writer flag.
+   * An in memory queue to hold concurrent log requests. Except the {@link
+   * #enqueue(PendingLogBufferRequest)} method, all methods on this class can only be called while
+   * holding the writer flag.
    */
   private static final class PendingRequestQueue {
 
@@ -162,7 +166,8 @@ public class ConcurrentLogBufferWriter implements Closeable {
       try {
         if (!inflightRequests.isEmpty()) {
           // persist logs in append only WAL
-          Iterable<LogBufferEvent> events = writer.write(new PendingEventIterator(inflightRequests.iterator()));
+          Iterable<LogBufferEvent> events = writer.write(
+              new PendingEventIterator(inflightRequests.iterator()));
           for (LogBufferProcessorPipeline pipeline : pipelines) {
             pipeline.processLogEvents(events.iterator());
           }
@@ -177,8 +182,8 @@ public class ConcurrentLogBufferWriter implements Closeable {
     }
 
     /**
-     * Marks all inflight requests as collected through the {@link Iterator#next()} method as completed.
-     * This method must be called while holding the writer flag.
+     * Marks all inflight requests as collected through the {@link Iterator#next()} method as
+     * completed. This method must be called while holding the writer flag.
      */
     void completeAll(@Nullable Throwable failureCause) {
       Iterator<PendingLogBufferRequest> iterator = inflightRequests.iterator();
@@ -192,6 +197,7 @@ public class ConcurrentLogBufferWriter implements Closeable {
      * Pending log events iterator.
      */
     static final class PendingEventIterator extends AbstractIterator<byte[]> {
+
       Iterator<PendingLogBufferRequest> requestIterator;
       Iterator<byte[]> currentRequestIterator;
 

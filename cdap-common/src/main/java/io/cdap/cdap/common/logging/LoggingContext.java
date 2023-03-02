@@ -20,10 +20,11 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Defines LoggingContext interface so that we have at least somewhat structured logging context data and know how to
- * inject it on the logs writing end.
+ * Defines LoggingContext interface so that we have at least somewhat structured logging context
+ * data and know how to inject it on the logs writing end.
  */
 public interface LoggingContext {
+
   /**
    * @return collection of system tags associated with this logging context
    */
@@ -35,15 +36,18 @@ public interface LoggingContext {
   Map<String, SystemTag> getSystemTagsMap();
 
   /**
-   * @return Map of tag name to system tag associated with this logging context with the {@link SystemTag#getValue()}
-   * as the map values.
+   * @return Map of tag name to system tag associated with this logging context with the {@link
+   *     SystemTag#getValue()} as the map values.
    */
   Map<String, String> getSystemTagsAsString();
 
   // hack hack hack: time constraints
+
   /**
-   * Returns the partition name that is used to group log messages of a component into one partition for collection.
-   * The partition name must be consistent with the value returned as path fragment.
+   * Returns the partition name that is used to group log messages of a component into one partition
+   * for collection. The partition name must be consistent with the value returned as path
+   * fragment.
+   *
    * @return partition name.
    */
   String getLogPartition();
@@ -52,6 +56,7 @@ public interface LoggingContext {
    * Defines the interface for the system tag associated with LoggingContext.
    */
   interface SystemTag {
+
     /**
      * @return tag name
      */

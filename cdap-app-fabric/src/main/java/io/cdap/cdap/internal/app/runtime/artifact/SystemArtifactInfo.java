@@ -24,6 +24,7 @@ import java.io.File;
  * Container for information about a system artifact.
  */
 public class SystemArtifactInfo {
+
   private final Id.Artifact artifactId;
   private final File artifactFile;
   private final ArtifactConfig config;

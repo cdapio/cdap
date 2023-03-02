@@ -56,7 +56,8 @@ public class HBase11TableUtil extends HBaseTableUtil {
   @Override
   public HTableDescriptorBuilder buildHTableDescriptor(TableId tableId) {
     Preconditions.checkArgument(tableId != null, "Table id should not be null");
-    return new HBase11HTableDescriptorBuilder(HTableNameConverter.toTableName(tablePrefix, tableId));
+    return new HBase11HTableDescriptorBuilder(
+        HTableNameConverter.toTableName(tablePrefix, tableId));
   }
 
   @Override
@@ -66,7 +67,8 @@ public class HBase11TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException {
+  public HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId)
+      throws IOException {
     Preconditions.checkArgument(admin != null, "HBaseAdmin should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     return admin.getTableDescriptor(HTableNameConverter.toTableName(tablePrefix, tableId));
@@ -96,16 +98,19 @@ public class HBase11TableUtil extends HBaseTableUtil {
     Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableId != null, "Table Id should not be null.");
     TableName tableName = HTableNameConverter.toTableName(tablePrefix, tableId);
-    ddlExecutor.deleteTableIfExists(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+    ddlExecutor.deleteTableIfExists(tableName.getNamespaceAsString(),
+        tableName.getQualifierAsString());
   }
 
   @Override
-  public void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor) throws IOException {
+  public void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor)
+      throws IOException {
     Preconditions.checkArgument(ddlExecutor != null, "HBaseDDLExecutor should not be null");
     Preconditions.checkArgument(tableDescriptor != null, "Table descriptor should not be null.");
     TableName tableName = tableDescriptor.getTableName();
     TableDescriptor tbd = HBase11TableDescriptorUtil.getTableDescriptor(tableDescriptor);
-    ddlExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), tbd);
+    ddlExecutor.modifyTable(tableName.getNamespaceAsString(), tableName.getQualifierAsString(),
+        tbd);
   }
 
   @Override
@@ -116,10 +121,11 @@ public class HBase11TableUtil extends HBaseTableUtil {
   }
 
   @Override
-  public List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException {
+  public List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId)
+      throws IOException {
     List<TableId> tableIds = Lists.newArrayList();
     HTableDescriptor[] hTableDescriptors =
-      admin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(namespaceId));
+        admin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(namespaceId));
     for (HTableDescriptor hTableDescriptor : hTableDescriptors) {
       if (isCDAPTable(hTableDescriptor)) {
         tableIds.add(HTableNameConverter.from(hTableDescriptor));

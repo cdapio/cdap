@@ -22,6 +22,7 @@ import javax.management.MXBean;
  * {@link MXBean} for reporting CDAP entities
  */
 public interface CDAPEntitiesMXBean {
+
   /**
    * Returns the number of namespaces in CDAP
    */

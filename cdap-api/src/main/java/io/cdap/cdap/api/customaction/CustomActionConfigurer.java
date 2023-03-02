@@ -41,7 +41,8 @@ public interface CustomActionConfigurer extends PluginConfigurer, DatasetConfigu
   void setDescription(String description);
 
   /**
-   * Sets a map of properties that will be available through {@link CustomActionSpecification} at runtime.
+   * Sets a map of properties that will be available through {@link CustomActionSpecification} at
+   * runtime.
    *
    * @param properties properties
    */

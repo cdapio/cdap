@@ -27,14 +27,16 @@ import java.util.Set;
  * Class to serialize Lineage.
  */
 public class LineageRecord {
+
   private final long start;
   private final long end;
   private final Set<RelationRecord> relations;
   private final Map<String, ProgramRecord> programs;
   private final Map<String, DataRecord> data;
 
-  public LineageRecord(long start, long end, Set<RelationRecord> relations, Map<String, ProgramRecord> programs,
-                       Map<String, DataRecord> data) {
+  public LineageRecord(long start, long end, Set<RelationRecord> relations,
+      Map<String, ProgramRecord> programs,
+      Map<String, DataRecord> data) {
     this.start = start;
     this.end = end;
     this.relations = Collections.unmodifiableSet(new LinkedHashSet<>(relations));
@@ -72,10 +74,10 @@ public class LineageRecord {
     }
     LineageRecord that = (LineageRecord) o;
     return Objects.equals(start, that.start) &&
-      Objects.equals(end, that.end) &&
-      Objects.equals(relations, that.relations) &&
-      Objects.equals(programs, that.programs) &&
-      Objects.equals(data, that.data);
+        Objects.equals(end, that.end) &&
+        Objects.equals(relations, that.relations) &&
+        Objects.equals(programs, that.programs) &&
+        Objects.equals(data, that.data);
   }
 
   @Override
@@ -86,11 +88,11 @@ public class LineageRecord {
   @Override
   public String toString() {
     return "LineageRecord{" +
-      "start=" + start +
-      ", end=" + end +
-      ", relations=" + relations +
-      ", programs=" + programs +
-      ", data=" + data +
-      '}';
+        "start=" + start +
+        ", end=" + end +
+        ", relations=" + relations +
+        ", programs=" + programs +
+        ", data=" + data +
+        '}';
   }
 }

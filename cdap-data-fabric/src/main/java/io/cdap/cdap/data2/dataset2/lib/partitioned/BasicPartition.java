@@ -30,7 +30,8 @@ class BasicPartition implements Partition {
   protected final String relativePath;
   protected final PartitionKey key;
 
-  protected BasicPartition(PartitionedFileSetDataset partitionedFileSetDataset, String relativePath, PartitionKey key) {
+  protected BasicPartition(PartitionedFileSetDataset partitionedFileSetDataset, String relativePath,
+      PartitionKey key) {
     this.partitionedFileSetDataset = partitionedFileSetDataset;
     this.relativePath = relativePath;
     this.key = key;

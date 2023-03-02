@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * extending from {@link AbstractExtensionLoader}
  */
 public class EventWriterExtensionProvider extends AbstractExtensionLoader<String, EventWriter>
-  implements EventWriterProvider {
+    implements EventWriterProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(EventWriterExtensionProvider.class);
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
@@ -46,8 +46,9 @@ public class EventWriterExtensionProvider extends AbstractExtensionLoader<String
   @Inject
   public EventWriterExtensionProvider(CConfiguration cConf) {
     super(cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) != null
-            ? cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) : "");
-    this.enabledEventWriters = cConf.getStringCollection(Constants.Event.EVENTS_WRITER_EXTENSIONS_ENABLED_LIST);
+        ? cConf.get(Constants.Event.EVENTS_WRITER_EXTENSIONS_DIR) : "");
+    this.enabledEventWriters = cConf.getStringCollection(
+        Constants.Event.EVENTS_WRITER_EXTENSIONS_ENABLED_LIST);
     if (this.enabledEventWriters == null || this.enabledEventWriters.isEmpty()) {
       LOG.debug("No event writers enabled.");
       return;
@@ -58,10 +59,10 @@ public class EventWriterExtensionProvider extends AbstractExtensionLoader<String
   private static Set<String> createAllowedResources() {
     try {
       return ClassPathResources.getResourcesWithDependencies(EventWriter.class.getClassLoader(),
-                                                             EventWriter.class);
+          EventWriter.class);
     } catch (IOException e) {
       throw new RuntimeException("Failed to trace dependencies for writer extension. " +
-                                   "Usage of events writer might fail.", e);
+          "Usage of events writer might fail.", e);
     }
   }
 

@@ -41,16 +41,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wrapper around {@link ProgramStateWriter} with additional hook to start a
- * heartbeat thread on running or resuming program state and stop the thread on completed/error/suspend state.
+ * Wrapper around {@link ProgramStateWriter} with additional hook to start a heartbeat thread on
+ * running or resuming program state and stop the thread on completed/error/suspend state.
  */
 public class ProgramStateWriterWithHeartBeat {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramStateWriterWithHeartBeat.class);
   private static final Gson GSON =
-    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+      ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+          .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+          .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   private final long heartBeatIntervalSeconds;
   private final ProgramStateWriter programStateWriter;
   private final ProgramRunId programRunId;
@@ -59,18 +59,19 @@ public class ProgramStateWriterWithHeartBeat {
 
 
   public ProgramStateWriterWithHeartBeat(ProgramRunId programRunId,
-                                         ProgramStateWriter programStateWriter,
-                                         MessagingService messagingService,
-                                         CConfiguration cConf) {
-    this(programRunId, programStateWriter, cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS),
-         new MessagingProgramStatePublisher(cConf, messagingService));
+      ProgramStateWriter programStateWriter,
+      MessagingService messagingService,
+      CConfiguration cConf) {
+    this(programRunId, programStateWriter,
+        cConf.getLong(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS),
+        new MessagingProgramStatePublisher(cConf, messagingService));
   }
 
   @VisibleForTesting
   ProgramStateWriterWithHeartBeat(ProgramRunId programRunId,
-                                  ProgramStateWriter programStateWriter,
-                                  long heartBeatIntervalSeconds,
-                                  ProgramStatePublisher programStatePublisher) {
+      ProgramStateWriter programStateWriter,
+      long heartBeatIntervalSeconds,
+      ProgramStatePublisher programStatePublisher) {
     this.programRunId = programRunId;
     this.programStateWriter = programStateWriter;
     this.heartBeatIntervalSeconds = heartBeatIntervalSeconds;
@@ -98,22 +99,24 @@ public class ProgramStateWriterWithHeartBeat {
   }
 
   /**
-   * If executor service isn't initialized or if its shutdown
-   * create a new executor service and schedule a heartbeat thread
+   * If executor service isn't initialized or if its shutdown create a new executor service and
+   * schedule a heartbeat thread
    */
   private void scheduleHeartBeatThread() {
     if (scheduler == null) {
-      scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("program-heart-beat"));
+      scheduler = Executors.newSingleThreadScheduledExecutor(
+          Threads.createDaemonThreadFactory("program-heart-beat"));
       scheduler.scheduleAtFixedRate(
-        () -> {
-          Map<String, String> properties = new HashMap<>();
-          properties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
-          properties.put(ProgramOptionConstants.HEART_BEAT_TIME, String.valueOf(System.currentTimeMillis()));
-          // publish as heart_beat type, so it can be handled appropriately at receiver
-          programStatePublisher.publish(Notification.Type.PROGRAM_HEART_BEAT, properties);
-          LOG.trace("Sent heartbeat for program {}", programRunId);
-        }, heartBeatIntervalSeconds,
-        heartBeatIntervalSeconds, TimeUnit.SECONDS);
+          () -> {
+            Map<String, String> properties = new HashMap<>();
+            properties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
+            properties.put(ProgramOptionConstants.HEART_BEAT_TIME,
+                String.valueOf(System.currentTimeMillis()));
+            // publish as heart_beat type, so it can be handled appropriately at receiver
+            programStatePublisher.publish(Notification.Type.PROGRAM_HEART_BEAT, properties);
+            LOG.trace("Sent heartbeat for program {}", programRunId);
+          }, heartBeatIntervalSeconds,
+          heartBeatIntervalSeconds, TimeUnit.SECONDS);
     }
   }
 
@@ -126,6 +129,7 @@ public class ProgramStateWriterWithHeartBeat {
 
   /**
    * This method is only used for testing
+   *
    * @return true if the heart beat thread is active, false otherwise
    */
   @VisibleForTesting

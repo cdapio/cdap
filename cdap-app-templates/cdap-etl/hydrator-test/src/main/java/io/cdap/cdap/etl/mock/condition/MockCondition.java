@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
 @Plugin(type = Condition.PLUGIN_TYPE)
 @Name("Mock")
 public class MockCondition extends Condition {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
@@ -54,6 +55,7 @@ public class MockCondition extends Condition {
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+
     private String name;
     private String tableName;
   }
@@ -79,9 +81,12 @@ public class MockCondition extends Condition {
             String stageName = entry.getKey();
             StageStatistics statistics = entry.getValue();
             Put put = new Put("stats");
-            put.add(stageName + ".input.records", String.valueOf(statistics.getInputRecordsCount()));
-            put.add(stageName + ".output.records", String.valueOf(statistics.getOutputRecordsCount()));
-            put.add(stageName + ".error.records", String.valueOf(statistics.getErrorRecordsCount()));
+            put.add(stageName + ".input.records",
+                String.valueOf(statistics.getInputRecordsCount()));
+            put.add(stageName + ".output.records",
+                String.valueOf(statistics.getOutputRecordsCount()));
+            put.add(stageName + ".error.records",
+                String.valueOf(statistics.getErrorRecordsCount()));
             table.put(put);
           }
         }
@@ -95,8 +100,8 @@ public class MockCondition extends Condition {
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", false, false));
     return PluginClass.builder().setName("Mock").setType(Condition.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockCondition.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockCondition.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 
   public static ETLPlugin getPlugin(String name) {
@@ -116,7 +121,8 @@ public class MockCondition extends Condition {
   /**
    * Read the value for the specified rowKey and columnKey.
    */
-  public static String readOutput(DataSetManager<Table> tableManager, String rowKey, String columnKey) {
+  public static String readOutput(DataSetManager<Table> tableManager, String rowKey,
+      String columnKey) {
     Table table = tableManager.get();
     return Bytes.toString(table.get(Bytes.toBytes(rowKey), Bytes.toBytes(columnKey)));
   }

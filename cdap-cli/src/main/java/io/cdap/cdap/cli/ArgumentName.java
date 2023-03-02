@@ -141,44 +141,52 @@ public enum ArgumentName {
   }
 
   public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "<%s> " +
-    "is of the form <entity-type>:<entity-id>, where <entity-type> is one of " +
-    "%s" +
-    "'artifact', 'application', 'dataset' or 'program'.\n" +
-    "\n" +
-    "%s" +
-    "For artifacts and apps, " +
-    "<entity-id> is composed of the namespace, entity name, and version, such as " +
-    "<namespace-name>.<artifact-name>.<artifact-version> or " +
-    "<namespace-name>.<app-name>.<app-version>.\n" +
-    "\n" +
-    "Note:  Metadata for versioned entities is not versioned, including entities such as applications, " +
-    "programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.\n" +
-    "\n" +
-    "For programs, <entity-id> includes the " +
-    "application name and the program type: " +
-    "<namespace-name>.<app-name>.<program-type>.<program-name>. <program-type> is one of " +
-    "mapreduce, service, spark, worker, or workflow.\n" +
-    "\n" +
-    "For datasets, " +
-    "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name>.\n" +
-    "\n" +
-    "Custom entities can be specified as hierarchical key-value pair with an optional type if the last key in " +
-    "hierarchy is not the type of the entity. For example a 'field' in dataset can be specified as: " +
-    "namespace=<namespace-name>,dataset=<dataset-name>,field=<field-name>." +
-    "\n" +
-    "A 'jar' in a namespace can be specified as: " +
-    "namespace=<namespace-name>,jar=<jar-name>,version=<version-number>,type=jar.";
+      "is of the form <entity-type>:<entity-id>, where <entity-type> is one of " +
+      "%s" +
+      "'artifact', 'application', 'dataset' or 'program'.\n" +
+      "\n" +
+      "%s" +
+      "For artifacts and apps, " +
+      "<entity-id> is composed of the namespace, entity name, and version, such as " +
+      "<namespace-name>.<artifact-name>.<artifact-version> or " +
+      "<namespace-name>.<app-name>.<app-version>.\n" +
+      "\n" +
+      "Note:  Metadata for versioned entities is not versioned, including entities such as applications, "
+      +
+      "programs, schedules, and program runs. Additions to metadata in one version are reflected in all versions.\n"
+      +
+      "\n" +
+      "For programs, <entity-id> includes the " +
+      "application name and the program type: " +
+      "<namespace-name>.<app-name>.<program-type>.<program-name>. <program-type> is one of " +
+      "mapreduce, service, spark, worker, or workflow.\n" +
+      "\n" +
+      "For datasets, " +
+      "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name>.\n" +
+      "\n" +
+      "Custom entities can be specified as hierarchical key-value pair with an optional type if the last key in "
+      +
+      "hierarchy is not the type of the entity. For example a 'field' in dataset can be specified as: "
+      +
+      "namespace=<namespace-name>,dataset=<dataset-name>,field=<field-name>." +
+      "\n" +
+      "A 'jar' in a namespace can be specified as: " +
+      "namespace=<namespace-name>,jar=<jar-name>,version=<version-number>,type=jar.";
 
-  public static final String ENTITY_DESCRIPTION_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
-    ENTITY, "", "");
+  public static final String ENTITY_DESCRIPTION_STRING = String.format(
+      ENTITY_DESCRIPTION_TEMPLATE_STRING,
+      ENTITY, "", "");
 
-  public static final String ENTITY_DESCRIPTION_ALL_STRING = String.format(ENTITY_DESCRIPTION_TEMPLATE_STRING,
-    ENTITY, "'namespace', ", "For namespaces, '<entity-id>' is composed from the namespace, such as " +
-    "'namespace:<namespace-name>'.\n" +
-    "\n");
+  public static final String ENTITY_DESCRIPTION_ALL_STRING = String.format(
+      ENTITY_DESCRIPTION_TEMPLATE_STRING,
+      ENTITY, "'namespace', ",
+      "For namespaces, '<entity-id>' is composed from the namespace, such as " +
+          "'namespace:<namespace-name>'.\n" +
+          "\n");
 
-  public static final String ENTITY_DESCRIPTION_PERMISSIONS = "'<permissions>' is a comma-separated list of " +
-    "privileges, any of 'GET', 'CREATE', 'UPDATE', 'DELETE', 'LIST', 'APPLICATION.EXECUTE', 'APPLICATION.PREVIEW', " +
-    "'ACCESS.SET_OWNER' or 'ACCESS.IMPERSONATE'";
+  public static final String ENTITY_DESCRIPTION_PERMISSIONS =
+      "'<permissions>' is a comma-separated list of " +
+          "privileges, any of 'GET', 'CREATE', 'UPDATE', 'DELETE', 'LIST', 'APPLICATION.EXECUTE', "
+          + "'APPLICATION.PREVIEW', 'ACCESS.SET_OWNER' or 'ACCESS.IMPERSONATE'";
 }
 

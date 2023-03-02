@@ -30,7 +30,8 @@ public final class MetricsAdminMessage {
    */
   public enum Type {
     /**
-     * Indicate deletion of metrics. The payload would be Json serialization of {@link MetricDeleteQuery}.
+     * Indicate deletion of metrics. The payload would be Json serialization of {@link
+     * MetricDeleteQuery}.
      */
     DELETE;
   }
@@ -68,8 +69,8 @@ public final class MetricsAdminMessage {
   @Override
   public String toString() {
     return "MetricsAdminMessage{" +
-      "type=" + type +
-      ", payload=" + payload +
-      '}';
+        "type=" + type +
+        ", payload=" + payload +
+        '}';
   }
 }

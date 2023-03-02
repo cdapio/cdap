@@ -54,9 +54,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link MessagingService} that performs lead-election and only operates if it is currently a leader.
+ * A {@link MessagingService} that performs lead-election and only operates if it is currently a
+ * leader.
  */
-public class LeaderElectionMessagingService extends AbstractIdleService implements MessagingService {
+public class LeaderElectionMessagingService extends AbstractIdleService implements
+    MessagingService {
 
   private static final Logger LOG = LoggerFactory.getLogger(LeaderElectionMessagingService.class);
 
@@ -71,7 +73,7 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
   @Inject
   LeaderElectionMessagingService(Injector injector, CConfiguration cConf,
-                                 MessageTableCacheProvider cacheProvider, ZKClient zkClient) {
+      MessageTableCacheProvider cacheProvider, ZKClient zkClient) {
     this.injector = injector;
     this.cConf = cConf;
     this.cacheProvider = cacheProvider;
@@ -81,38 +83,41 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
   @Override
   protected void startUp() throws Exception {
-    delayExecutor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("fencing-delay"));
+    delayExecutor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("fencing-delay"));
 
     // Starts leader election
     final CountDownLatch latch = new CountDownLatch(1);
-    leaderElection = new LeaderElection(zkClient, Constants.Service.MESSAGING_SERVICE, new ElectionHandler() {
-      @Override
-      public void leader() {
-        if (!tableUpgraded) {
-          upgradeTable();
-          tableUpgraded = true;
-        }
+    leaderElection = new LeaderElection(zkClient, Constants.Service.MESSAGING_SERVICE,
+        new ElectionHandler() {
+          @Override
+          public void leader() {
+            if (!tableUpgraded) {
+              upgradeTable();
+              tableUpgraded = true;
+            }
 
-        final DelegateService delegateService = new DelegateService(injector.getInstance(CoreMessagingService.class),
-                                                                    injector.getInstance(MessagingHttpService.class));
-        updateDelegate(delegateService);
-        LOG.info("Messaging service instance {} running at {} becomes leader",
-                 cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID),
-                 cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS));
+            final DelegateService delegateService = new DelegateService(
+                injector.getInstance(CoreMessagingService.class),
+                injector.getInstance(MessagingHttpService.class));
+            updateDelegate(delegateService);
+            LOG.info("Messaging service instance {} running at {} becomes leader",
+                cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID),
+                cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS));
 
-        fencingStart(delegateService);
-        latch.countDown();
-      }
+            fencingStart(delegateService);
+            latch.countDown();
+          }
 
-      @Override
-      public void follower() {
-        updateDelegate(null);
-        LOG.info("Messaging service instance {} running at {} becomes follower",
-                 cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID),
-                 cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS));
-        latch.countDown();
-      }
-    });
+          @Override
+          public void follower() {
+            updateDelegate(null);
+            LOG.info("Messaging service instance {} running at {} becomes follower",
+                cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID),
+                cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS));
+            latch.countDown();
+          }
+        });
     leaderElection.startAndWait();
     latch.await();
   }
@@ -131,28 +136,31 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
 
   @Override
   public void createTopic(TopicMetadata topicMetadata)
-    throws TopicAlreadyExistsException, IOException, UnauthorizedException {
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     getMessagingService().createTopic(topicMetadata);
   }
 
   @Override
   public void updateTopic(TopicMetadata topicMetadata)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().updateTopic(topicMetadata);
   }
 
   @Override
-  public void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException {
+  public void deleteTopic(TopicId topicId)
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().deleteTopic(topicId);
   }
 
   @Override
-  public TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException {
+  public TopicMetadata getTopic(TopicId topicId)
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     return getMessagingService().getTopic(topicId);
   }
 
   @Override
-  public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException, UnauthorizedException {
+  public List<TopicId> listTopics(NamespaceId namespaceId)
+      throws IOException, UnauthorizedException {
     return getMessagingService().listTopics(namespaceId);
   }
 
@@ -164,18 +172,19 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   @Override
   @Nullable
   public RollbackDetail publish(StoreRequest request)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     return getMessagingService().publish(request);
   }
 
   @Override
-  public void storePayload(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException {
+  public void storePayload(StoreRequest request)
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().storePayload(request);
   }
 
   @Override
   public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     getMessagingService().rollback(topicId, rollbackDetail);
   }
 
@@ -210,8 +219,8 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   }
 
   /**
-   * Updates the delegate with the given {@link DelegateService} and stop the old one.
-   * It also mark the delegate not usable.
+   * Updates the delegate with the given {@link DelegateService} and stop the old one. It also mark
+   * the delegate not usable.
    */
   private void updateDelegate(@Nullable DelegateService newService) {
     DelegateService oldService = delegate.getReference();
@@ -250,13 +259,14 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     DelegateService delegateService = delegate.getReference();
     if (delegateService == null || !delegate.isMarked()) {
       throw new ServiceUnavailableException(Constants.Service.MESSAGING_SERVICE,
-                                            "Messaging service is temporarily unavailable due to leader transition");
+          "Messaging service is temporarily unavailable due to leader transition");
     }
     return delegateService.getMessagingService();
   }
 
   /**
-   * Private class to hold both {@link CoreMessagingService} and {@link MessagingHttpService} together.
+   * Private class to hold both {@link CoreMessagingService} and {@link MessagingHttpService}
+   * together.
    */
   private final class DelegateService extends AbstractIdleService {
 

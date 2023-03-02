@@ -28,7 +28,8 @@ public interface ProgramRunnerFactory {
    *
    * @param programType type of program
    * @return a {@link ProgramRunner} that can execute the given program type.
-   * @throws IllegalArgumentException if no {@link ProgramRunner} is found for the given program type
+   * @throws IllegalArgumentException if no {@link ProgramRunner} is found for the given program
+   *     type
    */
   ProgramRunner create(ProgramType programType);
 }

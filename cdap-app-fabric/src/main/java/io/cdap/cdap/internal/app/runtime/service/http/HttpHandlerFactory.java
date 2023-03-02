@@ -46,42 +46,45 @@ public final class HttpHandlerFactory {
   private final LoadingCache<TypeToken<?>, Class<?>> handlerClasses;
 
   /**
-   * Creates an instance that could generate {@link HttpHandler} that always binds to service Path that starts with
-   * the given prefix.
+   * Creates an instance that could generate {@link HttpHandler} that always binds to service Path
+   * that starts with the given prefix.
    */
   public HttpHandlerFactory(String pathPrefix, TransactionControl defaultTxControl) {
     handlerClasses = CacheBuilder.newBuilder().build(
-      new CacheLoader<TypeToken<?>, Class<?>>() {
-      @Override
-      public Class<?> load(TypeToken<?> key) throws Exception {
-        // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
-        ClassDefinition classDef = new HttpHandlerGenerator(defaultTxControl).generate(key, pathPrefix);
+        new CacheLoader<TypeToken<?>, Class<?>>() {
+          @Override
+          public Class<?> load(TypeToken<?> key) throws Exception {
+            // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
+            ClassDefinition classDef = new HttpHandlerGenerator(defaultTxControl).generate(key,
+                pathPrefix);
 
-        // The ClassLoader of the generated HttpHandler has CDAP system ClassLoader as parent.
-        // The ClassDefinition contains list of classes that should not be loaded by the generated class ClassLoader
-        ByteCodeClassLoader classLoader = new ByteCodeClassLoader(HttpHandlerFactory.class.getClassLoader());
-        classLoader.addClass(classDef);
-        return classLoader.loadClass(classDef.getClassName());
-      }
-    });
+            // The ClassLoader of the generated HttpHandler has CDAP system ClassLoader as parent.
+            // The ClassDefinition contains list of classes that should not be loaded by the generated class ClassLoader
+            ByteCodeClassLoader classLoader = new ByteCodeClassLoader(
+                HttpHandlerFactory.class.getClassLoader());
+            classLoader.addClass(classDef);
+            return classLoader.loadClass(classDef.getClassName());
+          }
+        });
   }
 
   /**
-   * Creates an implementation of {@link HttpHandler} that delegates all public {@link javax.ws.rs.Path @Path} methods
-   * to the user delegate.
+   * Creates an implementation of {@link HttpHandler} that delegates all public {@link
+   * javax.ws.rs.Path @Path} methods to the user delegate.
    */
   public <T> HttpHandler createHttpHandler(TypeToken<T> delegateType, DelegatorContext<T> context,
-                                           MetricsContext metricsContext) {
+      MetricsContext metricsContext) {
     Class<?> cls = handlerClasses.getUnchecked(delegateType);
     Preconditions.checkState(HttpHandler.class.isAssignableFrom(cls),
-                             "Fatal error: %s is not instance of %s", cls, HttpHandler.class);
+        "Fatal error: %s is not instance of %s", cls, HttpHandler.class);
 
     @SuppressWarnings("unchecked")
     Class<? extends HttpHandler> handlerClass = (Class<? extends HttpHandler>) cls;
 
     try {
-      Constructor<? extends HttpHandler> constructor = handlerClass.getConstructor(DelegatorContext.class,
-                                                                                   MetricsContext.class);
+      Constructor<? extends HttpHandler> constructor = handlerClass.getConstructor(
+          DelegatorContext.class,
+          MetricsContext.class);
       return constructor.newInstance(context, metricsContext);
     } catch (Exception e) {
       LOG.error("Failed to instantiate generated HttpHandler {}", handlerClass, e);
@@ -104,17 +107,19 @@ public final class HttpHandlerFactory {
       try {
         @SuppressWarnings("unchecked")
         TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
-        httpHandlers.add(createHttpHandler(type, new VerificationDelegateContext<>(handler), metricsContext));
+        httpHandlers.add(
+            createHttpHandler(type, new VerificationDelegateContext<>(handler), metricsContext));
       } catch (Exception e) {
-        throw new IllegalArgumentException("Invalid http handler class " + handler.getClass().getName());
+        throw new IllegalArgumentException(
+            "Invalid http handler class " + handler.getClass().getName());
       }
     }
 
     try {
       // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
       NettyHttpService.builder("service-configurer")
-        .setHttpHandlers(httpHandlers)
-        .build();
+          .setHttpHandlers(httpHandlers)
+          .build();
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid http handler", e);
     }

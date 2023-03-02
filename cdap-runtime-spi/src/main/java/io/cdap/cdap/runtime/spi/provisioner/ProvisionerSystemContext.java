@@ -21,18 +21,18 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
- * Context for system level provisioner information. System level information cannot be seen or modified by end
- * users.
+ * Context for system level provisioner information. System level information cannot be seen or
+ * modified by end users.
  */
 public interface ProvisionerSystemContext {
 
   /**
-   * System properties are derived from the CDAP configuration. Anything in the CDAP configuration that is prefixed by
-   * 'provisioner.system.properties.[provisioner-name].' will be adding as an entry in the system properties.
-   * For example, if the provisioner is named 'abc', and there is a configuration property
-   * 'provisioner.system.properties.abc.retry.timeout' with value '60', the system properties map will contain
-   * a key 'retry.timeout' with value '60'. System properties are not visible to end users and cannot be overwritten
-   * by end users.
+   * System properties are derived from the CDAP configuration. Anything in the CDAP configuration
+   * that is prefixed by 'provisioner.system.properties.[provisioner-name].' will be adding as an
+   * entry in the system properties. For example, if the provisioner is named 'abc', and there is a
+   * configuration property 'provisioner.system.properties.abc.retry.timeout' with value '60', the
+   * system properties map will contain a key 'retry.timeout' with value '60'. System properties are
+   * not visible to end users and cannot be overwritten by end users.
    *
    * @return unmodifiable system properties for the provisioner
    */
@@ -49,10 +49,12 @@ public interface ProvisionerSystemContext {
   String getCDAPVersion();
 
   /**
-   * Creates or retrieves a lock specific to this provisioner. Multiple locks can be created by passing
-   * different names.
+   * Creates or retrieves a lock specific to this provisioner. Multiple locks can be created by
+   * passing different names.
+   *
    * @param name lock name used as a key to identify lock requested
-   * @return a new or existing lock instance that can be used to coordinate multiple instances of same provisioner
+   * @return a new or existing lock instance that can be used to coordinate multiple instances of
+   *     same provisioner
    */
   Lock getLock(String name);
 }

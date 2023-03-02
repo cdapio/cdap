@@ -21,6 +21,7 @@ import io.cdap.cdap.messaging.TopicMetadata;
  * Request to scan across a key range in a MessageTable.
  */
 public class ScanRequest {
+
   private final TopicMetadata topicMetadata;
   private final byte[] startRow;
   private final byte[] stopRow;

@@ -37,7 +37,9 @@ import java.io.IOException;
  * byte array representations.
  */
 public class AccessTokenCodec implements Codec<AccessToken> {
-  private static final TypeToken<AccessToken> ACCESS_TOKEN_TYPE = new TypeToken<AccessToken>() { };
+
+  private static final TypeToken<AccessToken> ACCESS_TOKEN_TYPE = new TypeToken<AccessToken>() {
+  };
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;
@@ -54,7 +56,8 @@ public class AccessTokenCodec implements Codec<AccessToken> {
     Encoder encoder = new BinaryEncoder(bos);
 
     encoder.writeInt(AccessToken.Schemas.getVersion());
-    DatumWriter<AccessToken> writer = writerFactory.create(ACCESS_TOKEN_TYPE, AccessToken.Schemas.getCurrentSchema());
+    DatumWriter<AccessToken> writer = writerFactory.create(ACCESS_TOKEN_TYPE,
+        AccessToken.Schemas.getCurrentSchema());
     writer.encode(token, encoder);
     return bos.toByteArray();
   }
@@ -64,7 +67,8 @@ public class AccessTokenCodec implements Codec<AccessToken> {
     ByteArrayInputStream bis = new ByteArrayInputStream(data);
     Decoder decoder = new BinaryDecoder(bis);
 
-    DatumReader<AccessToken> reader = readerFactory.create(ACCESS_TOKEN_TYPE, AccessToken.Schemas.getCurrentSchema());
+    DatumReader<AccessToken> reader = readerFactory.create(ACCESS_TOKEN_TYPE,
+        AccessToken.Schemas.getCurrentSchema());
     int readVersion = decoder.readInt();
     Schema readSchema = AccessToken.Schemas.getSchemaVersion(readVersion);
     if (readSchema == null) {

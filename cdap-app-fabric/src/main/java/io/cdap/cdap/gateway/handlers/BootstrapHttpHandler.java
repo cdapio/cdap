@@ -32,6 +32,7 @@ import javax.ws.rs.Path;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class BootstrapHttpHandler extends AbstractHttpHandler {
+
   private final BootstrapService bootstrapService;
 
   @Inject

@@ -45,7 +45,7 @@ public final class ProgramResources {
 
   private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop.");
   private static final List<String> EXCLUDE_PACKAGES = ImmutableList.of("org.apache.hadoop.hbase.",
-                                                                        "org.apache.hadoop.hive.");
+      "org.apache.hadoop.hive.");
 
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
@@ -74,9 +74,9 @@ public final class ProgramResources {
   }
 
   /**
-   * Returns a Set of resources name that are visible through the cdap-api module as well as Hadoop classes.
-   * This includes all classes+resources in cdap-api plus all classes+resources that cdap-api
-   * depends on (for example, sl4j, gson, etc).
+   * Returns a Set of resources name that are visible through the cdap-api module as well as Hadoop
+   * classes. This includes all classes+resources in cdap-api plus all classes+resources that
+   * cdap-api depends on (for example, sl4j, gson, etc).
    */
   private static Set<String> createBaseResources() throws IOException {
     // Everything should be traceable in the same ClassLoader of this class, which is the CDAP system ClassLoader
@@ -85,33 +85,37 @@ public final class ProgramResources {
     // Gather resources information for cdap-api classes
     // Add everything in cdap-api as visible resources
     // Trace dependencies for cdap-api classes
-    Set<String> result = ClassPathResources.getResourcesWithDependencies(classLoader, Application.class);
-    result.addAll(ClassPathResources.getResourcesWithDependencies(classLoader, SystemServiceConfigurer.class));
+    Set<String> result = ClassPathResources.getResourcesWithDependencies(classLoader,
+        Application.class);
+    result.addAll(ClassPathResources.getResourcesWithDependencies(classLoader,
+        SystemServiceConfigurer.class));
 
     // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
-    Iterables.addAll(result, Iterables.transform(ClassPathResources.getClassPathResources(classLoader, Path.class),
-                                                 ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME));
+    Iterables.addAll(result,
+        Iterables.transform(ClassPathResources.getClassPathResources(classLoader, Path.class),
+            ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME));
 
     // Gather Hadoop classes and resources
     getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                 HADOOP_PACKAGES, EXCLUDE_PACKAGES, ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME, result);
+        HADOOP_PACKAGES, EXCLUDE_PACKAGES, ClassPathResources.RESOURCE_INFO_TO_RESOURCE_NAME,
+        result);
 
     return Collections.unmodifiableSet(result);
   }
 
   /**
-   * Finds all resources that are accessible in a given {@link ClassPath} that starts with certain package prefixes.
-   * Also includes all non .class file resources in the same base URLs of those classes that are accepted through
-   * the package prefixes filtering.
+   * Finds all resources that are accessible in a given {@link ClassPath} that starts with certain
+   * package prefixes. Also includes all non .class file resources in the same base URLs of those
+   * classes that are accepted through the package prefixes filtering.
    *
-   * Resources information presented in the result collection is transformed by the given result transformation
-   * function.
+   * Resources information presented in the result collection is transformed by the given result
+   * transformation function.
    */
   private static <V, T extends Collection<V>> T getResources(ClassPath classPath,
-                                                             Iterable<String> includePackagePrefixes,
-                                                             Iterable<String> excludePackagePrefixes,
-                                                             Function<ClassPath.ResourceInfo, V> resultTransform,
-                                                             final T result) throws IOException {
+      Iterable<String> includePackagePrefixes,
+      Iterable<String> excludePackagePrefixes,
+      Function<ClassPath.ResourceInfo, V> resultTransform,
+      final T result) throws IOException {
     Set<URL> resourcesBaseURLs = new HashSet<>();
     // Adds all .class resources that should be included
     // Also record the base URL of those resources

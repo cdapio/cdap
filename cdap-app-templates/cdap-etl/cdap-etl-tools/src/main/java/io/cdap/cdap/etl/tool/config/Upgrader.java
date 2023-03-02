@@ -38,11 +38,12 @@ import java.util.Set;
  * Upgrades an old hydrator config into a new one.
  */
 public class Upgrader {
+
   public static final String BATCH_NAME = "cdap-etl-batch";
   public static final String DATA_PIPELINE_NAME = "cdap-data-pipeline";
   public static final String DATA_STREAMS_NAME = "cdap-data-streams";
   public static final Set<String> ARTIFACT_NAMES =
-    ImmutableSet.of(BATCH_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
+      ImmutableSet.of(BATCH_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
   private static final Gson GSON = new Gson();
   private static final ArtifactVersion LOWEST_VERSION = new ArtifactVersion("3.2.0");
 
@@ -53,15 +54,18 @@ public class Upgrader {
   private final UpgradeContext dataStreamsContext;
 
   public Upgrader(NamespaceClient namespaceClient, ArtifactClient artifactClient,
-                  String newVersion, boolean includeCurrentVersion, boolean downgrade) {
-    this.etlBatchContext = new ClientUpgradeContext(namespaceClient, artifactClient, BATCH_NAME, newVersion);
+      String newVersion, boolean includeCurrentVersion, boolean downgrade) {
+    this.etlBatchContext = new ClientUpgradeContext(namespaceClient, artifactClient, BATCH_NAME,
+        newVersion);
     this.dataPipelineContext =
-      new ClientUpgradeContext(namespaceClient, artifactClient, DATA_PIPELINE_NAME, newVersion);
-    this.dataStreamsContext = new ClientUpgradeContext(namespaceClient, artifactClient, DATA_STREAMS_NAME, newVersion);
+        new ClientUpgradeContext(namespaceClient, artifactClient, DATA_PIPELINE_NAME, newVersion);
+    this.dataStreamsContext = new ClientUpgradeContext(namespaceClient, artifactClient,
+        DATA_STREAMS_NAME, newVersion);
     this.upgradeRange = downgrade ?
-      new ArtifactVersionRange(new ArtifactVersion(newVersion), includeCurrentVersion,
-                               new ArtifactVersion(ETLVersion.getVersion()), true) :
-      new ArtifactVersionRange(LOWEST_VERSION, true, new ArtifactVersion(newVersion), includeCurrentVersion);
+        new ArtifactVersionRange(new ArtifactVersion(newVersion), includeCurrentVersion,
+            new ArtifactVersion(ETLVersion.getVersion()), true) :
+        new ArtifactVersionRange(LOWEST_VERSION, true, new ArtifactVersion(newVersion),
+            includeCurrentVersion);
     this.newVersion = newVersion;
   }
 
@@ -80,7 +84,7 @@ public class Upgrader {
   }
 
   public boolean upgrade(ArtifactSummary oldArtifact, String oldConfigStr,
-                         UpgradeAction upgradeAction) throws Exception {
+      UpgradeAction upgradeAction) throws Exception {
 
     String artifactName = oldArtifact.getName();
     if (!ARTIFACT_NAMES.contains(artifactName)) {
@@ -95,16 +99,17 @@ public class Upgrader {
       return false;
     }
 
-    ArtifactSummary newArtifact = new ArtifactSummary(artifactName, newVersion, ArtifactScope.SYSTEM);
+    ArtifactSummary newArtifact = new ArtifactSummary(artifactName, newVersion,
+        ArtifactScope.SYSTEM);
     AppRequest<? extends ETLConfig> appRequest;
     switch (artifactName) {
       case BATCH_NAME:
         appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
-                                                                      oldConfigStr, etlBatchContext));
+            oldConfigStr, etlBatchContext));
         break;
       case DATA_PIPELINE_NAME:
         appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
-                                                                      oldConfigStr, dataPipelineContext));
+            oldConfigStr, dataPipelineContext));
         break;
       case DATA_STREAMS_NAME:
         appRequest = new AppRequest<>(newArtifact, convertStreamsConfig(oldConfigStr));
@@ -121,6 +126,7 @@ public class Upgrader {
    * Performs an action on the upgraded hydrator config.
    */
   public interface UpgradeAction {
+
     boolean upgrade(AppRequest<? extends ETLConfig> appRequest) throws Exception;
   }
 
@@ -128,13 +134,13 @@ public class Upgrader {
     DataStreamsConfig config = GSON.fromJson(configStr, DataStreamsConfig.class);
 
     DataStreamsConfig.Builder builder = DataStreamsConfig.builder()
-      .addConnections(config.getConnections())
-      .setResources(config.getResources())
-      .setDriverResources(config.getDriverResources())
-      .setClientResources(config.getClientResources())
-      .setBatchInterval(config.getBatchInterval())
-      .setCheckpointDir(config.getCheckpointDir())
-      .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
+        .addConnections(config.getConnections())
+        .setResources(config.getResources())
+        .setDriverResources(config.getDriverResources())
+        .setClientResources(config.getClientResources())
+        .setBatchInterval(config.getBatchInterval())
+        .setCheckpointDir(config.getCheckpointDir())
+        .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
 
     for (ETLStage stage : config.getStages()) {
       builder.addStage(stage.upgradeStage(dataStreamsContext));
@@ -143,7 +149,7 @@ public class Upgrader {
   }
 
   private ETLBatchConfig convertBatchConfig(int majorVersion, int minorVersion, String configStr,
-                                            UpgradeContext upgradeContext) {
+      UpgradeContext upgradeContext) {
     UpgradeableConfig config;
 
     if (majorVersion == 3 && minorVersion == 2) {
@@ -154,12 +160,12 @@ public class Upgrader {
       // 3.4.x and up all have the same config format, but the plugin artifacts may need to be upgraded
       ETLBatchConfig batchConfig = GSON.fromJson(configStr, ETLBatchConfig.class);
       ETLBatchConfig.Builder builder = ETLBatchConfig.builder(batchConfig.getSchedule())
-        .addConnections(batchConfig.getConnections())
-        .setResources(batchConfig.getResources())
-        .setDriverResources(batchConfig.getDriverResources())
-        .setEngine(batchConfig.getEngine())
-        .setPushdownEnabled(batchConfig.isPushdownEnabled())
-        .setTransformationPushdown(batchConfig.getTransformationPushdown());
+          .addConnections(batchConfig.getConnections())
+          .setResources(batchConfig.getResources())
+          .setDriverResources(batchConfig.getDriverResources())
+          .setEngine(batchConfig.getEngine())
+          .setPushdownEnabled(batchConfig.isPushdownEnabled())
+          .setTransformationPushdown(batchConfig.getTransformationPushdown());
       // upgrade any of the plugin artifact versions if needed
       for (ETLStage postAction : batchConfig.getPostActions()) {
         builder.addPostAction(postAction.upgradeStage(upgradeContext));

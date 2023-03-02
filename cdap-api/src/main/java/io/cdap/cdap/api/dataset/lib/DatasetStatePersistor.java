@@ -20,21 +20,22 @@ import io.cdap.cdap.api.data.DatasetContext;
 import javax.annotation.Nullable;
 
 /**
- * Defines how some state will be persisted/managed, using a {@link DatasetContext} to read and persist state.
+ * Defines how some state will be persisted/managed, using a {@link DatasetContext} to read and
+ * persist state.
  */
 public interface DatasetStatePersistor {
 
   /**
    * @param datasetContext context to use to instantiate dataset(s) for reading the state
-   * @return the serialized bytes of the state of the partition consuming process; return null to indicate a fresh
-   *         state of consuming (defaults to starting from the beginning).
+   * @return the serialized bytes of the state of the partition consuming process; return null to
+   *     indicate a fresh state of consuming (defaults to starting from the beginning).
    */
   @Nullable
   byte[] readState(DatasetContext datasetContext);
 
   /**
-   * Writes the serialized bytes of the state of the partition consuming process. The bytes written in this method
-   * should be available in the following call to readBytes(DatasetContext).
+   * Writes the serialized bytes of the state of the partition consuming process. The bytes written
+   * in this method should be available in the following call to readBytes(DatasetContext).
    *
    * @param datasetContext context to use to instantiate dataset(s) for persisting the state
    * @param state the bytes to persist

@@ -24,6 +24,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public class MetadataException extends Exception {
+
   public MetadataException(Throwable cause) {
     super(cause);
   }

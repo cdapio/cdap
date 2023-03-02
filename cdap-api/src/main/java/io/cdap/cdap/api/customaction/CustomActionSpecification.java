@@ -24,6 +24,7 @@ import java.util.Set;
  * Specification for the custom java code that will be executed as a part of {@link Workflow}.
  */
 public interface CustomActionSpecification extends PropertyProvider {
+
   /**
    * @return Class name of the custom action.
    */

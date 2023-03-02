@@ -53,6 +53,7 @@ import java.util.UUID;
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name("MockRuntime")
 public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], Put> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
@@ -66,6 +67,7 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private String tableName;
 
@@ -79,7 +81,7 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
     pipelineConfigurer.createDataset(config.tableName, Table.class);
     if (!config.containsMacro("runtimeDatasetName")) {
       pipelineConfigurer.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(),
-                                       DatasetProperties.EMPTY);
+          DatasetProperties.EMPTY);
     }
   }
 
@@ -87,7 +89,8 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
   public void prepareRun(BatchSinkContext context) throws Exception {
     context.addOutput(Output.ofDataset(config.tableName));
     if (!context.datasetExists(config.runtimeDatasetName)) {
-      context.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(), DatasetProperties.EMPTY);
+      context.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(),
+          DatasetProperties.EMPTY);
     }
   }
 
@@ -104,7 +107,8 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter)
+      throws Exception {
     byte[] rowkey = Bytes.toBytes(UUID.randomUUID());
     Put put = new Put(rowkey);
     put.add(SCHEMA_COL, input.getSchema().toString());
@@ -117,7 +121,8 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
    *
    * @param tableManager dataset manager used to get the sink dataset to read from
    */
-  public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager) throws Exception {
+  public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager)
+      throws Exception {
     Table table = tableManager.get();
 
     try (Scanner scanner = table.scan(null, null)) {
@@ -135,9 +140,11 @@ public class MockRuntimeDatasetSink extends BatchSink<StructuredRecord, byte[], 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
-    properties.put("runtimeDatasetName", new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
+    properties.put("runtimeDatasetName",
+        new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
     return PluginClass.builder().setName("MockRuntime").setType(BatchSink.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockRuntimeDatasetSink.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockRuntimeDatasetSink.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

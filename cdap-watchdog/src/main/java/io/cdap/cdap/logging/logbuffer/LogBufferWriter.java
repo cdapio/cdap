@@ -42,15 +42,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Appends logs to log buffer file. The file is rotated when it reaches max size. The log buffer file name is
- * monotonically increasing number. When a new file is created, the file name becomes (max_file_id + 1).buf. The
- * file format is as below
+ * Appends logs to log buffer file. The file is rotated when it reaches max size. The log buffer
+ * file name is monotonically increasing number. When a new file is created, the file name becomes
+ * (max_file_id + 1).buf. The file format is as below
  *
  * <length> <log_event>
- * length = Avro encoded int32 for size in bytes for the log event
- * log_event = Avro encoded log bytes
+ * length = Avro encoded int32 for size in bytes for the log event log_event = Avro encoded log
+ * bytes
  */
 public class LogBufferWriter implements Flushable, Closeable {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferWriter.class);
   private static final String FILE_SUFFIX = ".buf";
   private final LoggingEventSerializer logEventSerializer;
@@ -68,7 +69,8 @@ public class LogBufferWriter implements Flushable, Closeable {
   private long currFileId;
   private long writtenBytes;
 
-  public LogBufferWriter(String logBufferBaseDir, long maxFileSize, Runnable cleaner) throws IOException {
+  public LogBufferWriter(String logBufferBaseDir, long maxFileSize, Runnable cleaner)
+      throws IOException {
     File baseDir = new File(logBufferBaseDir);
     // make sure base dir already exists, if not create it.
     Files.createDirectories(baseDir.toPath());
@@ -77,13 +79,15 @@ public class LogBufferWriter implements Flushable, Closeable {
     this.maxFileSizeInBytes = maxFileSize;
     this.cleaner = cleaner;
     // Mark cleaner future as completed when its initialized
-    this.cleanerFuture =  CompletableFuture.completedFuture(0);
-    this.executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("log-buffer-cleaner"));
+    this.cleanerFuture = CompletableFuture.completedFuture(0);
+    this.executorService = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("log-buffer-cleaner"));
     this.logEventSerializer = new LoggingEventSerializer();
 
     // scan file names under base dir and get next monotonically increasing file id
     this.currFileId = getNextFileId(baseDir);
-    this.currOutputStream = new BufferedOutputStream(locationFactory.create(getFileName(currFileId)).getOutputStream());
+    this.currOutputStream = new BufferedOutputStream(
+        locationFactory.create(getFileName(currFileId)).getOutputStream());
   }
 
   /**
@@ -98,15 +102,17 @@ public class LogBufferWriter implements Flushable, Closeable {
     while (events.hasNext()) {
       byte[] event = events.next();
       LogBufferFileOffset offset = write(event);
-      offsets.add(new LogBufferEvent(logEventSerializer.fromBytes(ByteBuffer.wrap(event)), event.length, offset));
+      offsets.add(
+          new LogBufferEvent(logEventSerializer.fromBytes(ByteBuffer.wrap(event)), event.length,
+              offset));
     }
     currOutputStream.flush();
     return offsets;
   }
 
   /**
-   * Writes an event to log buffer file. If the buffer file has reached its max size limit, new file is created with
-   * monotonically increasing file name.
+   * Writes an event to log buffer file. If the buffer file has reached its max size limit, new file
+   * is created with monotonically increasing file name.
    *
    * @param eventBytes event to be written to log buffer
    * @return log buffer file offset
@@ -153,8 +159,8 @@ public class LogBufferWriter implements Flushable, Closeable {
   }
 
   /**
-   * Returns next monotonically increasing file id. The method scans all the files under base path and returns
-   * max file id + 1.
+   * Returns next monotonically increasing file id. The method scans all the files under base path
+   * and returns max file id + 1.
    */
   private long getNextFileId(File baseDir) {
     long maxFileId = -1;

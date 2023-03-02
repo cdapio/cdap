@@ -20,6 +20,7 @@ package io.cdap.cdap.common.logging;
  * Service Logging Context used by different cdap system services such as metrics etc
  */
 public class ServiceLoggingContext extends ComponentLoggingContext {
+
   // Note: TAG_SYSTEM_ID is kept here for backward compatibility with 3.4 to support upgrade to 3.5. In 3.5 we removed
   // ServiceLoggingContext which originally used to hold this constant (CDAP-6548). When an user  upgrades to 3.5
   // there might be log events in kafka in old format with TAG_SYSTEM_ID. We want to be able to process these logs
@@ -34,7 +35,8 @@ public class ServiceLoggingContext extends ComponentLoggingContext {
    * @param componentId component id
    * @param serviceId service id
    */
-  public ServiceLoggingContext(final String systemId, final String componentId, final String serviceId) {
+  public ServiceLoggingContext(final String systemId, final String componentId,
+      final String serviceId) {
     super(systemId, componentId);
     setSystemTag(TAG_SERVICE_ID, serviceId);
   }

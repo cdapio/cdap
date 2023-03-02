@@ -23,4 +23,5 @@ import io.cdap.cdap.api.messaging.MessagingContext;
  * Context for an {@link AlertPublisher}, exposing methods to publish messages to TMS.
  */
 public interface AlertPublisherContext extends StageContext, MessagingContext, MessagingAdmin {
+
 }

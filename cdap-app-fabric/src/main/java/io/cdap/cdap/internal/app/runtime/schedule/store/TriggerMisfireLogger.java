@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
  * Logs schedule trigger misfires.
  */
 public class TriggerMisfireLogger extends TriggerListenerSupport {
+
   private static final Logger LOG = LoggerFactory.getLogger(TriggerMisfireLogger.class);
 
   @Override
@@ -40,8 +41,8 @@ public class TriggerMisfireLogger extends TriggerListenerSupport {
   @Override
   public void triggerMisfired(Trigger trigger) {
     getLog().warn("Trigger {}.{} misfired job {}.{}  at: {}. Should have fired at: {}.",
-                  trigger.getKey().getGroup(), trigger.getKey().getName(),
-                  trigger.getJobKey().getGroup(), trigger.getJobKey().getName(), new java.util.Date(),
-                  trigger.getNextFireTime());
+        trigger.getKey().getGroup(), trigger.getKey().getName(),
+        trigger.getJobKey().getGroup(), trigger.getJobKey().getName(), new java.util.Date(),
+        trigger.getNextFireTime());
   }
 }

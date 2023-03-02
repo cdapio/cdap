@@ -17,10 +17,11 @@
 package io.cdap.cdap.common.http;
 
 /**
- * Names for any Http headers introduced by CDAP should be placed here.
- * This will help keeping the context about headers in one place.
+ * Names for any Http headers introduced by CDAP should be placed here. This will help keeping the
+ * context about headers in one place.
  */
 public final class HttpHeaderNames {
+
   /**
    * Store request start time. Header should not be deleted or modified.
    */
@@ -29,5 +30,6 @@ public final class HttpHeaderNames {
   // TODO move all other custom headers used by CDAP to this class. JIRA https://cdap.atlassian.net/browse/CDAP-18799
 
   // to prevent instantiation of this class
-  private HttpHeaderNames() {}
+  private HttpHeaderNames() {
+  }
 }

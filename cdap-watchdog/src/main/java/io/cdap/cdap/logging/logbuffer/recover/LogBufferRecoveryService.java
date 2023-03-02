@@ -37,16 +37,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Log buffer recovery service which recovers logs upon log saver restart and sends them to log buffer pipeline for
- * further processing. This service first scans all the files to figure out max file id till which it should recover.
- * This is because while recovery service is running, new files can be created. Recovery service should not recover
- * those logs.
+ * Log buffer recovery service which recovers logs upon log saver restart and sends them to log
+ * buffer pipeline for further processing. This service first scans all the files to figure out max
+ * file id till which it should recover. This is because while recovery service is running, new
+ * files can be created. Recovery service should not recover those logs.
  */
 public class LogBufferRecoveryService extends AbstractExecutionThreadService {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferRecoveryService.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
-    Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
+      Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
   private static final String SERVICE_NAME = "log.buffer.recovery";
 
   private final List<LogBufferProcessorPipeline> pipelines;
@@ -61,16 +62,16 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
   private volatile boolean stopped;
 
   public LogBufferRecoveryService(CConfiguration cConf, List<LogBufferProcessorPipeline> pipelines,
-                                  List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
-                                  AtomicBoolean startCleanup) {
+      List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
+      AtomicBoolean startCleanup) {
     this(pipelines, checkpointManagers, cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR),
-         cConf.getInt(Constants.LogBuffer.LOG_BUFFER_RECOVERY_BATCH_SIZE), startCleanup);
+        cConf.getInt(Constants.LogBuffer.LOG_BUFFER_RECOVERY_BATCH_SIZE), startCleanup);
   }
 
   @VisibleForTesting
   LogBufferRecoveryService(List<LogBufferProcessorPipeline> pipelines,
-                           List<CheckpointManager<LogBufferFileOffset>> checkpointManager,
-                           String baseLogDir, int batchSize, AtomicBoolean startCleanup) {
+      List<CheckpointManager<LogBufferFileOffset>> checkpointManager,
+      String baseLogDir, int batchSize, AtomicBoolean startCleanup) {
     this.pipelines = pipelines;
     this.checkpointManagers = checkpointManager;
     this.baseLogDir = baseLogDir;
@@ -86,7 +87,7 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
       // get the smallest offset of all the log pipelines
       LogBufferFileOffset minOffset = getSmallestOffset(checkpointManagers);
       this.reader = new LogBufferReader(baseLogDir, batchSize, getMaxFileId(baseLogDir),
-                                        minOffset.getFileId(), minOffset.getFilePos());
+          minOffset.getFileId(), minOffset.getFilePos());
     }
   }
 
@@ -130,8 +131,9 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
     return SERVICE_NAME;
   }
 
-  private LogBufferFileOffset getSmallestOffset(List<CheckpointManager<LogBufferFileOffset>> checkpointManagers)
-    throws IOException {
+  private LogBufferFileOffset getSmallestOffset(
+      List<CheckpointManager<LogBufferFileOffset>> checkpointManagers)
+      throws IOException {
     // there will be atleast one log pipeline
     LogBufferFileOffset minOffset = checkpointManagers.get(0).getCheckpoint(0).getOffset();
 
@@ -144,7 +146,8 @@ public class LogBufferRecoveryService extends AbstractExecutionThreadService {
     return minOffset;
   }
 
-  private void recoverLogs(List<LogBufferEvent> logBufferEvents, List<LogBufferProcessorPipeline> pipelines) {
+  private void recoverLogs(List<LogBufferEvent> logBufferEvents,
+      List<LogBufferProcessorPipeline> pipelines) {
     for (LogBufferProcessorPipeline pipeline : pipelines) {
       pipeline.processLogEvents(logBufferEvents.iterator());
     }

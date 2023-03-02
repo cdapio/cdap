@@ -54,7 +54,7 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
       Method defineClass = null;
       try {
         defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class,
-                                                          byte[].class, int.class, int.class);
+            byte[].class, int.class, int.class);
         defineClass.setAccessible(true);
       } catch (Exception e) {
         // ok to ignore this exception, it will resort to the slow reflection way.
@@ -69,7 +69,7 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
       Method defineClass = null;
       try {
         defineClass = ClassLoader.class.getDeclaredMethod("defineClass", String.class,
-                                                          byte[].class, int.class, int.class);
+            byte[].class, int.class, int.class);
         defineClass.setAccessible(true);
       } catch (Exception e) {
         // ok to ignore this exception, it will resort to the slow reflection way.
@@ -77,13 +77,14 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
 
       // Generate the FieldAccessor class bytecode.
       ClassDefinition classDef = new FieldAccessorGenerator()
-                                      .generate(key.getType().getRawType(),
-                                                Fields.findField(key.getType().getType(), key.getFieldName()),
-                                                defineClass == null);
+          .generate(key.getType().getRawType(),
+              Fields.findField(key.getType().getType(), key.getFieldName()),
+              defineClass == null);
       return createAccessor(key.getType(), classDef);
     }
 
-    private FieldAccessor createAccessor(TypeToken<?> type, ClassDefinition classDef) throws Exception {
+    private FieldAccessor createAccessor(TypeToken<?> type, ClassDefinition classDef)
+        throws Exception {
       // Must use the same classloader as the type.
       ClassLoader classLoader = type.getRawType().getClassLoader();
       String className = classDef.getClassName();
@@ -94,7 +95,8 @@ public final class ASMFieldAccessorFactory implements FieldAccessorFactory {
       if (result == null) {
         // Try to define the class from the same classloader of the given type.
         byte[] bytecode = classDef.getBytecode();
-        result = (Class<?>) defineClass.invoke(classLoader, className, bytecode, 0, bytecode.length);
+        result = (Class<?>) defineClass.invoke(classLoader, className, bytecode, 0,
+            bytecode.length);
       }
       return (FieldAccessor) result.getConstructor(Type.class).newInstance(type.getType());
     }

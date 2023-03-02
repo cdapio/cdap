@@ -21,15 +21,17 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 
 /**
- * Factory to create {@link CommonNettyHttpServiceBuilder} using {@link CConfiguration}
- * and {@link MetricsCollectionService}
+ * Factory to create {@link CommonNettyHttpServiceBuilder} using {@link CConfiguration} and {@link
+ * MetricsCollectionService}
  */
 public class CommonNettyHttpServiceFactory {
+
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  public CommonNettyHttpServiceFactory(CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
+  public CommonNettyHttpServiceFactory(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
   }

@@ -29,32 +29,36 @@ import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.Method;
 
 /**
- * Current java LevelDB implementation has a memory accumulation problem during compaction.
- * Each {@link org.iq80.leveldb.impl.FileMetaData} object holds minimum and maximum keys for the file.
+ * Current java LevelDB implementation has a memory accumulation problem during compaction. Each
+ * {@link org.iq80.leveldb.impl.FileMetaData} object holds minimum and maximum keys for the file.
  * And those keys may reside in a slice pointing to a byte array with the whole file. In this case
- * instead of holding 20 bytes reference, we hold a multi-kb or even mb reference per file, leading to OOM
- * on big compaction. The patch checks all {@link org.iq80.leveldb.impl.InternalKey} objects while they
- * are created and if it received such heavy metadata reference, makes a copy of the key (usually few dozen bytes)
- * and uses this lightweight metadata reference instead.
+ * instead of holding 20 bytes reference, we hold a multi-kb or even mb reference per file, leading
+ * to OOM on big compaction. The patch checks all {@link org.iq80.leveldb.impl.InternalKey} objects
+ * while they are created and if it received such heavy metadata reference, makes a copy of the key
+ * (usually few dozen bytes) and uses this lightweight metadata reference instead.
  */
 public class LevelDBClassRewriter implements ClassRewriter {
+
   /**
    * Full filename of the {@link org.iq80.leveldb.impl.FileMetaData} class to be patched
    */
   private static final String FILE_META_DATA_CLASS_NAME = "org.iq80.leveldb.impl.FileMetaData";
   /**
-   * Type of {@link FileMetaDataUtil} class that has normalization static methos to trim key storage down
+   * Type of {@link FileMetaDataUtil} class that has normalization static methos to trim key storage
+   * down
    */
   private static final Type FILE_META_DATA_UTIL_TYPE = Type.getType(FileMetaDataUtil.class);
   /**
    * {@link Type} of {@link org.iq80.leveldb.impl.InternalKey}
    */
-  private static final Type INTERNAL_KEY_TYPE = Type.getObjectType("org/iq80/leveldb/impl/InternalKey");
+  private static final Type INTERNAL_KEY_TYPE = Type.getObjectType(
+      "org/iq80/leveldb/impl/InternalKey");
   /**
    * {@link org.iq80.leveldb.impl.FileMetaData#FileMetaData} {@link Method}
    */
-  public static final Method FILE_META_DATA_CONSTRUCTOR = new Method("<init>", Type.VOID_TYPE, new Type[]{
-    Type.LONG_TYPE, Type.LONG_TYPE, INTERNAL_KEY_TYPE, INTERNAL_KEY_TYPE});
+  public static final Method FILE_META_DATA_CONSTRUCTOR = new Method("<init>", Type.VOID_TYPE,
+      new Type[]{
+          Type.LONG_TYPE, Type.LONG_TYPE, INTERNAL_KEY_TYPE, INTERNAL_KEY_TYPE});
   /**
    * Parameter number for "smallest" parameter in {@link org.iq80.leveldb.impl.FileMetaData#FileMetaData}
    */
@@ -67,19 +71,21 @@ public class LevelDBClassRewriter implements ClassRewriter {
    * {@link FileMetaDataUtil#normalize} {@link Method}
    */
   private static final Method NORMALIZE_METHOD =
-    new Method("normalize", Type.getMethodDescriptor(INTERNAL_KEY_TYPE, INTERNAL_KEY_TYPE));
+      new Method("normalize", Type.getMethodDescriptor(INTERNAL_KEY_TYPE, INTERNAL_KEY_TYPE));
 
   /**
    * @param className class name inspected
-   * @return true if thi is {@link org.iq80.leveldb.impl.FileMetaData} class that needs to be rewritten
+   * @return true if thi is {@link org.iq80.leveldb.impl.FileMetaData} class that needs to be
+   *     rewritten
    */
   public boolean needRewrite(String className) {
     return FILE_META_DATA_CLASS_NAME.equals(className);
   }
 
   /**
-   * Rewrites {@link org.iq80.leveldb.impl.FileMetaData#FileMetaData(long, long, InternalKey, InternalKey)} constructor
-   * to trim down heavy storage for keys passed as 3rd and 4th parameter.
+   * Rewrites {@link org.iq80.leveldb.impl.FileMetaData#FileMetaData(long, long, InternalKey,
+   * InternalKey)} constructor to trim down heavy storage for keys passed as 3rd and 4th parameter.
+   *
    * @param className name of the class - must be FileMetaData
    * @param input an {@link InputStream} to provide the original bytecode of the class
    * @return rewritten class bytecode
@@ -93,7 +99,7 @@ public class LevelDBClassRewriter implements ClassRewriter {
     cr.accept(new ClassVisitor(Opcodes.ASM7, cw) {
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
-                                       String signature, String[] exceptions) {
+          String signature, String[] exceptions) {
 
         MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
         if (!FILE_META_DATA_CONSTRUCTOR.equals(new Method(name, descriptor))) {

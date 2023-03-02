@@ -23,8 +23,10 @@ import io.cdap.cdap.api.ProgramLifecycle;
  * Defines configurable condition in the Workflow.
  */
 public interface Condition extends ProgramLifecycle<WorkflowContext>, Predicate<WorkflowContext> {
+
   /**
    * Configures the condition.
+   *
    * @param configurer the {@link ConditionConfigurer} used to configure the condition.
    */
   void configure(ConditionConfigurer configurer);

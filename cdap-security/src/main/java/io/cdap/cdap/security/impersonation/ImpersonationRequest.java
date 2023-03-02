@@ -21,10 +21,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * A wrapper which wraps around the {@link io.cdap.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
- * be performed and the type of operation {@link ImpersonatedOpType} which will be performed.
+ * A wrapper which wraps around the {@link io.cdap.cdap.proto.id.NamespacedEntityId} on which
+ * impersonation needs to be performed and the type of operation {@link ImpersonatedOpType} which
+ * will be performed.
  */
 public class ImpersonationRequest {
+
   private final NamespacedEntityId entityId;
   private final ImpersonatedOpType impersonatedOpType;
   private final String principal;
@@ -36,13 +38,15 @@ public class ImpersonationRequest {
   }
 
   // principal is needed for RemoteUGIProvider to make query to master but we should not pass the key tab uri
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType, String principal) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
+      String principal) {
     this(entityId, impersonatedOpType, principal, null);
   }
 
   // principal and keytabURI is needed for master side to look up the key tab file.
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType, String principal,
-                              String keytabURI) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
+      String principal,
+      String keytabURI) {
     this.principal = principal;
     this.entityId = entityId;
     this.impersonatedOpType = impersonatedOpType;
@@ -70,11 +74,11 @@ public class ImpersonationRequest {
   @Override
   public String toString() {
     return "ImpersonationRequest{" +
-      "entityId=" + entityId +
-      ", impersonatedOpType=" + impersonatedOpType +
-      ", principal=" + principal +
-      ", keytabURI=" + keytabURI +
-      '}';
+        "entityId=" + entityId +
+        ", impersonatedOpType=" + impersonatedOpType +
+        ", principal=" + principal +
+        ", keytabURI=" + keytabURI +
+        '}';
   }
 
   @Override
@@ -87,9 +91,9 @@ public class ImpersonationRequest {
     }
     ImpersonationRequest that = (ImpersonationRequest) o;
     return Objects.equals(entityId, that.entityId) &&
-      impersonatedOpType == that.impersonatedOpType &&
-      Objects.equals(principal, that.principal) &&
-      Objects.equals(keytabURI, that.keytabURI);
+        impersonatedOpType == that.impersonatedOpType &&
+        Objects.equals(principal, that.principal) &&
+        Objects.equals(keytabURI, that.keytabURI);
   }
 
   @Override

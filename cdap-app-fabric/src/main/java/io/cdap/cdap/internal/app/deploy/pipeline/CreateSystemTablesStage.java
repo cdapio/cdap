@@ -41,7 +41,8 @@ public class CreateSystemTablesStage extends AbstractStage<ApplicationDeployable
    * @param input An instance of {@link ApplicationDeployable}
    */
   @Override
-  public void process(ApplicationDeployable input) throws IOException, TableSchemaIncompatibleException {
+  public void process(ApplicationDeployable input)
+      throws IOException, TableSchemaIncompatibleException {
     for (StructuredTableSpecification spec : input.getSystemTables()) {
       structuredTableAdmin.createOrUpdate(spec);
     }

@@ -27,6 +27,7 @@ public final class Fields {
 
   /**
    * Find a {@link Field} in the class hierarchy of the given type.
+   *
    * @param classType The leaf class to start with.
    * @param fieldName Name of the field.
    * @return A {@link Field} if found.
@@ -40,8 +41,10 @@ public final class Fields {
         // OK to ignore, keep finding.
       }
     }
-    throw new NoSuchFieldException("Field " + fieldName + " not exists in the class hierarchy of " + classType);
+    throw new NoSuchFieldException(
+        "Field " + fieldName + " not exists in the class hierarchy of " + classType);
   }
 
-  private Fields() {}
+  private Fields() {
+  }
 }

@@ -35,20 +35,21 @@ import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.persist.TransactionVisibilityState;
 
 /**
- * Common state and utilities shared by the HBase version-specific {@code IncrementHandler} coprocessor
- * implementations.  This common implementation cannot go into a shared base class, as each coprocessor needs
- * to derive from the HBase version's {@code BaseRegionObserver} class, in order to avoid being broken by
- * API changes.
+ * Common state and utilities shared by the HBase version-specific {@code IncrementHandler}
+ * coprocessor implementations.  This common implementation cannot go into a shared base class, as
+ * each coprocessor needs to derive from the HBase version's {@code BaseRegionObserver} class, in
+ * order to avoid being broken by API changes.
  */
 public class IncrementHandlerState {
+
   /**
-   * Property set for {@link HColumnDescriptor} to indicate if increment is transactional. Default: "true", i.e.
-   * transactional.
+   * Property set for {@link HColumnDescriptor} to indicate if increment is transactional. Default:
+   * "true", i.e. transactional.
    */
   public static final String PROPERTY_TRANSACTIONAL = "dataset.table.readless.increment.transactional";
   public static final long MAX_TS_PER_MS = 1000000;
   // prefix bytes used to mark values that are deltas vs. full sums
-  public static final byte[] DELTA_MAGIC_PREFIX = new byte[] { 'X', 'D' };
+  public static final byte[] DELTA_MAGIC_PREFIX = new byte[]{'X', 'D'};
   // expected length for values storing deltas (prefix + increment value)
   public static final int DELTA_FULL_LENGTH = DELTA_MAGIC_PREFIX.length + Bytes.SIZEOF_LONG;
   public static final int BATCH_UNLIMITED = -1;
@@ -88,8 +89,10 @@ public class IncrementHandlerState {
 
   public void initFamily(byte[] familyName, Map<byte[], byte[]> familyValues) {
     String familyAsString = Bytes.toString(familyName);
-    byte[] transactionalConfig = familyValues.get(Bytes.toBytes(IncrementHandlerState.PROPERTY_TRANSACTIONAL));
-    boolean txnl = transactionalConfig == null || !"false".equals(Bytes.toString(transactionalConfig));
+    byte[] transactionalConfig = familyValues.get(
+        Bytes.toBytes(IncrementHandlerState.PROPERTY_TRANSACTIONAL));
+    boolean txnl =
+        transactionalConfig == null || !"false".equals(Bytes.toString(transactionalConfig));
     LOG.info("Family " + familyAsString + " is transactional: " + txnl);
     if (txnl) {
       txnlFamilies.add(familyName);
@@ -138,6 +141,7 @@ public class IncrementHandlerState {
 
   /**
    * Returns the upper bound beyond which we can compact any increment deltas into a new sum.
+   *
    * @param columnFamily the column family name
    * @return the newest timestamp beyond which can compact delta increments
    */
@@ -152,8 +156,8 @@ public class IncrementHandlerState {
   }
 
   /**
-   * Returns the time-to-live (in milliseconds) for the given column family, transformed into the same precision
-   * used in assigning unique timestamps.
+   * Returns the time-to-live (in milliseconds) for the given column family, transformed into the
+   * same precision used in assigning unique timestamps.
    *
    * @param familyName the column family name
    * @return the time-to-live value
@@ -164,8 +168,9 @@ public class IncrementHandlerState {
   }
 
   /**
-   * Returns the oldest timestamp that will be visible for a given column family, after the column family's
-   * configured time-to-live is applied.
+   * Returns the oldest timestamp that will be visible for a given column family, after the column
+   * family's configured time-to-live is applied.
+   *
    * @param familyName the name of the column family
    * @return the oldest timestamp value that will be visible
    */

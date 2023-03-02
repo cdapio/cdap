@@ -31,23 +31,24 @@ import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 
 /**
- * Read alerts written by an AlertPublisherSink. Alerts will be written to files within a set of directories within a
- * base directory.
+ * Read alerts written by an AlertPublisherSink. Alerts will be written to files within a set of
+ * directories within a base directory.
  *
- * /path/to/base/phase-1
- * /path/to/base/phase-2
- * /path/to/base/phase-3
+ * /path/to/base/phase-1 /path/to/base/phase-2 /path/to/base/phase-3
  *
- * This reader will go through each directory in sequence and read all alerts in all files in each directory.
+ * This reader will go through each directory in sequence and read all alerts in all files in each
+ * directory.
  */
 public class AlertReader extends AbstractCloseableIterator<Alert> {
+
   private static final Gson GSON = new Gson();
   private final Iterator<Location> directories;
   private Iterator<Location> files;
   private BufferedReader currentReader;
 
   public AlertReader(FileSet fileSet) throws IOException {
-    this.directories = fileSet.getBaseLocation().append(Constants.Connector.DATA_DIR).list().iterator();
+    this.directories = fileSet.getBaseLocation().append(Constants.Connector.DATA_DIR).list()
+        .iterator();
     if (directories.hasNext()) {
       this.files = directories.next().list().iterator();
       this.currentReader = getNextReader();
@@ -97,7 +98,8 @@ public class AlertReader extends AbstractCloseableIterator<Alert> {
         String fileName = file.getName();
         // TextOutputFormat will write files like _SUCCESS and .part-m-00000.crc
         if (!"_SUCCESS".equals(fileName) && !fileName.startsWith(".")) {
-          return new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+          return new BufferedReader(
+              new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
         }
       }
 

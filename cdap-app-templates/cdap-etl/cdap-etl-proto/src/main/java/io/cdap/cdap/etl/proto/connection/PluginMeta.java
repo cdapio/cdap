@@ -25,12 +25,14 @@ import java.util.Objects;
  * Plugin metadata information
  */
 public class PluginMeta {
+
   private final String name;
   private final String type;
   private final Map<String, String> properties;
   private final ArtifactSelectorConfig artifact;
 
-  public PluginMeta(String name, String type, Map<String, String> properties, ArtifactSelectorConfig artifact) {
+  public PluginMeta(String name, String type, Map<String, String> properties,
+      ArtifactSelectorConfig artifact) {
     this.name = name;
     this.type = type;
     this.properties = properties;
@@ -65,13 +67,13 @@ public class PluginMeta {
 
     PluginMeta that = (PluginMeta) o;
     return Objects.equals(name, that.name) &&
-             Objects.equals(type, that.type) &&
-             Objects.equals(properties, that.properties) &&
-             Objects.equals(artifact, that.artifact);
+        Objects.equals(type, that.type) &&
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(artifact, that.artifact);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, type,  properties, artifact);
+    return Objects.hash(name, type, properties, artifact);
   }
 }

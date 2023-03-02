@@ -33,11 +33,12 @@ import java.util.Iterator;
  * @param <OUT> Type of output object
  */
 public class AggregatorBridge<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
-  extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
+    extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
 
   private final BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator;
 
-  public AggregatorBridge(BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator) {
+  public AggregatorBridge(
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator) {
     this.aggregator = aggregator;
   }
 
@@ -72,7 +73,8 @@ public class AggregatorBridge<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
   }
 
   @Override
-  public void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues, Emitter<OUT> emitter) throws Exception {
+  public void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues, Emitter<OUT> emitter)
+      throws Exception {
     // this condition should not happen, since the group key is generated with the groupBy with existing input, so the
     // iterator will at least contain that value
     if (!groupValues.hasNext()) {

@@ -25,39 +25,46 @@ import io.cdap.cdap.proto.security.Principal;
 import java.util.Set;
 
 /**
- * Interface to manage {@link Permission} on entities. Depending on authorization extension can provide management
- * access or not depending on security type. In the latter case permission must be managed using native tools for the
- * security environment.
+ * Interface to manage {@link Permission} on entities. Depending on authorization extension can
+ * provide management access or not depending on security type. In the latter case permission must
+ * be managed using native tools for the security environment.
  */
 public interface PermissionManager {
 
   /**
-   * Grants a {@link Principal} authorization to perform a set of {@link Permission permissions} on {@link EntityId}
-   * represented by the {@link Authorizable}
-   * Note: this grant is used to support wildcard privilege management
-   * @param authorizable The {@link Authorizable} on which the {@link Permission} are to be granted
-   * @param principal the {@link Principal} that performs the permissions. This could be a user, or role
+   * Grants a {@link Principal} authorization to perform a set of {@link Permission permissions} on
+   * {@link EntityId} represented by the {@link Authorizable} Note: this grant is used to support
+   * wildcard privilege management
+   *
+   * @param authorizable The {@link Authorizable} on which the {@link Permission} are to be
+   *     granted
+   * @param principal the {@link Principal} that performs the permissions. This could be a user,
+   *     or role
    * @param permissions the set of {@link Permission permissions} to grant.
    */
   void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException;
+      throws AccessException;
 
   /**
-   * Revokes a {@link Principal} authorization to perform a set of {@link Permission permissions} on {@link EntityId}
-   * represented by the {@link Authorizable}
-   * Note: this revoke is used to support wildcard privilege management.
-   * @param authorizable the {@link Authorizable} whose {@link Permission permissions} are to be revoked
-   * @param principal the {@link Principal} that performs the permissions. This could be a user, group or role
+   * Revokes a {@link Principal} authorization to perform a set of {@link Permission permissions} on
+   * {@link EntityId} represented by the {@link Authorizable} Note: this revoke is used to support
+   * wildcard privilege management.
+   *
+   * @param authorizable the {@link Authorizable} whose {@link Permission permissions} are to be
+   *     revoked
+   * @param principal the {@link Principal} that performs the permissions. This could be a user,
+   *     group or role
    * @param permissions the set of {@link Permission permissions} to revoke
    */
   void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException;
+      throws AccessException;
 
   /**
-   * Revokes all {@link Principal}s authorization to perform any set of {@link Permission permissions} on
-   * {@link EntityId} represented by the {@link Authorizable}
+   * Revokes all {@link Principal}s authorization to perform any set of {@link Permission
+   * permissions} on {@link EntityId} represented by the {@link Authorizable}
    *
-   * @param authorizable the {@link Authorizable} on which all {@link Permission permissions} are to be revoked
+   * @param authorizable the {@link Authorizable} on which all {@link Permission permissions}
+   *     are to be revoked
    */
   void revoke(Authorizable authorizable) throws AccessException;
 

@@ -36,7 +36,7 @@ public class Notification {
   public static final String PARTITION_KEYS = "partitionKeys";
 
   private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
+      new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
 
   /**
    * The type of the notification.
@@ -57,7 +57,7 @@ public class Notification {
   }
 
   public static Notification forPartitions(DatasetId datasetId,
-                                           Collection<? extends PartitionKey> partitionKeys) {
+      Collection<? extends PartitionKey> partitionKeys) {
     Map<String, String> properties = new HashMap<>();
     properties.put(DATASET_ID, datasetId.toString());
     properties.put(NUM_PARTITIONS, Integer.toString(partitionKeys.size()));
@@ -85,7 +85,7 @@ public class Notification {
     Notification that = (Notification) o;
 
     return Objects.equals(notificationType, that.notificationType)
-      && Objects.equals(properties, that.properties);
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -96,8 +96,8 @@ public class Notification {
   @Override
   public String toString() {
     return "Notification{" +
-      "notificationType=" + notificationType +
-      ", properties=" + properties +
-      '}';
+        "notificationType=" + notificationType +
+        ", properties=" + properties +
+        '}';
   }
 }

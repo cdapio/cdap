@@ -44,13 +44,15 @@ import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 
 /**
- * Used in coprocessors to get the metadata of a Topic. It also provides the metadata of topics by periodically
- * scanning the Metadata table.
+ * Used in coprocessors to get the metadata of a Topic. It also provides the metadata of topics by
+ * periodically scanning the Metadata table.
  */
 public class TopicMetadataCache extends AbstractIdleService {
+
   private static final Log LOG = LogFactory.getLog(TopicMetadataCache.class);
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private static final byte[] COL_FAMILY = MessagingUtils.Constants.COLUMN_FAMILY;
   private static final byte[] COL = MessagingUtils.Constants.METADATA_COLUMN;
@@ -68,10 +70,10 @@ public class TopicMetadataCache extends AbstractIdleService {
 
   private long lastUpdated;
   private long metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(
-    MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS);
+      MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS);
 
   public TopicMetadataCache(RegionCoprocessorEnvironment env, CConfigurationReader cConfReader,
-                            String hbaseNamespacePrefix, String metadataTableNamespace, ScanBuilder scanBuilder) {
+      String hbaseNamespacePrefix, String metadataTableNamespace, ScanBuilder scanBuilder) {
     this.env = env;
     this.cConfReader = cConfReader;
     this.hbaseNamespacePrefix = hbaseNamespacePrefix;
@@ -110,8 +112,8 @@ public class TopicMetadataCache extends AbstractIdleService {
   }
 
   /**
-   * Called in unit tests and since the refresh thread might invoke cache update at the same time, we make this method
-   * synchronized. Aside from unit tests, synchronization is not required.
+   * Called in unit tests and since the refresh thread might invoke cache update at the same time,
+   * we make this method synchronized. Aside from unit tests, synchronization is not required.
    */
   @VisibleForTesting
   public synchronized void updateCache() throws IOException {
@@ -124,14 +126,15 @@ public class TopicMetadataCache extends AbstractIdleService {
         this.cConf = cConf;
         int metadataScanSize = cConf.getInt(Constants.MessagingSystem.HBASE_SCAN_CACHE_ROWS);
         metadataCacheUpdateFreqInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(
-          Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS,
-          MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS));
+            Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS,
+            MessagingUtils.Constants.METADATA_CACHE_UPDATE_FREQUENCY_SECS));
         String tableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
 
         metadataTable = getMetadataTable(tableName);
         if (metadataTable == null) {
-          LOG.warn(String.format("Could not find Table of metadataTable %s:%s. Cannot update metadata cache",
-                                 hbaseNamespacePrefix, tableName));
+          LOG.warn(String.format(
+              "Could not find Table of metadataTable %s:%s. Cannot update metadata cache",
+              hbaseNamespacePrefix, tableName));
           return;
         }
 
@@ -150,10 +153,12 @@ public class TopicMetadataCache extends AbstractIdleService {
           }
         }
 
-        long elapsed = System.currentTimeMillis()  - now;
+        long elapsed = System.currentTimeMillis() - now;
         this.metadataCache = newTopicCache;
         this.lastUpdated = now;
-        LOG.debug(String.format("Updated consumer config cache with %d topics, took %d msec", topicCount, elapsed));
+        LOG.debug(
+            String.format("Updated consumer config cache with %d topics, took %d msec", topicCount,
+                elapsed));
       }
     } finally {
       if (metadataTable != null) {
@@ -168,7 +173,7 @@ public class TopicMetadataCache extends AbstractIdleService {
 
   private Table getMetadataTable(String tableName) throws IOException {
     return env.getTable(HTableNameConverter.toTableName(hbaseNamespacePrefix,
-                                                        TableId.from(metadataTableNamespace, tableName)));
+        TableId.from(metadataTableNamespace, tableName)));
   }
 
   private void startRefreshThread() {

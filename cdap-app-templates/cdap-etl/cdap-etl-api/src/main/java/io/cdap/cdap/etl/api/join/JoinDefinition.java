@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class JoinDefinition {
+
   private final List<JoinField> selectedFields;
   private final List<JoinStage> stages;
   private final JoinCondition condition;
@@ -44,7 +45,7 @@ public class JoinDefinition {
   private final JoinDistribution distribution;
 
   private JoinDefinition(List<JoinField> selectedFields, List<JoinStage> stages,
-                         JoinCondition condition, Schema outputSchema, JoinDistribution distribution) {
+      JoinCondition condition, Schema outputSchema, JoinDistribution distribution) {
     this.stages = Collections.unmodifiableList(stages);
     this.selectedFields = Collections.unmodifiableList(new ArrayList<>(selectedFields));
     this.condition = condition;
@@ -83,6 +84,7 @@ public class JoinDefinition {
    * Builds a JoinSpecification.
    */
   public static class Builder {
+
     private final List<JoinStage> stages;
     private final List<JoinField> selectedFields;
     private JoinCondition condition;
@@ -129,16 +131,15 @@ public class JoinDefinition {
     }
 
     /**
-     * Set the distribution factor and stage name of the skewed stage. This should be set if the join being performed
-     * is skewed (ie. joining a large dataset with a small dataset) and the "small" dataset is too large to broadcast
-     * . The specified skewed stage must be marked as "required" and neither stage should be broadcast for
-     * distribution to work.
+     * Set the distribution factor and stage name of the skewed stage. This should be set if the
+     * join being performed is skewed (ie. joining a large dataset with a small dataset) and the
+     * "small" dataset is too large to broadcast . The specified skewed stage must be marked as
+     * "required" and neither stage should be broadcast for distribution to work.
      *
-     * @param size      The number of distributions to split each key into. Note that the smaller dataset will grow by
-     *                  this factor, values greater than 20 are not recommended
-     * @param stageName The name of the input stage that contains the skewed data, this stage must be marked as
-     *                  "required"
-     * @return
+     * @param size The number of distributions to split each key into. Note that the smaller
+     *     dataset will grow by this factor, values greater than 20 are not recommended
+     * @param stageName The name of the input stage that contains the skewed data, this stage
+     *     must be marked as "required"
      */
     public Builder setDistributionFactor(int size, String stageName) {
       this.distribution = new JoinDistribution(size, stageName);
@@ -146,12 +147,12 @@ public class JoinDefinition {
     }
 
     /**
-     * Set the output schema for the join. This should only be set if the input JoinStages do not contain known
-     * schemas. The most common scenario here is when the input schemas are not known when the pipeline is deployed
-     * due to macros.
+     * Set the output schema for the join. This should only be set if the input JoinStages do not
+     * contain known schemas. The most common scenario here is when the input schemas are not known
+     * when the pipeline is deployed due to macros.
      * <p>
-     * When all input schemas are known, if the expected output schema differs from this schema, an error
-     * will be thrown.
+     * When all input schemas are known, if the expected output schema differs from this schema, an
+     * error will be thrown.
      */
     public Builder setOutputSchema(Schema outputSchema) {
       this.outputSchema = outputSchema;
@@ -194,7 +195,7 @@ public class JoinDefinition {
       }
 
       return new JoinDefinition(selectedFields, stages, condition,
-        outputSchema == null ? generatedOutputSchema : outputSchema, distribution);
+          outputSchema == null ? generatedOutputSchema : outputSchema, distribution);
     }
 
     @Nullable
@@ -202,14 +203,14 @@ public class JoinDefinition {
       Set<String> outputFieldNames = new HashSet<>();
       List<Schema.Field> outputFields = new ArrayList<>(selectedFields.size());
       Map<String, JoinStage> stageMap = stages.stream()
-        .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
+          .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
 
       for (JoinField field : selectedFields) {
         JoinStage joinStage = stageMap.get(field.getStageName());
         if (joinStage == null) {
           errors.add(new SelectedFieldError(field, String.format(
-            "Selected field '%s'.'%s' is invalid because stage '%s' is not part of the join.",
-            field.getStageName(), field.getFieldName(), field.getStageName())));
+              "Selected field '%s'.'%s' is invalid because stage '%s' is not part of the join.",
+              field.getStageName(), field.getFieldName(), field.getStageName())));
           continue;
         }
         Schema stageSchema = joinStage.getSchema();
@@ -222,16 +223,17 @@ public class JoinDefinition {
         Schema.Field schemaField = stageSchema.getField(field.getFieldName());
         if (schemaField == null) {
           errors.add(new SelectedFieldError(field, String.format(
-            "Selected field '%s'.'%s' is invalid because stage '%s' does not contain field '%s'.",
-            field.getStageName(), field.getFieldName(), field.getStageName(), field.getFieldName())));
+              "Selected field '%s'.'%s' is invalid because stage '%s' does not contain field '%s'.",
+              field.getStageName(), field.getFieldName(), field.getStageName(),
+              field.getFieldName())));
           continue;
         }
 
         String outputFieldName = field.getAlias() == null ? field.getFieldName() : field.getAlias();
         if (!outputFieldNames.add(outputFieldName)) {
           errors.add(new SelectedFieldError(field, String.format(
-            "Field '%s' from stage '%s' is a duplicate. Set an alias to make it unique.",
-            outputFieldName, field.getStageName())));
+              "Field '%s' from stage '%s' is a duplicate. Set an alias to make it unique.",
+              outputFieldName, field.getStageName())));
           continue;
         }
 
@@ -250,14 +252,15 @@ public class JoinDefinition {
     }
 
     /**
-     * Validate that the first schema is compatible with the second. Schema s1 is compatible with schema s2 if all
-     * the fields in s1 are present in s2 with the same type, or with the nullable version of the type. In addition,
-     * s2 cannot contain any fields that are not present in s1.
+     * Validate that the first schema is compatible with the second. Schema s1 is compatible with
+     * schema s2 if all the fields in s1 are present in s2 with the same type, or with the nullable
+     * version of the type. In addition, s2 cannot contain any fields that are not present in s1.
      *
      * @param expected the expected schema
      * @param provided the provided schema
      */
-    private static void validateSchemaCompatibility(Schema expected, Schema provided, List<JoinError> errors) {
+    private static void validateSchemaCompatibility(Schema expected, Schema provided,
+        List<JoinError> errors) {
       Set<String> missingFields = new HashSet<>();
       for (Schema.Field expectedField : expected.getFields()) {
         Schema.Field providedField = provided.getField(expectedField.getName());
@@ -269,39 +272,43 @@ public class JoinDefinition {
         Schema providedFieldSchema = providedField.getSchema();
         boolean expectedIsNullable = expectedFieldSchema.isNullable();
         boolean providedIsNullable = providedFieldSchema.isNullable();
-        expectedFieldSchema = expectedIsNullable ? expectedFieldSchema.getNonNullable() : expectedFieldSchema;
-        providedFieldSchema = providedIsNullable ? providedFieldSchema.getNonNullable() : providedFieldSchema;
+        expectedFieldSchema =
+            expectedIsNullable ? expectedFieldSchema.getNonNullable() : expectedFieldSchema;
+        providedFieldSchema =
+            providedIsNullable ? providedFieldSchema.getNonNullable() : providedFieldSchema;
         if (expectedFieldSchema.getType() != providedFieldSchema.getType()) {
           errors.add(new OutputSchemaError(
-            expectedField.getName(), expectedFieldSchema.getDisplayName(),
-            String.format("Provided schema does not match expected schema. " +
-                "Field '%s' is a '%s' but is expected to be a '%s'",
               expectedField.getName(), expectedFieldSchema.getDisplayName(),
-              providedFieldSchema.getDisplayName())));
+              String.format("Provided schema does not match expected schema. " +
+                      "Field '%s' is a '%s' but is expected to be a '%s'",
+                  expectedField.getName(), expectedFieldSchema.getDisplayName(),
+                  providedFieldSchema.getDisplayName())));
           continue;
         }
         if (expectedIsNullable && !providedIsNullable) {
           errors.add(new OutputSchemaError(
-            expectedField.getName(), expectedFieldSchema.getDisplayName(),
-            String.format("Provided schema does not match expected schema. Field '%s' should be nullable",
-              expectedField.getName())));
+              expectedField.getName(), expectedFieldSchema.getDisplayName(),
+              String.format(
+                  "Provided schema does not match expected schema. Field '%s' should be nullable",
+                  expectedField.getName())));
         }
       }
 
       if (!missingFields.isEmpty()) {
         errors.add(new JoinError(String.format(
-          "Provided schema is missing fields: %s. Select fewer fields or update the output schema.",
-          String.join(", ", missingFields))));
+            "Provided schema is missing fields: %s. Select fewer fields or update the output schema.",
+            String.join(", ", missingFields))));
       }
 
       for (Schema.Field providedField : provided.getFields()) {
         String fieldName = providedField.getName();
         if (expected.getField(fieldName) == null) {
           errors.add(new OutputSchemaError(
-            fieldName, null,
-            String.format("The output schema contains extra field '%s' that not in the list of selected fields.",
-              fieldName),
-            "Select it from one of the inputs, or remove it from the output schema."));
+              fieldName, null,
+              String.format(
+                  "The output schema contains extra field '%s' that not in the list of selected fields.",
+                  fieldName),
+              "Select it from one of the inputs, or remove it from the output schema."));
         }
       }
     }

@@ -28,31 +28,32 @@ import java.util.Map;
 public interface ProgramStatePublisher {
 
   /**
-   *
-   * @return if program status notification with given system arguments would need a program start (false) or not
-   * (true). If true it means that program start is handled elsewhere (e.g. in preview or workflow) and
-   * notification is only to report program start already happened. Such notification would not need to have the
-   * {@link ProgramOptionConstants#PROGRAM_DESCRIPTOR} field and will have
-   * {@link ProgramOptionConstants#PROGRAM_ARTIFACT_ID} field instead.
+   * @return if program status notification with given system arguments would need a program start
+   *     (false) or not (true). If true it means that program start is handled elsewhere (e.g. in
+   *     preview or workflow) and notification is only to report program start already happened.
+   *     Such notification would not need to have the {@link ProgramOptionConstants#PROGRAM_DESCRIPTOR}
+   *     field and will have {@link ProgramOptionConstants#PROGRAM_ARTIFACT_ID} field instead.
    */
   static boolean isProgramStartSkipped(Map<String, String> systemArguments) {
     boolean isInWorkflow = systemArguments.containsKey(ProgramOptionConstants.WORKFLOW_NAME);
-    boolean skipProvisioning = Boolean.parseBoolean(systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
+    boolean skipProvisioning = Boolean.parseBoolean(
+        systemArguments.get(ProgramOptionConstants.SKIP_PROVISIONING));
 
     return isInWorkflow || skipProvisioning;
   }
 
   /**
-   *
-   * @return {@link ArtifactId} retrieved from either {@link ProgramOptionConstants#PROGRAM_ARTIFACT_ID} or
-   * {@link ProgramOptionConstants#PROGRAM_DESCRIPTOR}
+   * @return {@link ArtifactId} retrieved from either {@link ProgramOptionConstants#PROGRAM_ARTIFACT_ID}
+   *     or {@link ProgramOptionConstants#PROGRAM_DESCRIPTOR}
    */
   static ArtifactId getArtifactId(Gson gson, Map<String, String> properties) {
     if (properties.containsKey(ProgramOptionConstants.PROGRAM_ARTIFACT_ID)) {
-      return gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_ARTIFACT_ID), ArtifactId.class);
+      return gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_ARTIFACT_ID),
+          ArtifactId.class);
     } else {
       //Old program notification, it is passing program descriptor
-      return gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class)
+      return gson.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR),
+              ProgramDescriptor.class)
           .getArtifactId();
     }
   }

@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * Represents metadata for the sensitive data to be stored.
  */
 public class SecretMetadata {
+
   private final String name;
   private final String description;
   private final long creationTimeMs;
@@ -40,7 +41,7 @@ public class SecretMetadata {
    * @param properties properties of the secret
    */
   public SecretMetadata(String name, @Nullable String description, long creationTimeMs,
-                        Map<String, String> properties) {
+      Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.creationTimeMs = creationTimeMs;
@@ -86,9 +87,9 @@ public class SecretMetadata {
     }
     SecretMetadata that = (SecretMetadata) o;
     return creationTimeMs == that.creationTimeMs &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(properties, that.properties);
+        Objects.equals(name, that.name) &&
+        Objects.equals(description, that.description) &&
+        Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -99,9 +100,9 @@ public class SecretMetadata {
   @Override
   public String toString() {
     return "SecretMetadata{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", creationTimeMs=" + creationTimeMs +
-      '}';
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", creationTimeMs=" + creationTimeMs +
+        '}';
   }
 }

@@ -22,6 +22,7 @@ import java.util.Objects;
  * A class that holds metadata for a new commit.
  */
 public class CommitMeta {
+
   private final String author;
   private final String committer;
   private final long timestampMillis;
@@ -59,8 +60,9 @@ public class CommitMeta {
       return false;
     }
     CommitMeta that = (CommitMeta) o;
-    return timestampMillis == that.timestampMillis && author.equals(that.author) && committer.equals(that.committer) &&
-      message.equals(that.message);
+    return timestampMillis == that.timestampMillis && author.equals(that.author)
+        && committer.equals(that.committer) &&
+        message.equals(that.message);
   }
 
   @Override

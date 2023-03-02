@@ -31,10 +31,12 @@ import java.util.Set;
 /**
  *
  */
-public final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapReduceSpecification> {
+public final class MapReduceSpecificationCodec extends
+    AbstractSpecificationCodec<MapReduceSpecification> {
 
   @Override
-  public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.addProperty("className", src.getClassName());
@@ -64,8 +66,9 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
   }
 
   @Override
-  public MapReduceSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public MapReduceSpecification deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();
@@ -81,10 +84,11 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     String outputDataSet = outputDataSetElem == null ? null : outputDataSetElem.getAsString();
 
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
     return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                      dataSets, properties, driverResources, mapperResources, reducerResources,
-                                      plugins);
+        dataSets, properties, driverResources, mapperResources, reducerResources,
+        plugins);
   }
 
   /**
@@ -95,7 +99,8 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
    * @param context The context to deserialize object.
    * @return A {@link Resources} or {@code null}.
    */
-  private Resources deserializeResources(JsonObject jsonObj, String prefix, JsonDeserializationContext context) {
+  private Resources deserializeResources(JsonObject jsonObj, String prefix,
+      JsonDeserializationContext context) {
     // See if it of new format
     String name = prefix + "Resources";
     JsonElement element = jsonObj.get(name);

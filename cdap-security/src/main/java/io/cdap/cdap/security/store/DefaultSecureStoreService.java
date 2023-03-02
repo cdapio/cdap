@@ -41,46 +41,47 @@ import javax.annotation.Nullable;
  * Default implementation of the service that manages access to the Secure Store,
  */
 public class DefaultSecureStoreService extends AbstractIdleService implements SecureStoreService {
+
   private final AccessEnforcer accessEnforcer;
   private final AuthenticationContext authenticationContext;
   private final SecureStoreService secureStoreService;
 
   @Inject
   DefaultSecureStoreService(AccessEnforcer accessEnforcer,
-                            AuthenticationContext authenticationContext,
-                            @Named(SecureStoreServerModule.DELEGATE_SECURE_STORE_SERVICE)
-                              SecureStoreService secureStoreService) {
+      AuthenticationContext authenticationContext,
+      @Named(SecureStoreServerModule.DELEGATE_SECURE_STORE_SERVICE)
+          SecureStoreService secureStoreService) {
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStoreService = secureStoreService;
   }
 
   /**
-   * Lists all the secure keys in the given namespace that the user has access to.
-   * Returns an empty list if the user does not have access to any of the keys in the namespace.
+   * Lists all the secure keys in the given namespace that the user has access to. Returns an empty
+   * list if the user does not have access to any of the keys in the namespace.
    *
    * @return A map of key names accessible by the user and their descriptions.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws IOException If there was a problem reading from the store.
-   *
    */
   @Override
   public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
     accessEnforcer.enforceOnParent(EntityType.SECUREKEY, new NamespaceId(namespace),
-                                   authenticationContext.getPrincipal(), StandardPermission.LIST);
+        authenticationContext.getPrincipal(), StandardPermission.LIST);
     Principal principal = authenticationContext.getPrincipal();
     return secureStoreService.list(namespace);
   }
 
   /**
-   * Checks if the user has access to read the secure key and returns the {@link SecureStoreData} associated
-   * with the key if they do.
+   * Checks if the user has access to read the secure key and returns the {@link SecureStoreData}
+   * associated with the key if they do.
    *
    * @return Data associated with the key if the user has read access.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws NotFoundException If the key is not found in the store.
    * @throws IOException If there was a problem reading from the store.
-   * @throws UnauthorizedException If the user does not have READ permissions on the secure key.
+   * @throws UnauthorizedException If the user does not have READ permissions on the secure
+   *     key.
    */
   @Override
   public final SecureStoreData get(String namespace, String name) throws Exception {
@@ -93,13 +94,15 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   /**
    * Puts the user provided data in the secure store, if the user has admin access to the key.
    *
-   * @throws UnauthorizedException If the user does not have write permissions on the namespace.
+   * @throws UnauthorizedException If the user does not have write permissions on the
+   *     namespace.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws IOException If there was a problem storing the key to underlying provider.
    */
   @Override
-  public final synchronized void put(String namespace, String name, String value, @Nullable String description,
-                                     Map<String, String> properties) throws Exception {
+  public final synchronized void put(String namespace, String name, String value,
+      @Nullable String description,
+      Map<String, String> properties) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(namespace);
     SecureKeyId secureKeyId = namespaceId.secureKey(name);
@@ -108,9 +111,10 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   }
 
   /**
-   * Deletes the key if the user has ADMIN privileges to the key. 
+   * Deletes the key if the user has ADMIN privileges to the key.
    *
-   * @throws UnauthorizedException If the user does not have admin privileges required to delete the secure key.
+   * @throws UnauthorizedException If the user does not have admin privileges required to delete
+   *     the secure key.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws NotFoundException If the key to be deleted is not found.
    * @throws IOException If there was a problem deleting it from the underlying provider.

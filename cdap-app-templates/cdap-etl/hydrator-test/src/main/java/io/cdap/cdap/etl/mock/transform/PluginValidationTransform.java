@@ -35,11 +35,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This transform is basically identity transform but can be used to validate the plugin config can be set as macro
+ * This transform is basically identity transform but can be used to validate the plugin config can
+ * be set as macro
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name(PluginValidationTransform.PLUGIN_NAME)
 public class PluginValidationTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final String PLUGIN_NAME = "PluginValidation";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -52,13 +54,14 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     if (!config.containsMacro("plugin1") && !config.containsMacro("plugin1Type")) {
-      pipelineConfigurer.usePlugin(config.connectionConfig.plugin1Type, config.connectionConfig.plugin1,
-                                   config.connectionConfig.plugin1, PluginProperties.builder().build());
+      pipelineConfigurer.usePlugin(config.connectionConfig.plugin1Type,
+          config.connectionConfig.plugin1,
+          config.connectionConfig.plugin1, PluginProperties.builder().build());
     }
 
     if (!config.containsMacro("plugin2") && !config.containsMacro("plugin2Type")) {
       pipelineConfigurer.usePlugin(config.plugin2Type, config.plugin2,
-                                   config.plugin2, PluginProperties.builder().build());
+          config.plugin2, PluginProperties.builder().build());
     }
   }
 
@@ -69,12 +72,13 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
     Object plugin2 = context.newPluginInstance(config.plugin2);
     if (plugin1 == null || plugin2 == null) {
       throw new RuntimeException(String.format("Both %s and %s should get instantiated.",
-                                               config.connectionConfig.plugin1, config.plugin2));
+          config.connectionConfig.plugin1, config.plugin2));
     }
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     emitter.emit(input);
   }
 
@@ -82,6 +86,7 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
    * Config for the source.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     public ConnectionConfig connectionConfig;
 
@@ -96,6 +101,7 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
    * Connection Config for mock source
    */
   public static class ConnectionConfig extends PluginConfig {
+
     @Macro
     public String plugin1;
 
@@ -103,7 +109,8 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
     public String plugin1Type;
   }
 
-  public static ETLPlugin getPlugin(String plugin1, String plugin1Type, String plugin2, String plugin2Type) {
+  public static ETLPlugin getPlugin(String plugin1, String plugin1Type, String plugin2,
+      String plugin2Type) {
     Map<String, String> properties = new HashMap<>();
     properties.put("plugin1", plugin1);
     properties.put("plugin1Type", plugin1Type);
@@ -112,7 +119,8 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
     return new ETLPlugin(PLUGIN_NAME, Transform.PLUGIN_TYPE, properties, null);
   }
 
-  public static ETLPlugin getPluginUsingConnection(String connectionName, String plugin2, String plugin2Type) {
+  public static ETLPlugin getPluginUsingConnection(String connectionName, String plugin2,
+      String plugin2Type) {
     Map<String, String> properties = new HashMap<>();
     properties.put("connectionConfig", String.format("${conn(%s)}", connectionName));
     properties.put("plugin2", plugin2);
@@ -122,14 +130,16 @@ public class PluginValidationTransform extends Transform<StructuredRecord, Struc
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
-                                                               false, ImmutableSet.of("plugin1", "plugin1Type")));
+    properties.put("connectionConfig",
+        new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
+            false, ImmutableSet.of("plugin1", "plugin1Type")));
     properties.put("plugin1", new PluginPropertyField("plugin1", "", "string", true, true));
     properties.put("plugin1Type", new PluginPropertyField("plugin1Type", "", "string", true, true));
     properties.put("plugin2", new PluginPropertyField("plugin2", "", "string", true, true));
     properties.put("plugin2Type", new PluginPropertyField("plugin2Type", "", "string", true, true));
     return PluginClass.builder().setName(PLUGIN_NAME).setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(PluginValidationTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(PluginValidationTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

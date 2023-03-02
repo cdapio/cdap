@@ -20,9 +20,9 @@ import io.cdap.cdap.etl.api.Lookup;
 import java.util.Map;
 
 /**
- * Implementation of {@link AbstractLookupProvider} that uses {@link DatasetContext}.
- * This provides the raw {@link Lookup} without doing any transaction-wrapping for you,
- * and therefore should be used when executing lookup functions inside a transaction.
+ * Implementation of {@link AbstractLookupProvider} that uses {@link DatasetContext}. This provides
+ * the raw {@link Lookup} without doing any transaction-wrapping for you, and therefore should be
+ * used when executing lookup functions inside a transaction.
  */
 public class DatasetContextLookupProvider extends AbstractLookupProvider {
 

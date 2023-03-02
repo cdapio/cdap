@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
  * Currently joins can only be performed on equality on a set of fields from each stage.
  */
 public class JoinCondition {
+
   private final Op op;
 
   private JoinCondition(Op op) {
@@ -49,12 +50,12 @@ public class JoinCondition {
   }
 
   /**
-   * Validate that is condition is valid to use when joining the given stages.
-   * Returns errors found when performing validation.
+   * Validate that is condition is valid to use when joining the given stages. Returns errors found
+   * when performing validation.
    *
    * @param joinStages the stages that will be joined on this condition
-   * @return collection of errors found when performing validation.
-   *   The collection will be empty if there are no problems.
+   * @return collection of errors found when performing validation. The collection will be empty if
+   *     there are no problems.
    */
   public Collection<JoinError> validate(List<JoinStage> joinStages) {
     // no-op
@@ -81,6 +82,7 @@ public class JoinCondition {
    * Join on an arbitrary expression.
    */
   public static class OnExpression extends JoinCondition {
+
     private final String expression;
     private final Map<String, String> datasetAliases;
 
@@ -103,15 +105,16 @@ public class JoinCondition {
       List<JoinError> errors = new ArrayList<>();
       if (joinStages.size() != 2) {
         errors.add(
-          new ExpressionConditionError("Join expressions are only supported for joins between two datasets."));
+            new ExpressionConditionError(
+                "Join expressions are only supported for joins between two datasets."));
       }
       for (JoinStage stage : joinStages) {
         if (stage.getSchema() == null) {
           errors.add(
-            new ExpressionConditionError(
-              String.format("Input stage '%s' does not have a set schema. " +
-                              "Advanced join conditions cannot be used with dynamic or unknown input schemas.",
-                            stage.getStageName())));
+              new ExpressionConditionError(
+                  String.format("Input stage '%s' does not have a set schema. " +
+                          "Advanced join conditions cannot be used with dynamic or unknown input schemas.",
+                      stage.getStageName())));
         }
       }
       return errors;
@@ -121,6 +124,7 @@ public class JoinCondition {
      * Builder for expression join conditions
      */
     public static class Builder {
+
       private String expression;
       private final Map<String, String> datasetAliases;
 
@@ -157,6 +161,7 @@ public class JoinCondition {
    * Join on multiple keys from each stage.
    */
   public static class OnKeys extends JoinCondition {
+
     private final Set<JoinKey> keys;
     private final boolean nullSafe;
 
@@ -179,7 +184,7 @@ public class JoinCondition {
       List<JoinError> errors = new ArrayList<>();
 
       Map<String, JoinStage> stageMap = joinStages.stream()
-        .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
+          .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
 
       for (JoinKey joinKey : keys) {
         String joinStageName = joinKey.getStageName();
@@ -187,8 +192,8 @@ public class JoinCondition {
         // check that the stage for each key is in the list of stages
         if (joinStage == null) {
           errors.add(new JoinKeyError(joinKey,
-                                      String.format("Join key for stage '%s' is invalid. " +
-                                                      "Stage '%s' is not an input.", joinStageName, joinStageName)));
+              String.format("Join key for stage '%s' is invalid. " +
+                  "Stage '%s' is not an input.", joinStageName, joinStageName)));
           continue;
         }
         // this happens if the schema for that stage is unknown.
@@ -197,8 +202,8 @@ public class JoinCondition {
           continue;
         }
         Set<String> fields = joinStage.getSchema().getFields().stream()
-          .map(Schema.Field::getName)
-          .collect(Collectors.toSet());
+            .map(Schema.Field::getName)
+            .collect(Collectors.toSet());
 
         // check that the key fields for each key is in fields for that stage
         // for example, when joining on A.id = B.uid, check that 'id' is in the fields for stage A and 'uid' for stage B
@@ -206,15 +211,15 @@ public class JoinCondition {
         keysCopy.removeAll(fields);
         if (keysCopy.size() == 1) {
           errors.add(new JoinKeyError(joinKey,
-                                      String.format("Join key for stage '%s' is invalid. " +
-                                                      "Field '%s' does not exist in the stage.",
-                                                    joinStageName, keysCopy.iterator().next())));
+              String.format("Join key for stage '%s' is invalid. " +
+                      "Field '%s' does not exist in the stage.",
+                  joinStageName, keysCopy.iterator().next())));
         }
         if (keysCopy.size() > 1) {
           errors.add(new JoinKeyError(joinKey,
-                                      String.format("Join key for stage '%s' is invalid. " +
-                                                      "Fields %s do not exist in the stage.",
-                                                    joinStageName, String.join(", ", keysCopy))));
+              String.format("Join key for stage '%s' is invalid. " +
+                      "Fields %s do not exist in the stage.",
+                  joinStageName, String.join(", ", keysCopy))));
         }
       }
 
@@ -248,9 +253,9 @@ public class JoinCondition {
 
           if (key1Schema.getType() != otherFieldSchema.getType()) {
             errors.add(new JoinKeyFieldError(otherKey.getStageName(), otherField, String.format(
-              "Type mismatch on join keys. '%s'.'%s' is of type '%s' while '%s'.'%s' is of type '%s'.",
-              key1.getStageName(), key1Field, key1Schema.getDisplayName(),
-              otherKey.getStageName(), otherField, otherFieldSchema.getDisplayName())));
+                "Type mismatch on join keys. '%s'.'%s' is of type '%s' while '%s'.'%s' is of type '%s'.",
+                key1.getStageName(), key1Field, key1Schema.getDisplayName(),
+                otherKey.getStageName(), otherField, otherFieldSchema.getDisplayName())));
           }
         }
       }
@@ -267,6 +272,7 @@ public class JoinCondition {
      * Builds an OnKeys condition.
      */
     public static class Builder {
+
       private final Set<JoinKey> keys;
       private boolean nullSafe;
 
@@ -287,9 +293,10 @@ public class JoinCondition {
       }
 
       /**
-       * Whether to perform null safe equality on the join keys. Null safe means a null value equals another null value.
-       * For example, when joining on A.id = B.id, if there are rows in both A and B with null ids, they will be
-       * joined together. When not performing a null-safe join, rows with null ids would not get joined.
+       * Whether to perform null safe equality on the join keys. Null safe means a null value equals
+       * another null value. For example, when joining on A.id = B.id, if there are rows in both A
+       * and B with null ids, they will be joined together. When not performing a null-safe join,
+       * rows with null ids would not get joined.
        *
        * Note that the behavior of traditional SQL systems is *not* to perform null safe joins. T
        */
@@ -315,15 +322,19 @@ public class JoinCondition {
         // this means there are stages with different number of fields.
         // it's the equivalent of trying to join on A.id = B.id and A.name = [null]
         if (numFieldsToStages.size() > 1) {
-          StringBuilder message = new StringBuilder("Must join on the same number of fields for each stage. ");
+          StringBuilder message = new StringBuilder(
+              "Must join on the same number of fields for each stage. ");
           for (Map.Entry<Integer, Set<String>> entry : numFieldsToStages.entrySet()) {
             int numFields = entry.getKey();
-            String fieldsStr = String.format("%d join field%s", numFields, numFields == 1 ? "" : "s");
+            String fieldsStr = String.format("%d join field%s", numFields,
+                numFields == 1 ? "" : "s");
             Set<String> stages = entry.getValue();
             if (stages.size() == 1) {
-              message.append(String.format("Stage '%s' has %s. ", stages.iterator().next(), fieldsStr));
+              message.append(
+                  String.format("Stage '%s' has %s. ", stages.iterator().next(), fieldsStr));
             } else {
-              message.append(String.format("Stages %s have %s. ", String.join(", ", stages), fieldsStr));
+              message.append(
+                  String.format("Stages %s have %s. ", String.join(", ", stages), fieldsStr));
             }
           }
           throw new InvalidJoinException(message.toString());

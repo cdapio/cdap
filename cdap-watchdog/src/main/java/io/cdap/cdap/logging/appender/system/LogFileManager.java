@@ -43,6 +43,7 @@ import org.slf4j.LoggerFactory;
  * Class including logic for getting log file to write to. Used by {@link CDAPLogAppender}
  */
 public final class LogFileManager implements Flushable, Syncable {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogFileManager.class);
   private static final String LOG_DIRECTORY_DATE_FORMAT = "yyyy-MM-dd";
 
@@ -56,8 +57,8 @@ public final class LogFileManager implements Flushable, Syncable {
   private final FileMetaDataWriter fileMetaDataWriter;
 
   LogFileManager(String dirPermissions, String filePermissions,
-                 long maxFileLifetimeMs, long maxFileSizeInBytes, int syncIntervalBytes,
-                 FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
+      long maxFileLifetimeMs, long maxFileSizeInBytes, int syncIntervalBytes,
+      FileMetaDataWriter fileMetaDataWriter, LocationFactory locationFactory) {
     this.dirPermissions = dirPermissions;
     this.filePermissions = filePermissions;
     this.maxLifetimeMillis = maxFileLifetimeMs;
@@ -73,35 +74,40 @@ public final class LogFileManager implements Flushable, Syncable {
   }
 
   /**
-   * Get log file output stream for the give logging context and timestamp - return an already open file,
-   * or create and return a new file or rotate a file based on time and return the corresponding stream.
+   * Get log file output stream for the give logging context and timestamp - return an already open
+   * file, or create and return a new file or rotate a file based on time and return the
+   * corresponding stream.
+   *
    * @param logPathIdentifier identify logging context
    * @param eventTimestamp timestamp from logging event
    * @return LogFileOutputStream output stream to the log file
-   * @throws IOException if there is exception while getting location or while writing meta data
+   * @throws IOException if there is exception while getting location or while writing meta
+   *     data
    */
   LogFileOutputStream getLogFileOutputStream(LogPathIdentifier logPathIdentifier,
-                                             long eventTimestamp) throws IOException {
+      long eventTimestamp) throws IOException {
     LogFileOutputStream logFileOutputStream = outputStreamMap.get(logPathIdentifier);
     if (logFileOutputStream == null) {
       logFileOutputStream = createOutputStream(logPathIdentifier, eventTimestamp);
     } else {
       // rotate the file if needed (time has passed)
-      logFileOutputStream = rotateOutputStream(logFileOutputStream, logPathIdentifier, eventTimestamp);
+      logFileOutputStream = rotateOutputStream(logFileOutputStream, logPathIdentifier,
+          eventTimestamp);
     }
     return logFileOutputStream;
   }
 
   private LogFileOutputStream createOutputStream(final LogPathIdentifier identifier,
-                                                 long timestamp) throws IOException {
+      long timestamp) throws IOException {
     TimeStampLocation location = createLocation(identifier);
     LogFileOutputStream logFileOutputStream = new LogFileOutputStream(
-      location.getLocation(), filePermissions, syncIntervalBytes, location.getTimeStamp(), new Closeable() {
-      @Override
-      public void close() throws IOException {
-        outputStreamMap.remove(identifier);
-      }
-    });
+        location.getLocation(), filePermissions, syncIntervalBytes, location.getTimeStamp(),
+        new Closeable() {
+          @Override
+          public void close() throws IOException {
+            outputStreamMap.remove(identifier);
+          }
+        });
     logFileOutputStream.flush();
     LOG.info("Created Avro file at {}", location);
 
@@ -109,7 +115,8 @@ public final class LogFileManager implements Flushable, Syncable {
     // LogFileOutputStream creation writes the schema to the avro file. if meta data write fails,
     // we then close output stream and delete the file
     try {
-      fileMetaDataWriter.writeMetaData(identifier, timestamp, location.getTimeStamp(), location.getLocation());
+      fileMetaDataWriter.writeMetaData(identifier, timestamp, location.getTimeStamp(),
+          location.getLocation());
     } catch (Throwable e) {
       // delete created file as there was exception while writing meta data
       Closeables.closeQuietly(logFileOutputStream);
@@ -145,10 +152,11 @@ public final class LogFileManager implements Flushable, Syncable {
   }
 
   private LogFileOutputStream rotateOutputStream(LogFileOutputStream logFileOutputStream,
-                                                 LogPathIdentifier identifier, long timestamp) throws IOException {
+      LogPathIdentifier identifier, long timestamp) throws IOException {
     long currentTs = System.currentTimeMillis();
     long timeSinceFileCreate = currentTs - logFileOutputStream.getCreateTime();
-    if (timeSinceFileCreate > maxLifetimeMillis || logFileOutputStream.getSize() > maxFileSizeInBytes) {
+    if (timeSinceFileCreate > maxLifetimeMillis
+        || logFileOutputStream.getSize() > maxFileSizeInBytes) {
       logFileOutputStream.close();
       return createOutputStream(identifier, timestamp);
     }
@@ -171,6 +179,7 @@ public final class LogFileManager implements Flushable, Syncable {
 
   /**
    * Flushes the contents of all the open log files
+   *
    * @throws IOException if flush failed on any of the underlying stream.
    */
   @Override
@@ -202,7 +211,8 @@ public final class LogFileManager implements Flushable, Syncable {
   private void ensureDirectoryCheck(Location location) throws IOException {
     if (!location.isDirectory() && !mkDirs(location) && !location.isDirectory()) {
       throw new IOException(
-        String.format("File Exists at the logging location %s, Expected to be a directory", location));
+          String.format("File Exists at the logging location %s, Expected to be a directory",
+              location));
     }
   }
 
@@ -222,10 +232,10 @@ public final class LogFileManager implements Flushable, Syncable {
     long currentTime = System.currentTimeMillis();
     String date = formatLogDirectoryName(currentTime);
     Location contextLocation =
-      logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
-        .append(date)
-        .append(logPathIdentifier.getPathId1())
-        .append(logPathIdentifier.getPathId2());
+        logsDirectoryLocation.append(logPathIdentifier.getNamespaceId())
+            .append(date)
+            .append(logPathIdentifier.getPathId1())
+            .append(logPathIdentifier.getPathId2());
     ensureDirectoryCheck(contextLocation);
 
     String fileName = String.format("%s.avro", currentTime);
@@ -233,6 +243,7 @@ public final class LogFileManager implements Flushable, Syncable {
   }
 
   private class TimeStampLocation {
+
     private final Location location;
     private final long timeStamp;
 
@@ -252,13 +263,14 @@ public final class LogFileManager implements Flushable, Syncable {
     @Override
     public String toString() {
       return "TimeStampLocation{" +
-        "location=" + location +
-        ", timeStamp=" + timeStamp +
-        '}';
+          "location=" + location +
+          ", timeStamp=" + timeStamp +
+          '}';
     }
   }
 
   public static String formatLogDirectoryName(long timestamp) {
-    return new SimpleDateFormat(LogFileManager.LOG_DIRECTORY_DATE_FORMAT).format(new Date(timestamp));
+    return new SimpleDateFormat(LogFileManager.LOG_DIRECTORY_DATE_FORMAT).format(
+        new Date(timestamp));
   }
 }

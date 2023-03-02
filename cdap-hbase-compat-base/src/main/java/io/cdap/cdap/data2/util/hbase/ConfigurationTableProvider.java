@@ -24,16 +24,18 @@ import org.apache.hadoop.hbase.client.Table;
  * Interface to obtain the configuration HBase table.
  */
 public interface ConfigurationTableProvider {
+
   /**
    * @return the configuration table as an {@link Table}
-   * @throws TableNotFoundException if the table does not exist. This is expected if a coprocessor starts before
-   *                                the CDAP master creates the table.
+   * @throws TableNotFoundException if the table does not exist. This is expected if a
+   *     coprocessor starts before the CDAP master creates the table.
    * @throws IOException for other errors
    */
   Table get() throws IOException;
 
   /**
-   * @return the full table name of the configuration table. This should be used for logging purposes only.
+   * @return the full table name of the configuration table. This should be used for logging
+   *     purposes only.
    */
   String getTableName();
 }

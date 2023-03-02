@@ -37,7 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A simple service for managing the lifecycle of the http service that hosts the support bundle REST api.
+ * A simple service for managing the lifecycle of the http service that hosts the support bundle
+ * REST api.
  */
 public class SupportBundleInternalService extends AbstractIdleService {
 
@@ -49,19 +50,20 @@ public class SupportBundleInternalService extends AbstractIdleService {
 
   @Inject
   SupportBundleInternalService(CConfiguration cConf, SConfiguration sConf,
-                               DiscoveryService discoveryService,
-                               @Named(Constants.SupportBundle.HANDLERS_NAME) Set<HttpHandler> handlers,
-                               CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      DiscoveryService discoveryService,
+      @Named(Constants.SupportBundle.HANDLERS_NAME) Set<HttpHandler> handlers,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SUPPORT_BUNDLE_SERVICE)
-      .setHttpHandlers(handlers)
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHost(cConf.get(Constants.SupportBundle.SERVICE_BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.SupportBundle.SERVICE_BIND_PORT))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_WORKER_THREADS))
-      .setExecThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_EXEC_THREADS))
-      .setConnectionBacklog(10000);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.SUPPORT_BUNDLE_SERVICE)
+        .setHttpHandlers(handlers)
+        .setExceptionHandler(new HttpExceptionHandler())
+        .setHost(cConf.get(Constants.SupportBundle.SERVICE_BIND_ADDRESS))
+        .setPort(cConf.getInt(Constants.SupportBundle.SERVICE_BIND_PORT))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_WORKER_THREADS))
+        .setExecThreadPoolSize(cConf.getInt(Constants.SupportBundle.SERVICE_EXEC_THREADS))
+        .setConnectionBacklog(10000);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -77,8 +79,8 @@ public class SupportBundleInternalService extends AbstractIdleService {
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.debug("SupportBundleInternal service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(
-        URIScheme.createDiscoverable(Constants.Service.SUPPORT_BUNDLE_SERVICE, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.SUPPORT_BUNDLE_SERVICE, httpService)));
 
   }
 

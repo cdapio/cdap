@@ -42,13 +42,16 @@ import java.lang.reflect.Type;
  * Deploys an application from an existing artifact.
  */
 public class UpdateAppCommand extends AbstractAuthCommand {
-  private static final Type CONFIG_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
+
+  private static final Type CONFIG_TYPE = new TypeToken<AppRequest<JsonObject>>() {
+  }.getType();
   private static final Gson GSON = new Gson();
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public UpdateAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+  public UpdateAppCommand(ApplicationClient applicationClient, FilePathResolver resolver,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -61,7 +64,8 @@ public class UpdateAppCommand extends AbstractAuthCommand {
 
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
-    ArtifactScope artifactScope = ArtifactScope.valueOf(arguments.get(ArgumentName.SCOPE.toString()).toUpperCase());
+    ArtifactScope artifactScope = ArtifactScope.valueOf(
+        arguments.get(ArgumentName.SCOPE.toString()).toUpperCase());
     ArtifactSummary artifact = new ArtifactSummary(artifactName, artifactVersion, artifactScope);
 
     JsonObject config = new JsonObject();
@@ -81,13 +85,15 @@ public class UpdateAppCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("update app <%s> <%s> <%s> <%s> [<%s>]", ArgumentName.APP, ArgumentName.ARTIFACT_NAME,
-      ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE, ArgumentName.APP_CONFIG_FILE);
+    return String.format("update app <%s> <%s> <%s> <%s> [<%s>]", ArgumentName.APP,
+        ArgumentName.ARTIFACT_NAME,
+        ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE, ArgumentName.APP_CONFIG_FILE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Updates %s to use another artifact version and/or configuration", Fragment.of(
-      Article.A, ElementType.APP.getName()));
+    return String.format("Updates %s to use another artifact version and/or configuration",
+        Fragment.of(
+            Article.A, ElementType.APP.getName()));
   }
 }

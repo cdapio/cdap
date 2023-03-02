@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/system/serviceproviders")
 public class OperationalStatsHttpHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsHttpHandler.class);
   private static final Gson GSON = new Gson();
 
@@ -55,17 +56,19 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   public void getServiceProviders(HttpRequest request, HttpResponder responder) throws Exception {
     // we want to fetch stats with the stat type 'info' grouped by the service name
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(getStats(OperationalStatsUtils.STAT_TYPE_KEY, OperationalStatsUtils.STAT_TYPE_INFO,
-                                            OperationalStatsUtils.SERVICE_NAME_KEY)));
+        GSON.toJson(
+            getStats(OperationalStatsUtils.STAT_TYPE_KEY, OperationalStatsUtils.STAT_TYPE_INFO,
+                OperationalStatsUtils.SERVICE_NAME_KEY)));
   }
 
   @GET
   @Path("/{service-provider}/stats")
   public void getServiceProviderStats(HttpRequest request, HttpResponder responder,
-                                      @PathParam("service-provider") String serviceProvider) throws Exception {
+      @PathParam("service-provider") String serviceProvider) throws Exception {
     // we want to fetch stats with the specified service name grouped by the stat type
     Map<String, Map<String, Object>> stats =
-      getStats(OperationalStatsUtils.SERVICE_NAME_KEY, serviceProvider, OperationalStatsUtils.STAT_TYPE_KEY);
+        getStats(OperationalStatsUtils.SERVICE_NAME_KEY, serviceProvider,
+            OperationalStatsUtils.STAT_TYPE_KEY);
     if (stats.isEmpty()) {
       throw new NotFoundException(String.format("Service provider %s not found", serviceProvider));
     }
@@ -75,10 +78,11 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Reads operational stats collected using the {@link OperationalStats} extension mechanism with the specified
-   * property key and value, grouped by the specified groupByKey.
+   * Reads operational stats collected using the {@link OperationalStats} extension mechanism with
+   * the specified property key and value, grouped by the specified groupByKey.
    *
-   * @param propertyKey the key that must be contained with the specified value in the stat to be returned
+   * @param propertyKey the key that must be contained with the specified value in the stat to
+   *     be returned
    * @param propertyValue the value that the specified key must have in the stat to be returned
    * @param groupByKey an additional key in the stat's property to group the stats by
    * @return a {@link Map} of the group to a {@link Map} of stats of that group
@@ -86,9 +90,11 @@ public class OperationalStatsHttpHandler extends AbstractHttpHandler {
    */
   @VisibleForTesting
   Map<String, Map<String, Object>> getStats(String propertyKey, String propertyValue,
-                                            String groupByKey) throws Exception {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(propertyKey), "Property should not be null or empty.");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(propertyValue), "Property value should not be null or empty.");
+      String groupByKey) throws Exception {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(propertyKey),
+        "Property should not be null or empty.");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(propertyValue),
+        "Property value should not be null or empty.");
     Hashtable<String, String> properties = new Hashtable<>();
     // we want stats with the specified value for the specified key, so set them in the properties
     properties.put(propertyKey, propertyValue);

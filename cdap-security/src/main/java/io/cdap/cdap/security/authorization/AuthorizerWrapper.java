@@ -40,7 +40,9 @@ import java.util.stream.Collectors;
  * Wraps an {@link Authorizer} and creates an {@link AccessController} out of it
  */
 public class AuthorizerWrapper implements AccessController {
-  private static final Set<EntityType> ENTITIES_SUPPORTING_READ = EnumSet.of(EntityType.DATASET, EntityType.SECUREKEY);
+
+  private static final Set<EntityType> ENTITIES_SUPPORTING_READ = EnumSet.of(EntityType.DATASET,
+      EntityType.SECUREKEY);
   private final Authorizer authorizer;
 
   public AuthorizerWrapper(Authorizer authorizer) {
@@ -123,7 +125,7 @@ public class AuthorizerWrapper implements AccessController {
   public Set<GrantedPermission> listGrants(Principal principal) throws AccessException {
     try {
       return authorizer.listPrivileges(principal).stream().map(
-        p -> new GrantedPermission(p.getAuthorizable(), p.getAction().getPermission())
+          p -> new GrantedPermission(p.getAuthorizable(), p.getAction().getPermission())
       ).collect(Collectors.toSet());
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
@@ -131,20 +133,24 @@ public class AuthorizerWrapper implements AccessController {
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void grant(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     try {
-      authorizer.grant(authorizable, principal, getActionSet(permissions, authorizable.getEntityType()));
+      authorizer.grant(authorizable, principal,
+          getActionSet(permissions, authorizable.getEntityType()));
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void revoke(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     try {
-      authorizer.revoke(authorizable, principal, getActionSet(permissions, authorizable.getEntityType()));
+      authorizer.revoke(authorizable, principal,
+          getActionSet(permissions, authorizable.getEntityType()));
     } catch (Exception e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
@@ -160,9 +166,11 @@ public class AuthorizerWrapper implements AccessController {
   }
 
   @Override
-  public void enforce(EntityId entity, Principal principal, Permission permission) throws AccessException {
+  public void enforce(EntityId entity, Principal principal, Permission permission)
+      throws AccessException {
     try {
-      if (permission == StandardPermission.GET && ENTITIES_SUPPORTING_READ.contains(entity.getEntityType())) {
+      if (permission == StandardPermission.GET && ENTITIES_SUPPORTING_READ.contains(
+          entity.getEntityType())) {
         authorizer.isVisible(entity, principal);
       } else {
         authorizer.enforce(entity, principal, getAction(permission, entity.getEntityType()));
@@ -174,10 +182,11 @@ public class AuthorizerWrapper implements AccessController {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+      throws AccessException {
     try {
       Set<Action> actions = getActionSet(permissions, entity.getEntityType());
-      if (actions.contains(Action.READ) && !ENTITIES_SUPPORTING_READ.contains(entity.getEntityType())) {
+      if (actions.contains(Action.READ) && !ENTITIES_SUPPORTING_READ.contains(
+          entity.getEntityType())) {
         //Convert GET into visibility check
         authorizer.isVisible(entity, principal);
         actions.remove(Action.READ);
@@ -191,8 +200,9 @@ public class AuthorizerWrapper implements AccessController {
   }
 
   @Override
-  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
-    throws AccessException {
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+      Permission permission)
+      throws AccessException {
     try {
       if (permission == StandardPermission.LIST) {
         authorizer.isVisible(parentId, principal);
@@ -206,7 +216,7 @@ public class AuthorizerWrapper implements AccessController {
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
-    throws AccessException {
+      throws AccessException {
     try {
       return authorizer.isVisible(entityIds, principal);
     } catch (Exception e) {
@@ -216,7 +226,7 @@ public class AuthorizerWrapper implements AccessController {
 
   private Set<Action> getActionSet(Set<? extends Permission> permissions, EntityType entityType) {
     return permissions.stream().map(p -> getAction(p, entityType))
-      .collect(Collectors.toCollection(() -> EnumSet.noneOf(Action.class)));
+        .collect(Collectors.toCollection(() -> EnumSet.noneOf(Action.class)));
   }
 
   static Action getAction(Permission permission, EntityType entityType) {

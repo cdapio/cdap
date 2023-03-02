@@ -39,11 +39,11 @@ import javax.ws.rs.Path;
 public final class WorkflowServiceHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()
-                                    .registerTypeAdapter(CustomActionSpecification.class,
-                                                         new CustomActionSpecificationCodec())
-                                    .registerTypeAdapter(ConditionSpecification.class,
-                                                         new ConditionSpecificationCodec())
-                                    .create();
+      .registerTypeAdapter(CustomActionSpecification.class,
+          new CustomActionSpecificationCodec())
+      .registerTypeAdapter(ConditionSpecification.class,
+          new ConditionSpecificationCodec())
+      .create();
 
   private final Supplier<List<WorkflowActionNode>> statusSupplier;
 
@@ -57,7 +57,8 @@ public final class WorkflowServiceHandler extends AbstractHttpHandler {
   @GET
   @Path("/status")
   public void handleStatus(HttpRequest request, HttpResponder responder) {
-    Type type = new TypeToken<List<WorkflowActionNode>>() { }.getType();
+    Type type = new TypeToken<List<WorkflowActionNode>>() {
+    }.getType();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(statusSupplier.get(), type));
   }
 }

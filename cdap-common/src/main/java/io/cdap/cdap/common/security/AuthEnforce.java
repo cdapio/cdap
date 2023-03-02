@@ -30,40 +30,44 @@ import javax.ws.rs.QueryParam;
  * Annotation for a method that needs Authorization enforcement.
  * <p>
  * {@link AuthEnforce#entities()}: Specifies the entity on which authorization will be enforced.
- * Method parameters {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a unique name and
- * those names should be provided here. if a class field needs to be specified then the field name itself should be
- * specified here. It can either be an EntityId or an array of Strings from which the EntityId on which enforcement
- * is needed (specified through {@link AuthEnforce#enforceOn()}) can be constructed. This will first be looked up
- * in method parameter and if not found it will be looked up in the class member variable. If a class member
- * variable is marked with the same name as a method parameter then the method parameter will take precedence over
- * the class member variable. If you you want the class member variable to be used then specify it with
- * this.AnnotationName
+ * Method parameters {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a
+ * unique name and those names should be provided here. if a class field needs to be specified then
+ * the field name itself should be specified here. It can either be an EntityId or an array of
+ * Strings from which the EntityId on which enforcement is needed (specified through {@link
+ * AuthEnforce#enforceOn()}) can be constructed. This will first be looked up in method parameter
+ * and if not found it will be looked up in the class member variable. If a class member variable is
+ * marked with the same name as a method parameter then the method parameter will take precedence
+ * over the class member variable. If you you want the class member variable to be used then specify
+ * it with this.AnnotationName
  * <p>
- * {@link AuthEnforce#enforceOn()}: CDAP entities (see {@link EntityId}) class on which enforcement will be done. If
- * you want to enforce on the parent of the entity specify that EntityId class here
+ * {@link AuthEnforce#enforceOn()}: CDAP entities (see {@link EntityId}) class on which enforcement
+ * will be done. If you want to enforce on the parent of the entity specify that EntityId class
+ * here
  * <p>
- * {@link AuthEnforce#permissions()}: An array of {@link StandardPermission} to be checked during enforcement
+ * {@link AuthEnforce#permissions()}: An array of {@link StandardPermission} to be checked during
+ * enforcement
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface AuthEnforce {
 
   /**
-   * Specifies the entity on which authorization will be enforced. Method parameters should be marked with
-   * {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a unique name and those names should
-   * be provided here. if a class field needs to be specified then the field name itself should be specified here.
-   * It can either be an EntityId or an array of Strings from which the EntityId on which enforcement
-   * is needed (specified through {@link AuthEnforce#enforceOn()}) can be constructed. This will first be looked up
-   * in method parameter and if not found it will be looked up in the class member variable. If a class member
-   * variable is marked with the same name as a method parameter then the method parameter will take precedence over
-   * the class member variable. If you you want the class member variable to be used then specify it with
-   * this.AnnotationName
+   * Specifies the entity on which authorization will be enforced. Method parameters should be
+   * marked with {@link Name}(preferred)/{@link QueryParam}/{@link PathParam} annotation with a
+   * unique name and those names should be provided here. if a class field needs to be specified
+   * then the field name itself should be specified here. It can either be an EntityId or an array
+   * of Strings from which the EntityId on which enforcement is needed (specified through {@link
+   * AuthEnforce#enforceOn()}) can be constructed. This will first be looked up in method parameter
+   * and if not found it will be looked up in the class member variable. If a class member variable
+   * is marked with the same name as a method parameter then the method parameter will take
+   * precedence over the class member variable. If you you want the class member variable to be used
+   * then specify it with this.AnnotationName
    */
   String[] entities();
 
   /**
-   * CDAP entities (see {@link EntityId}) class on which enforcement will be done. If
-   * you want to enforce on the parent of the entity specify that EntityId class here
+   * CDAP entities (see {@link EntityId}) class on which enforcement will be done. If you want to
+   * enforce on the parent of the entity specify that EntityId class here
    */
   Class<? extends EntityId> enforceOn();
 

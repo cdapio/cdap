@@ -20,7 +20,8 @@ package io.cdap.cdap.proto.id;
  */
 public class Ids {
 
-  private Ids() {}
+  private Ids() {
+  }
 
   public static NamespaceId namespace(String namespace) {
     return new NamespaceId(namespace);

@@ -22,6 +22,7 @@ import java.util.Objects;
  * An error related to a specific join key field.
  */
 public class JoinKeyFieldError extends JoinError {
+
   private final String stageName;
   private final String keyField;
 
@@ -52,7 +53,7 @@ public class JoinKeyFieldError extends JoinError {
     }
     JoinKeyFieldError that = (JoinKeyFieldError) o;
     return Objects.equals(stageName, that.stageName) &&
-      Objects.equals(keyField, that.keyField);
+        Objects.equals(keyField, that.keyField);
   }
 
   @Override

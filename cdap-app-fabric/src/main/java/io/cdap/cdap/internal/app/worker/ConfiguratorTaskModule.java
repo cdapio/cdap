@@ -33,7 +33,8 @@ public class ConfiguratorTaskModule extends AbstractModule {
   protected void configure() {
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
     bind(UGIProvider.class).to(CurrentUGIProvider.class);
-    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
+        .in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
   }
 }

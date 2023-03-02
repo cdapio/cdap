@@ -32,7 +32,8 @@ public class SupportBundleVMInfoTaskFactory implements SupportBundleTaskFactory 
   private final VMInformationFetcher fetcher;
 
   @Inject
-  SupportBundleVMInfoTaskFactory(RemoteMonitorServicesFetcher servicesFetcher, VMInformationFetcher fetcher) {
+  SupportBundleVMInfoTaskFactory(RemoteMonitorServicesFetcher servicesFetcher,
+      VMInformationFetcher fetcher) {
     this.servicesFetcher = servicesFetcher;
     this.fetcher = fetcher;
   }

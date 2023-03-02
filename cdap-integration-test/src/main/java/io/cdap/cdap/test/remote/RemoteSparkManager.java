@@ -44,7 +44,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of {@link SparkManager} that interacts with CDAP using REST API.
  */
-public class RemoteSparkManager extends AbstractProgramManager<SparkManager> implements SparkManager {
+public class RemoteSparkManager extends AbstractProgramManager<SparkManager> implements
+    SparkManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteSparkManager.class);
 
@@ -52,7 +53,7 @@ public class RemoteSparkManager extends AbstractProgramManager<SparkManager> imp
   private final RESTClient restClient;
 
   public RemoteSparkManager(ProgramId programId, ApplicationManager applicationManager,
-                            ClientConfig clientConfig, RESTClient restClient) {
+      ClientConfig clientConfig, RESTClient restClient) {
     super(programId, applicationManager);
     this.clientConfig = clientConfig;
     this.restClient = restClient;
@@ -79,8 +80,8 @@ public class RemoteSparkManager extends AbstractProgramManager<SparkManager> imp
       URIScheme scheme = connectionConfig.isSSLEnabled() ? URIScheme.HTTPS : URIScheme.HTTP;
 
       return ServiceDiscoverable.createServiceBaseURL(
-        scheme.createDiscoverable("spark", new InetSocketAddress(connectionConfig.getHostname(),
-                                                                 connectionConfig.getPort())), programId);
+          scheme.createDiscoverable("spark", new InetSocketAddress(connectionConfig.getHostname(),
+              connectionConfig.getPort())), programId);
     } catch (TimeoutException e) {
       return null;
     } catch (Exception e) {
@@ -93,15 +94,15 @@ public class RemoteSparkManager extends AbstractProgramManager<SparkManager> imp
    * Checks if a user service is available by hitting the availability endpoint.
    */
   private void checkAvailability() throws IOException, UnauthenticatedException,
-    NotFoundException, UnauthorizedException {
+      NotFoundException, UnauthorizedException {
     URL url = clientConfig.resolveNamespacedURLV3(programId.getNamespaceId(),
-                                                  String.format("apps/%s/versions/%s/%s/%s/available",
-                                                                programId.getApplication(), programId.getVersion(),
-                                                                programId.getType().getCategoryName(),
-                                                                programId.getProgram()));
+        String.format("apps/%s/versions/%s/%s/%s/available",
+            programId.getApplication(), programId.getVersion(),
+            programId.getType().getCategoryName(),
+            programId.getProgram()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, clientConfig.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
-                                               HttpURLConnection.HTTP_UNAVAILABLE);
+        HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST,
+        HttpURLConnection.HTTP_UNAVAILABLE);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(programId);
     }

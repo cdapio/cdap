@@ -36,8 +36,8 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
   private final Iterable<RunRecord> runRecordList;
 
   public SupportBundlePipelineRunLogTask(File appFolderPath, ProgramId programName,
-                                         RemoteLogsFetcher remoteLogsFetcher,
-                                         Iterable<RunRecord> runRecordList) {
+      RemoteLogsFetcher remoteLogsFetcher,
+      Iterable<RunRecord> runRecordList) {
     this.appFolderPath = appFolderPath;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.programName = programName;
@@ -50,7 +50,7 @@ public class SupportBundlePipelineRunLogTask implements SupportBundleTask {
       String runId = runRecord.getPid();
       File file = new File(appFolderPath, runId + SupportBundleFileNames.LOG_SUFFIX_NAME);
       remoteLogsFetcher.writeProgramRunLogs(programName, runId, 0L,
-                                            TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), file);
+          TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), file);
     }
   }
 }

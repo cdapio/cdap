@@ -60,9 +60,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ScheduleStore extends from RAMJobStore and persists the trigger and schedule information into datasets.
+ * ScheduleStore extends from RAMJobStore and persists the trigger and schedule information into
+ * datasets.
  */
 public class DatasetBasedTimeScheduleStore extends RAMJobStore {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedTimeScheduleStore.class);
   private static final String JOB_KEY = "job";
   private static final String TRIGGER_KEY = "trigger";
@@ -90,20 +92,22 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   }
 
   @Override
-  public void storeJob(JobDetail newJob, boolean replaceExisting) throws ObjectAlreadyExistsException {
+  public void storeJob(JobDetail newJob, boolean replaceExisting)
+      throws ObjectAlreadyExistsException {
     super.storeJob(newJob, replaceExisting);
     persistJobAndTrigger(newJob, null);
   }
 
   @Override
-  public void storeTrigger(OperableTrigger newTrigger, boolean replaceExisting) throws JobPersistenceException {
+  public void storeTrigger(OperableTrigger newTrigger, boolean replaceExisting)
+      throws JobPersistenceException {
     super.storeTrigger(newTrigger, replaceExisting);
     persistJobAndTrigger(null, newTrigger);
   }
 
   @Override
   public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs,
-                                   boolean replace) throws JobPersistenceException {
+      boolean replace) throws JobPersistenceException {
     super.storeJobsAndTriggers(triggersAndJobs, replace);
     for (Map.Entry<JobDetail, Set<? extends Trigger>> e : triggersAndJobs.entrySet()) {
       persistJobAndTrigger(e.getKey(), null);
@@ -115,7 +119,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   @Override
   public void storeJobAndTrigger(JobDetail newJob, OperableTrigger newTrigger)
-                                 throws JobPersistenceException {
+      throws JobPersistenceException {
     storeJob(newJob, true);
     storeTrigger(newTrigger, true);
   }
@@ -179,7 +183,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void persistChangeOfState(final TriggerKey triggerKey, final Trigger.TriggerState newTriggerState) {
+  private void persistChangeOfState(final TriggerKey triggerKey,
+      final Trigger.TriggerState newTriggerState) {
     try {
       Preconditions.checkNotNull(triggerKey);
       TransactionRunners.run(transactionRunner, context -> {
@@ -191,7 +196,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
         } else {
           LOG.warn("Trigger key {} was not found while trying to persist its state to {}.",
-                   triggerKey, newTriggerState);
+              triggerKey, newTriggerState);
         }
       });
     } catch (Throwable th) {
@@ -251,7 +256,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   @VisibleForTesting
   @Nullable
   TriggerStatusV2 readTrigger(StructuredTable table, TriggerKey key) throws IOException {
-    byte [] result = get(table, TRIGGER_KEY, key.getName());
+    byte[] result = get(table, TRIGGER_KEY, key.getName());
     if (result != null) {
       return (TriggerStatusV2) SerializationUtils.deserialize(result);
     } else {
@@ -259,14 +264,15 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
-  private void upsert(StructuredTable table, String type, String name, byte[] data) throws IOException {
+  private void upsert(StructuredTable table, String type, String name, byte[] data)
+      throws IOException {
     List<Field<?>> fields = getPrimaryKeys(type, name);
     fields.add(Fields.bytesField(StoreDefinition.TimeScheduleStore.VALUE_FIELD, data));
     table.upsert(fields);
   }
 
   private void persistTrigger(StructuredTable table, OperableTrigger trigger,
-                              Trigger.TriggerState state) throws IOException {
+      Trigger.TriggerState state) throws IOException {
     byte[] data = SerializationUtils.serialize(new TriggerStatusV2(trigger, state));
     upsert(table, TRIGGER_KEY, trigger.getKey().getName(), data);
   }
@@ -283,29 +289,30 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = getTimeScheduleStructuredTable(context);
       try (CloseableIterator<StructuredRow> iterator =
-        table.scan(Range.singleton(getScanPrefix(JOB_KEY)), Integer.MAX_VALUE)) {
+          table.scan(Range.singleton(getScanPrefix(JOB_KEY)), Integer.MAX_VALUE)) {
         while (iterator.hasNext()) {
           JobDetail jobDetail =
-            (JobDetail) SerializationUtils.deserialize(
-              iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
+              (JobDetail) SerializationUtils.deserialize(
+                  iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
           LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
           jobs.add(jobDetail);
         }
       }
 
       try (CloseableIterator<StructuredRow> iterator =
-        table.scan(Range.singleton(getScanPrefix(TRIGGER_KEY)), Integer.MAX_VALUE)) {
+          table.scan(Range.singleton(getScanPrefix(TRIGGER_KEY)), Integer.MAX_VALUE)) {
         while (iterator.hasNext()) {
           TriggerStatusV2 trigger =
-            (TriggerStatusV2) SerializationUtils.deserialize(
-              iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
+              (TriggerStatusV2) SerializationUtils.deserialize(
+                  iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
           if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
-            trigger.state.equals(Trigger.TriggerState.PAUSED)) {
+              trigger.state.equals(Trigger.TriggerState.PAUSED)) {
             triggers.add(trigger);
             LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
           } else {
-            LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
-                      trigger.state);
+            LOG.debug("Schedule: trigger with key {} and state {} skipped",
+                trigger.trigger.getKey(),
+                trigger.state);
           }
         }
       }
@@ -335,16 +342,17 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
     for (TriggerKey key : triggersWithNoJob) {
       LOG.error(String.format("No Job was found for the Trigger key '%s'." +
-                                " Deleting the trigger entry from the store.", key));
+          " Deleting the trigger entry from the store.", key));
       executeDelete(key);
     }
   }
 
   /**
-   * Trigger and state.
-   * New version of TriggerStatus which supports custom serialization from CDAP 3.3 release.
+   * Trigger and state. New version of TriggerStatus which supports custom serialization from CDAP
+   * 3.3 release.
    */
   public static class TriggerStatusV2 implements Externalizable {
+
     private static final long serialVersionUID = -2972207194129529281L;
     private OperableTrigger trigger;
     private Trigger.TriggerState state;

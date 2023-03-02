@@ -68,9 +68,11 @@ import org.slf4j.LoggerFactory;
  * Just a java wrapper for accessing service's REST API.
  */
 public class DatasetServiceClient {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
   private static final Gson GSON = new Gson();
-  private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
+  private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() {
+  }.getType();
 
   private final RemoteClient remoteClient;
   private final NamespaceId namespaceId;
@@ -81,12 +83,13 @@ public class DatasetServiceClient {
   private final String masterShortUserName;
 
   DatasetServiceClient(NamespaceId namespaceId,
-                       CConfiguration cConf,
-                       AuthenticationContext authenticationContext,
-                       RemoteClientFactory remoteClientFactory) {
+      CConfiguration cConf,
+      AuthenticationContext authenticationContext,
+      RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
-      String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()));
+        Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
+        String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3,
+            namespaceId.getNamespace()));
     this.namespaceId = namespaceId;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
@@ -97,30 +100,34 @@ public class DatasetServiceClient {
 
   @Nullable
   public DatasetMeta getInstance(String instanceName)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
 
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;
     }
     if (HttpResponseStatus.FORBIDDEN.code() == response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to get dataset instance %s, details: %s",
-                                                         instanceName, response),
-                                           new UnauthorizedException(response.getResponseBodyAsString()));
+      throw new DatasetManagementException(
+          String.format("Failed to get dataset instance %s, details: %s",
+              instanceName, response),
+          new UnauthorizedException(response.getResponseBodyAsString()));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Cannot retrieve dataset instance %s info, details: %s",
-                                                         instanceName, response));
+      throw new DatasetManagementException(
+          String.format("Cannot retrieve dataset instance %s info, details: %s",
+              instanceName, response));
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
   }
 
-  Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException, UnauthorizedException {
+  Collection<DatasetSpecificationSummary> getAllInstances()
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
-                                                         response));
+      throw new DatasetManagementException(
+          String.format("Cannot retrieve all dataset instances, details: %s",
+              response));
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
@@ -130,100 +137,113 @@ public class DatasetServiceClient {
    * Get the dataset instances which have the specified dataset properties.
    */
   Collection<DatasetSpecificationSummary> getInstances(Map<String, String> properties)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doPost("datasets", GSON.toJson(properties));
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
-                                                         response));
+      throw new DatasetManagementException(
+          String.format("Cannot retrieve all dataset instances, details: %s",
+              response));
     }
 
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
   @Nullable
-  public DatasetTypeMeta getType(String typeName) throws DatasetManagementException, UnauthorizedException {
+  public DatasetTypeMeta getType(String typeName)
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doGet("types/" + typeName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Cannot retrieve dataset type %s info, details: %s",
-                                                         typeName, response));
+      throw new DatasetManagementException(
+          String.format("Cannot retrieve dataset type %s info, details: %s",
+              typeName, response));
     }
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetTypeMeta.class);
   }
 
   public void addInstance(String datasetInstanceName, String datasetType,
-                          DatasetProperties props) throws DatasetManagementException, UnauthorizedException {
+      DatasetProperties props) throws DatasetManagementException, UnauthorizedException {
     addInstance(datasetInstanceName, datasetType, props, null);
   }
 
   public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props,
-                          @Nullable KerberosPrincipalId owner)
-    throws DatasetManagementException, UnauthorizedException {
+      @Nullable KerberosPrincipalId owner)
+      throws DatasetManagementException, UnauthorizedException {
     String ownerPrincipal = owner == null ? null : owner.getPrincipal();
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription(), ownerPrincipal);
+        new DatasetInstanceConfiguration(datasetType, props.getProperties(), props.getDescription(),
+            ownerPrincipal);
 
-    HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
+    HttpResponse response = doPut("datasets/" + datasetInstanceName,
+        GSON.toJson(creationProperties));
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, response));
+      throw new InstanceConflictException(
+          String.format("Failed to add instance %s due to conflict, details: %s",
+              datasetInstanceName, response));
     }
     if (HttpResponseStatus.FORBIDDEN.code() == response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, response),
-                                           new UnauthorizedException(response.getResponseBodyAsString()));
+          datasetInstanceName, response),
+          new UnauthorizedException(response.getResponseBodyAsString()));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         datasetInstanceName, response));
+          datasetInstanceName, response));
     }
   }
 
   public void updateInstance(String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties",
-                                  GSON.toJson(props.getProperties()));
+        GSON.toJson(props.getProperties()));
 
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
     }
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to update instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, response));
+      throw new InstanceConflictException(
+          String.format("Failed to update instance %s due to conflict, details: %s",
+              datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
-                                                         datasetInstanceName, response));
+      throw new DatasetManagementException(
+          String.format("Failed to update instance %s, details: %s",
+              datasetInstanceName, response));
     }
   }
 
-  void truncateInstance(String datasetInstanceName) throws DatasetManagementException, UnauthorizedException {
+  void truncateInstance(String datasetInstanceName)
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doPost("datasets/" + datasetInstanceName + "/admin/truncate");
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
-                                                         datasetInstanceName, response));
+      throw new DatasetManagementException(
+          String.format("Failed to truncate instance %s, details: %s",
+              datasetInstanceName, response));
     }
   }
 
-  public void deleteInstance(String datasetInstanceName) throws DatasetManagementException, UnauthorizedException {
+  public void deleteInstance(String datasetInstanceName)
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("datasets/" + datasetInstanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       throw new InstanceNotFoundException(datasetInstanceName);
     }
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to delete instance %s due to conflict, details: %s",
-                                                        datasetInstanceName, response));
+      throw new InstanceConflictException(
+          String.format("Failed to delete instance %s due to conflict, details: %s",
+              datasetInstanceName, response));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
-                                                         datasetInstanceName, response));
+      throw new DatasetManagementException(
+          String.format("Failed to delete instance %s, details: %s",
+              datasetInstanceName, response));
     }
   }
 
@@ -233,38 +253,44 @@ public class DatasetServiceClient {
   void deleteInstances() throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("datasets");
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
+      throw new DatasetManagementException(
+          String.format("Failed to delete instances, details: %s", response));
     }
   }
 
   public void addModule(String moduleName, String className, Location jarLocation)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
 
-    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT, "modules/" + moduleName)
-      .addHeader("X-Class-Name", className)
-      .withBody((ContentProvider<? extends InputStream>) jarLocation::getInputStream);
+    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.PUT,
+            "modules/" + moduleName)
+        .addHeader("X-Class-Name", className)
+        .withBody((ContentProvider<? extends InputStream>) jarLocation::getInputStream);
     HttpResponse response = doRequest(requestBuilder);
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
-                                                      moduleName, response));
+      throw new ModuleConflictException(
+          String.format("Failed to add module %s due to conflict, details: %s",
+              moduleName, response));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add module %s, details: %s", moduleName, response));
+      throw new DatasetManagementException(
+          String.format("Failed to add module %s, details: %s", moduleName, response));
     }
   }
 
 
-  public void deleteModule(String moduleName) throws DatasetManagementException, UnauthorizedException {
+  public void deleteModule(String moduleName)
+      throws DatasetManagementException, UnauthorizedException {
     HttpResponse response = doDelete("modules/" + moduleName);
 
     if (HttpResponseStatus.CONFLICT.code() == response.getResponseCode()) {
-      throw new ModuleConflictException(String.format("Failed to delete module %s due to conflict, details: %s",
-                                                      moduleName, response));
+      throw new ModuleConflictException(
+          String.format("Failed to delete module %s due to conflict, details: %s",
+              moduleName, response));
     }
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete module %s, details: %s",
-                                                         moduleName, response));
+          moduleName, response));
     }
   }
 
@@ -272,37 +298,38 @@ public class DatasetServiceClient {
     HttpResponse response = doDelete("modules");
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete modules, details: %s", response));
+      throw new DatasetManagementException(
+          String.format("Failed to delete modules, details: %s", response));
     }
   }
 
   private HttpResponse doGet(String resource)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.GET, resource));
   }
 
   private HttpResponse doPut(String resource, String body)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.PUT, resource).withBody(body));
   }
 
   private HttpResponse doPost(String resource)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource));
   }
 
   private HttpResponse doPost(String resource, String body)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource).withBody(body));
   }
 
   private HttpResponse doDelete(String resource)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.DELETE, resource));
   }
 
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
       LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
@@ -331,7 +358,8 @@ public class DatasetServiceClient {
     return callerId != null ? callerId : "unknown http client";
   }
 
-  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder) throws DatasetManagementException {
+  private HttpRequest.Builder addUserIdHeader(HttpRequest.Builder builder)
+      throws DatasetManagementException {
     if (LOG.isTraceEnabled()) {
       builder = builder.addHeader("callerId", Thread.currentThread().getName());
     }
@@ -363,9 +391,11 @@ public class DatasetServiceClient {
       // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
       // configured principal
       if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
-        LOG.trace("Accessing dataset in system namespace using the system principal because the current user " +
-                    "{} is the same as the CDAP master user {}.",
-                  currUserShortName, masterShortUserName);
+        LOG.trace(
+            "Accessing dataset in system namespace using the system principal because the current user "
+                +
+                "{} is the same as the CDAP master user {}.",
+            currUserShortName, masterShortUserName);
         userId = currUserShortName;
       }
     }
@@ -374,7 +404,8 @@ public class DatasetServiceClient {
 
   private static void logThreadDump() {
     if (LOG.isTraceEnabled()) {
-      StringBuilder sb = new StringBuilder("Timeout while making request to dataset service. Thread dump follows:\n");
+      StringBuilder sb = new StringBuilder(
+          "Timeout while making request to dataset service. Thread dump follows:\n");
       ThreadMXBean bean = ManagementFactory.getThreadMXBean();
       for (ThreadInfo threadInfo : bean.dumpAllThreads(true, true)) {
         append(sb, threadInfo);
@@ -387,14 +418,14 @@ public class DatasetServiceClient {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static void append(StringBuilder sb, ThreadInfo threadInfo) {
     sb.append("\"" + threadInfo.getThreadName() + "\"" +
-                " Id=" + threadInfo.getThreadId() + " " +
-                threadInfo.getThreadState());
+        " Id=" + threadInfo.getThreadId() + " " +
+        threadInfo.getThreadState());
     if (threadInfo.getLockName() != null) {
       sb.append(" on " + threadInfo.getLockName());
     }
     if (threadInfo.getLockOwnerName() != null) {
       sb.append(" owned by \"" + threadInfo.getLockOwnerName() +
-                  "\" Id=" + threadInfo.getLockOwnerId());
+          "\" Id=" + threadInfo.getLockOwnerId());
     }
     if (threadInfo.isSuspended()) {
       sb.append(" (suspended)");

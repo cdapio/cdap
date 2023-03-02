@@ -22,12 +22,13 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * This class contains static utility methods that operate on or return objects
- * of type {@code Iterable}.
+ * This class contains static utility methods that operate on or return objects of type {@code
+ * Iterable}.
  */
 final class Iterables {
 
-  static <F, T> Iterable<T> transform(final Iterable<F> iterable, final Function<? super F, ? extends T> transform) {
+  static <F, T> Iterable<T> transform(final Iterable<F> iterable,
+      final Function<? super F, ? extends T> transform) {
     return new Iterable<T>() {
       @Override
       public Iterator<T> iterator() {

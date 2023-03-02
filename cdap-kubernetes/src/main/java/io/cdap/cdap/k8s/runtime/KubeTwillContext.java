@@ -96,8 +96,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
   private final String uid;
 
   public KubeTwillContext(RuntimeSpecification runtimeSpec, RunId appRunId, RunId runId,
-                          String[] appArguments, String[] arguments,
-                          KubeMasterEnvironment masterEnv) throws IOException {
+      String[] appArguments, String[] arguments,
+      KubeMasterEnvironment masterEnv) throws IOException {
     this.runtimeSpec = runtimeSpec;
     this.appRunId = appRunId;
     this.runId = runId;
@@ -110,10 +110,12 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
     this.instancesFuture = new CompletableFuture<>();
     this.instanceIdFuture = new CompletableFuture<>();
-    this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture, instanceIdFuture,
-                                                           masterEnv.getApiClientFactory());
-    this.uid = new String(Files.readAllBytes(Paths.get(podInfo.getPodInfoDir(), podInfo.getUidFile())),
-                          StandardCharsets.UTF_8);
+    this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture,
+        instanceIdFuture,
+        masterEnv.getApiClientFactory());
+    this.uid = new String(
+        Files.readAllBytes(Paths.get(podInfo.getPodInfoDir(), podInfo.getUidFile())),
+        StandardCharsets.UTF_8);
   }
 
   @Override
@@ -160,8 +162,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
   }
 
   /**
-   * Returns the instanceId. Note that the instance ID might change over the lifetime of the process due to
-   * k8s Deployment can be removing a pod with lower instance Id on scaling down.
+   * Returns the instanceId. Note that the instance ID might change over the lifetime of the process
+   * due to k8s Deployment can be removing a pod with lower instance Id on scaling down.
    */
   @Override
   public int getInstanceId() {
@@ -199,12 +201,14 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
   @Override
   public Cancellable announce(String serviceName, int port) {
-    return discoveryService.register(new Discoverable(serviceName, new InetSocketAddress(getHost(), port)));
+    return discoveryService.register(
+        new Discoverable(serviceName, new InetSocketAddress(getHost(), port)));
   }
 
   @Override
   public Cancellable announce(String serviceName, int port, byte[] payload) {
-    return discoveryService.register(new Discoverable(serviceName, new InetSocketAddress(getHost(), port), payload));
+    return discoveryService.register(
+        new Discoverable(serviceName, new InetSocketAddress(getHost(), port), payload));
   }
 
   @Override
@@ -225,16 +229,17 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
    * Starts a {@link AbstractWatcherThread} to watch for changes in number of replicas.
    *
    * @param podInfo the {@link PodInfo} about the pod that this process is running in
-   * @param instancesFuture a {@link CompletableFuture} of {@link AtomicInteger}. The future will be completed when the
-   *                       initial replicas is fetched. The {@link AtomicInteger} used to complete the future
-   *                       will be reflecting the number of replicas live.
-   * @param instanceIdFuture a {@link CompletableFuture} that will be completed when the instanceId is determined.
+   * @param instancesFuture a {@link CompletableFuture} of {@link AtomicInteger}. The future
+   *     will be completed when the initial replicas is fetched. The {@link AtomicInteger} used to
+   *     complete the future will be reflecting the number of replicas live.
+   * @param instanceIdFuture a {@link CompletableFuture} that will be completed when the
+   *     instanceId is determined.
    * @return a {@link Cancellable} to stop the watcher thread
    */
   private static Cancellable startInstanceWatcher(PodInfo podInfo,
-                                                  CompletableFuture<AtomicInteger> instancesFuture,
-                                                  CompletableFuture<AtomicInteger> instanceIdFuture,
-                                                  ApiClientFactory apiClientFactory) {
+      CompletableFuture<AtomicInteger> instancesFuture,
+      CompletableFuture<AtomicInteger> instanceIdFuture,
+      ApiClientFactory apiClientFactory) {
 
     List<V1OwnerReference> ownerReferences = podInfo.getOwnerReferences();
 
@@ -242,21 +247,23 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     if (ownerReferences.isEmpty()) {
       instancesFuture.complete(new AtomicInteger());
       instanceIdFuture.complete(new AtomicInteger());
-      return () -> { };
+      return () -> {
+      };
     }
 
     // Find the ReplicaSet, Deployment, or StatefulSet owner
     Set<String> supportedKind = ImmutableSet.of("ReplicaSet", "Deployment", "StatefulSet", "Job");
     V1OwnerReference ownerRef = ownerReferences.stream()
-      .filter(ref -> supportedKind.contains(ref.getKind()))
-      .findFirst()
-      .orElse(null);
+        .filter(ref -> supportedKind.contains(ref.getKind()))
+        .findFirst()
+        .orElse(null);
 
     // If can't find any, which shouldn't happen, just return
     if (ownerRef == null) {
       instancesFuture.complete(new AtomicInteger());
       instanceIdFuture.complete(new AtomicInteger());
-      return () -> { };
+      return () -> {
+      };
     }
 
     // apiVersion is in the format of [group]/[version]
@@ -267,9 +274,9 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
     // Watch for the changes in number of instances.
     InstanceWatcherThread watcherThread = new InstanceWatcherThread(group, version, plural,
-                                                                    podInfo, ownerRef,
-                                                                    instancesFuture, instanceIdFuture,
-                                                                    apiClientFactory);
+        podInfo, ownerRef,
+        instancesFuture, instanceIdFuture,
+        apiClientFactory);
     watcherThread.start();
 
     return watcherThread::close;
@@ -278,7 +285,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
   /**
    * A {@link AbstractWatcherThread} for dynamically watching for changes in number of instances.
    */
-  private static class InstanceWatcherThread extends AbstractWatcherThread<DynamicKubernetesObject> {
+  private static class InstanceWatcherThread extends
+      AbstractWatcherThread<DynamicKubernetesObject> {
 
     private static final Random RANDOM = new Random();
 
@@ -291,16 +299,18 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     private final ExecutorService executor;
 
     InstanceWatcherThread(String group, String version, String plural, PodInfo podInfo,
-                          V1OwnerReference ownerRef, CompletableFuture<AtomicInteger> instancesFuture,
-                          CompletableFuture<AtomicInteger> instanceIdFuture, ApiClientFactory apiClientFactory) {
-      super("twill-instance-watch", podInfo.getNamespace(), group, version, plural, apiClientFactory);
+        V1OwnerReference ownerRef, CompletableFuture<AtomicInteger> instancesFuture,
+        CompletableFuture<AtomicInteger> instanceIdFuture, ApiClientFactory apiClientFactory) {
+      super("twill-instance-watch", podInfo.getNamespace(), group, version, plural,
+          apiClientFactory);
       this.podInfo = podInfo;
       this.ownerRef = ownerRef;
       this.instances = new AtomicInteger();
       this.instanceId = new AtomicInteger();
       this.instancesFuture = instancesFuture;
       this.instanceIdFuture = instanceIdFuture;
-      this.executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("twill-instance-assign"));
+      this.executor = Executors.newSingleThreadExecutor(
+          Threads.createDaemonThreadFactory("twill-instance-assign"));
     }
 
     @Override
@@ -373,11 +383,11 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
     }
 
     /**
-     * Performs the instance Id assignment logic using annotations on the owner object.
-     * The logic involves setting an annotation with key {@link #INSTANCES_ASSIGNMENT}, and value is a Json map
-     * that stores association of instance Id to pod name ({@code instanceId -> Pod Name}).
-     * Each of the pod instances will race to update the assignment map, which we rely on the compare and set property
-     * of the k8s replace API to guarantee a consistent view across all pods.
+     * Performs the instance Id assignment logic using annotations on the owner object. The logic
+     * involves setting an annotation with key {@link #INSTANCES_ASSIGNMENT}, and value is a Json
+     * map that stores association of instance Id to pod name ({@code instanceId -> Pod Name}). Each
+     * of the pod instances will race to update the assignment map, which we rely on the compare and
+     * set property of the k8s replace API to guarantee a consistent view across all pods.
      */
     private void performAssignInstanceId() {
 
@@ -385,31 +395,34 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
         int instances = this.instances.get();
 
         try {
-          DynamicKubernetesApi api = new DynamicKubernetesApi(group, version, plural, getApiClient());
+          DynamicKubernetesApi api = new DynamicKubernetesApi(group, version, plural,
+              getApiClient());
           Gson gson = api.getGson();
 
           DynamicKubernetesObject owner = api.get(podInfo.getNamespace(),
-                                                  ownerRef.getName()).throwsApiException().getObject();
+              ownerRef.getName()).throwsApiException().getObject();
 
           V1ObjectMeta ownerMetadata = owner.getMetadata();
-          Map<String, String> annotations = new HashMap<>(Optional.ofNullable(ownerMetadata.getAnnotations())
-                                                            .orElse(Collections.emptyMap()));
+          Map<String, String> annotations = new HashMap<>(
+              Optional.ofNullable(ownerMetadata.getAnnotations())
+                  .orElse(Collections.emptyMap()));
           Map<Integer, String> instanceAssignments;
           if (!annotations.containsKey(INSTANCES_ASSIGNMENT)) {
             instanceAssignments = new TreeMap<>();
           } else {
             instanceAssignments = gson.fromJson(annotations.get(INSTANCES_ASSIGNMENT),
-                                                new TypeToken<TreeMap<Integer, String>>() { }.getType());
+                new TypeToken<TreeMap<Integer, String>>() {
+                }.getType());
             // Remove instanceId >= number of instances
             instanceAssignments.entrySet().removeIf(e -> e.getKey() >= instances);
           }
 
           // See if the current pod already has an assignment
           int instanceId = instanceAssignments.entrySet().stream()
-            .filter(e -> podInfo.getName().equals(e.getValue()))
-            .map(Map.Entry::getKey)
-            .findFirst()
-            .orElse(-1);
+              .filter(e -> podInfo.getName().equals(e.getValue()))
+              .map(Map.Entry::getKey)
+              .findFirst()
+              .orElse(-1);
 
           if (instanceId >= 0) {
             LOG.debug("Found existing instance ID {}", instanceId);
@@ -444,7 +457,8 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
           instanceAssignments.put(instanceId, podInfo.getName());
           annotations.put(INSTANCES_ASSIGNMENT, gson.toJson(instanceAssignments,
-                                                            new TypeToken<TreeMap<Integer, String>>() { }.getType()));
+              new TypeToken<TreeMap<Integer, String>>() {
+              }.getType()));
           owner.setMetadata(ownerMetadata.annotations(annotations));
 
           api.update(owner).throwsApiException();
@@ -453,10 +467,12 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
           break;
         } catch (Exception e) {
           if (e instanceof ApiException && ((ApiException) e).getCode() == 409) {
-            LOG.debug("Conflict occurred while updating the instanceId assignment, operation will be be retried.");
+            LOG.debug(
+                "Conflict occurred while updating the instanceId assignment, operation will be be retried.");
             LOG.trace("Trace log for conflict", e);
           } else {
-            LOG.warn("Exception raised when trying to assign instance ID. Operation will be retried", e);
+            LOG.warn(
+                "Exception raised when trying to assign instance ID. Operation will be retried", e);
           }
           try {
             TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(300));
@@ -477,33 +493,35 @@ public class KubeTwillContext implements ExtendedTwillContext, Closeable {
      *
      * @param assignments the current assignment to cleanup
      * @param instances total number of instances
-     * @return {@code true} if the assignments map is clear to have enough space for a new assignment
+     * @return {@code true} if the assignments map is clear to have enough space for a new
+     *     assignment
      * @throws ApiException if failed to query the k8s API server
      */
     private boolean cleanupAssignments(Map<Integer, String> assignments,
-                                       int instances) throws ApiException, IOException {
+        int instances) throws ApiException, IOException {
       if (assignments.size() < instances) {
         return true;
       }
 
       CoreV1Api coreApi = new CoreV1Api(getApiClient());
       String labelSelector = podInfo.getLabels().entrySet().stream()
-        .map(e -> e.getKey() + "=" + e.getValue())
-        .collect(Collectors.joining(","));
+          .map(e -> e.getKey() + "=" + e.getValue())
+          .collect(Collectors.joining(","));
 
       V1PodList podList = coreApi.listNamespacedPod(podInfo.getNamespace(), null, null, null, null,
-                                                    labelSelector, null, null, null, null, null);
+          labelSelector, null, null, null, null, null);
       Set<String> activePods = podList.getItems().stream()
-        .map(V1Pod::getMetadata)
-        .filter(Objects::nonNull)
-        .map(V1ObjectMeta::getName)
-        .collect(Collectors.toSet());
+          .map(V1Pod::getMetadata)
+          .filter(Objects::nonNull)
+          .map(V1ObjectMeta::getName)
+          .collect(Collectors.toSet());
 
       Iterator<Map.Entry<Integer, String>> iterator = assignments.entrySet().iterator();
       while (iterator.hasNext()) {
         Map.Entry<Integer, String> entry = iterator.next();
         if (!activePods.contains(entry.getValue())) {
-          LOG.debug("Removed inactive pod instance id assignment {}={}", entry.getKey(), entry.getValue());
+          LOG.debug("Removed inactive pod instance id assignment {}={}", entry.getKey(),
+              entry.getValue());
           iterator.remove();
         }
       }

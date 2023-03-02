@@ -17,15 +17,17 @@
 package io.cdap.cdap.runtime.spi;
 
 /**
- * Version information that is comparable to other instance of the same class or any other Object that
- * returns properly formatted version from it's {@link Object#toString()}. E.g. you can compare it to a string.
- * Also any instance of this interface must return proper bare version from it's toString.
+ * Version information that is comparable to other instance of the same class or any other Object
+ * that returns properly formatted version from it's {@link Object#toString()}. E.g. you can compare
+ * it to a string. Also any instance of this interface must return proper bare version from it's
+ * toString.
  */
 public interface VersionInfo extends Comparable<Object> {
 
   /**
-   * Gets the major version part of the version string. The default implementation is to parse the version string,
-   * in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   * Gets the major version part of the version string. The default implementation is to parse the
+   * version string, in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   *
    * @return the major version.
    */
   default int getMajor() {
@@ -40,8 +42,9 @@ public interface VersionInfo extends Comparable<Object> {
   }
 
   /**
-   * Gets the minor version part of the version string. The default implementation is to parse the version string,
-   * in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   * Gets the minor version part of the version string. The default implementation is to parse the
+   * version string, in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   *
    * @return the minor version.
    */
   default int getMinor() {
@@ -58,8 +61,9 @@ public interface VersionInfo extends Comparable<Object> {
   }
 
   /**
-   * Gets the fix version part of the version string. The default implementation is to parse the version string,
-   * in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   * Gets the fix version part of the version string. The default implementation is to parse the
+   * version string, in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   *
    * @return the fix version.
    */
   default int getFix() {
@@ -81,6 +85,7 @@ public interface VersionInfo extends Comparable<Object> {
   /**
    * checks if the version is snapshot. The default implementation is to parse the version string,
    * in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   *
    * @return true if version is snapshot, otherwise false.
    */
   default boolean isSnapshot() {
@@ -92,8 +97,9 @@ public interface VersionInfo extends Comparable<Object> {
   }
 
   /**
-   * Gets the buildTime part of the version string. The default implementation is to parse the version string,
-   * in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   * Gets the buildTime part of the version string. The default implementation is to parse the
+   * version string, in the format "major.minor.fix-buildTime"/"major.minor.fix-SNAPSHOT-buildTime".
+   *
    * @return the buildTime.
    */
   default long getBuildTime() {

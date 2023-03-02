@@ -19,7 +19,8 @@ package io.cdap.cdap.data2.util.hbase;
 import org.apache.hadoop.hbase.client.Delete;
 
 /**
- * Default implementation of {@link DeleteBuilder}. Specific HBase compat module can extends and override methods.
+ * Default implementation of {@link DeleteBuilder}. Specific HBase compat module can extends and
+ * override methods.
  */
 class DefaultDeleteBuilder implements DeleteBuilder {
 

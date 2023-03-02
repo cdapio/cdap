@@ -22,13 +22,14 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Secrets Manager interface to store secrets securely and retrieve them when needed. Secrets are small sensitive
- * information such as passwords, database credentials, API keys etc.
+ * Secrets Manager interface to store secrets securely and retrieve them when needed. Secrets are
+ * small sensitive information such as passwords, database credentials, API keys etc.
  *
- * The implementation of this class must be thread safe as store and retrieve methods can be called from multiple
- * threads.
+ * The implementation of this class must be thread safe as store and retrieve methods can be called
+ * from multiple threads.
  */
 public interface SecretManager {
+
   /**
    * Returns the name of the secrets manager.
    *
@@ -37,15 +38,16 @@ public interface SecretManager {
   String getName();
 
   /**
-   * Initialize the secrets manager. This method is guaranteed to be called before any other method is called.
-   * It will only be called once for the lifetime of the secrets manager.
+   * Initialize the secrets manager. This method is guaranteed to be called before any other method
+   * is called. It will only be called once for the lifetime of the secrets manager.
    *
    * @param context the context that can be used to initialize the secrets manager
    */
   void initialize(SecretManagerContext context) throws IOException;
 
   /**
-   * Securely stores secret for a given namespace. If the store already has provided secret, it will be replaced.
+   * Securely stores secret for a given namespace. If the store already has provided secret, it will
+   * be replaced.
    *
    * @param namespace the namespace that this secret belongs to
    * @param secret the sensitive data that has to be securely stored
@@ -84,7 +86,8 @@ public interface SecretManager {
   void delete(String namespace, String name) throws SecretNotFoundException, IOException;
 
   /**
-   * Cleans up initialized resources. It will only be called once for the lifetime of the secrets manager.
+   * Cleans up initialized resources. It will only be called once for the lifetime of the secrets
+   * manager.
    *
    * @param context secret manager context
    */

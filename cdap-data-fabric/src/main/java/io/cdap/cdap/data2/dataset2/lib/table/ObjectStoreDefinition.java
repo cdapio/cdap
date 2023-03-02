@@ -40,16 +40,17 @@ import java.util.Map;
  * DatasetDefinition for {@link ObjectStoreDataset}.
  */
 public class ObjectStoreDefinition
-  extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin>
-  implements Reconfigurable {
+    extends AbstractDatasetDefinition<ObjectStore, DatasetAdmin>
+    implements Reconfigurable {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public ObjectStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+  public ObjectStoreDefinition(String name,
+      DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
     super(name);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
@@ -58,25 +59,27 @@ public class ObjectStoreDefinition
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("objects", checkAndRemoveSchema(properties)))
-      .build();
+        .properties(properties.getProperties())
+        .datasets(tableDef.configure("objects", checkAndRemoveSchema(properties)))
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     // TODO (CDAP-6268): validate schema compatibility
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(newProperties.getProperties())
-      .datasets(AbstractDatasetDefinition.reconfigure(tableDef, "objects", checkAndRemoveSchema(newProperties),
-                                                      currentSpec.getSpecification("objects")))
-      .build();
+        .properties(newProperties.getProperties())
+        .datasets(AbstractDatasetDefinition.reconfigure(tableDef, "objects",
+            checkAndRemoveSchema(newProperties),
+            currentSpec.getSpecification("objects")))
+        .build();
   }
 
   /**
-   * strip schema from the properties sent to the underlying table, since ObjectStore allows schema that tables do not
+   * strip schema from the properties sent to the underlying table, since ObjectStore allows schema
+   * that tables do not
    */
   private DatasetProperties checkAndRemoveSchema(DatasetProperties properties) {
     Preconditions.checkArgument(properties.getProperties().containsKey("type"));
@@ -89,13 +92,13 @@ public class ObjectStoreDefinition
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return tableDef.getAdmin(datasetContext, spec.getSpecification("objects"), classLoader);
   }
 
   @Override
   public ObjectStoreDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
     KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 

@@ -28,8 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link DatasetAdmin} that propagates administrative operations to the given list of
- * {@link io.cdap.cdap.api.dataset.DatasetAdmin}s
+ * Implementation of {@link DatasetAdmin} that propagates administrative operations to the given
+ * list of {@link io.cdap.cdap.api.dataset.DatasetAdmin}s
  */
 @Beta
 public class CompositeDatasetAdmin implements DatasetAdmin, Updatable {
@@ -40,6 +40,7 @@ public class CompositeDatasetAdmin implements DatasetAdmin, Updatable {
 
   /**
    * Constructor that takes list of dataset admins
+   *
    * @param admins list of dataset admins
    */
   public CompositeDatasetAdmin(Map<String, ? extends DatasetAdmin> admins) {
@@ -92,7 +93,8 @@ public class CompositeDatasetAdmin implements DatasetAdmin, Updatable {
       try {
         admin.close();
       } catch (IOException e) {
-        LOG.warn("Exception raised when calling close() on {} of type {}", admin, admin.getClass(), e);
+        LOG.warn("Exception raised when calling close() on {} of type {}", admin, admin.getClass(),
+            e);
       }
     }
   }

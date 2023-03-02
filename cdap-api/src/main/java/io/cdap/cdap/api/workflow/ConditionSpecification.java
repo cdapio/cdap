@@ -23,6 +23,7 @@ import java.util.Set;
  * Specification for the condition that will be executed as a part of {@link Workflow}.
  */
 public interface ConditionSpecification extends PropertyProvider {
+
   /**
    * @return Class name of the condition.
    */

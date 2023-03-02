@@ -53,31 +53,35 @@ public class ConfigHandler extends AbstractHttpHandler {
 
   @Path("/config/cdap")
   @GET
-  public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                         @DefaultValue("json") @QueryParam("format") String format) throws IOException {
+  public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request,
+      HttpResponder responder,
+      @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getCConf()));
     } else if ("xml".equals(format)) {
       responder.sendString(HttpResponseStatus.OK, configService.getCConfXMLString(),
-                           new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
+          new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
     } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+          "Invalid format: " + format + ". Valid formats: json, xml");
     }
   }
 
   @Path("/config/hadoop")
   @GET
-  public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
+  public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request,
+      HttpResponder responder,
+      @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     contextAccessEnforcer.enforce(InstanceId.SELF, StandardPermission.GET);
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(configService.getHConf()));
     } else if ("xml".equals(format)) {
       responder.sendString(HttpResponseStatus.OK, configService.getHConfXMLString(),
-                           new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
+          new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "application/xml"));
     } else {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+          "Invalid format: " + format + ". Valid formats: json, xml");
     }
   }
 }

@@ -30,26 +30,28 @@ import java.util.Queue;
 /**
  * Specification for a {@link Workflow}
  */
-public final class WorkflowSpecification extends AbstractProgramSpecification implements PropertyProvider {
+public final class WorkflowSpecification extends AbstractProgramSpecification implements
+    PropertyProvider {
+
   private final Map<String, String> properties;
   private final List<WorkflowNode> nodes;
   private final Map<String, WorkflowNode> nodeIdMap;
   private final Map<String, DatasetCreationSpec> localDatasetSpecs;
 
   public WorkflowSpecification(String className, String name, String description,
-                               Map<String, String> properties, List<WorkflowNode> nodes,
-                               Map<String, DatasetCreationSpec> localDatasetSpecs, Map<String, Plugin> plugins) {
+      Map<String, String> properties, List<WorkflowNode> nodes,
+      Map<String, DatasetCreationSpec> localDatasetSpecs, Map<String, Plugin> plugins) {
     super(className, name, description, plugins);
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
-                                           Collections.unmodifiableMap(new HashMap<>(properties));
+        Collections.unmodifiableMap(new HashMap<>(properties));
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
     this.nodeIdMap = Collections.unmodifiableMap(generateNodeIdMap(nodes));
     this.localDatasetSpecs = Collections.unmodifiableMap(new HashMap<>(localDatasetSpecs));
   }
 
   /**
-   * Visit all the nodes in the {@link Workflow} and generate the map of node id to
-   * the {@link WorkflowNode}.
+   * Visit all the nodes in the {@link Workflow} and generate the map of node id to the {@link
+   * WorkflowNode}.
    */
   private Map<String, WorkflowNode> generateNodeIdMap(List<WorkflowNode> nodesInWorkflow) {
     Map<String, WorkflowNode> nodeIdMap = new HashMap<>();
@@ -104,7 +106,8 @@ public final class WorkflowSpecification extends AbstractProgramSpecification im
   }
 
   /**
-   * Return the map of local dataset names and associated specifications required for dataset instance creation.
+   * Return the map of local dataset names and associated specifications required for dataset
+   * instance creation.
    */
   public Map<String, DatasetCreationSpec> getLocalDatasetSpecs() {
     return localDatasetSpecs;
@@ -113,14 +116,14 @@ public final class WorkflowSpecification extends AbstractProgramSpecification im
   @Override
   public String toString() {
     return "WorkflowSpecification{" +
-      "className='" + getClassName() + '\'' +
-      ", name='" + getName() + '\'' +
-      ", description='" + getDescription() + '\'' +
-      ", plugins=" + getPlugins() +
-      ", properties=" + properties +
-      ", nodes=" + nodes +
-      ", nodeIdMap=" + nodeIdMap +
-      ", localDatasetSpecs=" + localDatasetSpecs +
-      '}';
+        "className='" + getClassName() + '\'' +
+        ", name='" + getName() + '\'' +
+        ", description='" + getDescription() + '\'' +
+        ", plugins=" + getPlugins() +
+        ", properties=" + properties +
+        ", nodes=" + nodes +
+        ", nodeIdMap=" + nodeIdMap +
+        ", localDatasetSpecs=" + localDatasetSpecs +
+        '}';
   }
 }

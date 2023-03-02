@@ -40,6 +40,7 @@ import java.io.IOException;
  * Preview data publisher that publishes to the TMS.
  */
 public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
+
   private static final Gson GSON = new Gson();
 
   private final TopicId topic;
@@ -48,7 +49,7 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
 
   @Inject
   MessagingPreviewDataPublisher(CConfiguration cConf,
-                                @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService) {
+      @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Preview.MESSAGING_TOPIC));
     this.messagingService = messagingService;
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.preview.");
@@ -56,13 +57,15 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
 
   @Override
   public void publish(EntityId entityId, PreviewMessage previewMessage) {
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(previewMessage)).build();
+    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(previewMessage))
+        .build();
     try {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
-                              t -> t instanceof IOException || t instanceof RetryableException);
+          t -> t instanceof IOException || t instanceof RetryableException);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to publish preview message " + previewMessage + " for application " + entityId,
-                                 e);
+      throw new RuntimeException(
+          "Failed to publish preview message " + previewMessage + " for application " + entityId,
+          e);
     }
   }
 }

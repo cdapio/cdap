@@ -23,6 +23,7 @@ import java.util.Set;
  */
 public interface MessagingMetricsProcessorServiceFactory {
 
-  MessagingMetricsProcessorManagerService create(Set<Integer> topicNumbers, MetricsContext metricsContext,
-                                          Integer instanceId);
+  MessagingMetricsProcessorManagerService create(Set<Integer> topicNumbers,
+      MetricsContext metricsContext,
+      Integer instanceId);
 }

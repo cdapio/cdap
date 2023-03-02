@@ -27,7 +27,9 @@ import org.apache.avro.generic.GenericRecord;
  * Class used to serialize/de-serialize LoggerContextVO.
  */
 final class LoggerContextSerializer {
-  private LoggerContextSerializer() {}
+
+  private LoggerContextSerializer() {
+  }
 
   static GenericRecord encode(Schema schema, LoggerContextVO context) {
     if (context != null) {

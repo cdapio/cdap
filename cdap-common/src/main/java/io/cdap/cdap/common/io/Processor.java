@@ -19,7 +19,8 @@ package io.cdap.cdap.common.io;
 /**
  * Process input values.
  *
- * {@link #process} will be called for each input, and should return {@code false} when the processing should stop.
+ * {@link #process} will be called for each input, and should return {@code false} when the
+ * processing should stop.
  *
  * @param <T> type of the input values
  * @param <R> type of the result value

@@ -77,14 +77,17 @@ public class SearchHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SearchHelper.class);
 
-  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
-  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
+  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset(
+      "meta.business");
+  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset(
+      "meta.system");
 
-  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(
+      NamespaceId.SYSTEM.getNamespace());
 
   private static final Comparator<Map.Entry<MetadataEntity, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
-    // sort in descending order
-    (o1, o2) -> o2.getValue() - o1.getValue();
+      // sort in descending order
+      (o1, o2) -> o2.getValue() - o1.getValue();
 
   private final DatasetDefinition<MetadataDataset, DatasetAdmin> metaDatasetDefinition;
   private final Map<String, DatasetSpecification> datasetSpecs;
@@ -92,20 +95,22 @@ public class SearchHelper {
 
   @Inject
   public SearchHelper(TransactionSystemClient txClient,
-                      @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+      @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
     //noinspection unchecked
     this.metaDatasetDefinition = new MetadataDatasetDefinition(MetadataDataset.TYPE,
-                                                               new IndexedTableDefinition("indexedTable",
-                                                                                          tableDefinition));
-    this.datasetSpecs = ImmutableMap.of(MetadataScope.SYSTEM.name(), createDatasetSpec(metaDatasetDefinition, SYSTEM),
-                                        MetadataScope.USER.name(), createDatasetSpec(metaDatasetDefinition, USER));
+        new IndexedTableDefinition("indexedTable",
+            tableDefinition));
+    this.datasetSpecs = ImmutableMap.of(MetadataScope.SYSTEM.name(),
+        createDatasetSpec(metaDatasetDefinition, SYSTEM),
+        MetadataScope.USER.name(), createDatasetSpec(metaDatasetDefinition, USER));
     this.transactional = Transactions.createTransactionalWithRetry(
-      createTransactional(txClient), RetryStrategies.retryOnConflict(20, 100));
+        createTransactional(txClient), RetryStrategies.retryOnConflict(20, 100));
   }
 
   void createDatasets() throws IOException {
     for (MetadataScope scope : MetadataScope.ALL) {
-      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
+      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT,
+          datasetSpecs.get(scope.name()), null);
       if (!admin.exists()) {
         admin.create();
       }
@@ -114,23 +119,27 @@ public class SearchHelper {
 
   void dropDatasets() throws IOException {
     for (MetadataScope scope : MetadataScope.ALL) {
-      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
+      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT,
+          datasetSpecs.get(scope.name()), null);
       if (admin.exists()) {
         admin.drop();
       }
     }
   }
 
-  private static DatasetSpecification createDatasetSpec(DatasetDefinition def, MetadataScope scope) {
+  private static DatasetSpecification createDatasetSpec(DatasetDefinition def,
+      MetadataScope scope) {
     return def.configure(getMetadataDatasetInstance(scope).getEntityName(),
-                         DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
+        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
   }
 
   private static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 
-  private class MetaOnlyDatasetContext implements io.cdap.cdap.api.data.DatasetContext, AutoCloseable {
+  private class MetaOnlyDatasetContext implements io.cdap.cdap.api.data.DatasetContext,
+      AutoCloseable {
+
     private final Map<String, MetadataDataset> datasets = new HashMap<>();
     private final TransactionContext txContext;
 
@@ -144,7 +153,7 @@ public class SearchHelper {
       if (dataset == null) {
         try {
           dataset = metaDatasetDefinition.getDataset(
-            SYSTEM_CONTEXT, datasetSpecs.get(scope), Collections.emptyMap(), null);
+              SYSTEM_CONTEXT, datasetSpecs.get(scope), Collections.emptyMap(), null);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
@@ -157,18 +166,23 @@ public class SearchHelper {
     }
 
     @Override
-    public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
-      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+    public <T extends Dataset> T getDataset(String namespace, String name)
+        throws DatasetInstantiationException {
+      throw new UnsupportedOperationException(
+          "This class intentionally does not implement this method");
     }
 
     @Override
     public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+      throw new UnsupportedOperationException(
+          "This class intentionally does not implement this method");
     }
 
     @Override
-    public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments) {
-      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+    public <T extends Dataset> T getDataset(String namespace, String name,
+        Map<String, String> arguments) {
+      throw new UnsupportedOperationException(
+          "This class intentionally does not implement this method");
     }
 
     @Override
@@ -210,7 +224,8 @@ public class SearchHelper {
       }
 
       @Override
-      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable)
+          throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
         try (MetaOnlyDatasetContext datasetContext = new MetaOnlyDatasetContext(txContext)) {
           txContext.start(timeout);
@@ -220,13 +235,16 @@ public class SearchHelper {
         }
       }
 
-      private void finishExecute(TransactionContext txContext, io.cdap.cdap.api.data.DatasetContext dsContext,
-                                 io.cdap.cdap.api.TxRunnable runnable)
-        throws TransactionFailureException {
+      private void finishExecute(TransactionContext txContext,
+          io.cdap.cdap.api.data.DatasetContext dsContext,
+          io.cdap.cdap.api.TxRunnable runnable)
+          throws TransactionFailureException {
         try {
           runnable.run(dsContext);
         } catch (Exception e) {
-          txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
+          txContext.abort(
+              new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable,
+                  e));
         }
         // The call the txContext.abort above will always have exception thrown
         // Hence we'll only reach here if and only if the runnable.run() returns normally.
@@ -242,15 +260,20 @@ public class SearchHelper {
   }
 
   public MetadataSearchResponse search(SearchRequest request, @Nullable MetadataScope scope) {
-    Set<MetadataScope> searchScopes = scope == null ? EnumSet.allOf(MetadataScope.class) : Collections.singleton(scope);
+    Set<MetadataScope> searchScopes =
+        scope == null ? EnumSet.allOf(MetadataScope.class) : Collections.singleton(scope);
     if ("*".equals(request.getQuery())) {
       if (SortInfo.DEFAULT.equals(request.getSortInfo())) {
         // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that
         // a full index search should not be done in production.
-        LOG.warn("Attempt to search through all indexes. This query can have an adverse effect on performance and is " +
-                   "not recommended for production use. It is only meant to be used for administrative purposes " +
-                   "such as upgrade. To improve the performance of such queries, please specify sort parameters " +
-                   "as well.");
+        LOG.warn(
+            "Attempt to search through all indexes. This query can have an adverse effect on performance and is "
+                +
+                "not recommended for production use. It is only meant to be used for administrative purposes "
+                +
+                "such as upgrade. To improve the performance of such queries, please specify sort parameters "
+                +
+                "as well.");
       } else {
         // when it is a known sort (stored sorted in the metadata dataset already), restrict it to system scope only
         searchScopes = EnumSet.of(SYSTEM);
@@ -287,20 +310,21 @@ public class SearchHelper {
 
     // add 1 to maxIndex because end index is exclusive
     Set<MetadataEntity> subSortedEntities = new LinkedHashSet<>(
-      ImmutableList.copyOf(sortedEntities).subList(startIndex, endIndex)
+        ImmutableList.copyOf(sortedEntities).subList(startIndex, endIndex)
     );
 
     // Fetch metadata for entities in the result list
     // Note: since the fetch is happening in a different transaction, the metadata for entities may have been
     // removed. It is okay not to have metadata for some results in case this happens.
     Set<MetadataSearchResultRecord> finalResults = execute(
-      context -> addMetadataToEntities(subSortedEntities,
-                                       fetchMetadata(context.getDataset(SYSTEM), subSortedEntities),
-                                       fetchMetadata(context.getDataset(USER), subSortedEntities)));
+        context -> addMetadataToEntities(subSortedEntities,
+            fetchMetadata(context.getDataset(SYSTEM), subSortedEntities),
+            fetchMetadata(context.getDataset(USER), subSortedEntities)));
 
     return new MetadataSearchResponse(
-      sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit, request.getNumCursors(), total,
-      finalResults, cursors, request.shouldShowHidden(), request.getEntityScopes());
+        sortInfo.getSortBy() + " " + sortInfo.getSortOrder(), offset, limit,
+        request.getNumCursors(), total,
+        finalResults, cursors, request.shouldShowHidden(), request.getEntityScopes());
   }
 
   private Set<MetadataEntity> getSortedEntities(List<MetadataEntry> results, SortInfo sortInfo) {
@@ -318,11 +342,12 @@ public class SearchHelper {
     final Map<MetadataEntity, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : results) {
       weightedResults.put(metadataEntry.getMetadataEntity(),
-                          weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
+          weightedResults.getOrDefault(metadataEntry.getMetadataEntity(), 0) + 1);
     }
 
     // Sort the results by score
-    List<Map.Entry<MetadataEntity, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
+    List<Map.Entry<MetadataEntity, Integer>> resultList = new ArrayList<>(
+        weightedResults.entrySet());
     resultList.sort(SEARCH_RESULT_DESC_SCORE_COMPARATOR);
     Set<MetadataEntity> result = new LinkedHashSet<>(resultList.size());
     for (Map.Entry<MetadataEntity, Integer> entry : resultList) {
@@ -332,7 +357,7 @@ public class SearchHelper {
   }
 
   private Map<MetadataEntity, MetadataDataset.Record> fetchMetadata(MetadataDataset mds,
-                                                                    final Set<MetadataEntity> metadataEntities) {
+      final Set<MetadataEntity> metadataEntities) {
     Set<MetadataDataset.Record> metadataSet = mds.getMetadata(metadataEntities);
     Map<MetadataEntity, MetadataDataset.Record> metadataMap = new HashMap<>();
     for (MetadataDataset.Record m : metadataSet) {
@@ -343,8 +368,8 @@ public class SearchHelper {
 
   private Set<MetadataSearchResultRecord>
   addMetadataToEntities(Set<MetadataEntity> entities,
-                        Map<MetadataEntity, MetadataDataset.Record> systemMetadata,
-                        Map<MetadataEntity, MetadataDataset.Record> userMetadata) {
+      Map<MetadataEntity, MetadataDataset.Record> systemMetadata,
+      Map<MetadataEntity, MetadataDataset.Record> userMetadata) {
     Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
     for (MetadataEntity entity : entities) {
       ImmutableMap.Builder<MetadataScope, Metadata> builder = ImmutableMap.builder();

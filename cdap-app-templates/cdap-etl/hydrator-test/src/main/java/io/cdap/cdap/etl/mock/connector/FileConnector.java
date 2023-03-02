@@ -53,17 +53,18 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 @Plugin(type = Connector.PLUGIN_TYPE)
 @Name(FileConnector.NAME)
 public class FileConnector implements BatchConnector<LongWritable, Text> {
+
   public static final String NAME = "FileConnector";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final Schema DEFAULT_SCHEMA = Schema.recordOf(
-    "schema",
-    Schema.Field.of("offset", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("body", Schema.of(Schema.Type.STRING))
+      "schema",
+      Schema.Field.of("offset", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("body", Schema.of(Schema.Type.STRING))
   );
 
   @Override
   public InputFormatProvider getInputFormatProvider(ConnectorContext context,
-                                                    SampleRequest request) throws IOException {
+      SampleRequest request) throws IOException {
     Job job = Job.getInstance();
     File file = new File(request.getPath());
     FileInputFormat.addInputPath(job, new Path(file.toURI()));
@@ -76,14 +77,15 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
       @Override
       public Map<String, String> getInputFormatConfiguration() {
         return Collections.singletonMap(FileInputFormat.INPUT_DIR,
-                                        job.getConfiguration().get(FileInputFormat.INPUT_DIR));
+            job.getConfiguration().get(FileInputFormat.INPUT_DIR));
       }
     };
   }
 
   @Override
   public StructuredRecord transform(LongWritable key, Text val) {
-    return StructuredRecord.builder(DEFAULT_SCHEMA).set("offset", key.get()).set("body", val.toString()).build();
+    return StructuredRecord.builder(DEFAULT_SCHEMA).set("offset", key.get())
+        .set("body", val.toString()).build();
   }
 
   @Override
@@ -102,43 +104,48 @@ public class FileConnector implements BatchConnector<LongWritable, Text> {
     // if it is not a directory, then it is not browsable, return the path itself
     if (!file.isDirectory()) {
       return BrowseDetail.builder().setTotalCount(1)
-               .addEntity(BrowseEntity.builder(file.getName(), request.getPath(), "file").canSample(true).build())
-               .build();
+          .addEntity(BrowseEntity.builder(file.getName(), request.getPath(), "file").canSample(true)
+              .build())
+          .build();
     }
 
     // list the files and classify them with file and directory
     File[] files = file.listFiles();
     // sort the files by the name
     Arrays.sort(files);
-    int limit = request.getLimit() == null ? files.length : Math.min(request.getLimit(), files.length);
+    int limit =
+        request.getLimit() == null ? files.length : Math.min(request.getLimit(), files.length);
     BrowseDetail.Builder builder = BrowseDetail.builder().setTotalCount(files.length);
     for (int i = 0; i < limit; i++) {
       File listedFile = files[i];
       if (listedFile.isDirectory()) {
-        builder.addEntity(BrowseEntity.builder(listedFile.getName(), listedFile.getCanonicalPath(), "directory")
-                            .canSample(true).canBrowse(true).build());
+        builder.addEntity(
+            BrowseEntity.builder(listedFile.getName(), listedFile.getCanonicalPath(), "directory")
+                .canSample(true).canBrowse(true).build());
         continue;
       }
-      builder.addEntity(BrowseEntity.builder(listedFile.getName(), listedFile.getCanonicalPath(), "file")
-                          .canSample(true).build());
+      builder.addEntity(
+          BrowseEntity.builder(listedFile.getName(), listedFile.getCanonicalPath(), "file")
+              .canSample(true).build());
     }
     return builder.build();
   }
 
   @Override
-  public ConnectorSpec generateSpec(ConnectorContext context, ConnectorSpecRequest connectorSpecRequest) {
+  public ConnectorSpec generateSpec(ConnectorContext context,
+      ConnectorSpecRequest connectorSpecRequest) {
     Map<String, String> properties = ImmutableMap.of("path", connectorSpecRequest.getPath(),
-                                                     "useConnection", "true",
-                                                     "connection", connectorSpecRequest.getConnectionWithMacro());
+        "useConnection", "true",
+        "connection", connectorSpecRequest.getConnectionWithMacro());
     return ConnectorSpec.builder()
-             .setSchema(DEFAULT_SCHEMA)
-             .addRelatedPlugin(new PluginSpec("file", "batchsource", properties))
-             .addRelatedPlugin(new PluginSpec("file", "streamingsource", properties))
-             .build();
+        .setSchema(DEFAULT_SCHEMA)
+        .addRelatedPlugin(new PluginSpec("file", "batchsource", properties))
+        .addRelatedPlugin(new PluginSpec("file", "streamingsource", properties))
+        .build();
   }
 
   private static PluginClass getPluginClass() {
     return PluginClass.builder().setName(NAME).setType(Connector.PLUGIN_TYPE)
-             .setDescription("").setClassName(FileConnector.class.getName()).build();
+        .setDescription("").setClassName(FileConnector.class.getName()).build();
   }
 }

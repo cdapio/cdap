@@ -32,14 +32,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An UpstreamHandler that verifies the userId in a request header and updates the {@code SecurityRequestContext}.
+ * An UpstreamHandler that verifies the userId in a request header and updates the {@code
+ * SecurityRequestContext}.
  */
 public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
+
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
   private static final String EMPTY_USER_ID = "CDAP-empty-user-id";
-  private static final Credential EMPTY_USER_CREDENTIAL = new Credential("CDAP-empty-user-credential",
-                                                                         Credential.CredentialType.INTERNAL);
+  private static final Credential EMPTY_USER_CREDENTIAL = new Credential(
+      "CDAP-empty-user-credential",
+      Credential.CredentialType.INTERNAL);
   private static final String EMPTY_USER_IP = "CDAP-empty-user-ip";
 
   private final boolean internalAuthEnabled;
@@ -49,8 +52,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   }
 
   /**
-   * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
-   * Returns a 401 if the identifier is malformed.
+   * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal. Returns a 401
+   * if the identifier is malformed.
    */
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -95,7 +98,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         } else {
           String credentialTypeStr = authHeader.substring(0, idx);
           try {
-            Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(credentialTypeStr);
+            Credential.CredentialType credentialType = Credential.CredentialType.fromQualifiedName(
+                credentialTypeStr);
             String credentialValue = authHeader.substring(idx + 1).trim();
             currentUserCredential = new Credential(credentialValue, credentialType);
             SecurityRequestContext.setUserCredential(currentUserCredential);
@@ -106,7 +110,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
         }
       }
       LOG.trace("Got user ID '{}' user IP '{}' from IP '{}' and authorization header length '{}'",
-                userID, userIP, ctx.channel().remoteAddress(), authHeader == null ? "NULL" : authHeader.length());
+          userID, userIP, ctx.channel().remoteAddress(),
+          authHeader == null ? "NULL" : authHeader.length());
       SecurityRequestContext.setUserId(currentUserID);
       SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
@@ -123,7 +128,8 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     LOG.error("Got exception: {}", cause.getMessage(), cause);
     // TODO: add WWW-Authenticate header for 401 response -  REACTOR-900
-    HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.UNAUTHORIZED);
+    HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        HttpResponseStatus.UNAUTHORIZED);
     HttpUtil.setContentLength(response, 0);
     HttpUtil.setKeepAlive(response, false);
     ctx.channel().writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);

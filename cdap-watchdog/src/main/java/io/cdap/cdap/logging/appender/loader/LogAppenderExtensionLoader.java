@@ -28,7 +28,9 @@ import java.util.Set;
 /**
  * Extension loader to load log appenders.
  */
-public class LogAppenderExtensionLoader extends AbstractExtensionLoader<String, Appender<ILoggingEvent>> {
+public class LogAppenderExtensionLoader extends
+    AbstractExtensionLoader<String, Appender<ILoggingEvent>> {
+
   private final CConfiguration cConf;
 
   LogAppenderExtensionLoader(CConfiguration cConf) {

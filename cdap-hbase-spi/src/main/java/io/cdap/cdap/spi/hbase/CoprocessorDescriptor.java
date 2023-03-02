@@ -32,12 +32,13 @@ public final class CoprocessorDescriptor {
   private final int priority;
   private final Map<String, String> properties;
 
-  public CoprocessorDescriptor(String className, @Nullable String path, int priority, Map<String, String> properties) {
+  public CoprocessorDescriptor(String className, @Nullable String path, int priority,
+      Map<String, String> properties) {
     this.className = className;
     this.path = path;
     this.priority = priority;
     this.properties = properties == null ? Collections.<String, String>emptyMap()
-      : Collections.unmodifiableMap(properties);
+        : Collections.unmodifiableMap(properties);
   }
 
   public String getClassName() {

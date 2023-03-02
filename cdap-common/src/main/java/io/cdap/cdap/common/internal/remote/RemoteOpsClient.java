@@ -40,28 +40,33 @@ import java.util.Map;
  * Common HTTP client functionality for remote operations from programs.
  */
 public class RemoteOpsClient {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
-    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
-    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
-    .create();
+      .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+      .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+      .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+      .create();
 
   private final RemoteClient remoteClient;
 
-  protected RemoteOpsClient(RemoteClientFactory remoteClientFactory, final String discoverableServiceName) {
+  protected RemoteOpsClient(RemoteClientFactory remoteClientFactory,
+      final String discoverableServiceName) {
     this.remoteClient = remoteClientFactory.createRemoteClient(discoverableServiceName,
-                                                               new DefaultHttpRequestConfig(false),
-                                                               "/v1/execute/");
+        new DefaultHttpRequestConfig(false),
+        "/v1/execute/");
   }
 
-  protected HttpResponse executeRequest(String methodName, Object... arguments) throws UnauthorizedException {
+  protected HttpResponse executeRequest(String methodName, Object... arguments)
+      throws UnauthorizedException {
     return executeRequest(methodName, ImmutableMap.<String, String>of(), arguments);
   }
 
-  protected HttpResponse executeRequest(String methodName, Map<String, String> headers, Object... arguments)
-    throws UnauthorizedException {
+  protected HttpResponse executeRequest(String methodName, Map<String, String> headers,
+      Object... arguments)
+      throws UnauthorizedException {
     String body = GSON.toJson(createBody(arguments));
-    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, methodName).addHeaders(headers);
+    HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, methodName)
+        .addHeaders(headers);
     if (body != null) {
       builder.withBody(body);
     }
@@ -72,8 +77,8 @@ public class RemoteOpsClient {
         return response;
       }
       throw new RuntimeException(String.format("%s Response: %s.",
-                                               remoteClient.createErrorMessage(request, body),
-                                               response));
+          remoteClient.createErrorMessage(request, body),
+          response));
     } catch (IOException e) {
       throw new RuntimeException(remoteClient.createErrorMessage(request, body), e);
     }

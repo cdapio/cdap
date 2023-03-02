@@ -20,7 +20,8 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 /**
  * Wraps {@link MapReduceProgramRunner} to be run via Twill
  */
-public final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduceProgramRunner> {
+public final class MapReduceTwillRunnable extends
+    AbstractProgramTwillRunnable<MapReduceProgramRunner> {
 
   public MapReduceTwillRunnable(String name) {
     super(name);

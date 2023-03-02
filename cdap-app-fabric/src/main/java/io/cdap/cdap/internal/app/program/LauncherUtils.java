@@ -26,14 +26,18 @@ import org.apache.twill.api.TwillPreparer;
  * Utility class for launching twill runnables.
  */
 public class LauncherUtils {
+
   /**
    * Sets the JVM options overrides for all twill runnables with an override config set.
+   *
    * @param cConf The configuration to use
    * @param twillPreparer The twill preparer to use
    * @param runnables The set of runnables to override
    */
-  public static void overrideJVMOpts(CConfiguration cConf, TwillPreparer twillPreparer, Set<String> runnables) {
-    Map<String, String> jvmOverrideConfig = cConf.getPropsWithPrefix(Constants.AppFabric.PROGRAM_JVM_OPTS_PREFIX);
+  public static void overrideJVMOpts(CConfiguration cConf, TwillPreparer twillPreparer,
+      Set<String> runnables) {
+    Map<String, String> jvmOverrideConfig = cConf.getPropsWithPrefix(
+        Constants.AppFabric.PROGRAM_JVM_OPTS_PREFIX);
     for (Map.Entry<String, String> jvmOverrideEntry : jvmOverrideConfig.entrySet()) {
       String jvmOverrideKey = jvmOverrideEntry.getKey();
       if (runnables.contains(jvmOverrideKey)) {

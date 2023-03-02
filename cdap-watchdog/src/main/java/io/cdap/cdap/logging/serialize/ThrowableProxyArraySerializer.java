@@ -26,13 +26,15 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for ThrowableProxyArray.
  */
 final class ThrowableProxyArraySerializer {
-  private ThrowableProxyArraySerializer() {}
+
+  private ThrowableProxyArraySerializer() {
+  }
 
   static GenericArray<GenericRecord> encode(Schema schema, IThrowableProxy[] throwableProxies) {
     if (throwableProxies != null) {
       Schema tpArraySchema = schema.getTypes().get(1);
       GenericArray<GenericRecord> steArray = new GenericData.Array<>(throwableProxies.length,
-                                                                                  tpArraySchema);
+          tpArraySchema);
       for (IThrowableProxy tp : throwableProxies) {
         steArray.add(ThrowableProxySerializer.encode(tpArraySchema.getElementType(), tp));
       }

@@ -27,38 +27,43 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import javax.annotation.Nullable;
 
 /**
- * Plugin configurer specifically for service. It provides additional functionality such as instantiate the plugin
- * with provided macro evaluator.
+ * Plugin configurer specifically for service. It provides additional functionality such as
+ * instantiate the plugin with provided macro evaluator.
  */
 public interface ServicePluginConfigurer extends PluginConfigurer {
+
   /**
-   * Adds a Plugin usage to the Application and create a new instance.
-   * The Plugin will be accessible at execution time via the {@link PluginContext}.
+   * Adds a Plugin usage to the Application and create a new instance. The Plugin will be accessible
+   * at execution time via the {@link PluginContext}.
    *
    * @param pluginType plugin type name
    * @param pluginName plugin name
-   * @param pluginId an unique identifier for this usage. The same id is used to get the plugin at execution time.
-   * @param properties properties for the plugin. The same set of properties will be used to instantiate the plugin
-   *                   instance at execution time
+   * @param pluginId an unique identifier for this usage. The same id is used to get the plugin
+   *     at execution time.
+   * @param properties properties for the plugin. The same set of properties will be used to
+   *     instantiate the plugin instance at execution time
    * @param selector for selecting which plugin to use
    * @param macroEvaluator macro evaluator to be used to evaluate macros
    * @param options macro parsing options
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
-   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the
+   *     given properties
    */
   @Nullable
-  <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                  PluginSelector selector, MacroEvaluator macroEvaluator, MacroParserOptions options);
+  <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector, MacroEvaluator macroEvaluator, MacroParserOptions options);
 
   /**
-   * Creates a new instance of {@link ClassLoader} that contains this program classloader, all the plugins
-   * export-package classloader instantiated by this configurer and system classloader in that loading order.
-   * Currently this method is only supported in services.
+   * Creates a new instance of {@link ClassLoader} that contains this program classloader, all the
+   * plugins export-package classloader instantiated by this configurer and system classloader in
+   * that loading order. Currently this method is only supported in services.
    *
    * @return a combined classloader
    */
   default ClassLoader createClassLoader() {
-    throw new UnsupportedOperationException("Creating classloader for all plugins is not supported.");
+    throw new UnsupportedOperationException(
+        "Creating classloader for all plugins is not supported.");
   }
 }

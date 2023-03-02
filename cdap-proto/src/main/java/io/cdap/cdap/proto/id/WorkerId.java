@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.ProgramType;
  * Uniquely identifies a worker.
  */
 public class WorkerId extends ProgramId implements ParentedId<ApplicationId> {
+
   public WorkerId(String namespace, String application, String program) {
     super(namespace, application, ProgramType.WORKER, program);
   }

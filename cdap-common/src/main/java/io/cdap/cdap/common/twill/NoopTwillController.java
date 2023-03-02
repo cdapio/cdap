@@ -38,7 +38,8 @@ import org.apache.twill.internal.RunIds;
 /**
  * A no-op {@link TwillController}.
  */
-final class NoopTwillController extends AbstractExecutionServiceController implements TwillController {
+final class NoopTwillController extends AbstractExecutionServiceController implements
+    TwillController {
 
   NoopTwillController() {
     super(RunIds.generate());
@@ -59,7 +60,8 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
 
       @Override
       public Cancellable watchChanges(ChangeListener listener, Executor executor) {
-        return () -> { };
+        return () -> {
+        };
       }
 
       @Override
@@ -77,7 +79,8 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   @Override
   public Future<Integer> changeInstances(String runnable, int newCount) {
     CompletableFuture<Integer> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Change instances is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Change instances is not supported"));
     return future;
   }
 
@@ -90,57 +93,67 @@ final class NoopTwillController extends AbstractExecutionServiceController imple
   @Override
   public Future<String> restartAllInstances(String runnable) {
     CompletableFuture<String> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Restart all instances is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Restart all instances is not supported"));
     return future;
   }
 
   @Override
-  public Future<Set<String>> restartInstances(Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
+  public Future<Set<String>> restartInstances(
+      Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
     CompletableFuture<Set<String>> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Restart instances is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Restart instances is not supported"));
     return future;
   }
 
   @Override
   public Future<String> restartInstances(String runnable, int instanceId, int... moreInstanceIds) {
     CompletableFuture<String> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Restart instances is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Restart instances is not supported"));
     return future;
   }
 
   @Override
   public Future<String> restartInstances(String runnable, Set<Integer> instanceIds) {
     CompletableFuture<String> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Restart instances is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Restart instances is not supported"));
     return future;
   }
 
   @Override
-  public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(
+      Map<String, LogEntry.Level> logLevels) {
     CompletableFuture<Map<String, LogEntry.Level>> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Update log levels is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Update log levels is not supported"));
     return future;
   }
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-                                                             Map<String, LogEntry.Level> logLevelsForRunnable) {
+      Map<String, LogEntry.Level> logLevelsForRunnable) {
     CompletableFuture<Map<String, LogEntry.Level>> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Update log levels is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Update log levels is not supported"));
     return future;
   }
 
   @Override
   public Future<String[]> resetLogLevels(String... loggerNames) {
     CompletableFuture<String[]> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Reset log levels is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Reset log levels is not supported"));
     return future;
   }
 
   @Override
   public Future<String[]> resetRunnableLogLevels(String runnableName, String... loggerNames) {
     CompletableFuture<String[]> future = new CompletableFuture<>();
-    future.completeExceptionally(new UnsupportedOperationException("Reset runnable log levels is not supported"));
+    future.completeExceptionally(
+        new UnsupportedOperationException("Reset runnable log levels is not supported"));
     return future;
   }
 

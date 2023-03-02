@@ -22,8 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates the category for a plugin. A plugin can only belong to one category.
- * By default, a plugin does not belong to any category.
+ * Annotates the category for a plugin. A plugin can only belong to one category. By default, a
+ * plugin does not belong to any category.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

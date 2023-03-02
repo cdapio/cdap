@@ -33,10 +33,11 @@ import org.slf4j.LoggerFactory;
  * When rolling over, renames files according to a fixed window algorithm.
  */
 public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
+
   private static final Logger LOG = LoggerFactory.getLogger(FixedWindowRollingPolicy.class);
 
   private static final String FNP_NOT_SET =
-    "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
+      "The \"FileNamePattern\" property must be set before using FixedWindowRollingPolicy. ";
 
   // TODO CDAP-8369 - Support compression
   private int minIndex;
@@ -59,10 +60,12 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
     if (fileNamePatternStr != null) {
       if (context instanceof AppenderContext) {
         AppenderContext context = (AppenderContext) this.context;
-        fileNamePatternStr = fileNamePatternStr.replace("instanceId", Integer.toString(context.getInstanceId()));
+        fileNamePatternStr = fileNamePatternStr.replace("instanceId",
+            Integer.toString(context.getInstanceId()));
       } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
-        throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
-                                          " but got " + context.getClass().getName());
+        throw new IllegalStateException(
+            "Expected logger context instance of " + AppenderContext.class.getName() +
+                " but got " + context.getClass().getName());
       }
 
       fileNamePattern = new FileNamePattern(fileNamePatternStr, this.context);
@@ -86,8 +89,8 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
 
     if (itc == null) {
       throw new IllegalStateException("FileNamePattern ["
-                                        + fileNamePattern.getPattern()
-                                        + "] does not contain a valid IntegerToken");
+          + fileNamePattern.getPattern()
+          + "] does not contain a valid IntegerToken");
     }
     processedIndex = maxIndex;
     super.start();
@@ -116,7 +119,8 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
           // no need to proceed further if we are not able to delete location so throw exception
           if (deleteLocation.exists() && !deleteLocation.delete()) {
             LOG.warn("Failed to delete location: {}", deleteLocation.toURI().toString());
-            throw new RolloverFailure(String.format("Not able to delete file: %s", deleteLocation.toURI().toString()));
+            throw new RolloverFailure(
+                String.format("Not able to delete file: %s", deleteLocation.toURI().toString()));
           }
           processedIndex--;
         }
@@ -130,19 +134,22 @@ public class FixedWindowRollingPolicy extends LocationRollingPolicyBase {
             Location newName = parentLocation.append(fileNamePattern.convertInt(i + 1));
             // throw exception if rename fails, so that in next iteration of rollover, it will be retried
             if (toRename.renameTo(newName) == null) {
-              LOG.warn("Failed to rename {} to {}", toRename.toURI().toString(), newName.toURI().toString());
-              throw new RolloverFailure(String.format("Failed to rename %s to %s", toRename.toURI().toString(),
-                                                      newName.toURI().toString()));
+              LOG.warn("Failed to rename {} to {}", toRename.toURI().toString(),
+                  newName.toURI().toString());
+              throw new RolloverFailure(
+                  String.format("Failed to rename %s to %s", toRename.toURI().toString(),
+                      newName.toURI().toString()));
             }
           } else {
             LOG.trace("Skipping roll-over for inexistent file {}", toRename.toURI().toString());
           }
         }
 
-        if (activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex))) == null) {
+        if (activeFileLocation.renameTo(parentLocation.append(fileNamePattern.convertInt(minIndex)))
+            == null) {
           LOG.warn("Failed to rename location: {}", activeFileLocation.toURI().toString());
           throw new RolloverFailure(String.format("Not able to rename file: %s",
-                                                  activeFileLocation.toURI().toString()));
+              activeFileLocation.toURI().toString()));
         }
 
         // reset max processed index after rename of active location has been processed successfully

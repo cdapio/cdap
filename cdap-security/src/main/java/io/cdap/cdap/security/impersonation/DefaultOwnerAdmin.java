@@ -45,7 +45,8 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public DefaultOwnerAdmin(CConfiguration cConf, OwnerStore ownerStore, NamespaceQueryAdmin namespaceQueryAdmin) {
+  public DefaultOwnerAdmin(CConfiguration cConf, OwnerStore ownerStore,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
     this.ownerStore = ownerStore;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -53,7 +54,7 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
 
   @Override
   public void add(NamespacedEntityId entityId, KerberosPrincipalId kerberosPrincipalId)
-    throws IOException, AlreadyExistsException {
+      throws IOException, AlreadyExistsException {
     ownerStore.add(entityId, kerberosPrincipalId);
   }
 
@@ -71,27 +72,29 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
   }
 
   @Override
-  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids) throws IOException {
+  public <T extends NamespacedEntityId> Map<T, String> getOwnerPrincipals(Set<T> ids)
+      throws IOException {
     return ownerStore.getOwners(ids).entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPrincipal()));
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPrincipal()));
   }
 
   @Nullable
   @Override
-  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId) throws AccessException {
+  public ImpersonationInfo getImpersonationInfo(NamespacedEntityId entityId)
+      throws AccessException {
     try {
       entityId = getEffectiveEntity(entityId);
       if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
         KerberosPrincipalId effectiveOwner = ownerStore.getOwner(entityId);
         if (effectiveOwner != null) {
           return new ImpersonationInfo(effectiveOwner.getPrincipal(),
-                                       SecurityUtil.getKeytabURIforPrincipal(effectiveOwner.getPrincipal(), cConf));
+              SecurityUtil.getKeytabURIforPrincipal(effectiveOwner.getPrincipal(), cConf));
         }
       }
       // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
       NamespaceConfig nsConfig = getNamespaceConfig(entityId.getNamespaceId());
       return nsConfig.getPrincipal() == null ? null : new ImpersonationInfo(nsConfig.getPrincipal(),
-                                                                            nsConfig.getKeytabURI());
+          nsConfig.getKeytabURI());
     } catch (IOException e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }
@@ -106,7 +109,8 @@ public class DefaultOwnerAdmin implements OwnerAdmin {
       effectiveOwner = ownerStore.getOwner(entityId);
     }
     // (CDAP-8176) Since no owner was found for the entity return namespace principal if present.
-    return effectiveOwner != null ? effectiveOwner.getPrincipal() : getNamespaceConfig(entityId).getPrincipal();
+    return effectiveOwner != null ? effectiveOwner.getPrincipal()
+        : getNamespaceConfig(entityId).getPrincipal();
   }
 
   private NamespacedEntityId getEffectiveEntity(NamespacedEntityId entityId) {

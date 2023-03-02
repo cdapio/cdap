@@ -23,10 +23,11 @@ import io.cdap.cdap.api.dataset.lib.PartitionedFileSet;
 import java.util.List;
 
 /**
- * Incrementally consumes new/unprocessed {@link Partition}s of a {@link PartitionedFileSet}.
- * In order to support multiple partition consumers consuming different partitions from the same PartitionedFileSet,
- * the consumePartitions method must be called in its own, short transaction before the processing of the partitions.
- * This is so that other concurrent consumers can see that the partitions have been marked as IN_PROGRESS.
+ * Incrementally consumes new/unprocessed {@link Partition}s of a {@link PartitionedFileSet}. In
+ * order to support multiple partition consumers consuming different partitions from the same
+ * PartitionedFileSet, the consumePartitions method must be called in its own, short transaction
+ * before the processing of the partitions. This is so that other concurrent consumers can see that
+ * the partitions have been marked as IN_PROGRESS.
  */
 @Beta
 public interface PartitionConsumer {
@@ -50,40 +51,45 @@ public interface PartitionConsumer {
 
   /**
    * This method must be called on any partitions returned by the {@code #consumePartitions} method.
-   * If a program fails to call this method for any partitions, those partitions will be 'expired' after a timeout
-   * defined on the configured {@link ConsumerConfiguration}.
+   * If a program fails to call this method for any partitions, those partitions will be 'expired'
+   * after a timeout defined on the configured {@link ConsumerConfiguration}.
    *
    * @param partitions list of partitions to mark as either succeeded or failed processing
    * @param succeeded whether or not processing of the specified partitions was successful
-   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   * @throws IllegalStateException if any of the specified partitions are not in the working set
+   *     as in progress.
    */
   void onFinish(List<? extends Partition> partitions, boolean succeeded);
 
   /**
-   * Same as {@link #onFinish(List, boolean)}, but allows specifying {@link PartitionKey}s
-   * instead of {@link io.cdap.cdap.api.dataset.lib.Partition}s.
+   * Same as {@link #onFinish(List, boolean)}, but allows specifying {@link PartitionKey}s instead
+   * of {@link io.cdap.cdap.api.dataset.lib.Partition}s.
    *
-   * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
+   * @param partitionKeys list of partition keys to mark as either succeeded or failed
+   *     processing
    * @param succeeded whether or not processing of the specified partitions was successful
-   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   * @throws IllegalStateException if any of the specified partitions are not in the working set
+   *     as in progress.
    */
   void onFinishWithKeys(List<? extends PartitionKey> partitionKeys, boolean succeeded);
 
   /**
-   * Returns a list of partitions to the working set, without increasing the number of retries. They are made
-   * available for future processing.
+   * Returns a list of partitions to the working set, without increasing the number of retries. They
+   * are made available for future processing.
    *
    * @param partitions list of partitions to put back
-   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   * @throws IllegalStateException if any of the specified partitions are not in the working set
+   *     as in progress.
    */
   void untake(List<? extends Partition> partitions);
 
   /**
-   * Returns a list of partition keys to the working set, without increasing the number of retries. They are made
-   * available for future processing.
+   * Returns a list of partition keys to the working set, without increasing the number of retries.
+   * They are made available for future processing.
    *
    * @param partitionKeys list of partition keys to put back
-   * @throws IllegalStateException if any of the specified partitions are not in the working set as in progress.
+   * @throws IllegalStateException if any of the specified partitions are not in the working set
+   *     as in progress.
    */
   void untakeWithKeys(List<? extends PartitionKey> partitionKeys);
 }

@@ -20,6 +20,7 @@ package io.cdap.cdap.api.schedule;
  * Base interface for the trigger information to be passed to the triggered program.
  */
 public interface TriggerInfo {
+
   /**
    * The type of the trigger info.
    */

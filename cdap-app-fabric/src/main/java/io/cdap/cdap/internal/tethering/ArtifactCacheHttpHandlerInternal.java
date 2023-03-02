@@ -61,16 +61,17 @@ import org.apache.twill.filesystem.Location;
 
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
+      .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
   private final ArtifactCache cache;
   private final TetheringStore tetheringStore;
   private final RemoteAuthenticator remoteAuthenticator;
 
   public ArtifactCacheHttpHandlerInternal(ArtifactCache cache, TetheringStore tetheringStore,
-                                          RemoteAuthenticator remoteAuthenticator) {
+      RemoteAuthenticator remoteAuthenticator) {
     this.cache = cache;
     this.tetheringStore = tetheringStore;
     this.remoteAuthenticator = remoteAuthenticator;
@@ -79,11 +80,11 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("peers/{peer}/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
   public void fetchArtifact(HttpRequest request, HttpResponder responder,
-                            @PathParam("peer") String peer,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("artifact-name") String artifactName,
-                            @PathParam("artifact-version") String artifactVersion,
-                            @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+      @PathParam("peer") String peer,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion,
+      @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
     ArtifactScope artifactScope = validateScope(scope);
     if (artifactScope == ArtifactScope.SYSTEM) {
       namespaceId = NamespaceId.SYSTEM.getNamespace();
@@ -93,11 +94,13 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
       RemoteClient remoteClient = getRemoteClient(peer);
       File artifactPath = cache.getArtifact(artifactId, peer, remoteClient);
       Location artifactLocation = Locations.toLocation(artifactPath);
-        responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
-                            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+      responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(artifactLocation),
+          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+              MediaType.APPLICATION_OCTET_STREAM));
     } catch (Exception ex) {
       if (ex instanceof HttpErrorStatusProvider) {
-        HttpResponseStatus status = HttpResponseStatus.valueOf(((HttpErrorStatusProvider) ex).getStatusCode());
+        HttpResponseStatus status = HttpResponseStatus.valueOf(
+            ((HttpErrorStatusProvider) ex).getStatusCode());
         responder.sendString(status, exceptionToJson(ex));
       } else {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
@@ -108,14 +111,14 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("peers/{peer}/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
   public void getArtifactDetail(HttpRequest request, HttpResponder responder,
-                                @PathParam("peer") String peer,
-                                @PathParam("namespace-id") String namespace,
-                                @PathParam("artifact-name") String artifactName,
-                                @PathParam("artifact-version") String artifactVersion,
-                                @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+      @PathParam("peer") String peer,
+      @PathParam("namespace-id") String namespace,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion,
+      @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
     RemoteClient remoteClient = getRemoteClient(peer);
     String url = String.format("namespaces/%s/artifacts/%s/versions/%s",
-                               namespace, artifactName, artifactVersion);
+        namespace, artifactName, artifactVersion);
     io.cdap.common.http.HttpRequest req = remoteClient.requestBuilder(HttpMethod.GET, url).build();
     HttpResponse response = remoteClient.execute(req);
     String responseBody = response.getResponseBodyAsString(StandardCharsets.UTF_8);
@@ -132,10 +135,12 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
       if (uri.getScheme() != null) {
         uri = URI.create(uri.getPath());
       }
-      ArtifactDescriptor modifiedDescriptor = new ArtifactDescriptor(originalDescriptor.getNamespace(),
-                                                                     originalDescriptor.getArtifactId(),
-                                                                     uri);
-      ArtifactDetail modifiedDetail = new ArtifactDetail(modifiedDescriptor, originalDetail.getMeta());
+      ArtifactDescriptor modifiedDescriptor = new ArtifactDescriptor(
+          originalDescriptor.getNamespace(),
+          originalDescriptor.getArtifactId(),
+          uri);
+      ArtifactDetail modifiedDetail = new ArtifactDetail(modifiedDescriptor,
+          originalDetail.getMeta());
       responseBody = GSON.toJson(modifiedDetail);
     }
     responder.sendString(HttpResponseStatus.valueOf(responseCode), responseBody);
@@ -144,25 +149,27 @@ public class ArtifactCacheHttpHandlerInternal extends AbstractHttpHandler {
   /**
    * Return a remote client that can connect to appfabric on a tethered peer.
    */
-  private RemoteClient getRemoteClient(String peer) throws PeerNotFoundException, IOException, URISyntaxException {
+  private RemoteClient getRemoteClient(String peer)
+      throws PeerNotFoundException, IOException, URISyntaxException {
     String endpoint = tetheringStore.getPeer(peer).getEndpoint();
     RemoteClientFactory factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(endpoint),
-                                                          new NoOpInternalAuthenticator(),
-                                                          remoteAuthenticator);
+        new NoOpInternalAuthenticator(),
+        remoteAuthenticator);
     HttpRequestConfig config = new DefaultHttpRequestConfig(true);
     URI peerUri = new URI(endpoint);
     // Add peer endpoint's path to the beginning of the remote client's base path
     // ex : if peerUri is https://my.host.com/api, then the base path will be /api/v3Internal
     // So some/path would be resolved by the remote client to https://my.host.com/api/v3Internal/some/path
-    String basePath = peerUri.getPath() != null ? peerUri.getPath() + Constants.Gateway.INTERNAL_API_VERSION_3 :
-      Constants.Gateway.INTERNAL_API_VERSION_3;
+    String basePath =
+        peerUri.getPath() != null ? peerUri.getPath() + Constants.Gateway.INTERNAL_API_VERSION_3 :
+            Constants.Gateway.INTERNAL_API_VERSION_3;
     return factory.createRemoteClient("", config,
-                                      basePath);
+        basePath);
   }
 
   /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Return json representation of an exception. Used to propagate exception across network for
+   * better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);

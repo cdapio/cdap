@@ -27,12 +27,12 @@ import java.util.Map;
 public class ConstraintCodec extends ProtoConstraintCodec {
 
   private static final Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> TYPE_TO_CONSTRAINT =
-    ImmutableMap.<ProtoConstraint.Type, Class<? extends ProtoConstraint>>builder()
-      .put(ProtoConstraint.Type.CONCURRENCY, ConcurrencyConstraint.class)
-      .put(ProtoConstraint.Type.DELAY, DelayConstraint.class)
-      .put(ProtoConstraint.Type.LAST_RUN, LastRunConstraint.class)
-      .put(ProtoConstraint.Type.TIME_RANGE, TimeRangeConstraint.class)
-      .build();
+      ImmutableMap.<ProtoConstraint.Type, Class<? extends ProtoConstraint>>builder()
+          .put(ProtoConstraint.Type.CONCURRENCY, ConcurrencyConstraint.class)
+          .put(ProtoConstraint.Type.DELAY, DelayConstraint.class)
+          .put(ProtoConstraint.Type.LAST_RUN, LastRunConstraint.class)
+          .put(ProtoConstraint.Type.TIME_RANGE, TimeRangeConstraint.class)
+          .build();
 
   public ConstraintCodec() {
     super(TYPE_TO_CONSTRAINT);

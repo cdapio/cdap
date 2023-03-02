@@ -28,11 +28,13 @@ import java.util.Set;
  * Default implementation of {@link Aggregation}.
  */
 public class DefaultAggregation implements Aggregation {
+
   private final List<String> aggregateDimensions;
   private final Set<String> requiredDimensions;
 
   /**
    * Creates instance of {@link DefaultAggregation} with all tags being optional.
+   *
    * @param aggregateDimensions tags to be included in aggregation.
    */
   public DefaultAggregation(List<String> aggregateDimensions) {
@@ -45,10 +47,11 @@ public class DefaultAggregation implements Aggregation {
    * See also {@link Aggregation#getDimensionNames()} for more info on aggregateDimensions.
    *
    * @param aggregateDimensions dimensions to be included in aggregation.
-   * @param requiredDimensions dimensions that must be present in {@link io.cdap.cdap.api.dataset.lib.cube.CubeFact}
-   *                     for aggregated value to be stored.
+   * @param requiredDimensions dimensions that must be present in {@link
+   *     io.cdap.cdap.api.dataset.lib.cube.CubeFact} for aggregated value to be stored.
    */
-  public DefaultAggregation(List<String> aggregateDimensions, Collection<String> requiredDimensions) {
+  public DefaultAggregation(List<String> aggregateDimensions,
+      Collection<String> requiredDimensions) {
     this.aggregateDimensions = ImmutableList.copyOf(aggregateDimensions);
     this.requiredDimensions = ImmutableSet.copyOf(requiredDimensions);
   }

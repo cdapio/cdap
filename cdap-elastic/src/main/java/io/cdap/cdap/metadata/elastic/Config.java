@@ -20,7 +20,9 @@ package io.cdap.cdap.metadata.elastic;
  * Configuration constants for the Elasticsearch metadata storage provider.
  */
 public final class Config {
-  private Config() { }
+
+  private Config() {
+  }
 
   static final String CONF_ELASTIC_HOSTS = "metadata.elasticsearch.cluster.hosts";
   static final String CONF_ELASTIC_TLS_VERIFY = "metadata.elasticsearch.tls.verify";

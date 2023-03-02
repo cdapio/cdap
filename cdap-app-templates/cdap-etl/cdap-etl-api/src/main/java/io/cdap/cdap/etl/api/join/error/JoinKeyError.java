@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * An error related to a join key.
  */
 public class JoinKeyError extends JoinError {
+
   private final JoinKey key;
 
   public JoinKeyError(JoinKey key, String message) {

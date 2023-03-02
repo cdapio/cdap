@@ -49,9 +49,11 @@ public class HttpStatusRequestHandler extends ChannelInboundHandlerAdapter {
       // To have an independent health check of the router status, the command should
       // be served by the router itself without it talking to any downstream services
       if (request.uri().equals(Constants.EndPoints.STATUS)) {
-        ByteBuf content = Unpooled.copiedBuffer(Constants.Monitor.STATUS_OK, StandardCharsets.UTF_8);
+        ByteBuf content = Unpooled.copiedBuffer(Constants.Monitor.STATUS_OK,
+            StandardCharsets.UTF_8);
 
-        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, content);
+        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+            HttpResponseStatus.OK, content);
         HttpUtil.setContentLength(response, content.readableBytes());
         HttpUtil.setKeepAlive(response, false);
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain; charset=utf-8");

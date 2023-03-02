@@ -19,10 +19,11 @@ package io.cdap.cdap.proto;
 import java.util.Objects;
 
 /**
- * Represents an entry in {@link org.apache.hadoop.conf.Configuration}
- * or {@link io.cdap.cdap.common.conf.CConfiguration}.
+ * Represents an entry in {@link org.apache.hadoop.conf.Configuration} or {@link
+ * io.cdap.cdap.common.conf.CConfiguration}.
  */
 public final class ConfigEntry {
+
   private final String name;
   private final String value;
   private final String source;
@@ -60,16 +61,16 @@ public final class ConfigEntry {
     }
     final ConfigEntry other = (ConfigEntry) obj;
     return Objects.equals(this.name, other.name) &&
-      Objects.equals(this.value, other.value) &&
-      Objects.equals(this.source, other.source);
+        Objects.equals(this.value, other.value) &&
+        Objects.equals(this.source, other.source);
   }
 
   @Override
   public String toString() {
     return "ConfigEntry{" +
-      "name='" + name + '\'' +
-      ", value='" + value + '\'' +
-      ", source='" + source + '\'' +
-      '}';
+        "name='" + name + '\'' +
+        ", value='" + value + '\'' +
+        ", source='" + source + '\'' +
+        '}';
   }
 }

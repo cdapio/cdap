@@ -52,11 +52,11 @@ public class PreviewManagerModule extends PrivateModule {
   @Override
   protected void configure() {
     bind(DatasetDefinitionRegistryFactory.class)
-      .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+        .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
     bind(DatasetFramework.class)
-      .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-      .to(RemoteDatasetFramework.class);
+        .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+        .to(RemoteDatasetFramework.class);
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
     bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);

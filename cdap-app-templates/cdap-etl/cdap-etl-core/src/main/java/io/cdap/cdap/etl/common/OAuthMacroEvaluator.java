@@ -29,14 +29,15 @@ import java.net.HttpURLConnection;
 import java.util.Map;
 
 /**
- * A {@link MacroEvaluator} for resolving the {@code ${oauth(provider, credentialId)}} macro function. It uses
- * the studio service for getting oauth access token at runtime.
+ * A {@link MacroEvaluator} for resolving the {@code ${oauth(provider, credentialId)}} macro
+ * function. It uses the studio service for getting oauth access token at runtime.
  */
 public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator {
 
   public static final String FUNCTION_NAME = "oauth";
   private static final String SERVICE_NAME = "Oauth";
-  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private final ServiceDiscoverer serviceDiscoverer;
   private final Gson gson;
@@ -50,15 +51,17 @@ public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator 
   /**
    * Evaluates the OAuth macro function by calling the OAuth service to exchange an OAuth token.
    *
-   * @param args should contains exactly two arguments. The first one is the name of the OAuth provider, and the
-   *             second argument is the credential id.
+   * @param args should contains exactly two arguments. The first one is the name of the OAuth
+   *     provider, and the second argument is the credential id.
    * @return a map representing the OAuth token
    */
   @Override
   public Map<String, String> evaluateMacroMap(
-    String macroFunction, String... args) throws InvalidMacroException, IOException, RetryableException {
+      String macroFunction, String... args)
+      throws InvalidMacroException, IOException, RetryableException {
     if (args.length != 2) {
-      throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 2 arguments");
+      throw new InvalidMacroException(
+          "Macro '" + FUNCTION_NAME + "' should have exactly 2 arguments");
     }
 
     return getOAuthToken(args[0], args[1]);
@@ -82,12 +85,12 @@ public class OAuthMacroEvaluator extends AbstractServiceRetryableMacroEvaluator 
    * @throws RetryableException if failed to get the OAuth token due to transient error
    */
   private Map<String, String> getOAuthToken(String provider,
-                                            String credentialId) throws IOException, RetryableException {
+      String credentialId) throws IOException, RetryableException {
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
-                                                                 Constants.PIPELINEID,
-                                                                 Constants.STUDIO_SERVICE_NAME,
-                                                                 String.format("v1/oauth/provider/%s/credential/%s",
-                                                                               provider, credentialId));
+        Constants.PIPELINEID,
+        Constants.STUDIO_SERVICE_NAME,
+        String.format("v1/oauth/provider/%s/credential/%s",
+            provider, credentialId));
     return gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), MAP_STRING_TYPE);
   }
 }

@@ -28,6 +28,7 @@ import java.util.List;
  * LogReader BodyProducer to encode log events, as {@link LogData} objects.
  */
 public class LogDataOffsetProducer extends AbstractJSONLogProducer {
+
   private final List<String> fieldsToSuppress;
 
   LogDataOffsetProducer(CloseableIterator<LogEvent> logEventIter, List<String> fieldsToSuppress) {
@@ -47,15 +48,19 @@ public class LogDataOffsetProducer extends AbstractJSONLogProducer {
     if (stackTraceElements != null && stackTraceElements.length > 0) {
       StackTraceElement first = stackTraceElements[0];
       className = first.getClassName();
-      simpleClassName = (className.indexOf('.') >= 0) ? className.substring(className.lastIndexOf('.') + 1) : className;
+      simpleClassName =
+          (className.indexOf('.') >= 0) ? className.substring(className.lastIndexOf('.') + 1)
+              : className;
       lineNumber = first.getLineNumber();
       isNativeMethod = first.isNativeMethod();
     }
-    LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(), event.getThreadName(),
-                                  className, simpleClassName, lineNumber, event.getFormattedMessage(),
-                                  ThrowableProxyUtil.asString(event.getThrowableProxy()), event.getLoggerName(),
-                                  event.getMDCPropertyMap(), isNativeMethod);
-    return modifyLogJsonElememnt(GSON.toJsonTree(new FormattedLogDataEvent(logData, logEvent.getOffset())));
+    LogData logData = new LogData(event.getTimeStamp(), event.getLevel().toString(),
+        event.getThreadName(),
+        className, simpleClassName, lineNumber, event.getFormattedMessage(),
+        ThrowableProxyUtil.asString(event.getThrowableProxy()), event.getLoggerName(),
+        event.getMDCPropertyMap(), isNativeMethod);
+    return modifyLogJsonElememnt(
+        GSON.toJsonTree(new FormattedLogDataEvent(logData, logEvent.getOffset())));
   }
 
   private Object modifyLogJsonElememnt(JsonElement jsonElement) {
@@ -80,8 +85,9 @@ public class LogDataOffsetProducer extends AbstractJSONLogProducer {
       try {
         LogData.class.getDeclaredField(fieldToSuppress);
       } catch (NoSuchFieldException e) {
-        throw new IllegalArgumentException(String.format("Field %s is not supported as suppress field",
-                                                         fieldToSuppress));
+        throw new IllegalArgumentException(
+            String.format("Field %s is not supported as suppress field",
+                fieldToSuppress));
       }
     }
   }

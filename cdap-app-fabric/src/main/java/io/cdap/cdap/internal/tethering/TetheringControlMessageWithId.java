@@ -17,10 +17,11 @@
 package io.cdap.cdap.internal.tethering;
 
 /**
- * Control message and its message id.
- * These messages are sent from the tethering server to the client.
+ * Control message and its message id. These messages are sent from the tethering server to the
+ * client.
  */
 public class TetheringControlMessageWithId {
+
   private TetheringControlMessage controlMessage;
   private String messageId;
 

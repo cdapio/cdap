@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
  * Implementation of {@link MetricsTable} based on {@link Table}.
  */
 class MetricsTableOnTable implements MetricsTable {
+
   private final Table table;
 
   MetricsTableOnTable(Table table) {
@@ -104,7 +105,7 @@ class MetricsTableOnTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-                      @Nullable FuzzyRowFilter filter) {
+      @Nullable FuzzyRowFilter filter) {
     return table.scan(new Scan(start, stop, filter));
   }
 

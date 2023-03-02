@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
  */
 @Beta
 public class TableAlreadyExistsException extends Exception {
+
   private final StructuredTableId id;
 
   public TableAlreadyExistsException(StructuredTableId id) {

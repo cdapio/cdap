@@ -17,8 +17,8 @@
 package io.cdap.cdap.proto.security;
 
 /**
- * Special permissions checked on pipeline representations, e.g. {@link io.cdap.cdap.proto.id.ProgramId} or
- * {@link io.cdap.cdap.proto.id.ApplicationId}
+ * Special permissions checked on pipeline representations, e.g. {@link
+ * io.cdap.cdap.proto.id.ProgramId} or {@link io.cdap.cdap.proto.id.ApplicationId}
  */
 public enum ApplicationPermission implements Permission {
   PREVIEW, EXECUTE,

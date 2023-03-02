@@ -35,7 +35,7 @@ import org.apache.twill.api.RunId;
  * The program status trigger information to be passed to the triggered program.
  */
 public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
-  implements ProgramStatusTriggerInfo, Externalizable {
+    implements ProgramStatusTriggerInfo, Externalizable {
 
   private static final long serialVersionUID = 1L;
 
@@ -57,10 +57,10 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   }
 
   public DefaultProgramStatusTriggerInfo(String namespace, String applicationName,
-                                         ProgramType programType, String program,
-                                         RunId runId, ProgramStatus programStatus,
-                                         @Nullable WorkflowToken workflowToken,
-                                         Map<String, String> runtimeArguments) {
+      ProgramType programType, String program,
+      RunId runId, ProgramStatus programStatus,
+      @Nullable WorkflowToken workflowToken,
+      Map<String, String> runtimeArguments) {
     super(Type.PROGRAM_STATUS);
     this.namespace = namespace;
     this.applicationName = applicationName;

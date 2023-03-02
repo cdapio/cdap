@@ -66,6 +66,7 @@ import org.apache.twill.common.Threads;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class SupportBundleHttpHandler extends AbstractHttpHandler {
+
   private static final Gson GSON = new Gson();
   private static final String APPLICATION_ZIP = "application/zip";
   private static final String CONTENT_DISPOSITION_VALUE = "attachment; filename=\"bundle-%d.zip\"";
@@ -77,8 +78,8 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
 
   @Inject
   SupportBundleHttpHandler(CConfiguration cConf,
-                           SupportBundleGenerator bundleGenerator,
-                           ContextAccessEnforcer contextAccessEnforcer) {
+      SupportBundleGenerator bundleGenerator,
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.cConf = cConf;
     this.bundleGenerator = bundleGenerator;
     this.contextAccessEnforcer = contextAccessEnforcer;
@@ -87,8 +88,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @Override
   public void init(HandlerContext context) {
     super.init(context);
-    executorService = Executors.newFixedThreadPool(cConf.getInt(Constants.SupportBundle.MAX_THREADS),
-                                                   Threads.createDaemonThreadFactory("support-bundle-executor-%d"));
+    executorService = Executors.newFixedThreadPool(
+        cConf.getInt(Constants.SupportBundle.MAX_THREADS),
+        Threads.createDaemonThreadFactory("support-bundle-executor-%d"));
   }
 
   @Override
@@ -110,19 +112,21 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/support/bundles")
   public void createSupportBundle(HttpRequest request, HttpResponder responder,
-                                  @Nullable @QueryParam("namespace") String namespace,
-                                  @Nullable @QueryParam("application") String application,
-                                  @Nullable @QueryParam("programType") @DefaultValue("workflows") String programType,
-                                  @Nullable @QueryParam("programId") @DefaultValue("DataPipelineWorkflow")
-                                    String programName, @Nullable @QueryParam("run") String run,
-                                  @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
-                                    Integer maxRunsPerProgram) throws Exception {
+      @Nullable @QueryParam("namespace") String namespace,
+      @Nullable @QueryParam("application") String application,
+      @Nullable @QueryParam("programType") @DefaultValue("workflows") String programType,
+      @Nullable @QueryParam("programId") @DefaultValue("DataPipelineWorkflow")
+          String programName, @Nullable @QueryParam("run") String run,
+      @Nullable @QueryParam("maxRunsPerProgram") @DefaultValue("1")
+          Integer maxRunsPerProgram) throws Exception {
     // ensure the user is authorized to create supportBundle
-    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.CREATE);
+    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF,
+        StandardPermission.CREATE);
     // Establishes the support bundle configuration
     SupportBundleConfiguration bundleConfig =
-      new SupportBundleConfiguration(namespace, application, run, ProgramType.valueOfCategoryName(programType),
-                                     programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
+        new SupportBundleConfiguration(namespace, application, run,
+            ProgramType.valueOfCategoryName(programType),
+            programName, Optional.ofNullable(maxRunsPerProgram).orElse(1));
     // Generates support bundle and returns with uuid
     String prevInProgressUUID = bundleGenerator.getInProgressBundle();
     if (prevInProgressUUID == null) {
@@ -131,7 +135,7 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.CREATED, uuid);
     } else {
       responder.sendString(HttpResponseStatus.OK,
-                           String.format("The prev bundle id: %s is still running.", prevInProgressUUID));
+          String.format("The prev bundle id: %s is still running.", prevInProgressUUID));
     }
   }
 
@@ -144,7 +148,8 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
   @Path("/support/bundles")
   public void listSupportBundles(HttpRequest request, HttpResponder responder) {
     // Ensure the user is authorized to list support bundle statuses
-    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF, StandardPermission.LIST);
+    contextAccessEnforcer.enforceOnParent(EntityType.SUPPORT_BUNDLE, InstanceId.SELF,
+        StandardPermission.LIST);
 
     List<SupportBundleOperationStatus> bundleOperationStatusList = bundleGenerator.getAllBundleStatus();
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(bundleOperationStatusList));
@@ -158,8 +163,9 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    */
   @GET
   @Path("/support/bundles/{uuid}/status")
-  public void getSupportBundleStatus(HttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid)
-    throws IOException, NotFoundException {
+  public void getSupportBundleStatus(HttpRequest request, HttpResponder responder,
+      @PathParam("uuid") String uuid)
+      throws IOException, NotFoundException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
     SupportBundleOperationStatus bundleOperationStatus = bundleGenerator.getBundle(uuid);
@@ -174,12 +180,14 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/support/bundles/{uuid}")
-  public void deleteSupportBundle(HttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid)
-    throws IOException, NotFoundException {
+  public void deleteSupportBundle(HttpRequest request, HttpResponder responder,
+      @PathParam("uuid") String uuid)
+      throws IOException, NotFoundException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.DELETE);
     bundleGenerator.deleteBundle(uuid);
-    responder.sendString(HttpResponseStatus.OK, String.format("Successfully deleted bundle %s", uuid));
+    responder.sendString(HttpResponseStatus.OK,
+        String.format("Successfully deleted bundle %s", uuid));
   }
 
   /**
@@ -189,12 +197,14 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("/support/bundles/{uuid}")
-  public void downloadSupportBundle(FullHttpRequest request, HttpResponder responder, @PathParam("uuid") String uuid)
-    throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
+  public void downloadSupportBundle(FullHttpRequest request, HttpResponder responder,
+      @PathParam("uuid") String uuid)
+      throws BadRequestException, IOException, NotFoundException, NoSuchAlgorithmException {
     SupportBundleEntityId bundleEntityId = new SupportBundleEntityId(uuid);
     contextAccessEnforcer.enforce(bundleEntityId, StandardPermission.GET);
     String requestContent = request.content().toString(StandardCharsets.UTF_8);
-    File tempDir = new File(cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
+    File tempDir = new File(
+        cConf.get(Constants.SupportBundle.SUPPORT_BUNDLE_TEMP_DIR)).getAbsoluteFile();
     DirUtils.mkdirs(tempDir);
     java.nio.file.Path tmpPath = Files.createTempFile(tempDir.toPath(), "support-bundle", ".zip");
     String digestHeader = "";
@@ -202,19 +212,22 @@ public class SupportBundleHttpHandler extends AbstractHttpHandler {
     try {
       if (requestContent == null || requestContent.length() == 0) {
         bundleRequestFileList = new SupportBundleRequestFileList(new ArrayList<>());
-        digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath, bundleRequestFileList);
+        digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath,
+            bundleRequestFileList);
       } else {
         try {
           bundleRequestFileList = GSON.fromJson(requestContent, SupportBundleRequestFileList.class);
         } catch (Exception e) {
-          throw new BadRequestException(String.format("Failed to parse body on %s", requestContent));
+          throw new BadRequestException(
+              String.format("Failed to parse body on %s", requestContent));
         }
-        digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath, bundleRequestFileList);
+        digestHeader = bundleGenerator.createBundleZipByRequest(uuid, tmpPath,
+            bundleRequestFileList);
       }
       responder.sendFile(tmpPath.toFile(), new DefaultHttpHeaders().add("digest", digestHeader)
-        .add(HttpHeaderNames.CONTENT_TYPE, APPLICATION_ZIP)
-        .add(HttpHeaderNames.CONTENT_DISPOSITION,
-             String.format(CONTENT_DISPOSITION_VALUE, System.currentTimeMillis())));
+          .add(HttpHeaderNames.CONTENT_TYPE, APPLICATION_ZIP)
+          .add(HttpHeaderNames.CONTENT_DISPOSITION,
+              String.format(CONTENT_DISPOSITION_VALUE, System.currentTimeMillis())));
     } finally {
       Files.deleteIfExists(tmpPath);
     }

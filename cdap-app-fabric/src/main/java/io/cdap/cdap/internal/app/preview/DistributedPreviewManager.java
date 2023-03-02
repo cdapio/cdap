@@ -69,7 +69,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link PreviewManager} to be used in distributed mode where it launches preview runner in separate processes.
+ * A {@link PreviewManager} to be used in distributed mode where it launches preview runner in
+ * separate processes.
  */
 public class DistributedPreviewManager extends DefaultPreviewManager implements Runnable {
 
@@ -83,25 +84,27 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
   @Inject
   DistributedPreviewManager(CConfiguration cConf, Configuration hConf,
-                            DiscoveryServiceClient discoveryServiceClient,
-                            @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                            TransactionSystemClient transactionSystemClient,
-                            AccessControllerInstantiator accessControllerInstantiator,
-                            AccessEnforcer accessEnforcer,
-                            AuthenticationContext authenticationContext,
-                            @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-                            @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
-                            @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
-                            @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                            PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
-                            PreviewRunStopper previewRunStopper, MessagingService messagingService,
-                            MetricsCollectionService metricsCollectionService,
-                            PreviewDataCleanupService previewDataCleanupService,
-                            TwillRunner twillRunner) {
+      DiscoveryServiceClient discoveryServiceClient,
+      @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+      TransactionSystemClient transactionSystemClient,
+      AccessControllerInstantiator accessControllerInstantiator,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext,
+      @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
+      @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
+      @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
+      @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
+      PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
+      PreviewRunStopper previewRunStopper, MessagingService messagingService,
+      MetricsCollectionService metricsCollectionService,
+      PreviewDataCleanupService previewDataCleanupService,
+      TwillRunner twillRunner) {
     super(discoveryServiceClient, datasetFramework, transactionSystemClient,
-          accessControllerInstantiator, accessEnforcer, authenticationContext, previewLevelDBTableService,
-          previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore, previewRunStopper,
-          messagingService, previewDataCleanupService, metricsCollectionService);
+        accessControllerInstantiator, accessEnforcer, authenticationContext,
+        previewLevelDBTableService,
+        previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore,
+        previewRunStopper,
+        messagingService, previewDataCleanupService, metricsCollectionService);
 
     this.cConf = cConf;
     this.hConf = hConf;
@@ -111,7 +114,8 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
   @Override
   protected void startUp() throws Exception {
     super.startUp();
-    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("preview-manager"));
+    scheduler = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("preview-manager"));
     scheduler.scheduleWithFixedDelay(this, 2, 5, TimeUnit.SECONDS);
   }
 
@@ -150,7 +154,7 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
     if (activeController == null) {
       try {
         Path tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                               cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+            cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
         Files.createDirectories(tmpDir);
 
         Path runDir = Files.createTempDirectory(tmpDir, "preview");
@@ -172,31 +176,33 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
           }
 
           ResourceSpecification runnerResourceSpec = ResourceSpecification.Builder.with()
-            .setVirtualCores(cConf.getInt(Constants.Preview.CONTAINER_CORES))
-            .setMemory(cConf.getInt(Constants.Preview.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-            .setInstances(cConf.getInt(Constants.Preview.CONTAINER_COUNT))
-            .build();
+              .setVirtualCores(cConf.getInt(Constants.Preview.CONTAINER_CORES))
+              .setMemory(cConf.getInt(Constants.Preview.CONTAINER_MEMORY_MB),
+                  ResourceSpecification.SizeUnit.MEGA)
+              .setInstances(cConf.getInt(Constants.Preview.CONTAINER_COUNT))
+              .build();
 
           Optional<ResourceSpecification> artifactLocalizerResourceSpec = Optional.empty();
           artifactLocalizerResourceSpec = Optional.of(
-            ResourceSpecification.Builder.with()
-              .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
-              .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
-                         ResourceSpecification.SizeUnit.MEGA)
-              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
-              .build());
+              ResourceSpecification.Builder.with()
+                  .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+                  .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                      ResourceSpecification.SizeUnit.MEGA)
+                  .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+                  .build());
 
           LOG.info("Starting preview runners with {} instances and artifactLocalizer enabled",
-                   runnerResourceSpec.getInstances());
+              runnerResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-            new PreviewRunnerTwillApplication(cConfPath.toUri(),
-                                              hConfPath.toUri(),
-                                              runnerResourceSpec,
-                                              artifactLocalizerResourceSpec));
+              new PreviewRunnerTwillApplication(cConfPath.toUri(),
+                  hConfPath.toUri(),
+                  runnerResourceSpec,
+                  artifactLocalizerResourceSpec));
 
           Map<String, String> configMap = new HashMap<>();
-          configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+          configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
+              NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
           String priorityClass = cConf.get(Constants.Preview.CONTAINER_PRIORITY_CLASS_NAME);
@@ -206,50 +212,53 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
 
           if (twillPreparer instanceof DependentTwillPreparer) {
             twillPreparer = ((DependentTwillPreparer) twillPreparer)
-              .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
-                                      ArtifactLocalizerTwillRunnable.class.getSimpleName());
+                .dependentRunnableNames(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                    ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
             int diskSize = cConf.getInt(Constants.Preview.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
-              .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk("preview-runner-data", diskSize,
-                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+                .withStatefulRunnable(PreviewRunnerTwillRunnable.class.getSimpleName(), false,
+                    new StatefulDisk("preview-runner-data", diskSize,
+                        cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
             String twillUserIdentity = cConf.get(Constants.Twill.Security.IDENTITY_USER);
             if (twillUserIdentity != null) {
               SecurityContext securityContext = new SecurityContext.Builder()
-                .withIdentity(twillUserIdentity).build();
+                  .withIdentity(twillUserIdentity).build();
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(), securityContext);
+                  .withSecurityContext(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                      securityContext);
             }
 
             // Mount secret in ArtifactLocalizer sidecar which only runs trusted code,
             // so requests originated by ArtifactLocalizer can run with system identity when internal auth
             // is enabled.
-            String artifactLocalizerSecretName = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
-            String artifactLocalizerSecretPath = cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
+            String artifactLocalizerSecretName = cConf.get(
+                Constants.Twill.Security.MASTER_SECRET_DISK_NAME);
+            String artifactLocalizerSecretPath = cConf.get(
+                Constants.Twill.Security.MASTER_SECRET_DISK_PATH);
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
-              .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                              new SecretDisk(artifactLocalizerSecretName, artifactLocalizerSecretPath));
+                .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
+                    new SecretDisk(artifactLocalizerSecretName, artifactLocalizerSecretPath));
             // Mount worker secrets as configured in CConf
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(PreviewRunnerTwillRunnable.class.getSimpleName(),
-                                new SecretDisk(secretName, secretPath));
+                  .withSecretDisk(PreviewRunnerTwillRunnable.class.getSimpleName(),
+                      new SecretDisk(secretName, secretPath));
             }
           }
 
           // Set JVM options for preview runner and artifact localizer
           twillPreparer.setJVMOptions(PreviewRunnerTwillRunnable.class.getSimpleName(),
-                                      cConf.get(Constants.Preview.CONTAINER_JVM_OPTS));
+              cConf.get(Constants.Preview.CONTAINER_JVM_OPTS));
           twillPreparer.setJVMOptions(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                                      cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
+              cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
           activeController.onRunning(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);

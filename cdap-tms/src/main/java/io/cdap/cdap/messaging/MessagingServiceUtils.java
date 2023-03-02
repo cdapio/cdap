@@ -36,14 +36,15 @@ public final class MessagingServiceUtils {
   private static final Logger LOG = LoggerFactory.getLogger(MessagingServiceUtils.class);
 
   /**
-   * Returns a set of system {@link TopicId} as configured by the {@link Constants.MessagingSystem#SYSTEM_TOPICS}
-   * property.
+   * Returns a set of system {@link TopicId} as configured by the {@link
+   * Constants.MessagingSystem#SYSTEM_TOPICS} property.
    *
    * @param cConf the configuration to get the system topics
-   * @param ignoreInvalidTopic if {@code true}, invalid topics will be ignored; otherwise exception will be raised
+   * @param ignoreInvalidTopic if {@code true}, invalid topics will be ignored; otherwise
+   *     exception will be raised
    * @return a set of valid system {@link TopicId}.
-   * @throws IllegalArgumentException if {@code ignoreInvalidTopic} is {@code true} and there is invalid topic being
-   *                                  configured
+   * @throws IllegalArgumentException if {@code ignoreInvalidTopic} is {@code true} and there is
+   *     invalid topic being configured
    */
   public static Set<TopicId> getSystemTopics(CConfiguration cConf, boolean ignoreInvalidTopic) {
     Set<TopicId> systemTopics = new LinkedHashSet<>();
@@ -70,11 +71,13 @@ public final class MessagingServiceUtils {
         int totalTopicCount = Integer.parseInt(topic.substring(idx + 1));
         if (totalTopicCount <= 0) {
           if (ignoreInvalidTopic) {
-            LOG.warn("Ignore system topic '{}' because the total topic number {} in it is not positive integer.",
-                     topic, totalTopicCount);
+            LOG.warn(
+                "Ignore system topic '{}' because the total topic number {} in it is not positive integer.",
+                topic, totalTopicCount);
             continue;
           } else {
-            throw new IllegalArgumentException("Total topic number must be positive for system topic '" + topic + "'.");
+            throw new IllegalArgumentException(
+                "Total topic number must be positive for system topic '" + topic + "'.");
           }
         }
 
@@ -87,10 +90,13 @@ public final class MessagingServiceUtils {
         systemTopics.addAll(topics);
       } catch (NumberFormatException e) {
         if (ignoreInvalidTopic) {
-          LOG.warn("Ignore invalid system topic '{}' because of the invalid total topic number in it.", topic);
+          LOG.warn(
+              "Ignore invalid system topic '{}' because of the invalid total topic number in it.",
+              topic);
         } else {
-          throw new IllegalArgumentException("Total topic number must be a positive number for system topic '"
-                                               + topic + "'.");
+          throw new IllegalArgumentException(
+              "Total topic number must be a positive number for system topic '"
+                  + topic + "'.");
         }
       } catch (IllegalArgumentException e) {
         if (ignoreInvalidTopic) {

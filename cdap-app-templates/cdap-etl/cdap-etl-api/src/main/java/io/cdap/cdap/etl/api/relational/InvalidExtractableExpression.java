@@ -20,28 +20,30 @@ import javax.annotation.Nullable;
 
 /**
  * Invalid Extractable Expression specification
+ *
  * @param <T> type of the scalar value contained in this expression
  */
 public class InvalidExtractableExpression<T> implements ExtractableExpression<T> {
-    String validationError;
 
-    public InvalidExtractableExpression(String validationError) {
-        this.validationError = validationError;
-    }
+  String validationError;
 
-    @Override
-    public boolean isValid() {
-        return false;
-    }
+  public InvalidExtractableExpression(String validationError) {
+    this.validationError = validationError;
+  }
 
-    @Override
-    public String getValidationError() {
-        return validationError;
-    }
+  @Override
+  public boolean isValid() {
+    return false;
+  }
 
-    @Nullable
-    @Override
-    public T extract() {
-        return null;
-    }
+  @Override
+  public String getValidationError() {
+    return validationError;
+  }
+
+  @Nullable
+  @Override
+  public T extract() {
+    return null;
+  }
 }

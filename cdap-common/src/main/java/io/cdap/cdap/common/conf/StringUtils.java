@@ -26,8 +26,10 @@ import java.util.StringTokenizer;
  * Utility for strings.
  */
 public class StringUtils {
+
   /**
    * Returns an arraylist of strings.
+   *
    * @param str the comma seperated string values
    * @return the arraylist of the comma seperated string values
    */
@@ -41,6 +43,7 @@ public class StringUtils {
 
   /**
    * Returns a collection of strings.
+   *
    * @param str comma seperated string values
    * @return an <code>ArrayList</code> of string values
    */
@@ -49,7 +52,7 @@ public class StringUtils {
     if (str == null) {
       return values;
     }
-    StringTokenizer tokenizer = new StringTokenizer (str, ",");
+    StringTokenizer tokenizer = new StringTokenizer(str, ",");
     values = new ArrayList<>();
     while (tokenizer.hasMoreTokens()) {
       values.add(tokenizer.nextToken());
@@ -58,7 +61,9 @@ public class StringUtils {
   }
 
   /**
-   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on each value.
+   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on
+   * each value.
+   *
    * @param str a comma separated <String> with values
    * @return a <code>Collection</code> of <code>String</code> values
    */
@@ -67,7 +72,9 @@ public class StringUtils {
   }
 
   /**
-   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on each value.
+   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on
+   * each value.
+   *
    * @param str a comma separated <String> with values
    * @return an array of <code>String</code> values
    */
@@ -84,9 +91,9 @@ public class StringUtils {
 
   /**
    * Given an array of strings, return a comma-separated list of its elements.
+   *
    * @param strs Array of strings
-   * @return Empty string if strs.length is 0, comma separated list of strings
-   * otherwise
+   * @return Empty string if strs.length is 0, comma separated list of strings otherwise
    */
 
   public static String arrayToString(String[] strs) {
@@ -103,9 +110,8 @@ public class StringUtils {
   }
 
   /**
-   * The traditional binary prefixes, kilo, mega, ..., exa,
-   * which can be represented by a 64-bit integer.
-   * TraditionalBinaryPrefix symbol are case insensitive.
+   * The traditional binary prefixes, kilo, mega, ..., exa, which can be represented by a 64-bit
+   * integer. TraditionalBinaryPrefix symbol are case insensitive.
    */
   public enum TraditionalBinaryPrefix {
     KILO(1024),
@@ -137,13 +143,11 @@ public class StringUtils {
     }
 
     /**
-     * Convert a string to long.
-     * The input string is first be trimmed
-     * and then it is parsed with traditional binary prefix.
+     * Convert a string to long. The input string is first be trimmed and then it is parsed with
+     * traditional binary prefix.
      *
-     * For example,
-     * "-1230k" will be converted to -1230 * 1024 = -1259520;
-     * "891g" will be converted to 891 * 1024^3 = 956703965184;
+     * For example, "-1230k" will be converted to -1230 * 1024 = -1259520; "891g" will be converted
+     * to 891 * 1024^3 = 956703965184;
      *
      * @param s input string
      * @return a long value represented by the input string.
@@ -160,8 +164,8 @@ public class StringUtils {
           prefix = TraditionalBinaryPrefix.valueOf(lastchar).value;
         } catch (IllegalArgumentException e) {
           throw new IllegalArgumentException("Invalid size prefix '" + lastchar
-                                               + "' in '" + s
-                                               + "'. Allowed prefixes are k, m, g, t, p, e(case insensitive)");
+              + "' in '" + s
+              + "'. Allowed prefixes are k, m, g, t, p, e(case insensitive)");
         }
         long num = Long.parseLong(s.substring(0, lastpos));
         if (num > (Long.MAX_VALUE / prefix) || num < (Long.MIN_VALUE / prefix)) {

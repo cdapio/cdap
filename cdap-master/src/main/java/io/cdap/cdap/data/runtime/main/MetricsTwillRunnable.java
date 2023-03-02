@@ -66,6 +66,7 @@ import org.slf4j.LoggerFactory;
  * TwillRunnable to run Metrics Service through twill.
  */
 public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTwillRunnable.class);
 
   private Injector injector;
@@ -80,13 +81,15 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
     getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS, context.getInstanceId());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS,
+        context.getInstanceId());
     injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.METRICS));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.METRICS));
     return injector;
   }
 
@@ -97,38 +100,39 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
+      String txClientId) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MessagingClientModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      // For the injection of DatasetDefinition of MetricsTable directly
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new KafkaLogAppenderModule(),
-      new LogReaderRuntimeModules().getDistributedModules(),
-      new MetricsHandlerModule(),
-      // Log query is running in the same process as the metrics query
-      new LogQueryRuntimeModule().getDistributedModules(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new MetricsStoreModule(),
-      new AuditModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MessagingClientModule(),
+        new DataFabricModules(txClientId).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        // For the injection of DatasetDefinition of MetricsTable directly
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new KafkaLogAppenderModule(),
+        new LogReaderRuntimeModules().getDistributedModules(),
+        new MetricsHandlerModule(),
+        // Log query is running in the same process as the metrics query
+        new LogQueryRuntimeModule().getDistributedModules(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new MetricsStoreModule(),
+        new AuditModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          }
         }
-      }
     );
   }
 }

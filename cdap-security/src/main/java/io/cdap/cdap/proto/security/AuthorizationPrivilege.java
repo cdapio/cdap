@@ -25,19 +25,21 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
- * enforced. The cache stores whether the enforce succeeded or failed.
+ * Key for caching Privileges on containers. This represents a specific privilege on which
+ * authorization can be enforced. The cache stores whether the enforce succeeded or failed.
  *
  * Action may be empty in the case of isVisible checks for single entities.
  */
 public class AuthorizationPrivilege {
+
   private final EntityId entityId;
   private final Set<Permission> permissions;
   private final Principal principal;
   private final EntityType childEntityType;
 
-  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<? extends Permission> permissions,
-                                EntityType childEntityType) {
+  public AuthorizationPrivilege(Principal principal, EntityId entityId,
+      Set<? extends Permission> permissions,
+      EntityType childEntityType) {
     this.entityId = entityId;
     this.permissions = Collections.unmodifiableSet(permissions);
     this.childEntityType = childEntityType;
@@ -55,9 +57,10 @@ public class AuthorizationPrivilege {
   public Set<Permission> getPermissions() {
     return permissions;
   }
+
   /**
-   * @return child entity type for {@link AccessEnforcer#enforceOnParent(EntityType, EntityId, Principal, Permission)}
-   * checks.
+   * @return child entity type for {@link AccessEnforcer#enforceOnParent(EntityType, EntityId,
+   *     Principal, Permission)} checks.
    */
   @Nullable
   public EntityType getChildEntityType() {
@@ -74,8 +77,8 @@ public class AuthorizationPrivilege {
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
     return Objects.equals(entityId, that.entityId) && permissions.equals(that.permissions) &&
-      Objects.equals(childEntityType, that.childEntityType) &&
-      Objects.equals(principal, that.principal);
+        Objects.equals(childEntityType, that.childEntityType) &&
+        Objects.equals(principal, that.principal);
   }
 
   @Override
@@ -86,10 +89,10 @@ public class AuthorizationPrivilege {
   @Override
   public String toString() {
     return "AuthorizationPrivilege {" +
-      "entityId=" + entityId +
-      ", permissions=" + permissions +
-      ", principal=" + principal +
-      ", childEntityType=" + childEntityType +
-      '}';
+        "entityId=" + entityId +
+        ", permissions=" + permissions +
+        ", principal=" + principal +
+        ", childEntityType=" + childEntityType +
+        '}';
   }
 }

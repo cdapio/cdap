@@ -31,24 +31,24 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Wrapper class for use in NoSqlStructuredTable classes to ensure the correct context is set for the dataset class
- * loader.
+ * Wrapper class for use in NoSqlStructuredTable classes to ensure the correct context is set for
+ * the dataset class loader.
  */
 public class NoSqlStructuredTableDatasetDefinition implements DatasetDefinition {
 
   private static final AccessEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder SYSTEM_NAMESPACE_ACCESS_RECORDER =
-    new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
-      @Override
-      public void recordLineage(AccessType accessType) {
-        // no-op
-      }
+      new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
+        @Override
+        public void recordLineage(AccessType accessType) {
+          // no-op
+        }
 
-      @Override
-      public void emitAudit(AccessType accessType) {
-        // no-op
-      }
-    };
+        @Override
+        public void emitAudit(AccessType accessType) {
+          // no-op
+        }
+      };
   private final DatasetDefinition datasetDefinition;
 
   public NoSqlStructuredTableDatasetDefinition(DatasetDefinition datasetDefinition) {
@@ -66,19 +66,21 @@ public class NoSqlStructuredTableDatasetDefinition implements DatasetDefinition 
   }
 
   @Override
-  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec, ClassLoader classLoader)
-    throws IOException {
+  public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
+      ClassLoader classLoader)
+      throws IOException {
     return datasetDefinition.getAdmin(datasetContext, spec, classLoader);
   }
 
   @Override
   public Dataset getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map arguments,
-                            ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     try {
-      return DefaultDatasetRuntimeContext.execute(SYSTEM_NAMESPACE_ENFORCER, SYSTEM_NAMESPACE_ACCESS_RECORDER,
-                                                  null, null, null,
-                                                  () -> datasetDefinition.getDataset(
-                                                    datasetContext, spec, arguments, classLoader));
+      return DefaultDatasetRuntimeContext.execute(SYSTEM_NAMESPACE_ENFORCER,
+          SYSTEM_NAMESPACE_ACCESS_RECORDER,
+          null, null, null,
+          () -> datasetDefinition.getDataset(
+              datasetContext, spec, arguments, classLoader));
     } catch (Exception e) {
       Throwables.propagateIfPossible(e, IOException.class);
       throw Throwables.propagate(e);

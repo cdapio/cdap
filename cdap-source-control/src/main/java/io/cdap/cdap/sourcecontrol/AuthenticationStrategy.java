@@ -17,10 +17,11 @@
 package io.cdap.cdap.sourcecontrol;
 
 /**
- * Interface to provide authentication objects used by JGit for different
- * {@link io.cdap.cdap.proto.sourcecontrol.Provider}s and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}s.
+ * Interface to provide authentication objects used by JGit for different {@link
+ * io.cdap.cdap.proto.sourcecontrol.Provider}s and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}s.
  */
 public interface AuthenticationStrategy {
+
   /**
    * Returns a credential provider for authenticating with a remote git repository.
    *

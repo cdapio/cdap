@@ -40,11 +40,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Server for authenticating clients accessing CDAP.  When a client authenticates successfully, it is issued
- * an access token containing a verifiable representation of the client's identity.  Other CDAP services
- * (such as the router) can independently verify client identities based on the token contents.
+ * Server for authenticating clients accessing CDAP.  When a client authenticates successfully, it
+ * is issued an access token containing a verifiable representation of the client's identity.  Other
+ * CDAP services (such as the router) can independently verify client identities based on the token
+ * contents.
  */
 public class AuthenticationServerMain extends DaemonMain {
+
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationServerMain.class);
   private ZKClientService zkClientService;
   private ExternalAuthenticationServer authServer;
@@ -53,12 +55,12 @@ public class AuthenticationServerMain extends DaemonMain {
   @Override
   public void init(String[] args) {
     Injector injector = Guice.createInjector(new ConfigModule(),
-                                             new IOModule(),
-                                             RemoteAuthenticatorModules.getDefaultModule(),
-                                             new ZKClientModule(),
-                                             new ZKDiscoveryModule(),
-                                             new CoreSecurityRuntimeModule().getDistributedModules(),
-                                             new ExternalAuthenticationModule());
+        new IOModule(),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new CoreSecurityRuntimeModule().getDistributedModules(),
+        new ExternalAuthenticationModule());
     configuration = injector.getInstance(CConfiguration.class);
 
     if (SecurityUtil.isManagedSecurity(configuration)) {
@@ -77,14 +79,14 @@ public class AuthenticationServerMain extends DaemonMain {
         SecurityUtil.enableKerberosLogin(configuration);
 
         io.cdap.cdap.common.service.Services.startAndWait(zkClientService,
-                                                          configuration.getLong(
-                                                            Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                                                          TimeUnit.MILLISECONDS,
-                                                          String.format("Connection timed out while trying to start " +
-                                                                          "ZooKeeper client. Please verify that the " +
-                                                                          "ZooKeeper quorum settings are correct in " +
-                                                                          "cdap-site.xml. Currently configured as: %s",
-                                                                        zkClientService.getConnectString()));
+            configuration.getLong(
+                Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+            TimeUnit.MILLISECONDS,
+            String.format("Connection timed out while trying to start " +
+                    "ZooKeeper client. Please verify that the " +
+                    "ZooKeeper quorum settings are correct in " +
+                    "cdap-site.xml. Currently configured as: %s",
+                zkClientService.getConnectString()));
         authServer.startAndWait();
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);
@@ -96,8 +98,8 @@ public class AuthenticationServerMain extends DaemonMain {
       }
     } else {
       String warning = "AuthenticationServer not started since security is disabled." +
-                        " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
-                        " and edit the appropriate configuration.";
+          " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
+          " and edit the appropriate configuration.";
       LOG.warn(warning);
     }
   }

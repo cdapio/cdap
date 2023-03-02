@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * Util class to determine version of clients CDAP is using
  */
 public class VersionHelper {
+
   private static final Logger LOG = LoggerFactory.getLogger(VersionHelper.class);
 
   private VersionHelper() {
@@ -54,7 +55,7 @@ public class VersionHelper {
 
   public static ClientVersion getZooKeeperVersion() {
     return new ClientVersion("zookeeper",
-                             String.format("%d.%d.%d.%d", Info.MAJOR, Info.MINOR, Info.MICRO, Info.REVISION));
+        String.format("%d.%d.%d.%d", Info.MAJOR, Info.MINOR, Info.MICRO, Info.REVISION));
   }
 
   public static ClientVersion getSparkVersion(CConfiguration cConf) {

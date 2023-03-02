@@ -22,11 +22,13 @@ import io.cdap.cdap.etl.api.condition.StageStatistics;
  * Default implementation of the {@link StageStatistics}.
  */
 public class BasicStageStatistics implements StageStatistics {
+
   private final long numOfInputRecords;
   private final long numOfOutputRecords;
   private final long numOfErrorRecords;
 
-  public BasicStageStatistics(long numOfInputRecords, long numOfOutputRecords, long numOfErrorRecords) {
+  public BasicStageStatistics(long numOfInputRecords, long numOfOutputRecords,
+      long numOfErrorRecords) {
     this.numOfInputRecords = numOfInputRecords;
     this.numOfOutputRecords = numOfOutputRecords;
     this.numOfErrorRecords = numOfErrorRecords;

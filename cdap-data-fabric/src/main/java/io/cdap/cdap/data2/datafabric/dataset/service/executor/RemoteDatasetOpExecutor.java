@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
 public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
+
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetOpExecutor.class);
 
   private static final Gson GSON = new Gson();
@@ -54,11 +55,12 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  public RemoteDatasetOpExecutor(AuthenticationContext authenticationContext, RemoteClientFactory remoteClientFactory) {
+  public RemoteDatasetOpExecutor(AuthenticationContext authenticationContext,
+      RemoteClientFactory remoteClientFactory) {
     this.authenticationContext = authenticationContext;
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.DATASET_EXECUTOR,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+        Constants.Service.DATASET_EXECUTOR,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
@@ -68,23 +70,25 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
 
   @Override
   public DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                        DatasetProperties props) throws Exception {
-    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
+      DatasetProperties props) throws Exception {
+    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta,
+        props);
     HttpResponse response = doRequest(datasetInstanceId, "create", GSON.toJson(creationParams));
     return ObjectResponse.fromJsonBody(response, DatasetCreationResponse.class).getResponseObject();
   }
 
   @Override
   public DatasetCreationResponse update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                        DatasetProperties props, DatasetSpecification existing) throws Exception {
-    InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing, props);
+      DatasetProperties props, DatasetSpecification existing) throws Exception {
+    InternalDatasetCreationParams updateParams = new InternalDatasetUpdateParams(typeMeta, existing,
+        props);
     HttpResponse response = doRequest(datasetInstanceId, "update", GSON.toJson(updateParams));
     return ObjectResponse.fromJsonBody(response, DatasetCreationResponse.class).getResponseObject();
   }
 
   @Override
   public void drop(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
-    throws Exception {
+      throws Exception {
     InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
     doRequest(datasetInstanceId, "drop", GSON.toJson(dropParams));
   }
@@ -100,15 +104,17 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   }
 
   private DatasetAdminOpResponse executeAdminOp(DatasetId datasetInstanceId, String opName)
-    throws IOException, HandlerException, ConflictException, UnauthorizedException {
+      throws IOException, HandlerException, ConflictException, UnauthorizedException {
     HttpResponse httpResponse = doRequest(datasetInstanceId, opName, null);
-    return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
+    return GSON.fromJson(Bytes.toString(httpResponse.getResponseBody()),
+        DatasetAdminOpResponse.class);
   }
 
   private HttpResponse doRequest(DatasetId datasetInstanceId, String opName,
-                                 @Nullable String body) throws IOException, ConflictException, UnauthorizedException {
-    String path = String.format("namespaces/%s/data/datasets/%s/admin/%s", datasetInstanceId.getNamespace(),
-                                datasetInstanceId.getEntityName(), opName);
+      @Nullable String body) throws IOException, ConflictException, UnauthorizedException {
+    String path = String.format("namespaces/%s/data/datasets/%s/admin/%s",
+        datasetInstanceId.getNamespace(),
+        datasetInstanceId.getEntityName(), opName);
     LOG.trace("executing POST on {} with body {}", path, body);
     try {
       HttpRequest.Builder builder = remoteClient.requestBuilder(HttpMethod.POST, path);
@@ -135,7 +141,7 @@ public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
     }
     if (httpResponse.getResponseCode() != 200) {
       throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
-                                 httpResponse.getResponseBodyAsString(Charsets.UTF_8));
+          httpResponse.getResponseBodyAsString(Charsets.UTF_8));
     }
   }
 }

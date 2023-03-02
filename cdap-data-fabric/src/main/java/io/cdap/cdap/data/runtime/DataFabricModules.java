@@ -19,10 +19,10 @@ import com.google.inject.Module;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 
 /**
- * DataFabricModules defines all of the bindings for the different data
- * fabric modes.
+ * DataFabricModules defines all of the bindings for the different data fabric modes.
  */
 public class DataFabricModules extends RuntimeModule {
+
   private final String txClientId;
 
   public DataFabricModules(String txClientId) {

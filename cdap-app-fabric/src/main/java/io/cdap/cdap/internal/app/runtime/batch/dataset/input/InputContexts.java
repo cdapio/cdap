@@ -24,14 +24,16 @@ import io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
  */
 public final class InputContexts {
 
-  private InputContexts() { }
+  private InputContexts() {
+  }
 
   /**
    * @param multiInputTaggedSplit the split given to this mapper task
    * @return an {@link InputContext} representing the input that this mapper task is processing
    */
   public static InputContext create(MultiInputTaggedSplit multiInputTaggedSplit) {
-    String mappingString = multiInputTaggedSplit.getConf().get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
+    String mappingString = multiInputTaggedSplit.getConf()
+        .get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
     if (mappingString != null) {
       return new BasicPartitionedFileSetInputContext(multiInputTaggedSplit);
     }

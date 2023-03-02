@@ -25,12 +25,14 @@ public class MapReduceLoggingContext extends ApplicationLoggingContext {
 
   /**
    * Constructs the MapReduceLoggingContext.
+   *
    * @param namespaceId namespace id
    * @param applicationId application id
    * @param mapReduceId mapreduce job id
    * @param runId run id
    */
-  public MapReduceLoggingContext(String namespaceId, String applicationId, String mapReduceId, String runId) {
+  public MapReduceLoggingContext(String namespaceId, String applicationId, String mapReduceId,
+      String runId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_MAP_REDUCE_JOB_ID, mapReduceId);
   }

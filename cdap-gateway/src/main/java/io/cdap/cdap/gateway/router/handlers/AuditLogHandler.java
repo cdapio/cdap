@@ -37,17 +37,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ChannelDuplexHandler} that captures {@link HttpRequest} and corresponding {@link HttpResponse}
- * over the forwarding connections from router to CDAP services (via the client bootstrap) for audit log purpose.
- * The router logic guarantees that the same forwarding connection won't have more than one request on the fly
- * (i.e. no HTTP pipeline), hence it's safe to use fields to remember the {@link AuditLogEntry}
- * and have it tied back with the {@link HttpRequest} when a {@link HttpResponse} is received.
+ * A {@link ChannelDuplexHandler} that captures {@link HttpRequest} and corresponding {@link
+ * HttpResponse} over the forwarding connections from router to CDAP services (via the client
+ * bootstrap) for audit log purpose. The router logic guarantees that the same forwarding connection
+ * won't have more than one request on the fly (i.e. no HTTP pipeline), hence it's safe to use
+ * fields to remember the {@link AuditLogEntry} and have it tied back with the {@link HttpRequest}
+ * when a {@link HttpResponse} is received.
  */
 public class AuditLogHandler extends ChannelDuplexHandler {
 
-  private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
-  private static final Set<HttpMethod> AUDIT_LOG_LOOKUP_METHOD = ImmutableSet.of(HttpMethod.PUT, HttpMethod.DELETE,
-                                                                                 HttpMethod.POST);
+  private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(
+      Constants.Router.AUDIT_LOGGER_NAME);
+  private static final Set<HttpMethod> AUDIT_LOG_LOOKUP_METHOD = ImmutableSet.of(HttpMethod.PUT,
+      HttpMethod.DELETE,
+      HttpMethod.POST);
   private AuditLogEntry logEntry;
   private boolean logRequestBody;
   private boolean logResponseBody;
@@ -60,13 +63,14 @@ public class AuditLogHandler extends ChannelDuplexHandler {
 
       // Extra configurations for audit log
       AuditLogConfig logConfig = AUDIT_LOG_LOOKUP_METHOD.contains(request.method())
-        ? RouterAuditLookUp.getInstance().getAuditLogContent(request.uri(), request.method()) : null;
+          ? RouterAuditLookUp.getInstance().getAuditLogContent(request.uri(), request.method())
+          : null;
 
       if (logConfig == null) {
         logEntry = new AuditLogEntry(request, Networks.getIP(ctx.channel().remoteAddress()));
       } else {
         logEntry = new AuditLogEntry(request, Networks.getIP(ctx.channel().remoteAddress()),
-                                     logConfig.getHeaderNames());
+            logConfig.getHeaderNames());
         logRequestBody = logConfig.isLogRequestBody();
         logResponseBody = logConfig.isLogResponseBody();
       }
@@ -81,7 +85,8 @@ public class AuditLogHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
+      throws Exception {
     if (logEntry == null) {
       ctx.write(msg, promise);
       return;

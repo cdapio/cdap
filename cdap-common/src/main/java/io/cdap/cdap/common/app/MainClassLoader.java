@@ -46,8 +46,8 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
- * The main {@link ClassLoader} used by CDAP. This class performs necessary class rewriting for the whole CDAP
- * system.
+ * The main {@link ClassLoader} used by CDAP. This class performs necessary class rewriting for the
+ * whole CDAP system.
  */
 public class MainClassLoader extends InterceptableClassLoader {
 
@@ -60,15 +60,15 @@ public class MainClassLoader extends InterceptableClassLoader {
   private final Map<String, Boolean> cache;
 
   /**
-   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for the
-   *                       {@link MainClassLoader} to be created
-   * @return a new instance from the current context classloader or the system classloader. The returned
-   * {@link MainClassLoader} will be the defining classloader for all classes available in the context classloader.
-   * It will return {@code null} if it is not able to create a new instance due to lack of classpath information.
-   *
+   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for
+   *     the {@link MainClassLoader} to be created
+   * @return a new instance from the current context classloader or the system classloader. The
+   *     returned {@link MainClassLoader} will be the defining classloader for all classes available
+   *     in the context classloader. It will return {@code null} if it is not able to create a new
+   *     instance due to lack of classpath information.
    */
   @Nullable
-  public static MainClassLoader createFromContext(URL...extraClasspath) {
+  public static MainClassLoader createFromContext(URL... extraClasspath) {
     return createFromContext(new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
@@ -84,16 +84,17 @@ public class MainClassLoader extends InterceptableClassLoader {
 
   /**
    * @param filter A {@link FilterClassLoader.Filter} for filtering out classes from the
-   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for the
-   *                       {@link MainClassLoader} to be created
-   * @return a new instance from the current context classloader or the system classloader. The returned
-   * {@link MainClassLoader} will be the defining classloader for classes in the context classloader
-   * that the filter rejected. For classes that pass the filter, the defining classloader will be the original
-   * context classloader.
-   * It will return {@code null} if it is not able to create a new instance due to lack of classpath information.
+   * @param extraClasspath extra list of {@link URL} to be added to the end of the classpath for
+   *     the {@link MainClassLoader} to be created
+   * @return a new instance from the current context classloader or the system classloader. The
+   *     returned {@link MainClassLoader} will be the defining classloader for classes in the
+   *     context classloader that the filter rejected. For classes that pass the filter, the
+   *     defining classloader will be the original context classloader. It will return {@code null}
+   *     if it is not able to create a new instance due to lack of classpath information.
    */
   @Nullable
-  public static MainClassLoader createFromContext(FilterClassLoader.Filter filter, URL...extraClasspath) {
+  public static MainClassLoader createFromContext(FilterClassLoader.Filter filter,
+      URL... extraClasspath) {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     if (classLoader == null) {
       classLoader = ClassLoader.getSystemClassLoader();
@@ -170,7 +171,7 @@ public class MainClassLoader extends InterceptableClassLoader {
 
     if (isAuthRewriteNeeded(className)) {
       rewrittenCode = authEnforceRewriter.rewriteClass(
-        className, rewrittenCode == null ? input : new ByteArrayInputStream(rewrittenCode));
+          className, rewrittenCode == null ? input : new ByteArrayInputStream(rewrittenCode));
     }
 
     if (levelDBClassRewriter.needRewrite(className)) {
@@ -185,7 +186,8 @@ public class MainClassLoader extends InterceptableClassLoader {
   private static void addClassPath(List<URL> urls) {
     String wildcardSuffix = File.pathSeparator + "*";
     // In case the system classloader is not a URLClassLoader, use the classpath property (maybe from non Oracle JDK)
-    for (String path : Splitter.on(File.pathSeparatorChar).split(System.getProperty("java.class.path"))) {
+    for (String path : Splitter.on(File.pathSeparatorChar)
+        .split(System.getProperty("java.class.path"))) {
       if ("*".equals(path) || path.endsWith(wildcardSuffix)) {
         for (File jarFile : DirUtils.listFiles(new File(path), "jar")) {
           try {
@@ -201,9 +203,9 @@ public class MainClassLoader extends InterceptableClassLoader {
 
   private boolean isRewriteNeeded(String className) throws IOException {
     return guavaClassRewriter.needRewrite(className)
-      || levelDBClassRewriter.needRewrite(className)
-      || isDatasetRewriteNeeded(className)
-      || isAuthRewriteNeeded(className);
+        || levelDBClassRewriter.needRewrite(className)
+        || isDatasetRewriteNeeded(className)
+        || isAuthRewriteNeeded(className);
   }
 
   private boolean isDatasetRewriteNeeded(String className) throws IOException {

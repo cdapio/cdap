@@ -30,9 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Gathers statistics from a running mapreduce job through its counters and writes the data to the metrics system.
+ * Gathers statistics from a running mapreduce job through its counters and writes the data to the
+ * metrics system.
  */
 public class MapReduceMetricsWriter {
+
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceMetricsWriter.class);
 
   private final Job jobConf;
@@ -41,10 +43,12 @@ public class MapReduceMetricsWriter {
 
   public MapReduceMetricsWriter(Job jobConf, BasicMapReduceContext context) {
     this.jobConf = jobConf;
-    this.mapperMetrics = context.getProgramMetrics().childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
-                                                                  MapReduceMetrics.TaskType.Mapper.getId());
-    this.reducerMetrics = context.getProgramMetrics().childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
-                                                                   MapReduceMetrics.TaskType.Reducer.getId());
+    this.mapperMetrics = context.getProgramMetrics()
+        .childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
+            MapReduceMetrics.TaskType.Mapper.getId());
+    this.reducerMetrics = context.getProgramMetrics()
+        .childContext(Constants.Metrics.Tag.MR_TASK_TYPE,
+            MapReduceMetrics.TaskType.Reducer.getId());
   }
 
   public void reportStats() throws IOException, InterruptedException {
@@ -65,9 +69,10 @@ public class MapReduceMetricsWriter {
     for (TaskReport tr : jobConf.getTaskReports(TaskType.REDUCE)) {
       runningReducers += tr.getRunningTaskAttemptIds().size();
     }
-    int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
-    int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
-
+    int memoryPerMapper = jobConf.getConfiguration()
+        .getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
+    int memoryPerReducer = jobConf.getConfiguration()
+        .getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
     long mapInputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(jobCounters, TaskCounter.MAP_OUTPUT_RECORDS);
@@ -81,7 +86,7 @@ public class MapReduceMetricsWriter {
     mapperMetrics.gauge(MapReduceMetrics.METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
     LOG.trace("Reporting mapper stats: (completion, containers, memory) = ({}, {}, {})",
-              (int) (mapProgress * 100), runningMappers, runningMappers * memoryPerMapper);
+        (int) (mapProgress * 100), runningMappers, runningMappers * memoryPerMapper);
 
     // reduce stats
     float reduceProgress = jobStatus.getReduceProgress();
@@ -95,7 +100,7 @@ public class MapReduceMetricsWriter {
     reducerMetrics.gauge(MapReduceMetrics.METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
     LOG.trace("Reporting reducer stats: (completion, containers, memory) = ({}, {}, {})",
-              (int) (reduceProgress * 100), runningReducers, runningReducers * memoryPerReducer);
+        (int) (reduceProgress * 100), runningReducers, runningReducers * memoryPerReducer);
   }
 
   private long getTaskCounter(Counters jobCounters, TaskCounter taskCounter) {

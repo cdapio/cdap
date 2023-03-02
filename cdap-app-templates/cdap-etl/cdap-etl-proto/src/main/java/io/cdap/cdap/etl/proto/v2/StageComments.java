@@ -21,6 +21,7 @@ import javax.annotation.Nullable;
  * Class for holding comments for an ETL stage
  */
 public class StageComments {
+
   private final List<Comment> list;
 
   public StageComments(List<Comment> list) {
@@ -31,6 +32,7 @@ public class StageComments {
    * Class that represents a stage comment
    */
   protected class Comment {
+
     private final String content;
     private final long createDate;
     private final String user;

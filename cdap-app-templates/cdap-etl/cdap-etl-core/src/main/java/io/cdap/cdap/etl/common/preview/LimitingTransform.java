@@ -21,7 +21,8 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transformation;
 
 /**
- * A {@link Transformation} that delegates transform operations while restricting the number of input emitted.
+ * A {@link Transformation} that delegates transform operations while restricting the number of
+ * input emitted.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object

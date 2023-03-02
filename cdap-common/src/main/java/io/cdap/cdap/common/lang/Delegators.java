@@ -22,8 +22,8 @@ package io.cdap.cdap.common.lang;
 public final class Delegators {
 
   /**
-   * Returns the root delegate object that is not a {@link Delegator} in the delegation chain
-   * that is assignable to the given type.
+   * Returns the root delegate object that is not a {@link Delegator} in the delegation chain that
+   * is assignable to the given type.
    */
   @SuppressWarnings("unchecked")
   public static <T, V> V getDelegate(T object, Class<V> type) {
@@ -34,7 +34,8 @@ public final class Delegators {
       result = ((Delegator<T>) result).getDelegate();
 
       // Terminate the search if result is not a Delegator and assignable to the given type
-      if (result != null && !(result instanceof Delegator) && type.isAssignableFrom(result.getClass())) {
+      if (result != null && !(result instanceof Delegator) && type.isAssignableFrom(
+          result.getClass())) {
         break;
       }
     }

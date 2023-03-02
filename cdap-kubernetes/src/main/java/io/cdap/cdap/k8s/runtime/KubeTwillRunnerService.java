@@ -106,9 +106,7 @@ import org.slf4j.LoggerFactory;
  *
  * Each resource will also have the following labels:
  *
- * cdap.twill.runner=k8s
- * cdap.twill.run.id=[run id]
- * cdap.twill.app=[cleansed app name]
+ * cdap.twill.runner=k8s cdap.twill.run.id=[run id] cdap.twill.app=[cleansed app name]
  *
  * and annotations:
  *
@@ -128,15 +126,15 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
   private static final String WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME
-    = "cdap-workload-launcher-namespace-role-binding";
+      = "cdap-workload-launcher-namespace-role-binding";
   private static final String WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT
-    = "cdap-workload-launcher-cluster-role-binding-%s";
+      = "cdap-workload-launcher-cluster-role-binding-%s";
   private static final String RBAC_V1_API_GROUP = "rbac.authorization.k8s.io";
   private static final String CLUSTER_ROLE_KIND = "ClusterRole";
   private static final String SERVICE_ACCOUNT_KIND = "ServiceAccount";
   public static final String RESOURCE_QUOTA_NAME = "cdap-resource-quota";
   public static final String WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY =
-    "workload.identity.gcp.service.account.email";
+      "workload.identity.gcp.service.account.email";
   // Whether to cleanup resources after job completion
   public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
@@ -162,15 +160,16 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   private String workloadIdentityProvider;
   private RbacAuthorizationV1Api rbacV1Api;
 
-  public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext, ApiClientFactory apiClientFactory,
-                                String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
-                                boolean enableMonitor,
-                                boolean workloadIdentityEnabled,
-                                String workloadLauncherRoleNameForNamespace,
-                                String workloadLauncherRoleNameForCluster,
-                                String workloadIdentityPool,
-                                String workloadIdentityProvider) {
+  public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
+      ApiClientFactory apiClientFactory,
+      String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
+      PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
+      boolean enableMonitor,
+      boolean workloadIdentityEnabled,
+      String workloadLauncherRoleNameForNamespace,
+      String workloadLauncherRoleNameForCluster,
+      String workloadIdentityPool,
+      String workloadIdentityProvider) {
     this.masterEnvContext = masterEnvContext;
     this.apiClientFactory = apiClientFactory;
     this.kubeNamespace = kubeNamespace;
@@ -199,7 +198,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   }
 
   @Override
-  public TwillPreparer prepare(TwillRunnable runnable, ResourceSpecification resourceSpecification) {
+  public TwillPreparer prepare(TwillRunnable runnable,
+      ResourceSpecification resourceSpecification) {
     return prepare(new SingleRunnableApplication(runnable, resourceSpecification));
   }
 
@@ -219,22 +219,24 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     labels.put(RUN_ID_LABEL, runId.getId());
 
     return new KubeTwillPreparer(masterEnvContext, apiClient, kubeNamespace, podInfo,
-                                 spec, runId, appLocation, resourcePrefix, labels,
-                                 (resourceType, meta, timeout, timeoutUnit) -> {
-      // Adds the controller to the LiveInfo.
-      liveInfoLock.lock();
-      try {
-        KubeTwillController controller = createKubeTwillController(spec.getName(), runId, resourceType, meta);
-        if (!enableMonitor) {
-          //since monitor is disabled, we fire and forget
-          return controller;
-        }
-        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), n -> new KubeLiveInfo(resourceType, n));
-        return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
-      } finally {
-        liveInfoLock.unlock();
-      }
-    });
+        spec, runId, appLocation, resourcePrefix, labels,
+        (resourceType, meta, timeout, timeoutUnit) -> {
+          // Adds the controller to the LiveInfo.
+          liveInfoLock.lock();
+          try {
+            KubeTwillController controller = createKubeTwillController(spec.getName(), runId,
+                resourceType, meta);
+            if (!enableMonitor) {
+              //since monitor is disabled, we fire and forget
+              return controller;
+            }
+            KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(),
+                n -> new KubeLiveInfo(resourceType, n));
+            return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller, meta);
+          } finally {
+            liveInfoLock.unlock();
+          }
+        });
   }
 
   @Nullable
@@ -253,24 +255,30 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   @Override
   public Iterable<LiveInfo> lookupLive() {
     // Protect against modifications
-    return () -> Collections.unmodifiableCollection(liveInfos.values()).stream().map(LiveInfo.class::cast).iterator();
+    return () -> Collections.unmodifiableCollection(liveInfos.values()).stream()
+        .map(LiveInfo.class::cast).iterator();
   }
 
   @Override
-  public Cancellable scheduleSecureStoreUpdate(@SuppressWarnings("deprecation") SecureStoreUpdater updater,
-                                               long initialDelay, long delay, TimeUnit unit) {
-    return () -> { };
+  public Cancellable scheduleSecureStoreUpdate(
+      @SuppressWarnings("deprecation") SecureStoreUpdater updater,
+      long initialDelay, long delay, TimeUnit unit) {
+    return () -> {
+    };
   }
 
   @Override
-  public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay, long delay, long retryDelay,
-                                           TimeUnit unit) {
-    return () -> { };
+  public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
+      long delay, long retryDelay,
+      TimeUnit unit) {
+    return () -> {
+    };
   }
 
   @Override
   public void start() {
-    LOG.debug("Starting KubeTwillRunnerService with {} monitor", enableMonitor ? "enabled" : "disabled");
+    LOG.debug("Starting KubeTwillRunnerService with {} monitor",
+        enableMonitor ? "enabled" : "disabled");
     try {
       apiClient = apiClientFactory.create();
       coreV1Api = new CoreV1Api(apiClient);
@@ -279,7 +287,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         return;
       }
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
-        Threads.createDaemonThreadFactory("kube-monitor-executor"));
+          Threads.createDaemonThreadFactory("kube-monitor-executor"));
       addAndStartWatchers(kubeNamespace);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
@@ -289,7 +297,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   @Override
   public void onStart(Collection<NamespaceDetail> namespaceDetails) {
     for (NamespaceDetail namespaceDetail : namespaceDetails) {
-      String namespace = namespaceDetail.getProperties().get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+      String namespace = namespaceDetail.getProperties()
+          .get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
       if (namespace != null) {
         addAndStartWatchers(namespace);
       }
@@ -306,8 +315,9 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
     String namespace = properties.get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
     if (namespace == null || namespace.isEmpty()) {
-      throw new IOException(String.format("Cannot create Kubernetes namespace for %s because no name was provided",
-                                          cdapNamespace));
+      throw new IOException(
+          String.format("Cannot create Kubernetes namespace for %s because no name was provided",
+              cdapNamespace));
     }
     // Kubernetes namespace must be a lowercase RFC 1123 label, consisting of lower case alphanumeric characters or '-'
     // and must start and end with an alphanumeric character
@@ -317,12 +327,14 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     copySecrets(namespace, cdapNamespace);
     createWorkloadServiceAccount(namespace, cdapNamespace);
     if (workloadIdentityEnabled) {
-      String workloadIdentityServiceAccountEmail = properties.get(WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
-      if (workloadIdentityServiceAccountEmail != null && !workloadIdentityServiceAccountEmail.isEmpty()) {
+      String workloadIdentityServiceAccountEmail = properties.get(
+          WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY);
+      if (workloadIdentityServiceAccountEmail != null
+          && !workloadIdentityServiceAccountEmail.isEmpty()) {
         WorkloadIdentityUtil.findOrCreateWorkloadIdentityConfigMap(coreV1Api, namespace,
-                                                                   workloadIdentityServiceAccountEmail,
-                                                                   workloadIdentityPool,
-                                                                   workloadIdentityProvider);
+            workloadIdentityServiceAccountEmail,
+            workloadIdentityPool,
+            workloadIdentityProvider);
       }
     }
     addAndStartWatchers(cdapNamespace);
@@ -330,7 +342,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   @Override
   public void onNamespaceDeletion(NamespaceDetail namespaceDetail) throws Exception {
-    String namespace = namespaceDetail.getProperties().get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
+    String namespace = namespaceDetail.getProperties()
+        .get(KubeMasterEnvironment.NAMESPACE_PROPERTY);
     if (namespace != null && !namespace.isEmpty()) {
       deleteKubeNamespace(namespace, namespaceDetail.getName());
       stopAndRemoveWatchers(namespace);
@@ -338,30 +351,35 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   }
 
   /**
-   * Returns the k8s label selector which selects all runs started by the k8s twill runner that has the run id label.
+   * Returns the k8s label selector which selects all runs started by the k8s twill runner that has
+   * the run id label.
    */
   public String getSelector() {
     return selector;
   }
 
   /**
-   * Checks if namespace already exists from the same CDAP instance. Otherwise, creates a new Kubernetes namespace.
+   * Checks if namespace already exists from the same CDAP instance. Otherwise, creates a new
+   * Kubernetes namespace.
    */
   private void findOrCreateKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     try {
       V1Namespace existingNamespace = coreV1Api.readNamespace(namespace, null);
       if (existingNamespace.getMetadata() == null) {
-        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
+        throw new IOException(
+            String.format("Kubernetes namespace %s exists but was not created by CDAP", namespace));
       }
       Map<String, String> labels = existingNamespace.getMetadata().getLabels();
       if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
-        throw new IOException(String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
-                                            namespace, cdapNamespace));
+        throw new IOException(
+            String.format("Kubernetes namespace %s exists but was not created by CDAP namespace %s",
+                namespace, cdapNamespace));
       }
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new IOException("Error occurred while checking if Kubernetes namespace already exists. Error code = "
-                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+        throw new IOException(
+            "Error occurred while checking if Kubernetes namespace already exists. Error code = "
+                + e.getCode() + ", Body = " + e.getResponseBody(), e);
       }
       createKubeNamespace(namespace, cdapNamespace);
     }
@@ -369,7 +387,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
   private void createKubeNamespace(String namespace, String cdapNamespace) throws Exception {
     V1Namespace namespaceObject = new V1Namespace();
-    namespaceObject.setMetadata(new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+    namespaceObject.setMetadata(
+        new V1ObjectMeta().name(namespace).putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
       coreV1Api.createNamespace(namespaceObject, null, null, null, null);
       LOG.debug("Created Kubernetes namespace {} for namespace {}", namespace, cdapNamespace);
@@ -380,15 +399,17 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         e.addSuppressed(deletionException);
       }
       throw new IOException("Error occurred while creating Kubernetes namespace. Error code = "
-                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+          + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
   }
 
   /**
-   * Updates resource quota if it already exists in the Kubernetes namespace. Otherwise, creates a new resource quota.
+   * Updates resource quota if it already exists in the Kubernetes namespace. Otherwise, creates a
+   * new resource quota.
    */
-  private void updateOrCreateResourceQuota(String namespace, String cdapNamespace, Map<String, String> properties)
-    throws Exception {
+  private void updateOrCreateResourceQuota(String namespace, String cdapNamespace,
+      Map<String, String> properties)
+      throws Exception {
 
     String kubeCpuLimit = properties.get(NAMESPACE_CPU_LIMIT_PROPERTY);
     String kubeMemoryLimit = properties.get(NAMESPACE_MEMORY_LIMIT_PROPERTY);
@@ -406,40 +427,44 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
     V1ResourceQuota resourceQuota = new V1ResourceQuota();
     resourceQuota.setMetadata(new V1ObjectMeta()
-                                .name(RESOURCE_QUOTA_NAME)
-                                .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+        .name(RESOURCE_QUOTA_NAME)
+        .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     resourceQuota.setSpec(new V1ResourceQuotaSpec().hard(hardLimitMap));
     try {
-      V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace,
-                                                                                    null);
+      V1ResourceQuota existingResourceQuota = coreV1Api.readNamespacedResourceQuota(
+          RESOURCE_QUOTA_NAME, namespace,
+          null);
       if (existingResourceQuota.getMetadata() == null) {
-        throw new IOException(String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
+        throw new IOException(
+            String.format("%s exists but was not created by CDAP", RESOURCE_QUOTA_NAME));
       }
       Map<String, String> labels = existingResourceQuota.getMetadata().getLabels();
       if (labels == null || !cdapNamespace.equals(labels.get(CDAP_NAMESPACE_LABEL))) {
         throw new IOException(String.format("%s exists but was not created by CDAP namespace %s",
-                                            RESOURCE_QUOTA_NAME, cdapNamespace));
+            RESOURCE_QUOTA_NAME, cdapNamespace));
       }
       if (!hardLimitMap.equals(existingResourceQuota.getSpec().getHard())) {
         coreV1Api.replaceNamespacedResourceQuota(RESOURCE_QUOTA_NAME, namespace, resourceQuota,
-                                                 null, null, null, null);
+            null, null, null, null);
       }
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new IOException("Error occurred while checking or updating Kubernetes resource quota. Error code = "
-                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+        throw new IOException(
+            "Error occurred while checking or updating Kubernetes resource quota. Error code = "
+                + e.getCode() + ", Body = " + e.getResponseBody(), e);
       }
       createKubeResourceQuota(namespace, resourceQuota);
     }
   }
 
-  private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota) throws Exception {
+  private void createKubeResourceQuota(String namespace, V1ResourceQuota resourceQuota)
+      throws Exception {
     try {
       coreV1Api.createNamespacedResourceQuota(namespace, resourceQuota, null, null, null, null);
       LOG.debug("Created resource quota for Kubernetes namespace {}", namespace);
     } catch (ApiException e) {
       throw new IOException("Error occurred while creating Kubernetes resource quota. Error code = "
-                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+          + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
   }
 
@@ -452,26 +477,29 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       for (V1Volume volume : podInfo.getVolumes()) {
         if (volume.getSecret() != null) {
           String secretName = volume.getSecret().getSecretName();
-          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName, podInfo.getNamespace(),
-                                                                   null);
-          V1Secret secret = new V1Secret().data(existingSecret.getData()).type(existingSecret.getType())
-            .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
-                                                                        cdapNamespace));
+          V1Secret existingSecret = coreV1Api.readNamespacedSecret(secretName,
+              podInfo.getNamespace(),
+              null);
+          V1Secret secret = new V1Secret().data(existingSecret.getData())
+              .type(existingSecret.getType())
+              .metadata(new V1ObjectMeta().name(secretName).putLabelsItem(CDAP_NAMESPACE_LABEL,
+                  cdapNamespace));
           try {
             coreV1Api.createNamespacedSecret(namespace, secret, null, null, null, null);
           } catch (ApiException e) {
             if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
               throw e;
             }
-            LOG.warn("The secret '{}:{}' already exists : {}. Ignoring creation of the secret.", namespace,
-                     secret.getMetadata().getName(), e.getResponseBody());
+            LOG.warn("The secret '{}:{}' already exists : {}. Ignoring creation of the secret.",
+                namespace,
+                secret.getMetadata().getName(), e.getResponseBody());
           }
           LOG.debug("Created secret {} in Kubernetes namespace {}", secretName, namespace);
         }
       }
     } catch (ApiException e) {
       throw new IOException("Error occurred while copying volumes. Error code = "
-                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+          + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
   }
 
@@ -479,7 +507,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    * Create service account and role bindings required for workload pod.
    * TODO: (CDAP-18956) improve this logic to be for each pipeline run
    */
-  private void createWorkloadServiceAccount(String namespace, String cdapNamespace) throws IOException {
+  private void createWorkloadServiceAccount(String namespace, String cdapNamespace)
+      throws IOException {
     try {
       // Create service account for workload pod
       // TODO(CDAP-19149): Cleanup strong coupling currently present in CDAP service accounts to avoid copying.
@@ -488,95 +517,108 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
       // Create namespace-specific role-binding for the workload service account
       createNamespacedRoleBinding(WORKLOAD_LAUNCHER_NAMESPACE_ROLE_BINDING_NAME, CLUSTER_ROLE_KIND,
-                                  workloadLauncherRoleNameForNamespace, namespace, serviceAccountName, cdapNamespace);
+          workloadLauncherRoleNameForNamespace, namespace, serviceAccountName, cdapNamespace);
 
       // Create cluster-wide role-binding for the workload service account
-      String workloadLauncherClusterRoleBindingName = String.format(WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT,
-                                                                    namespace);
-      createClusterRoleBinding(workloadLauncherClusterRoleBindingName, workloadLauncherRoleNameForCluster, namespace,
-                               serviceAccountName, cdapNamespace);
+      String workloadLauncherClusterRoleBindingName = String.format(
+          WORKLOAD_LAUNCHER_CLUSTER_ROLE_BINDING_FORMAT,
+          namespace);
+      createClusterRoleBinding(workloadLauncherClusterRoleBindingName,
+          workloadLauncherRoleNameForCluster, namespace,
+          serviceAccountName, cdapNamespace);
 
     } catch (ApiException e) {
-      throw new IOException("Error occurred while creating service account or role binding. Error code = "
-                              + e.getCode() + ", Body = " + e.getResponseBody(), e);
+      throw new IOException(
+          "Error occurred while creating service account or role binding. Error code = "
+              + e.getCode() + ", Body = " + e.getResponseBody(), e);
     }
   }
 
-  private void createServiceAccount(String namespace, String cdapNamespace, String serviceAccountName)
-    throws ApiException {
+  private void createServiceAccount(String namespace, String cdapNamespace,
+      String serviceAccountName)
+      throws ApiException {
     V1ServiceAccount serviceAccount = new V1ServiceAccount()
-      .metadata(new V1ObjectMeta().name(serviceAccountName)
-                  .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
+        .metadata(new V1ObjectMeta().name(serviceAccountName)
+            .putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace));
     try {
       coreV1Api.createNamespacedServiceAccount(namespace, serviceAccount, null, null, null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
       }
-      LOG.warn("The service account '{}:{}' already exists : {}. Ignoring creation of the service account.", namespace,
-               serviceAccountName, e.getResponseBody());
+      LOG.warn(
+          "The service account '{}:{}' already exists : {}. Ignoring creation of the service account.",
+          namespace,
+          serviceAccountName, e.getResponseBody());
     }
     LOG.info("Created serviceAccount {} in Kubernetes namespace {}", serviceAccountName, namespace);
   }
 
-  private void createNamespacedRoleBinding(String bindingName, String roleKind, String roleName, String namespace,
-                                           String serviceAccountName, String cdapNamespace) throws ApiException {
+  private void createNamespacedRoleBinding(String bindingName, String roleKind, String roleName,
+      String namespace,
+      String serviceAccountName, String cdapNamespace) throws ApiException {
     KubeUtil.validatePathSegmentName(bindingName);
     V1RoleBinding namespaceWorkloadLauncherBinding = new V1RoleBindingBuilder()
-      .withMetadata(new V1ObjectMetaBuilder()
-                      .withNamespace(namespace)
-                      .withName(bindingName)
-                      .build().putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace))
-      .withRoleRef(new V1RoleRefBuilder()
-                     .withApiGroup(RBAC_V1_API_GROUP)
-                     .withKind(roleKind)
-                     .withName(roleName).build())
-      .withSubjects(new V1SubjectBuilder()
-                      .withKind(SERVICE_ACCOUNT_KIND)
-                      .withName(serviceAccountName).build())
-      .build();
+        .withMetadata(new V1ObjectMetaBuilder()
+            .withNamespace(namespace)
+            .withName(bindingName)
+            .build().putLabelsItem(CDAP_NAMESPACE_LABEL, cdapNamespace))
+        .withRoleRef(new V1RoleRefBuilder()
+            .withApiGroup(RBAC_V1_API_GROUP)
+            .withKind(roleKind)
+            .withName(roleName).build())
+        .withSubjects(new V1SubjectBuilder()
+            .withKind(SERVICE_ACCOUNT_KIND)
+            .withName(serviceAccountName).build())
+        .build();
     try {
-      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null, null, null);
+      rbacV1Api.createNamespacedRoleBinding(namespace, namespaceWorkloadLauncherBinding, null, null,
+          null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
       }
-      LOG.warn("The role binding '{}:{}' already exists : {}. Ignoring creation of the role binding.", namespace,
-               bindingName, e.getResponseBody());
+      LOG.warn(
+          "The role binding '{}:{}' already exists : {}. Ignoring creation of the role binding.",
+          namespace,
+          bindingName, e.getResponseBody());
     }
 
     LOG.info("Created namespace role binding '{}' in k8s namespace '{}' for service account '{}'",
-             bindingName, serviceAccountName, serviceAccountName);
+        bindingName, serviceAccountName, serviceAccountName);
   }
 
-  private void createClusterRoleBinding(String bindingName, String roleName, String serviceAccountNamespace,
-                                        String serviceAccountName, String cdapNamespace) throws ApiException {
+  private void createClusterRoleBinding(String bindingName, String roleName,
+      String serviceAccountNamespace,
+      String serviceAccountName, String cdapNamespace) throws ApiException {
     KubeUtil.validatePathSegmentName(bindingName);
     V1ClusterRoleBinding clusterWorkloadLauncherBinding = new V1ClusterRoleBindingBuilder()
-      .withMetadata(new V1ObjectMetaBuilder()
-                      .withName(bindingName).build().putLabelsItem(
-                        CDAP_NAMESPACE_LABEL, cdapNamespace))
-      .withRoleRef(new V1RoleRefBuilder()
-                     .withApiGroup(RBAC_V1_API_GROUP)
-                     .withKind(CLUSTER_ROLE_KIND)
-                     .withName(roleName).build())
-      .withSubjects(new V1SubjectBuilder()
-                      .withKind(SERVICE_ACCOUNT_KIND)
-                      .withNamespace(serviceAccountNamespace)
-                      .withName(serviceAccountName).build())
-      .build();
+        .withMetadata(new V1ObjectMetaBuilder()
+            .withName(bindingName).build().putLabelsItem(
+                CDAP_NAMESPACE_LABEL, cdapNamespace))
+        .withRoleRef(new V1RoleRefBuilder()
+            .withApiGroup(RBAC_V1_API_GROUP)
+            .withKind(CLUSTER_ROLE_KIND)
+            .withName(roleName).build())
+        .withSubjects(new V1SubjectBuilder()
+            .withKind(SERVICE_ACCOUNT_KIND)
+            .withNamespace(serviceAccountNamespace)
+            .withName(serviceAccountName).build())
+        .build();
     try {
       rbacV1Api.createClusterRoleBinding(clusterWorkloadLauncherBinding, null, null, null, null);
     } catch (ApiException e) {
       if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
         throw e;
       }
-      LOG.warn("The cluster role binding '{}' already exists : {}. Ignoring creation of the cluster role binding.",
-               bindingName, e.getResponseBody());
+      LOG.warn(
+          "The cluster role binding '{}' already exists : {}. Ignoring creation of the cluster role binding.",
+          bindingName, e.getResponseBody());
     }
 
-    LOG.info("Created cluster role binding '{}' for service account '{}' in k8s namespace '{}'", bindingName,
-             serviceAccountName, serviceAccountNamespace);
+    LOG.info("Created cluster role binding '{}' for service account '{}' in k8s namespace '{}'",
+        bindingName,
+        serviceAccountName, serviceAccountNamespace);
   }
 
   /**
@@ -588,7 +630,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       if (namespaceObject.getMetadata() != null) {
         Map<String, String> namespaceLabels = namespaceObject.getMetadata().getLabels();
         if (namespaceLabels != null && namespaceLabels.get(CDAP_NAMESPACE_LABEL)
-          .equals(cdapNamespace)) {
+            .equals(cdapNamespace)) {
           // PropagationPolicy is set to background cascading deletion. Kubernetes deletes the owner object immediately
           // and the controller cleans up the dependent objects in the background.
           coreV1Api.deleteNamespace(namespace, null, null, 0, null, "Background", null);
@@ -596,14 +638,15 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
           return;
         }
       }
-      LOG.debug("Kubernetes namespace {} was not deleted because it was not created by CDAP namespace {}",
-                namespace, cdapNamespace);
+      LOG.debug(
+          "Kubernetes namespace {} was not deleted because it was not created by CDAP namespace {}",
+          namespace, cdapNamespace);
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         LOG.debug("Kubernetes namespace {} was not deleted because it was not found", namespace);
       } else {
         throw new IOException("Error occurred while deleting Kubernetes namespace. Error code = "
-                                + e.getCode() + ", Body = " + e.getResponseBody(), e);
+            + e.getCode() + ", Body = " + e.getResponseBody(), e);
       }
     }
   }
@@ -654,20 +697,22 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    * @return the controller
    */
   private <T extends KubernetesObject> KubeTwillController monitorController(
-    KubeLiveInfo liveInfo, long timeout, TimeUnit timeoutUnit, KubeTwillController controller,
-    AppResourceWatcherThread<T> watcher, Type resourceType, CompletableFuture<Void> startupTaskCompletion) {
+      KubeLiveInfo liveInfo, long timeout, TimeUnit timeoutUnit, KubeTwillController controller,
+      AppResourceWatcherThread<T> watcher, Type resourceType,
+      CompletableFuture<Void> startupTaskCompletion) {
 
     String runId = controller.getRunId().getId();
     if (!enableMonitor) {
       throw new UnsupportedOperationException(
-        String.format("Cannot monitor controller for run %s when monitoring is disabled", runId));
+          String.format("Cannot monitor controller for run %s when monitoring is disabled", runId));
     }
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
-              liveInfo.getApplicationName(), runId, timeout, timeoutUnit);
+        liveInfo.getApplicationName(), runId, timeout, timeoutUnit);
 
     // Schedule to terminate the controller in the timeout time.
-    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminateOnTimeout, timeout, timeoutUnit);
+    Future<?> terminationFuture = monitorScheduler.schedule(controller::terminateOnTimeout, timeout,
+        timeoutUnit);
 
     // This future is for transferring the cancel watch to the change listener
     CompletableFuture<Cancellable> cancellableFuture = new CompletableFuture<>();
@@ -693,7 +738,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         if (resourceType.equals(V1Job.class)) {
           // If job has status active we consider it as ready
           if (isJobReady((V1Job) resource)) {
-            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            LOG.debug("Application {} with run {} is available in Kubernetes",
+                liveInfo.getApplicationName(), runId);
             startupTaskCompletion.complete(null);
             // Cancel the scheduled termination
             terminationFuture.cancel(false);
@@ -714,7 +760,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
           }
         } else {
           if (isAllReplicasReady(resource)) {
-            LOG.debug("Application {} with run {} is available in Kubernetes", liveInfo.getApplicationName(), runId);
+            LOG.debug("Application {} with run {} is available in Kubernetes",
+                liveInfo.getApplicationName(), runId);
             // Cancel the scheduled termination
             terminationFuture.cancel(false);
             // Cancel the watch
@@ -767,10 +814,11 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       if (!resourceType.equals(V1Job.class)) {
         try {
           Uninterruptibles.getUninterruptibly(controller.terminate());
-          LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
+          LOG.debug("Controller for application {} of run {} is terminated",
+              liveInfo.getApplicationName(), runId);
         } catch (ExecutionException e) {
           LOG.error("Controller for application {} of run {} is terminated due to failure",
-                    liveInfo.getApplicationName(), runId, e.getCause());
+              liveInfo.getApplicationName(), runId, e.getCause());
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -786,11 +834,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    * @return the application {@link Location}
    */
   private Location getApplicationLocation(String name, RunId runId) {
-    return masterEnvContext.getLocationFactory().create(String.format("twill/%s/%s", name, runId.getId()));
+    return masterEnvContext.getLocationFactory()
+        .create(String.format("twill/%s/%s", name, runId.getId()));
   }
 
   /**
-   * Checks if number of requested replicas is the same as the number of ready replicas in the given resource.
+   * Checks if number of requested replicas is the same as the number of ready replicas in the given
+   * resource.
    */
   private boolean isAllReplicasReady(Object resource) {
     try {
@@ -806,7 +856,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       return replicas != null && Objects.equals(replicas, readyReplicas);
 
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
-      LOG.warn("Failed to get number of replicas and ready replicas from the resource {}", resource, e);
+      LOG.warn("Failed to get number of replicas and ready replicas from the resource {}", resource,
+          e);
       return false;
     }
   }
@@ -824,23 +875,25 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
 
       try {
         String labelSelector = job.getMetadata().getLabels().entrySet().stream()
-          .map(e -> e.getKey() + "=" + e.getValue())
-          .collect(Collectors.joining(","));
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining(","));
 
         // Make sure at least one pod launched from the job is in active state.
         // https://github.com/kubernetes-client/java/blob/master/kubernetes/docs/V1JobStatus.md
-        V1PodList podList = coreV1Api.listNamespacedPod(job.getMetadata().getNamespace(), null, null, null, null,
-                                                        labelSelector, null, null, null, null, null);
+        V1PodList podList = coreV1Api.listNamespacedPod(job.getMetadata().getNamespace(), null,
+            null, null, null,
+            labelSelector, null, null, null, null, null);
 
         for (V1Pod pod : podList.getItems()) {
           if (pod.getStatus() != null && pod.getStatus().getPhase() != null
-            && pod.getStatus().getPhase().equalsIgnoreCase("RUNNING")) {
+              && pod.getStatus().getPhase().equalsIgnoreCase("RUNNING")) {
             return true;
           }
         }
       } catch (ApiException e) {
         // If there is an exception while getting active pods for a job, we will use job level status.
-        LOG.warn("Error while getting active pods for job {}, {}", job.getMetadata().getName(), e.getResponseBody());
+        LOG.warn("Error while getting active pods for job {}, {}", job.getMetadata().getName(),
+            e.getResponseBody());
       }
     }
     return false;
@@ -858,10 +911,11 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
   }
 
   /**
-   * An {@link ResourceChangeListener} to watch for changes in application resources. It is for refreshing the
-   * liveInfos map.
+   * An {@link ResourceChangeListener} to watch for changes in application resources. It is for
+   * refreshing the liveInfos map.
    */
-  private final class AppResourceChangeListener<T extends KubernetesObject> implements ResourceChangeListener<T> {
+  private final class AppResourceChangeListener<T extends KubernetesObject> implements
+      ResourceChangeListener<T> {
 
     @Override
     public void resourceAdded(T resource) {
@@ -877,19 +931,24 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       // Read the start timeout millis from the annotation. It is set by the KubeTwillPreparer
       long startTimeoutMillis = TimeUnit.SECONDS.toMillis(120);
       try {
-        startTimeoutMillis = Long.parseLong(metadata.getAnnotations().get(START_TIMEOUT_ANNOTATION));
+        startTimeoutMillis = Long.parseLong(
+            metadata.getAnnotations().get(START_TIMEOUT_ANNOTATION));
       } catch (Exception e) {
         // This shouldn't happen
-        LOG.warn("Failed to get start timeout from the annotation using key {} from resource {}. Defaulting to {} ms",
-                 START_TIMEOUT_ANNOTATION, metadata.getName(), startTimeoutMillis, e);
+        LOG.warn(
+            "Failed to get start timeout from the annotation using key {} from resource {}. Defaulting to {} ms",
+            START_TIMEOUT_ANNOTATION, metadata.getName(), startTimeoutMillis, e);
       }
 
       // Add the LiveInfo and Controller
       liveInfoLock.lock();
       try {
-        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(appName, k -> new KubeLiveInfo(resource.getClass(), appName));
-        KubeTwillController controller = createKubeTwillController(appName, runId, resource.getClass(), metadata);
-        liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller, metadata);
+        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(appName,
+            k -> new KubeLiveInfo(resource.getClass(), appName));
+        KubeTwillController controller = createKubeTwillController(appName, runId,
+            resource.getClass(), metadata);
+        liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller,
+            metadata);
       } finally {
         liveInfoLock.unlock();
       }
@@ -911,7 +970,8 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
         if (liveInfo != null) {
           RunId runId = RunIds.fromString(metadata.getLabels().get(RUN_ID_LABEL));
           if (!liveInfo.resourceType.equals(V1Job.class)) {
-            Optional.ofNullable(liveInfo.getController(runId)).ifPresent(KubeTwillController::terminate);
+            Optional.ofNullable(liveInfo.getController(runId))
+                .ifPresent(KubeTwillController::terminate);
           }
         }
       } finally {
@@ -924,17 +984,19 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    * Creates a {@link KubeTwillController}.
    */
   private KubeTwillController createKubeTwillController(String appName, RunId runId,
-                                                        Type resourceType, V1ObjectMeta meta) {
+      Type resourceType, V1ObjectMeta meta) {
     CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
-    KubeTwillController controller = new KubeTwillController(meta.getNamespace(), runId, discoveryServiceClient,
-                                                             apiClient, resourceType, meta, startupTaskCompletion);
+    KubeTwillController controller = new KubeTwillController(meta.getNamespace(), runId,
+        discoveryServiceClient,
+        apiClient, resourceType, meta, startupTaskCompletion);
 
     Location appLocation = getApplicationLocation(appName, runId);
     controller.onTerminated(() -> {
       try {
         appLocation.delete(true);
       } catch (IOException e) {
-        throw new RuntimeException("Failed to delete location for " + appName + "-" + runId + " at " + appLocation, e);
+        throw new RuntimeException(
+            "Failed to delete location for " + appName + "-" + runId + " at " + appLocation, e);
       }
     }, command -> new Thread(command, "app-cleanup-" + appName).start());
     return controller;
@@ -957,11 +1019,11 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     public TwillSpecification configure() {
       TwillRunnableSpecification runnableSpec = runnable.configure();
       return TwillSpecification.Builder.with()
-        .setName(runnableSpec.getName())
-        .withRunnable().add(runnableSpec.getName(), runnable, resourceSpec)
-        .noLocalFiles()
-        .anyOrder()
-        .build();
+          .setName(runnableSpec.getName())
+          .withRunnable().add(runnableSpec.getName(), runnable, resourceSpec)
+          .noLocalFiles()
+          .anyOrder()
+          .build();
     }
   }
 
@@ -974,14 +1036,15 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     }
     Map<Type, AppResourceWatcherThread<?>> typeMap = new HashMap<>();
     // Batch jobs are k8s jobs, and streaming pipelines are k8s deployments
-    typeMap.put(V1Job.class, AppResourceWatcherThread.createJobWatcher(namespace, selector, apiClientFactory));
+    typeMap.put(V1Job.class,
+        AppResourceWatcherThread.createJobWatcher(namespace, selector, apiClientFactory));
     // We only create deployments and statefulsets in the system namespace,
     // so only add watchers for them in that namespace
     if (namespace.equals(kubeNamespace)) {
       typeMap.put(V1Deployment.class,
-                  AppResourceWatcherThread.createDeploymentWatcher(namespace, selector, apiClientFactory));
+          AppResourceWatcherThread.createDeploymentWatcher(namespace, selector, apiClientFactory));
       typeMap.put(V1StatefulSet.class,
-                  AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector, apiClientFactory));
+          AppResourceWatcherThread.createStatefulSetWatcher(namespace, selector, apiClientFactory));
     }
     typeMap.values().forEach(watcher -> {
       watcher.addListener(new AppResourceChangeListener<>());
@@ -1013,6 +1076,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
    * Kubernetes LiveInfo.
    */
   private final class KubeLiveInfo implements LiveInfo {
+
     private final Type resourceType;
     private final String applicationName;
     private final Map<String, KubeTwillController> controllers;
@@ -1024,7 +1088,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     }
 
     KubeTwillController addControllerIfAbsent(RunId runId, long timeout, TimeUnit timeoutUnit,
-                                              KubeTwillController controller, V1ObjectMeta meta) {
+        KubeTwillController controller, V1ObjectMeta meta) {
       KubeTwillController existing = controllers.putIfAbsent(runId.getId(), controller);
       if (existing != null) {
         return existing;
@@ -1033,12 +1097,13 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
       // If it is newly added controller, monitor it.
       addAndStartWatchers(namespace);
       return monitorController(this, timeout, timeoutUnit, controller,
-                               resourceWatchers.get(namespace).get(resourceType),
-                               resourceType, controller.getStartedFuture());
+          resourceWatchers.get(namespace).get(resourceType),
+          resourceType, controller.getStartedFuture());
     }
 
     /**
      * Remove the given controller instance.
+     *
      * @param controller the instance to remove
      */
     void removeController(KubeTwillController controller) {
@@ -1058,7 +1123,7 @@ public class KubeTwillRunnerService implements TwillRunnerService, NamespaceList
     public Iterable<TwillController> getControllers() {
       // Protect against modifications
       return () -> Collections.unmodifiableCollection(controllers.values())
-        .stream().map(TwillController.class::cast).iterator();
+          .stream().map(TwillController.class::cast).iterator();
     }
 
     /**

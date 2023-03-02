@@ -40,8 +40,8 @@ public interface PluginFinder {
    * @throws PluginNotExistsException if no plugin can be found
    */
   Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId pluginNamespaceId,
-                                                        ArtifactId parentArtifactId,
-                                                        String pluginType, String pluginName,
-                                                        PluginSelector selector) throws PluginNotExistsException;
+      ArtifactId parentArtifactId,
+      String pluginType, String pluginName,
+      PluginSelector selector) throws PluginNotExistsException;
 
 }

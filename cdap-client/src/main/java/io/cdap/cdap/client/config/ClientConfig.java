@@ -61,11 +61,11 @@ public class ClientConfig {
   private Map<String, String> additionalHeaders;
 
   private ClientConfig(@Nullable ConnectionConfig connectionConfig,
-                       boolean verifySSLCert, int unavailableRetryLimit,
-                       String apiVersion, Supplier<AccessToken> accessToken,
-                       int defaultReadTimeout, int defaultConnectTimeout,
-                       int uploadReadTimeout, int uploadConnectTimeout,
-                       Map<String, String> additionalHeaders) {
+      boolean verifySSLCert, int unavailableRetryLimit,
+      String apiVersion, Supplier<AccessToken> accessToken,
+      int defaultReadTimeout, int defaultConnectTimeout,
+      int uploadReadTimeout, int uploadConnectTimeout,
+      Map<String, String> additionalHeaders) {
     this.connectionConfig = connectionConfig;
     this.verifySSLCert = verifySSLCert;
     this.apiVersion = apiVersion;
@@ -82,15 +82,16 @@ public class ClientConfig {
     return ClientConfig.builder().build();
   }
 
-  private URL resolveURL(String apiVersion, String path) throws DisconnectedException, MalformedURLException {
+  private URL resolveURL(String apiVersion, String path)
+      throws DisconnectedException, MalformedURLException {
     return getConnectionConfig().resolveURI(apiVersion, path).toURL();
   }
 
   /**
    * Resolves a path against the target CDAP server
    *
-   * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:11015/v2/apps".
+   * @param path Path to the HTTP endpoint. For example, "apps" would result in a URL like
+   *     "http://example.com:11015/v2/apps".
    * @return URL of the resolved path
    */
   public URL resolveURL(String path) throws DisconnectedException, MalformedURLException {
@@ -104,8 +105,8 @@ public class ClientConfig {
   /**
    * Resolves a path against the target CDAP server
    *
-   * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:11015/v2/apps".
+   * @param path Path to the HTTP endpoint. For example, "apps" would result in a URL like
+   *     "http://example.com:11015/v2/apps".
    * @return URL of the resolved path
    */
   public URL resolveURLV3(String path) throws MalformedURLException {
@@ -122,13 +123,14 @@ public class ClientConfig {
   /**
    * Resolves a path against the target CDAP server with the provided namespace, using V3 APIs
    *
-   * @param path Path to the HTTP endpoint. For example, "apps" would result
-   *             in a URL like "http://example.com:11015/v3/&lt;namespace&gt;/apps".
+   * @param path Path to the HTTP endpoint. For example, "apps" would result in a URL like
+   *     "http://example.com:11015/v3/&lt;namespace&gt;/apps".
    * @return URL of the resolved path
-   * @throws MalformedURLException
    */
-  public URL resolveNamespacedURLV3(NamespaceId namespace, String path) throws MalformedURLException {
-    return getConnectionConfig().resolveNamespacedURI(namespace, Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
+  public URL resolveNamespacedURLV3(NamespaceId namespace, String path)
+      throws MalformedURLException {
+    return getConnectionConfig().resolveNamespacedURI(namespace,
+        Constants.Gateway.API_VERSION_3_TOKEN, path).toURL();
   }
 
   public HttpRequestConfig getDefaultRequestConfig() {
@@ -139,8 +141,8 @@ public class ClientConfig {
   }
 
   /**
-   * @return a {@link HttpRequestConfig} used for operations whose duration varies based on the operation, such as
-   * application deployment and query execution.
+   * @return a {@link HttpRequestConfig} used for operations whose duration varies based on the
+   *     operation, such as application deployment and query execution.
    */
   public HttpRequestConfig getUploadRequestConfig() {
     if (connectionConfig == null) {
@@ -266,7 +268,8 @@ public class ClientConfig {
     private int unavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
     private Map<String, String> additionalHeaders = new HashMap<>();
 
-    public Builder() { }
+    public Builder() {
+    }
 
     public Builder(ClientConfig clientConfig) {
       this.connectionConfig = clientConfig.connectionConfig;
@@ -337,9 +340,9 @@ public class ClientConfig {
 
     public ClientConfig build() {
       return new ClientConfig(connectionConfig, verifySSLCert,
-                              unavailableRetryLimit, apiVersion, accessToken,
-                              defaultReadTimeout, defaultConnectTimeout,
-                              uploadReadTimeout, uploadConnectTimeout, ImmutableMap.copyOf(additionalHeaders));
+          unavailableRetryLimit, apiVersion, accessToken,
+          defaultReadTimeout, defaultConnectTimeout,
+          uploadReadTimeout, uploadConnectTimeout, ImmutableMap.copyOf(additionalHeaders));
     }
   }
 

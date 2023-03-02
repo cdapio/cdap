@@ -28,12 +28,14 @@ import java.util.List;
  * Common ETL Config.
  */
 public abstract class ETLConfig extends Config {
+
   private final ETLStage source;
   private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;
   private final Resources resources;
 
-  public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms, Resources resources) {
+  public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+      Resources resources) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
@@ -49,7 +51,8 @@ public abstract class ETLConfig extends Config {
   }
 
   public List<ETLStage> getTransforms() {
-    return Collections.unmodifiableList(transforms == null ? new ArrayList<ETLStage>() : transforms);
+    return Collections.unmodifiableList(
+        transforms == null ? new ArrayList<ETLStage>() : transforms);
   }
 
   public Resources getResources() {
@@ -57,9 +60,9 @@ public abstract class ETLConfig extends Config {
   }
 
   protected <T extends io.cdap.cdap.etl.proto.v1.ETLConfig.Builder> T upgradeBase(T builder,
-                                                                                  UpgradeContext upgradeContext,
-                                                                                  String sourceType,
-                                                                                  String sinkType) {
+      UpgradeContext upgradeContext,
+      String sourceType,
+      String sinkType) {
     builder.setResources(resources);
     String prevStageName = getSource().getName() + ".1";
 
@@ -68,7 +71,8 @@ public abstract class ETLConfig extends Config {
     int stageNum = 2;
     for (ETLStage v0Transform : getTransforms()) {
       String currStageName = v0Transform.getName() + "." + stageNum;
-      builder.addTransform(v0Transform.upgradeStage(currStageName, Transform.PLUGIN_TYPE, upgradeContext));
+      builder.addTransform(
+          v0Transform.upgradeStage(currStageName, Transform.PLUGIN_TYPE, upgradeContext));
       builder.addConnection(prevStageName, currStageName);
       prevStageName = currStageName;
       stageNum++;

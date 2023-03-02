@@ -22,8 +22,10 @@ import java.util.Collection;
  * A Get reads one, multiple, or all columns of a row.
  */
 public class Get extends RowColumns<Get> {
+
   /**
    * Get all of the columns of a row.
+   *
    * @param row Row to get.
    */
   public Get(byte[] row) {
@@ -32,6 +34,7 @@ public class Get extends RowColumns<Get> {
 
   /**
    * Get a set of columns of a row.
+   *
    * @param row Row to get.
    * @param columns Columns to get.
    */
@@ -41,6 +44,7 @@ public class Get extends RowColumns<Get> {
 
   /**
    * Get a set of columns of a row.
+   *
    * @param row Row to get.
    * @param columns Columns to get.
    */
@@ -50,6 +54,7 @@ public class Get extends RowColumns<Get> {
 
   /**
    * Get all of the columns of a row.
+   *
    * @param row Row to get.
    */
   public Get(String row) {
@@ -58,6 +63,7 @@ public class Get extends RowColumns<Get> {
 
   /**
    * Get a set of columns of a row.
+   *
    * @param row Row to get.
    * @param columns Columns to get.
    */
@@ -67,6 +73,7 @@ public class Get extends RowColumns<Get> {
 
   /**
    * Get a set of columns of a row.
+   *
    * @param row row to get
    * @param columns columns to get
    */

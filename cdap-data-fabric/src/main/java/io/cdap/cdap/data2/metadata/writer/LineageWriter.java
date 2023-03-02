@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * Defines an interface to record program-dataset access records.
  */
 public interface LineageWriter {
+
   /**
    * Add a program-dataset access.
    *
@@ -46,5 +47,5 @@ public interface LineageWriter {
    * @param component program component such as flowlet id, etc.
    */
   void addAccess(ProgramRunId run, DatasetId datasetInstance,
-                 AccessType accessType, @Nullable NamespacedEntityId component);
+      AccessType accessType, @Nullable NamespacedEntityId component);
 }

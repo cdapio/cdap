@@ -90,13 +90,13 @@ public abstract class MetadataOperation {
   }
 
   /**
-   * Represents the creation or update of an entity. Similar to a {@link Put} with
-   * an additional set of properties that are only added if the entity did not exist
-   * yet (that is, if these properties are not defined yet). This is useful, for
-   * example, for properties like the creation date, which should never change when
-   * an entity is modified.
+   * Represents the creation or update of an entity. Similar to a {@link Put} with an additional set
+   * of properties that are only added if the entity did not exist yet (that is, if these properties
+   * are not defined yet). This is useful, for example, for properties like the creation date, which
+   * should never change when an entity is modified.
    */
   public static class Create extends MetadataOperation {
+
     private final Map<String, String> properties;
     private final Set<String> tags;
 
@@ -126,7 +126,7 @@ public abstract class MetadataOperation {
       }
       Create that = (Create) o;
       return Objects.equals(properties, that.properties)
-        && Objects.equals(tags, that.tags);
+          && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -137,17 +137,17 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "Create{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", properties=" + properties +
-        ", tags=" + tags +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", properties=" + properties +
+          ", tags=" + tags +
+          '}';
     }
   }
 
   /**
-   * Represents the deletion of an entity, which results in removing all it from
-   * the metadata store, including all its tags and properties.
+   * Represents the deletion of an entity, which results in removing all it from the metadata store,
+   * including all its tags and properties.
    */
   public static class Drop extends MetadataOperation {
 
@@ -161,9 +161,9 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "Drop{" +
-        "type=" + type +
-        ", entity=" + entity +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          '}';
     }
   }
 
@@ -171,6 +171,7 @@ public abstract class MetadataOperation {
    * A metadata operation that only applies to one scope.
    */
   private abstract static class ScopedOperation extends MetadataOperation {
+
     protected final MetadataScope scope;
 
     /**
@@ -202,6 +203,7 @@ public abstract class MetadataOperation {
    * Represents addition or update of metadata.
    */
   public static class Put extends ScopedOperation {
+
     private final Map<String, String> properties;
     private final Set<String> tags;
 
@@ -220,7 +222,8 @@ public abstract class MetadataOperation {
      * @param properties The properties to be deleted
      * @param tags The names of the tags to be deleted
      */
-    public Put(MetadataEntity entity, MetadataScope scope, Map<String, String> properties, Set<String> tags) {
+    public Put(MetadataEntity entity, MetadataScope scope, Map<String, String> properties,
+        Set<String> tags) {
       super(Type.PUT, entity, scope);
       this.properties = ImmutableMap.copyOf(properties);
       this.tags = ImmutableSet.copyOf(tags);
@@ -241,7 +244,7 @@ public abstract class MetadataOperation {
       }
       Put that = (Put) o;
       return Objects.equals(properties, that.properties)
-        && Objects.equals(tags, that.tags);
+          && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -252,12 +255,12 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "Put{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", scope=" + scope +
-        ", properties=" + properties +
-        ", tags=" + tags +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", scope=" + scope +
+          ", properties=" + properties +
+          ", tags=" + tags +
+          '}';
     }
   }
 
@@ -265,6 +268,7 @@ public abstract class MetadataOperation {
    * Represents a deletion of metadata.
    */
   public static class Delete extends ScopedOperation {
+
     private final Set<String> properties;
     private final Set<String> tags;
 
@@ -285,7 +289,8 @@ public abstract class MetadataOperation {
      * @param properties The names of the properties to be deleted
      * @param tags The names of the tags to be deleted
      */
-    public Delete(MetadataEntity entity, MetadataScope scope, Set<String> properties, Set<String> tags) {
+    public Delete(MetadataEntity entity, MetadataScope scope, Set<String> properties,
+        Set<String> tags) {
       super(Type.DELETE, entity, scope);
       this.properties = ImmutableSet.copyOf(properties);
       this.tags = ImmutableSet.copyOf(tags);
@@ -306,7 +311,7 @@ public abstract class MetadataOperation {
       }
       Delete that = (Delete) o;
       return Objects.equals(properties, that.properties)
-        && Objects.equals(tags, that.tags);
+          && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -317,12 +322,12 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "Delete{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", scope=" + scope +
-        ", properties=" + properties +
-        ", tags=" + tags +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", scope=" + scope +
+          ", properties=" + properties +
+          ", tags=" + tags +
+          '}';
     }
   }
 
@@ -351,10 +356,10 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "DeleteAll{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", scope=" + scope +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", scope=" + scope +
+          '}';
     }
   }
 
@@ -383,10 +388,10 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "DeleteAllProperties{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", scope=" + scope +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", scope=" + scope +
+          '}';
     }
   }
 
@@ -415,10 +420,10 @@ public abstract class MetadataOperation {
     @Override
     public String toString() {
       return "DeleteAllTags{" +
-        "type=" + type +
-        ", entity=" + entity +
-        ", scope=" + scope +
-        '}';
+          "type=" + type +
+          ", entity=" + entity +
+          ", scope=" + scope +
+          '}';
     }
   }
 }

@@ -55,7 +55,8 @@ public class DeleteArtifactCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete artifact <%s> <%s>", ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION);
+    return String.format("delete artifact <%s> <%s>", ArgumentName.ARTIFACT_NAME,
+        ArgumentName.ARTIFACT_VERSION);
   }
 
   @Override

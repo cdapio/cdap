@@ -26,6 +26,7 @@ import java.util.List;
  * Admin for querying namespace. For namespace manipulation operation see {@link NamespaceAdmin}
  */
 public interface NamespaceQueryAdmin {
+
   /**
    * Lists all namespaces.
    *

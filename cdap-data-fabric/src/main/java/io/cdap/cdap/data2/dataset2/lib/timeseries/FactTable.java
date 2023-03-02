@@ -57,9 +57,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Table for storing {@link Fact}s.
  *
- * Thread safe as long as the passed into the constructor datasets are thread safe (usually is not the case).
+ * Thread safe as long as the passed into the constructor datasets are thread safe (usually is not
+ * the case).
  */
 public final class FactTable implements Closeable {
+
   private static final Logger LOG = LoggerFactory.getLogger(FactTable.class);
   private static final int MAX_ROLL_TIME = 0xfffe;
 
@@ -83,23 +85,25 @@ public final class FactTable implements Closeable {
 
   /**
    * Creates an instance of {@link FactTable}.
+   *
    * @param timeSeriesTable A table for storing facts information.
    * @param entityTable The table for storing dimension encoding mappings.
    * @param resolution Resolution in seconds
-   * @param rollTime Number of resolution for writing to a new row with a new timebase.
-*                 Meaning the differences between timebase of two consecutive rows divided by
-*                 resolution seconds. It essentially defines how many columns per row in the table.
-   * @param coarseLagFactor
-   * @param coarseRoundFactor
+   * @param rollTime Number of resolution for writing to a new row with a new timebase. Meaning
+   *     the differences between timebase of two consecutive rows divided by resolution seconds. It
+   *     essentially defines how many columns per row in the table.
    */
   public FactTable(MetricsTable timeSeriesTable,
-                   EntityTable entityTable, int resolution, int rollTime, int coarseLagFactor, int coarseRoundFactor) {
+      EntityTable entityTable, int resolution, int rollTime, int coarseLagFactor,
+      int coarseRoundFactor) {
     // Two bytes for column name, which is a delta timestamp
-    Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME, "Rolltime should be <= " + MAX_ROLL_TIME);
+    Preconditions.checkArgument(rollTime <= MAX_ROLL_TIME,
+        "Rolltime should be <= " + MAX_ROLL_TIME);
 
     this.entityTable = entityTable;
     this.timeSeriesTable = timeSeriesTable;
-    this.codec = new FactCodec(entityTable, resolution, rollTime, coarseLagFactor, coarseRoundFactor);
+    this.codec = new FactCodec(entityTable, resolution, rollTime, coarseLagFactor,
+        coarseRoundFactor);
     this.resolution = resolution;
     this.rollTime = rollTime;
     this.putCountMetric = "factTable." + resolution + ".put.count";
@@ -107,7 +111,8 @@ public final class FactTable implements Closeable {
 
     // only use the cache if the resolution is not the total resolution
     this.factCounterCache = resolution == Integer.MAX_VALUE ? null :
-      CacheBuilder.newBuilder().expireAfterAccess(1L, TimeUnit.MINUTES).maximumSize(100000).build();
+        CacheBuilder.newBuilder().expireAfterAccess(1L, TimeUnit.MINUTES).maximumSize(100000)
+            .build();
   }
 
   public void setMetricsCollector(MetricsCollector metrics) {
@@ -130,11 +135,12 @@ public final class FactTable implements Closeable {
         // round to the resolution timestamp
         long tsToResolution = codec.roundToResolution(fact.getTimestamp(), nowSeconds);
         FactMeasurementKey key = new FactMeasurementKey(tsToResolution,
-                                                        fact.getDimensionValues(),
-                                                        measurement.getName());
+            fact.getDimensionValues(),
+            measurement.getName());
         if (MeasureType.COUNTER == measurement.getType()) {
           if (factCounterCache != null) {
-            FactCacheKey cacheKey = new FactCacheKey(fact.getDimensionValues(), measurement.getName());
+            FactCacheKey cacheKey = new FactCacheKey(fact.getDimensionValues(),
+                measurement.getName());
             Long existingTs = factCounterCache.getIfPresent(cacheKey);
 
             // if there is no existing ts or existing ts is greater than or equal to the current ts, this metric value
@@ -151,14 +157,16 @@ public final class FactTable implements Closeable {
             // should be updated
             if (existingTs == null || existingTs < tsToResolution) {
               cacheUpdates.compute(
-                cacheKey, (k, oldValue) -> oldValue == null || tsToResolution > oldValue ? tsToResolution : oldValue);
+                  cacheKey,
+                  (k, oldValue) -> oldValue == null || tsToResolution > oldValue ? tsToResolution
+                      : oldValue);
             }
           } else {
             inc(incrementsTable, key, measurement.getValue());
           }
         } else {
           gaugesTable
-            .put(key, measurement.getValue());
+              .put(key, measurement.getValue());
         }
       }
     }
@@ -170,7 +178,7 @@ public final class FactTable implements Closeable {
     // We use HashMap as a fast L0 cache that we create and throw out after each batch
     Map<EntityTable.EntityName, Long> cache = new HashMap<>();
     BiFunction<EntityTable.EntityName, Supplier<Long>, Long> cacheFunction = (name, loader) ->
-      cache.computeIfAbsent(name, nm -> loader.get());
+        cache.computeIfAbsent(name, nm -> loader.get());
     // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(toColumnarFormat(gaugesTable, nowSeconds, cacheFunction));
     timeSeriesTable.increment(toColumnarFormat(incrementsTable, nowSeconds, cacheFunction));
@@ -182,30 +190,32 @@ public final class FactTable implements Closeable {
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], Long>> toColumnarFormat(
-    Map<FactMeasurementKey, Long> data, long nowSeconds,
-    BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
+      Map<FactMeasurementKey, Long> data, long nowSeconds,
+      BiFunction<EntityTable.EntityName, Supplier<Long>, Long> fastCache) {
 
     return data.entrySet().stream().collect(Collectors.groupingBy(
-      entry -> codec.createRowKey(entry.getKey().dimensionValues, entry.getKey().measurementName,
-                                  entry.getKey().timestamp, nowSeconds, fastCache),
-      () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR),
-      Collectors.toMap(
-        entry -> codec.createColumn(entry.getKey().timestamp, nowSeconds),
-        entry -> entry.getValue(),
-        (u, v) -> {
-          throw new IllegalStateException(String.format("Duplicate key %s", u));
-          },
-        () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR)
-      )
+        entry -> codec.createRowKey(entry.getKey().dimensionValues, entry.getKey().measurementName,
+            entry.getKey().timestamp, nowSeconds, fastCache),
+        () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR),
+        Collectors.toMap(
+            entry -> codec.createColumn(entry.getKey().timestamp, nowSeconds),
+            entry -> entry.getValue(),
+            (u, v) -> {
+              throw new IllegalStateException(String.format("Duplicate key %s", u));
+            },
+            () -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR)
+        )
     ));
   }
 
   private class FactMeasurementKey {
+
     private final long timestamp;
     private final List<DimensionValue> dimensionValues;
     private final String measurementName;
 
-    private FactMeasurementKey(long timestamp, List<DimensionValue> dimensionValues, String measurementName) {
+    private FactMeasurementKey(long timestamp, List<DimensionValue> dimensionValues,
+        String measurementName) {
       this.timestamp = timestamp;
       this.dimensionValues = dimensionValues;
       this.measurementName = measurementName;
@@ -221,8 +231,8 @@ public final class FactTable implements Closeable {
       }
       FactMeasurementKey that = (FactMeasurementKey) o;
       return timestamp == that.timestamp
-        && dimensionValues.equals(that.dimensionValues)
-        && measurementName.equals(that.measurementName);
+          && dimensionValues.equals(that.dimensionValues)
+          && measurementName.equals(that.measurementName);
     }
 
     @Override
@@ -232,6 +242,7 @@ public final class FactTable implements Closeable {
   }
 
   private class MeasureNameComparator implements Comparator<String> {
+
     private final Map<String, Long> measureNameToEntityIdMap;
 
     private MeasureNameComparator(Map<String, Long> measureNameToEntityIdMap) {
@@ -240,12 +251,14 @@ public final class FactTable implements Closeable {
 
     @Override
     public int compare(String first, String second) {
-      return Long.compare(measureNameToEntityIdMap.get(first), measureNameToEntityIdMap.get(second));
+      return Long.compare(measureNameToEntityIdMap.get(first),
+          measureNameToEntityIdMap.get(second));
     }
   }
 
   public FactScanner scan(FactScan scan) {
-    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs(), scan.getMeasureNames());
+    return new FactScanner(getScanner(scan), codec, scan.getStartTs(), scan.getEndTs(),
+        scan.getMeasureNames());
   }
 
   private List<String> getSortedMeasures(Collection<String> measures) {
@@ -267,11 +280,11 @@ public final class FactTable implements Closeable {
     List<String> measureNames = getSortedMeasures(scan.getMeasureNames());
 
     byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(),
-                                              measureNames.isEmpty() ? null : measureNames.get(0),
-                                              scan.getStartTs(), false);
+        measureNames.isEmpty() ? null : measureNames.get(0),
+        scan.getStartTs(), false);
     byte[] endRow = codec.createEndRowKey(scan.getDimensionValues(),
-                                          measureNames.isEmpty() ? null : measureNames.get(measureNames.size() - 1),
-                                          scan.getEndTs(), false);
+        measureNames.isEmpty() ? null : measureNames.get(measureNames.size() - 1),
+        scan.getEndTs(), false);
     byte[][] columns;
     if (Arrays.equals(startRow, endRow)) {
       // If on the same timebase, we only need subset of columns
@@ -285,12 +298,14 @@ public final class FactTable implements Closeable {
     }
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter =
-      measureNames.isEmpty() ? createFuzzyRowFilter(scan, startRow) : createFuzzyRowFilter(scan, measureNames);
+        measureNames.isEmpty() ? createFuzzyRowFilter(scan, startRow)
+            : createFuzzyRowFilter(scan, measureNames);
 
     if (LOG.isTraceEnabled()) {
-      LOG.trace("Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
-                timeSeriesTable, scan, Bytes.toHexString(startRow),
-                endRow == null ? null : Bytes.toHexString(endRow), fuzzyRowFilter);
+      LOG.trace(
+          "Scanning fact table {} with scan: {}; constructed startRow: {}, endRow: {}, fuzzyRowFilter: {}",
+          timeSeriesTable, scan, Bytes.toHexString(startRow),
+          endRow == null ? null : Bytes.toHexString(endRow), fuzzyRowFilter);
     }
 
     return timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
@@ -298,6 +313,7 @@ public final class FactTable implements Closeable {
 
   /**
    * Delete entries in fact table.
+   *
    * @param scan specifies deletion criteria
    */
   public void delete(FactScan scan) {
@@ -335,11 +351,13 @@ public final class FactTable implements Closeable {
   }
 
   /**
-   * Searches for first non-null valued dimensions in records that contain given list of dimensions and match given
-   * dimension values in given time range. Returned dimension values are those that are not defined in given
-   * dimension values.
+   * Searches for first non-null valued dimensions in records that contain given list of dimensions
+   * and match given dimension values in given time range. Returned dimension values are those that
+   * are not defined in given dimension values.
+   *
    * @param allDimensionNames list of all dimension names to be present in the record
-   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null value.
+   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null
+   *     value.
    * @param startTs start of the time range, in seconds
    * @param endTs end of the time range, in seconds
    * @return {@link Set} of {@link DimensionValue}s
@@ -347,8 +365,8 @@ public final class FactTable implements Closeable {
   // todo: pass a limit on number of dimensionValues returned
   // todo: kinda not cool API when we expect null values in a map...
   public Set<DimensionValue> findSingleDimensionValue(List<String> allDimensionNames,
-                                                      Map<String, String> dimensionSlice,
-                                                      long startTs, long endTs) {
+      Map<String, String> dimensionSlice,
+      long startTs, long endTs) {
     // Algorithm, briefly:
     // We scan in the records which have given allDimensionNames. We use dimensionSlice as a criteria for scan.
     // If record from the scan has non-null values in the dimensions which are not specified in dimensionSlice,
@@ -365,7 +383,8 @@ public final class FactTable implements Closeable {
         dimToFillIndexes.add(i);
         allDimensions.add(new DimensionValue(dimensionName, null));
       } else {
-        DimensionValue dimensionValue = new DimensionValue(dimensionName, dimensionSlice.get(dimensionName));
+        DimensionValue dimensionValue = new DimensionValue(dimensionName,
+            dimensionSlice.get(dimensionName));
         allDimensions.add(dimensionValue);
       }
     }
@@ -384,7 +403,8 @@ public final class FactTable implements Closeable {
     byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter =
-      createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions), startRow);
+        createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions),
+            startRow);
     Scanner scanner = timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
     scans++;
     try {
@@ -441,22 +461,26 @@ public final class FactTable implements Closeable {
       }
     }
 
-    LOG.trace("search for dimensions completed, scans performed: {}, scanned records: {}", scans, scannedRecords);
+    LOG.trace("search for dimensions completed, scans performed: {}, scanned records: {}", scans,
+        scannedRecords);
 
     return result;
   }
 
   /**
    * Finds all measure names of the facts that match given {@link DimensionValue}s and time range.
+   *
    * @param allDimensionNames list of all dimension names to be present in the fact record
-   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null value.
+   * @param dimensionSlice dimension values to filter by, {@code null} means any non-null
+   *     value.
    * @param startTs start timestamp, in sec
    * @param endTs end timestamp, in sec
    * @return {@link Set} of measure names
    */
   // todo: pass a limit on number of measures returned
-  public Set<String> findMeasureNames(List<String> allDimensionNames, Map<String, String> dimensionSlice,
-                                      long startTs, long endTs) {
+  public Set<String> findMeasureNames(List<String> allDimensionNames,
+      Map<String, String> dimensionSlice,
+      long startTs, long endTs) {
 
     List<DimensionValue> allDimensions = Lists.newArrayList();
     for (String dimensionName : allDimensionNames) {
@@ -467,7 +491,8 @@ public final class FactTable implements Closeable {
     byte[] endRow = codec.createEndRowKey(allDimensions, null, endTs, false);
     endRow = Bytes.stopKeyForPrefix(endRow);
     FuzzyRowFilter fuzzyRowFilter =
-      createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions), startRow);
+        createFuzzyRowFilter(new FactScan(startTs, endTs, Collections.emptyList(), allDimensions),
+            startRow);
 
     Set<String> measureNames = Sets.newHashSet();
     int scannedRecords = 0;
@@ -518,7 +543,8 @@ public final class FactTable implements Closeable {
     for (String measureName : measureNames) {
       // add exact fuzzy keys for all the measure names provided in the scan, when constructing fuzzy row filter
       // its okay to use startTs as timebase part of rowKey is always fuzzy in fuzzy filter
-      byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(), measureName, scan.getStartTs(), false);
+      byte[] startRow = codec.createStartRowKey(scan.getDimensionValues(), measureName,
+          scan.getStartTs(), false);
       byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
       fuzzyPairsList.add(new ImmutablePair<>(startRow, fuzzyRowMask));
     }
@@ -530,18 +556,20 @@ public final class FactTable implements Closeable {
 
     // if we are querying only one measure, we will use fixed measureName for filter,
     // if there are no measures or more than one measures to query we use `ANY` fuzzy filter.
-    String measureName = (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
+    String measureName =
+        (scan.getMeasureNames().size() == 1) ? scan.getMeasureNames().iterator().next() : null;
     byte[] fuzzyRowMask = codec.createFuzzyRowMask(scan.getDimensionValues(), measureName);
     // note: we can use startRow, as it will contain all "fixed" parts of the key needed
     return new FuzzyRowFilter(ImmutableList.of(new ImmutablePair<>(startRow, fuzzyRowMask)));
   }
 
   private static void inc(Map<FactMeasurementKey, Long> incrementsTable,
-                          FactMeasurementKey key, long value) {
+      FactMeasurementKey key, long value) {
     incrementsTable.compute(key, (k, prev) -> value + (prev == null ? 0 : prev));
   }
 
   class FactCacheKey {
+
     private final List<DimensionValue> dimensionValues;
     private final String metricName;
 
@@ -560,7 +588,7 @@ public final class FactTable implements Closeable {
       }
       FactCacheKey that = (FactCacheKey) o;
       return Objects.equals(dimensionValues, that.dimensionValues) &&
-        Objects.equals(metricName, that.metricName);
+          Objects.equals(metricName, that.metricName);
     }
 
     @Override

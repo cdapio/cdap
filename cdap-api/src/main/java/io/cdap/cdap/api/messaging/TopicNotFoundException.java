@@ -19,7 +19,8 @@ package io.cdap.cdap.api.messaging;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Exception thrown when attempting an operation on a topic when a topic of that name does not exist.
+ * Exception thrown when attempting an operation on a topic when a topic of that name does not
+ * exist.
  */
 @Beta
 public class TopicNotFoundException extends MessagingException {

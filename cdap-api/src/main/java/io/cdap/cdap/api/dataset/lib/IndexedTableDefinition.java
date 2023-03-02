@@ -35,7 +35,7 @@ import java.util.TreeSet;
  */
 @Beta
 public class IndexedTableDefinition
-  extends CompositeDatasetDefinition<IndexedTable> {
+    extends CompositeDatasetDefinition<IndexedTable> {
 
   public IndexedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, "d", tableDef, "i", tableDef);
@@ -44,9 +44,11 @@ public class IndexedTableDefinition
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     // Dynamic indexing allows indexes to be specified at runtime
-    boolean dynamicIndexing = Boolean.parseBoolean(properties.getProperties().get(IndexedTable.DYNAMIC_INDEXING));
+    boolean dynamicIndexing = Boolean.parseBoolean(
+        properties.getProperties().get(IndexedTable.DYNAMIC_INDEXING));
     if (!dynamicIndexing) {
-      String columnNamesToIndex = properties.getProperties().get(IndexedTable.INDEX_COLUMNS_CONF_KEY);
+      String columnNamesToIndex = properties.getProperties()
+          .get(IndexedTable.INDEX_COLUMNS_CONF_KEY);
       if (columnNamesToIndex == null) {
         throw new IllegalArgumentException("columnsToIndex must be specified");
       }
@@ -56,18 +58,22 @@ public class IndexedTableDefinition
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
-    boolean dynamicIndexing = Boolean.parseBoolean(newProperties.getProperties().get(IndexedTable.DYNAMIC_INDEXING));
-    boolean oldDynamicIndexing = Boolean.parseBoolean(currentSpec.getProperty(IndexedTable.DYNAMIC_INDEXING));
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    boolean dynamicIndexing = Boolean.parseBoolean(
+        newProperties.getProperties().get(IndexedTable.DYNAMIC_INDEXING));
+    boolean oldDynamicIndexing = Boolean.parseBoolean(
+        currentSpec.getProperty(IndexedTable.DYNAMIC_INDEXING));
     if (dynamicIndexing != oldDynamicIndexing) {
       // dynamic indexing property cannot change
-      throw new IncompatibleUpdateException(String.format("Attempt to change dynamic indexing from '%s' to '%s'",
-                                                          oldDynamicIndexing, dynamicIndexing));
+      throw new IncompatibleUpdateException(
+          String.format("Attempt to change dynamic indexing from '%s' to '%s'",
+              oldDynamicIndexing, dynamicIndexing));
     }
     if (!dynamicIndexing) {
       // validate that the columns to index property is not null and the same as before
-      String columnNamesToIndex = newProperties.getProperties().get(IndexedTable.INDEX_COLUMNS_CONF_KEY);
+      String columnNamesToIndex = newProperties.getProperties()
+          .get(IndexedTable.INDEX_COLUMNS_CONF_KEY);
       if (columnNamesToIndex == null) {
         throw new IllegalArgumentException("columnsToIndex must be specified");
       }
@@ -76,8 +82,9 @@ public class IndexedTableDefinition
         Set<byte[]> newColumns = parseColumns(columnNamesToIndex);
         Set<byte[]> oldColumns = parseColumns(oldColumnsToIndex);
         if (!newColumns.equals(oldColumns)) {
-          throw new IncompatibleUpdateException(String.format("Attempt to change columns to index from '%s' to '%s'",
-                                                              oldColumnsToIndex, columnNamesToIndex));
+          throw new IncompatibleUpdateException(
+              String.format("Attempt to change columns to index from '%s' to '%s'",
+                  oldColumnsToIndex, columnNamesToIndex));
         }
       }
     }
@@ -86,7 +93,7 @@ public class IndexedTableDefinition
 
   @Override
   public IndexedTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     SortedSet<byte[]> columnsToIndex;
     String keyPrefix = null;
@@ -96,14 +103,15 @@ public class IndexedTableDefinition
       String columnsToIndexProp = arguments.get(IndexedTable.INDEX_COLUMNS_CONF_KEY);
       if (columnsToIndexProp == null) {
         throw new IllegalArgumentException(
-          "columnsToIndex must be specified in runtime arguments when dynamic indexing is enabled");
+            "columnsToIndex must be specified in runtime arguments when dynamic indexing is enabled");
       }
       columnsToIndex = parseColumns(columnsToIndexProp);
 
       // Dynamic indexing also needs a key prefix
       keyPrefix = arguments.get(IndexedTable.DYNAMIC_INDEXING_PREFIX);
       if (keyPrefix == null) {
-        throw new IllegalArgumentException("When dynamic indexing is used, the indexing prefix has to be specified");
+        throw new IllegalArgumentException(
+            "When dynamic indexing is used, the indexing prefix has to be specified");
       }
     } else {
       columnsToIndex = parseColumns(spec.getProperty(IndexedTable.INDEX_COLUMNS_CONF_KEY));
@@ -113,7 +121,7 @@ public class IndexedTableDefinition
     Table index = getDataset(datasetContext, "i", spec, arguments, classLoader);
 
     return new IndexedTable(spec.getName(), table, index, columnsToIndex,
-                            keyPrefix == null ? Bytes.EMPTY_BYTE_ARRAY : Bytes.toBytes(keyPrefix));
+        keyPrefix == null ? Bytes.EMPTY_BYTE_ARRAY : Bytes.toBytes(keyPrefix));
   }
 
   /**

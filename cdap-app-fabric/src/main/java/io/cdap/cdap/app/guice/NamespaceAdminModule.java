@@ -36,7 +36,8 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class)
+            .in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
@@ -53,7 +54,8 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class)
+            .in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
@@ -69,7 +71,8 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class)
+            .in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);

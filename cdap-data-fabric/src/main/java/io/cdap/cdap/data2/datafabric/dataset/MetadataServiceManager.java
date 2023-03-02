@@ -31,7 +31,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class MetadataServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  MetadataServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+  MetadataServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+      DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient, Constants.Service.METADATA_SERVICE, twillRunner);
   }
 

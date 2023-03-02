@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * Program run fields
  */
 public class ProgramRunInfo {
+
   private final String namespace;
   private final String application;
   private final String version;
@@ -36,7 +37,8 @@ public class ProgramRunInfo {
   @Nullable
   private ProgramStartInfo startInfo;
 
-  public ProgramRunInfo(String namespace, String application, String version, String type, String program, String run) {
+  public ProgramRunInfo(String namespace, String application, String version, String type,
+      String program, String run) {
     this.namespace = namespace;
     this.application = application;
     this.version = version;
@@ -99,6 +101,7 @@ public class ProgramRunInfo {
 
   /**
    * This is not null only when the program status is "STARTING"
+   *
    * @return {@link ProgramStartInfo} or null if program status is not "STARTING"
    */
   @Nullable

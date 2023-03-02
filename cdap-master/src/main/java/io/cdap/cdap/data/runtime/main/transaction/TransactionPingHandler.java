@@ -28,11 +28,13 @@ import javax.ws.rs.Path;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * Handles ping requests for Transaction service.
- * Similar to PingHandler, but overriding the status endpoint, to also check transaction manager status.
+ * Handles ping requests for Transaction service. Similar to PingHandler, but overriding the status
+ * endpoint, to also check transaction manager status.
  */
 public class TransactionPingHandler extends PingHandler {
+
   private static final JsonObject NOT_OK_JSON;
+
   static {
     NOT_OK_JSON = new JsonObject();
     NOT_OK_JSON.addProperty("status", Constants.Monitor.STATUS_NOTOK);
@@ -51,7 +53,7 @@ public class TransactionPingHandler extends PingHandler {
   public void status(HttpRequest request, HttpResponder responder) {
     // ignore the service-name, since we dont need it. its only used for routing
     responder.sendJson(HttpResponseStatus.OK,
-                       Constants.Monitor.STATUS_OK.equals(transactionSystemClient.status())
-                         ? OK_JSON.toString() : NOT_OK_JSON.toString());
+        Constants.Monitor.STATUS_OK.equals(transactionSystemClient.status())
+            ? OK_JSON.toString() : NOT_OK_JSON.toString());
   }
 }

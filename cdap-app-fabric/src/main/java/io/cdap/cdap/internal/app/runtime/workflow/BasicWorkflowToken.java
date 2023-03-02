@@ -56,7 +56,8 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   /**
    * Creates a {@link BasicWorkflowToken} with the specified maximum size.
    *
-   * @param maxSizeMb the specified maximum size in MB for the {@link BasicWorkflowToken} to create.
+   * @param maxSizeMb the specified maximum size in MB for the {@link BasicWorkflowToken} to
+   *     create.
    */
   public BasicWorkflowToken(int maxSizeMb) {
     for (Scope scope : Scope.values()) {
@@ -91,21 +92,24 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
   }
 
   /**
-   * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer classes.
+   * Method to disable the put operation on the {@link WorkflowToken} form Mapper and Reducer
+   * classes.
    */
   public synchronized void disablePut() {
     putAllowed = false;
   }
 
   /**
-   * Merge the other WorkflowToken passed to the method as a parameter
-   * with the WorkflowToken on which the method is invoked.
+   * Merge the other WorkflowToken passed to the method as a parameter with the WorkflowToken on
+   * which the method is invoked.
+   *
    * @param other the other WorkflowToken to be merged
    */
   synchronized void mergeToken(WorkflowToken other) {
     for (Scope scope : Scope.values()) {
       Map<String, List<NodeValue>> thisTokenValueMapForScope = this.tokenValueMap.get(scope);
-      for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : other.getAll(scope).entrySet()) {
+      for (Map.Entry<String, List<NodeValue>> otherTokenValueMapForScopeEntry : other.getAll(scope)
+          .entrySet()) {
         String otherKey = otherTokenValueMapForScopeEntry.getKey();
         if (!thisTokenValueMapForScope.containsKey(otherKey)) {
           thisTokenValueMapForScope.put(otherKey, Lists.<NodeValue>newArrayList());
@@ -142,14 +146,17 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   private void put(String key, Value value, Scope scope) {
     if (!putAllowed) {
-      String msg = String.format("Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
-                                 "allowed from the Mapper and Reducer classes and from Spark executor.", key, nodeName);
+      String msg = String.format(
+          "Failed to put key '%s' from node '%s' in the WorkflowToken. Put operation is not " +
+              "allowed from the Mapper and Reducer classes and from Spark executor.", key,
+          nodeName);
       throw new UnsupportedOperationException(msg);
     }
 
     Preconditions.checkNotNull(key, "Null key cannot be added in the WorkflowToken.");
     Preconditions.checkNotNull(value, String.format("Null value provided for the key '%s'.", key));
-    Preconditions.checkNotNull(value.toString(), String.format("Null value provided for the key '%s'.", key));
+    Preconditions.checkNotNull(value.toString(),
+        String.format("Null value provided for the key '%s'.", key));
     Preconditions.checkState(nodeName != null, "nodeName cannot be null.");
 
     List<NodeValue> nodeValueList = tokenValueMap.get(scope).get(key);
@@ -187,7 +194,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     // List of NodeValue cannot be empty if the key is added in the WorkflowToken as
     // when we add key, we also add single NodeValue.
     Preconditions.checkState(!nodeValueList.isEmpty(),
-                             String.format("List of NodeValue for the key %s cannot be empty", key));
+        String.format("List of NodeValue for the key %s cannot be empty", key));
 
     return nodeValueList.get(nodeValueList.size() - 1).getValue();
   }
@@ -270,7 +277,8 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
       for (Counter counter : group) {
         groupBuilder.put(counter.getName(), counter.getValue());
         // Also put the counter to system scope.
-        put(group.getName() + "." + counter.getName(), Value.of(counter.getValue()), WorkflowToken.Scope.SYSTEM);
+        put(group.getName() + "." + counter.getName(), Value.of(counter.getValue()),
+            WorkflowToken.Scope.SYSTEM);
       }
       countersBuilder.put(group.getName(), groupBuilder.build());
     }
@@ -280,6 +288,7 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
 
   /**
    * Make a deep copy of the {@link WorkflowToken}.
+   *
    * @return copied WorkflowToken
    */
   public synchronized WorkflowToken deepCopy() {
@@ -293,15 +302,16 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     }
     return builder.build();
   }
-  
+
   /**
-   * Updates a key in the workflow token. Used to either add or update the {@link NodeValue} for a key, depending on
-   * whether it exists already.
+   * Updates a key in the workflow token. Used to either add or update the {@link NodeValue} for a
+   * key, depending on whether it exists already.
    *
    * @param key the key whose value is to be added or updated.
    * @param nodeValue the {@link NodeValue} to add or update
    * @param nodeValues the existing, non-null list of {@link NodeValue} for the specified key
-   * @param index the index at which to add or update. For adding, use a number less than 0, for replacing,
+   * @param index the index at which to add or update. For adding, use a number less than 0, for
+   *     replacing,
    */
   private void addOrUpdate(String key, NodeValue nodeValue, List<NodeValue> nodeValues, int index) {
     int oldValueLen = (index < 0) ? 0 : nodeValues.get(index).getValue().toString().length();
@@ -310,13 +320,14 @@ public class BasicWorkflowToken implements WorkflowToken, Serializable {
     int left = bytesLeft - valueLen + oldValueLen;
     left = (left < 0 || index >= 0) ? left : left - key.length();
     if (left < 0) {
-      throw new IllegalStateException(String.format("Exceeded maximum permitted size of workflow token '%sMB' while " +
-                                                      "adding key '%s' with value '%s'. Current size is '%sMB'. " +
-                                                      "Please increase the maximum permitted size by setting the " +
-                                                      "parameter '%s' in cdap-site.xml to add more values.",
-                                                    maxSizeBytes / (1024 * 1024), key, nodeValue,
-                                                    (maxSizeBytes - bytesLeft) / (1024 * 1024),
-                                                    Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+      throw new IllegalStateException(
+          String.format("Exceeded maximum permitted size of workflow token '%sMB' while " +
+                  "adding key '%s' with value '%s'. Current size is '%sMB'. " +
+                  "Please increase the maximum permitted size by setting the " +
+                  "parameter '%s' in cdap-site.xml to add more values.",
+              maxSizeBytes / (1024 * 1024), key, nodeValue,
+              (maxSizeBytes - bytesLeft) / (1024 * 1024),
+              Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
     }
     if (index >= 0) {
       nodeValues.set(index, nodeValue);

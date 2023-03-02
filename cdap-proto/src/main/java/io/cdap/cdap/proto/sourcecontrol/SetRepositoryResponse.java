@@ -25,11 +25,13 @@ import java.util.Objects;
  * The HTTP Response class for setting repository configuration.
  */
 public class SetRepositoryResponse {
+
   private final Collection<RepositoryValidationFailure> errors;
   private final String message;
 
   public SetRepositoryResponse(RepositoryConfigValidationException e) {
-    this.errors = e.getFailures().isEmpty() ? null : Collections.unmodifiableList(new ArrayList<>(e.getFailures()));
+    this.errors = e.getFailures().isEmpty() ? null
+        : Collections.unmodifiableList(new ArrayList<>(e.getFailures()));
     this.message = e.getMessage();
   }
 

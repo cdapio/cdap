@@ -44,14 +44,14 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
     // Now, we iterate through all ProgramSpecification and generate programs
     Iterable<ProgramSpecification> specifications = Iterables.concat(
-      appSpec.getMapReduce().values(),
-      appSpec.getWorkflows().values(),
-      appSpec.getServices().values(),
-      appSpec.getSpark().values(),
-      appSpec.getWorkers().values()
+        appSpec.getMapReduce().values(),
+        appSpec.getWorkflows().values(),
+        appSpec.getServices().values(),
+        appSpec.getSpark().values(),
+        appSpec.getWorkers().values()
     );
 
-    for (ProgramSpecification spec: specifications) {
+    for (ProgramSpecification spec : specifications) {
       ProgramType type = ProgramTypes.fromSpecification(spec);
       ProgramId programId = input.getApplicationId().program(type, spec.getName());
       programDescriptors.add(new ProgramDescriptor(programId, appSpec));

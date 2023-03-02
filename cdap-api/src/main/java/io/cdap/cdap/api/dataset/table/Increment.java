@@ -21,14 +21,14 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * An Increment interprets the values of columns as 8-byte integers and
- * increments them by the specified value.
+ * An Increment interprets the values of columns as 8-byte integers and increments them by the
+ * specified value.
  * <ul>
  *   <li>
  *     The operation fails if a column's existing value is
  *     not exactly 8 bytes long (with {@link NumberFormatException}).
  *   </li><li>
- *     If a column to increment does not exist prior to the operation, then the column is created and 
+ *     If a column to increment does not exist prior to the operation, then the column is created and
  *     the column's value is set to the increment value.
  *   </li><li>
  *     An increment operation should at least change the value of one column.
@@ -36,11 +36,12 @@ import java.util.TreeMap;
  * </ul>
  */
 public class Increment {
-  /** 
-   * Row to change. 
+
+  /**
+   * Row to change.
    */
   private final byte[] row;
-  /** 
+  /**
    * Map of columns/values to increment each column's values by.
    */
   private final Map<byte[], Long> values;
@@ -63,6 +64,7 @@ public class Increment {
 
   /**
    * Changes the values of columns in a row.
+   *
    * @param row Row to change.
    */
   public Increment(byte[] row) {
@@ -72,6 +74,7 @@ public class Increment {
 
   /**
    * Changes the value of at least one column in a row.
+   *
    * @param row Row to change.
    * @param column Column to change.
    * @param value Value to increment by.
@@ -83,6 +86,7 @@ public class Increment {
 
   /**
    * Adds a column and sets the column's value.
+   *
    * @param column Column to add.
    * @param value Column value.
    * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Increment}.
@@ -96,6 +100,7 @@ public class Increment {
 
   /**
    * Changes the values of all of the columns in a row.
+   *
    * @param row Row in which all column values are incremented.
    */
   public Increment(String row) {
@@ -104,6 +109,7 @@ public class Increment {
 
   /**
    * Changes the value of at least one column in a row.
+   *
    * @param row Row to change.
    * @param column Column to change.
    * @param value Value to increment the column value by.
@@ -115,6 +121,7 @@ public class Increment {
 
   /**
    * Adds a column and sets the column's value.
+   *
    * @param column Column to add.
    * @param value Column value.
    * @return Instance of this {@link io.cdap.cdap.api.dataset.table.Increment}.

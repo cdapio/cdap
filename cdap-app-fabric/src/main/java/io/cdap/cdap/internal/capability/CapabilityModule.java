@@ -24,6 +24,7 @@ import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
  * Module for binding classes for capability
  */
 public class CapabilityModule extends PrivateModule {
+
   @Override
   protected void configure() {
     bind(CapabilityApplier.class).in(Scopes.SINGLETON);

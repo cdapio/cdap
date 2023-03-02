@@ -49,13 +49,16 @@ public class VersionHandler extends AbstractHttpHandler {
 
   @Path("/version")
   @GET
-  public void version(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Version(versions.get(0).getVersion())));
+  public void version(@SuppressWarnings("UnusedParameters") HttpRequest request,
+      HttpResponder responder) {
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(new Version(versions.get(0).getVersion())));
   }
 
   @Path("/versions")
   @GET
-  public void versions(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
+  public void versions(@SuppressWarnings("UnusedParameters") HttpRequest request,
+      HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(versions));
   }
 

@@ -22,8 +22,9 @@ import io.cdap.cdap.api.dataset.DataSetException;
  * Thrown when a Partition already exists.
  */
 public class PartitionAlreadyExistsException extends DataSetException {
+
   public PartitionAlreadyExistsException(String datasetName, PartitionKey partitionKey) {
     super(String.format("Dataset '%s' already has a partition with the same key: %s",
-                        datasetName, partitionKey.toString()));
+        datasetName, partitionKey.toString()));
   }
 }

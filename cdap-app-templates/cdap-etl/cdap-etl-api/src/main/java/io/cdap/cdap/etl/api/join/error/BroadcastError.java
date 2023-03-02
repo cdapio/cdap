@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * An error with the broadcast settings for join
  */
 public class BroadcastError extends JoinError {
+
   public BroadcastError(String message) {
     super(JoinError.Type.BROADCAST, message, null);
   }

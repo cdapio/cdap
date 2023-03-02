@@ -34,7 +34,9 @@ import org.slf4j.LoggerFactory;
  * Utility class for dealing with HBase coprocessors.
  */
 public final class CoprocessorUtil {
+
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorUtil.class);
+
   private CoprocessorUtil() {
 
   }
@@ -44,7 +46,8 @@ public final class CoprocessorUtil {
    */
   public static Map<String, String> getNonCoprocessorProperties(HTableDescriptor tableDescriptor) {
     Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues()
+        .entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String val = Bytes.toString(entry.getValue().get()).trim();
 
@@ -61,12 +64,14 @@ public final class CoprocessorUtil {
    *
    * @return a Map from coprocessor class name to {@link CoprocessorDescriptor}
    */
-  public static Map<String, CoprocessorDescriptor> getCoprocessors(HTableDescriptor tableDescriptor) {
+  public static Map<String, CoprocessorDescriptor> getCoprocessors(
+      HTableDescriptor tableDescriptor) {
     Map<String, CoprocessorDescriptor> info = Maps.newHashMap();
 
     // Extract information about existing data janitor coprocessor
     // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues()
+        .entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String spec = Bytes.toString(entry.getValue().get()).trim();
 
@@ -83,7 +88,7 @@ public final class CoprocessorUtil {
         String className = matcher.group(2).trim();
         Path path = matcher.group(1).trim().isEmpty() ? null : new Path(matcher.group(1).trim());
         int priority = matcher.group(3).trim().isEmpty() ? Coprocessor.PRIORITY_USER
-          : Integer.valueOf(matcher.group(3));
+            : Integer.valueOf(matcher.group(3));
         String cfgSpec = null;
         try {
           cfgSpec = matcher.group(4);
@@ -103,7 +108,8 @@ public final class CoprocessorUtil {
         String pathStr = path == null ? null : path.toUri().getPath();
         info.put(className, new CoprocessorDescriptor(className, pathStr, priority, properties));
       } catch (Exception ex) {
-        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec, ex);
+        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec,
+            ex);
       }
     }
 

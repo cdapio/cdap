@@ -17,8 +17,8 @@
 package io.cdap.cdap.api.schedule;
 
 /**
- * Similar to {@link ScheduleBuilder}, but allows specifying whether the scheduler should wait until the
- * configured constraint is met.
+ * Similar to {@link ScheduleBuilder}, but allows specifying whether the scheduler should wait until
+ * the configured constraint is met.
  */
 public interface ConstraintProgramScheduleBuilder extends ScheduleBuilder {
 
@@ -28,7 +28,8 @@ public interface ConstraintProgramScheduleBuilder extends ScheduleBuilder {
   ScheduleBuilder waitUntilMet();
 
   /**
-   * Specifies that the scheduler will abort the schedule execution if the configured constraint is not met.
+   * Specifies that the scheduler will abort the schedule execution if the configured constraint is
+   * not met.
    */
   ScheduleBuilder abortIfNotMet();
 }

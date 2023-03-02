@@ -23,6 +23,7 @@ import java.util.Objects;
  * Represents runtime job details.
  */
 public class RuntimeJobDetail {
+
   private final ProgramRunInfo runInfo;
   private final RuntimeJobStatus status;
 

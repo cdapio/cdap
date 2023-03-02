@@ -50,7 +50,8 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
         MetricsContext context = this.context;
         if (context == null) {
           // The service.getContext already handle concurrent calls, so no need to synchronize here
-          this.context = context = serviceProvider.get().getContext(Constants.Metrics.TRANSACTION_MANAGER_CONTEXT);
+          this.context = context = serviceProvider.get()
+              .getContext(Constants.Metrics.TRANSACTION_MANAGER_CONTEXT);
         }
         return context;
       }
@@ -59,7 +60,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   // todo: change TxMetricsCollector in Tephra
   @Override
-  public void gauge(String metricName, int value, String...tags) {
+  public void gauge(String metricName, int value, String... tags) {
     metricsContext.get().gauge(metricName, value);
   }
 

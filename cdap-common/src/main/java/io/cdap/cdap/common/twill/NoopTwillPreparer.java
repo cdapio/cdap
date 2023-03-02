@@ -30,7 +30,7 @@ import org.apache.twill.api.logging.LogHandler;
  * A no-op implementation of {@link TwillPreparer}.
  */
 final class NoopTwillPreparer implements TwillPreparer {
-  
+
   @Override
   public TwillPreparer withConfiguration(Map<String, String> config) {
     return this;
@@ -177,7 +177,8 @@ final class NoopTwillPreparer implements TwillPreparer {
   }
 
   @Override
-  public TwillPreparer setLogLevels(String runnableName, Map<String, LogEntry.Level> logLevelsForRunnable) {
+  public TwillPreparer setLogLevels(String runnableName,
+      Map<String, LogEntry.Level> logLevelsForRunnable) {
     return this;
   }
 

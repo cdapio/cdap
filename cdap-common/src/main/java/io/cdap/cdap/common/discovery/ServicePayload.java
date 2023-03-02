@@ -24,6 +24,7 @@ import java.util.Set;
  * Defines the payload that is placed for every service.
  */
 public class ServicePayload {
+
   private final Map<String, String> values = Maps.newHashMap();
 
   /**

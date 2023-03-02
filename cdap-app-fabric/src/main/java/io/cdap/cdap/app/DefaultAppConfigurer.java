@@ -103,29 +103,32 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
     this(namespace, artifactId, app, "", null, null, null, null,
-         new FeatureFlagsProvider() {
-         }, null);
+        new FeatureFlagsProvider() {
+        }, null);
   }
 
-  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
-                              @Nullable PluginFinder pluginFinder,
-                              @Nullable PluginInstantiator pluginInstantiator,
-                              @Nullable RuntimeConfigurer runtimeConfigurer,
-                              @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                              FeatureFlagsProvider featureFlagsProvider) {
-   this(namespace, artifactId, app, configuration, pluginFinder, pluginInstantiator, runtimeConfigurer, runtimeInfo,
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app,
+      String configuration,
+      @Nullable PluginFinder pluginFinder,
+      @Nullable PluginInstantiator pluginInstantiator,
+      @Nullable RuntimeConfigurer runtimeConfigurer,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    this(namespace, artifactId, app, configuration, pluginFinder, pluginInstantiator,
+        runtimeConfigurer, runtimeInfo,
         featureFlagsProvider, null);
   }
 
-  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
-                              @Nullable PluginFinder pluginFinder,
-                              @Nullable PluginInstantiator pluginInstantiator,
-                              @Nullable RuntimeConfigurer runtimeConfigurer,
-                              @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                              FeatureFlagsProvider featureFlagsProvider,
-                              @Nullable ApplicationSpecification deployedApplicationSpec) {
+  public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app,
+      String configuration,
+      @Nullable PluginFinder pluginFinder,
+      @Nullable PluginInstantiator pluginInstantiator,
+      @Nullable RuntimeConfigurer runtimeConfigurer,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider,
+      @Nullable ApplicationSpecification deployedApplicationSpec) {
     super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
-          featureFlagsProvider);
+        featureFlagsProvider);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -152,7 +155,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce,
+        deployNamespace, artifactId,
         pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     mapReduce.configure(configurer);
     addDatasetsAndPlugins(configurer);
@@ -168,27 +172,29 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     // It is a bit hacky here to look for the DefaultExtendedSparkConfigurer implementation through the
     // SparkRunnerClassloader directly (CDAP-11797)
     ClassLoader sparkRunnerClassLoader = ClassLoaders.findByName(
-      spark.getClass().getClassLoader(), "io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
+        spark.getClass().getClassLoader(),
+        "io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
 
     if (sparkRunnerClassLoader != null) {
       try {
         configurer = (DefaultSparkConfigurer) sparkRunnerClassLoader
-          .loadClass("io.cdap.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
-          .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
-                          PluginFinder.class, PluginInstantiator.class, 
-                          AppDeploymentRuntimeInfo.class, FeatureFlagsProvider.class)
-          .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator, 
-            runtimeInfo, getFeatureFlagsProvider());
+            .loadClass("io.cdap.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
+            .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
+                PluginFinder.class, PluginInstantiator.class,
+                AppDeploymentRuntimeInfo.class, FeatureFlagsProvider.class)
+            .newInstance(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator,
+                runtimeInfo, getFeatureFlagsProvider());
 
       } catch (Exception e) {
         // Ignore it and the configurer will be defaulted to DefaultSparkConfigurer
-        LOG.trace("No DefaultExtendedSparkConfigurer found. Fallback to DefaultSparkConfigurer.", e);
+        LOG.trace("No DefaultExtendedSparkConfigurer found. Fallback to DefaultSparkConfigurer.",
+            e);
       }
     }
 
     if (configurer == null) {
       configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder,
-        pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+          pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     }
 
     spark.configure(configurer);
@@ -214,17 +220,20 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     Preconditions.checkArgument(service != null, "Service cannot be null.");
     // check that a system service is only used in system namespace
     if (!deployNamespace.equals(Id.Namespace.fromEntityId(NamespaceId.SYSTEM))) {
-      TypeToken<?> type = TypeToken.of(service.getClass()).resolveType(Service.class.getTypeParameters()[0]);
+      TypeToken<?> type = TypeToken.of(service.getClass())
+          .resolveType(Service.class.getTypeParameters()[0]);
       if (SystemServiceConfigurer.class.isAssignableFrom(type.getRawType())) {
         throw new IllegalArgumentException(String.format(
-          "Invalid service '%s'. Services can only use a SystemServiceConfigurer if the application is "
-            + "deployed in the system namespace.", service.getClass().getSimpleName()));
+            "Invalid service '%s'. Services can only use a SystemServiceConfigurer if the application is "
+                + "deployed in the system namespace.", service.getClass().getSimpleName()));
       }
     }
 
     DefaultSystemTableConfigurer systemTableConfigurer = new DefaultSystemTableConfigurer();
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
-      pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo, getFeatureFlagsProvider());
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace,
+        artifactId,
+        pluginFinder, pluginInstantiator, systemTableConfigurer, runtimeInfo,
+        getFeatureFlagsProvider());
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -236,8 +245,9 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void addWorker(Worker worker) {
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
-    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
-      pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
+    DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace,
+        artifactId,
+        pluginFinder, pluginInstantiator, runtimeInfo, getFeatureFlagsProvider());
     worker.configure(configurer);
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();
@@ -248,7 +258,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     // Schedules are unique by name so two different schedules with the same name cannot be scheduled
     String scheduleName = scheduleSpec.getName();
     Preconditions.checkArgument(null == scheduleSpecs.put(scheduleName, scheduleSpec),
-                                "Duplicate schedule name for schedule: '%s'", scheduleName);
+        "Duplicate schedule name for schedule: '%s'", scheduleName);
   }
 
   @Override
@@ -258,7 +268,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   @Override
   public void emitMetadata(Metadata metadata, MetadataScope scope) {
-    Metadata scopeMetadata = appMetadata.computeIfAbsent(scope, s -> new Metadata(new HashMap<>(), new HashSet<>()));
+    Metadata scopeMetadata = appMetadata.computeIfAbsent(scope,
+        s -> new Metadata(new HashMap<>(), new HashSet<>()));
     Map<String, String> properties = new HashMap<>(scopeMetadata.getProperties());
     properties.putAll(metadata.getProperties());
     Set<String> tags = new HashSet<>(scopeMetadata.getTags());
@@ -273,11 +284,11 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
   @Override
   public ScheduleBuilder buildSchedule(String scheduleName, ProgramType schedulableProgramType,
-                                       String programName) {
+      String programName) {
     if (ProgramType.WORKFLOW != schedulableProgramType) {
       throw new IllegalArgumentException(String.format(
-        "Cannot schedule program %s of type %s: Only workflows can be scheduled",
-        programName, schedulableProgramType));
+          "Cannot schedule program %s of type %s: Only workflows can be scheduled",
+          programName, schedulableProgramType));
     }
     return new DefaultScheduleBuilder(scheduleName, programName, triggerFactory);
   }
@@ -302,7 +313,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   /**
    * Creates a {@link ApplicationSpecification} based on values in this configurer.
    *
-   * @param applicationName if not null, the application name to use instead of using the one from this configurer
+   * @param applicationName if not null, the application name to use instead of using the one
+   *     from this configurer
    * @return a new {@link ApplicationSpecification}.
    */
   public ApplicationSpecification createSpecification(@Nullable String applicationName) {
@@ -311,33 +323,36 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   public ApplicationSpecification createSpecification(@Nullable String applicationName,
-                                                      @Nullable String applicationVersion) {
+      @Nullable String applicationVersion) {
     // applicationName can be null only for apps before 3.2 that were not upgraded
     ArtifactScope scope = artifactId.getNamespace().equals(Id.Namespace.SYSTEM)
-      ? ArtifactScope.SYSTEM : ArtifactScope.USER;
-    ArtifactId artifactId = new ArtifactId(this.artifactId.getName(), this.artifactId.getVersion(), scope);
+        ? ArtifactScope.SYSTEM : ArtifactScope.USER;
+    ArtifactId artifactId = new ArtifactId(this.artifactId.getName(), this.artifactId.getVersion(),
+        scope);
 
     String namespace = deployNamespace.toEntityId().getNamespace();
     String appName = applicationName == null ? name : applicationName;
-    String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
+    String appVersion =
+        applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
 
     Map<String, ScheduleCreationSpec> builtScheduleSpecs = new HashMap<>();
     for (Map.Entry<String, ScheduleCreationSpec> entry : scheduleSpecs.entrySet()) {
       // If the ScheduleCreationSpec is really a builder, then build the ScheduleCreationSpec
       if (entry.getValue() instanceof DefaultScheduleBuilder.ScheduleCreationBuilder) {
         DefaultScheduleBuilder.ScheduleCreationBuilder builder =
-          (DefaultScheduleBuilder.ScheduleCreationBuilder) entry.getValue();
+            (DefaultScheduleBuilder.ScheduleCreationBuilder) entry.getValue();
         builtScheduleSpecs.put(entry.getKey(), builder.build(namespace, appName, appVersion));
       } else {
         builtScheduleSpecs.put(entry.getKey(), entry.getValue());
       }
     }
 
-    return new DefaultApplicationSpecification(appName, appVersion, ProjectInfo.getVersion().toString(), description,
-                                               configuration, artifactId,
-                                               getDatasetModules(), getDatasetSpecs(),
-                                               mapReduces, sparks, workflows, services,
-                                               builtScheduleSpecs, workers, getPlugins());
+    return new DefaultApplicationSpecification(appName, appVersion,
+        ProjectInfo.getVersion().toString(), description,
+        configuration, artifactId,
+        getDatasetModules(), getDatasetSpecs(),
+        mapReduces, sparks, workflows, services,
+        builtScheduleSpecs, workers, getPlugins());
   }
 
   public Collection<StructuredTableSpecification> getSystemTables() {
@@ -349,7 +364,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   /**
-   * Adds the dataset and plugins at the application level so that they can be used by any program in the application.
+   * Adds the dataset and plugins at the application level so that they can be used by any program
+   * in the application.
    *
    * @param configurer the program's configurer
    */
@@ -368,7 +384,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
       StructuredTableSpecification existing = systemTables.get(spec.getTableId());
       if (existing != null && !existing.equals(spec)) {
         throw new IllegalArgumentException(String.format(
-          "System table '%s' was created more than once with different specifications.", spec.getTableId().getName()));
+            "System table '%s' was created more than once with different specifications.",
+            spec.getTableId().getName()));
       }
       systemTables.put(spec.getTableId(), spec);
     }

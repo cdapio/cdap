@@ -25,5 +25,6 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
  * @param <O> Output type of the deployment.
  */
 public interface ManagerFactory<I, O> {
+
   Manager<I, O> create(ProgramTerminator handler);
 }

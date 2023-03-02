@@ -67,10 +67,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Replication Status tool is used to track the status of replication from Master to a Slave Cluster.
- * The tool reads writeTime and replicateTime for all tables and uses it to determine if all CDAP tables have been
- * completely replicated to the Slave cluster.
- * */
+ * The Replication Status tool is used to track the status of replication from Master to a Slave
+ * Cluster. The tool reads writeTime and replicateTime for all tables and uses it to determine if
+ * all CDAP tables have been completely replicated to the Slave cluster.
+ */
 public class ReplicationStatusTool {
 
   private static CConfiguration cConf = CConfiguration.create();
@@ -96,7 +96,7 @@ public class ReplicationStatusTool {
 
   // Default paths to be pulled from configuration
   private static final String[] ALL_CHECKSUM_PATHS_DEFAULT = {
-    TxConstants.Manager.CFG_TX_SNAPSHOT_DIR 
+      TxConstants.Manager.CFG_TX_SNAPSHOT_DIR
   };
 
   private static Set<String> allChecksumPaths;
@@ -105,11 +105,13 @@ public class ReplicationStatusTool {
    * Carries the current replication state of the cluster
    */
   private static class ReplicationState {
+
     private final Long shutdownTime;
     private final SortedMap<String, String> hdfsState;
     private final Map<String, Long> hBaseState;
 
-    ReplicationState(Long shutdownTime, SortedMap<String, String> hdfsState, Map<String, Long> hBaseState) {
+    ReplicationState(Long shutdownTime, SortedMap<String, String> hdfsState,
+        Map<String, Long> hBaseState) {
       this.shutdownTime = shutdownTime;
       this.hdfsState = hdfsState;
       this.hBaseState = hBaseState;
@@ -159,11 +161,13 @@ public class ReplicationStatusTool {
 
   private static boolean sanityCheckOptions(CommandLine cmd) {
     if (cmd.hasOption(MASTER_OPTION) && !cmd.hasOption(OUTPUT_OPTION)) {
-      System.out.println("No File Path provided for creating Master Status with option -" + OUTPUT_OPTION);
+      System.out.println(
+          "No File Path provided for creating Master Status with option -" + OUTPUT_OPTION);
       return false;
     }
     if (!cmd.hasOption(MASTER_OPTION) && !cmd.hasOption(INPUT_OPTION)) {
-      System.out.println("No File Path provided for reading Master Status with option -" + INPUT_OPTION);
+      System.out.println(
+          "No File Path provided for reading Master Status with option -" + INPUT_OPTION);
       return false;
     }
     return true;
@@ -183,7 +187,8 @@ public class ReplicationStatusTool {
     options.addOption(OUTPUT_OPTION, true, "FilePath to dump Master Cluster Status");
     options.addOption(INPUT_OPTION, true, "Status File copied from the Master Cluster");
     options.addOption(FILE_OPTION, true, "File with HDFS Paths");
-    options.addOption(SHUTDOWNTIME_OPTION, true, "Override cdap-master Shutdown Time on Master Cluster [epoch time]");
+    options.addOption(SHUTDOWNTIME_OPTION, true,
+        "Override cdap-master Shutdown Time on Master Cluster [epoch time]");
     options.addOption(DEBUG_OPTION, false, "Dump Cluster Status for debugging");
     options.addOption(HELP_OPTION, false, "Show this Usage");
     CommandLineParser parser = new BasicParser();
@@ -210,20 +215,22 @@ public class ReplicationStatusTool {
   private static void processMasterCluster() throws IOException {
     masterShutdownTime = shutDownTimeArgument != 0L ? shutDownTimeArgument : getShutdownTime();
     if (masterShutdownTime == 0L) {
-      System.out.println("CDAP Shutdown time not available. Please run after CDAP has been shut down.");
+      System.out.println(
+          "CDAP Shutdown time not available. Please run after CDAP has been shut down.");
       return;
     }
 
     ReplicationState masterReplicationState =
-      new ReplicationState(masterShutdownTime,
-                           getClusterChecksumMap(),
-                           getMapFromTable(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
+        new ReplicationState(masterShutdownTime,
+            getClusterChecksumMap(),
+            getMapFromTable(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
 
     // write replication state to output file
     try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outputStatusFileName))) {
       GSON.toJson(masterReplicationState, bufferedWriter);
     }
-    System.out.println("Copy the file " + outputStatusFileName + " to the Slave Cluster and run tool there.");
+    System.out.println(
+        "Copy the file " + outputStatusFileName + " to the Slave Cluster and run tool there.");
   }
 
   private static void processSlaveCluster() throws Exception {
@@ -235,7 +242,7 @@ public class ReplicationStatusTool {
 
     if (masterReplicationState == null || masterReplicationState.shutdownTime == 0L) {
       System.out.println("Could not read CDAP Shutdown Time from input file."
-                           + " Please make sure CDAP has been shutdown on the Master and rerun the tool on Master.");
+          + " Please make sure CDAP has been shutdown on the Master and rerun the tool on Master.");
       return;
     }
     if (masterReplicationState.hdfsState.isEmpty()) {
@@ -249,12 +256,13 @@ public class ReplicationStatusTool {
     checkHBaseReplicationComplete(masterReplicationState.hBaseState);
   }
 
-  private static void checkHBaseReplicationComplete(Map<String, Long> masterTimeMap) throws Exception {
+  private static void checkHBaseReplicationComplete(Map<String, Long> masterTimeMap)
+      throws Exception {
     boolean complete;
 
     // Get replicate Time from table for all regions
     Map<String, Long> slaveTimeMap =
-      getMapFromTable(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE);
+        getMapFromTable(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE);
 
     // Verify that all regions on the Master cluster are present on the Slave cluster
     complete = !checkDifferences(masterTimeMap.keySet(), slaveTimeMap.keySet(), "Region");
@@ -265,8 +273,10 @@ public class ReplicationStatusTool {
       Long writeTime = writeTimeEntry.getValue();
       Long replicateTime = slaveTimeMap.get(region);
 
-      if (replicateTime != null && !isReplicationComplete(masterShutdownTime, writeTime, replicateTime)) {
-        System.out.println("Region:" + region + " behind by " + (writeTime - replicateTime) + "ms.");
+      if (replicateTime != null && !isReplicationComplete(masterShutdownTime, writeTime,
+          replicateTime)) {
+        System.out.println(
+            "Region:" + region + " behind by " + (writeTime - replicateTime) + "ms.");
         complete = false;
       }
     }
@@ -299,7 +309,7 @@ public class ReplicationStatusTool {
     HashMap<String, Long> timeMap = new HashMap<>();
 
     try (Table table = tableUtil.createTable(hConf, getReplicationStateTableId(tableUtil));
-         ResultScanner resultScanner = table.getScanner(scan.build())) {
+        ResultScanner resultScanner = table.getScanner(scan.build())) {
       while ((result = resultScanner.next()) != null) {
         ReplicationStatusKey key = new ReplicationStatusKey(result.getRow());
         String region = key.getRegionName();
@@ -324,28 +334,33 @@ public class ReplicationStatusTool {
     // scan.setStartRow(startKey.getKey());
     // scan.setStopRow(Bytes.stopKeyForPrefix(startKey.getKey()));
 
-    scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY), Bytes.toBytes(rowType));
+    scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
+        Bytes.toBytes(rowType));
     scan.setMaxVersions(1);
     return scan;
   }
 
   private static TableId getReplicationStateTableId(HBaseTableUtil tableUtil) throws IOException {
-    String tableName = hConf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAME);
-    String ns = hConf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAMESPACE);
+    String tableName = hConf.get(
+        ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAME);
+    String ns = hConf.get(
+        ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAMESPACE);
     TableId tableId = tableUtil.createHTableId(
-      (ns != null)
-        ? new NamespaceId(ns)
-        : new NamespaceId(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAMESPACE),
-      (tableName != null)
-        ? tableName
-        : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAME);
+        (ns != null)
+            ? new NamespaceId(ns)
+            : new NamespaceId(
+                ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAMESPACE),
+        (tableName != null)
+            ? tableName
+            : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAME);
     return tableId;
   }
 
   private static Long getTimeFromResult(Result result, String rowType) {
     Long timestamp = 0L;
     ByteBuffer timestampBuffer = result.getValueAsByteBuffer(
-      Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY), Bytes.toBytes(rowType));
+        Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
+        Bytes.toBytes(rowType));
     if (timestampBuffer != null) {
       timestamp = timestampBuffer.getLong();
     }
@@ -355,7 +370,7 @@ public class ReplicationStatusTool {
   private static Long getShutdownTime() throws IOException {
     Long shutdownTime = 0L;
     File shutdownTimeFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                     Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
+        Constants.Replication.CDAP_SHUTDOWN_TIME_FILENAME).getAbsoluteFile();
     try (BufferedReader br = new BufferedReader(new FileReader(shutdownTimeFile))) {
       //Read the shutdown Time
       shutdownTime = new Long(br.readLine());
@@ -368,12 +383,13 @@ public class ReplicationStatusTool {
 
   /**
    * This function implements the logic to test if replication is complete for a given table
+   *
    * @param shutdownTime CDAP shutdown time
    * @param writeTime timestamp of the last WAL entry written for this table
    * @param replicateTime timestamp of the last WAL entry replicated for this table
-   * @return
    */
-  private static boolean isReplicationComplete(long shutdownTime, long writeTime, long replicateTime) {
+  private static boolean isReplicationComplete(long shutdownTime, long writeTime,
+      long replicateTime) {
     if (replicateTime > shutdownTime) {
       // Anything after CDAP shutdown time can be ignored owing to non CDAP tables.
       return true;
@@ -393,12 +409,12 @@ public class ReplicationStatusTool {
 
     ScanBuilder scan = tableUtil.buildScan();
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
-                   Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
+        Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE));
     scan.addColumn(Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.TIME_FAMILY),
-                   Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE));
+        Bytes.toBytes(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE));
 
     try (Table table = tableUtil.createTable(hConf, getReplicationStateTableId(tableUtil));
-         ResultScanner resultScanner = table.getScanner(scan.build())) {
+        ResultScanner resultScanner = table.getScanner(scan.build())) {
       Result result;
       while ((result = resultScanner.next()) != null) {
         ReplicationStatusKey key = new ReplicationStatusKey(result.getRow());
@@ -406,16 +422,18 @@ public class ReplicationStatusTool {
         String region = key.getRegionName();
         UUID rsID = key.getRsID();
 
-        Long writeTime = getTimeFromResult(result, ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE);
+        Long writeTime = getTimeFromResult(result,
+            ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE);
         Long replicateTime = getTimeFromResult(result,
-                                               ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE);
+            ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE);
         System.out.println("Key=>rowType:" + rowType + ":region:" + region + ":RSID:" + rsID
-                             + " writeTime:" + writeTime + ":replicateTime:" + replicateTime);
+            + " writeTime:" + writeTime + ":replicateTime:" + replicateTime);
       }
     }
   }
 
-  private static void checkHDFSReplicationComplete(SortedMap<String, String> masterChecksumMap) throws IOException {
+  private static void checkHDFSReplicationComplete(SortedMap<String, String> masterChecksumMap)
+      throws IOException {
     boolean complete;
     SortedMap<String, String> slaveChecksumMap = getClusterChecksumMap();
 
@@ -429,8 +447,9 @@ public class ReplicationStatusTool {
       String slaveChecksum = slaveChecksumMap.get(file);
 
       if (slaveChecksum != null && !masterChecksum.equals(slaveChecksum)) {
-        System.out.println("Master Checksum " + masterChecksum + " for File " + file + " does not match with"
-                             + " Slave Checksum " + slaveChecksum);
+        System.out.println(
+            "Master Checksum " + masterChecksum + " for File " + file + " does not match with"
+                + " Slave Checksum " + slaveChecksum);
         complete = false;
       }
     }
@@ -475,7 +494,8 @@ public class ReplicationStatusTool {
     return fileList;
   }
 
-  private static void addAllDirFiles(Path filePath, FileSystem fs, List<String> fileList) throws IOException {
+  private static void addAllDirFiles(Path filePath, FileSystem fs, List<String> fileList)
+      throws IOException {
     FileStatus[] fileStatus = fs.listStatus(filePath);
     for (FileStatus fileStat : fileStatus) {
       if (fileStat.isDirectory()) {
@@ -490,7 +510,8 @@ public class ReplicationStatusTool {
     System.out.println("\nThis is all the File Checksums on the Cluster:");
     SortedMap<String, String> checksumMap = getClusterChecksumMap();
     for (Map.Entry<String, String> checksumEntry : checksumMap.entrySet()) {
-      System.out.println("File:" + checksumEntry.getKey() + " Checksum:" + checksumEntry.getValue());
+      System.out.println(
+          "File:" + checksumEntry.getKey() + " Checksum:" + checksumEntry.getValue());
     }
   }
 }

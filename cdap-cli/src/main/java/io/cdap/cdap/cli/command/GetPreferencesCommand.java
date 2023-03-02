@@ -26,6 +26,7 @@ import io.cdap.cdap.client.PreferencesClient;
  * Gets preferences for instance, namespace, application, program.
  */
 public class GetPreferencesCommand extends AbstractGetPreferencesCommand {
+
   private final ElementType type;
 
   protected GetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {

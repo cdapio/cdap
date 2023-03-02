@@ -16,6 +16,5 @@
 
 /**
  * Packages for ETL Application Templates.
- *
  */
 package io.cdap.cdap.etl.api.lookup;

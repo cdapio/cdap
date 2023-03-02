@@ -17,7 +17,6 @@ package io.cdap.cdap.api.builder;
 
 /**
  *
- * @param <T>
  */
 public interface DescriptionSetter<T> {
 

@@ -30,7 +30,9 @@ import javax.annotation.Nullable;
 /**
  * This class provides the specification for a MapReduce job.
  */
-public class MapReduceSpecification extends AbstractProgramSpecification implements PropertyProvider {
+public class MapReduceSpecification extends AbstractProgramSpecification implements
+    PropertyProvider {
+
   private final Set<String> dataSets;
   private final Map<String, String> properties;
   private final String inputDataSet;
@@ -39,16 +41,18 @@ public class MapReduceSpecification extends AbstractProgramSpecification impleme
   private final Resources mapperResources;
   private final Resources reducerResources;
 
-  public MapReduceSpecification(String className, String name, String description, String inputDataSet,
-                                String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                @Nullable Resources driverResources,
-                                @Nullable Resources mapperResources, @Nullable Resources reducerResources,
-                                Map<String, Plugin> plugins) {
+  public MapReduceSpecification(String className, String name, String description,
+      String inputDataSet,
+      String outputDataSet, Set<String> dataSets, Map<String, String> properties,
+      @Nullable Resources driverResources,
+      @Nullable Resources mapperResources, @Nullable Resources reducerResources,
+      Map<String, Plugin> plugins) {
     super(className, name, description, plugins);
     this.inputDataSet = inputDataSet;
     this.outputDataSet = outputDataSet;
-    this.properties = Collections.unmodifiableMap(properties == null ? Collections.<String, String>emptyMap()
-                                                    : new HashMap<>(properties));
+    this.properties = Collections.unmodifiableMap(
+        properties == null ? Collections.<String, String>emptyMap()
+            : new HashMap<>(properties));
     this.driverResources = driverResources;
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
@@ -66,16 +70,16 @@ public class MapReduceSpecification extends AbstractProgramSpecification impleme
   }
 
   /**
-   * @return An immutable set of {@link io.cdap.cdap.api.dataset.Dataset DataSets} that
-   *         are used by the {@link MapReduce}.
+   * @return An immutable set of {@link io.cdap.cdap.api.dataset.Dataset DataSets} that are used by
+   *     the {@link MapReduce}.
    */
   public Set<String> getDataSets() {
     return dataSets;
   }
 
   /**
-   * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset is used as output
-   *         destination
+   * @return name of the dataset to be used as output of mapreduce job or {@code null} if no dataset
+   *     is used as output destination
    */
   @Nullable
   public String getOutputDataSet() {
@@ -83,8 +87,8 @@ public class MapReduceSpecification extends AbstractProgramSpecification impleme
   }
 
   /**
-   * @return name The name of the dataset to be used as input to a MapReduce job or {@code null}
-   * if no dataset is used as the input source.
+   * @return name The name of the dataset to be used as input to a MapReduce job or {@code null} if
+   *     no dataset is used as the input source.
    */
   @Nullable
   public String getInputDataSet() {
@@ -115,7 +119,8 @@ public class MapReduceSpecification extends AbstractProgramSpecification impleme
     return reducerResources;
   }
 
-  private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet, String outputDataSet) {
+  private Set<String> getAllDatasets(Set<String> dataSets, String inputDataSet,
+      String outputDataSet) {
     Set<String> allDatasets = new HashSet<>(dataSets);
 
     if (inputDataSet != null && !inputDataSet.isEmpty()) {

@@ -31,10 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ChannelDuplexHandler} for forwarding requests/responses between the router and the internal service.
- * It also handle idle state event for closing idled internal connections.
+ * A {@link ChannelDuplexHandler} for forwarding requests/responses between the router and the
+ * internal service. It also handle idle state event for closing idled internal connections.
  */
 public class OutboundHandler extends ChannelDuplexHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(OutboundHandler.class);
 
   private final Channel inboundChannel;
@@ -66,7 +67,8 @@ public class OutboundHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise)
+      throws Exception {
     // A request starts with a HttpRequest
     if (msg instanceof HttpRequest) {
       requestInProgress = true;
@@ -118,9 +120,11 @@ public class OutboundHandler extends ChannelDuplexHandler {
         // No data has been sent or received for a while. Close channel.
         Channel channel = ctx.channel();
         channel.close();
-        LOG.trace("No data has been sent or received for channel '{}' for more than the configured idle timeout. " +
-                    "Closing the channel. Local Address: {}, Remote Address: {}",
-                  channel, channel.localAddress(), channel.remoteAddress());
+        LOG.trace(
+            "No data has been sent or received for channel '{}' for more than the configured idle timeout. "
+                +
+                "Closing the channel. Local Address: {}, Remote Address: {}",
+            channel, channel.localAddress(), channel.remoteAddress());
       }
     }
   }

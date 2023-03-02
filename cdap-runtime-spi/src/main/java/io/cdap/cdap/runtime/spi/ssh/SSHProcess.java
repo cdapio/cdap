@@ -63,9 +63,9 @@ public interface SSHProcess {
    * Blocks for the remote process to finish.
    *
    * @param timeout the maximum time to wait
-   * @param unit    the {@link TimeUnit} for the timeout
+   * @param unit the {@link TimeUnit} for the timeout
    * @return the exit code of the process
-   * @throws TimeoutException     if the process is not yet terminated after the given timeout
+   * @throws TimeoutException if the process is not yet terminated after the given timeout
    * @throws InterruptedException if this thread is interrupted while waiting
    */
   int waitFor(long timeout, TimeUnit unit) throws TimeoutException, InterruptedException;

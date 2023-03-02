@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
  * Main class for running artifact cache service in Kubernetes.
  */
 public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+
   /**
    * Main entry point
    */
@@ -52,32 +53,33 @@ public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOpt
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new MessagingClientModule(),
-      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
-                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
-      getDataFabricModule(),
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(ArtifactCacheService.class).in(Scopes.SINGLETON);
-          expose(ArtifactCacheService.class);
-        }
-      });
+        new MessagingClientModule(),
+        RemoteAuthenticatorModules.getDefaultModule(
+            TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+            Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
+        getDataFabricModule(),
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new PrivateModule() {
+          @Override
+          protected void configure() {
+            bind(ArtifactCacheService.class).in(Scopes.SINGLETON);
+            expose(ArtifactCacheService.class);
+          }
+        });
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     services.add(injector.getInstance(ArtifactCacheService.class));
   }
 
@@ -85,7 +87,7 @@ public class ArtifactCacheServiceMain extends AbstractServiceMain<EnvironmentOpt
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.ARTIFACT_CACHE_SERVICE);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.ARTIFACT_CACHE_SERVICE);
   }
 }

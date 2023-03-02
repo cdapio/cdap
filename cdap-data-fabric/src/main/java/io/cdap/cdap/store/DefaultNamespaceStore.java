@@ -39,7 +39,8 @@ public class DefaultNamespaceStore implements NamespaceStore {
     this.transactionRunner = transactionRunner;
   }
 
-  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws TableNotFoundException {
+  private NamespaceTable getNamespaceTable(StructuredTableContext context)
+      throws TableNotFoundException {
     return new NamespaceTable(context);
   }
 

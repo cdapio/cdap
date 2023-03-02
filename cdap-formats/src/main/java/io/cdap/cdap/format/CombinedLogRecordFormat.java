@@ -29,12 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * A {@link RecordFormat} that interprets byte array as data in Combined Log Format.
- * CLF format: remote_host remote_login auth_user [date] "request" status content_length referrer user_agent
- * Sample CLF data:
- * 220.181.108.77 - - [01/Feb/2015:06:59:57 +0000] "GET / HTTP/1.1" 301 295 "-"
+ * A {@link RecordFormat} that interprets byte array as data in Combined Log Format. CLF format:
+ * remote_host remote_login auth_user [date] "request" status content_length referrer user_agent
+ * Sample CLF data: 220.181.108.77 - - [01/Feb/2015:06:59:57 +0000] "GET / HTTP/1.1" 301 295 "-"
  * "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)"
- *
  */
 public class CombinedLogRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord> {
 
@@ -48,8 +46,8 @@ public class CombinedLogRecordFormat extends RecordFormat<ByteBuffer, Structured
     while (index < fields.size()) {
       Schema.Field field = fields.get(index);
       String val = (parts.size() < index || (parts.get(index).equals("-") &&
-                                             field.getSchema().getType() != Schema.Type.STRING))
-                    ? null : parts.get(index);
+          field.getSchema().getType() != Schema.Type.STRING))
+          ? null : parts.get(index);
       builder.convertAndSet(field.getName(), val);
       index++;
     }
@@ -60,15 +58,15 @@ public class CombinedLogRecordFormat extends RecordFormat<ByteBuffer, Structured
   @Override
   protected Schema getDefaultSchema() {
     return Schema.recordOf("record",
-             Schema.Field.of("remote_host", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("remote_login", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("auth_user", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("request_time", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("request", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("status", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-             Schema.Field.of("content_length", Schema.nullableOf(Schema.of(Schema.Type.INT))),
-             Schema.Field.of("referrer", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
-             Schema.Field.of("user_agent", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+        Schema.Field.of("remote_host", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("remote_login", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("auth_user", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("request_time", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("request", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("status", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("content_length", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("referrer", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("user_agent", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
   }
 
 
@@ -119,7 +117,8 @@ public class CombinedLogRecordFormat extends RecordFormat<ByteBuffer, Structured
     }
 
     if (end == -1) {
-      throw new UnexpectedFormatException(String.format("Could not parse data in CLF format. Entry %s", data));
+      throw new UnexpectedFormatException(
+          String.format("Could not parse data in CLF format. Entry %s", data));
     }
 
     parts.add(data.substring(start, end));

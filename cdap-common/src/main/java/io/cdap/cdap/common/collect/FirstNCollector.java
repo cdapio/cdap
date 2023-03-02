@@ -22,8 +22,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * This collector is used for collecting the first N elements, it returns
- * false after N elements have been collected.
+ * This collector is used for collecting the first N elements, it returns false after N elements
+ * have been collected.
  *
  * @param <Element> Type of element.
  */

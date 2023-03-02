@@ -52,6 +52,7 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
 
   /**
    * Constructor with dataset type name.
+   *
    * @param name the type name to be used for this dataset definition.
    */
   public FileSetDefinition(String name) {
@@ -69,26 +70,30 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
     validateProperties(properties.getProperties());
     newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
     return DatasetSpecification
-      .builder(instanceName, getName())
-      .properties(newProperties)
-      .build();
+        .builder(instanceName, getName())
+        .properties(newProperties)
+        .build();
   }
 
   private void validateProperties(Map<String, String> props) {
-    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_USE_EXISTING);
-    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL, FileSetProperties.DATA_POSSESS_EXISTING);
-    checkMutualExclusive(props, FileSetProperties.DATA_USE_EXISTING, FileSetProperties.DATA_POSSESS_EXISTING);
+    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL,
+        FileSetProperties.DATA_USE_EXISTING);
+    checkMutualExclusive(props, FileSetProperties.DATA_EXTERNAL,
+        FileSetProperties.DATA_POSSESS_EXISTING);
+    checkMutualExclusive(props, FileSetProperties.DATA_USE_EXISTING,
+        FileSetProperties.DATA_POSSESS_EXISTING);
   }
 
   private void checkMutualExclusive(Map<String, String> props, String key1, String key2) {
-    Preconditions.checkArgument(!(Boolean.valueOf(props.get(key1)) && Boolean.valueOf(props.get(key2))),
-                                "Only one of '%s' and '%s' may be set to true", key1, key2);
+    Preconditions.checkArgument(
+        !(Boolean.valueOf(props.get(key1)) && Boolean.valueOf(props.get(key2))),
+        "Only one of '%s' and '%s' may be set to true", key1, key2);
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     validateProperties(newProperties.getProperties());
     boolean wasExternal = FileSetProperties.isDataExternal(currentSpec.getProperties());
     boolean isExternal = FileSetProperties.isDataExternal(newProperties.getProperties());
@@ -98,26 +103,29 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
     // validate that we are not "internalizing" an external location
     if (wasExternal && !isExternal) {
       throw new IncompatibleUpdateException(
-        String.format("Cannot convert external file set '%s' to non-external.", instanceName));
+          String.format("Cannot convert external file set '%s' to non-external.", instanceName));
     }
 
     // allow change of path only if the dataset is external
     if (!Objects.equals(oldPath, newPath) && !isExternal) {
       throw new IncompatibleUpdateException(
-        String.format("Cannot change the base path of non-external file set '%s'.", instanceName));
+          String.format("Cannot change the base path of non-external file set '%s'.",
+              instanceName));
     }
     return configure(instanceName, newProperties);
   }
 
   @Override
   public FileSetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new FileSetAdmin(datasetContext, cConf, locationFactory, namespacePathLocator, spec);
   }
 
   @Override
-  public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> arguments,
-                            ClassLoader classLoader) throws IOException {
-    return new FileSetDataset(datasetContext, cConf, spec, locationFactory, namespacePathLocator, arguments);
+  public FileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+      Map<String, String> arguments,
+      ClassLoader classLoader) throws IOException {
+    return new FileSetDataset(datasetContext, cConf, spec, locationFactory, namespacePathLocator,
+        arguments);
   }
 }

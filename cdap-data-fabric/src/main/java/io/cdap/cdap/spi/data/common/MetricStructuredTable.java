@@ -34,14 +34,15 @@ import java.util.Optional;
  * Structured table that takes a delegation and emit metrics on each operation.
  */
 public class MetricStructuredTable implements StructuredTable {
+
   private final StructuredTable structuredTable;
   private final MetricsCollector metricsCollector;
   private final String metricPrefix;
   private final boolean emitTimeMetrics;
 
   public MetricStructuredTable(StructuredTableId tableId,
-                               StructuredTable structuredTable, MetricsCollector metricsCollector,
-                               boolean emitTimeMetrics) {
+      StructuredTable structuredTable, MetricsCollector metricsCollector,
+      boolean emitTimeMetrics) {
     this.structuredTable = structuredTable;
     this.metricsCollector = metricsCollector;
     this.metricPrefix = Constants.Metrics.StructuredTable.METRICS_PREFIX + tableId.getName() + ".";
@@ -85,10 +86,12 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   private interface ReadFunction {
+
     Optional<StructuredRow> read() throws InvalidFieldException, IOException;
   }
 
-  private Optional<StructuredRow> read(ReadFunction readFunc, String metricNamePrefix) throws IOException {
+  private Optional<StructuredRow> read(ReadFunction readFunc, String metricNamePrefix)
+      throws IOException {
     try {
       Optional<StructuredRow> result;
       if (!emitTimeMetrics) {
@@ -108,19 +111,20 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
-  public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
+  public Optional<StructuredRow> read(Collection<Field<?>> keys)
+      throws InvalidFieldException, IOException {
     return read(() -> structuredTable.read(keys), "read.");
   }
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
-                                      Collection<String> columns) throws InvalidFieldException, IOException {
+      Collection<String> columns) throws InvalidFieldException, IOException {
     return read(() -> structuredTable.read(keys, columns), "read.");
   }
 
   @Override
   public Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
-    throws InvalidFieldException, IOException {
+      throws InvalidFieldException, IOException {
     try {
       if (!emitTimeMetrics) {
         return structuredTable.multiRead(multiKeys);
@@ -138,10 +142,12 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   private interface ScanFunction {
+
     CloseableIterator<StructuredRow> scan() throws InvalidFieldException, IOException;
   }
 
-  private CloseableIterator<StructuredRow> scan(ScanFunction scanFunc, String metricNamePrefix) throws IOException {
+  private CloseableIterator<StructuredRow> scan(ScanFunction scanFunc, String metricNamePrefix)
+      throws IOException {
     try {
       CloseableIterator<StructuredRow> result;
       if (!emitTimeMetrics) {
@@ -162,46 +168,53 @@ public class MetricStructuredTable implements StructuredTable {
 
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+      throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(keyRange, limit, sortOrder), "scan.");
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit)
+      throws InvalidFieldException, IOException {
     return scan(keyRange, limit, SortOrder.ASC);
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException {
+  public CloseableIterator<StructuredRow> scan(Field<?> index)
+      throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(index), "index.scan.");
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
-    throws InvalidFieldException, IOException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes)
+      throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(keyRange, limit, filterIndexes), "index.range.scan.");
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
-    return scan(() -> structuredTable.scan(keyRange, limit, orderByField, sortOrder), "sort.range.scan.");
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField,
+      SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
+    return scan(() -> structuredTable.scan(keyRange, limit, orderByField, sortOrder),
+        "sort.range.scan.");
   }
 
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
-                                               Collection<Field<?>> filterIndexes, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+      Collection<Field<?>> filterIndexes, SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
     return scan(() -> structuredTable.scan(keyRange, limit, filterIndexes, sortOrder),
-                "sort.index.range.scan.");
+        "sort.index.range.scan.");
   }
 
   private interface MultiScanFunction {
+
     CloseableIterator<StructuredRow> multiScan() throws InvalidFieldException, IOException;
   }
 
-  private CloseableIterator<StructuredRow> multiScan(MultiScanFunction multiScanFunction, String metricNamePrefix)
-    throws IOException {
+  private CloseableIterator<StructuredRow> multiScan(MultiScanFunction multiScanFunction,
+      String metricNamePrefix)
+      throws IOException {
     try {
       CloseableIterator<StructuredRow> result;
       if (!emitTimeMetrics) {
@@ -222,13 +235,13 @@ public class MetricStructuredTable implements StructuredTable {
 
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
-                                                    int limit) throws InvalidFieldException, IOException {
+      int limit) throws InvalidFieldException, IOException {
     return multiScan(() -> structuredTable.multiScan(keyRanges, limit), "multi.scan.");
   }
 
   @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
-    throws InvalidFieldException, IOException, IllegalArgumentException {
+      throws InvalidFieldException, IOException, IllegalArgumentException {
     try {
       boolean result;
       if (!emitTimeMetrics) {
@@ -249,7 +262,7 @@ public class MetricStructuredTable implements StructuredTable {
 
   @Override
   public void increment(Collection<Field<?>> keys, String column,
-                        long amount) throws InvalidFieldException, IOException, IllegalArgumentException {
+      long amount) throws InvalidFieldException, IOException, IllegalArgumentException {
     try {
       if (!emitTimeMetrics) {
         structuredTable.increment(keys, column, amount);
@@ -303,7 +316,8 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
-  public void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException, IOException {
+  public void updateAll(Range keyRange, Collection<Field<?>> fields)
+      throws InvalidFieldException, IOException {
     try {
       if (!emitTimeMetrics) {
         structuredTable.updateAll(keyRange, fields);

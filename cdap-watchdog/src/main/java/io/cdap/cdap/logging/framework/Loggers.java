@@ -26,9 +26,9 @@ import ch.qos.logback.classic.util.LoggerNameUtil;
 public final class Loggers {
 
   /**
-   * Returns the effective {@link Logger} for the given logger name. An
-   * effective {@link Logger} is the most specific {@link Logger} in the logger
-   * hierarchy based on the given logger name, which is already defined in the given {@link LoggerContext}.
+   * Returns the effective {@link Logger} for the given logger name. An effective {@link Logger} is
+   * the most specific {@link Logger} in the logger hierarchy based on the given logger name, which
+   * is already defined in the given {@link LoggerContext}.
    */
   public static Logger getEffectiveLogger(LoggerContext context, String loggerName) {
     // If there is such logger, then just return the effective level

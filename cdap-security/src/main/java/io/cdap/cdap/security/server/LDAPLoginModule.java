@@ -36,26 +36,31 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A custom {@link LoginModule} that does LDAP authentication. It allows the disabling of SSL
- * certificate verification for connections between the {@link ExternalAuthenticationServer} and an LDAP instance.
+ * certificate verification for connections between the {@link ExternalAuthenticationServer} and an
+ * LDAP instance.
  */
 public class LDAPLoginModule extends LdapLoginModule {
+
   private static final Logger LOG = LoggerFactory.getLogger(LDAPLoginModule.class);
 
   /**
    * A {@link SocketFactory} that trusts all SSL certificates.
    */
   public static class TrustAllSSLSocketFactory extends SocketFactory {
+
     private final SocketFactory trustAllFactory;
 
     private TrustAllSSLSocketFactory() {
-      TrustManager[] trustManagers = new TrustManager[] { new X509TrustManager() {
+      TrustManager[] trustManagers = new TrustManager[]{new X509TrustManager() {
         @Override
-        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
+            throws CertificateException {
           // no-op
         }
 
         @Override
-        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
+            throws CertificateException {
           // no-op
         }
 
@@ -86,7 +91,7 @@ public class LDAPLoginModule extends LdapLoginModule {
      * @see SocketFactory#createSocket(String, int)
      */
     @Override
-    public Socket createSocket(String host, int port) throws IOException  {
+    public Socket createSocket(String host, int port) throws IOException {
       return trustAllFactory.createSocket(host, port);
     }
 
@@ -102,7 +107,8 @@ public class LDAPLoginModule extends LdapLoginModule {
      * @see SocketFactory#createSocket(String, int, InetAddress, int)
      */
     @Override
-    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
+    public Socket createSocket(String host, int port, InetAddress localHost, int localPort)
+        throws IOException {
       return trustAllFactory.createSocket(host, port, localHost, localPort);
     }
 
@@ -111,7 +117,7 @@ public class LDAPLoginModule extends LdapLoginModule {
      */
     @Override
     public Socket createSocket(InetAddress address, int port,
-                               InetAddress localAddress, int localPort) throws IOException {
+        InetAddress localAddress, int localPort) throws IOException {
       return trustAllFactory.createSocket(address, port, localAddress, localPort);
     }
   }

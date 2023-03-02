@@ -28,7 +28,9 @@ import java.util.Objects;
 /**
  * Identifies a versionless program.
  */
-public class ProgramReference extends NamespacedEntityId implements ParentedId<ApplicationReference> {
+public class ProgramReference extends NamespacedEntityId implements
+    ParentedId<ApplicationReference> {
+
   private final String application;
   private final ProgramType type;
   private final String program;
@@ -74,16 +76,16 @@ public class ProgramReference extends NamespacedEntityId implements ParentedId<A
   @Override
   public Iterable<String> toIdParts() {
     return Collections.unmodifiableList(
-      Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program));
+        Arrays.asList(namespace, application, type.getPrettyName().toLowerCase(), program));
   }
 
   @SuppressWarnings("unused")
   public static ProgramReference fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ProgramReference(
-      next(iterator, "namespace"), next(iterator, "application"),
-      ProgramType.valueOfPrettyName(next(iterator, "type")),
-      nextAndEnd(iterator, "program"));
+        next(iterator, "namespace"), next(iterator, "application"),
+        ProgramType.valueOfPrettyName(next(iterator, "type")),
+        nextAndEnd(iterator, "program"));
   }
 
   @Override
@@ -94,10 +96,10 @@ public class ProgramReference extends NamespacedEntityId implements ParentedId<A
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .append(MetadataEntity.APPLICATION, application)
-      .append(MetadataEntity.TYPE, type.getPrettyName())
-      .appendAsType(MetadataEntity.PROGRAM, program)
-      .build();
+        .append(MetadataEntity.APPLICATION, application)
+        .append(MetadataEntity.TYPE, type.getPrettyName())
+        .appendAsType(MetadataEntity.PROGRAM, program)
+        .build();
   }
 
   @Override
@@ -112,15 +114,16 @@ public class ProgramReference extends NamespacedEntityId implements ParentedId<A
     }
     ProgramReference programRef = (ProgramReference) o;
     return Objects.equals(getParent(), programRef.getParent()) &&
-      Objects.equals(type, programRef.type) &&
-      Objects.equals(program, programRef.program);
+        Objects.equals(type, programRef.type) &&
+        Objects.equals(program, programRef.program);
   }
 
   @Override
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(), type, program);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), getNamespace(), getApplication(),
+          type, program);
     }
     return hashCode;
   }

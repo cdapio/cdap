@@ -41,7 +41,7 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
   private final TokenSecureStoreRenewer secureStoreRenewer;
 
   ImpersonatedTwillPreparer(Configuration hConf, TwillPreparer delegate, Impersonator impersonator,
-                            TokenSecureStoreRenewer secureStoreRenewer, ProgramId programId) {
+      TokenSecureStoreRenewer secureStoreRenewer, ProgramId programId) {
     this.hConf = hConf;
     this.delegate = delegate;
     this.impersonator = impersonator;
@@ -63,7 +63,7 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
           addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
         }
         return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit),
-                                               impersonator, programId);
+            impersonator, programId);
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -71,8 +71,8 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
   }
 
   /**
-   * Determines if HBase security is enabled. This method uses reflection to invoke HBase case so that
-   * we can ignore if HBase is not present in the current environment.
+   * Determines if HBase security is enabled. This method uses reflection to invoke HBase case so
+   * that we can ignore if HBase is not present in the current environment.
    */
   private boolean isHBaseSecurityEnabled() {
     try {

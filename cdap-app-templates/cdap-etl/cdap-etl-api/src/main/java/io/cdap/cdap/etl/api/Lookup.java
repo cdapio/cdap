@@ -25,6 +25,7 @@ import java.util.Set;
  * @param <T> the type of object that will be returned for a lookup
  */
 public interface Lookup<T> {
+
   /**
    * Performs a single lookup.
    *

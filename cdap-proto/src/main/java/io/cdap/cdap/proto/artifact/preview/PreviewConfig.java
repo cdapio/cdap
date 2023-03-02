@@ -26,17 +26,20 @@ import javax.annotation.Nullable;
  * Preview configuration in the {@link AppRequest}.
  */
 public class PreviewConfig {
+
   private final String programName;
   private final ProgramType programType;
   private final Map<String, String> runtimeArgs;
   // The timeout unit is minutes.
   private final Integer timeout;
 
-  public PreviewConfig(String programName, ProgramType programType, @Nullable Map<String, String> runtimeArgs,
-                       @Nullable Integer timeout) {
+  public PreviewConfig(String programName, ProgramType programType,
+      @Nullable Map<String, String> runtimeArgs,
+      @Nullable Integer timeout) {
     this.programName = programName;
     this.programType = programType;
-    this.runtimeArgs = runtimeArgs == null ? new HashMap<String, String>() : new HashMap<>(runtimeArgs);
+    this.runtimeArgs =
+        runtimeArgs == null ? new HashMap<String, String>() : new HashMap<>(runtimeArgs);
     this.timeout = timeout;
   }
 

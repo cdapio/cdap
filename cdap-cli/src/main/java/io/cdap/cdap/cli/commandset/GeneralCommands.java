@@ -38,14 +38,14 @@ public class GeneralCommands extends CommandSet<Command> implements Categorized 
   @Inject
   public GeneralCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(VersionCommand.class))
-        .add(injector.getInstance(ExitCommand.class))
-        .add(injector.getInstance(QuitCommand.class))
-        .add(injector.getInstance(ConnectCommand.class))
-        .add(injector.getInstance(ConnectLinkCommand.class))
-        .add(injector.getInstance(RenderAsCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(VersionCommand.class))
+            .add(injector.getInstance(ExitCommand.class))
+            .add(injector.getInstance(QuitCommand.class))
+            .add(injector.getInstance(ConnectCommand.class))
+            .add(injector.getInstance(ConnectLinkCommand.class))
+            .add(injector.getInstance(RenderAsCommand.class))
+            .build());
   }
 
   @Override

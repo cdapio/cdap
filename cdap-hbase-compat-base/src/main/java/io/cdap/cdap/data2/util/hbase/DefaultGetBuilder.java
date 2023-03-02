@@ -21,7 +21,8 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.Filter;
 
 /**
- * Default implementation of {@link GetBuilder}. Specific HBase compat module can extends and override methods.
+ * Default implementation of {@link GetBuilder}. Specific HBase compat module can extends and
+ * override methods.
  */
 class DefaultGetBuilder implements GetBuilder {
 

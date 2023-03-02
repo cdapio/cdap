@@ -20,6 +20,7 @@ package io.cdap.cdap.master.spi.twill;
  * Represents information about a file-based secret used by a twill runnable.
  */
 public class SecretDisk {
+
   private final String name;
   private final String path;
 
@@ -30,6 +31,7 @@ public class SecretDisk {
 
   /**
    * Returns the secret name.
+   *
    * @return the secret name
    */
   public String getName() {
@@ -38,6 +40,7 @@ public class SecretDisk {
 
   /**
    * Returns the secret filepath directory.
+   *
    * @return the secret filepath directory
    */
   public String getPath() {

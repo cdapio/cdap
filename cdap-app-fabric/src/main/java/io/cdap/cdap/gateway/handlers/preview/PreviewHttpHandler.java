@@ -72,11 +72,13 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class PreviewHttpHandler extends AbstractLogHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
-    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory(true)).create();
-  private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
+      .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+      .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory(true)).create();
+  private static final Type STRING_LIST_MAP_TYPE = new TypeToken<Map<String, List<String>>>() {
+  }.getType();
 
   private final PreviewManager previewManager;
 
@@ -89,11 +91,13 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   @POST
   @Path("/previews")
   public void start(FullHttpRequest request, HttpResponder responder,
-                    @PathParam("namespace-id") String namespaceId) throws Exception {
+      @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
+        StandardCharsets.UTF_8)) {
       AppRequest<?> appRequest = GSON.fromJson(reader, AppRequest.class);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.start(namespace, appRequest)));
+      responder.sendString(HttpResponseStatus.OK,
+          GSON.toJson(previewManager.start(namespace, appRequest)));
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     } catch (IllegalArgumentException e) {
@@ -103,8 +107,9 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
   @POST
   @Path("/previews/{preview-id}/stop")
-  public void stop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                   @PathParam("preview-id") String previewId) throws Exception {
+  public void stop(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
     previewManager.stopPreview(application);
@@ -113,8 +118,9 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
   @GET
   @Path("/previews/{preview-id}/status")
-  public void getStatus(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                        @PathParam("preview-id") String previewId)  throws Exception {
+  public void getStatus(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getStatus(application)));
@@ -122,30 +128,33 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
   @GET
   @Path("/previews/{preview-id}/tracers")
-  public void getTracers(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                         @PathParam("preview-id") String previewId) {
+  public void getTracers(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId) {
     // TODO Implement API in PreviewStore to get all the tracers.
   }
 
   @GET
   @Path("/previews/{preview-id}/tracers/{tracer-id}")
   public void getData(HttpRequest request, HttpResponder responder,
-                      @PathParam("namespace-id") String namespaceId,
-                      @PathParam("preview-id") String previewId,
-                      @PathParam("tracer-id") String tracerId) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId,
+      @PathParam("tracer-id") String tracerId) throws Exception {
     ApplicationId previewAppId = validateAndGetAppId(namespaceId, previewId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getData(previewAppId, tracerId)));
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(previewManager.getData(previewAppId, tracerId)));
   }
 
   @POST
   @Path("/previews/{preview-id}/tracers")
   public void getTracersData(FullHttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("preview-id") String previewId) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId) throws Exception {
     ApplicationId application = validateAndGetAppId(namespaceId, previewId);
 
     Map<String, List<String>> previewRequest;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
+        StandardCharsets.UTF_8)) {
       previewRequest = GSON.fromJson(reader, STRING_LIST_MAP_TYPE);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
@@ -169,60 +178,61 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   @GET
   @Path("/previews/{preview-id}/logs")
   public void getPreviewLogs(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId, @PathParam("preview-id") String previewId,
-                             @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                             @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
-                             @QueryParam("escape") @DefaultValue("true") boolean escape,
-                             @QueryParam("filter") @DefaultValue("") String filterStr,
-                             @QueryParam("format") @DefaultValue("text") String format,
-                             @QueryParam("suppress") List<String> suppress) throws Exception {
+      @PathParam("namespace-id") String namespaceId, @PathParam("preview-id") String previewId,
+      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     sendLogs(responder, namespaceId, previewId,
-             info -> doGetLogs(info.getLogReader(), responder, info.getLoggingContext(),
-                               fromTimeSecsParam, toTimeSecsParam, escape, filterStr,
-                               info.getRunRecord(), format, suppress));
+        info -> doGetLogs(info.getLogReader(), responder, info.getLoggingContext(),
+            fromTimeSecsParam, toTimeSecsParam, escape, filterStr,
+            info.getRunRecord(), format, suppress));
   }
 
   @GET
   @Path("/previews/{preview-id}/logs/prev")
   public void getPreviewLogsPrev(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("preview-id") String previewId,
-                                 @QueryParam("max") @DefaultValue("50") int maxEvents,
-                                 @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                                 @QueryParam("escape") @DefaultValue("true") boolean escape,
-                                 @QueryParam("filter") @DefaultValue("") String filterStr,
-                                 @QueryParam("format") @DefaultValue("text") String format,
-                                 @QueryParam("suppress") List<String> suppress) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     sendLogs(responder, namespaceId, previewId,
-             info -> doPrev(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
-                            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
+        info -> doPrev(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
+            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
 
   @GET
   @Path("/previews/{preview-id}/logs/next")
   public void getPreviewLogsNext(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("preview-id") String previewId,
-                                 @QueryParam("max") @DefaultValue("50") int maxEvents,
-                                 @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                                 @QueryParam("escape") @DefaultValue("true") boolean escape,
-                                 @QueryParam("filter") @DefaultValue("") String filterStr,
-                                 @QueryParam("format") @DefaultValue("text") String format,
-                                 @QueryParam("suppress") List<String> suppress) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     sendLogs(responder, namespaceId, previewId,
-             info -> doNext(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
-                            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
+        info -> doNext(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
+            fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
 
   private void sendLogs(HttpResponder responder, String namespaceId, String previewId,
-                        Consumer<LogReaderInfo> logsResponder) throws Exception {
+      Consumer<LogReaderInfo> logsResponder) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, previewId);
     ProgramRunId programRunId = previewManager.getRunId(applicationId);
     if (programRunId == null) {
       responder.sendStatus(HttpResponseStatus.OK);
       return;
     }
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+        null);
     LogReader logReader = previewManager.getLogReader();
     logsResponder.accept(new LogReaderInfo(logReader, loggingContext, null));
   }
@@ -230,10 +240,10 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   @POST
   @Path("previews/{preview-id}/metrics/search")
   public void search(HttpRequest request, HttpResponder responder,
-                     @PathParam("namespace-id") String namespaceId,
-                     @PathParam("preview-id") String previewId,
-                     @QueryParam("target") String target,
-                     @QueryParam("tag") List<String> tags) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId,
+      @QueryParam("target") String target,
+      @QueryParam("tag") List<String> tags) throws Exception {
     validateAndGetAppId(namespaceId, previewId);
 
     MetricsQueryHelper helper = getMetricsQueryHelper();
@@ -251,7 +261,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
           responder.sendJson(HttpResponseStatus.OK, GSON.toJson(helper.searchMetric(tags)));
           break;
         default:
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Unknown target param value: " + target);
+          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
+              "Unknown target param value: " + target);
           break;
       }
     } catch (IllegalArgumentException e) {
@@ -259,44 +270,49 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+          "Internal error while querying for metrics");
     }
   }
 
   @POST
   @Path("previews/{preview-id}/metrics/query")
   public void query(FullHttpRequest request, HttpResponder responder,
-                    @PathParam("namespace-id") String namespaceId,
-                    @PathParam("preview-id") String previewId,
-                    @QueryParam("metric") List<String> metrics,
-                    @QueryParam("groupBy") List<String> groupBy,
-                    @QueryParam("tag") List<String> tags) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("preview-id") String previewId,
+      @QueryParam("metric") List<String> metrics,
+      @QueryParam("groupBy") List<String> groupBy,
+      @QueryParam("tag") List<String> tags) throws Exception {
     // Check if valid application id
     validateAndGetAppId(namespaceId, previewId);
 
     MetricsQueryHelper helper = getMetricsQueryHelper();
     try {
-      Map<String, List<String>> queryParameters = new QueryStringDecoder(request.uri()).parameters();
+      Map<String, List<String>> queryParameters = new QueryStringDecoder(
+          request.uri()).parameters();
       if (queryParameters.isEmpty()) {
         if (request.content().isReadable()) {
           Map<String, MetricsQueryHelper.QueryRequestFormat> queries =
-            GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                          new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() { }.getType());
+              GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+                  new TypeToken<Map<String, MetricsQueryHelper.QueryRequestFormat>>() {
+                  }.getType());
           overrideQueries(queries, namespaceId, previewId);
-          responder.sendJson(HttpResponseStatus.OK, GSON.toJson(helper.executeBatchQueries(queries)));
+          responder.sendJson(HttpResponseStatus.OK,
+              GSON.toJson(helper.executeBatchQueries(queries)));
           return;
         }
         responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Batch request with empty content");
       }
       tags = overrideTags(tags, namespaceId, previewId);
       responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(helper.executeTagQuery(tags, metrics, groupBy, queryParameters)));
+          GSON.toJson(helper.executeTagQuery(tags, metrics, groupBy, queryParameters)));
     } catch (IllegalArgumentException e) {
       LOG.warn("Invalid request", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
       LOG.error("Exception querying metrics ", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+          "Internal error while querying for metrics");
     }
   }
 
@@ -326,16 +342,17 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
     return newTags;
   }
 
-  private void overrideQueries(Map<String, MetricsQueryHelper.QueryRequestFormat> query, String namespaceId,
-                               String previewId) {
+  private void overrideQueries(Map<String, MetricsQueryHelper.QueryRequestFormat> query,
+      String namespaceId,
+      String previewId) {
     for (MetricsQueryHelper.QueryRequestFormat format : query.values()) {
       Map<String, String> tags = format.getTags();
       if (!tags.containsKey(MetricsQueryHelper.NAMESPACE_STRING) ||
-        !tags.get(MetricsQueryHelper.NAMESPACE_STRING).equals(namespaceId)) {
+          !tags.get(MetricsQueryHelper.NAMESPACE_STRING).equals(namespaceId)) {
         tags.put(MetricsQueryHelper.NAMESPACE_STRING, namespaceId);
       }
       if (!tags.containsKey(MetricsQueryHelper.APP_STRING) ||
-        !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
+          !tags.get(MetricsQueryHelper.APP_STRING).equals(previewId)) {
         tags.put(MetricsQueryHelper.APP_STRING, previewId);
       }
     }
@@ -344,7 +361,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   // Create the application ID for the supplied namespace and preview if its valid.
   // Validity is verified by checking its status in the store.
   private ApplicationId validateAndGetAppId(String namespace, String preview)
-    throws NotFoundException, AccessException {
+      throws NotFoundException, AccessException {
     ApplicationId applicationId = new ApplicationId(namespace, preview);
     previewManager.getStatus(applicationId);
     return applicationId;
@@ -359,7 +376,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
     private final LoggingContext loggingContext;
     private final RunRecordDetail runRecord;
 
-    private LogReaderInfo(LogReader logReader, LoggingContext loggingContext, RunRecordDetail runRecord) {
+    private LogReaderInfo(LogReader logReader, LoggingContext loggingContext,
+        RunRecordDetail runRecord) {
       this.logReader = logReader;
       this.loggingContext = loggingContext;
       this.runRecord = runRecord;

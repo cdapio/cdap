@@ -27,24 +27,26 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * RemoteWorkerPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used exclusively in tasks
- * running in the {@link TaskWorkerTwillRunnable}. This implementation uses the {@link ArtifactLocalizerClient} to
- * download and cache the given artifact on the local file system.
+ * RemoteWorkerPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used
+ * exclusively in tasks running in the {@link TaskWorkerTwillRunnable}. This implementation uses the
+ * {@link ArtifactLocalizerClient} to download and cache the given artifact on the local file
+ * system.
  */
 public class RemoteWorkerPluginFinder extends RemotePluginFinder {
+
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   RemoteWorkerPluginFinder(LocationFactory locationFactory,
-                           RemoteClientFactory remoteClientFactory,
-                           ArtifactLocalizerClient artifactLocalizerClient) {
+      RemoteClientFactory remoteClientFactory,
+      ArtifactLocalizerClient artifactLocalizerClient) {
     super(locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   @Override
   protected Location getArtifactLocation(ArtifactId artifactId)
-    throws IOException, ArtifactNotFoundException, UnauthorizedException {
+      throws IOException, ArtifactNotFoundException, UnauthorizedException {
     return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
   }
 }

@@ -43,11 +43,11 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * This class is responsible for preferences operations.
- * It does not wrap its operations in a transaction. It is up to the caller to decide what operations belong
- * in a transaction.
+ * This class is responsible for preferences operations. It does not wrap its operations in a
+ * transaction. It is up to the caller to decide what operations belong in a transaction.
  */
 public class PreferencesTable {
+
   private static final String EMPTY_NAMESPACE = "";
   private static final String INSTANCE_PREFERENCE = "instance_preference";
   private static final String NAMESPACE_PREFERENCE = "namespace_preference";
@@ -55,7 +55,8 @@ public class PreferencesTable {
   private static final String PROGRAM_PREFERENCE = "program_preference";
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
   private final StructuredTable table;
 
   public PreferencesTable(StructuredTableContext context) {
@@ -83,26 +84,30 @@ public class PreferencesTable {
         return get(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
   }
 
   /**
-   * Verify that the preferences for the entity id were written with a greater or equal sequence id.
+   * Verify that the preferences for the entity id were written with a greater or equal sequence
+   * id.
    *
    * @param entityId the entity id to verify
-   * @param afterId  the sequence id to check
-   * @throws ConflictException if the latest version of the preferences is older than the given sequence id
+   * @param afterId the sequence id to check
+   * @throws ConflictException if the latest version of the preferences is older than the given
+   *     sequence id
    */
   public void ensureSequence(EntityId entityId, long afterId)
-    throws IOException, ConflictException {
+      throws IOException, ConflictException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         checkSeqId(EMPTY_NAMESPACE, INSTANCE_PREFERENCE, entityId.getEntityName(), afterId);
         return;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
-        checkSeqId(namespaceId.getNamespace(), NAMESPACE_PREFERENCE, namespaceId.getNamespace(), afterId);
+        checkSeqId(namespaceId.getNamespace(), NAMESPACE_PREFERENCE, namespaceId.getNamespace(),
+            afterId);
         return;
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
@@ -110,18 +115,20 @@ public class PreferencesTable {
         return;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        checkSeqId(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId), afterId);
+        checkSeqId(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId),
+            afterId);
         return;
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
   }
 
   /**
-   * Get the resolved preferences for the entity id, the preferences are resolved from
-   * instance -> namespace -> application -> program level
-   * (i.e. preferences at child level e.g. program take precedence over those at parent level e.g. application)
+   * Get the resolved preferences for the entity id, the preferences are resolved from instance ->
+   * namespace -> application -> program level (i.e. preferences at child level e.g. program take
+   * precedence over those at parent level e.g. application)
    *
    * @param entityId the entity id to get the preferences from
    * @return preferences detail
@@ -142,8 +149,9 @@ public class PreferencesTable {
     }
     PreferencesDetail preferences = getPreferences(entityId);
 
-    PreferencesDetail resolved = new PreferencesDetail(preferences.getProperties(), preferences.getSeqId(),
-                                                       true);
+    PreferencesDetail resolved = new PreferencesDetail(preferences.getProperties(),
+        preferences.getSeqId(),
+        true);
     if (parentPreferences != null) {
       resolved = PreferencesDetail.resolve(parentPreferences, resolved);
     }
@@ -151,11 +159,11 @@ public class PreferencesTable {
   }
 
   /**
-   * Get a single resolved preference for the entity id, the preferences are resolved from instance -> namespace -> app
-   * -> program level.
+   * Get a single resolved preference for the entity id, the preferences are resolved from instance
+   * -> namespace -> app -> program level.
    *
    * @param entityId the entity id to get the preferences from
-   * @param name     the name of the preference to resolve
+   * @param name the name of the preference to resolve
    * @return the resolved value of the preference, or null of the named preference is not there
    */
   @Nullable
@@ -179,29 +187,33 @@ public class PreferencesTable {
    * Set the preferences for the entity id.
    *
    * @param entityId the entity id to set the preferences from
-   * @param propMap  the map which contains the preferences
+   * @param propMap the map which contains the preferences
    * @return the sequence id of the operation
    */
   public long setPreferences(EntityId entityId, Map<String, String> propMap) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         return upsert(
-          EMPTY_NAMESPACE, INSTANCE_PREFERENCE, new Config(entityId.getEntityName(), propMap));
+            EMPTY_NAMESPACE, INSTANCE_PREFERENCE, new Config(entityId.getEntityName(), propMap));
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
         return upsert(
-          namespaceId.getNamespace(), NAMESPACE_PREFERENCE, new Config(namespaceId.getNamespace(), propMap));
+            namespaceId.getNamespace(), NAMESPACE_PREFERENCE,
+            new Config(namespaceId.getNamespace(), propMap));
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         return upsert(
-          appId.getNamespace(), APPLICATION_PREFERENCE, new Config(appId.getApplication(), propMap));
+            appId.getNamespace(), APPLICATION_PREFERENCE,
+            new Config(appId.getApplication(), propMap));
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         return upsert(
-          programId.getNamespace(), PROGRAM_PREFERENCE, new Config(getProgramName(programId), propMap));
+            programId.getNamespace(), PROGRAM_PREFERENCE,
+            new Config(getProgramName(programId), propMap));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
   }
 
@@ -226,7 +238,8 @@ public class PreferencesTable {
         return delete(programId.getNamespace(), PROGRAM_PREFERENCE, getProgramName(programId));
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
   }
 
@@ -235,7 +248,7 @@ public class PreferencesTable {
    */
   private String getProgramName(ProgramId programId) {
     return String.join(",", programId.getApplication(), programId.getType().getCategoryName(),
-                       programId.getProgram());
+        programId.getProgram());
   }
 
   private long upsert(String namespace, String type, Config config) throws IOException {
@@ -255,7 +268,8 @@ public class PreferencesTable {
   private long delete(String namespace, String type, String name) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
-    if (!row.isPresent() || row.get().getString(StoreDefinition.PreferencesStore.PROPERTIES_FIELD) == null) {
+    if (!row.isPresent()
+        || row.get().getString(StoreDefinition.PreferencesStore.PROPERTIES_FIELD) == null) {
       return -1;
     }
     Long currentSeq = row.get().getLong(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD);
@@ -265,7 +279,7 @@ public class PreferencesTable {
   }
 
   private void checkSeqId(String namespace, String type, String name, long seq)
-    throws IOException, ConflictException {
+      throws IOException, ConflictException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
     Long currentSeq = null;
@@ -275,8 +289,9 @@ public class PreferencesTable {
         return;
       }
     }
-    throw new ConflictException(String.format("Expected sequence id >= %d for %s %s in namespace %s, but found %s",
-                                              seq, type, name, namespace, currentSeq));
+    throw new ConflictException(
+        String.format("Expected sequence id >= %d for %s %s in namespace %s, but found %s",
+            seq, type, name, namespace, currentSeq));
   }
 
   private PreferencesDetail get(String namespace, String type, String name) throws IOException {
@@ -297,7 +312,7 @@ public class PreferencesTable {
   private List<Field<?>> toFields(String namespace, String type, Config config, long seqId) {
     List<Field<?>> fields = getPrimaryKey(namespace, type, config.getName());
     fields.add(Fields.stringField(StoreDefinition.PreferencesStore.PROPERTIES_FIELD,
-                                  GSON.toJson(config.getProperties())));
+        GSON.toJson(config.getProperties())));
     fields.add(Fields.longField(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD, seqId));
     return fields;
   }

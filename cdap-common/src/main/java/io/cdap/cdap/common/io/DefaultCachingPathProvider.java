@@ -37,9 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link CachingPathProvider} that generates local path based on location name and last modified time, which assumes
- * that a location won't change more frequent that the smallest file time granularity that the FS can support.
- * It also manages unused cache files based on last access time.
+ * A {@link CachingPathProvider} that generates local path based on location name and last modified
+ * time, which assumes that a location won't change more frequent that the smallest file time
+ * granularity that the FS can support. It also manages unused cache files based on last access
+ * time.
  */
 public class DefaultCachingPathProvider implements CachingPathProvider {
 
@@ -51,33 +52,33 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
   public DefaultCachingPathProvider(Path cacheDir, long cacheExpiry, TimeUnit cacheExpiryUnit) {
     this.cacheDir = cacheDir;
     this.cache = CacheBuilder.newBuilder()
-      .expireAfterAccess(cacheExpiry, cacheExpiryUnit)
-      .removalListener((RemovalListener<CacheKey, Path>) notification -> {
-        Path path = notification.getValue();
-        if (path == null) {
-          return;
-        }
-        try {
-          Files.deleteIfExists(path);
-          LOG.trace("Removed cache file {}", path);
-        } catch (IOException e) {
-          LOG.warn("Failed to delete cache file {}. An unused file may left behind.", path, e);
-        }
-        // Try to delete the parent directory. We ignore the failure as it can happen if the directory is not empty.
-        try {
-          if (Files.deleteIfExists(path.getParent())) {
-            LOG.trace("Removed cache directory {}", path.getParent());
+        .expireAfterAccess(cacheExpiry, cacheExpiryUnit)
+        .removalListener((RemovalListener<CacheKey, Path>) notification -> {
+          Path path = notification.getValue();
+          if (path == null) {
+            return;
           }
-        } catch (IOException e) {
-          LOG.trace("Failed to delete directory {}", path.getParent(), e);
-        }
-      })
-      .build(new CacheLoader<CacheKey, Path>() {
-        @Override
-        public Path load(CacheKey key) {
-          return getCachePath(key.getFileName(), key.getLastModified());
-        }
-      });
+          try {
+            Files.deleteIfExists(path);
+            LOG.trace("Removed cache file {}", path);
+          } catch (IOException e) {
+            LOG.warn("Failed to delete cache file {}. An unused file may left behind.", path, e);
+          }
+          // Try to delete the parent directory. We ignore the failure as it can happen if the directory is not empty.
+          try {
+            if (Files.deleteIfExists(path.getParent())) {
+              LOG.trace("Removed cache directory {}", path.getParent());
+            }
+          } catch (IOException e) {
+            LOG.trace("Failed to delete directory {}", path.getParent(), e);
+          }
+        })
+        .build(new CacheLoader<CacheKey, Path>() {
+          @Override
+          public Path load(CacheKey key) {
+            return getCachePath(key.getFileName(), key.getLastModified());
+          }
+        });
 
     populateCache(cacheDir, cache);
   }
@@ -103,7 +104,8 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
   }
 
   String getCacheName(Location location) {
-    return Hashing.md5().hashString(location.toURI().getPath()).toString() + "-" + location.getName();
+    return Hashing.md5().hashString(location.toURI().getPath()).toString() + "-"
+        + location.getName();
   }
 
   @VisibleForTesting
@@ -143,6 +145,7 @@ public class DefaultCachingPathProvider implements CachingPathProvider {
    * Cache key that contains the location file name and the last modified time.
    */
   private static final class CacheKey {
+
     private final String fileName;
     private final long lastModified;
 

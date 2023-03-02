@@ -20,9 +20,9 @@ package io.cdap.cdap.error.api;
 import java.util.Set;
 
 /**
- * Interface that an exception that wants to add error tags needs to implement. There are two ways this can be used.
- * 1) An exception may directly implement it.
- * 2) An exception may be wrapped by another exception that implements it
+ * Interface that an exception that wants to add error tags needs to implement. There are two ways
+ * this can be used. 1) An exception may directly implement it. 2) An exception may be wrapped by
+ * another exception that implements it
  */
 public interface ErrorTagProvider {
 
@@ -44,7 +44,9 @@ public interface ErrorTagProvider {
       return displayName;
     }
 
-  };
+  }
+
+  ;
 
   Set<ErrorTag> getErrorTags();
 

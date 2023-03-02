@@ -43,7 +43,7 @@ public class AddMetadataTagsCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     MetadataEntity metadataEntity =
-      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
+        MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     Set<String> tags = ImmutableSet.copyOf(parseList(arguments.get("tags")));
     client.addTags(metadataEntity, tags);
     output.println("Successfully added metadata tags");

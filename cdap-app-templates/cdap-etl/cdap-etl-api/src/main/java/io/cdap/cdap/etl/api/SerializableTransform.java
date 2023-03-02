@@ -20,8 +20,11 @@ import java.io.Serializable;
 
 /**
  * Used to mark a transform as serializable.
+ *
  * @param <IN> Input class
  * @param <OUT> Output class
  */
-public abstract class SerializableTransform<IN, OUT> extends Transform<IN, OUT> implements Serializable {
+public abstract class SerializableTransform<IN, OUT> extends Transform<IN, OUT> implements
+    Serializable {
+
 }

@@ -38,7 +38,8 @@ public class LogMessage implements ILoggingEvent {
   public LogMessage(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     this.loggingEvent = loggingEvent;
     this.loggingContext = loggingContext;
-    this.mdc = new LoggingContextMDC(loggingContext.getSystemTagsAsString(), loggingEvent.getMDCPropertyMap());
+    this.mdc = new LoggingContextMDC(loggingContext.getSystemTagsAsString(),
+        loggingEvent.getMDCPropertyMap());
   }
 
   public LoggingContext getLoggingContext() {
@@ -130,8 +131,8 @@ public class LogMessage implements ILoggingEvent {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("loggingEvent", loggingEvent)
-      .add("loggingContext", loggingContext)
-      .toString();
+        .add("loggingEvent", loggingEvent)
+        .add("loggingContext", loggingContext)
+        .toString();
   }
 }

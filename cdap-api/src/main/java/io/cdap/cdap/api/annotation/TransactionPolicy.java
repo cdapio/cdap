@@ -25,11 +25,11 @@ import java.lang.annotation.Target;
 
 /**
  * Annotates a {@link ProgramLifecycle} method to indicate that it will not run inside transaction.
- * 
- * By default, program life cycle methods ({@link ProgramLifecycle#initialize(RuntimeContext) initialize},
- * {@link ProgramLifecycle#destroy() destroy}), are run inside a transaction. Some methods do not require a
- * transaction, or they need to control their transactions themselves. Such a method can be annotated,
- * for example in a worker, with:
+ *
+ * By default, program life cycle methods ({@link ProgramLifecycle#initialize(RuntimeContext)
+ * initialize}, {@link ProgramLifecycle#destroy() destroy}), are run inside a transaction. Some
+ * methods do not require a transaction, or they need to control their transactions themselves. Such
+ * a method can be annotated, for example in a worker, with:
  *
  * <pre><code>
  * {@literal @}Override
@@ -39,8 +39,8 @@ import java.lang.annotation.Target;
  * }
  * </code></pre>
  *
- * This is especially useful if the method may run longer than the transaction timeout, and it would then
- * fail if run inside a transaction.
+ * This is especially useful if the method may run longer than the transaction timeout, and it would
+ * then fail if run inside a transaction.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

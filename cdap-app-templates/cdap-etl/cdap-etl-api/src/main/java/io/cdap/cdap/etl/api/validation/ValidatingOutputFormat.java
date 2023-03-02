@@ -22,13 +22,13 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
  * Validating output format provider.
  */
 public interface ValidatingOutputFormat extends OutputFormatProvider {
+
   String PLUGIN_TYPE = "validatingOutputFormat";
 
   /**
    * Validates configurations of output format.
    *
    * @param context format context
-   *
    * @throws IllegalArgumentException incase of validation errors.
    */
   void validate(FormatContext context);

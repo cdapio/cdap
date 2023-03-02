@@ -51,7 +51,7 @@ public class DefaultSSHContext implements SSHContext {
   private SSHKeyPair sshKeyPair;
 
   DefaultSSHContext(@Nullable InetSocketAddress proxyAddress,
-                    @Nullable Location keysDir, @Nullable SSHKeyPair keyPair) {
+      @Nullable Location keysDir, @Nullable SSHKeyPair keyPair) {
     this.proxyAddress = proxyAddress;
     this.keysDir = keysDir;
     this.sshKeyPair = keyPair;
@@ -65,7 +65,8 @@ public class DefaultSSHContext implements SSHContext {
 
       ByteArrayOutputStream bos = new ByteArrayOutputStream();
       keyPair.writePublicKey(bos, user);
-      SSHPublicKey publicKey = new SSHPublicKey(user, new String(bos.toByteArray(), StandardCharsets.UTF_8));
+      SSHPublicKey publicKey = new SSHPublicKey(user,
+          new String(bos.toByteArray(), StandardCharsets.UTF_8));
 
       bos.reset();
       keyPair.writePrivateKey(bos);
@@ -81,7 +82,7 @@ public class DefaultSSHContext implements SSHContext {
   public void setSSHKeyPair(SSHKeyPair keyPair) {
     if (keysDir == null) {
       throw new IllegalStateException("Setting of key pair is not allowed. " +
-                                        "It can only be called during the Provisioner.createCluster cycle");
+          "It can only be called during the Provisioner.createCluster cycle");
     }
     this.sshKeyPair = keyPair;
 
@@ -108,13 +109,13 @@ public class DefaultSSHContext implements SSHContext {
 
   @Override
   public SSHSession createSSHSession(String user, Supplier<byte[]> privateKeySupplier,
-                                     String host, int port, Map<String, String> configs) throws IOException {
+      String host, int port, Map<String, String> configs) throws IOException {
     SSHConfig config = SSHConfig.builder(host)
-      .setPort(port)
-      .setProxyAddress(proxyAddress)
-      .setUser(user)
-      .setPrivateKeySupplier(privateKeySupplier)
-      .build();
+        .setPort(port)
+        .setProxyAddress(proxyAddress)
+        .setUser(user)
+        .setPrivateKeySupplier(privateKeySupplier)
+        .build();
 
     return new DefaultSSHSession(config);
   }

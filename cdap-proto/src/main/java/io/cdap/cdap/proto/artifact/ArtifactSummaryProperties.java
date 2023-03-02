@@ -27,9 +27,11 @@ import java.util.Objects;
  * An {@link ArtifactSummary} with properties.
  */
 public class ArtifactSummaryProperties extends ArtifactSummary {
+
   private final Map<String, String> properties;
 
-  public ArtifactSummaryProperties(String name, String version, ArtifactScope scope, Map<String, String> properties) {
+  public ArtifactSummaryProperties(String name, String version, ArtifactScope scope,
+      Map<String, String> properties) {
     super(name, version, scope);
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
@@ -63,7 +65,7 @@ public class ArtifactSummaryProperties extends ArtifactSummary {
   @Override
   public String toString() {
     return "ArtifactSummaryProperties{" +
-      "properties=" + properties +
-      "} " + super.toString();
+        "properties=" + properties +
+        "} " + super.toString();
   }
 }

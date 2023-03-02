@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory;
  * Admin for managing namespaces.
  */
 public final class DefaultNamespaceAdmin implements NamespaceAdmin {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceAdmin.class);
 
   private final NamespaceStore nsStore;
@@ -98,14 +99,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Inject
   @VisibleForTesting
   public DefaultNamespaceAdmin(NamespaceStore nsStore,
-                               Store store,
-                               DatasetFramework dsFramework,
-                               MetricsCollectionService metricsCollectionService,
-                               Provider<NamespaceResourceDeleter> resourceDeleter,
-                               Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
-                               CConfiguration cConf, Impersonator impersonator, AccessEnforcer accessEnforcer,
-                               AuthenticationContext authenticationContext,
-                               TetheringStore tetheringStore) {
+      Store store,
+      DatasetFramework dsFramework,
+      MetricsCollectionService metricsCollectionService,
+      Provider<NamespaceResourceDeleter> resourceDeleter,
+      Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
+      CConfiguration cConf, Impersonator impersonator, AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext,
+      TetheringStore tetheringStore) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
     this.store = store;
@@ -115,12 +116,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.accessEnforcer = accessEnforcer;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
-    this.namespaceMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, NamespaceMeta>() {
-      @Override
-      public NamespaceMeta load(NamespaceId namespaceId) throws Exception {
-        return fetchNamespaceMeta(namespaceId);
-      }
-    });
+    this.namespaceMetaCache = CacheBuilder.newBuilder()
+        .build(new CacheLoader<NamespaceId, NamespaceMeta>() {
+          @Override
+          public NamespaceMeta load(NamespaceId namespaceId) throws Exception {
+            return fetchNamespaceMeta(namespaceId);
+          }
+        });
     this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
     this.tetheringStore = tetheringStore;
     this.cConf = cConf;
@@ -145,7 +147,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     String ownerPrincipal = metadata.getConfig().getPrincipal();
     Principal requestingUser = authenticationContext.getPrincipal();
     if (ownerPrincipal != null) {
-      accessEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, AccessPermission.SET_OWNER);
+      accessEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser,
+          AccessPermission.SET_OWNER);
     }
     accessEnforcer.enforce(namespace, requestingUser, StandardPermission.CREATE);
 
@@ -159,12 +162,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (metadata.getConfig() != null) {
       String configuredPrincipal = metadata.getConfig().getPrincipal();
       String configuredKeytabURI = metadata.getConfig().getKeytabURI();
-      if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(configuredKeytabURI)) ||
-        (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(configuredKeytabURI))) {
+      if ((!Strings.isNullOrEmpty(configuredPrincipal) && Strings.isNullOrEmpty(
+          configuredKeytabURI)) ||
+          (Strings.isNullOrEmpty(configuredPrincipal) && !Strings.isNullOrEmpty(
+              configuredKeytabURI))) {
         throw new BadRequestException(
-          String.format("Either both or none of the following two configurations must be configured. " +
-                          "Configured principal: %s, Configured keytabURI: %s",
-                        configuredPrincipal, configuredKeytabURI));
+            String.format(
+                "Either both or none of the following two configurations must be configured. " +
+                    "Configured principal: %s, Configured keytabURI: %s",
+                configuredPrincipal, configuredKeytabURI));
       }
       hasValidKerberosConf = true;
     }
@@ -186,7 +192,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
       // if needed, run master environment specific logic
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
-      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED) && masterEnv != null) {
+      if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
+          && masterEnv != null) {
         masterEnv.onNamespaceCreation(namespace.getNamespace(), metadata.getConfig().getConfigs());
       }
     } catch (Throwable t) {
@@ -194,14 +201,17 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       try {
         resourceDeleter.get().deleteResources(metadata);
       } catch (Exception e) {
-        LOG.error(String.format("Failed to delete resources for namespace '%s'", namespace.getNamespace()), e);
+        LOG.error(String.format("Failed to delete resources for namespace '%s'",
+            namespace.getNamespace()), e);
         t.addSuppressed(e);
       }
       try {
         // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
         deleteNamespaceMeta(metadata.getNamespaceId());
       } catch (Exception e) {
-        LOG.error(String.format("Failed to delete metadata for namespace '%s'", namespace.getNamespace()), e);
+        LOG.error(
+            String.format("Failed to delete metadata for namespace '%s'", namespace.getNamespace()),
+            e);
         t.addSuppressed(e);
       }
       throw new NamespaceCannotBeCreatedException(namespace, t);
@@ -215,34 +225,37 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       NamespaceConfig existingConfig = existingNamespaceMeta.getConfig();
       // if hbase namespace is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHbaseNamespace()) &&
-        metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
-        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
-                                                                  "namespace mapping for hbase namespace '%s'",
-                                                                existingNamespaceMeta.getName(),
-                                                                existingConfig.getHbaseNamespace()));
+          metadata.getConfig().getHbaseNamespace().equals(existingConfig.getHbaseNamespace())) {
+        throw new BadRequestException(
+            String.format("A namespace '%s' already exists with the given " +
+                    "namespace mapping for hbase namespace '%s'",
+                existingNamespaceMeta.getName(),
+                existingConfig.getHbaseNamespace()));
       }
       // if hive database is provided validate no other existing namespace is mapped to it
       if (!Strings.isNullOrEmpty(metadata.getConfig().getHiveDatabase()) &&
-        metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
-        throw new BadRequestException(String.format("A namespace '%s' already exists with the given " +
-                                                                  "namespace mapping for hive database '%s'",
-                                                                existingNamespaceMeta.getName(),
-                                                                existingConfig.getHiveDatabase()));
+          metadata.getConfig().getHiveDatabase().equals(existingConfig.getHiveDatabase())) {
+        throw new BadRequestException(
+            String.format("A namespace '%s' already exists with the given " +
+                    "namespace mapping for hive database '%s'",
+                existingNamespaceMeta.getName(),
+                existingConfig.getHiveDatabase()));
       }
       if (!Strings.isNullOrEmpty(metadata.getConfig().getRootDirectory())) {
         // check that the given root directory path is an absolute path
         validatePath(metadata.getName(), metadata.getConfig().getRootDirectory());
         // make sure that this new location is not same as some already mapped location or subdir of the existing
         // location or vice versa.
-        if (hasSubDirRelationship(existingConfig.getRootDirectory(), metadata.getConfig().getRootDirectory())) {
+        if (hasSubDirRelationship(existingConfig.getRootDirectory(),
+            metadata.getConfig().getRootDirectory())) {
           throw new BadRequestException(String.format("Failed to create namespace %s with custom " +
-                                                                    "location %s. A namespace '%s' already exists " +
-                                                                    "with location '%s' and these two locations are " +
-                                                                    "have a subdirectory relationship.",
-                                                                  metadata.getName(),
-                                                                  metadata.getConfig().getRootDirectory(),
-                                                                  existingNamespaceMeta.getName(),
-                                                                  existingConfig.getRootDirectory()));
+                  "location %s. A namespace '%s' already exists " +
+                  "with location '%s' and these two locations are " +
+                  "have a subdirectory relationship.",
+              metadata.getName(),
+              metadata.getConfig().getRootDirectory(),
+              existingNamespaceMeta.getName(),
+              existingConfig.getRootDirectory()));
         }
       }
     }
@@ -251,13 +264,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private boolean hasSubDirRelationship(@Nullable String existingDir, String newDir) {
     // only check for subdir if the existing namespace dir is custom mapped in which case this will not be null
     return !Strings.isNullOrEmpty(existingDir) &&
-      (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
+        (Paths.get(newDir).startsWith(existingDir) || Paths.get(existingDir).startsWith(newDir));
   }
 
   private boolean hasCustomMapping(NamespaceMeta metadata) {
     NamespaceConfig config = metadata.getConfig();
-    return !(Strings.isNullOrEmpty(config.getRootDirectory()) && Strings.isNullOrEmpty(config.getHbaseNamespace()) &&
-      Strings.isNullOrEmpty(config.getHiveDatabase()));
+    return !(Strings.isNullOrEmpty(config.getRootDirectory()) && Strings.isNullOrEmpty(
+        config.getHbaseNamespace()) &&
+        Strings.isNullOrEmpty(config.getHiveDatabase()));
   }
 
   private void validatePath(String namespace, String rootDir) throws IOException {
@@ -266,8 +280,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     File customLocation = new File(rootDir);
     if (!customLocation.isAbsolute()) {
       throw new IOException(String.format(
-        "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
-        namespace, customLocation));
+          "Cannot create the namespace '%s' with the given custom location %s. Custom location must be absolute path.",
+          namespace, customLocation));
     }
   }
 
@@ -280,25 +294,26 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    */
   @Override
   @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, permissions = StandardPermission.DELETE)
-  public synchronized void delete(@Name("namespaceId") final NamespaceId namespaceId) throws Exception {
+  public synchronized void delete(@Name("namespaceId") final NamespaceId namespaceId)
+      throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     NamespaceMeta namespaceMeta = get(namespaceId);
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  String.format("Some programs are currently running in namespace " +
-                                                                  "'%s', please stop them before deleting namespace",
-                                                                namespaceId));
+          String.format("Some programs are currently running in namespace " +
+                  "'%s', please stop them before deleting namespace",
+              namespaceId));
     }
 
     List<String> tetheredPeers = getTetheredPeersUsingNamespace(namespaceId);
     if (!tetheredPeers.isEmpty()) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  String.format("Namespace '%s' is used in tethering connections " +
-                                                                  "with peers: %s. Delete tethering connections " +
-                                                                  "before deleting the namespace",
-                                                                namespaceId,
-                                                                tetheredPeers));
+          String.format("Namespace '%s' is used in tethering connections " +
+                  "with peers: %s. Delete tethering connections " +
+                  "before deleting the namespace",
+              namespaceId,
+              tetheredPeers));
     }
 
     LOG.info("Deleting namespace '{}'.", namespaceId);
@@ -306,8 +321,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       // if needed, run master environment specific logic if it is a non-default namespace (see below for more info)
       MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
       if (cConf.getBoolean(Constants.Namespace.NAMESPACE_CREATION_HOOK_ENABLED)
-        && masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
-        masterEnv.onNamespaceDeletion(namespaceId.getNamespace(), namespaceMeta.getConfig().getConfigs());
+          && masterEnv != null && !NamespaceId.DEFAULT.equals(namespaceId)) {
+        masterEnv.onNamespaceDeletion(namespaceId.getNamespace(),
+            namespaceMeta.getConfig().getConfigs());
       }
 
       resourceDeleter.get().deleteResources(namespaceMeta);
@@ -332,7 +348,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
+  public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId)
+      throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -340,10 +357,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     if (checkProgramsRunning(namespaceId)) {
       throw new NamespaceCannotBeDeletedException(namespaceId,
-                                                  String.format("Some programs are currently running in namespace " +
-                                                                  "'%s', please stop them before deleting datasets " +
-                                                                  "in the namespace.",
-                                                                namespaceId));
+          String.format("Some programs are currently running in namespace " +
+                  "'%s', please stop them before deleting datasets " +
+                  "in the namespace.",
+              namespaceId));
     }
     try {
       dsFramework.deleteAllInstances(namespaceId);
@@ -355,11 +372,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  public synchronized void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta) throws Exception {
+  public synchronized void updateProperties(NamespaceId namespaceId, NamespaceMeta namespaceMeta)
+      throws Exception {
     if (!exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    accessEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(),
+        StandardPermission.UPDATE);
 
     NamespaceMeta existingMeta = nsStore.get(namespaceId);
     // Already ensured that namespace exists, so namespace meta should not be null
@@ -382,7 +401,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
       String existingKeytabURI = existingMeta.getConfig().getKeytabURIWithoutVersion();
       if (existingKeytabURI == null) {
-        throw new BadRequestException("Cannot update keytab URI since there is no existing principal or keytab URI.");
+        throw new BadRequestException(
+            "Cannot update keytab URI since there is no existing principal or keytab URI.");
       }
       if (keytabURI.equals(existingKeytabURI)) {
         // The given keytab URI is the same as the existing one, but the content of the keytab file might be changed.
@@ -397,8 +417,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     Set<String> difference = existingMeta.getConfig().getDifference(config);
     if (!difference.isEmpty()) {
-      throw new BadRequestException(String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
-                                                    "is created.", difference, namespaceId));
+      throw new BadRequestException(
+          String.format("Mappings %s for namespace %s cannot be updated once the namespace " +
+              "is created.", difference, namespaceId));
     }
     NamespaceMeta updatedMeta = builder.build();
     nsStore.update(updatedMeta);
@@ -419,8 +440,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     //noinspection ConstantConditions
     return AuthorizationUtil.isVisible(namespaces, accessEnforcer, principal,
-                                       NamespaceMeta::getNamespaceId,
-                                       input -> principal.getName().equals(input.getConfig().getPrincipal()));
+        NamespaceMeta::getNamespaceId,
+        input -> principal.getName().equals(input.getConfig().getPrincipal()));
   }
 
   /**
@@ -453,7 +474,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       if (lastUnauthorizedException == null) {
         Throwable cause = e.getCause();
         if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
-          cause instanceof UnauthorizedException) {
+            cause instanceof UnauthorizedException) {
           throw (Exception) cause;
         }
         throw e;
@@ -461,7 +482,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     }
 
     // If the requesting user is same as namespace owner, we do not care about if the user is authorized or not
-    if (namespaceMeta != null && principal.getName().equals(namespaceMeta.getConfig().getPrincipal())) {
+    if (namespaceMeta != null && principal.getName()
+        .equals(namespaceMeta.getConfig().getPrincipal())) {
       return namespaceMeta;
     }
 
@@ -508,15 +530,16 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   private List<String> getTetheredPeersUsingNamespace(NamespaceId namespaceId) throws IOException {
     return tetheringStore.getPeers()
-      .stream()
-      .filter(p -> p.getMetadata().getNamespaceAllocations().stream().
-        anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
-      .map(PeerInfo::getName)
-      .collect(Collectors.toList());
+        .stream()
+        .filter(p -> p.getMetadata().getNamespaceAllocations().stream().
+            anyMatch(na -> na.getNamespace().equals(namespaceId.getNamespace())))
+        .map(PeerInfo::getName)
+        .collect(Collectors.toList());
   }
 
   /**
    * Deletes the namespace meta and also invalidates the cache
+   *
    * @param namespaceId of namespace whose meta needs to be deleted
    */
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
@@ -528,7 +551,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * Emit the namespace count metric.
    */
   private void emitNamespaceCountMetric() {
-    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
-                                                                      nsStore.getNamespaceCount());
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
+            nsStore.getNamespaceCount());
   }
 }

@@ -33,7 +33,8 @@ import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.TwillRunner;
 
 /**
- * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
+ * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed
+ * containers.
  */
 final class DistributedProgramRunnerModule extends PrivateModule {
 
@@ -52,11 +53,10 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind and expose ProgramRunnerFactory. It is used in both program deployment and program execution.
     // Should get refactored by CDAP-5506
     bindConstant()
-      .annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE))
-      .to(publishProgramState);
+        .annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE))
+        .to(publishProgramState);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
     expose(ProgramRunnerFactory.class);
-
 
     // The following are bindings are for ProgramRunners. They are private to this module and only
     // available to the remote execution ProgramRunnerFactory exposed.
@@ -64,22 +64,28 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // This set of program runners are for on_premise mode
     bind(ClusterMode.class).toInstance(ClusterMode.ON_PREMISE);
     // TwillRunner used by the ProgramRunner is the remote execution one
-    bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TwillRunner.class);
+    bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+        .to(TwillRunner.class);
     // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
     bind(ProgramRunnerFactory.class)
-      .annotatedWith(Constants.AppFabric.ProgramRunner.class)
-      .to(ProgramRunnerFactory.class);
+        .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+        .to(ProgramRunnerFactory.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
-      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE)
+        .to(DistributedMapReduceProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW)
+        .to(DistributedWorkflowProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE)
+        .to(DistributedServiceProgramRunner.class);
+    defaultProgramRunnerBinder.addBinding(ProgramType.WORKER)
+        .to(DistributedWorkerProgramRunner.class);
 
     // Bind and expose ProgramRuntimeService
-    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
+    bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class)
+        .in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
   }
 }

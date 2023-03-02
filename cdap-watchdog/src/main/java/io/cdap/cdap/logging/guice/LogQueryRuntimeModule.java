@@ -39,7 +39,7 @@ public class LogQueryRuntimeModule extends RuntimeModule {
 
   private static void bindHandlers(Binder binder) {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder, HttpHandler.class,
-                                                                      Names.named(Constants.Service.LOG_QUERY));
+        Names.named(Constants.Service.LOG_QUERY));
     handlerBinder.addBinding().to(LogHttpHandler.class);
     CommonHandlers.add(handlerBinder);
   }

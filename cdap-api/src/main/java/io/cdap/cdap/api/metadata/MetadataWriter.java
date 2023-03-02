@@ -25,25 +25,26 @@ import java.util.Map;
 public interface MetadataWriter {
 
   /**
-   * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity metadataEntity}.
-   * Existing keys will be updated with new values.
+   * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity
+   * metadataEntity}. Existing keys will be updated with new values.
    */
   void addProperties(MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
-   * Adds the specified tags to specified {@link MetadataEntity}. If a given tag already exists for the metadata
-   * entity it will be skipped.
+   * Adds the specified tags to specified {@link MetadataEntity}. If a given tag already exists for
+   * the metadata entity it will be skipped.
    */
   void addTags(MetadataEntity metadataEntity, String... tags);
 
   /**
-   * Adds all the specified tags to specified {@link MetadataEntity}. If a given tag already exists for the metadata
-   * entity it will be skipped.
+   * Adds all the specified tags to specified {@link MetadataEntity}. If a given tag already exists
+   * for the metadata entity it will be skipped.
    */
   void addTags(MetadataEntity metadataEntity, Iterable<String> tags);
 
   /**
-   * Removes all the user metadata (including properties and tags) for the specified {@link MetadataEntity}.
+   * Removes all the user metadata (including properties and tags) for the specified {@link
+   * MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove user metadata for
    */
@@ -57,7 +58,8 @@ public interface MetadataWriter {
   void removeProperties(MetadataEntity metadataEntity);
 
   /**
-   * Removes the specified keys from the user metadata properties of the specified {@link MetadataEntity}.
+   * Removes the specified keys from the user metadata properties of the specified {@link
+   * MetadataEntity}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove

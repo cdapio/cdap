@@ -87,10 +87,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of the {@link ArtifactRepository}, all the operation does not have authorization enforce
- * involved
+ * Default implementation of the {@link ArtifactRepository}, all the operation does not have
+ * authorization enforce involved
  */
 public class DefaultArtifactRepository implements ArtifactRepository {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactRepository.class);
   private final ArtifactStore artifactStore;
   private final ArtifactRepositoryReader artifactRepositoryReader;
@@ -105,15 +106,18 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
-                                   ArtifactRepositoryReader artifactRepositoryReader,
-                                   MetadataServiceClient metadataServiceClient,
-                                   Impersonator impersonator) {
+      ArtifactRepositoryReader artifactRepositoryReader,
+      MetadataServiceClient metadataServiceClient,
+      Impersonator impersonator) {
     this.artifactStore = artifactStore;
     this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, new ProgramRuntimeProviderLoader(cConf));
-    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory, impersonator);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf,
+        new ProgramRuntimeProviderLoader(cConf));
+    this.artifactInspector = new DefaultArtifactInspector(cConf, artifactClassLoaderFactory,
+        impersonator);
     this.systemArtifactDirs = new HashSet<>();
-    this.maxArtifactLoadParallelism = cConf.getInt(Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);
+    this.maxArtifactLoadParallelism = cConf.getInt(
+        Constants.AppFabric.SYSTEM_ARTIFACTS_MAX_PARALLELISM);
     String systemArtifactsDir = cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
     if (!Strings.isNullOrEmpty(systemArtifactsDir)) {
       String sparkDirStr = SparkCompatReader.get(cConf).getCompat();
@@ -139,22 +143,24 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(
-    ArtifactDescriptor artifactDescriptor, EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactDescriptor.getLocation()).iterator(),
-                                                        entityImpersonator);
+      ArtifactDescriptor artifactDescriptor, EntityImpersonator entityImpersonator)
+      throws IOException {
+    return artifactClassLoaderFactory.createClassLoader(
+        ImmutableList.of(artifactDescriptor.getLocation()).iterator(),
+        entityImpersonator);
   }
 
   @Override
   public void clear(NamespaceId namespace) throws Exception {
     for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
       deleteArtifact(Id.Artifact.from(Id.Namespace.fromEntityId(namespace),
-                                      artifactDetail.getDescriptor().getArtifactId()));
+          artifactDetail.getDescriptor().getArtifactId()));
     }
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(final NamespaceId namespace,
-                                                    boolean includeSystem) throws Exception {
+      boolean includeSystem) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     if (includeSystem) {
       convertAndAdd(summaries, artifactStore.getArtifacts(NamespaceId.SYSTEM));
@@ -164,15 +170,15 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
-                                                    ArtifactSortOrder order)
-    throws Exception {
+      ArtifactSortOrder order)
+      throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     return convertAndAdd(summaries, artifactStore.getArtifacts(namespace, name, limit, order));
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(final ArtifactRange range, int limit,
-                                                    ArtifactSortOrder order) throws Exception {
+      ArtifactSortOrder order) throws Exception {
     List<ArtifactSummary> summaries = new ArrayList<>();
     return convertAndAdd(summaries, artifactStore.getArtifacts(range, limit, order));
   }
@@ -189,13 +195,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public List<ArtifactDetail> getArtifactDetails(final ArtifactRange range, int limit,
-                                                 ArtifactSortOrder order) throws Exception {
+      ArtifactSortOrder order) throws Exception {
     return artifactRepositoryReader.getArtifactDetails(range, limit, order);
   }
 
   @Override
   public List<ApplicationClassSummary> getApplicationClasses(NamespaceId namespace,
-                                                             boolean includeSystem) throws IOException {
+      boolean includeSystem) throws IOException {
     List<ApplicationClassSummary> summaries = Lists.newArrayList();
     if (includeSystem) {
       addAppSummaries(summaries, NamespaceId.SYSTEM);
@@ -207,48 +213,53 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace,
-                                                          String className) throws IOException {
+      String className) throws IOException {
     List<ApplicationClassInfo> infos = Lists.newArrayList();
     for (Map.Entry<ArtifactDescriptor, ApplicationClass> entry :
-      artifactStore.getApplicationClasses(namespace, className).entrySet()) {
+        artifactStore.getApplicationClasses(namespace, className).entrySet()) {
       ArtifactSummary artifactSummary = ArtifactSummary.from(entry.getKey().getArtifactId());
       ApplicationClass appClass = entry.getValue();
-      infos.add(new ApplicationClassInfo(artifactSummary, appClass.getClassName(), appClass.getConfigSchema()));
+      infos.add(new ApplicationClassInfo(artifactSummary, appClass.getClassName(),
+          appClass.getConfigSchema()));
     }
     return Collections.unmodifiableList(infos);
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(
-    NamespaceId namespace, Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
+      NamespaceId namespace, Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId);
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins(
-    NamespaceId namespace, Id.Artifact artifactId, String pluginType) throws IOException, ArtifactNotFoundException {
+      NamespaceId namespace, Id.Artifact artifactId, String pluginType)
+      throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(
-    NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
-    Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginPredicate,
-    int limit, ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+      NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName,
+      Predicate<io.cdap.cdap.proto.id.ArtifactId> pluginPredicate,
+      int limit, ArtifactSortOrder order)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName,
-                                          pluginPredicate::apply, limit, order);
+        pluginPredicate::apply, limit, order);
   }
 
   @Override
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
-                                                               String pluginType, String pluginName,
-                                                               PluginSelector selector)
-    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace,
+      ArtifactRange artifactRange,
+      String pluginType, String pluginName,
+      PluginSelector selector)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+        namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE,
+        ArtifactSortOrder.UNORDERED);
     return getPluginEntries(pluginClasses, selector,
-                            Id.Namespace.fromEntityId(new NamespaceId(artifactRange.getNamespace())),
-                            pluginType, pluginName);
+        Id.Namespace.fromEntityId(new NamespaceId(artifactRange.getNamespace())),
+        pluginType, pluginName);
   }
 
   @Override
@@ -258,17 +269,17 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
-                                    @Nullable Set<ArtifactRange> parentArtifacts,
-                                    @Nullable Set<PluginClass> additionalPlugins) throws Exception {
+      @Nullable Set<ArtifactRange> parentArtifacts,
+      @Nullable Set<PluginClass> additionalPlugins) throws Exception {
     return addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
-                       Collections.emptyMap());
+        Collections.emptyMap());
   }
 
   @Override
   public ArtifactDetail addArtifact(final Id.Artifact artifactId, final File artifactFile,
-                                    @Nullable Set<ArtifactRange> parentArtifacts,
-                                    @Nullable Set<PluginClass> additionalPlugins,
-                                    Map<String, String> properties) throws Exception {
+      @Nullable Set<ArtifactRange> parentArtifacts,
+      @Nullable Set<PluginClass> additionalPlugins,
+      Map<String, String> properties) throws Exception {
     if (additionalPlugins != null) {
       validatePluginSet(additionalPlugins);
     }
@@ -276,7 +287,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     parentArtifacts = parentArtifacts == null ? Collections.emptySet() : parentArtifacts;
     CloseableClassLoader parentClassLoader = null;
     EntityImpersonator entityImpersonator = new EntityImpersonator(artifactId.toEntityId(),
-                                                                   impersonator);
+        impersonator);
     List<ArtifactDescriptor> parentDescriptors = new ArrayList<>();
     if (!parentArtifacts.isEmpty()) {
       validateParentSet(artifactId, parentArtifacts);
@@ -284,16 +295,20 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
 
     additionalPlugins = additionalPlugins == null ? Collections.emptySet() : additionalPlugins;
-    ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId, artifactFile,
-                                                                              parentDescriptors,
-                                                                              additionalPlugins);
-    ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(), parentArtifacts,
-                                         properties);
-    ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile, entityImpersonator);
+    ArtifactClassesWithMetadata artifactClassesWithMetadata = inspectArtifact(artifactId,
+        artifactFile,
+        parentDescriptors,
+        additionalPlugins);
+    ArtifactMeta meta = new ArtifactMeta(artifactClassesWithMetadata.getArtifactClasses(),
+        parentArtifacts,
+        properties);
+    ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, artifactFile,
+        entityImpersonator);
     ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
     // info hides some fields that are available in detail, such as the location of the artifact
-    ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
-                                                 artifactDetail.getMeta().getProperties());
+    ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(),
+        artifactDetail.getMeta().getClasses(),
+        artifactDetail.getMeta().getProperties());
     // add system metadata for artifacts
     writeSystemMetadata(artifactId.toEntityId(), artifactInfo);
 
@@ -303,12 +318,14 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
+  public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties)
+      throws Exception {
     artifactStore.updateArtifactProperties(artifactId, oldProperties -> properties);
   }
 
   @Override
-  public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
+  public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value)
+      throws Exception {
     artifactStore.updateArtifactProperties(artifactId, oldProperties -> {
       Map<String, String> updated = new HashMap<>();
       updated.putAll(oldProperties);
@@ -346,25 +363,29 @@ public class DefaultArtifactRepository implements ArtifactRepository {
         try {
           artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
         } catch (IllegalArgumentException e) {
-          LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
+          LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ",
+              e.getMessage()));
           continue;
         }
 
         // check for a corresponding .json config file
         String artifactFileName = jarFile.getName();
-        String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
+        String configFileName =
+            artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
         File configFile = new File(systemArtifactDir, configFileName);
 
         try {
           // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
           ArtifactConfig artifactConfig = configFile.isFile() ?
-            configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
+              configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
 
           validateParentSet(artifactId, artifactConfig.getParents());
           validatePluginSet(artifactConfig.getPlugins());
-          systemArtifacts.put(artifactId, new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
+          systemArtifacts.put(artifactId,
+              new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
         } catch (InvalidArtifactException e) {
-          LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+          LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.",
+              artifactFileName), e);
         }
       }
     }
@@ -395,14 +416,16 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
     if (!remainingArtifacts.isEmpty()) {
       ExecutorService executorService =
-        Executors.newFixedThreadPool(Math.min(maxArtifactLoadParallelism, remainingArtifacts.size()),
-                                     Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
+          Executors.newFixedThreadPool(
+              Math.min(maxArtifactLoadParallelism, remainingArtifacts.size()),
+              Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
       try {
         // loop until there is no change
         boolean artifactsAdded = true;
         while (!remainingArtifacts.isEmpty() && artifactsAdded) {
-          artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
-                                               childToParents);
+          artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts,
+              parentToChildren,
+              childToParents);
         }
       } finally {
         executorService.shutdownNow();
@@ -410,20 +433,20 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
       if (!remainingArtifacts.isEmpty()) {
         LOG.warn("Unable to add system artifacts {} due to cyclic dependencies",
-                 Joiner.on(",").join(remainingArtifacts));
+            Joiner.on(",").join(remainingArtifacts));
       }
     }
   }
 
   /**
-   * Add as many system artifacts as possible in parallel. Returns true if at least one artifact was added and there
-   * were no errors.
+   * Add as many system artifacts as possible in parallel. Returns true if at least one artifact was
+   * added and there were no errors.
    */
   private boolean loadSystemArtifacts(ExecutorService executorService,
-                                      Map<Id.Artifact, SystemArtifactInfo> systemArtifacts,
-                                      Set<Id.Artifact> remainingArtifacts,
-                                      Multimap<Id.Artifact, Id.Artifact> parentToChildren,
-                                      Multimap<Id.Artifact, Id.Artifact> childToParents) throws Exception {
+      Map<Id.Artifact, SystemArtifactInfo> systemArtifacts,
+      Set<Id.Artifact> remainingArtifacts,
+      Multimap<Id.Artifact, Id.Artifact> parentToChildren,
+      Multimap<Id.Artifact, Id.Artifact> childToParents) throws Exception {
 
     // add all artifacts that don't have any more parents
     Set<Id.Artifact> addedArtifacts = new HashSet<>();
@@ -479,8 +502,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
     // drop plugin metadata
     plugins.forEach(pluginClass -> {
-      PluginId pluginId = new PluginId(artifact.getNamespace(), artifact.getArtifact(), artifact.getVersion(),
-                                       pluginClass.getName(), pluginClass.getType());
+      PluginId pluginId = new PluginId(artifact.getNamespace(), artifact.getArtifact(),
+          artifact.getVersion(),
+          pluginClass.getName(), pluginClass.getType());
       mutations.add(new MetadataMutation.Drop(pluginId.toMetadataEntity()));
     });
     metadataServiceClient.batch(mutations);
@@ -496,9 +520,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       public ArtifactInfo apply(@Nullable ArtifactDetail input) {
         // transform artifactDetail to artifactInfo
         ArtifactId artifactId = input.getDescriptor().getArtifactId();
-        return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope(),
-                                input.getMeta().getClasses(), input.getMeta().getProperties(),
-                                input.getMeta().getUsableBy());
+        return new ArtifactInfo(artifactId.getName(), artifactId.getVersion().getVersion(),
+            artifactId.getScope(),
+            input.getMeta().getClasses(), input.getMeta().getProperties(),
+            input.getMeta().getUsableBy());
       }
     });
   }
@@ -512,7 +537,9 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       try {
         ArtifactDetail currentArtifactDetail = artifactStore.getArtifact(artifactId);
         if (!shouldUpdateSytemArtifact(currentArtifactDetail, systemArtifactInfo)) {
-          LOG.info("Artifact {} already exists and it did not change, will not try loading it again.", artifactId);
+          LOG.info(
+              "Artifact {} already exists and it did not change, will not try loading it again.",
+              artifactId);
           return;
         }
       } catch (ArtifactNotFoundException e) {
@@ -520,24 +547,26 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
 
       addArtifact(artifactId,
-                  systemArtifactInfo.getArtifactFile(),
-                  systemArtifactInfo.getConfig().getParents(),
-                  systemArtifactInfo.getConfig().getPlugins(),
-                  systemArtifactInfo.getConfig().getProperties());
+          systemArtifactInfo.getArtifactFile(),
+          systemArtifactInfo.getConfig().getParents(),
+          systemArtifactInfo.getConfig().getPlugins(),
+          systemArtifactInfo.getConfig().getProperties());
       LOG.info("Added system artifact {}.", artifactId);
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {
-      LOG.warn("Could not add system artifact '{}' because it extends artifacts that do not exist.", fileName, e);
+      LOG.warn("Could not add system artifact '{}' because it extends artifacts that do not exist.",
+          fileName, e);
     } catch (InvalidArtifactException e) {
       LOG.warn("Could not add system artifact '{}' because it is invalid.", fileName, e);
     } catch (UnauthorizedException e) {
-      LOG.warn("Could not add system artifact '{}' because of an authorization error.", fileName, e);
+      LOG.warn("Could not add system artifact '{}' because of an authorization error.", fileName,
+          e);
     }
   }
 
   private boolean shouldUpdateSytemArtifact(ArtifactDetail currentArtifactDetail,
-                                            SystemArtifactInfo systemArtifactInfo) {
+      SystemArtifactInfo systemArtifactInfo) {
     if (!currentArtifactDetail.getDescriptor().getArtifactId().getVersion().isSnapshot()) {
       // if it's not a snapshot, don't bother trying to update it since artifacts are immutable
       return false;
@@ -549,18 +578,19 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       return true;
     }
     if (!Objects.equals(systemArtifactInfo.getConfig().getProperties(),
-                       currentArtifactDetail.getMeta().getProperties())) {
+        currentArtifactDetail.getMeta().getProperties())) {
       return true;
     }
     Set<PluginClass> additionalPlugins = systemArtifactInfo.getConfig().getPlugins();
-    if (additionalPlugins != null && !currentArtifactDetail.getMeta().getClasses().getPlugins().containsAll(
-      additionalPlugins)) {
+    if (additionalPlugins != null && !currentArtifactDetail.getMeta().getClasses().getPlugins()
+        .containsAll(
+            additionalPlugins)) {
       return true;
     }
     try (
-      InputStream stream1 = currentArtifactDetail.getDescriptor().getLocation().getInputStream();
-      InputStream stream2 = new FileInputStream(systemArtifactInfo.getArtifactFile())
-      ) {
+        InputStream stream1 = currentArtifactDetail.getDescriptor().getLocation().getInputStream();
+        InputStream stream2 = new FileInputStream(systemArtifactInfo.getArtifactFile())
+    ) {
       return !IOUtils.contentEquals(stream1, stream2);
     } catch (IOException e) {
       // In case of any IO problems, jsut update it
@@ -569,28 +599,30 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   private ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                                      List<ArtifactDescriptor> parentDescriptors,
-                                                      Set<PluginClass> additionalPlugins)
-    throws IOException, InvalidArtifactException {
-    ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId, artifactFile,
-                                                                             parentDescriptors,
-                                                                             additionalPlugins);
+      List<ArtifactDescriptor> parentDescriptors,
+      Set<PluginClass> additionalPlugins)
+      throws IOException, InvalidArtifactException {
+    ArtifactClassesWithMetadata artifact = artifactInspector.inspectArtifact(artifactId,
+        artifactFile,
+        parentDescriptors,
+        additionalPlugins);
     validatePluginSet(artifact.getArtifactClasses().getPlugins());
     if (additionalPlugins == null || additionalPlugins.isEmpty()) {
       return artifact;
     } else {
       ArtifactClasses newArtifactClasses = ArtifactClasses.builder()
-        .addApps(artifact.getArtifactClasses().getApps())
-        .addPlugins(artifact.getArtifactClasses().getPlugins())
-        .addPlugins(additionalPlugins)
-        .build();
+          .addApps(artifact.getArtifactClasses().getApps())
+          .addPlugins(artifact.getArtifactClasses().getPlugins())
+          .addPlugins(additionalPlugins)
+          .build();
       return new ArtifactClassesWithMetadata(newArtifactClasses, artifact.getMutations());
     }
   }
 
   private Map.Entry<ArtifactDescriptor, PluginClass> getPluginEntries(
-    Map<ArtifactDescriptor, PluginClass> pluginClasses, PluginSelector selector, Id.Namespace namespace,
-    String pluginType, String pluginName) throws PluginNotExistsException {
+      Map<ArtifactDescriptor, PluginClass> pluginClasses, PluginSelector selector,
+      Id.Namespace namespace,
+      String pluginType, String pluginName) throws PluginNotExistsException {
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
       artifactIds.put(pluginClassEntry.getKey().getArtifactId(), pluginClassEntry.getValue());
@@ -609,7 +641,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   // convert details to summaries (to hide location and other unnecessary information)
-  private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries, Iterable<ArtifactDetail> details) {
+  private List<ArtifactSummary> convertAndAdd(List<ArtifactSummary> summaries,
+      Iterable<ArtifactDetail> details) {
     for (ArtifactDetail detail : details) {
       summaries.add(ArtifactSummary.from(detail.getDescriptor().getArtifactId()));
     }
@@ -617,25 +650,30 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Get {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts for the given artifact.
+   * Get {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts for the given
+   * artifact.
    *
-   * @param artifactId the id of the artifact for which to find its parent and grandparent {@link ArtifactDescriptor}
+   * @param artifactId the id of the artifact for which to find its parent and grandparent
+   *     {@link ArtifactDescriptor}
    * @param parentArtifacts the ranges of parents to find
-   * @return {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts, in that specific order
+   * @return {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts, in that
+   *     specific order
    * @throws ArtifactRangeNotFoundException if none of the parents could be found
-   * @throws InvalidArtifactException       if one of the parents also has parents
+   * @throws InvalidArtifactException if one of the parents also has parents
    */
   private List<ArtifactDescriptor> getParentArtifactDescriptors(Id.Artifact artifactId,
-                                                                Set<ArtifactRange> parentArtifacts)
-    throws ArtifactRangeNotFoundException, InvalidArtifactException {
+      Set<ArtifactRange> parentArtifacts)
+      throws ArtifactRangeNotFoundException, InvalidArtifactException {
     List<ArtifactDetail> parents = new ArrayList<>();
     for (ArtifactRange parentRange : parentArtifacts) {
-      parents.addAll(artifactStore.getArtifacts(parentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
+      parents.addAll(
+          artifactStore.getArtifacts(parentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED));
     }
 
     if (parents.isEmpty()) {
-      throw new ArtifactRangeNotFoundException(String.format("Artifact %s extends artifacts '%s' that do not exist",
-                                                             artifactId, Joiner.on('/').join(parentArtifacts)));
+      throw new ArtifactRangeNotFoundException(
+          String.format("Artifact %s extends artifacts '%s' that do not exist",
+              artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
     ArtifactDescriptor parentArtifact = null;
@@ -649,23 +687,24 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       for (ArtifactRange grandparentRange : grandparentRanges) {
         // if the parent as the child as a parent (cyclic dependency)
         if (grandparentRange.getNamespace().equals(artifactId.getNamespace().getId()) &&
-          grandparentRange.getName().equals(artifactId.getName()) &&
-          grandparentRange.versionIsInRange(artifactId.getVersion())) {
+            grandparentRange.getName().equals(artifactId.getName()) &&
+            grandparentRange.versionIsInRange(artifactId.getVersion())) {
           throw new InvalidArtifactException(String.format(
-            "Invalid artifact '%s': cyclic dependency. Parent '%s' has artifact '%s' as a parent.",
-            artifactId, parent.getDescriptor().getArtifactId(), artifactId));
+              "Invalid artifact '%s': cyclic dependency. Parent '%s' has artifact '%s' as a parent.",
+              artifactId, parent.getDescriptor().getArtifactId(), artifactId));
         }
 
         List<ArtifactDetail> grandparents =
-          artifactStore.getArtifacts(grandparentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+            artifactStore.getArtifacts(grandparentRange, Integer.MAX_VALUE,
+                ArtifactSortOrder.UNORDERED);
 
         // check that no grandparent has parents
         for (ArtifactDetail grandparent : grandparents) {
           Set<ArtifactRange> greatGrandparents = grandparent.getMeta().getUsableBy();
           if (!greatGrandparents.isEmpty()) {
             throw new InvalidArtifactException(String.format(
-              "Invalid artifact '%s'. Grandparents of artifacts cannot have parents. Grandparent '%s' has parents.",
-              artifactId, grandparent.getDescriptor().getArtifactId()));
+                "Invalid artifact '%s'. Grandparents of artifacts cannot have parents. Grandparent '%s' has parents.",
+                artifactId, grandparent.getDescriptor().getArtifactId()));
           }
 
           // assumes any grandparent will do
@@ -690,26 +729,28 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Create a parent classloader (potentially multi-level classloader) based on the list of parent artifacts provided.
-   * The multi-level classloader will be constructed based the order of artifacts in the list (e.g. lower level
-   * classloader from artifacts in the front of the list and high leveler classloader from those towards the end)
+   * Create a parent classloader (potentially multi-level classloader) based on the list of parent
+   * artifacts provided. The multi-level classloader will be constructed based the order of
+   * artifacts in the list (e.g. lower level classloader from artifacts in the front of the list and
+   * high leveler classloader from those towards the end)
    *
    * @param parentArtifacts list of parent artifacts to create the classloader from
    * @throws IOException if there was some error reading from the store
    */
   private CloseableClassLoader createParentClassLoader(List<ArtifactDescriptor> parentArtifacts,
-                                                       EntityImpersonator entityImpersonator)
-    throws IOException {
+      EntityImpersonator entityImpersonator)
+      throws IOException {
     List<Location> parentLocations = new ArrayList<>();
     for (ArtifactDescriptor descriptor : parentArtifacts) {
       parentLocations.add(descriptor.getLocation());
     }
-    return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
+    return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(),
+        entityImpersonator);
   }
 
   private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {
     for (Map.Entry<ArtifactDescriptor, List<ApplicationClass>> classInfo :
-      artifactStore.getApplicationClasses(namespace).entrySet()) {
+        artifactStore.getApplicationClasses(namespace).entrySet()) {
       ArtifactSummary artifactSummary = ArtifactSummary.from(classInfo.getKey().getArtifactId());
 
       for (ApplicationClass appClass : classInfo.getValue()) {
@@ -719,13 +760,15 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Validates the parents of an artifact. Checks that each artifact only appears with a single version range.
+   * Validates the parents of an artifact. Checks that each artifact only appears with a single
+   * version range.
    *
    * @param parents the set of parent ranges to validate
    * @throws InvalidArtifactException if there is more than one version range for an artifact
    */
   @VisibleForTesting
-  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents) throws InvalidArtifactException {
+  static void validateParentSet(Id.Artifact artifactId, Set<ArtifactRange> parents)
+      throws InvalidArtifactException {
     boolean isInvalid = false;
     StringBuilder errMsg = new StringBuilder("Invalid parents field.");
 
@@ -744,9 +787,10 @@ public class DefaultArtifactRepository implements ArtifactRepository {
         isInvalid = true;
       }
       if (artifactId.getName().equals(parentName) &&
-        artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
+          artifactId.getNamespace().toEntityId().getNamespace().equals(parent.getNamespace())) {
         throw new InvalidArtifactException(String.format(
-          "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent, artifactId));
+            "Invalid parent '%s' for artifact '%s'. An artifact cannot extend itself.", parent,
+            artifactId));
       }
     }
 
@@ -758,11 +802,12 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   }
 
   /**
-   * Validates the set of plugins for an artifact. Checks that the pair of plugin type and name are unique among
-   * all plugins in an artifact.
+   * Validates the set of plugins for an artifact. Checks that the pair of plugin type and name are
+   * unique among all plugins in an artifact.
    *
    * @param plugins the set of plugins to validate
-   * @throws InvalidArtifactException if there is more than one class with the same type and name
+   * @throws InvalidArtifactException if there is more than one class with the same type and
+   *     name
    */
   @VisibleForTesting
   static void validatePluginSet(Set<PluginClass> plugins) throws InvalidArtifactException {
@@ -771,7 +816,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     Set<ImmutablePair<String, String>> existingPlugins = new HashSet<>();
     Set<ImmutablePair<String, String>> dupes = new HashSet<>();
     for (PluginClass plugin : plugins) {
-      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(), plugin.getName());
+      ImmutablePair<String, String> typeAndName = ImmutablePair.of(plugin.getType(),
+          plugin.getName());
       if (!existingPlugins.add(typeAndName) && !dupes.contains(typeAndName)) {
         errMsg.append(" Only one plugin with type '");
         errMsg.append(typeAndName.getFirst());
@@ -790,10 +836,11 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     }
   }
 
-  private void writeSystemMetadata(io.cdap.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
+  private void writeSystemMetadata(io.cdap.cdap.proto.id.ArtifactId artifactId,
+      ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
     ArtifactSystemMetadataWriter writer =
-      new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
+        new ArtifactSystemMetadataWriter(metadataServiceClient, artifactId, artifactInfo);
     writer.write();
   }
 }

@@ -24,8 +24,8 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Responsible for keeping track of {@link Job}s, which correspond to schedules that have been triggered,
- * but not yet executed.
+ * Responsible for keeping track of {@link Job}s, which correspond to schedules that have been
+ * triggered, but not yet executed.
  */
 public interface JobQueue {
 
@@ -49,7 +49,8 @@ public interface JobQueue {
    * @param job the job to update the state of
    * @param state the new job state
    * @return a new, updated Job
-   * @throws IllegalArgumentException In the case of an illegal state transition. See {@link Job.State}.
+   * @throws IllegalArgumentException In the case of an illegal state transition. See {@link
+   *     Job.State}.
    */
   Job transitState(Job job, Job.State state) throws IllegalArgumentException, IOException;
 
@@ -59,10 +60,12 @@ public interface JobQueue {
    * @param schedule the schedule for which jobs will be update
    * @param notification the new notification to update the schedule jobs with
    */
-  void addNotification(ProgramScheduleRecord schedule, Notification notification) throws IOException;
+  void addNotification(ProgramScheduleRecord schedule, Notification notification)
+      throws IOException;
 
   /**
-   * Marks all jobs associated with the given schedule Id for deletion, recording the time of deletion.
+   * Marks all jobs associated with the given schedule Id for deletion, recording the time of
+   * deletion.
    *
    * @param scheduleId the scheduledId for which to delete
    * @param deletedTime the timestamp to use for the delete marker
@@ -83,7 +86,8 @@ public interface JobQueue {
 
   /**
    * @param partition the partition of the JobQueue to get Jobs from
-   * @param lastJobProcessed the job to start the scan from (exclusive), or null to indicate scanning from the start
+   * @param lastJobProcessed the job to start the scan from (exclusive), or null to indicate
+   *     scanning from the start
    * @return A {@link CloseableIterator} over all the jobs in the given partition of the JobQueue
    */
   CloseableIterator<Job> getJobs(int partition, @Nullable Job lastJobProcessed) throws IOException;

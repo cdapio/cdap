@@ -24,34 +24,36 @@ import javax.annotation.Nullable;
 
 /**
  * Helper methods to add plugins to Programs.
+ *
  * @param <T> Program's configurer that implements {@link PluginConfigurer}
  */
 public abstract class AbstractPluginConfigurable<T extends PluginConfigurer & DatasetConfigurer>
-  extends AbstractProgramDatasetConfigurable<T> {
+    extends AbstractProgramDatasetConfigurable<T> {
 
   @Override
   protected abstract T getConfigurer();
 
   @Nullable
-  public <M> M usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
+  public <M> M usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties) {
     return getConfigurer().usePlugin(pluginType, pluginName, pluginId, properties);
   }
 
   @Nullable
   public <M> M usePlugin(String pluginType, String pluginName,
-                         String pluginId, PluginProperties properties, PluginSelector selector) {
+      String pluginId, PluginProperties properties, PluginSelector selector) {
     return getConfigurer().usePlugin(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Nullable
   public <M> Class<M> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                     PluginProperties properties) {
+      PluginProperties properties) {
     return getConfigurer().usePluginClass(pluginType, pluginName, pluginId, properties);
   }
 
   @Nullable
   public <M> Class<M> usePluginClass(String pluginType, String pluginName,
-                                     String pluginId, PluginProperties properties, PluginSelector selector) {
+      String pluginId, PluginProperties properties, PluginSelector selector) {
     return getConfigurer().usePluginClass(pluginType, pluginName, pluginId, properties, selector);
   }
 }

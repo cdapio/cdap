@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * LogReader callback that sends JSON objects.
  */
 public abstract class AbstractJSONCallback extends AbstractChunkedCallback {
+
   protected static final Gson GSON = new Gson();
   private final AtomicBoolean started = new AtomicBoolean();
 

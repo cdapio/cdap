@@ -31,7 +31,8 @@ public class WorkflowTokenCodec implements JsonDeserializer<WorkflowToken> {
 
   @Override
   public WorkflowToken deserialize(JsonElement jsonElement, Type type,
-                                   JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-    return jsonDeserializationContext.deserialize(jsonElement, new TypeToken<BasicWorkflowToken>() { }.getType());
+      JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+    return jsonDeserializationContext.deserialize(jsonElement, new TypeToken<BasicWorkflowToken>() {
+    }.getType());
   }
 }

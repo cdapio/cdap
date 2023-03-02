@@ -51,6 +51,7 @@ import javax.annotation.Nullable;
  * Handy dataset to be used for managing metadata.
  */
 public class MetadataStoreDataset extends AbstractDataset {
+
   /**
    * All rows we store use single column of this name.
    */
@@ -74,8 +75,8 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * Deserialize the given serialized value of a given type.
-   * Default implementation is to use {@link Gson} to deserialize.
+   * Deserialize the given serialized value of a given type. Default implementation is to use {@link
+   * Gson} to deserialize.
    *
    * @param key the key used to fetch the given value
    * @param serialized the serialized value
@@ -162,7 +163,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   @Nullable
   public byte[] getValue(MDSKey id) {
     Row row = table.get(id.getKey());
-   return row.isEmpty() ? null : row.get(COLUMN);
+    return row.isEmpty() ? null : row.get(COLUMN);
   }
 
   /**
@@ -257,7 +258,7 @@ public class MetadataStoreDataset extends AbstractDataset {
    * @return a list of the deserialized value of the result
    */
   public <T> List<T> list(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
-                          Predicate<T> filter) {
+      Predicate<T> filter) {
     return Lists.newArrayList(listKV(startId, stopId, typeOfT, limit, filter).values());
   }
 
@@ -314,7 +315,8 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * returns mapping of all that has first id parts in range of startId and stopId for default COLUMN
+   * returns mapping of all that has first id parts in range of startId and stopId for default
+   * COLUMN
    *
    * @param startId start row key
    * @param stopId stop row key
@@ -324,12 +326,13 @@ public class MetadataStoreDataset extends AbstractDataset {
    * @return map of row key to result
    */
   public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
-                                   Predicate<T> filter) {
+      Predicate<T> filter) {
     return listKV(startId, stopId, typeOfT, limit, null, filter);
   }
 
   /**
-   * returns mapping of all that has first id parts in range of startId and stopId for default COLUMN
+   * returns mapping of all that has first id parts in range of startId and stopId for default
+   * COLUMN
    *
    * @param startId start row key
    * @param stopId stop row key
@@ -340,7 +343,7 @@ public class MetadataStoreDataset extends AbstractDataset {
    * @return map of row key to result
    */
   public <T> Map<MDSKey, T> listKV(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, int limit,
-                                   Predicate<MDSKey> keyFilter, Predicate<T> valueFilter) {
+      Predicate<MDSKey> keyFilter, Predicate<T> valueFilter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
@@ -349,8 +352,8 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   /**
-   * Returns mapping of all that match the given keySet provided they pass the combinedFilter predicate
-   * for default COLUMN
+   * Returns mapping of all that match the given keySet provided they pass the combinedFilter
+   * predicate for default COLUMN
    *
    * @param keySet row key set
    * @param typeOfT the type of the result
@@ -359,7 +362,7 @@ public class MetadataStoreDataset extends AbstractDataset {
    * @return map of row key to result
    */
   public <T> Map<MDSKey, T> listKV(Set<MDSKey> keySet, Type typeOfT, int limit,
-                                   @Nullable Predicate<KeyValue<T>> combinedFilter) {
+      @Nullable Predicate<KeyValue<T>> combinedFilter) {
     // Sort fuzzy keys
     List<MDSKey> sortedKeys = Lists.newArrayList(keySet);
     Collections.sort(sortedKeys);
@@ -368,7 +371,7 @@ public class MetadataStoreDataset extends AbstractDataset {
     byte[] startKey = sortedKeys.get(0).getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(sortedKeys.get(sortedKeys.size() - 1).getKey());
 
-    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>();
+    List<ImmutablePair<byte[], byte[]>> fuzzyKeys = new ArrayList<>();
     for (MDSKey key : sortedKeys) {
       fuzzyKeys.add(getFuzzyKeyFor(key));
     }
@@ -392,15 +395,15 @@ public class MetadataStoreDataset extends AbstractDataset {
   /**
    * Run a scan on MDS for default COLUMN
    *
-   * @param startId  scan start key
-   * @param stopId   scan stop key
-   * @param typeOfT  type of value
-   * @param function function to process each element returned from scan.
-   *                 If function.apply returns false then the scan is stopped.
-   *                 Also, function.apply should not return null.
-   * @param <T>      type of value
+   * @param startId scan start key
+   * @param stopId scan stop key
+   * @param typeOfT type of value
+   * @param function function to process each element returned from scan. If function.apply
+   *     returns false then the scan is stopped. Also, function.apply should not return null.
+   * @param <T> type of value
    */
-  public <T> void scan(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT, Function<KeyValue<T>, Boolean> function) {
+  public <T> void scan(MDSKey startId, @Nullable MDSKey stopId, Type typeOfT,
+      Function<KeyValue<T>, Boolean> function) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
@@ -503,7 +506,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   }
 
   private <T> Map<MDSKey, T> listCombinedFilterKV(Scan runScan, Type typeOfT, int limit,
-                                                  @Nullable Predicate<KeyValue<T>> combinedFilter) {
+      @Nullable Predicate<KeyValue<T>> combinedFilter) {
     try {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
       try (Scanner scan = table.scan(runScan)) {
@@ -532,8 +535,9 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit, @Nullable Predicate<MDSKey> keyFilter,
-                                    @Nullable Predicate<T> valueFilter) {
+  private <T> Map<MDSKey, T> listKV(Scan runScan, Type typeOfT, int limit,
+      @Nullable Predicate<MDSKey> keyFilter,
+      @Nullable Predicate<T> valueFilter) {
     try {
       Map<MDSKey, T> map = Maps.newLinkedHashMap();
       try (Scanner scan = table.scan(runScan)) {
@@ -585,6 +589,7 @@ public class MetadataStoreDataset extends AbstractDataset {
    * @param <T> Type of scan result object
    */
   public class KeyValue<T> {
+
     private final MDSKey key;
     private final T value;
 
@@ -602,7 +607,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  protected MDSKey.Builder getApplicationKeyBuilder(String recordType, @Nullable ApplicationId applicationId) {
+  protected MDSKey.Builder getApplicationKeyBuilder(String recordType,
+      @Nullable ApplicationId applicationId) {
     MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
     if (applicationId != null) {
       builder.add(applicationId.getNamespace());
@@ -612,7 +618,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     return builder;
   }
 
-  protected MDSKey.Builder getNamespaceKeyBuilder(String recordType, @Nullable NamespaceId namespaceId) {
+  protected MDSKey.Builder getNamespaceKeyBuilder(String recordType,
+      @Nullable NamespaceId namespaceId) {
     MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
     if (namespaceId != null) {
       builder.add(namespaceId.getNamespace());
@@ -632,7 +639,8 @@ public class MetadataStoreDataset extends AbstractDataset {
     return builder;
   }
 
-  protected MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramRunId programRunId) {
+  protected MDSKey.Builder getProgramKeyBuilder(String recordType,
+      @Nullable ProgramRunId programRunId) {
     MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
     if (programRunId != null) {
       builder.add(programRunId.getNamespace());

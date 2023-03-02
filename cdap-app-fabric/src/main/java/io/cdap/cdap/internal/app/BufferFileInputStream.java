@@ -43,7 +43,6 @@ public final class BufferFileInputStream implements Closeable {
    *
    * @param file to read
    * @param bufferSize of the bytes.
-   * @throws java.io.FileNotFoundException
    */
   public BufferFileInputStream(String file, int bufferSize) throws FileNotFoundException {
     this(new FileInputStream(file), bufferSize);
@@ -53,7 +52,6 @@ public final class BufferFileInputStream implements Closeable {
    * Constructor of BufferFileInputStream with default buffer stream size.
    *
    * @param file The File to read
-   * @throws java.io.FileNotFoundException
    */
   public BufferFileInputStream(String file) throws FileNotFoundException {
     this(file, 100 * 1024);
@@ -74,7 +72,6 @@ public final class BufferFileInputStream implements Closeable {
    * Reads block of byte size from the stream and returns a byte array.
    *
    * @return byte array of bytes read from stream.
-   * @throws java.io.IOException
    */
   public byte[] read() throws IOException {
     int length = stream.read(buffer);
@@ -90,8 +87,6 @@ public final class BufferFileInputStream implements Closeable {
 
   /**
    * Closes the stream.
-   *
-   * @throws java.io.IOException
    */
   @Override
   public void close() throws IOException {

@@ -32,17 +32,17 @@ import javax.annotation.Nullable;
 public class MetadataValidator {
 
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
-    .or(CharMatcher.inRange('a', 'z'))
-    .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_'))
-    .or(CharMatcher.is('-'));
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.inRange('0', '9'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.is('-'));
 
   private static final CharMatcher VALUE_MATCHER = CharMatcher.inRange('A', 'Z')
-    .or(CharMatcher.inRange('a', 'z'))
-    .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_'))
-    .or(CharMatcher.is('-'))
-    .or(CharMatcher.WHITESPACE);
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.inRange('0', '9'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.WHITESPACE);
 
   private final int maxCharacters;
 
@@ -61,7 +61,7 @@ public class MetadataValidator {
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
   public void validateProperties(MetadataEntity metadataEntity,
-                                 @Nullable Map<String, String> properties) throws InvalidMetadataException {
+      @Nullable Map<String, String> properties) throws InvalidMetadataException {
 
     if (null == properties || properties.isEmpty()) {
       return;
@@ -86,7 +86,7 @@ public class MetadataValidator {
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
   public void validateTags(MetadataEntity metadataEntity,
-                           @Nullable Set<String> tags) throws InvalidMetadataException {
+      @Nullable Set<String> tags) throws InvalidMetadataException {
     if (null == tags || tags.isEmpty()) {
       return;
     }
@@ -100,10 +100,10 @@ public class MetadataValidator {
    * Validate that the key is not reserved {@link MetadataConstants#TAGS_KEY}.
    */
   private static void validateTagReservedKey(MetadataEntity metadataEntity, String key)
-    throws InvalidMetadataException {
+      throws InvalidMetadataException {
     if (MetadataConstants.TAGS_KEY.equals(key.toLowerCase())) {
       throw new InvalidMetadataException(
-        metadataEntity, "Could not set metadata with reserved key " + MetadataConstants.TAGS_KEY);
+          metadataEntity, "Could not set metadata with reserved key " + MetadataConstants.TAGS_KEY);
     }
   }
 
@@ -111,11 +111,11 @@ public class MetadataValidator {
    * Validate the key matches the {@link #KEY_AND_TAG_MATCHER} character test.
    */
   private static void validateKeyAndTagsFormat(MetadataEntity metadataEntity, String keyword)
-    throws InvalidMetadataException {
+      throws InvalidMetadataException {
     if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
-        "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "underscores and hyphens.", keyword));
+          "Illegal format for '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
+              "underscores and hyphens.", keyword));
     }
   }
 
@@ -123,22 +123,25 @@ public class MetadataValidator {
    * Validate the value of a property matches the {@link #VALUE_MATCHER} character test.
    */
   private static void validateValueFormat(MetadataEntity metadataEntity, String keyword)
-    throws InvalidMetadataException {
+      throws InvalidMetadataException {
     if (!VALUE_MATCHER.matchesAllOf(keyword)) {
       throw new InvalidMetadataException(metadataEntity, String.format(
-        "Illegal format for the value '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), " +
-          "underscores, hyphens and whitespaces.", keyword));
+          "Illegal format for the value '%s'. Should only contain alphanumeric characters (a-z, A-Z, 0-9), "
+              +
+              "underscores, hyphens and whitespaces.", keyword));
     }
   }
 
   /**
    * Validate that the key length does not exceed the configured limit.
    */
-  private void validateLength(MetadataEntity metadataEntity, String keyword) throws InvalidMetadataException {
+  private void validateLength(MetadataEntity metadataEntity, String keyword)
+      throws InvalidMetadataException {
     // check for max char per value
     if (keyword.length() > maxCharacters) {
       throw new InvalidMetadataException(
-        metadataEntity, "Metadata " + keyword + " exceeds maximum of " + maxCharacters + " characters.");
+          metadataEntity,
+          "Metadata " + keyword + " exceeds maximum of " + maxCharacters + " characters.");
     }
   }
 

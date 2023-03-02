@@ -22,25 +22,24 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * This is a delegating RecordReader, which delegates the functionality to the
- * underlying record reader in {@link TaggedInputSplit}
+ * This is a delegating RecordReader, which delegates the functionality to the underlying record
+ * reader in {@link TaggedInputSplit}
  *
  * @param <K> Type of key
  * @param <V> Type of value
  */
 public class DelegatingRecordReader<K, V> extends RecordReader<K, V> {
+
   private final RecordReader<K, V> originalRR;
 
   /**
    * Constructs the DelegatingRecordReader.
    *
    * @param recordReader the actual RecordReader to delegate operations to.
-   *
-   * @throws IOException
-   * @throws InterruptedException
    */
   @SuppressWarnings("unchecked")
-  public DelegatingRecordReader(RecordReader<K, V> recordReader) throws IOException, InterruptedException {
+  public DelegatingRecordReader(RecordReader<K, V> recordReader)
+      throws IOException, InterruptedException {
     this.originalRR = recordReader;
   }
 
@@ -65,7 +64,8 @@ public class DelegatingRecordReader<K, V> extends RecordReader<K, V> {
   }
 
   @Override
-  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+  public void initialize(InputSplit split, TaskAttemptContext context)
+      throws IOException, InterruptedException {
     // We need to be sure not to pass the TaggedInputSplit to the underlying RecordReader. Otherwise, it can result
     // in ClassCastExceptions
     InputSplit inputSplit = ((TaggedInputSplit) split).getInputSplit();

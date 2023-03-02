@@ -34,9 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Note that
- * this ClassLoader just delegates to other ClassLoaders, but never define class, hence no Class
- * loaded by this class would have {@link Class#getClassLoader()}} returning this ClassLoader.
+ * A {@link ClassLoader} that load classes from list of other {@link ClassLoader}s. Note that this
+ * ClassLoader just delegates to other ClassLoaders, but never define class, hence no Class loaded
+ * by this class would have {@link Class#getClassLoader()}} returning this ClassLoader.
  */
 public class CombineClassLoader extends URLClassLoader {
 
@@ -49,7 +49,7 @@ public class CombineClassLoader extends URLClassLoader {
    * @param parent parent ClassLoader. If null, bootstrap ClassLoader will be the parent.
    * @param delegates list of ClassLoaders for delegation
    */
-  public CombineClassLoader(@Nullable ClassLoader parent, ClassLoader...delegates) {
+  public CombineClassLoader(@Nullable ClassLoader parent, ClassLoader... delegates) {
     this(parent, Arrays.asList(delegates));
   }
 
@@ -59,7 +59,8 @@ public class CombineClassLoader extends URLClassLoader {
    * @param parent parent ClassLoader. If null, bootstrap ClassLoader will be the parent.
    * @param delegates list of ClassLoaders for delegation
    */
-  public CombineClassLoader(@Nullable ClassLoader parent, Iterable<? extends ClassLoader> delegates) {
+  public CombineClassLoader(@Nullable ClassLoader parent,
+      Iterable<? extends ClassLoader> delegates) {
     super(new URL[0], parent);
     this.delegates = ImmutableList.copyOf(delegates);
   }

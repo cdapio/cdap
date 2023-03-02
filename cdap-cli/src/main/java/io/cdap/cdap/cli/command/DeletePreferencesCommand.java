@@ -29,13 +29,15 @@ import java.io.PrintStream;
  * Deletes preferences for instance, namespace, application, program.
  */
 public class DeletePreferencesCommand extends AbstractCommand {
+
   private static final String SUCCESS = "Deleted preferences successfully for the '%s'";
 
   private final PreferencesClient client;
   private final ElementType type;
   private final CLIConfig cliConfig;
 
-  protected DeletePreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected DeletePreferencesCommand(ElementType type, PreferencesClient client,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -77,7 +79,8 @@ public class DeletePreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized element type for preferences " + type.getName());
+        throw new IllegalArgumentException(
+            "Unrecognized element type for preferences " + type.getName());
     }
   }
 
@@ -93,7 +96,8 @@ public class DeletePreferencesCommand extends AbstractCommand {
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("delete %s preferences <%s>", type.getShortName(), type.getArgumentName());
+        return String.format("delete %s preferences <%s>", type.getShortName(),
+            type.getArgumentName());
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }

@@ -41,13 +41,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An implementation of {@link LineageWriter} and {@link FieldLineageWriter} that publish lineage information to TMS.
+ * An implementation of {@link LineageWriter} and {@link FieldLineageWriter} that publish lineage
+ * information to TMS.
  */
 public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter {
+
   private static final Logger LOG = LoggerFactory.getLogger(MessagingLineageWriter.class);
   private static final Gson GSON = new GsonBuilder().enableComplexMapKeySerialization()
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-    .create();
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+      .create();
 
   private final TopicId topic;
   private final MessagingService messagingService;
@@ -65,20 +67,21 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
 
   @Override
   public void addAccess(ProgramRunId programRunId, DatasetId datasetId,
-                        AccessType accessType, @Nullable NamespacedEntityId componentId) {
+      AccessType accessType, @Nullable NamespacedEntityId componentId) {
     publishLineage(programRunId, new DataAccessLineage(accessType, datasetId, componentId));
   }
 
   @Override
   public void write(ProgramRunId programRunId, FieldLineageInfo info) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.FIELD_LINEAGE, programRunId,
-                                                  GSON.toJsonTree(info));
+        GSON.toJsonTree(info));
     publish(message);
   }
 
 
   private void publishLineage(ProgramRunId programRunId, DataAccessLineage lineage) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, programRunId, GSON.toJsonTree(lineage));
+    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.LINEAGE, programRunId,
+        GSON.toJsonTree(lineage));
     publish(message);
   }
 
@@ -88,21 +91,24 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
 
     if (lineageSize > publishSizeLimit) {
       if (!isLineageWarningLogged) {
-        LOG.warn("Some lineage messages are not being logged as they are larger than the limit of {} bytes.",
-                 publishSizeLimit);
+        LOG.warn(
+            "Some lineage messages are not being logged as they are larger than the limit of {} bytes.",
+            publishSizeLimit);
         isLineageWarningLogged = true;
       }
       LOG.trace("Size of lineage message is {} bytes, which is larger than the limit {}.\n" +
-        "Therefore the lineage will not be published.", lineageSize, publishSizeLimit);
+          "Therefore the lineage will not be published.", lineageSize, publishSizeLimit);
     } else {
       StoreRequest request = StoreRequestBuilder.of(topic).addPayload(messageJson).build();
       try {
-        Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+        Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+            Retries.ALWAYS_TRUE);
       } catch (Exception e) {
         LOG.trace("Failed to publish metadata message: {}", message);
         ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
-        throw new RuntimeException(String.format("Failed to publish metadata message of type '%s' for program " +
-                                                   "run '%s'.", message.getType(), programRunId), e);
+        throw new RuntimeException(
+            String.format("Failed to publish metadata message of type '%s' for program " +
+                "run '%s'.", message.getType(), programRunId), e);
       }
     }
   }

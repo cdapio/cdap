@@ -2,13 +2,13 @@
  * Copyright © 2016 Cask Data, Inc.
  * Portions copyright (C) 2008 The Guava Authors
  * Derived from the Google Guava Project
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *  
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  * This class is copied form the guava Joiner class.
  */
 class Joiner {
+
   /**
    * Returns a joiner which automatically places {@code separator} between consecutive elements.
    */
@@ -95,8 +96,8 @@ class Joiner {
    * Appends to {@code appendable} the string representation of each of the remaining arguments.
    */
   public final <A extends Appendable> A appendTo(
-    A appendable, @Nullable Object first, @Nullable Object second, Object... rest)
-    throws IOException {
+      A appendable, @Nullable Object first, @Nullable Object second, Object... rest)
+      throws IOException {
     return appendTo(appendable, iterable(first, second, rest));
   }
 
@@ -140,7 +141,7 @@ class Joiner {
    * throw {@link IOException}.
    */
   public final StringBuilder appendTo(
-    StringBuilder builder, @Nullable Object first, @Nullable Object second, Object... rest) {
+      StringBuilder builder, @Nullable Object first, @Nullable Object second, Object... rest) {
     return appendTo(builder, iterable(first, second, rest));
   }
 
@@ -275,6 +276,7 @@ class Joiner {
    * @since 2.0
    */
   public static final class MapJoiner {
+
     private final Joiner joiner;
     private final String keyValueSeparator;
 
@@ -316,8 +318,9 @@ class Joiner {
      * @since 10.0
      */
     @Beta
-    public <A extends Appendable> A appendTo(A appendable, Iterable<? extends Map.Entry<?, ?>> entries)
-      throws IOException {
+    public <A extends Appendable> A appendTo(A appendable,
+        Iterable<? extends Map.Entry<?, ?>> entries)
+        throws IOException {
       return appendTo(appendable, entries.iterator());
     }
 
@@ -328,8 +331,9 @@ class Joiner {
      * @since 11.0
      */
     @Beta
-    public <A extends Appendable> A appendTo(A appendable, Iterator<? extends Map.Entry<?, ?>> parts)
-      throws IOException {
+    public <A extends Appendable> A appendTo(A appendable,
+        Iterator<? extends Map.Entry<?, ?>> parts)
+        throws IOException {
       Preconditions.checkNotNull(appendable);
       if (parts.hasNext()) {
         Map.Entry<?, ?> entry = parts.next();
@@ -355,7 +359,8 @@ class Joiner {
      * @since 10.0
      */
     @Beta
-    public StringBuilder appendTo(StringBuilder builder, Iterable<? extends Map.Entry<?, ?>> entries) {
+    public StringBuilder appendTo(StringBuilder builder,
+        Iterable<? extends Map.Entry<?, ?>> entries) {
       return appendTo(builder, entries.iterator());
     }
 
@@ -367,7 +372,8 @@ class Joiner {
      * @since 11.0
      */
     @Beta
-    public StringBuilder appendTo(StringBuilder builder, Iterator<? extends Map.Entry<?, ?>> entries) {
+    public StringBuilder appendTo(StringBuilder builder,
+        Iterator<? extends Map.Entry<?, ?>> entries) {
       try {
         appendTo((Appendable) builder, entries);
       } catch (IOException impossible) {
@@ -416,7 +422,7 @@ class Joiner {
   }
 
   private static Iterable<Object> iterable(
-    final Object first, final Object second, final Object[] rest) {
+      final Object first, final Object second, final Object[] rest) {
     Preconditions.checkNotNull(rest);
     return new AbstractList<Object>() {
       @Override

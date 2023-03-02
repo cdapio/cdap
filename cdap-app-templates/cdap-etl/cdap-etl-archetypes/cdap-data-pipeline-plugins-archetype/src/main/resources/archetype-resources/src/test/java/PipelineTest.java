@@ -68,13 +68,15 @@ import org.junit.Test;
  * Unit tests for our plugins.
  */
 public class PipelineTest extends HydratorTestBase {
+
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("data-pipeline", "1.0.0");
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @BeforeClass
   public static void setupTestClass() throws Exception {
-    ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(), APP_ARTIFACT.getVersion());
+    ArtifactId parentArtifact = NamespaceId.DEFAULT.artifact(APP_ARTIFACT.getName(),
+        APP_ARTIFACT.getVersion());
 
     // add the data-pipeline artifact and mock plugins
     setupBatchArtifacts(parentArtifact, DataPipelineApp.class);
@@ -82,12 +84,12 @@ public class PipelineTest extends HydratorTestBase {
     // add our plugins artifact with the data-pipeline artifact as its parent.
     // this will make our plugins available to data-pipeline.
     addPluginArtifact(NamespaceId.DEFAULT.artifact("example-plugins", "1.0.0"),
-                      parentArtifact,
-                      TextFileSetSource.class,
-                      TextFileSetSink.class,
-                      WordCountAggregator.class,
-                      WordCountCompute.class,
-                      WordCountSink.class);
+        parentArtifact,
+        TextFileSetSource.class,
+        TextFileSetSink.class,
+        WordCountAggregator.class,
+        WordCountCompute.class,
+        WordCountSink.class);
   }
 
   @Test
@@ -101,7 +103,8 @@ public class PipelineTest extends HydratorTestBase {
     actionProperties.put(FilesetMoveAction.Conf.SOURCE_FILESET, "sourceTestMoveFrom");
     actionProperties.put(FilesetMoveAction.Conf.DEST_FILESET, inputName);
     ETLStage moveAction =
-      new ETLStage("moveInput", new ETLPlugin(FilesetMoveAction.NAME, Action.PLUGIN_TYPE, actionProperties, null));
+        new ETLStage("moveInput",
+            new ETLPlugin(FilesetMoveAction.NAME, Action.PLUGIN_TYPE, actionProperties, null));
 
     Map<String, String> sourceProperties = new HashMap<>();
     sourceProperties.put(TextFileSetSource.Conf.FILESET_NAME, inputName);
@@ -109,23 +112,25 @@ public class PipelineTest extends HydratorTestBase {
     sourceProperties.put(TextFileSetSource.Conf.DELETE_INPUT_ON_SUCCESS, "true");
     sourceProperties.put(TextFileSetSource.Conf.FILES, "${file}");
     ETLStage source =
-      new ETLStage("source", new ETLPlugin(TextFileSetSource.NAME, BatchSource.PLUGIN_TYPE, sourceProperties, null));
+        new ETLStage("source",
+            new ETLPlugin(TextFileSetSource.NAME, BatchSource.PLUGIN_TYPE, sourceProperties, null));
     ETLStage sink = new ETLStage("sink", MockSink.getPlugin(outputName));
 
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addStage(moveAction)
-      .addConnection(moveAction.getName(), source.getName())
-      .addConnection(source.getName(), sink.getName())
-      .build();
+        .addStage(source)
+        .addStage(sink)
+        .addStage(moveAction)
+        .addConnection(moveAction.getName(), source.getName())
+        .addConnection(source.getName(), sink.getName())
+        .build();
 
     // create the move from fileset
     addDatasetInstance(FileSet.class.getName(), moveFromName);
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("textSourceTestPipeline");
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
+    ApplicationManager appManager = deployApplication(pipelineId,
+        new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write some files that will be moved to the input fileset
     DataSetManager<FileSet> moveFromManager = getDataset(moveFromName);
@@ -161,17 +166,17 @@ public class PipelineTest extends HydratorTestBase {
     outputRecords.addAll(MockSink.readOutput(outputManager));
     Set<StructuredRecord> expected = new HashSet<>();
     expected.add(StructuredRecord.builder(TextFileSetSource.OUTPUT_SCHEMA)
-                   .set("position", (long) inputText.indexOf(line1))
-                   .set("text", line1)
-                   .build());
+        .set("position", (long) inputText.indexOf(line1))
+        .set("text", line1)
+        .build());
     expected.add(StructuredRecord.builder(TextFileSetSource.OUTPUT_SCHEMA)
-                   .set("position", (long) inputText.indexOf(line2))
-                   .set("text", line2)
-                   .build());
+        .set("position", (long) inputText.indexOf(line2))
+        .set("text", line2)
+        .build());
     expected.add(StructuredRecord.builder(TextFileSetSource.OUTPUT_SCHEMA)
-                   .set("position", (long) inputText.indexOf(line3))
-                   .set("text", line3)
-                   .build());
+        .set("position", (long) inputText.indexOf(line3))
+        .set("text", line3)
+        .build());
     Assert.assertEquals(expected, outputRecords);
 
     // check that the input file does not exist in the moveFrom fileSet,
@@ -195,7 +200,7 @@ public class PipelineTest extends HydratorTestBase {
     sinkProperties.put(TextFileSetSink.Conf.FIELD_SEPARATOR, "|");
     sinkProperties.put(TextFileSetSink.Conf.OUTPUT_DIR, "${dir}");
     ETLStage sink = new ETLStage("sink", new ETLPlugin(TextFileSetSink.NAME, BatchSink.PLUGIN_TYPE,
-                                                       sinkProperties, null));
+        sinkProperties, null));
 
     Map<String, String> actionProperties = new HashMap<>();
     actionProperties.put(FilesetDeletePostAction.Conf.FILESET_NAME, outputName);
@@ -203,24 +208,26 @@ public class PipelineTest extends HydratorTestBase {
     // there are various .crc files that do not contain any of the output content.
     actionProperties.put(FilesetDeletePostAction.Conf.DELETE_REGEX, ".*\\.crc|_SUCCESS");
     actionProperties.put(FilesetDeletePostAction.Conf.DIRECTORY, outputDirName);
-    ETLStage postAction = new ETLStage("cleanup", new ETLPlugin(FilesetDeletePostAction.NAME, PostAction.PLUGIN_TYPE,
-                                                                actionProperties, null));
+    ETLStage postAction = new ETLStage("cleanup",
+        new ETLPlugin(FilesetDeletePostAction.NAME, PostAction.PLUGIN_TYPE,
+            actionProperties, null));
 
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addPostAction(postAction)
-      .addConnection(source.getName(), sink.getName())
-      .build();
+        .addStage(source)
+        .addStage(sink)
+        .addPostAction(postAction)
+        .addConnection(source.getName(), sink.getName())
+        .build();
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("textSinkTestPipeline");
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
+    ApplicationManager appManager = deployApplication(pipelineId,
+        new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write some data to the input fileset
     Schema inputSchema = Schema.recordOf("test",
-                                         Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
-                                         Schema.Field.of("item", Schema.of(Schema.Type.STRING)));
+        Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("item", Schema.of(Schema.Type.STRING)));
 
     Map<String, String> users = new HashMap<>();
     users.put("samuel", "wallet");
@@ -231,7 +238,8 @@ public class PipelineTest extends HydratorTestBase {
     for (Map.Entry<String, String> userEntry : users.entrySet()) {
       String name = userEntry.getKey();
       String item = userEntry.getValue();
-      inputRecords.add(StructuredRecord.builder(inputSchema).set("name", name).set("item", item).build());
+      inputRecords.add(
+          StructuredRecord.builder(inputSchema).set("name", name).set("item", item).build());
     }
     DataSetManager<Table> inputManager = getDataset(inputName);
     MockSource.writeInput(inputManager, inputRecords);
@@ -256,7 +264,8 @@ public class PipelineTest extends HydratorTestBase {
         Assert.fail("Post action did not delete file " + outputFile.getName());
       }
 
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(outputFile.getInputStream()))) {
+      try (BufferedReader reader = new BufferedReader(
+          new InputStreamReader(outputFile.getInputStream()))) {
         String line;
         while ((line = reader.readLine()) != null) {
           String[] parts = line.split("\\|");
@@ -280,24 +289,28 @@ public class PipelineTest extends HydratorTestBase {
     sinkProperties.put("field", "text");
     sinkProperties.put("tableName", outputName);
     ETLStage sink = new ETLStage("sink",
-                                 new ETLPlugin(WordCountSink.NAME, SparkSink.PLUGIN_TYPE, sinkProperties, null));
+        new ETLPlugin(WordCountSink.NAME, SparkSink.PLUGIN_TYPE, sinkProperties, null));
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addConnection(source.getName(), sink.getName())
-      .build();
+        .addStage(source)
+        .addStage(sink)
+        .addConnection(source.getName(), sink.getName())
+        .build();
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("sparkSinkTestPipeline");
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
+    ApplicationManager appManager = deployApplication(pipelineId,
+        new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input
-    Schema inputSchema = Schema.recordOf("text", Schema.Field.of("text", Schema.of(Schema.Type.STRING)));
+    Schema inputSchema = Schema.recordOf("text",
+        Schema.Field.of("text", Schema.of(Schema.Type.STRING)));
     DataSetManager<Table> inputManager = getDataset(inputName);
     List<StructuredRecord> inputRecords = new ArrayList<>();
     inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello World").build());
-    inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello my name is Hal").build());
-    inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello my name is Sam").build());
+    inputRecords.add(
+        StructuredRecord.builder(inputSchema).set("text", "Hello my name is Hal").build());
+    inputRecords.add(
+        StructuredRecord.builder(inputSchema).set("text", "Hello my name is Sam").build());
     MockSource.writeInput(inputManager, inputRecords);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -327,29 +340,31 @@ public class PipelineTest extends HydratorTestBase {
     transformProperties.put("lowerFields", "first");
     transformProperties.put("upperFields", "last");
     ETLStage transform = new ETLStage("transform",
-                                      new ETLPlugin(StringCaseTransform.NAME, Transform.PLUGIN_TYPE,
-                                                    transformProperties, null));
+        new ETLPlugin(StringCaseTransform.NAME, Transform.PLUGIN_TYPE,
+            transformProperties, null));
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addStage(transform)
-      .addConnection(source.getName(), transform.getName())
-      .addConnection(transform.getName(), sink.getName())
-      .build();
+        .addStage(source)
+        .addStage(sink)
+        .addStage(transform)
+        .addConnection(source.getName(), transform.getName())
+        .addConnection(transform.getName(), sink.getName())
+        .build();
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("transformTestPipeline");
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
+    ApplicationManager appManager = deployApplication(pipelineId,
+        new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input
     Schema schema = Schema.recordOf(
-      "name",
-      Schema.Field.of("first", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("last", Schema.of(Schema.Type.STRING))
+        "name",
+        Schema.Field.of("first", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("last", Schema.of(Schema.Type.STRING))
     );
     DataSetManager<Table> inputManager = getDataset(inputName);
     List<StructuredRecord> inputRecords = new ArrayList<>();
-    inputRecords.add(StructuredRecord.builder(schema).set("first", "Samuel").set("last", "Jackson").build());
+    inputRecords.add(
+        StructuredRecord.builder(schema).set("first", "Samuel").set("last", "Jackson").build());
     MockSource.writeInput(inputManager, inputRecords);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -359,7 +374,8 @@ public class PipelineTest extends HydratorTestBase {
     DataSetManager<Table> outputManager = getDataset(outputName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
     List<StructuredRecord> expected = new ArrayList<>();
-    expected.add(StructuredRecord.builder(schema).set("first", "samuel").set("last", "JACKSON").build());
+    expected.add(
+        StructuredRecord.builder(schema).set("first", "samuel").set("last", "JACKSON").build());
     Assert.assertEquals(expected, outputRecords);
   }
 
@@ -382,26 +398,31 @@ public class PipelineTest extends HydratorTestBase {
     ETLStage sink = new ETLStage("wcOutput", MockSink.getPlugin(outputName));
     Map<String, String> aggProperties = new HashMap<>();
     aggProperties.put("field", "text");
-    ETLStage agg = new ETLStage("middle", new ETLPlugin("WordCount", pluginType, aggProperties, null));
+    ETLStage agg = new ETLStage("middle",
+        new ETLPlugin("WordCount", pluginType, aggProperties, null));
     ETLBatchConfig pipelineConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(source)
-      .addStage(sink)
-      .addStage(agg)
-      .addConnection(source.getName(), agg.getName())
-      .addConnection(agg.getName(), sink.getName())
-      .build();
+        .addStage(source)
+        .addStage(sink)
+        .addStage(agg)
+        .addConnection(source.getName(), agg.getName())
+        .addConnection(agg.getName(), sink.getName())
+        .build();
 
     // create the pipeline
     ApplicationId pipelineId = NamespaceId.DEFAULT.app("wcTestPipeline-" + pluginType);
-    ApplicationManager appManager = deployApplication(pipelineId, new AppRequest<>(APP_ARTIFACT, pipelineConfig));
+    ApplicationManager appManager = deployApplication(pipelineId,
+        new AppRequest<>(APP_ARTIFACT, pipelineConfig));
 
     // write the input
-    Schema inputSchema = Schema.recordOf("text", Schema.Field.of("text", Schema.of(Schema.Type.STRING)));
+    Schema inputSchema = Schema.recordOf("text",
+        Schema.Field.of("text", Schema.of(Schema.Type.STRING)));
     DataSetManager<Table> inputManager = getDataset(inputName);
     List<StructuredRecord> inputRecords = new ArrayList<>();
     inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello World").build());
-    inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello my name is Hal").build());
-    inputRecords.add(StructuredRecord.builder(inputSchema).set("text", "Hello my name is Sam").build());
+    inputRecords.add(
+        StructuredRecord.builder(inputSchema).set("text", "Hello my name is Hal").build());
+    inputRecords.add(
+        StructuredRecord.builder(inputSchema).set("text", "Hello my name is Sam").build());
     MockSource.writeInput(inputManager, inputRecords);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
@@ -413,26 +434,26 @@ public class PipelineTest extends HydratorTestBase {
     outputRecords.addAll(MockSink.readOutput(outputManager));
     Set<StructuredRecord> expected = new HashSet<>();
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "Hello")
-                   .set("count", 3L).build());
+        .set("word", "Hello")
+        .set("count", 3L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "World")
-                   .set("count", 1L).build());
+        .set("word", "World")
+        .set("count", 1L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "my")
-                   .set("count", 2L).build());
+        .set("word", "my")
+        .set("count", 2L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "name")
-                   .set("count", 2L).build());
+        .set("word", "name")
+        .set("count", 2L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "is")
-                   .set("count", 2L).build());
+        .set("word", "is")
+        .set("count", 2L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "Hal")
-                   .set("count", 1L).build());
+        .set("word", "Hal")
+        .set("count", 1L).build());
     expected.add(StructuredRecord.builder(WordCountAggregator.OUTPUT_SCHEMA)
-                   .set("word", "Sam")
-                   .set("count", 1L).build());
+        .set("word", "Sam")
+        .set("count", 1L).build());
     Assert.assertEquals(expected, outputRecords);
   }
 }

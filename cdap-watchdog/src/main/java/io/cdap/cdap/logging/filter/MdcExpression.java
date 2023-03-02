@@ -23,6 +23,7 @@ import com.google.common.base.Objects;
  * Represents an expression that can match a key,value in MDC.
  */
 public class MdcExpression implements Filter {
+
   private final String key;
   private final String value;
 
@@ -48,8 +49,8 @@ public class MdcExpression implements Filter {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("key", key)
-      .add("value", value)
-      .toString();
+        .add("key", key)
+        .add("value", value)
+        .toString();
   }
 }

@@ -27,22 +27,23 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
 /**
- * Internal batch sink used as a connector between pipeline phases.
- * Though this extends BatchSink, this will not be instantiated through the plugin framework, but will
- * be created explicitly through the application.
+ * Internal batch sink used as a connector between pipeline phases. Though this extends BatchSink,
+ * this will not be instantiated through the plugin framework, but will be created explicitly
+ * through the application.
  *
- * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that wrote to it.
- * This way, multiple phases can have the same local PartitionedFileSet as a sink, and the source will read data
- * from all partitions.
+ * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that
+ * wrote to it. This way, multiple phases can have the same local PartitionedFileSet as a sink, and
+ * the source will read data from all partitions.
  *
- * This is because we don't want this to show up as a plugin that users can select and use, and also because
- * it uses features not exposed in the etl api (local workflow datasets).
+ * This is because we don't want this to show up as a plugin that users can select and use, and also
+ * because it uses features not exposed in the etl api (local workflow datasets).
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  *
  * @param <T> type of input object
  */
 public abstract class ConnectorSink<T> extends BatchSink<T, NullWritable, Text> {
+
   private final String datasetName;
   private final String phaseName;
 

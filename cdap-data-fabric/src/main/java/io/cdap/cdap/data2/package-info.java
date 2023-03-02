@@ -15,8 +15,8 @@
  */
 
 /**
- * This package contains implementations of the data fabric v2. It replaces major pieces of old version. The work is
- * being done incrementally, so old one will stay until all is done. To prevent mess, new sources are placed
- * in separate package
+ * This package contains implementations of the data fabric v2. It replaces major pieces of old
+ * version. The work is being done incrementally, so old one will stay until all is done. To prevent
+ * mess, new sources are placed in separate package
  */
 package io.cdap.cdap.data2;

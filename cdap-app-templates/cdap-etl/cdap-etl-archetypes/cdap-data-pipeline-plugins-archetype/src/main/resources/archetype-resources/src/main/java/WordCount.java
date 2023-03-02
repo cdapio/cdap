@@ -34,6 +34,7 @@ import scala.Tuple2;
  * Common class for word count spark plugins.
  */
 public class WordCount implements Serializable {
+
   private static final Pattern WHITESPACE = Pattern.compile("\\s");
   private final String field;
 
@@ -48,25 +49,27 @@ public class WordCount implements Serializable {
       Schema.Field inputField = inputSchema.getField(field);
       if (inputField == null) {
         throw new IllegalArgumentException(
-          String.format("Field '%s' does not exist in input schema %s.", field, inputSchema));
+            String.format("Field '%s' does not exist in input schema %s.", field, inputSchema));
       }
       Schema fieldSchema = inputField.getSchema();
-      Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+      Schema.Type fieldType =
+          fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (fieldType != Schema.Type.STRING) {
         throw new IllegalArgumentException(
-          String.format("Field '%s' is of illegal type %s. Must be of type %s.",
-                        field, fieldType, Schema.Type.STRING));
+            String.format("Field '%s' is of illegal type %s. Must be of type %s.",
+                field, fieldType, Schema.Type.STRING));
       }
     }
   }
 
   public JavaPairRDD<String, Long> countWords(JavaRDD<StructuredRecord> input) {
     return input.flatMap(new SplitFunction(field))
-      .groupBy(new Identity<String>())
-      .flatMapToPair(new CountFunction());
+        .groupBy(new Identity<String>())
+        .flatMapToPair(new CountFunction());
   }
 
   private static class Identity<T> implements Function<T, T> {
+
     @Override
     public T call(T t) throws Exception {
       return t;
@@ -74,6 +77,7 @@ public class WordCount implements Serializable {
   }
 
   private static class SplitFunction implements FlatMapFunction<StructuredRecord, String> {
+
     private final String field;
 
     public SplitFunction(String field) {
@@ -91,10 +95,12 @@ public class WordCount implements Serializable {
     }
   }
 
-  private static class CountFunction implements PairFlatMapFunction<Tuple2<String, Iterable<String>>, String, Long> {
+  private static class CountFunction implements
+      PairFlatMapFunction<Tuple2<String, Iterable<String>>, String, Long> {
 
     @Override
-    public Iterable<Tuple2<String, Long>> call(Tuple2<String, Iterable<String>> tuples) throws Exception {
+    public Iterable<Tuple2<String, Long>> call(Tuple2<String, Iterable<String>> tuples)
+        throws Exception {
       String word = tuples._1();
       Long count = 0L;
       for (String s : tuples._2()) {

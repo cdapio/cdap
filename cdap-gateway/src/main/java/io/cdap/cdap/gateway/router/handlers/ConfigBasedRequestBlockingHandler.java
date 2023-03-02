@@ -47,7 +47,7 @@ public class ConfigBasedRequestBlockingHandler extends ChannelInboundHandlerAdap
   @Override
   public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
     if (!(msg instanceof HttpRequest)
-      || !cConf.getBoolean(Constants.Router.BLOCK_REQUEST_ENABLED)) {
+        || !cConf.getBoolean(Constants.Router.BLOCK_REQUEST_ENABLED)) {
       ctx.fireChannelRead(msg);
       return;
     }
@@ -58,7 +58,7 @@ public class ConfigBasedRequestBlockingHandler extends ChannelInboundHandlerAdap
 
       ByteBuf content = Unpooled.copiedBuffer(responseMsg, StandardCharsets.UTF_8);
       HttpResponse response = new DefaultFullHttpResponse(
-        HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(statusCode), content
+          HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(statusCode), content
       );
       HttpUtil.setContentLength(response, content.readableBytes());
       response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json;charset=UTF-8");

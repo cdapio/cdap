@@ -18,8 +18,9 @@ package io.cdap.cdap.api.builder;
 import java.util.Map;
 
 /**
- * @param <T>
+ *
  */
 public interface OptionsSetter<T> {
+
   T withOptions(Map<String, String> options);
 }

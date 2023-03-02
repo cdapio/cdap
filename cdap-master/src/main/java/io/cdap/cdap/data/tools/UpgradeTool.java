@@ -101,8 +101,8 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
-    .create();
+      .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
+      .create();
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -118,13 +118,13 @@ public class UpgradeTool {
    */
   private enum Action {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
-              "  The upgrade tool upgrades the following: \n" +
-              "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. Stream State Store\n" +
-              "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
+        "  The upgrade tool upgrades the following: \n" +
+        "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
+        "  2. Stream State Store\n" +
+        "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
-                    "system HBase tables to a version that is compatible with the new HBase \n" +
-                    "version. All tables must be disabled prior to this step."),
+        "system HBase tables to a version that is compatible with the new HBase \n" +
+        "version. All tables must be disabled prior to this step."),
     HELP("Show this help.");
 
     private final String description;
@@ -158,7 +158,6 @@ public class UpgradeTool {
     HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
-
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       try {
         UpgradeTool.this.stop();
@@ -171,100 +170,105 @@ public class UpgradeTool {
   @VisibleForTesting
   Injector createInjector() {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new DFSLocationModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new MessagingClientModule(),
-      Modules.override(new DataSetsModules().getDistributedModules()).with(
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new DFSLocationModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new MessagingClientModule(),
+        Modules.override(new DataSetsModules().getDistributedModules()).with(
+            new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(DatasetFramework.class).to(InMemoryDatasetFramework.class)
+                    .in(Scopes.SINGLETON);
+                // the DataSetsModules().getDistributedModules() binds to RemoteDatasetFramework so override that to
+                // the same InMemoryDatasetFramework
+                bind(DatasetFramework.class)
+                    .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+                    .to(DatasetFramework.class);
+                bind(DatasetDefinitionRegistryFactory.class)
+                    .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+                // CDAP-5954 Upgrade tool does not need to record lineage and metadata changes for now.
+                bind(LineageWriter.class).to(NoOpLineageWriter.class);
+                bind(FieldLineageWriter.class).to(NoOpLineageWriter.class);
+              }
+            }
+        ),
+        new TwillModule(),
+        new ProgramRunnerRuntimeModule().getDistributedModules(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new KafkaClientModule(),
+        new IOModule(),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new AuthenticationContextModules().getMasterModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getMasterModule(),
+        new SecureStoreServerModule(),
+        new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
+        new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
+        new KafkaLogAppenderModule(),
+        // the DataFabricDistributedModule needs MetricsCollectionService binding
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
-            // the DataSetsModules().getDistributedModules() binds to RemoteDatasetFramework so override that to
-            // the same InMemoryDatasetFramework
-            bind(DatasetFramework.class)
-              .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-              .to(DatasetFramework.class);
-            bind(DatasetDefinitionRegistryFactory.class)
-              .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
-            // CDAP-5954 Upgrade tool does not need to record lineage and metadata changes for now.
-            bind(LineageWriter.class).to(NoOpLineageWriter.class);
-            bind(FieldLineageWriter.class).to(NoOpLineageWriter.class);
+            // Since Upgrade tool does not do anything with Metrics we just bind it to no-op implementations
+            bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+            bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
+          }
+
+          @Provides
+          @Singleton
+          @Named("datasetInstanceManager")
+          @SuppressWarnings("unused")
+          public DatasetInstanceManager getDatasetInstanceManager(
+              TransactionRunner transactionRunner) {
+            return new DatasetInstanceManager(transactionRunner);
+          }
+
+          // This is needed because the LocalApplicationManager
+          // expects a dsframework injection named datasetMDS
+          @Provides
+          @Singleton
+          @Named("datasetMDS")
+          @SuppressWarnings("unused")
+          public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
+            return dsFramework;
+          }
+
+        },
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
           }
         }
-      ),
-      new TwillModule(),
-      new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new KafkaClientModule(),
-      new IOModule(),
-      CoreSecurityRuntimeModule.getDistributedModule(cConf),
-      new AuthenticationContextModules().getMasterModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
-      new SecureStoreServerModule(),
-      new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
-      new AppFabricServiceRuntimeModule(cConf).getDistributedModules(),
-      new KafkaLogAppenderModule(),
-      // the DataFabricDistributedModule needs MetricsCollectionService binding
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Since Upgrade tool does not do anything with Metrics we just bind it to no-op implementations
-          bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
-          bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
-        }
-
-        @Provides
-        @Singleton
-        @Named("datasetInstanceManager")
-        @SuppressWarnings("unused")
-        public DatasetInstanceManager getDatasetInstanceManager(TransactionRunner transactionRunner) {
-          return new DatasetInstanceManager(transactionRunner);
-        }
-
-        // This is needed because the LocalApplicationManager
-        // expects a dsframework injection named datasetMDS
-        @Provides
-        @Singleton
-        @Named("datasetMDS")
-        @SuppressWarnings("unused")
-        public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
-          return dsFramework;
-        }
-
-      },
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
-        }
-      }
     );
   }
 
   /**
-   * Do the start up work
-   * Note: includeNewDatasets boolean is required because upgrade tool has two mode: 1. Normal CDAP upgrade and
-   * 2. Upgrading co processor for tables after hbase upgrade. This parameter specifies whether new system dataset
-   * which were added in the current release needs to be added in the dataset framework or not.
-   * During Normal CDAP upgrade (1) we don't need these datasets to be added in the ds framework as they will get
-   * created during upgrade rather than when cdap starts after upgrade which is what we want.
-   * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
-   * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
-   * @param includeNewDatasets boolean which specifies whether to add new datasets in ds framework or not
+   * Do the start up work Note: includeNewDatasets boolean is required because upgrade tool has two
+   * mode: 1. Normal CDAP upgrade and 2. Upgrading co processor for tables after hbase upgrade. This
+   * parameter specifies whether new system dataset which were added in the current release needs to
+   * be added in the dataset framework or not. During Normal CDAP upgrade (1) we don't need these
+   * datasets to be added in the ds framework as they will get created during upgrade rather than
+   * when cdap starts after upgrade which is what we want. Whereas during Hbase upgrade (2) we want
+   * these new tables to be added so that the co processor of these tables can be upgraded when the
+   * user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
+   *
+   * @param includeNewDatasets boolean which specifies whether to add new datasets in ds
+   *     framework or not
    */
   private void startUp(boolean includeNewDatasets) throws Exception {
     // Start all the services.
     LOG.info("Starting Zookeeper Client...");
-    Services.startAndWait(zkClientService, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                          TimeUnit.MILLISECONDS,
-                          String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-                                          "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
-                                          "Currently configured as: %s", zkClientService.getConnectString()));
+    Services.startAndWait(zkClientService,
+        cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+        TimeUnit.MILLISECONDS,
+        String.format("Connection timed out while trying to start ZooKeeper client. Please " +
+            "verify that the ZooKeeper quorum settings are correct in cdap-site.xml. " +
+            "Currently configured as: %s", zkClientService.getConnectString()));
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
@@ -287,7 +291,8 @@ public class UpgradeTool {
   }
 
   private void doMain(String[] args) throws Exception {
-    System.out.println(String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
+    System.out.println(
+        String.format("%s - version %s.", getClass().getSimpleName(), ProjectInfo.getVersion()));
     System.out.println();
 
     if (args.length < 1) {
@@ -312,7 +317,8 @@ public class UpgradeTool {
     try {
       switch (action) {
         case UPGRADE: {
-          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          System.out.println(
+              String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
           String response = getResponse(interactive);
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
@@ -330,7 +336,8 @@ public class UpgradeTool {
           break;
         }
         case UPGRADE_HBASE: {
-          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          System.out.println(
+              String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
           String response = getResponse(interactive);
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
@@ -351,14 +358,16 @@ public class UpgradeTool {
           break;
       }
     } catch (Exception e) {
-      System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
+      System.out.println(
+          String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       throw e;
     }
   }
 
   /**
-   * Checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so throw
-   * exception message with information on where its running.
+   * Checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so
+   * throw exception message with information on where its running.
+   *
    * @throws Exception if at least one master is running
    */
   private void ensureCDAPMasterStopped() throws Exception {
@@ -369,13 +378,16 @@ public class UpgradeTool {
     if (!nodeChildren.getChildren().isEmpty()) {
       for (String runId : nodeChildren.getChildren()) {
         // only one children would be present, as only the active master will be registered at this path
-        NodeData nodeData = zkClientService.getData(String.format("%s/%s", appFabricPath, runId)).get();
-        Discoverable discoverable = GSON.fromJson(Bytes.toString(nodeData.getData()), Discoverable.class);
+        NodeData nodeData = zkClientService.getData(String.format("%s/%s", appFabricPath, runId))
+            .get();
+        Discoverable discoverable = GSON.fromJson(Bytes.toString(nodeData.getData()),
+            Discoverable.class);
         runningNodes.add(discoverable.getSocketAddress().getHostName());
       }
       String exceptionMessage =
-        String.format("CDAP Master is still running on %s, please stop it before running upgrade.",
-                      com.google.common.base.Joiner.on(",").join(runningNodes));
+          String.format(
+              "CDAP Master is still running on %s, please stop it before running upgrade.",
+              com.google.common.base.Joiner.on(",").join(runningNodes));
       throw new Exception(exceptionMessage);
     }
     // CDAP-11733 As a future improvement, the upgrade tool can register as a CDAP master to become the leader
@@ -403,7 +415,8 @@ public class UpgradeTool {
     System.out.println();
 
     for (Action action : Action.values()) {
-      System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+      System.out.println(
+          String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
     }
   }
 
@@ -420,7 +433,8 @@ public class UpgradeTool {
   }
 
   private void performHBaseUpgrade() throws Exception {
-    System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE, Boolean.TRUE.toString());
+    System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE,
+        Boolean.TRUE.toString());
     performCoprocessorUpgrade();
   }
 
@@ -444,17 +458,18 @@ public class UpgradeTool {
   }
 
   /**
-   * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
-   * Note: includeNewDatasets boolean is required because upgrade tool has two mode: 1. Normal CDAP upgrade and
-   * 2. Upgrading co processor for tables after hbase upgrade. This parameter specifies whether new system dataset
-   * which were added in the current release needs to be added in the dataset framework or not.
-   * During Normal CDAP upgrade (1) we don't need these datasets to be added in the ds framework as they will get
-   * created during upgrade rather than when cdap starts after upgrade which is what we want.
-   * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
-   * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
+   * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by
+   * applications!!! Note: includeNewDatasets boolean is required because upgrade tool has two mode:
+   * 1. Normal CDAP upgrade and 2. Upgrading co processor for tables after hbase upgrade. This
+   * parameter specifies whether new system dataset which were added in the current release needs to
+   * be added in the dataset framework or not. During Normal CDAP upgrade (1) we don't need these
+   * datasets to be added in the ds framework as they will get created during upgrade rather than
+   * when cdap starts after upgrade which is what we want. Whereas during Hbase upgrade (2) we want
+   * these new tables to be added so that the co processor of these tables can be upgraded when the
+   * user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
   private void initializeDSFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
-    throws IOException, DatasetManagementException, UnauthorizedException {
+      throws IOException, DatasetManagementException, UnauthorizedException {
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     //noinspection StatementWithEmptyBody
     if (includeNewDatasets) {

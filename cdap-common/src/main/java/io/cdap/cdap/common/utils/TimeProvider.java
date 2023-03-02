@@ -24,7 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public interface TimeProvider {
 
   /**
-   * A {@link TimeProvider} that provides timestamp using system clock by calling {@link System#currentTimeMillis()}.
+   * A {@link TimeProvider} that provides timestamp using system clock by calling {@link
+   * System#currentTimeMillis()}.
    */
   TimeProvider SYSTEM_TIME = new TimeProvider() {
     @Override
@@ -34,9 +35,9 @@ public interface TimeProvider {
   };
 
   /**
-   * A {@link TimeProvider} that provides timestamp in incremental fashion. It returns the {@code start} value
-   * as provided to the constructor for the first call,
-   * followed by {@code start + 1, start + 2, start + 3, ...} and so on for subsequent calls.
+   * A {@link TimeProvider} that provides timestamp in incremental fashion. It returns the {@code
+   * start} value as provided to the constructor for the first call, followed by {@code start + 1,
+   * start + 2, start + 3, ...} and so on for subsequent calls.
    */
   final class IncrementalTimeProvider implements TimeProvider {
 

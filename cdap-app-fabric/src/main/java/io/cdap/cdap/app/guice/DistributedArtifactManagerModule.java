@@ -38,11 +38,11 @@ public class DistributedArtifactManagerModule extends AbstractModule {
     bind(PluginFinder.class).to(RemotePluginFinder.class);
     // ArtifactLocalizerClient is only used for task worker
     OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class)
-      .setBinding().toProvider(Providers.of(null));
+        .setBinding().toProvider(Providers.of(null));
 
     // Bind the ArtifactManager implementation
     install(new FactoryModuleBuilder()
-              .implement(ArtifactManager.class, RemoteArtifactManager.class)
-              .build(ArtifactManagerFactory.class));
+        .implement(ArtifactManager.class, RemoteArtifactManager.class)
+        .build(ArtifactManagerFactory.class));
   }
 }

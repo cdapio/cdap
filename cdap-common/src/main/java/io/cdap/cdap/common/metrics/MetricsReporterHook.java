@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * Records gateway requests/response metrics.
  */
 public class MetricsReporterHook extends AbstractHandlerHook {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsReporterHook.class);
   private static final String LATENCY_METRIC_NAME = "response.latency";
 
@@ -51,18 +52,18 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private final FeatureFlagsProvider featureFlagsProvider;
 
   public MetricsReporterHook(CConfiguration cConf,
-                             MetricsCollectionService metricsCollectionService, String serviceName) {
+      MetricsCollectionService metricsCollectionService, String serviceName) {
     this.serviceName = serviceName;
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
     if (metricsCollectionService != null) {
       this.collectorCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(1, TimeUnit.HOURS)
-        .build(new CacheLoader<Map<String, String>, MetricsContext>() {
-          @Override
-          public MetricsContext load(Map<String, String> key) {
-            return metricsCollectionService.getContext(key);
-          }
-        });
+          .expireAfterAccess(1, TimeUnit.HOURS)
+          .build(new CacheLoader<Map<String, String>, MetricsContext>() {
+            @Override
+            public MetricsContext load(Map<String, String> key) {
+              return metricsCollectionService.getContext(key);
+            }
+          });
     } else {
       collectorCache = null;
     }
@@ -127,10 +128,10 @@ public class MetricsReporterHook extends AbstractHandlerHook {
   private Map<String, String> createContext(HandlerInfo handlerInfo) {
     // todo: really inefficient to call this on the intense data flow path
     return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-      Constants.Metrics.Tag.COMPONENT, serviceName,
-      Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
-      Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());
+        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+        Constants.Metrics.Tag.COMPONENT, serviceName,
+        Constants.Metrics.Tag.HANDLER, getSimpleName(handlerInfo.getHandlerName()),
+        Constants.Metrics.Tag.METHOD, handlerInfo.getMethodName());
   }
 
   private String getSimpleName(String className) {

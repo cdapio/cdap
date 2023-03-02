@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public interface Spark {
+
   /**
    * Configures a {@link Spark} job using the given {@link SparkConfigurer}.
    */

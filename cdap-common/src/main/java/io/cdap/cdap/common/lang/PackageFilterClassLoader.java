@@ -27,8 +27,8 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
- * A {@link ClassLoader} that filter class based on package name. Classes in the bootstrap ClassLoader is always
- * loadable from this ClassLoader.
+ * A {@link ClassLoader} that filter class based on package name. Classes in the bootstrap
+ * ClassLoader is always loadable from this ClassLoader.
  */
 public class PackageFilterClassLoader extends ClassLoader {
 
@@ -36,7 +36,8 @@ public class PackageFilterClassLoader extends ClassLoader {
   private final ClassLoader bootstrapClassLoader;
 
   /**
-   * Constructs a new instance that only allow class's package name passes the given {@link Predicate}.
+   * Constructs a new instance that only allow class's package name passes the given {@link
+   * Predicate}.
    */
   public PackageFilterClassLoader(ClassLoader parent, Predicate<String> predicate) {
     super(parent);
@@ -47,7 +48,8 @@ public class PackageFilterClassLoader extends ClassLoader {
   }
 
   @Override
-  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+  protected synchronized Class<?> loadClass(String name, boolean resolve)
+      throws ClassNotFoundException {
     try {
       return bootstrapClassLoader.loadClass(name);
     } catch (ClassNotFoundException e) {
@@ -120,7 +122,8 @@ public class PackageFilterClassLoader extends ClassLoader {
    * @param classResource Resource name of the class.
    */
   private String getResourcePackage(String classResource) {
-    String packageName = classResource.substring(0, classResource.length() - ".class".length()).replace('/', '.');
+    String packageName = classResource.substring(0, classResource.length() - ".class".length())
+        .replace('/', '.');
     if (packageName.startsWith("/")) {
       return packageName.substring(1);
     }

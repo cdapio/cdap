@@ -25,6 +25,7 @@ import java.util.Set;
  * Options for macro parsing.
  */
 public class MacroParserOptions {
+
   public static final MacroParserOptions DEFAULT = builder().build();
   private final boolean evaluateLookups;
   private final boolean evaluateFunctions;
@@ -34,8 +35,8 @@ public class MacroParserOptions {
   private final Set<String> functionWhitelist;
 
   private MacroParserOptions(boolean evaluateLookups, boolean evaluateFunctions,
-                             boolean escapingEnabled, boolean skipInvalid,
-                             int maxRecurseDepth, Set<String> functionWhitelist) {
+      boolean escapingEnabled, boolean skipInvalid,
+      int maxRecurseDepth, Set<String> functionWhitelist) {
     this.evaluateLookups = evaluateLookups;
     this.evaluateFunctions = evaluateFunctions;
     this.escapingEnabled = escapingEnabled;
@@ -79,6 +80,7 @@ public class MacroParserOptions {
    * Builds macro parser options.
    */
   public static class Builder {
+
     private boolean evaluateLookups = true;
     private boolean evaluateFunctions = true;
     private boolean escapingEnabled = true;
@@ -123,7 +125,7 @@ public class MacroParserOptions {
 
     public MacroParserOptions build() {
       return new MacroParserOptions(evaluateLookups, evaluateFunctions, escapingEnabled,
-                                    skipInvalid, maxRecurseDepth, functionWhitelist);
+          skipInvalid, maxRecurseDepth, functionWhitelist);
     }
   }
 }

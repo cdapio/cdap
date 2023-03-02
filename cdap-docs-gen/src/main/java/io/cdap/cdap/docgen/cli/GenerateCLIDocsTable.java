@@ -50,8 +50,9 @@ public class GenerateCLIDocsTable {
         bind(TableRenderer.class).toInstance(new CsvTableRenderer());
       }
     });
-    this.printDocsCommand = new GenerateCLIDocsTableCommand(injector.getInstance(DefaultCommands.class),
-                                                            injector.getInstance(CLIConfig.class));
+    this.printDocsCommand = new GenerateCLIDocsTableCommand(
+        injector.getInstance(DefaultCommands.class),
+        injector.getInstance(CLIConfig.class));
   }
 
   public static void main(String[] args) throws Exception {

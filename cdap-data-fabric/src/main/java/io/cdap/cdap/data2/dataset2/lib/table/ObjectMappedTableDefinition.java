@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * DatasetDefinition for {@link ObjectMappedTableDataset}.
  */
-public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<ObjectMappedTable>  {
+public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<ObjectMappedTable> {
 
   private static final Gson GSON = new Gson();
   private static final String TABLE_NAME = "objects";
@@ -56,16 +56,17 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     // TODO (CDAP-6268): validate schema compatibility
     return super.reconfigure(instanceName, configureSchema(newProperties), currentSpec);
   }
 
   @Override
-  public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                                Map<String, String> arguments,
-                                                ClassLoader classLoader) throws IOException {
+  public ObjectMappedTableDataset<?> getDataset(DatasetContext datasetContext,
+      DatasetSpecification spec,
+      Map<String, String> arguments,
+      ClassLoader classLoader) throws IOException {
     String keyName = ObjectMappedTableProperties.getRowKeyExploreName(spec.getProperties());
 
     DatasetSpecification tableSpec = spec.getSpecification(TABLE_NAME);
@@ -74,11 +75,11 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
     // TODO: remove after CDAP-2122 is done
     if (!tableSpec.getProperties().containsKey(Table.PROPERTY_SCHEMA)) {
       tableSpec = DatasetSpecification.builder(tableSpec.getName(), tableSpec.getType())
-        .properties(tableSpec.getProperties())
-        .property(Table.PROPERTY_SCHEMA, spec.getProperty(Table.PROPERTY_SCHEMA))
-        .property(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
-        .datasets(tableSpec.getSpecifications().values())
-        .build();
+          .properties(tableSpec.getProperties())
+          .property(Table.PROPERTY_SCHEMA, spec.getProperty(Table.PROPERTY_SCHEMA))
+          .property(Table.PROPERTY_SCHEMA_ROW_FIELD, keyName)
+          .datasets(tableSpec.getSpecifications().values())
+          .build();
     }
 
     // reconstruct the table schema here because of backwards compatibility
@@ -87,7 +88,8 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
     Map<String, String> properties = spec.getProperties();
 
     TypeRepresentation typeRep = GSON.fromJson(
-      ObjectMappedTableProperties.getObjectTypeRepresentation(properties), TypeRepresentation.class);
+        ObjectMappedTableProperties.getObjectTypeRepresentation(properties),
+        TypeRepresentation.class);
     Schema objSchema = ObjectMappedTableProperties.getObjectSchema(properties);
     return new ObjectMappedTableDataset(spec.getName(), table, typeRep, objSchema, classLoader);
   }
@@ -100,8 +102,10 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
     // an ObjectMappedTable<Purchase> where Purchase is a class internal to their app.
     // we require schema here because we want to validate it to make sure it is supported.
     Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_NAME));
-    Preconditions.checkArgument(props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_TYPE));
+    Preconditions.checkArgument(
+        props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_NAME));
+    Preconditions.checkArgument(
+        props.containsKey(ObjectMappedTableProperties.ROW_KEY_EXPLORE_TYPE));
     try {
       Schema objectSchema = ObjectMappedTableProperties.getObjectSchema(props);
       validateSchema(objectSchema);
@@ -109,10 +113,10 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
       Schema.Type keyType = ObjectMappedTableProperties.getRowKeyExploreType(props);
       Schema fullSchema = addKeyToSchema(objectSchema, keyName, keyType);
       return TableProperties.builder()
-        .setSchema(fullSchema)
-        .setRowFieldName(keyName)
-        .addAll(properties.getProperties())
-        .build();
+          .setSchema(fullSchema)
+          .setRowFieldName(keyName)
+          .addAll(properties.getProperties())
+          .build();
     } catch (IOException e) {
       throw new IllegalArgumentException("Could not parse schema.", e);
     } catch (UnsupportedTypeException e) {
@@ -127,12 +131,13 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
     }
     for (Schema.Field field : schema.getFields()) {
       Schema fieldSchema = field.getSchema();
-      Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+      Schema.Type fieldType =
+          fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (!fieldType.isSimpleType()) {
         throw new UnsupportedTypeException(
-          String.format("Field %s is of unsupported type %s." +
-                          " Must be a simple type (boolean, int, long, float, double, string, bytes).",
-                        field.getName(), fieldType.toString()));
+            String.format("Field %s is of unsupported type %s." +
+                    " Must be a simple type (boolean, int, long, float, double, string, bytes).",
+                field.getName(), fieldType.toString()));
       }
     }
   }
@@ -145,7 +150,7 @@ public class ObjectMappedTableDefinition extends CompositeDatasetDefinition<Obje
       // have to lowercase since Hive will lowercase
       if (keyName.toLowerCase().equals(objectField.getName().toLowerCase())) {
         throw new IllegalArgumentException(
-          "Row key " + keyName + " cannot use the same column name as an object field.");
+            "Row key " + keyName + " cannot use the same column name as an object field.");
       }
       fields.add(objectField);
     }

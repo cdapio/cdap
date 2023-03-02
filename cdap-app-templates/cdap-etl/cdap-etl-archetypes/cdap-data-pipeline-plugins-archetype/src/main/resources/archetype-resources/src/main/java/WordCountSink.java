@@ -35,13 +35,14 @@ import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
 /**
- * SparkSink plugin that counts how many times each word appears in records input to it and stores the result in
- * a KeyValueTable.
+ * SparkSink plugin that counts how many times each word appears in records input to it and stores
+ * the result in a KeyValueTable.
  */
 @Plugin(type = SparkSink.PLUGIN_TYPE)
 @Name(WordCountSink.NAME)
 @Description("Counts how many times each word appears in all records input to the aggregator.")
 public class WordCountSink extends SparkSink<StructuredRecord> {
+
   public static final String NAME = "WordCount";
   private final Conf config;
 
@@ -49,6 +50,7 @@ public class WordCountSink extends SparkSink<StructuredRecord> {
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     @Description("The field from the input records containing the words to count.")
     private String field;
 
@@ -69,7 +71,8 @@ public class WordCountSink extends SparkSink<StructuredRecord> {
       WordCount wordCount = new WordCount(config.field);
       wordCount.validateSchema(inputSchema);
     }
-    pipelineConfigurer.createDataset(config.tableName, KeyValueTable.class, DatasetProperties.EMPTY);
+    pipelineConfigurer.createDataset(config.tableName, KeyValueTable.class,
+        DatasetProperties.EMPTY);
   }
 
   @Override
@@ -79,15 +82,17 @@ public class WordCountSink extends SparkSink<StructuredRecord> {
 
   @Override
   public void run(SparkExecutionPluginContext sparkExecutionPluginContext,
-                  JavaRDD<StructuredRecord> javaRDD) throws Exception {
+      JavaRDD<StructuredRecord> javaRDD) throws Exception {
     WordCount wordCount = new WordCount(config.field);
     JavaPairRDD outputRDD = wordCount.countWords(javaRDD)
-      .mapToPair(new PairFunction<Tuple2<String, Long>, byte[], byte[]>() {
-        @Override
-        public Tuple2<byte[], byte[]> call(Tuple2<String, Long> stringLongTuple2) throws Exception {
-          return new Tuple2<>(Bytes.toBytes(stringLongTuple2._1()), Bytes.toBytes(stringLongTuple2._2()));
-        }
-      });
+        .mapToPair(new PairFunction<Tuple2<String, Long>, byte[], byte[]>() {
+          @Override
+          public Tuple2<byte[], byte[]> call(Tuple2<String, Long> stringLongTuple2)
+              throws Exception {
+            return new Tuple2<>(Bytes.toBytes(stringLongTuple2._1()),
+                Bytes.toBytes(stringLongTuple2._2()));
+          }
+        });
     sparkExecutionPluginContext.saveAsDataset(outputRDD, config.tableName);
   }
 }

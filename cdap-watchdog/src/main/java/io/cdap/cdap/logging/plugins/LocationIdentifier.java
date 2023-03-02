@@ -22,6 +22,7 @@ import java.util.Objects;
  * Identifier for location of logs
  */
 public class LocationIdentifier {
+
   private final String namespaceId;
   private final String applicationId;
 
@@ -49,7 +50,8 @@ public class LocationIdentifier {
 
     LocationIdentifier that = (LocationIdentifier) o;
 
-    return (Objects.equals(namespaceId, that.namespaceId) && Objects.equals(applicationId, that.applicationId));
+    return (Objects.equals(namespaceId, that.namespaceId) && Objects.equals(applicationId,
+        that.applicationId));
   }
 
   @Override

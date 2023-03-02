@@ -78,17 +78,18 @@ import org.slf4j.LoggerFactory;
  * Class to process the profile metadata request
  */
 public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProfileMetadataMessageProcessor.class);
   private static final String PROFILE_METADATA_KEY = "profile";
   private static final Set<ScopedNameOfKind> PROFILE_METADATA_KEY_SET = Collections.singleton(
-    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, PROFILE_METADATA_KEY));
+      new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, PROFILE_METADATA_KEY));
   private static final Set<ProgramType> PROFILE_ALLOWED_PROGRAM_TYPES =
-    Arrays.stream(ProgramType.values())
-      .filter(SystemArguments::isProfileAllowed)
-      .collect(Collectors.toSet());
+      Arrays.stream(ProgramType.values())
+          .filter(SystemArguments::isProfileAllowed)
+          .collect(Collectors.toSet());
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
-    new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
+      new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStorage metadataStorage;
   private final NamespaceTable namespaceTable;
@@ -98,8 +99,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private final MetricsCollectionService metricsCollectionService;
 
   public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
-                                         StructuredTableContext structuredTableContext,
-                                         MetricsCollectionService metricsCollectionService) {
+      StructuredTableContext structuredTableContext,
+      MetricsCollectionService metricsCollectionService) {
     namespaceTable = new NamespaceTable(structuredTableContext);
     appMetadataStore = AppMetadataStore.create(structuredTableContext);
     scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
@@ -110,7 +111,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   @Override
   public void processMessage(MetadataMessage message, StructuredTableContext context)
-    throws IOException, ConflictException {
+      throws IOException, ConflictException {
 
     LOG.trace("Processing message: {}", message);
     EntityId entityId = message.getEntityId();
@@ -139,12 +140,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
       default:
         // This shouldn't happen
-        LOG.warn("Unknown message type for profile metadata update. Ignoring the message {}", message);
+        LOG.warn("Unknown message type for profile metadata update. Ignoring the message {}",
+            message);
     }
   }
 
   private void validateCreateEntityUpdateTime(EntityId entityId, MetadataMessage message)
-    throws IOException, ConflictException {
+      throws IOException, ConflictException {
     // here we expect only APP and SCHEDULE. For apps, no need to validate: that message
     // is emitted after the app is committed to the store. So, only validate for schedules.
     if (entityId.getEntityType() != EntityType.SCHEDULE) {
@@ -155,12 +157,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void validatePreferenceSequenceId(EntityId entityId, MetadataMessage message)
-    throws IOException, ConflictException {
+      throws IOException, ConflictException {
     long seqId = GSON.fromJson(message.getRawPayload(), long.class);
     preferencesTable.ensureSequence(entityId, seqId);
   }
 
-  private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
+  private void updateProfileMetadata(EntityId entityId, MetadataMessage message)
+      throws IOException {
     List<MetadataMutation> updates = new ArrayList<>();
     LOG.trace("Updating profile metadata for {}", entityId);
     collectProfileMetadata(entityId, message, updates);
@@ -168,7 +171,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
-                                      List<MetadataMutation> updates) throws IOException {
+      List<MetadataMutation> updates) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         for (NamespaceMeta meta : namespaceTable.list()) {
@@ -179,30 +182,35 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         NamespaceId namespaceId = (NamespaceId) entityId;
         // make sure namespace exists before updating
         if (namespaceTable.get(namespaceId) == null) {
-          LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
-                      "updated. Ignoring the message {}", namespaceId, message);
+          LOG.debug(
+              "Namespace {} is not found, so the profile metadata of programs or schedules in it will not get "
+                  +
+                  "updated. Ignoring the message {}", namespaceId, message);
           return;
         }
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
         appMetadataStore.scanApplications(
-          ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
-          entry -> {
-            ApplicationMeta meta = entry.getValue();
-            try {
-              collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-            return true;
-          });
+            ScanApplicationsRequest.builder().setNamespaceId(namespaceId).build(),
+            entry -> {
+              ApplicationMeta meta = entry.getValue();
+              try {
+                collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(),
+                    namespaceProfile, updates);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return true;
+            });
         break;
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         // make sure app exists before updating
         ApplicationMeta meta = appMetadataStore.getApplication(appId);
         if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of its programs/schedules will not get " +
-                      "updated. Ignoring the message {}", appId, message);
+          LOG.debug(
+              "Application {} is not found, so the profile metadata of its programs/schedules will not get "
+                  +
+                  "updated. Ignoring the message {}", appId, message);
           return;
         }
         collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
@@ -213,8 +221,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // make sure the app of the program exists before updating
         meta = appMetadataStore.getApplication(programId.getParent());
         if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
-                      "Ignoring the message {}", programId.getParent(), programId, message);
+          LOG.debug(
+              "Application {} is not found, so the profile metadata of program {} will not get updated. "
+                  +
+                  "Ignoring the message {}", programId.getParent(), programId, message);
           return;
         }
         if (PROFILE_ALLOWED_PROGRAM_TYPES.contains(programId.getType())) {
@@ -226,22 +236,24 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // make sure the schedule exists before updating
         try {
           ProgramSchedule schedule = scheduleDataset.getSchedule(scheduleId);
-          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()), updates);
+          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()),
+              updates);
         } catch (NotFoundException e) {
           LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
-                      "Ignoring the message {}", scheduleId, message);
+              "Ignoring the message {}", scheduleId, message);
           return;
         }
         break;
       default:
         // this should not happen
         LOG.warn("Type of the entity id {} cannot be used to update profile metadata. " +
-                   "Ignoring the message {}", entityId, message);
+            "Ignoring the message {}", entityId, message);
     }
   }
 
   /**
-   * Remove the profile metadata according to the message, currently only meant for application and schedule.
+   * Remove the profile metadata according to the message, currently only meant for application and
+   * schedule.
    */
   private void removeProfileMetadata(MetadataMessage message) throws IOException {
     EntityId entity = message.getEntityId();
@@ -268,38 +280,40 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectPluginMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
-                                     List<MetadataMutation> updates) {
+      List<MetadataMutation> updates) {
     String namespace = applicationId.getNamespace();
     Map<PluginId, Long> pluginCounts = appSpec.getPlugins().values().stream()
-      .map(p -> new PluginId(namespace, p))
-      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        .map(p -> new PluginId(namespace, p))
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
     String appKey = String.format("%s:%s", namespace, appSpec.getName());
     for (Map.Entry<PluginId, Long> entry : pluginCounts.entrySet()) {
-      LOG.trace("Adding application {} to plugin metadata for {}", appKey, entry.getKey().getPlugin());
+      LOG.trace("Adding application {} to plugin metadata for {}", appKey,
+          entry.getKey().getPlugin());
       updates.add(new MetadataMutation.Update(entry.getKey().toMetadataEntity(),
-                                              new Metadata(MetadataScope.SYSTEM,
-                                                           ImmutableMap.of(appKey, entry.getValue().toString()))
+          new Metadata(MetadataScope.SYSTEM,
+              ImmutableMap.of(appKey, entry.getValue().toString()))
       ));
     }
   }
 
-  private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
-                                         @Nullable ProfileId namespaceProfile,
-                                         List<MetadataMutation> updates) throws IOException {
+  private void collectAppProfileMetadata(ApplicationId applicationId,
+      ApplicationSpecification appSpec,
+      @Nullable ProfileId namespaceProfile,
+      List<MetadataMutation> updates) throws IOException {
     ProfileId appProfile = namespaceProfile == null
-      ? getResolvedProfileId(applicationId)
-      : getProfileId(applicationId).orElse(namespaceProfile);
+        ? getResolvedProfileId(applicationId)
+        : getProfileId(applicationId).orElse(namespaceProfile);
     for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, applicationId)) {
       collectProgramProfileMetadata(programId, appProfile, updates);
     }
   }
 
   private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
-                                             List<MetadataMutation> updates) throws IOException {
+      List<MetadataMutation> updates) throws IOException {
     ProfileId programProfile = appProfile == null
-      ? getResolvedProfileId(programId)
-      : getProfileId(programId).orElse(appProfile);
+        ? getResolvedProfileId(programId)
+        : getProfileId(programId).orElse(appProfile);
     addProfileMetadataUpdate(programId, programProfile, updates);
 
     for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
@@ -308,37 +322,38 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectScheduleProfileMetadata(ProgramSchedule schedule, ProfileId programProfile,
-                                              List<MetadataMutation> updates) {
+      List<MetadataMutation> updates) {
     ScheduleId scheduleId = schedule.getScheduleId();
     // if we are able to get profile from preferences or schedule properties, use it
     // otherwise default profile will be used
     Optional<ProfileId> scheduleProfileId =
-      SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(), schedule.getProperties());
+        SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(), schedule.getProperties());
     programProfile = scheduleProfileId.orElse(programProfile);
     addProfileMetadataUpdate(scheduleId, programProfile, updates);
   }
 
   private void addProfileMetadataUpdate(NamespacedEntityId entityId, ProfileId profileId,
-                                        List<MetadataMutation> updates) {
+      List<MetadataMutation> updates) {
     LOG.trace("Setting profile metadata for {} to {}", entityId, profileId);
     updates.add(new MetadataMutation.Update(entityId.toMetadataEntity(),
-                                            new Metadata(MetadataScope.SYSTEM,
-                                                         ImmutableMap.of(PROFILE_METADATA_KEY,
-                                                                         profileId.getScopedName()))));
+        new Metadata(MetadataScope.SYSTEM,
+            ImmutableMap.of(PROFILE_METADATA_KEY,
+                profileId.getScopedName()))));
   }
 
-  private void addProfileMetadataDelete(NamespacedEntityId entityId, List<MetadataMutation> deletes) {
+  private void addProfileMetadataDelete(NamespacedEntityId entityId,
+      List<MetadataMutation> deletes) {
     LOG.trace("Deleting profile metadata for {}", entityId);
     deletes.add(new MetadataMutation.Remove(entityId.toMetadataEntity(), PROFILE_METADATA_KEY_SET));
   }
 
   private void addPluginMetadataDelete(ApplicationId appId, ApplicationSpecification appSpec,
-                                       List<MetadataMutation> deletes) {
+      List<MetadataMutation> deletes) {
     LOG.trace("Deleting plugin metadata for {}", appSpec.getName());
     String namespace = appId.getNamespace();
     String appKey = String.format("%s:%s", namespace, appSpec.getName());
     Set<ScopedNameOfKind> pluginSet = Collections.singleton(
-      new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, appKey));
+        new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, appKey));
     for (Plugin plugin : appSpec.getPlugins().values()) {
       PluginId pluginId = new PluginId(namespace, plugin);
       deletes.add(new MetadataMutation.Remove(pluginId.toMetadataEntity(), pluginSet));
@@ -346,8 +361,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   /**
-   * Get the profile id for the provided entity id from the resolved preferences from preference dataset, if no profile
-   * is inside, it will return the default profile
+   * Get the profile id for the provided entity id from the resolved preferences from preference
+   * dataset, if no profile is inside, it will return the default profile
    *
    * @param entityId entity id to lookup the profile id
    * @return the profile id which will be used by this entity id, default profile if not find
@@ -355,29 +370,34 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   // TODO: CDAP-13579 consider preference key starts with [scope].[name].system.profile.name
   private ProfileId getResolvedProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
-    return profileName == null ? ProfileId.NATIVE : ProfileId.fromScopedName(namespaceId, profileName);
+        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    String profileName = preferencesTable.getResolvedPreference(entityId,
+        SystemArguments.PROFILE_NAME);
+    return profileName == null ? ProfileId.NATIVE
+        : ProfileId.fromScopedName(namespaceId, profileName);
   }
 
   /**
-   * Get the profile id for the provided entity id from its own preferences from preference dataset.
+   * Get the profile id for the provided entity id from its own preferences from preference
+   * dataset.
    *
    * @param entityId entity id to lookup the profile id
    * @return the profile id configured for this entity id, if any
    */
   private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getPreferences(entityId).getProperties().get(SystemArguments.PROFILE_NAME);
-    return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
+        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    String profileName = preferencesTable.getPreferences(entityId).getProperties()
+        .get(SystemArguments.PROFILE_NAME);
+    return profileName == null ? Optional.empty()
+        : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
   }
 
   /**
    * Get the schedule id from the schedule spec
    */
   private Set<ScheduleId> getSchedulesInApp(ApplicationId appId,
-                                            Map<String, ? extends ScheduleCreationSpec> scheduleSpecs) {
+      Map<String, ? extends ScheduleCreationSpec> scheduleSpecs) {
     Set<ScheduleId> result = new HashSet<>();
 
     for (String programName : scheduleSpecs.keySet()) {
@@ -389,7 +409,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   /**
    * Gets all programIds which are defined in the appSpec which are allowed to use profiles.
    */
-  private Set<ProgramId> getAllProfileAllowedPrograms(ApplicationSpecification appSpec, ApplicationId appId) {
+  private Set<ProgramId> getAllProfileAllowedPrograms(ApplicationSpecification appSpec,
+      ApplicationId appId) {
     Set<ProgramId> programIds = new HashSet<>();
     for (ProgramType programType : PROFILE_ALLOWED_PROGRAM_TYPES) {
       for (String name : appSpec.getProgramsByType(programType.getApiProgramType())) {
@@ -404,8 +425,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    */
   private void emitApplicationCountMetric() {
     try {
-      metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.APPLICATION_COUNT,
-                                                                        appMetadataStore.getApplicationCount());
+      metricsCollectionService.getContext(Collections.emptyMap())
+          .gauge(Constants.Metrics.Program.APPLICATION_COUNT,
+              appMetadataStore.getApplicationCount());
     } catch (IOException e) {
       LOG.warn("Failed to get application count", e);
     }
@@ -418,7 +440,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    */
   private void emitApplicationPluginCountMetric(ApplicationSpecification spec) {
     metricsCollectionService
-      .getContext(Collections.singletonMap(Constants.Metrics.Tag.APP, spec.getName()))
-      .gauge(Constants.Metrics.Program.APPLICATION_PLUGIN_COUNT, spec.getPlugins().size());
+        .getContext(Collections.singletonMap(Constants.Metrics.Tag.APP, spec.getName()))
+        .gauge(Constants.Metrics.Program.APPLICATION_PLUGIN_COUNT, spec.getPlugins().size());
   }
 }

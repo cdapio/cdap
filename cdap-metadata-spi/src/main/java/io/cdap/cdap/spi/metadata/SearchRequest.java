@@ -50,23 +50,23 @@ public class SearchRequest {
    * @param showHidden whether to return hidden entities (whose names begin with '_')
    * @param offset the offset to start returning results from
    * @param limit limits the number of results to return
-   * @param cursor if non-null, a cursor returned by a previous search. A cursor allows the search
-   *               engine to fetch the next set of results (starting at offset + limit) more efficiently.
-   *               Not all implementation support this optimization.
-   * @param cursorRequested whether this search should return a cursor. An implementation that does
-   *                        not support cursors will not respect this parameter and never return a cursor.
+   * @param cursor if non-null, a cursor returned by a previous search. A cursor allows the
+   *     search engine to fetch the next set of results (starting at offset + limit) more
+   *     efficiently. Not all implementation support this optimization.
+   * @param cursorRequested whether this search should return a cursor. An implementation that
+   *     does not support cursors will not respect this parameter and never return a cursor.
    * @param sorting if non-null, how to sort the results, otherwise by relevance
    */
   private SearchRequest(String query,
-                        @Nullable MetadataScope scope,
-                        @Nullable Set<String> namespaces,
-                        @Nullable Set<String> types,
-                        boolean showHidden,
-                        int offset,
-                        int limit,
-                        @Nullable String cursor,
-                        boolean cursorRequested,
-                        @Nullable Sorting sorting) {
+      @Nullable MetadataScope scope,
+      @Nullable Set<String> namespaces,
+      @Nullable Set<String> types,
+      boolean showHidden,
+      int offset,
+      int limit,
+      @Nullable String cursor,
+      boolean cursorRequested,
+      @Nullable Sorting sorting) {
     this.query = query;
     this.scope = scope;
     this.namespaces = namespaces;
@@ -133,36 +133,37 @@ public class SearchRequest {
     }
     SearchRequest that = (SearchRequest) o;
     return showHidden == that.showHidden &&
-      offset == that.offset &&
-      limit == that.limit &&
-      cursorRequested == that.cursorRequested &&
-      Objects.equals(query, that.query) &&
-      scope == that.scope &&
-      Objects.equals(namespaces, that.namespaces) &&
-      Objects.equals(types, that.types) &&
-      Objects.equals(cursor, that.cursor) &&
-      Objects.equals(sorting, that.sorting);
+        offset == that.offset &&
+        limit == that.limit &&
+        cursorRequested == that.cursorRequested &&
+        Objects.equals(query, that.query) &&
+        scope == that.scope &&
+        Objects.equals(namespaces, that.namespaces) &&
+        Objects.equals(types, that.types) &&
+        Objects.equals(cursor, that.cursor) &&
+        Objects.equals(sorting, that.sorting);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(query, scope, namespaces, types, showHidden, offset, limit, cursor, cursorRequested, sorting);
+    return Objects.hash(query, scope, namespaces, types, showHidden, offset, limit, cursor,
+        cursorRequested, sorting);
   }
 
   @Override
   public String toString() {
     return "SearchRequest{" +
-      "query='" + query + '\'' +
-      ", scope=" + scope +
-      ", namespaces=" + namespaces +
-      ", types=" + types +
-      ", showHidden=" + showHidden +
-      ", offset=" + offset +
-      ", limit=" + limit +
-      ", cursor='" + cursor + '\'' +
-      ", cursorRequested=" + cursorRequested +
-      ", sorting=" + sorting +
-      '}';
+        "query='" + query + '\'' +
+        ", scope=" + scope +
+        ", namespaces=" + namespaces +
+        ", types=" + types +
+        ", showHidden=" + showHidden +
+        ", offset=" + offset +
+        ", limit=" + limit +
+        ", cursor='" + cursor + '\'' +
+        ", cursorRequested=" + cursorRequested +
+        ", sorting=" + sorting +
+        '}';
   }
 
   /**
@@ -242,7 +243,7 @@ public class SearchRequest {
 
     public SearchRequest build() {
       return new SearchRequest(query, scope, namespaces, types, showHidden,
-                               offset, limit, cursor, cursorRequested, sorting);
+          offset, limit, cursor, cursorRequested, sorting);
     }
   }
 }

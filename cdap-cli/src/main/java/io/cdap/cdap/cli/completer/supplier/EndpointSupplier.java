@@ -54,12 +54,15 @@ public class EndpointSupplier implements CompleterSupplier {
       // "getCompleter(childPrefix, new DefaultStringsCompleter(nonArgumentTokens)" in io.cdap.common.cli.CLI.java).
       // Also matches "call service <app-id.service-id> version <app-version>".
       if ((METHOD_PREFIX.equals(prefixMatch) || METHOD_PREFIX_WITH_APP_VERSION.equals(prefixMatch))
-        && completer instanceof EndpointCompleter) {
-        return new HttpMethodPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
+          && completer instanceof EndpointCompleter) {
+        return new HttpMethodPrefixCompleter(serviceClient, cliConfig, prefix,
+            (EndpointCompleter) completer);
         // Matches prefix "call service <app-id.service-id> <http-method>" and
         // "call service <app-id.service-id> version <app-version> <http-method>".
-      } else if (ENDPOINT_PREFIX.equals(prefixMatch) || ENDPOINT_PREFIX_WITH_APP_VERSION.equals(prefixMatch)) {
-        return new HttpEndpointPrefixCompleter(serviceClient, cliConfig, prefix, (EndpointCompleter) completer);
+      } else if (ENDPOINT_PREFIX.equals(prefixMatch) || ENDPOINT_PREFIX_WITH_APP_VERSION.equals(
+          prefixMatch)) {
+        return new HttpEndpointPrefixCompleter(serviceClient, cliConfig, prefix,
+            (EndpointCompleter) completer);
       }
     }
     return null;

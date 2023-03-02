@@ -28,9 +28,11 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A {@link RemoteAuthenticator} that authenticate remote calls using Google Cloud token acquired from GCE metadata.
+ * A {@link RemoteAuthenticator} that authenticate remote calls using Google Cloud token acquired
+ * from GCE metadata.
  */
 public class GceRemoteAuthenticator implements RemoteAuthenticator {
+
   public static final String GCE_REMOTE_AUTHENTICATOR_NAME = "gce-remote-authenticator";
 
   private static final Gson GSON = new Gson();
@@ -56,16 +58,18 @@ public class GceRemoteAuthenticator implements RemoteAuthenticator {
       return accessToken;
     }
 
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
-    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).addHeader("Metadata-Flavor", "Google").build());
+    URL url = new URL(
+        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token");
+    HttpResponse response = HttpRequests.execute(
+        HttpRequest.get(url).addHeader("Metadata-Flavor", "Google").build());
     if (response.getResponseCode() != 200) {
       throw new IOException("Failed to default service account token");
     }
     JsonObject jsonObj = GSON.fromJson(response.getResponseBodyAsString(), JsonObject.class);
     this.accessToken = accessToken = new AccessToken(
-      jsonObj.getAsJsonPrimitive("token_type").getAsString(),
-      jsonObj.getAsJsonPrimitive("access_token").getAsString(),
-      jsonObj.getAsJsonPrimitive("expires_in").getAsLong()
+        jsonObj.getAsJsonPrimitive("token_type").getAsString(),
+        jsonObj.getAsJsonPrimitive("access_token").getAsString(),
+        jsonObj.getAsJsonPrimitive("expires_in").getAsLong()
     );
     return accessToken;
   }

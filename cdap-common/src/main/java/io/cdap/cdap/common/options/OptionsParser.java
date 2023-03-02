@@ -25,13 +25,13 @@ import java.util.TreeMap;
 
 /**
  * <p>
- *   <code>OptionsParser</code> looks into the class looking for annotations that
- *   specifies options. It then matches them with the command line arguments passed
- *   to it. If there are any options that are specified on command line and not
- *   present in annotated definition an usage message is automatically generated.
+ * <code>OptionsParser</code> looks into the class looking for annotations that
+ * specifies options. It then matches them with the command line arguments passed to it. If there
+ * are any options that are specified on command line and not present in annotated definition an
+ * usage message is automatically generated.
  *
- *   Following is an simple example of it's usage.
- *   <pre>
+ * Following is an simple example of it's usage.
+ * <pre>
  *     public class MyClass {
  *       {@literal @}Option(name="name", usage="Specifies the name of a flow")
  *       private String flowName;
@@ -58,19 +58,20 @@ import java.util.TreeMap;
  */
 public final class OptionsParser {
 
-  private OptionsParser() { }
+  private OptionsParser() {
+  }
 
   /**
-   * Parses the annotations specified in <code>object</code> and matches them
-   * against the command line arguments that are being passed. If the options
-   * could not be parsed it prints usage.
+   * Parses the annotations specified in <code>object</code> and matches them against the command
+   * line arguments that are being passed. If the options could not be parsed it prints usage.
    *
    * @param object instance of class that contains @Option annotations.
    * @param args command line arguments.
-   * @param out  stream available to dump outputs.
+   * @param out stream available to dump outputs.
    * @return List of arguments that were not definied by annotations.
    */
-  public static List<String> init(Object object, String[] args, String appName, String appVersion, PrintStream out) {
+  public static List<String> init(Object object, String[] args, String appName, String appVersion,
+      PrintStream out) {
     List<String> nonOptionArgs = new ArrayList<>();
     Map<String, String> parsedOptions = parseArgs(args, nonOptionArgs);
     Map<String, OptionSpec> declaredOptions = extractDeclarations(object);
@@ -112,10 +113,10 @@ public final class OptionsParser {
   }
 
   /**
-   * Prints usage based on info specified by annotation in the instance
-   * of class specified <code>object</code>.
+   * Prints usage based on info specified by annotation in the instance of class specified
+   * <code>object</code>.
+   *
    * @param object instance of class containing annotations for Options.
-
    * @param out stream to output usage.
    */
   public static void printUsage(Object object, String appName, String appVersion, PrintStream out) {
@@ -123,8 +124,8 @@ public final class OptionsParser {
   }
 
   /**
-   * Investigates the class specified by <code>object</code> and extracts out
-   * all the fields in the class that are annotated with @Option attributes.
+   * Investigates the class specified by <code>object</code> and extracts out all the fields in the
+   * class that are annotated with @Option attributes.
    *
    * @param object instance of class that is investigated for presence of @Option attributes
    * @return map of options to it's definitions.
@@ -165,7 +166,7 @@ public final class OptionsParser {
         }
 
         String kv = arg.startsWith("--") ? arg.substring(2) : arg.substring(1);
-        String [] splitKV = kv.split("=", 2);
+        String[] splitKV = kv.split("=", 2);
         String key = splitKV[0];
         String value = splitKV.length == 2 ? splitKV[1] : "";
         parsedOptions.put(key, value);
@@ -181,10 +182,12 @@ public final class OptionsParser {
 
   /**
    * Prints the usage based on declared Options in the class.
+   *
    * @param options extracted options from introspecting a class
    * @param out Stream to output the usage.
    */
-  private static void printUsage(Map<String, OptionSpec> options, String appName, String appVersion, PrintStream out) {
+  private static void printUsage(Map<String, OptionSpec> options, String appName, String appVersion,
+      PrintStream out) {
 
     out.print(String.format("%s - v%s\n", appName, appVersion));
     out.println("Options:");
@@ -204,10 +207,11 @@ public final class OptionsParser {
 
       String def = option.getDefaultValue();
       if ("null".equals(def)) {
-        out.printf(NON_DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">", usage);
+        out.printf(NON_DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">",
+            usage);
       } else {
         out.printf(DEFAULT_FORMAT_STRING, option.getName(), "<" + option.getTypeName() + ">",
-          usage, option.getDefaultValue());
+            usage, option.getDefaultValue());
       }
     }
   }

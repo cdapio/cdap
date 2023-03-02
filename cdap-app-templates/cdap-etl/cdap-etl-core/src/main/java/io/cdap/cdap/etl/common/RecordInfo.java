@@ -20,12 +20,13 @@ import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
- * Contains the record value output by a stage as well as context information about the record, including the stage
- * it was emitted from and the port it was emitted from.
+ * Contains the record value output by a stage as well as context information about the record,
+ * including the stage it was emitted from and the port it was emitted from.
  *
  * @param <T> the type of value
  */
 public class RecordInfo<T> implements Serializable {
+
   private static final long serialVersionUID = 2507536440619795611L;
   private final T value;
   private final String fromStage;
@@ -72,6 +73,7 @@ public class RecordInfo<T> implements Serializable {
    * @param <T> type of record value
    */
   public static class Builder<T> {
+
     private final T value;
     private final String fromStage;
     private final RecordType type;

@@ -58,12 +58,15 @@ import org.slf4j.LoggerFactory;
 public final class MapReduceContextConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContextConfig.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
-  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
-  private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output.DatasetOutput>>() { }.getType();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
+  private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() {
+  }.getType();
+  private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output.DatasetOutput>>() {
+  }.getType();
 
   static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
@@ -94,7 +97,7 @@ public final class MapReduceContextConfig {
    * @param localizedUserResources the localized resources for the MapReduce program
    */
   public void set(BasicMapReduceContext context, CConfiguration conf, URI programJarURI,
-                  Map<String, String> localizedUserResources) {
+      Map<String, String> localizedUserResources) {
     setProgramOptions(context.getProgramOptions());
     setProgramId(context.getProgram().getId());
     setApplicationSpecification(context.getApplicationSpecification());
@@ -158,7 +161,8 @@ public final class MapReduceContextConfig {
   }
 
   /**
-   * Returns the {@link WorkflowProgramInfo} if it is running inside Workflow or {@code null} if not.
+   * Returns the {@link WorkflowProgramInfo} if it is running inside Workflow or {@code null} if
+   * not.
    */
   @Nullable
   WorkflowProgramInfo getWorkflowProgramInfo() {
@@ -210,7 +214,8 @@ public final class MapReduceContextConfig {
 
   Map<String, File> getLocalizedResources() {
     Map<String, String> nameToPath = GSON.fromJson(hConf.get(HCONF_ATTR_LOCAL_FILES),
-                                                 new TypeToken<Map<String, String>>() { }.getType());
+        new TypeToken<Map<String, String>>() {
+        }.getType());
     Map<String, File> nameToFile = new HashMap<>();
     for (Map.Entry<String, String> entry : nameToPath.entrySet()) {
       nameToFile.put(entry.getKey(), new File(entry.getValue()));

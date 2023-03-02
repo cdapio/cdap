@@ -57,20 +57,21 @@ public interface SystemMetadataProvider {
   }
 
   static void addPlugin(PluginClass pluginClass, @Nullable String version,
-                        ImmutableMap.Builder<String, String> properties) {
+      ImmutableMap.Builder<String, String> properties) {
     String name = pluginClass.getName();
     String type = pluginClass.getType();
     // Need both name and type in the key because two plugins of different types could have the same name.
     // However, the composite of name + type is guaranteed to be unique
     properties.put(
-      PLUGIN_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name + MetadataConstants.KEYVALUE_SEPARATOR + type,
-      name + MetadataConstants.KEYVALUE_SEPARATOR + type
+        PLUGIN_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name
+            + MetadataConstants.KEYVALUE_SEPARATOR + type,
+        name + MetadataConstants.KEYVALUE_SEPARATOR + type
     );
     if (version != null) {
       properties.put(
-        PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name +
-          MetadataConstants.KEYVALUE_SEPARATOR + type,
-        name + MetadataConstants.KEYVALUE_SEPARATOR + version
+          PLUGIN_VERSION_KEY_PREFIX + MetadataConstants.KEYVALUE_SEPARATOR + name +
+              MetadataConstants.KEYVALUE_SEPARATOR + type,
+          name + MetadataConstants.KEYVALUE_SEPARATOR + version
       );
     }
   }

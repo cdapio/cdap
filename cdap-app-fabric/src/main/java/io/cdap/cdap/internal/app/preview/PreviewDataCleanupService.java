@@ -30,6 +30,7 @@ import org.apache.twill.common.Threads;
  * The clean up service that cleans up preview data periodically.
  */
 public class PreviewDataCleanupService extends AbstractScheduledService {
+
   private final PreviewStore previewStore;
   private final long cleanUpInterval;
   private final long ttl;
@@ -44,7 +45,8 @@ public class PreviewDataCleanupService extends AbstractScheduledService {
 
   @Override
   protected final ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("preview-cleanup"));
+    executor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory("preview-cleanup"));
     return executor;
   }
 

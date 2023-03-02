@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.lib.PartitionKey;
  * Represents the drop of a partition.
  */
 class DropPartitionOperation extends PartitionOperation {
+
   DropPartitionOperation(PartitionKey partitionKey, String relativePath) {
     super(partitionKey, relativePath);
   }

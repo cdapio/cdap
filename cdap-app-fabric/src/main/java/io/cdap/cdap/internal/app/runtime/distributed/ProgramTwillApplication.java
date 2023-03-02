@@ -45,24 +45,24 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
   private final TwillSpecification twillSpec;
 
   public ProgramTwillApplication(ProgramRunId programRunId, ProgramOptions programOptions,
-                                 Map<String, RunnableDefinition> runnables,
-                                 Iterable<Set<String>> launchOrder,
-                                 Map<String, LocalizeResource> localizeResources,
-                                 @Nullable EventHandler eventHandler) {
+      Map<String, RunnableDefinition> runnables,
+      Iterable<Set<String>> launchOrder,
+      Map<String, LocalizeResource> localizeResources,
+      @Nullable EventHandler eventHandler) {
     this.programRunId = programRunId;
     this.programOptions = programOptions;
 
     // Build the TwillSpecification
     Builder.MoreRunnable moreRunnable = Builder.with()
-      .setName(TwillAppNames.toTwillAppName(programRunId.getParent()))
-      .withRunnable();
+        .setName(TwillAppNames.toTwillAppName(programRunId.getParent()))
+        .withRunnable();
 
     // Add runnable and resources for each of them
     Builder.RunnableSetter runnableSetter = null;
     for (Map.Entry<String, RunnableDefinition> entry : runnables.entrySet()) {
       Builder.RuntimeSpecificationAdder runtimeSpecAdder = moreRunnable.add(entry.getKey(),
-                                                                            entry.getValue().getRunnable(),
-                                                                            entry.getValue().getResources());
+          entry.getValue().getRunnable(),
+          entry.getValue().getResources());
       runnableSetter = localizeFiles(localizeResources, runtimeSpecAdder);
       moreRunnable = runnableSetter;
     }
@@ -77,13 +77,15 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
       afterOrder = runnableSetter.anyOrder();
     } else {
       Iterator<String> order = iterator.next().iterator();
-      Preconditions.checkArgument(order.hasNext(), "Runnable launch order should have at least one runnable name");
+      Preconditions.checkArgument(order.hasNext(),
+          "Runnable launch order should have at least one runnable name");
       Builder.NextOrder nextOrder = runnableSetter.withOrder().begin(order.next(),
-                                                                     Iterators.toArray(order, String.class));
+          Iterators.toArray(order, String.class));
       afterOrder = nextOrder;
       while (iterator.hasNext()) {
         order = iterator.next().iterator();
-        Preconditions.checkArgument(order.hasNext(), "Runnable launch order should have at least one runnable name");
+        Preconditions.checkArgument(order.hasNext(),
+            "Runnable launch order should have at least one runnable name");
         nextOrder = nextOrder.nextWhenStarted(order.next(), Iterators.toArray(order, String.class));
         afterOrder = nextOrder;
       }
@@ -97,14 +99,16 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
   }
 
   /**
-   * Returns the {@link ProgramRunId} of the program run represented by this {@link TwillApplication}.
+   * Returns the {@link ProgramRunId} of the program run represented by this {@link
+   * TwillApplication}.
    */
   public ProgramRunId getProgramRunId() {
     return programRunId;
   }
 
   /**
-   * Returns the {@link ProgramOptions} of the program run represented by this {@link TwillApplication}.
+   * Returns the {@link ProgramOptions} of the program run represented by this {@link
+   * TwillApplication}.
    */
   public ProgramOptions getProgramOptions() {
     return programOptions;
@@ -119,13 +123,14 @@ public final class ProgramTwillApplication implements ExtendedTwillApplication {
    * Request localization of the program jar and all other files.
    */
   private Builder.RunnableSetter localizeFiles(Map<String, LocalizeResource> localizeResources,
-                                               Builder.RuntimeSpecificationAdder builder) {
+      Builder.RuntimeSpecificationAdder builder) {
     Builder.LocalFileAdder fileAdder;
     Builder.MoreFile moreFile = null;
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
       LOG.debug("Localizing file for {}: {} {}", programRunId, entry.getKey(), entry.getValue());
       fileAdder = (moreFile == null) ? builder.withLocalFiles() : moreFile;
-      moreFile = fileAdder.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
+      moreFile = fileAdder.add(entry.getKey(), entry.getValue().getURI(),
+          entry.getValue().isArchive());
     }
 
     return moreFile == null ? builder.noLocalFiles() : moreFile.apply();

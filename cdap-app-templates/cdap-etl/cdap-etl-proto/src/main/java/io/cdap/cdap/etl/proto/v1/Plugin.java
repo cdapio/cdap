@@ -27,11 +27,13 @@ import javax.annotation.Nullable;
  * Plugin Configuration that is part of {@link ETLStage}.
  */
 public class Plugin {
+
   private final String name;
   private final Map<String, String> properties;
   private final ArtifactSelectorConfig artifact;
 
-  public Plugin(String name, Map<String, String> properties, @Nullable ArtifactSelectorConfig artifact) {
+  public Plugin(String name, Map<String, String> properties,
+      @Nullable ArtifactSelectorConfig artifact) {
     this.name = name;
     this.properties = properties;
     this.artifact = artifact;
@@ -46,7 +48,8 @@ public class Plugin {
   }
 
   public Map<String, String> getProperties() {
-    return properties == null ? Collections.unmodifiableMap(new HashMap<String, String>()) : properties;
+    return properties == null ? Collections.unmodifiableMap(new HashMap<String, String>())
+        : properties;
   }
 
   public ArtifactSelectorConfig getArtifact() {
@@ -56,10 +59,10 @@ public class Plugin {
   @Override
   public String toString() {
     return "Plugin{" +
-      "name='" + name + '\'' +
-      ", properties=" + properties +
-      ", artifact=" + artifact +
-      '}';
+        "name='" + name + '\'' +
+        ", properties=" + properties +
+        ", artifact=" + artifact +
+        '}';
   }
 
   @Override
@@ -74,8 +77,8 @@ public class Plugin {
     Plugin that = (Plugin) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(artifact, that.artifact);
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(artifact, that.artifact);
   }
 
   @Override

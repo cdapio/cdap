@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class Read {
+
   private final MetadataEntity entity;
   private final Set<MetadataScope> scopes;
   private final Set<MetadataKind> kinds;
@@ -69,9 +70,9 @@ public class Read {
   }
 
   private Read(MetadataEntity entity,
-               @Nullable MetadataScope scope,
-               @Nullable MetadataKind kind,
-               Set<ScopedNameOfKind> selection) {
+      @Nullable MetadataScope scope,
+      @Nullable MetadataKind kind,
+      Set<ScopedNameOfKind> selection) {
     this.entity = entity;
     this.scopes = scope == null ? MetadataScope.ALL : Collections.singleton(scope);
     this.kinds = kind == null ? MetadataKind.ALL : Collections.singleton(kind);
@@ -100,8 +101,8 @@ public class Read {
   }
 
   /**
-   * @return the selected tags and properties to read; if non-null,
-   *         overrides {@link #getScopes()} and {@link #getKinds()}.
+   * @return the selected tags and properties to read; if non-null, overrides {@link #getScopes()}
+   *     and {@link #getKinds()}.
    */
   @Nullable
   public Set<ScopedNameOfKind> getSelection() {
@@ -111,10 +112,10 @@ public class Read {
   @Override
   public String toString() {
     return "Read{" +
-      "entity=" + entity +
-      ", scopes=" + scopes +
-      ", kinds=" + kinds +
-      ", selection=" + selection +
-      '}';
+        "entity=" + entity +
+        ", scopes=" + scopes +
+        ", kinds=" + kinds +
+        ", selection=" + selection +
+        '}';
   }
 }

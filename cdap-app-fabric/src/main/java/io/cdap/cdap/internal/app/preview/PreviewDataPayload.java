@@ -22,12 +22,14 @@ import io.cdap.cdap.proto.id.ApplicationId;
  * Class representing the preview data
  */
 public class PreviewDataPayload {
+
   private final ApplicationId applicationId;
   private final String tracerName;
   private final String propertyName;
   private final Object propertyValue;
 
-  public PreviewDataPayload(ApplicationId applicationId, String tracerName, String propertyName, Object propertyValue) {
+  public PreviewDataPayload(ApplicationId applicationId, String tracerName, String propertyName,
+      Object propertyValue) {
     this.applicationId = applicationId;
     this.tracerName = tracerName;
     this.propertyName = propertyName;

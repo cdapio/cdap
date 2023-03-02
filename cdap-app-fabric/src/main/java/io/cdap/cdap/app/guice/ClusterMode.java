@@ -21,14 +21,15 @@ package io.cdap.cdap.app.guice;
  */
 public enum ClusterMode {
   /**
-   * The mode that program containers run in the same cluster as the CDAP,
-   * hence can communicate directly with CDAP
+   * The mode that program containers run in the same cluster as the CDAP, hence can communicate
+   * directly with CDAP
    */
   ON_PREMISE,
 
   /**
-   * The mode that program containers run in isolated cluster such that it cannot communicate with CDAP directly.
-   * NOTE: Tethered programs run in ISOLATED mode as they need to communicate with a remote CDAP.
+   * The mode that program containers run in isolated cluster such that it cannot communicate with
+   * CDAP directly. NOTE: Tethered programs run in ISOLATED mode as they need to communicate with a
+   * remote CDAP.
    */
   ISOLATED
 }

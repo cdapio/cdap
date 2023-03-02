@@ -73,28 +73,29 @@ public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
 
     injector = createInjector(cConf, getConfiguration());
     injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.MESSAGING_SERVICE));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.MESSAGING_SERVICE));
     return injector;
   }
 
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new KafkaLogAppenderModule(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new MessagingServerRuntimeModule().getDistributedModules()
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new KafkaLogAppenderModule(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new MessagingServerRuntimeModule().getDistributedModules()
     );
   }
 }

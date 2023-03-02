@@ -53,7 +53,8 @@ public final class TrafficRelayServer extends AbstractIdleService {
   private EventLoopGroup eventLoopGroup;
   private InetSocketAddress bindAddress;
 
-  public TrafficRelayServer(InetAddress bindHost, Supplier<InetSocketAddress> targetAddressSupplier) {
+  public TrafficRelayServer(InetAddress bindHost,
+      Supplier<InetSocketAddress> targetAddressSupplier) {
     this.bindHost = bindHost;
     this.targetAddressSupplier = targetAddressSupplier;
     this.serverChannelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
@@ -71,61 +72,62 @@ public final class TrafficRelayServer extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     // We only do IO relying, hence doesn't need large amount of threads.
-    eventLoopGroup = new NioEventLoopGroup(10, Threads.createDaemonThreadFactory("traffic-relay-%d"));
+    eventLoopGroup = new NioEventLoopGroup(10,
+        Threads.createDaemonThreadFactory("traffic-relay-%d"));
 
     Bootstrap clientBootstrap = new Bootstrap()
-      .group(eventLoopGroup)
-      .channel(NioSocketChannel.class)
-      .option(ChannelOption.SO_KEEPALIVE, true)
-      .handler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        protected void initChannel(SocketChannel ch) {
-          clientChannelGroup.add(ch);
-        }
-      });
+        .group(eventLoopGroup)
+        .channel(NioSocketChannel.class)
+        .option(ChannelOption.SO_KEEPALIVE, true)
+        .handler(new ChannelInitializer<SocketChannel>() {
+          @Override
+          protected void initChannel(SocketChannel ch) {
+            clientChannelGroup.add(ch);
+          }
+        });
 
     ServerBootstrap serverBootstrap = new ServerBootstrap()
-      .group(eventLoopGroup)
-      .channel(NioServerSocketChannel.class)
-      .childHandler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        protected void initChannel(SocketChannel ch) {
-          serverChannelGroup.add(ch);
-          ch.pipeline().addLast("connector", new ChannelInboundHandlerAdapter() {
-            @Override
-            public void channelActive(ChannelHandlerContext ctx) {
-              InetSocketAddress targetAddr = targetAddressSupplier.get();
+        .group(eventLoopGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+          @Override
+          protected void initChannel(SocketChannel ch) {
+            serverChannelGroup.add(ch);
+            ch.pipeline().addLast("connector", new ChannelInboundHandlerAdapter() {
+              @Override
+              public void channelActive(ChannelHandlerContext ctx) {
+                InetSocketAddress targetAddr = targetAddressSupplier.get();
 
-              // If target address is not available, just close the connection.
-              Channel serverChannel = ctx.channel();
-              if (targetAddr == null) {
-                serverChannel.close();
-                return;
-              }
-
-              // Disable reading until the relay connection is opened
-              serverChannel.config().setAutoRead(false);
-              clientBootstrap.connect(targetAddr).addListener((ChannelFutureListener) future -> {
-                Channel clientChannel = future.channel();
-
-                serverChannel.closeFuture()
-                  .addListener((ChannelFutureListener) f -> clientChannel.close());
-                clientChannel.closeFuture()
-                  .addListener((ChannelFutureListener) f -> serverChannel.close());
-
-                if (future.isSuccess()) {
-                  serverChannel.pipeline().remove("connector");
-                  serverChannel.pipeline().addLast(new SimpleRelayChannelHandler(clientChannel));
-                  clientChannel.pipeline().addLast(new SimpleRelayChannelHandler(serverChannel));
-                  serverChannel.config().setAutoRead(true);
-                } else {
+                // If target address is not available, just close the connection.
+                Channel serverChannel = ctx.channel();
+                if (targetAddr == null) {
                   serverChannel.close();
+                  return;
                 }
-              });
-            }
-          });
-        }
-      });
+
+                // Disable reading until the relay connection is opened
+                serverChannel.config().setAutoRead(false);
+                clientBootstrap.connect(targetAddr).addListener((ChannelFutureListener) future -> {
+                  Channel clientChannel = future.channel();
+
+                  serverChannel.closeFuture()
+                      .addListener((ChannelFutureListener) f -> clientChannel.close());
+                  clientChannel.closeFuture()
+                      .addListener((ChannelFutureListener) f -> serverChannel.close());
+
+                  if (future.isSuccess()) {
+                    serverChannel.pipeline().remove("connector");
+                    serverChannel.pipeline().addLast(new SimpleRelayChannelHandler(clientChannel));
+                    clientChannel.pipeline().addLast(new SimpleRelayChannelHandler(serverChannel));
+                    serverChannel.config().setAutoRead(true);
+                  } else {
+                    serverChannel.close();
+                  }
+                });
+              }
+            });
+          }
+        });
 
     Channel serverChannel = serverBootstrap.bind(bindHost, 0).sync().channel();
     bindAddress = (InetSocketAddress) serverChannel.localAddress();

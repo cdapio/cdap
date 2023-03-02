@@ -34,6 +34,7 @@ import java.io.IOException;
  * </ul>
  */
 public class SchemaCache {
+
   private static final LRUCache<String, Schema> SCHEMA_CACHE = new LRUCache<>(100);
   private static final SchemaTypeAdapter SCHEMA_TYPE_ADAPTER = new SchemaTypeAdapter();
 

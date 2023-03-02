@@ -34,6 +34,7 @@ import jline.console.ConsoleReader;
  * {@link Command} to delete a namespace.
  */
 public class DeleteNamespaceCommand extends AbstractCommand {
+
   private static final String SUCCESS_MSG = "Namespace '%s' deleted successfully.";
   private final NamespaceClient namespaceClient;
   private final CLIConfig cliConfig;
@@ -47,23 +48,26 @@ public class DeleteNamespaceCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream out) throws Exception {
-    NamespaceId namespaceId = new NamespaceId(arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
+    NamespaceId namespaceId = new NamespaceId(
+        arguments.get(ArgumentName.NAMESPACE_NAME.toString()));
 
     ConsoleReader consoleReader = new ConsoleReader();
     if (NamespaceId.DEFAULT.equals(namespaceId)) {
       out.println("WARNING: Deleting contents of a namespace is an unrecoverable operation");
-      String prompt = String.format("Are you sure you want to delete contents of namespace '%s' [y/N]? ",
-                                    namespaceId.getNamespace());
+      String prompt = String.format(
+          "Are you sure you want to delete contents of namespace '%s' [y/N]? ",
+          namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId);
-        out.printf("Contents of namespace '%s' were deleted successfully", namespaceId.getNamespace());
+        out.printf("Contents of namespace '%s' were deleted successfully",
+            namespaceId.getNamespace());
         out.println();
       }
     } else {
       out.println("WARNING: Deleting a namespace is an unrecoverable operation");
       String prompt = String.format("Are you sure you want to delete namespace '%s' [y/N]? ",
-                                    namespaceId.getNamespace());
+          namespaceId.getNamespace());
       String userConfirm = consoleReader.readLine(prompt);
       if ("y".equalsIgnoreCase(userConfirm)) {
         namespaceClient.delete(namespaceId);

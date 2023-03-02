@@ -68,7 +68,7 @@ public class DatasetId extends NamespacedEntityId implements ParentedId<Namespac
     }
     DatasetId datasetId = (DatasetId) o;
     return Objects.equals(namespace, datasetId.namespace) &&
-      Objects.equals(dataset, datasetId.dataset);
+        Objects.equals(dataset, datasetId.dataset);
   }
 
   @Override

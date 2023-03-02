@@ -33,18 +33,20 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Table;
 
 /**
- * Reads the current {@link CConfiguration} from a table in HBase.  This make the configuration available
- * to processes running on the HBase servers (such as coprocessors).  The entire configuration is stored in
- * a single row, keyed by the configuration type (to allow future expansion), with the configuration
- * key as the column name, and the configuration value as the value.
+ * Reads the current {@link CConfiguration} from a table in HBase.  This make the configuration
+ * available to processes running on the HBase servers (such as coprocessors).  The entire
+ * configuration is stored in a single row, keyed by the configuration type (to allow future
+ * expansion), with the configuration key as the column name, and the configuration value as the
+ * value.
  *
  * This class should only be used directly from the client side, and never within a coprocessor (use
  * {@link CConfigurationReader} instead when in a coprocessor.
  *
- * This class does not depend on any HBase Server classes and is safe to be used with only HBase Client
- * libraries in the class path.
+ * This class does not depend on any HBase Server classes and is safe to be used with only HBase
+ * Client libraries in the class path.
  */
 public class ConfigurationReader {
+
   /**
    * Defines the types of configurations to save in the table. Each type is used as a row key.
    */
@@ -75,7 +77,8 @@ public class ConfigurationReader {
     this(new ConfigurationTableProvider() {
 
       private final String tableName =
-        HTableNameConverter.getSysConfigTablePrefix(cConf.get(Constants.Dataset.TABLE_PREFIX)) + TABLE_NAME;
+          HTableNameConverter.getSysConfigTablePrefix(cConf.get(Constants.Dataset.TABLE_PREFIX))
+              + TABLE_NAME;
 
       @Override
       public Table get() throws IOException {
@@ -100,12 +103,14 @@ public class ConfigurationReader {
   }
 
   /**
-   * Reads the given configuration type from the HBase table, looking for the HBase table using CDAP's table prefix.
+   * Reads the given configuration type from the HBase table, looking for the HBase table using
+   * CDAP's table prefix.
    *
    * @param type Type of configuration to read in
-   * @return The {@link CConfiguration} instance populated with the stored values, or {@code null} if no row
-   *         was found for the given type.
-   * @throws IOException If an error occurs while attempting to read the table or the table does not exist.
+   * @return The {@link CConfiguration} instance populated with the stored values, or {@code null}
+   *     if no row was found for the given type.
+   * @throws IOException If an error occurs while attempting to read the table or the table does
+   *     not exist.
    */
   public CConfiguration read(Type type) throws IOException {
     Table table = null;
@@ -127,11 +132,13 @@ public class ConfigurationReader {
             timestamp = result.getColumnLatestCell(FAMILY, e.getKey()).getTimestamp();
           }
         }
-        LOG.info(String.format("Read %d properties with time stamp %d from row '%s' in configuration table %s ",
-                               propertyCount, timestamp, type, table.getName()));
+        LOG.info(String.format(
+            "Read %d properties with time stamp %d from row '%s' in configuration table %s ",
+            propertyCount, timestamp, type, table.getName()));
         return conf;
       } else {
-        LOG.info(String.format("No configuration of type %s found in table %s.", type, table.getName()));
+        LOG.info(
+            String.format("No configuration of type %s found in table %s.", type, table.getName()));
         return null;
       }
     } catch (TableNotFoundException e) {

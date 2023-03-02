@@ -24,6 +24,7 @@ import java.util.Set;
  * Denotes the response of the metadata search API.
  */
 public class MetadataSearchResponse {
+
   private final String sort;
   private final int offset;
   private final int limit;
@@ -35,8 +36,8 @@ public class MetadataSearchResponse {
   private final Set<EntityScope> entityScope;
 
   public MetadataSearchResponse(String sort, int offset, int limit, int numCursors, int total,
-                                Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden,
-                                Set<EntityScope> entityScope) {
+      Set<MetadataSearchResultRecord> results, List<String> cursors, boolean showHidden,
+      Set<EntityScope> entityScope) {
     this.sort = sort;
     this.offset = offset;
     this.limit = limit;

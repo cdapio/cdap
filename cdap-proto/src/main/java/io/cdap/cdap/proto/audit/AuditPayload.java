@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public class AuditPayload {
+
   public static final AuditPayload EMPTY_PAYLOAD = new AuditPayload();
 
   // No meaningful non-empty instantiation possible

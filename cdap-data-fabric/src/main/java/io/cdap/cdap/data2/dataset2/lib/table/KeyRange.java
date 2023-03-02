@@ -25,12 +25,15 @@ import javax.annotation.Nullable;
  * Describes a range of (row) keys.
  */
 public class KeyRange {
+
   final byte[] start, stop;
 
   /**
    * Constructor from start and end.
+   *
    * @param start the start of the range; if null, then starts with the least key available.
-   * @param stop the end of the range (exclusive); if null, then extends to the greatest key available.
+   * @param stop the end of the range (exclusive); if null, then extends to the greatest key
+   *     available.
    */
   public KeyRange(@Nullable byte[] start, @Nullable byte[] stop) {
     this.start = start;
@@ -71,6 +74,6 @@ public class KeyRange {
   @Override
   public String toString() {
     return "(" + (start == null ? "null" : "'" + Bytes.toStringBinary(start)) + "'"
-      + ".." + (stop == null ? "null" : "'" + Bytes.toStringBinary(stop) + "'") + ")";
+        + ".." + (stop == null ? "null" : "'" + Bytes.toStringBinary(stop) + "'") + ")";
   }
 }

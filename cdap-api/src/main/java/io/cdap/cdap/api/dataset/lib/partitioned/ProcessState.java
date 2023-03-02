@@ -20,12 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents the process/consumed state of the partition. Partitions that have been successfully processed
- * are no longer held reference to. The ConsumablePartition corresponding to that partition will be removed from
- * the working set at that time
+ * Represents the process/consumed state of the partition. Partitions that have been successfully
+ * processed are no longer held reference to. The ConsumablePartition corresponding to that
+ * partition will be removed from the working set at that time
  *
- * AVAILABLE - available for processing
- * IN_PROGRESS - currently being processed
+ * AVAILABLE - available for processing IN_PROGRESS - currently being processed
  */
 public enum ProcessState {
   AVAILABLE(0), IN_PROGRESS(1), DISCARDED(2), COMPLETED(3);
@@ -38,9 +37,10 @@ public enum ProcessState {
 
   // helper map for efficient implementation of scopeFor()
   private static final Map<Byte, ProcessState> LOOKUP_BY_BYTE;
+
   static {
     LOOKUP_BY_BYTE = new HashMap<>();
-    for (ProcessState state: values()) {
+    for (ProcessState state : values()) {
       LOOKUP_BY_BYTE.put(state.toByte(), state);
     }
   }

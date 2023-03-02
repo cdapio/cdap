@@ -46,13 +46,14 @@ import org.iq80.leveldb.WriteOptions;
  * This "Table" is actually partitioned into multiple LevelDB tables. Each underlying table stores
  * messages published within a specific time range. Table names are of the form:
  *
- *   [namespace].[topic].[generation].[publish start (inclusive)][publish end (exclusive)]
+ * [namespace].[topic].[generation].[publish start (inclusive)][publish end (exclusive)]
  *
- * When a write occurs, messages are written to the correct table based on the their publish timestamp.
- * When a read is performed, the start and end timestamps are examined to determine if multiple underlying
- * levelDB tables need to be read.
+ * When a write occurs, messages are written to the correct table based on the their publish
+ * timestamp. When a read is performed, the start and end timestamps are examined to determine if
+ * multiple underlying levelDB tables need to be read.
  */
 final class LevelDBMessageTable extends AbstractMessageTable {
+
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private static final String PAYLOAD_COL = "p";
   private static final String TX_COL = "t";
@@ -80,14 +81,17 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  protected CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest) throws IOException {
-    Collection<LevelDBPartition> partitions = partitionManager.getPartitions(scanRequest.getStartTime());
+  protected CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest)
+      throws IOException {
+    Collection<LevelDBPartition> partitions = partitionManager.getPartitions(
+        scanRequest.getStartTime());
     if (partitions.isEmpty()) {
       return CloseableIterator.empty();
     }
     RawMessageTableEntry tableEntry = new RawMessageTableEntry();
     TopicMetadata topicMetadata = scanRequest.getTopicMetadata();
-    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
+        topicMetadata.getGeneration());
     MessageTableKey messageTableKey = MessageTableKey.fromTopic(topic);
     BiFunction<byte[], byte[], RawMessageTableEntry> decodeFunction = (key, value) -> {
       Map<String, byte[]> columns = decodeValue(value);
@@ -95,8 +99,9 @@ final class LevelDBMessageTable extends AbstractMessageTable {
       return tableEntry.set(messageTableKey, columns.get(TX_COL), columns.get(PAYLOAD_COL));
     };
 
-    return new PartitionedDBScanIterator<>(partitions.iterator(), scanRequest.getStartRow(), scanRequest.getStopRow(),
-                                           decodeFunction);
+    return new PartitionedDBScanIterator<>(partitions.iterator(), scanRequest.getStartRow(),
+        scanRequest.getStopRow(),
+        decodeFunction);
   }
 
   @Override
@@ -111,7 +116,8 @@ final class LevelDBMessageTable extends AbstractMessageTable {
       long publishTime = entry.getKey().getPublishTimestamp();
 
       // check if this entry belongs in a different partition. If so, write the current batch.
-      if (partition == null || publishTime < partition.getStartTime() || publishTime >= partition.getEndTime()) {
+      if (partition == null || publishTime < partition.getStartTime()
+          || publishTime >= partition.getEndTime()) {
         if (partition != null) {
           try {
             partition.getLevelDB().write(writeBatch, WRITE_OPTIONS);
@@ -124,7 +130,8 @@ final class LevelDBMessageTable extends AbstractMessageTable {
       }
 
       // LevelDB doesn't make copies, and since we reuse RawMessageTableEntry object, we need to create copies.
-      writeBatch.put(Arrays.copyOf(rowKey, rowKey.length), encodeValue(entry.getTxPtr(), entry.getPayload()));
+      writeBatch.put(Arrays.copyOf(rowKey, rowKey.length),
+          encodeValue(entry.getTxPtr(), entry.getPayload()));
     }
 
     if (partition != null) {
@@ -138,20 +145,23 @@ final class LevelDBMessageTable extends AbstractMessageTable {
 
   @Override
   protected void rollback(RollbackRequest rollbackRequest) throws IOException {
-    Collection<LevelDBPartition> partitions = partitionManager.getPartitions(rollbackRequest.getStartTime(),
-                                                                             rollbackRequest.getStopTime());
+    Collection<LevelDBPartition> partitions = partitionManager.getPartitions(
+        rollbackRequest.getStartTime(),
+        rollbackRequest.getStopTime());
 
     for (LevelDBPartition partition : partitions) {
       DB levelDB = partition.getLevelDB();
       WriteBatch writeBatch = partition.getLevelDB().createWriteBatch();
 
       try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator =
-             new DBScanIterator(levelDB, rollbackRequest.getStartRow(), rollbackRequest.getStopRow())) {
+          new DBScanIterator(levelDB, rollbackRequest.getStartRow(),
+              rollbackRequest.getStopRow())) {
         while (rowIterator.hasNext()) {
           Map.Entry<byte[], byte[]> rowValue = rowIterator.next();
           byte[] value = rowValue.getValue();
           Map<String, byte[]> columns = decodeValue(value);
-          writeBatch.put(rowValue.getKey(), encodeValue(rollbackRequest.getTxWritePointer(), columns.get(PAYLOAD_COL)));
+          writeBatch.put(rowValue.getKey(),
+              encodeValue(rollbackRequest.getTxWritePointer(), columns.get(PAYLOAD_COL)));
         }
       }
 
@@ -176,7 +186,8 @@ final class LevelDBMessageTable extends AbstractMessageTable {
     // Non-transactional
     if (txWritePtr == null) {
       // For non-tx message, payload cannot be null
-      Preconditions.checkArgument(payload != null, "Payload cannot be null for non-transactional message");
+      Preconditions.checkArgument(payload != null,
+          "Payload cannot be null for non-transactional message");
       byte[] result = new byte[1 + payload.length];
       result[0] = EncodeType.NON_TRANSACTIONAL.getType();
       Bytes.putBytes(result, 1, payload, 0, payload.length);

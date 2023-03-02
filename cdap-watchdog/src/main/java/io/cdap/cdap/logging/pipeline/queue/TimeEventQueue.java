@@ -30,7 +30,8 @@ import javax.annotation.concurrent.NotThreadSafe;
  * @param <OFFSET> Type of event offset associated with the event.
  */
 @NotThreadSafe
-public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> implements Iterable<EVENT> {
+public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> implements
+    Iterable<EVENT> {
 
   private final SortedSet<TimeEvent<EVENT, OFFSET>> events;
   private final Int2ObjectMap<SortedSet<OFFSET>> partitionOffsets;
@@ -47,12 +48,13 @@ public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> impl
 
   public void add(EVENT event, long eventTimestamp, int eventSize, int partition, OFFSET offset) {
     SortedSet<OFFSET> offsets = getOffsets(partition);
-    TimeEvent<EVENT, OFFSET> timeEvent = new TimeEvent<>(eventTimestamp, partition, offset, event, eventSize);
+    TimeEvent<EVENT, OFFSET> timeEvent = new TimeEvent<>(eventTimestamp, partition, offset, event,
+        eventSize);
     if (events.add(timeEvent)) {
       if (!offsets.add(offset)) {
         events.remove(timeEvent);
         throw new IllegalArgumentException("Adding different event with the same offset "
-                                             + offset + ", " + event);
+            + offset + ", " + event);
       }
 
       totalSize += eventSize;
@@ -156,7 +158,7 @@ public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> impl
     SortedSet<OFFSET> offsets = partitionOffsets.get(partition);
     if (offsets == null) {
       throw new IllegalArgumentException("Partition " + partition +
-                                           " is not in allowed partitions " + partitionOffsets.keySet());
+          " is not in allowed partitions " + partitionOffsets.keySet());
     }
     return offsets;
   }
@@ -170,12 +172,14 @@ public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> impl
   public interface EventIterator<EVENT, OFFSET> extends Iterator<EVENT> {
 
     /**
-     * Returns the offset provided at the insertion time of the last element returned by this iterator.
+     * Returns the offset provided at the insertion time of the last element returned by this
+     * iterator.
      */
     OFFSET getOffset();
 
     /**
-     * Returns the partition provided at the insertion time of the last element returned by this iterator.
+     * Returns the partition provided at the insertion time of the last element returned by this
+     * iterator.
      */
     int getPartition();
   }
@@ -184,7 +188,8 @@ public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> impl
    * This class represent an event stored in the event set.
    */
   private static final class TimeEvent<EVENT, OFFSET extends Comparable<OFFSET>>
-                        implements Comparable<TimeEvent<EVENT, OFFSET>> {
+      implements Comparable<TimeEvent<EVENT, OFFSET>> {
+
     private final long eventTime;
     private final int partition;
     private final OFFSET offset;

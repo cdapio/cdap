@@ -108,6 +108,7 @@ public abstract class Id implements EntityIdCompatible {
    * Indicates that the ID belongs to a namespace.
    */
   public abstract static class NamespacedId extends Id {
+
     public abstract Namespace getNamespace();
   }
 
@@ -115,6 +116,7 @@ public abstract class Id implements EntityIdCompatible {
    * Uniquely identifies a Query Handle.
    */
   public static final class QueryHandle extends Id {
+
     private final String id;
 
     private QueryHandle(String id) {
@@ -143,6 +145,7 @@ public abstract class Id implements EntityIdCompatible {
    * Uniquely identifies a Namespace.
    */
   public static final class Namespace extends Id {
+
     public static final Namespace DEFAULT = from("default");
     public static final Namespace SYSTEM = from("system");
     public static final Namespace CDAP = from("cdap");
@@ -182,6 +185,7 @@ public abstract class Id implements EntityIdCompatible {
    * Uniquely identifies an Application.
    */
   public static final class Application extends NamespacedId {
+
     private final Namespace namespace;
     private final String applicationId;
     private final String version;
@@ -242,11 +246,12 @@ public abstract class Id implements EntityIdCompatible {
     @Override
     public ApplicationId toEntityId() {
       return new ApplicationId(namespace.getId(), applicationId, version == null ?
-        ApplicationId.DEFAULT_VERSION : version);
+          ApplicationId.DEFAULT_VERSION : version);
     }
 
     public static Application fromEntityId(ApplicationId applicationId) {
-      return from(applicationId.getNamespace(), applicationId.getApplication(), applicationId.getVersion());
+      return from(applicationId.getNamespace(), applicationId.getApplication(),
+          applicationId.getVersion());
     }
   }
 
@@ -279,8 +284,9 @@ public abstract class Id implements EntityIdCompatible {
 
     @Override
     public ProgramRunId toEntityId() {
-      return new ProgramRunId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
-                              program.getId(), id);
+      return new ProgramRunId(program.getNamespaceId(), program.getApplicationId(),
+          program.getType(),
+          program.getId(), id);
     }
 
     public static Run fromEntityId(ProgramRunId programRunId) {
@@ -292,6 +298,7 @@ public abstract class Id implements EntityIdCompatible {
    * Uniquely identifies a Program.
    */
   public static class Program extends NamespacedId {
+
     private final Application application;
     private final ProgramType type;
     private final String id;
@@ -341,7 +348,8 @@ public abstract class Id implements EntityIdCompatible {
       return new Program(appId, type, pgmId);
     }
 
-    public static Program from(Id.Namespace namespaceId, String appId, ProgramType type, String pgmId) {
+    public static Program from(Id.Namespace namespaceId, String appId, ProgramType type,
+        String pgmId) {
       return new Program(new Application(namespaceId, appId), type, pgmId);
     }
 
@@ -349,18 +357,20 @@ public abstract class Id implements EntityIdCompatible {
       return new Program(new Application(new Namespace(namespaceId), appId), type, pgmId);
     }
 
-    public static Program from(String namespaceId, String appId, String version, ProgramType type, String pgmId) {
+    public static Program from(String namespaceId, String appId, String version, ProgramType type,
+        String pgmId) {
       return new Program(new Application(new Namespace(namespaceId), appId, version), type, pgmId);
     }
 
     @Override
     public ProgramId toEntityId() {
-      return new ProgramId(application.getNamespaceId(), application.getId(), application.getVersion(), type, id);
+      return new ProgramId(application.getNamespaceId(), application.getId(),
+          application.getVersion(), type, id);
     }
 
     public static Program fromEntityId(ProgramId programId) {
       return new Program(Id.Application.fromEntityId(programId.getParent()),
-                         programId.getType(), programId.getProgram());
+          programId.getType(), programId.getProgram());
     }
   }
 
@@ -409,7 +419,8 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     public static Service fromEntityId(ServiceId serviceId) {
-      return new Service(Id.Application.fromEntityId(serviceId.getParent()), serviceId.getProgram());
+      return new Service(Id.Application.fromEntityId(serviceId.getParent()),
+          serviceId.getProgram());
     }
   }
 
@@ -436,7 +447,8 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     public static Workflow fromEntityId(WorkflowId workflowId) {
-      return new Workflow(Id.Application.fromEntityId(workflowId.getParent()), workflowId.getProgram());
+      return new Workflow(Id.Application.fromEntityId(workflowId.getParent()),
+          workflowId.getProgram());
     }
   }
 
@@ -495,6 +507,7 @@ public abstract class Id implements EntityIdCompatible {
    * Dataset Module Id identifies a given dataset module.
    */
   public static final class DatasetModule extends NamespacedId {
+
     private final Namespace namespace;
     private final String moduleId;
 
@@ -506,8 +519,9 @@ public abstract class Id implements EntityIdCompatible {
         throw new NullPointerException("Dataset module id cannot be null.");
       }
       if (!isValidDatasetId(moduleId)) {
-        throw new IllegalArgumentException("Invalid characters found in dataset module Id '" + moduleId +
-                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
+        throw new IllegalArgumentException(
+            "Invalid characters found in dataset module Id '" + moduleId +
+                "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
       }
       this.namespace = namespace;
       this.moduleId = moduleId;
@@ -549,6 +563,7 @@ public abstract class Id implements EntityIdCompatible {
    * Artifact Id identifies an artifact by its namespace, name, and version.
    */
   public static class Artifact extends NamespacedId implements Comparable<Artifact> {
+
     private final Namespace namespace;
     private final String name;
     private final ArtifactVersion version;
@@ -594,7 +609,8 @@ public abstract class Id implements EntityIdCompatible {
 
     public io.cdap.cdap.api.artifact.ArtifactId toArtifactId() {
       return new io.cdap.cdap.api.artifact.ArtifactId(
-        name, version, Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+          name, version,
+          Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
     }
 
     public static Artifact from(Namespace namespace, String name, String version) {
@@ -607,11 +623,12 @@ public abstract class Id implements EntityIdCompatible {
 
     public static Artifact from(Id.Namespace namespace, io.cdap.cdap.api.artifact.ArtifactId id) {
       return new Artifact(ArtifactScope.SYSTEM.equals(id.getScope()) ? Namespace.SYSTEM : namespace,
-                          id.getName(), id.getVersion());
+          id.getName(), id.getVersion());
     }
 
     public static Artifact fromEntityId(ArtifactId artifactId) {
-      return from(Namespace.fromEntityId(artifactId.getParent()), artifactId.getArtifact(), artifactId.getVersion());
+      return from(Namespace.fromEntityId(artifactId.getParent()), artifactId.getArtifact(),
+          artifactId.getVersion());
     }
 
     /**
@@ -625,7 +642,8 @@ public abstract class Id implements EntityIdCompatible {
      */
     public static Artifact parse(Id.Namespace namespace, String fileName) {
       if (!fileName.endsWith(".jar")) {
-        throw new IllegalArgumentException(String.format("Artifact name '%s' does not end in .jar", fileName));
+        throw new IllegalArgumentException(
+            String.format("Artifact name '%s' does not end in .jar", fileName));
       }
 
       // strip '.jar' from the filename
@@ -637,7 +655,7 @@ public abstract class Id implements EntityIdCompatible {
       // this happens if it could not parse the version
       if (rawVersion == null) {
         throw new IllegalArgumentException(
-          String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
+            String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
       }
 
       // filename should be {name}-{version}.  Strip -{version} from it to get artifact name

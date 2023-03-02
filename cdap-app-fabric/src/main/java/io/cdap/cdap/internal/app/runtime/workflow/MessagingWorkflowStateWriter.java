@@ -54,26 +54,30 @@ public class MessagingWorkflowStateWriter implements WorkflowStateWriter {
   @Override
   public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_TOKEN,
-                                                  workflowRunId, GSON.toJsonTree(token));
+        workflowRunId, GSON.toJsonTree(token));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+          Retries.ALWAYS_TRUE);
     } catch (Exception e) {
       // Don't log the workflow token, as it can be large and may contain sensitive data
-      throw new RuntimeException("Failed to publish workflow token for workflow run " + workflowRunId, e);
+      throw new RuntimeException(
+          "Failed to publish workflow token for workflow run " + workflowRunId, e);
     }
   }
 
   @Override
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail state) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.WORKFLOW_STATE,
-                                                  workflowRunId, GSON.toJsonTree(state));
+        workflowRunId, GSON.toJsonTree(state));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+          Retries.ALWAYS_TRUE);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to publish workflow node state for workflow run " + workflowRunId
-                                   + "of node " + state.getNodeId() + " with state " + state.getNodeStatus(), e);
+      throw new RuntimeException(
+          "Failed to publish workflow node state for workflow run " + workflowRunId
+              + "of node " + state.getNodeId() + " with state " + state.getNodeStatus(), e);
     }
   }
 }

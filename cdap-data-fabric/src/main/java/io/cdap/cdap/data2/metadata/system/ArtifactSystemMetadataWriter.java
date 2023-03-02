@@ -33,8 +33,9 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ArtifactInfo artifactInfo;
 
-  public ArtifactSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ArtifactId artifactId,
-                                      ArtifactInfo artifactInfo) {
+  public ArtifactSystemMetadataWriter(MetadataServiceClient metadataServiceClient,
+      ArtifactId artifactId,
+      ArtifactInfo artifactInfo) {
     super(metadataServiceClient, artifactId);
     this.artifactInfo = artifactInfo;
   }

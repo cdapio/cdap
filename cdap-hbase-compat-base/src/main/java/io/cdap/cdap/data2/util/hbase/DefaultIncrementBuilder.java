@@ -22,7 +22,8 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Increment;
 
 /**
- * Default implementation of {@link IncrementBuilder}. Specific HBase compat module can extends and override methods.
+ * Default implementation of {@link IncrementBuilder}. Specific HBase compat module can extends and
+ * override methods.
  */
 class DefaultIncrementBuilder implements IncrementBuilder {
 
@@ -39,7 +40,8 @@ class DefaultIncrementBuilder implements IncrementBuilder {
   }
 
   @Override
-  public IncrementBuilder add(byte[] family, byte[] qualifier, long ts, long value) throws IOException {
+  public IncrementBuilder add(byte[] family, byte[] qualifier, long ts, long value)
+      throws IOException {
     increment.add(new KeyValue(increment.getRow(), family, qualifier, ts, Bytes.toBytes(value)));
     return this;
   }

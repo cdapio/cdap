@@ -23,16 +23,18 @@ import java.sql.SQLException;
  * Encapsulates the SQLException that caused the transaction to fail.
  */
 class SqlTransactionException extends TransactionException {
+
   private final SQLException sqlException;
 
   SqlTransactionException(SQLException sqlException, Throwable cause) {
     super(String.format("Failed to execute the sql queries. Transaction failed with sql state: %s",
-                        sqlException.getSQLState()), cause);
+        sqlException.getSQLState()), cause);
     this.sqlException = sqlException;
   }
 
   SqlTransactionException(String message, SQLException sqlException) {
-    super(String.format("%s Transaction failed with sql state: %s", message, sqlException.getSQLState()), sqlException);
+    super(String.format("%s Transaction failed with sql state: %s", message,
+        sqlException.getSQLState()), sqlException);
     this.sqlException = sqlException;
   }
 

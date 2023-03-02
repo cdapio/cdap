@@ -17,17 +17,17 @@
 package io.cdap.cdap.etl.api.relational;
 
 /**
- * Compiled scalar expression produced by {@link ExpressionFactory#compile} that can be
- * passed to various relational algebra calls of {@link Relation} objects.
- * Note that relations, engine and expression factories must come from the same {@link RelationalTranformContext}
- * and are valid only for the time of the {@link RelationalTransform#transform} call.
+ * Compiled scalar expression produced by {@link ExpressionFactory#compile} that can be passed to
+ * various relational algebra calls of {@link Relation} objects. Note that relations, engine and
+ * expression factories must come from the same {@link RelationalTranformContext} and are valid only
+ * for the time of the {@link RelationalTransform#transform} call.
  */
 public interface Expression {
+
   /**
-   *
-   * @return if this expression is valid. If during expression generation, it's found to be unsupported or invalid,
-   * generation will return an invalid Expression. Any {@link Relation} operation with invalid expression will
-   * result in an invalid {@link Relation}
+   * @return if this expression is valid. If during expression generation, it's found to be
+   *     unsupported or invalid, generation will return an invalid Expression. Any {@link Relation}
+   *     operation with invalid expression will result in an invalid {@link Relation}
    * @see #getValidationError() on operation problem details
    */
   boolean isValid();

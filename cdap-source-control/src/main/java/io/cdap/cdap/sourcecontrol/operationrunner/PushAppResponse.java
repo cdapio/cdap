@@ -22,6 +22,7 @@ import java.util.Objects;
  * Encapsulates the information generated from a single application push
  */
 public class PushAppResponse {
+
   private final String name;
   private final String version;
   private final String fileHash;
@@ -54,8 +55,8 @@ public class PushAppResponse {
     }
     PushAppResponse that = (PushAppResponse) o;
     return Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version) &&
-      Objects.equals(fileHash, that.fileHash);
+        Objects.equals(version, that.version) &&
+        Objects.equals(fileHash, that.fileHash);
   }
 
   @Override

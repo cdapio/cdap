@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  * Creates the default namespace if it doesn't exist.
  */
 public class DefaultNamespaceCreator extends BaseStepExecutor<EmptyArguments> {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceCreator.class);
   private final NamespaceAdmin namespaceAdmin;
 

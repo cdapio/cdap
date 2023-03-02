@@ -51,7 +51,8 @@ import java.util.UUID;
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
 public class MapReduceBatchContext extends AbstractBatchContext
-  implements BatchSinkContext, BatchSourceContext, StageSubmitterContext {
+    implements BatchSinkContext, BatchSourceContext, StageSubmitterContext {
+
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final MapReduceContext mrContext;
   private final boolean isPreviewEnabled;
@@ -59,11 +60,13 @@ public class MapReduceBatchContext extends AbstractBatchContext
   private final Set<String> inputNames;
   private final Set<String> connectorDatasets;
 
-  public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
-                               Set<String> connectorDatasets, DatasetContext datasetContext) {
-    super(pipelineRuntime, StageSpec.createCopy(stageSpec, context.getDataTracer(stageSpec.getName()).
-              getMaximumTracedRecords(), context.getDataTracer(stageSpec.getName()).isEnabled()),
-          datasetContext, context.getAdmin());
+  public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime,
+      StageSpec stageSpec,
+      Set<String> connectorDatasets, DatasetContext datasetContext) {
+    super(pipelineRuntime,
+        StageSpec.createCopy(stageSpec, context.getDataTracer(stageSpec.getName()).
+            getMaximumTracedRecords(), context.getDataTracer(stageSpec.getName()).isEnabled()),
+        datasetContext, context.getAdmin());
     this.mrContext = context;
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
@@ -82,10 +85,11 @@ public class MapReduceBatchContext extends AbstractBatchContext
       if (isPreviewEnabled && input instanceof Input.InputFormatProviderInput) {
         InputFormatProvider inputFormatProvider = ((Input.InputFormatProviderInput) input).getInputFormatProvider();
         LimitingInputFormatProvider wrapper =
-          new LimitingInputFormatProvider(inputFormatProvider, getMaxPreviewRecords());
+            new LimitingInputFormatProvider(inputFormatProvider, getMaxPreviewRecords());
         trackableInput = Input.of(input.getName(), wrapper).alias(input.getAlias());
       }
-      trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(trackableInput));
+      trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(),
+          suffixInput(trackableInput));
       mrContext.addInput(trackableInput);
       return trackableInput;
     });
@@ -100,8 +104,9 @@ public class MapReduceBatchContext extends AbstractBatchContext
     }
     Output actualOutput = suffixOutput(getOutput(output));
     Output trackableOutput = CALLER.callUnchecked(() -> {
-      Output trackableOutput1 = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
-                                                                                                 actualOutput);
+      Output trackableOutput1 =
+          isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),
+              actualOutput);
       mrContext.addOutput(trackableOutput1);
       return trackableOutput1;
     });
@@ -144,7 +149,8 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   /**
-   * Get the output, if preview is enabled, return the output with a {@link NullOutputFormatProvider}.
+   * Get the output, if preview is enabled, return the output with a {@link
+   * NullOutputFormatProvider}.
    */
   private Output getOutput(Output output) {
     // Do no return NullOutputFormat for connector datasets
@@ -170,32 +176,33 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, AccessException {
+  public void createTopic(String topic)
+      throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic);
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties)
-    throws TopicAlreadyExistsException, IOException, AccessException {
+      Map<String, String> properties)
+      throws TopicAlreadyExistsException, IOException, AccessException {
     mrContext.getAdmin().createTopic(topic, properties);
   }
 
   @Override
   public Map<String, String> getTopicProperties(String topic)
-    throws TopicNotFoundException, IOException, AccessException {
+      throws TopicNotFoundException, IOException, AccessException {
     return mrContext.getAdmin().getTopicProperties(topic);
   }
 
   @Override
   public void updateTopic(String topic, Map<String, String> properties)
-    throws TopicNotFoundException, IOException, AccessException {
+      throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().updateTopic(topic, properties);
   }
 
   @Override
   public void deleteTopic(String topic)
-    throws TopicNotFoundException, IOException, AccessException {
+      throws TopicNotFoundException, IOException, AccessException {
     mrContext.getAdmin().deleteTopic(topic);
   }
 }

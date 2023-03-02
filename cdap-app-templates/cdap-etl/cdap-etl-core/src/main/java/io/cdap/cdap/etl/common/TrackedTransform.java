@@ -24,13 +24,14 @@ import io.cdap.cdap.etl.api.Transformation;
 import javax.annotation.Nullable;
 
 /**
- * A {@link Transformation} that delegates transform operations while emitting metrics
- * around how many records were input into the transform and output by it.
+ * A {@link Transformation} that delegates transform operations while emitting metrics around how
+ * many records were input into the transform and output by it.
  *
  * @param <IN> Type of input object
  * @param <OUT> Type of output object
  */
 public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destroyable {
+
   private final Transformation<IN, OUT> transform;
   private final StageMetrics metrics;
   private final String metricInName;
@@ -38,22 +39,28 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   private final DataTracer dataTracer;
   private final StageStatisticsCollector collector;
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer) {
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
+      DataTracer dataTracer) {
     this(transform, metrics, dataTracer, new NoopStageStatisticsCollector());
   }
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer,
-                          StageStatisticsCollector collector) {
-    this(transform, metrics, Constants.Metrics.RECORDS_IN, Constants.Metrics.RECORDS_OUT, dataTracer, collector);
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
+      DataTracer dataTracer,
+      StageStatisticsCollector collector) {
+    this(transform, metrics, Constants.Metrics.RECORDS_IN, Constants.Metrics.RECORDS_OUT,
+        dataTracer, collector);
   }
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, @Nullable String metricInName,
-                          @Nullable String metricOutName, DataTracer dataTracer) {
-    this(transform, metrics, metricInName, metricOutName, dataTracer, new NoopStageStatisticsCollector());
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
+      @Nullable String metricInName,
+      @Nullable String metricOutName, DataTracer dataTracer) {
+    this(transform, metrics, metricInName, metricOutName, dataTracer,
+        new NoopStageStatisticsCollector());
   }
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, @Nullable String metricInName,
-                          @Nullable String metricOutName, DataTracer dataTracer, StageStatisticsCollector collector) {
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
+      @Nullable String metricInName,
+      @Nullable String metricOutName, DataTracer dataTracer, StageStatisticsCollector collector) {
     this.transform = transform;
     this.metrics = metrics;
     this.metricInName = metricInName;
@@ -71,7 +78,7 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
       }
     }
     transform.transform(input, metricOutName == null ? emitter :
-      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer, collector));
+        new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer, collector));
   }
 
   @Override

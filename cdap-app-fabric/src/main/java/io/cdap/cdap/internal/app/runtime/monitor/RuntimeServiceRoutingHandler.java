@@ -74,7 +74,7 @@ import org.slf4j.LoggerFactory;
  * The http handler for routing CDAP service requests from program runtime.
  */
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 +
-  "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
+    "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
 public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeServiceRoutingHandler.class);
@@ -84,54 +84,58 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
 
   @Inject
   RuntimeServiceRoutingHandler(DiscoveryServiceClient discoveryServiceClient,
-                               RuntimeRequestValidator requestValidator) {
+      RuntimeRequestValidator requestValidator) {
     this.requestValidator = requestValidator;
     this.endpointStrategyLoadingCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<String, EndpointStrategy>() {
-        @Override
-        public EndpointStrategy load(String key) {
-          return new RandomEndpointStrategy(() -> discoveryServiceClient.discover(key));
-        }
-      });
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build(new CacheLoader<String, EndpointStrategy>() {
+          @Override
+          public EndpointStrategy load(String key) {
+            return new RandomEndpointStrategy(() -> discoveryServiceClient.discover(key));
+          }
+        });
   }
 
   /**
-   * Handles GET and DELETE calls from program runtime to access CDAP services.
-   * It simply verifies the request and forward the call to internal CDAP service.
+   * Handles GET and DELETE calls from program runtime to access CDAP services. It simply verifies
+   * the request and forward the call to internal CDAP service.
    */
   @Path("/services/{service}/**")
-  @GET @DELETE
+  @GET
+  @DELETE
   public void routeService(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace") String namespace,
-                           @PathParam("app") String app,
-                           @PathParam("version") String version,
-                           @PathParam("program-type") String programType,
-                           @PathParam("program") String program,
-                           @PathParam("run") String run,
-                           @PathParam("service") String service) throws Exception {
-    HttpURLConnection urlConn = openConnection(request, namespace, app, version, programType, program, run, service);
+      @PathParam("namespace") String namespace,
+      @PathParam("app") String app,
+      @PathParam("version") String version,
+      @PathParam("program-type") String programType,
+      @PathParam("program") String program,
+      @PathParam("run") String run,
+      @PathParam("service") String service) throws Exception {
+    HttpURLConnection urlConn = openConnection(request, namespace, app, version, programType,
+        program, run, service);
     ResponseInfo responseInfo = new ResponseInfo(service, urlConn);
     responder.sendContent(HttpResponseStatus.valueOf(responseInfo.getResponseCode()),
-                          new RelayBodyProducer(urlConn.getURL(), responseInfo),
-                          responseInfo.getHeaders());
+        new RelayBodyProducer(urlConn.getURL(), responseInfo),
+        responseInfo.getHeaders());
   }
 
   /**
-   * Handles PUT and POST calls from program runtime to access CDAP services.
-   * It simply verify the request and forward the call to internal CDAP services.
+   * Handles PUT and POST calls from program runtime to access CDAP services. It simply verify the
+   * request and forward the call to internal CDAP services.
    */
   @Path("/services/{service}/**")
-  @PUT @POST
+  @PUT
+  @POST
   public BodyConsumer routeServiceWithBody(HttpRequest request, HttpResponder responder,
-                                           @PathParam("namespace") String namespace,
-                                           @PathParam("app") String app,
-                                           @PathParam("version") String version,
-                                           @PathParam("program-type") String programType,
-                                           @PathParam("program") String program,
-                                           @PathParam("run") String run,
-                                           @PathParam("service") String service) throws Exception {
-    HttpURLConnection urlConn = openConnection(request, namespace, app, version, programType, program, run, service);
+      @PathParam("namespace") String namespace,
+      @PathParam("app") String app,
+      @PathParam("version") String version,
+      @PathParam("program-type") String programType,
+      @PathParam("program") String program,
+      @PathParam("run") String run,
+      @PathParam("service") String service) throws Exception {
+    HttpURLConnection urlConn = openConnection(request, namespace, app, version, programType,
+        program, run, service);
     urlConn.setDoOutput(true);
     OutputStream output;
     try {
@@ -164,8 +168,8 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
         try {
           ResponseInfo responseInfo = new ResponseInfo(service, urlConn);
           responder.sendContent(HttpResponseStatus.valueOf(responseInfo.getResponseCode()),
-                                new RelayBodyProducer(urlConn.getURL(), responseInfo),
-                                responseInfo.getHeaders());
+              new RelayBodyProducer(urlConn.getURL(), responseInfo),
+              responseInfo.getHeaders());
         } catch (BadRequestException e) {
           throw new ServiceException(e, HttpResponseStatus.BAD_REQUEST);
         }
@@ -185,21 +189,23 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
    * @throws GoneException if the run already finished
    */
   private HttpURLConnection openConnection(HttpRequest request, String namespace, String app,
-                                           String version, String programType, String program, String run,
-                                           String service) throws BadRequestException, GoneException {
+      String version, String programType, String program, String run,
+      String service) throws BadRequestException, GoneException {
     ApplicationId appId = new NamespaceId(namespace).app(app, version);
     ProgramRunId programRunId = new ProgramRunId(appId,
-                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
-                                                 program, run);
+        ProgramType.valueOfCategoryName(programType, BadRequestException::new),
+        program, run);
     requestValidator.getProgramRunStatus(programRunId, request);
-    Discoverable discoverable = endpointStrategyLoadingCache.getUnchecked(service).pick(2, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategyLoadingCache.getUnchecked(service)
+        .pick(2, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(service);
     }
 
-    String prefix = String.format("%s/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s",
-                                  Constants.Gateway.INTERNAL_API_VERSION_3,
-                                  namespace, app, version, programType, program, run, service);
+    String prefix = String.format(
+        "%s/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/%s",
+        Constants.Gateway.INTERNAL_API_VERSION_3,
+        namespace, app, version, programType, program, run, service);
     URI uri = URIScheme.createURI(discoverable, request.uri().substring(prefix.length()));
     try {
       URL url = uri.toURL();
@@ -239,7 +245,7 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
     private final InputStream input;
 
     ResponseInfo(String serviceName,
-                 HttpURLConnection urlConn) throws BadRequestException, ServiceUnavailableException {
+        HttpURLConnection urlConn) throws BadRequestException, ServiceUnavailableException {
       InputStream is = null;
       try {
         this.responseCode = urlConn.getResponseCode();

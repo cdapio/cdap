@@ -23,8 +23,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
 /**
- * Provider for {@link ConfiguratorFactory}. Use the "remote" binding of {@link ConfiguratorFactory} if worker pool is
- * enabled. Use  the "local" binding of {@link ConfiguratorFactory} if worker pool is disabled.
+ * Provider for {@link ConfiguratorFactory}. Use the "remote" binding of {@link ConfiguratorFactory}
+ * if worker pool is enabled. Use  the "local" binding of {@link ConfiguratorFactory} if worker pool
+ * is disabled.
  */
 public class ConfiguratorFactoryProvider implements Provider<ConfiguratorFactory> {
 
@@ -42,9 +43,9 @@ public class ConfiguratorFactoryProvider implements Provider<ConfiguratorFactory
     boolean workerPoolEnabled = cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE);
     if (workerPoolEnabled) {
       return injector.getInstance(Key.get(ConfiguratorFactory.class,
-                                          Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_REMOTE)));
+          Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_REMOTE)));
     }
     return injector.getInstance(Key.get(ConfiguratorFactory.class,
-                                        Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_LOCAL)));
+        Names.named(Constants.AppFabric.FACTORY_IMPLEMENTATION_LOCAL)));
   }
 }

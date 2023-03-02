@@ -38,32 +38,38 @@ import java.util.Set;
  * Gets status of one or more programs in an application.
  */
 public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
+
   private final ProgramClient programClient;
 
   @Inject
-  public StatusProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  public StatusProgramsCommand(ApplicationClient appClient, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
 
   @Override
   protected BatchProgramStart createProgram(ProgramRecord programRecord) {
-    return new BatchProgramStart(programRecord.getApp(), programRecord.getType(), programRecord.getName());
+    return new BatchProgramStart(programRecord.getApp(), programRecord.getType(),
+        programRecord.getName());
   }
 
   @Override
-  protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
-    List<BatchProgramStatus> results = programClient.getStatus(args.appId.getParent(), args.programs);
+  protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args)
+      throws Exception {
+    List<BatchProgramStatus> results = programClient.getStatus(args.appId.getParent(),
+        args.programs);
 
     Table table = Table.builder()
-      .setHeader("name", "type", "status", "error")
-      .setRows(results, new RowMaker<BatchProgramStatus>() {
-        @Override
-        public List<?> makeRow(BatchProgramStatus result) {
-          return Lists.newArrayList(
-            result.getProgramId(), result.getProgramType(), result.getStatus(), result.getError());
-        }
-      }).build();
+        .setHeader("name", "type", "status", "error")
+        .setRows(results, new RowMaker<BatchProgramStatus>() {
+          @Override
+          public List<?> makeRow(BatchProgramStatus result) {
+            return Lists.newArrayList(
+                result.getProgramId(), result.getProgramType(), result.getStatus(),
+                result.getError());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);
   }
 
@@ -80,7 +86,8 @@ public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   public String getPattern() {
-    return String.format("get app <%s> programs status [of type <%s>]", ArgumentName.APP, ArgumentName.PROGRAM_TYPES);
+    return String.format("get app <%s> programs status [of type <%s>]", ArgumentName.APP,
+        ArgumentName.PROGRAM_TYPES);
   }
 
   @Override

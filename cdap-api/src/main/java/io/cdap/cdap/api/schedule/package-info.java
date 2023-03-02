@@ -16,7 +16,7 @@
 
 /**
  * <p>
- *   For running programs periodically.
+ * For running programs periodically.
  * </p>
  */
 package io.cdap.cdap.api.schedule;

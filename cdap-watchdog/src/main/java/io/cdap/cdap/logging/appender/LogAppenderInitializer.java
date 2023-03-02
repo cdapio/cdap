@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  * Creates and sets the logback log appender.
  */
 public class LogAppenderInitializer implements Closeable {
+
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
   private final Set<String> loggerNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final LogAppender logAppender;
@@ -148,14 +149,16 @@ public class LogAppenderInitializer implements Closeable {
 
   /**
    * Helper function to get the {@link LoggerContext}
-   * @return the {@link LoggerContext} or null if {@link LoggerFactory} is not a logback LoggerContext.
+   *
+   * @return the {@link LoggerContext} or null if {@link LoggerFactory} is not a logback
+   *     LoggerContext.
    */
   @Nullable
   private LoggerContext getLoggerContext() {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof LoggerContext)) {
       LOG.warn("LoggerFactory is not a logback LoggerContext. No log appender is added. " +
-                 "Logback might not be in the classpath");
+          "Logback might not be in the classpath");
       return null;
     }
     return (LoggerContext) loggerFactory;

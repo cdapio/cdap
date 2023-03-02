@@ -41,6 +41,7 @@ import org.iq80.leveldb.WriteOptions;
  * LevelDB implementation of {@link PayloadTable}.
  */
 public class LevelDBPayloadTable extends AbstractPayloadTable {
+
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private final DB levelDB;
   private final TopicMetadata topicMetadata;
@@ -51,16 +52,19 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
   }
 
   private void checkTopic(TopicId topicId, int generation) {
-    Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId), "Not allowed to use table with a " +
-      "different topic id. Table's topic Id: {}. Specified topic id: {}", this.topicMetadata.getTopicId(), topicId);
-    Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation, "Not allowed to use table with " +
-                                  "a different generation id. Table's generation: {}. Specified generation: {}",
-                                this.topicMetadata.getGeneration(), generation);
+    Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId),
+        "Not allowed to use table with a " +
+            "different topic id. Table's topic Id: {}. Specified topic id: {}",
+        this.topicMetadata.getTopicId(), topicId);
+    Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation,
+        "Not allowed to use table with " +
+            "a different generation id. Table's generation: {}. Specified generation: {}",
+        this.topicMetadata.getGeneration(), generation);
   }
 
   @Override
   protected CloseableIterator<RawPayloadTableEntry> read(byte[] startRow, byte[] stopRow,
-                                                         final int limit) throws IOException {
+      final int limit) throws IOException {
     final DBScanIterator iterator = new DBScanIterator(levelDB, startRow, stopRow);
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
       private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
@@ -107,7 +111,8 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
   }
 
   /**
-   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
+   * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older
+   * generation
    *
    * @param currentTime current timestamp
    * @throws IOException error occurred while trying to delete a row in LevelDB
@@ -116,13 +121,15 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
     WriteBatch writeBatch = levelDB.createWriteBatch();
     long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
     byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
-                                                     Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
+        Integer.parseInt(MessagingUtils.Constants.DEFAULT_GENERATION));
     byte[] stopRow = Bytes.stopKeyForPrefix(startRow);
 
-    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB, startRow, stopRow)) {
+    try (CloseableIterator<Map.Entry<byte[], byte[]>> rowIterator = new DBScanIterator(levelDB,
+        startRow, stopRow)) {
       while (rowIterator.hasNext()) {
         Map.Entry<byte[], byte[]> entry = rowIterator.next();
-        PayloadTable.Entry payloadTableEntry = new ImmutablePayloadTableEntry(entry.getKey(), entry.getValue());
+        PayloadTable.Entry payloadTableEntry = new ImmutablePayloadTableEntry(entry.getKey(),
+            entry.getValue());
 
         int dataGeneration = payloadTableEntry.getGeneration();
         int currGeneration = topicMetadata.getGeneration();
@@ -133,7 +140,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
         }
 
         if ((dataGeneration == Math.abs(currGeneration)) &&
-          ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
+            ((currentTime - payloadTableEntry.getPayloadWriteTimestamp()) > ttlInMs)) {
           writeBatch.delete(entry.getKey());
         } else {
           // terminate scanning table once an entry with write time after TTL is found, to avoid scanning whole table,

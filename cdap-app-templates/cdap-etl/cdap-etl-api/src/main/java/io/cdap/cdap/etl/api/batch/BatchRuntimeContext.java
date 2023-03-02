@@ -27,9 +27,9 @@ import io.cdap.cdap.etl.api.TransformContext;
 public interface BatchRuntimeContext extends DatasetContext, TransformContext {
 
   /**
-   * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
+   * Returns the logical start time of the Batch Job.  Logical start time is the time when this
+   * Batch job is supposed to start if this job is started by the scheduler. Otherwise it would be
+   * the current time when the job runs.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */

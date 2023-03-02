@@ -44,10 +44,11 @@ import javax.annotation.Nullable;
 import org.apache.tephra.TransactionFailureException;
 
 /**
- * An {@link AuthorizationContext} that delegates to the provided {@link DatasetContext}, {@link Admin} and
- * {@link Transactional}.
+ * An {@link AuthorizationContext} that delegates to the provided {@link DatasetContext}, {@link
+ * Admin} and {@link Transactional}.
  */
 public class DefaultAuthorizationContext implements AuthorizationContext {
+
   private final Properties extensionProperties;
   private final DatasetContext delegateDatasetContext;
   private final Admin delegateAdmin;
@@ -58,9 +59,9 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   @Inject
   @VisibleForTesting
   DefaultAuthorizationContext(@Assisted("extension-properties") Properties extensionProperties,
-                              DatasetContext delegateDatasetContext, Admin delegateAdmin,
-                              Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext,
-                              SecureStore delegateSecureStore) {
+      DatasetContext delegateDatasetContext, Admin delegateAdmin,
+      Transactional delegateTxnl, AuthenticationContext delegateAuthenticationContext,
+      SecureStore delegateSecureStore) {
     this.extensionProperties = extensionProperties;
     this.delegateDatasetContext = delegateDatasetContext;
     this.delegateAdmin = delegateAdmin;
@@ -86,13 +87,13 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Override
   public void createDataset(String name, String type, DatasetProperties properties)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     delegateAdmin.createDataset(name, type, properties);
   }
 
   @Override
   public void updateDataset(String name, DatasetProperties properties)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     delegateAdmin.updateDataset(name, properties);
   }
 
@@ -112,19 +113,21 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+  public <T extends Dataset> T getDataset(String namespace, String name)
+      throws DatasetInstantiationException {
     return delegateDatasetContext.getDataset(namespace, name);
   }
 
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return delegateDatasetContext.getDataset(name, arguments);
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
+  public <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments)
+      throws DatasetInstantiationException {
     return delegateDatasetContext.getDataset(namespace, name, arguments);
   }
 
@@ -155,7 +158,7 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     delegateAdmin.put(namespace, name, data, description, properties);
   }
 
@@ -172,17 +175,19 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+      Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
     throw new UnsupportedOperationException("Messaging not supported");
   }
 
   @Override
-  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(String topic)
+      throws TopicNotFoundException, IOException {
     throw new UnsupportedOperationException("Messaging not supported");
   }
 
   @Override
-  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+  public void updateTopic(String topic, Map<String, String> properties)
+      throws TopicNotFoundException, IOException {
     throw new UnsupportedOperationException("Messaging not supported");
   }
 

@@ -22,6 +22,7 @@ import java.util.Set;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
+ *
  * @param <OFFSET> type of the offset
  */
 public interface CheckpointManager<OFFSET> {

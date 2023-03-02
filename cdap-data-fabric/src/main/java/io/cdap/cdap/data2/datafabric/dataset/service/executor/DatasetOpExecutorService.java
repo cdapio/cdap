@@ -50,22 +50,24 @@ public class DatasetOpExecutorService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  public DatasetOpExecutorService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                                  CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                                  @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
+  public DatasetOpExecutorService(CConfiguration cConf, SConfiguration sConf,
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      @Named(Constants.Service.DATASET_EXECUTOR) Set<HttpHandler> handlers) {
 
     this.discoveryService = discoveryService;
 
     int workerThreads = cConf.getInt(Constants.Dataset.Executor.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Dataset.Executor.EXEC_THREADS, 30);
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.DATASET_EXECUTOR)
-      .setHttpHandlers(handlers)
-      .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
-      .setPort(cConf.getInt(Constants.Dataset.Executor.PORT))
-      .setWorkerThreadPoolSize(workerThreads)
-      .setExecThreadPoolSize(execThreads)
-      .setConnectionBacklog(20000);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.DATASET_EXECUTOR)
+        .setHttpHandlers(handlers)
+        .setHost(cConf.get(Constants.Dataset.Executor.ADDRESS))
+        .setPort(cConf.getInt(Constants.Dataset.Executor.PORT))
+        .setWorkerThreadPoolSize(workerThreads)
+        .setExecThreadPoolSize(execThreads)
+        .setConnectionBacklog(20000);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -75,14 +77,16 @@ public class DatasetOpExecutorService extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getEntityName(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.DATASET_EXECUTOR));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getEntityName(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.DATASET_EXECUTOR));
     LOG.info("Starting DatasetOpExecutorService...");
 
     httpService.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.DATASET_EXECUTOR, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.DATASET_EXECUTOR, httpService)));
     LOG.info("DatasetOpExecutorService started successfully on {}", httpService.getBindAddress());
   }
 
@@ -102,8 +106,8 @@ public class DatasetOpExecutorService extends AbstractIdleService {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("bindAddress", httpService.getBindAddress())
-      .toString();
+        .add("bindAddress", httpService.getBindAddress())
+        .toString();
   }
 
   public NettyHttpService getHttpService() {

@@ -23,4 +23,5 @@ import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
  * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
  */
 public interface PreviewRunnerManager extends PreviewRunStopper, Service {
+
 }

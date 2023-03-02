@@ -51,20 +51,20 @@ import javax.annotation.Nullable;
  * <p>
  * SQL Engines are implemented as plugins.
  * <p>
- * Internally, the SQL Engine needs to handle retries and only surface {@link SQLEngineException} errors when there is a
- * problem that cannot be recovered from and pipeline must be stopped.
+ * Internally, the SQL Engine needs to handle retries and only surface {@link SQLEngineException}
+ * errors when there is a problem that cannot be recovered from and pipeline must be stopped.
  * <p>
- * Note that this operation may be refactored at a later release, and thus this method signature is not guaranteed to
- * remain stable.
+ * Note that this operation may be refactored at a later release, and thus this method signature is
+ * not guaranteed to remain stable.
  *
- * @param <KEY_OUT>   The type for the Output Key when mapping a StructuredRecord
+ * @param <KEY_OUT> The type for the Output Key when mapping a StructuredRecord
  * @param <VALUE_OUT> The type for the Output Value when mapping a StructuredRecord
- * @param <KEY_IN>    The type for the Input Key when building a StructuredRecord
- * @param <VALUE_IN>  The type for the Input Value when building a StructuredRecord
+ * @param <KEY_IN> The type for the Input Key when building a StructuredRecord
+ * @param <VALUE_IN> The type for the Input Value when building a StructuredRecord
  */
 @Beta
 public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
-  extends PipelineConfigurable, SubmitterLifecycle<SQLEngineContext> {
+    extends PipelineConfigurable, SubmitterLifecycle<SQLEngineContext> {
 
   /**
    * Creates an Output Format Provided that can be used to push records into a SQL Engine.
@@ -75,7 +75,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @return {@link SQLPushDataset} instance that can be used to write records to the SQL Engine.
    */
   SQLPushDataset<StructuredRecord, KEY_OUT, VALUE_OUT> getPushProvider(SQLPushRequest pushRequest)
-    throws SQLEngineException;
+      throws SQLEngineException;
 
   /**
    * Creates an InputFormatProvider that can be used to pull records from the specified dataset.
@@ -84,14 +84,14 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
    * @return {@link SQLPullDataset} instance that can be used to read records from the SQL engine.
    */
   SQLPullDataset<StructuredRecord, KEY_IN, VALUE_IN> getPullProvider(SQLPullRequest pullRequest)
-    throws SQLEngineException;
+      throws SQLEngineException;
 
   /**
-   * Creates a {@link SQLDatasetConsumer} for a given {@link SQLPushRequest} with support for
-   * a supplied{@link PushCapability}.
+   * Creates a {@link SQLDatasetConsumer} for a given {@link SQLPushRequest} with support for a
+   * supplied{@link PushCapability}.
    *
-   * If the return value is null, we must assume that the supplied {@link SQLPushRequest} is not supported
-   * for this capability.
+   * If the return value is null, we must assume that the supplied {@link SQLPushRequest} is not
+   * supported for this capability.
    *
    * @param pushRequest push request used to create a consumer
    * @param capability the push capability we wish to use to upload
@@ -103,11 +103,11 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   }
 
   /**
-   * Creates a {@link SQLDatasetProducer} for a given {@link SQLPullRequest} with support for
-   * a supplied {@link PullCapability}.
+   * Creates a {@link SQLDatasetProducer} for a given {@link SQLPullRequest} with support for a
+   * supplied {@link PullCapability}.
    *
-   * If the return value is null, we must assume that the supplied {@link SQLPullRequest} is not supported
-   * for this capability.
+   * If the return value is null, we must assume that the supplied {@link SQLPullRequest} is not
+   * supported for this capability.
    *
    * @param pullRequest pull request used to create a producer
    * @param capability the capability we want to use to upload
@@ -121,8 +121,8 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   /**
    * Check if this dataset exists in the SQL Engine.
    * <p>
-   * This is a blocking call. if the process to write records into a dataset is ongoing, this method will block until
-   * the process completes. This ensures an accurate result for this operation.
+   * This is a blocking call. if the process to write records into a dataset is ongoing, this method
+   * will block until the process completes. This ensures an accurate result for this operation.
    *
    * @param datasetName the dataset name.
    * @return boolean specifying if this dataset exists in the remote engine.
@@ -138,16 +138,18 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   boolean canJoin(SQLJoinDefinition joinDefinition);
 
   /**
-   *
    * @return if engine supports relational plugins
    * @see io.cdap.cdap.etl.api.relational.RelationalTransform
    */
   default boolean supportsRelationalTranform() {
     return false;
-  };
+  }
+
+  ;
 
   /**
    * Final check if the requested transformations can be executed in the SQL Engine.
+   *
    * @param transformDefinition SQL transformation to validate
    * @return if transformations can be executed in the SQL Egine
    */
@@ -170,6 +172,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Consume a {@link SQLWriteRequest} and write this output into the SQL engine if possible
+   *
    * @param writeRequest write request to consume
    * @return {@link SQLWriteResult} containing information about the write operation
    * @throws SQLEngineException if the write process fails unexpectedly.
@@ -180,6 +183,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Consume a {@link SQLReadRequest} and read this input into the SQL engine if possible
+   *
    * @param readRequest read request to consume
    * @return {@link SQLReadResult} containing information about the read operation
    * @throws SQLEngineException if the read process fails unexpectedly.
@@ -191,15 +195,14 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   /**
    * Deletes all temporary datasets and cleans up all temporary data from the SQL engine.
    *
-   * @param datasetName boolean specifying if all running tasks should be stopped at this time (if any are running).
+   * @param datasetName boolean specifying if all running tasks should be stopped at this time
+   *     (if any are running).
    */
   void cleanup(String datasetName) throws SQLEngineException;
 
   /**
-   *
-   * @return engine to use for relational tranform. Will be called only if {@link #supportsRelationalTranform()}
-   * is true
-   * @throws SQLEngineException
+   * @return engine to use for relational tranform. Will be called only if {@link
+   *     #supportsRelationalTranform()} is true
    */
   default Engine getRelationalEngine() {
     throw new UnsupportedOperationException("Relational transform is not supported by the engine");
@@ -207,6 +210,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Prepares Relational plugin input based on provided descripton and dataset supplier.
+   *
    * @param relationDefinition dataset name and schema
    * @return a relation for the dataset definition
    */
@@ -216,17 +220,19 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Performs transformation of a single relation.
-   * @param context transformation context with transformation definition, input datasets and setter for output
+   *
+   * @param context transformation context with transformation definition, input datasets and
+   *     setter for output
    * @return output datasets for the transform requested
-   * @throws SQLEngineException
    */
   default SQLDataset transform(SQLTransformRequest context)
-    throws SQLEngineException {
+      throws SQLEngineException {
     throw new UnsupportedOperationException("Relational transform is not supported by the engine");
   }
 
   /**
    * Defines pull capabilities supported by this SQL Engine
+   *
    * @return Set detailing pull capabilities supported by this engine.
    */
   default Set<PullCapability> getPullCapabilities() {
@@ -235,6 +241,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Defines push capabilities supported by this SQL Engine
+   *
    * @return Set detailing push capabilities supported by this engine.
    */
   default Set<PushCapability> getPushCapabilities() {
@@ -243,6 +250,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Check if the supplied input schema is supported by the SQL engine
+   *
    * @param schema input schema to validate
    * @return boolean specifying if the input schema is supported.
    */
@@ -252,6 +260,7 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
 
   /**
    * Check if the supplied output schema is supported by the SQL engine
+   *
    * @param schema output schema to validate
    * @return boolean specifying if the output schema is supported.
    */
@@ -260,18 +269,26 @@ public interface SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
   }
 
   /**
-   * Defines which stages should be pushed down even when the platform doesn't select these stages for push down.
+   * Defines which stages should be pushed down even when the platform doesn't select these stages
+   * for push down.
+   *
    * @return Set containing stage names to push down to the SQL Engine
    */
   default Set<String> getIncludedStageNames() {
     return Collections.emptySet();
-  };
+  }
+
+  ;
 
   /**
-   * Defines which stages should not be pushed down even when the platform determines the stage must be pushed down
+   * Defines which stages should not be pushed down even when the platform determines the stage must
+   * be pushed down
+   *
    * @return Set containing stage names to exclude from pushing down to the SQL Engine
    */
   default Set<String> getExcludedStageNames() {
     return Collections.emptySet();
-  };
+  }
+
+  ;
 }

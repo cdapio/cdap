@@ -24,9 +24,11 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * Contains information about a SQL Engine Job.
+ *
  * @param <T> The output type for this SQL Engine Job.
  */
 public class SQLEngineJob<T> {
+
   private final SQLEngineJobKey key;
   private final CompletableFuture<T> task;
 

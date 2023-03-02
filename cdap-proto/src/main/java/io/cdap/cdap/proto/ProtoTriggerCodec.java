@@ -75,19 +75,21 @@ public class ProtoTriggerCodec implements JsonSerializer<Trigger>, JsonDeseriali
 
   @Override
   public Trigger deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+      throws JsonParseException {
     if (json == null) {
       return null;
     }
     if (!(json instanceof JsonObject)) {
-      throw new JsonParseException("Expected a JsonObject but found a " + json.getClass().getName());
+      throw new JsonParseException(
+          "Expected a JsonObject but found a " + json.getClass().getName());
     }
     JsonObject object = (JsonObject) json;
     JsonElement typeJson = object.get("type");
     ProtoTrigger.Type triggerType = context.deserialize(typeJson, ProtoTrigger.Type.class);
     Class<? extends Trigger> subClass = typeClassMap.get(triggerType);
     if (subClass == null) {
-      throw new JsonParseException("Unable to map trigger type " + triggerType + " to a trigger class");
+      throw new JsonParseException(
+          "Unable to map trigger type " + triggerType + " to a trigger class");
     }
     ProtoTrigger trigger = context.deserialize(json, subClass);
     trigger.validate();

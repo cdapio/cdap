@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.id.ProfileId;
  * Thrown when there is a conflict about the profile
  */
 public class ProfileConflictException extends ConflictException {
+
   private final ProfileId profileId;
 
   public ProfileConflictException(String message, ProfileId profileId) {

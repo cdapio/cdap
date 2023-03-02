@@ -28,9 +28,13 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Provides access to {@link DatasetDefinition} while removing burden of managing classloader separatelly.
- * @param <D> type of {@link Dataset} that {@link io.cdap.cdap.api.dataset.DatasetDefinition} creates
- * @param <A> type of {@link DatasetAdmin} that {@link io.cdap.cdap.api.dataset.DatasetDefinition} creates
+ * Provides access to {@link DatasetDefinition} while removing burden of managing classloader
+ * separatelly.
+ *
+ * @param <D> type of {@link Dataset} that {@link io.cdap.cdap.api.dataset.DatasetDefinition}
+ *     creates
+ * @param <A> type of {@link DatasetAdmin} that {@link io.cdap.cdap.api.dataset.DatasetDefinition}
+ *     creates
  */
 public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
 
@@ -52,11 +56,11 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
   }
 
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     DatasetSpecification spec = AbstractDatasetDefinition
-      .reconfigure(delegate, instanceName, newProperties, currentSpec)
-      .setOriginalProperties(newProperties);
+        .reconfigure(delegate, instanceName, newProperties, currentSpec)
+        .setOriginalProperties(newProperties);
     if (newProperties.getDescription() != null) {
       spec = spec.setDescription(newProperties.getDescription());
     }
@@ -68,7 +72,7 @@ public final class DatasetType<D extends Dataset, A extends DatasetAdmin> {
   }
 
   public D getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                      Map<String, String> arguments) throws IOException {
+      Map<String, String> arguments) throws IOException {
     return delegate.getDataset(datasetContext, spec, arguments, classLoader);
   }
 }

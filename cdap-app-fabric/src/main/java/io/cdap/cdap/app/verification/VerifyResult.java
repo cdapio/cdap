@@ -22,6 +22,7 @@ import io.cdap.cdap.error.Errors;
  * This class defines the result of {@link Verifier#verify(Object)}.
  */
 public final class VerifyResult {
+
   /**
    * Status of verification.
    */
@@ -45,7 +46,7 @@ public final class VerifyResult {
   /**
    * Constructor.
    *
-   * @param status  of the {@link Verifier#verify(Object)}
+   * @param status of the {@link Verifier#verify(Object)}
    * @param message description in case of failure.
    */
   public VerifyResult(Status status, String message) {
@@ -81,8 +82,7 @@ public final class VerifyResult {
   }
 
   /**
-   * Helper static method for creating failure {@link VerifyResult} with
-   * a descriptive message.
+   * Helper static method for creating failure {@link VerifyResult} with a descriptive message.
    *
    * @return An instance of {@link VerifyResult} which has failed with descriptive message.
    */

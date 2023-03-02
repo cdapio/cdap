@@ -22,10 +22,12 @@ import java.util.Objects;
  * Information about tethered peers that's returned by REST APIs.
  */
 public class PeerState extends PeerBase {
+
   private final TetheringConnectionStatus connectionStatus;
 
-  public PeerState(String name, String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
-                   long requestTime, TetheringConnectionStatus connectionStatus) {
+  public PeerState(String name, String endpoint, TetheringStatus tetheringStatus,
+      PeerMetadata metadata,
+      long requestTime, TetheringConnectionStatus connectionStatus) {
     super(name, endpoint, tetheringStatus, metadata, requestTime);
     this.connectionStatus = connectionStatus;
   }

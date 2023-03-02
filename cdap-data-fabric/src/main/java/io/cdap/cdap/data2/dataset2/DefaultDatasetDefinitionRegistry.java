@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
  * this is a hack for initializing system-level datasets for now
  */
 public class DefaultDatasetDefinitionRegistry extends InMemoryDatasetDefinitionRegistry {
+
   @Inject
   private Injector injector;
 

@@ -29,11 +29,13 @@ import org.apache.twill.api.TwillRunnerService;
  * A service for initializing the {@link TwillRunnerService} with a list of namespaces.
  */
 public class NamespaceInitializerService extends AbstractExecutionThreadService {
+
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final TwillRunnerService twillRunnerService;
 
   @Inject
-  NamespaceInitializerService(NamespaceQueryAdmin namespaceQueryAdmin, TwillRunnerService twillRunnerService) {
+  NamespaceInitializerService(NamespaceQueryAdmin namespaceQueryAdmin,
+      TwillRunnerService twillRunnerService) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.twillRunnerService = twillRunnerService;
   }
@@ -44,8 +46,8 @@ public class NamespaceInitializerService extends AbstractExecutionThreadService 
       return;
     }
     List<NamespaceDetail> namespaceDetails = namespaceQueryAdmin.list().stream()
-      .map(meta -> new NamespaceDetail(meta.getName(), meta.getConfig().getConfigs()))
-      .collect(Collectors.toList());
+        .map(meta -> new NamespaceDetail(meta.getName(), meta.getConfig().getConfigs()))
+        .collect(Collectors.toList());
     NamespaceListener namespaceListener = (NamespaceListener) twillRunnerService;
     namespaceListener.onStart(namespaceDetails);
   }

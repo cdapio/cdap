@@ -49,10 +49,10 @@ public interface ProgramController {
    *
    * </pre>
    * <p>
-   *   Any error during state transitions would end up in ERROR state.
+   * Any error during state transitions would end up in ERROR state.
    * </p>
    * <p>
-   *   Any unrecoverable error in ALIVE state would also end up in ERROR state.
+   * Any unrecoverable error in ALIVE state would also end up in ERROR state.
    * </p>
    */
   enum State {
@@ -129,7 +129,9 @@ public interface ProgramController {
 
   /**
    * Suspend the running {@link ProgramRunner}.
-   * @return A {@link ListenableFuture} that will be completed when the program is actually suspended.
+   *
+   * @return A {@link ListenableFuture} that will be completed when the program is actually
+   *     suspended.
    */
   ListenableFuture<ProgramController> suspend();
 
@@ -143,8 +145,8 @@ public interface ProgramController {
   ListenableFuture<ProgramController> stop();
 
   /**
-   * Attempt to stop the program gracefully within the given timeout. Depending on the implementation,
-   * if the timeout reached, the running program can be killed.
+   * Attempt to stop the program gracefully within the given timeout. Depending on the
+   * implementation, if the timeout reached, the running program can be killed.
    *
    * @param timeout the maximum time that it allows the service to terminate gracefully
    * @param timeoutUnit the {@link TimeUnit} for the {@code timeout}
@@ -164,13 +166,14 @@ public interface ProgramController {
 
   /**
    * @return The failure cause of the program if the current state is {@link State#ERROR}, otherwise
-   *         {@code null} will be returned.
+   *     {@code null} will be returned.
    */
   Throwable getFailureCause();
 
   /**
-   * Adds a listener to watch for state changes. Adding the same listener again don't have any effect
-   * and simply will get the same {@link Cancellable} back.
+   * Adds a listener to watch for state changes. Adding the same listener again don't have any
+   * effect and simply will get the same {@link Cancellable} back.
+   *
    * @param listener listener for listening to state changes
    * @param executor the executor used for making calls to the given listener
    * @return a {@link Cancellable} to cancel the listening
@@ -179,9 +182,11 @@ public interface ProgramController {
 
   /**
    * Sends a command to the program. It's up to the program on how to handle it.
+   *
    * @param name Name of the command.
    * @param value Value of the command.
-   * @return A {@link ListenableFuture} that would be completed when the command is handled or ignored.
+   * @return A {@link ListenableFuture} that would be completed when the command is handled or
+   *     ignored.
    */
   ListenableFuture<ProgramController> command(String name, Object value);
 
@@ -189,12 +194,14 @@ public interface ProgramController {
    * Listener for getting callbacks on state changed on {@link ProgramController}.
    */
   interface Listener {
+
     /**
-     * Called when the listener is added. This method will triggered once only and triggered before any other
-     * method in this interface is called.
+     * Called when the listener is added. This method will triggered once only and triggered before
+     * any other method in this interface is called.
      *
      * @param currentState The state of the program by the time when the listener is added.
-     * @param cause The cause of failure if the program failed by the time when the listener is added.
+     * @param cause The cause of failure if the program failed by the time when the listener is
+     *     added.
      */
     void init(State currentState, @Nullable Throwable cause);
 

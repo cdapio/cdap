@@ -21,6 +21,7 @@ package io.cdap.cdap.internal.app.preview;
  * Interface that provides poller info used for polling the preview requests.
  */
 public interface PreviewRequestPollerInfoProvider {
+
   /**
    * @return the poller info in generic byte array
    */

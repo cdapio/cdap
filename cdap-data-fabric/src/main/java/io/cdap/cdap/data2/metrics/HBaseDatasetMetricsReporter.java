@@ -47,7 +47,9 @@ import org.apache.twill.common.Threads;
  * Collects HBase-based dataset's metrics from HBase.
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
-public class HBaseDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
+public class HBaseDatasetMetricsReporter extends AbstractScheduledService implements
+    DatasetMetricsReporter {
+
   private final int reportIntervalInSec;
   private final MetricsCollectionService metricsService;
   private final Configuration hConf;
@@ -59,8 +61,9 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
 
 
   @Inject
-  public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                     Configuration hConf, CConfiguration conf, DatasetFramework dsFramework) {
+  public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService,
+      HBaseTableUtil hBaseTableUtil,
+      Configuration hConf, CConfiguration conf, DatasetFramework dsFramework) {
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
@@ -96,18 +99,20 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("HBaseDatasetMetricsReporter-scheduler"));
+        Threads.createDaemonThreadFactory("HBaseDatasetMetricsReporter-scheduler"));
     return executor;
   }
 
-  private void reportHBaseStats() throws IOException, DatasetManagementException, UnauthorizedException {
+  private void reportHBaseStats()
+      throws IOException, DatasetManagementException, UnauthorizedException {
     Map<TableId, HBaseTableUtil.TableStats> tableStats = hBaseTableUtil.getTableStats(hAdmin);
     if (tableStats.size() > 0) {
       report(tableStats);
     }
   }
 
-  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats) throws IOException, UnauthorizedException {
+  private void report(Map<TableId, HBaseTableUtil.TableStats> tableStats)
+      throws IOException, UnauthorizedException {
     Map<String, String> reverseNamespaceMap = hBaseTableUtil.getHBaseToCDAPNamespaceMap();
     for (Map.Entry<TableId, HBaseTableUtil.TableStats> statEntry : tableStats.entrySet()) {
       String hbaseNamespace = statEntry.getKey().getNamespace();
@@ -119,13 +124,16 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
       }
       String tableName = statEntry.getKey().getTableName();
       try {
-        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(new NamespaceId(cdapNamespace));
+        Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(
+            new NamespaceId(cdapNamespace));
         for (DatasetSpecificationSummary spec : instances) {
-          DatasetSpecification specification = dsFramework.getDatasetSpec(new DatasetId(cdapNamespace, spec.getName()));
+          DatasetSpecification specification = dsFramework.getDatasetSpec(
+              new DatasetId(cdapNamespace, spec.getName()));
           if (specification.isParent(tableName)) {
             MetricsContext collector =
-              metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, cdapNamespace,
-                                                        Constants.Metrics.Tag.DATASET, spec.getName()));
+                metricsService.getContext(
+                    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, cdapNamespace,
+                        Constants.Metrics.Tag.DATASET, spec.getName()));
             collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB());
             break;
           }

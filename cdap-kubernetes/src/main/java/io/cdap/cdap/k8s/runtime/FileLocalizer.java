@@ -62,7 +62,7 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   private volatile boolean stopped;
 
   public FileLocalizer(MasterEnvironmentRunnableContext context,
-                       @SuppressWarnings("unused") MasterEnvironment masterEnv) {
+      @SuppressWarnings("unused") MasterEnvironment masterEnv) {
     this.context = context;
     this.random = new Random();
   }
@@ -71,7 +71,8 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   public void run(String[] args) throws Exception {
     if (args.length < 2) {
       // This should never happen
-      throw new IllegalArgumentException("Expected to have two arguments: runtime config uri and the runnable name.");
+      throw new IllegalArgumentException(
+          "Expected to have two arguments: runtime config uri and the runnable name.");
     }
 
     LocalLocationFactory localLocationFactory = new LocalLocationFactory();
@@ -93,14 +94,17 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
       });
     }
 
-    try (Reader reader = Files.newBufferedReader(runtimeConfigDir.get().resolve(Constants.Files.TWILL_SPEC),
-                                                 StandardCharsets.UTF_8)) {
-      TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create().fromJson(reader);
+    try (Reader reader = Files.newBufferedReader(
+        runtimeConfigDir.get().resolve(Constants.Files.TWILL_SPEC),
+        StandardCharsets.UTF_8)) {
+      TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create()
+          .fromJson(reader);
 
       Path targetDir = Paths.get(System.getProperty("user.dir"));
       Files.createDirectories(targetDir);
 
-      for (LocalFile localFile : twillRuntimeSpec.getTwillSpecification().getRunnables().get(args[1]).getLocalFiles()) {
+      for (LocalFile localFile : twillRuntimeSpec.getTwillSpecification().getRunnables()
+          .get(args[1]).getLocalFiles()) {
         if (stopped) {
           LOG.info("Stop localization on request");
           break;
@@ -109,7 +113,8 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
         Path targetPath = targetDir.resolve(localFile.getName());
 
         callWithRetries(() -> {
-          try (InputStream is = getHttpURLConnectionInputStream(fileDownloadURLPath(localFile.getURI()))) {
+          try (InputStream is = getHttpURLConnectionInputStream(
+              fileDownloadURLPath(localFile.getURI()))) {
             if (localFile.isArchive()) {
               expand(localFile.getURI(), is, targetPath);
             } else {
@@ -128,8 +133,8 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
   }
 
   /**
-   * Return an {@link InputStream} for the given {@link HttpURLConnection} URL path that
-   * auto disconnects upon closing the {@link InputStream}
+   * Return an {@link InputStream} for the given {@link HttpURLConnection} URL path that auto
+   * disconnects upon closing the {@link InputStream}
    */
   private InputStream getHttpURLConnectionInputStream(String urlPath) throws IOException {
     HttpURLConnection conn = context.openHttpURLConnection(urlPath);
@@ -191,7 +196,8 @@ public class FileLocalizer implements MasterEnvironmentRunnable {
           throw e;
         }
         // Sleep for some random milliseconds before retrying
-        int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint()) + FAILURE_RETRY_RANGE.lowerEndpoint();
+        int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint())
+            + FAILURE_RETRY_RANGE.lowerEndpoint();
         LOG.debug("Retry fetching artifacts after {} ms", sleepMs);
         TimeUnit.MILLISECONDS.sleep(sleepMs);
       }

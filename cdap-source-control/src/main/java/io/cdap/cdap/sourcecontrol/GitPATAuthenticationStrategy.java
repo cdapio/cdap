@@ -31,12 +31,15 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
  * An {@link AuthenticationStrategy} to use with GitHub and Personal Access Tokens.
  */
 public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
+
   private static final String GITHUB_PAT_USERNAME = "oauth2";
   private final SecureStorePasswordProvider credentialsProvider;
 
-  public GitPATAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config, String namespaceId) {
+  public GitPATAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
+      String namespaceId) {
     this.credentialsProvider =
-      new SecureStorePasswordProvider(secureStore, GITHUB_PAT_USERNAME, config.getAuth().getTokenName(), namespaceId);
+        new SecureStorePasswordProvider(secureStore, GITHUB_PAT_USERNAME,
+            config.getAuth().getTokenName(), namespaceId);
   }
 
   @Override
@@ -45,16 +48,19 @@ public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
   }
 
   /**
-   * A class that wraps a {@link UsernamePasswordCredentialsProvider} but fetches password from a {@link SecureStore}.
+   * A class that wraps a {@link UsernamePasswordCredentialsProvider} but fetches password from a
+   * {@link SecureStore}.
    */
   private static class SecureStorePasswordProvider extends RefreshableCredentialsProvider {
+
     private final SecureStore secureStore;
     private final String username;
     private final String passwordKeyName;
     private final String namespaceID;
     private String password;
 
-    SecureStorePasswordProvider(SecureStore secureStore, String username, String passwordKeyName, String namespaceID) {
+    SecureStorePasswordProvider(SecureStore secureStore, String username, String passwordKeyName,
+        String namespaceID) {
       this.secureStore = secureStore;
       this.username = username;
       this.passwordKeyName = passwordKeyName;
@@ -71,8 +77,9 @@ public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
         throw new AuthenticationConfigException("Failed to get password from secure store", e);
       }
       if (data == null) {
-        throw new AuthenticationConfigException(String.format("Password with key name %s not found in secure store",
-                                                              passwordKeyName));
+        throw new AuthenticationConfigException(
+            String.format("Password with key name %s not found in secure store",
+                passwordKeyName));
       }
       password = new String(data.get(), StandardCharsets.UTF_8);
     }
@@ -88,12 +95,14 @@ public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
     }
 
     @Override
-    public boolean get(URIish urIish, CredentialItem... credentialItems) throws UnsupportedCredentialItem {
+    public boolean get(URIish urIish, CredentialItem... credentialItems)
+        throws UnsupportedCredentialItem {
       if (password == null) {
         throw new IllegalStateException(
-          "Password not fetched from secure store. Refresh credentials before getting them.");
+            "Password not fetched from secure store. Refresh credentials before getting them.");
       }
-      return new UsernamePasswordCredentialsProvider(username, password).get(urIish, credentialItems);
+      return new UsernamePasswordCredentialsProvider(username, password).get(urIish,
+          credentialItems);
     }
   }
 }

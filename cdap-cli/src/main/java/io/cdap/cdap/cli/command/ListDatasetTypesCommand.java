@@ -46,20 +46,21 @@ public class ListDatasetTypesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.list(cliConfig.getCurrentNamespace());
+    List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.list(
+        cliConfig.getCurrentNamespace());
 
     Table table = Table.builder()
-      .setHeader("name", "modules")
-      .setRows(datasetTypeMetas, new RowMaker<DatasetTypeMeta>() {
-        @Override
-        public List<?> makeRow(DatasetTypeMeta object) {
-          List<String> modulesStrings = Lists.newArrayList();
-          for (DatasetModuleMeta module : object.getModules()) {
-            modulesStrings.add(module.getName());
+        .setHeader("name", "modules")
+        .setRows(datasetTypeMetas, new RowMaker<DatasetTypeMeta>() {
+          @Override
+          public List<?> makeRow(DatasetTypeMeta object) {
+            List<String> modulesStrings = Lists.newArrayList();
+            for (DatasetModuleMeta module : object.getModules()) {
+              modulesStrings.add(module.getName());
+            }
+            return Lists.newArrayList(object.getName(), Joiner.on(", ").join(modulesStrings));
           }
-          return Lists.newArrayList(object.getName(), Joiner.on(", ").join(modulesStrings));
-        }
-      }).build();
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

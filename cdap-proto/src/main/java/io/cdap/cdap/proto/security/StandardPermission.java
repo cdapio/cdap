@@ -21,8 +21,8 @@ package io.cdap.cdap.proto.security;
  */
 public enum StandardPermission implements Permission {
   /**
-   * Create an entity. Can be used both with enforceOnParent when name is not known beforehand and with
-   * enforce when name is provided.
+   * Create an entity. Can be used both with enforceOnParent when name is not known beforehand and
+   * with enforce when name is provided.
    */
   CREATE {
     @Override
@@ -31,8 +31,8 @@ public enum StandardPermission implements Permission {
     }
   },
   /**
-   * List permission can be used on parent entity to check if a principal has access to list specific children
-   * types.
+   * List permission can be used on parent entity to check if a principal has access to list
+   * specific children types.
    */
   LIST {
     @Override
@@ -55,8 +55,7 @@ public enum StandardPermission implements Permission {
   /**
    * Permission to use specific entity.
    */
-  USE
-  ;
+  USE;
 
   @Override
   public PermissionType getPermissionType() {

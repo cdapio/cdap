@@ -37,6 +37,7 @@ import java.util.List;
  * Lists all plugins of a specific type available to an artifact.
  */
 public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
+
   private static final Gson GSON = new Gson();
 
   private final ArtifactClient artifactClient;
@@ -62,32 +63,36 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
       pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName);
     } else {
       pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName,
-        ArtifactScope.valueOf(scopeStr.toUpperCase()));
+          ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()
-      .setHeader("type", "name", "classname", "description", "properties", "artifact")
-      .setRows(pluginInfos, new RowMaker<PluginInfo>() {
-        @Override
-        public List<?> makeRow(PluginInfo object) {
-          return Lists.newArrayList(
-            object.getType(), object.getName(), object.getClassName(), object.getDescription(),
-            GSON.toJson(object.getProperties()), object.getArtifact().toString());
-        }
-      }).build();
+        .setHeader("type", "name", "classname", "description", "properties", "artifact")
+        .setRows(pluginInfos, new RowMaker<PluginInfo>() {
+          @Override
+          public List<?> makeRow(PluginInfo object) {
+            return Lists.newArrayList(
+                object.getType(), object.getName(), object.getClassName(), object.getDescription(),
+                GSON.toJson(object.getProperties()), object.getArtifact().toString());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("describe artifact-plugin <%s> <%s> <%s> <%s> [<%s>]", ArgumentName.ARTIFACT_NAME,
-      ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.PLUGIN_NAME, ArgumentName.SCOPE);
+    return String.format("describe artifact-plugin <%s> <%s> <%s> <%s> [<%s>]",
+        ArgumentName.ARTIFACT_NAME,
+        ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.PLUGIN_NAME,
+        ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Describes a plugin of a specific type and name available to a specific %s. " +
-                         "Can return multiple details if there are multiple versions of the plugin. If no scope is " +
-                         "provided, plugins are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
-                         ElementType.ARTIFACT.getName());
+    return String.format(
+        "Describes a plugin of a specific type and name available to a specific %s. " +
+            "Can return multiple details if there are multiple versions of the plugin. If no scope is "
+            +
+            "provided, plugins are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
+        ElementType.ARTIFACT.getName());
   }
 }

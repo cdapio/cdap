@@ -29,6 +29,7 @@ import java.util.Map;
  * @param <T> the type of object to emit
  */
 public class NoErrorEmitter<T> implements Emitter<T> {
+
   private final List<T> entryList;
   private final String errorMessage;
 

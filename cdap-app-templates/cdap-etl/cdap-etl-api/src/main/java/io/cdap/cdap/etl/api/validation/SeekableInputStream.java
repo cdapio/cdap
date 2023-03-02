@@ -25,8 +25,8 @@ import java.io.InputStream;
 public abstract class SeekableInputStream extends InputStream {
 
   /**
-   * Seek to the given offset from the start of the file.
-   * The next read() will be from that location. Can't seek past the end of the file.
+   * Seek to the given offset from the start of the file. The next read() will be from that
+   * location. Can't seek past the end of the file.
    */
   public abstract void seek(long pos) throws IOException;
 

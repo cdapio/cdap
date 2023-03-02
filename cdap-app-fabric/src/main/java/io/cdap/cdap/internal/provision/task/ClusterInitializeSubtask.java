@@ -33,7 +33,7 @@ import java.util.function.Function;
 public class ClusterInitializeSubtask extends ProvisioningSubtask {
 
   protected ClusterInitializeSubtask(Provisioner provisioner, ProvisionerContext provisionerContext,
-                                     Function<Cluster, Optional<ProvisioningOp.Status>> transition) {
+      Function<Cluster, Optional<ProvisioningOp.Status>> transition) {
     super(provisioner, provisionerContext, transition);
   }
 
@@ -48,6 +48,7 @@ public class ClusterInitializeSubtask extends ProvisioningSubtask {
     Map<String, String> properties = new HashMap<>(cluster.getProperties());
     properties.putAll(fullClusterDetails.getProperties());
 
-    return new Cluster(fullClusterDetails.getName(), ClusterStatus.RUNNING, fullClusterDetails.getNodes(), properties);
+    return new Cluster(fullClusterDetails.getName(), ClusterStatus.RUNNING,
+        fullClusterDetails.getNodes(), properties);
   }
 }

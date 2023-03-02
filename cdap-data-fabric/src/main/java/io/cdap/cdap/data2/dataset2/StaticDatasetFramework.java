@@ -33,10 +33,11 @@ import org.apache.twill.filesystem.Location;
 
 /**
  * In memory {@link DatasetFramework} implementation that has fixed set of {@link DatasetModule}s.
- * The modules cannot be changed after the creation of the DatasetFramework.
- * Since the modules are fixed, this implementation has better performance than {@link InMemoryDatasetFramework}.
+ * The modules cannot be changed after the creation of the DatasetFramework. Since the modules are
+ * fixed, this implementation has better performance than {@link InMemoryDatasetFramework}.
  */
 public class StaticDatasetFramework extends InMemoryDatasetFramework {
+
   private static final String REGISTRY_CACHE_KEY = "registry";
   private static final String MODULES_CACHE_KEY = "modules";
 
@@ -44,13 +45,14 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework {
   private final Cache<String, Object> cache = CacheBuilder.newBuilder().build();
 
   public StaticDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
-                                Map<String, DatasetModule> modules) {
+      Map<String, DatasetModule> modules) {
     super(registryFactory, modules);
   }
 
   @Override
-  protected DatasetDefinitionRegistry createRegistry(final LinkedHashSet<String> availableModuleClasses,
-                                                     @Nullable final ClassLoader classLoader) {
+  protected DatasetDefinitionRegistry createRegistry(
+      final LinkedHashSet<String> availableModuleClasses,
+      @Nullable final ClassLoader classLoader) {
     try {
       // It is okay to have an unchecked cast here, as the same line populates the cache for REGISTRY_CACHE_KEY
       return (DatasetDefinitionRegistry) cache.get(REGISTRY_CACHE_KEY, new Callable<Object>() {
@@ -69,12 +71,13 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework {
     try {
       // It is okay to have an unchecked cast here, as the same line populates the cache for MODULES_CACHE_KEY
       @SuppressWarnings("unchecked")
-      LinkedHashSet<String> modules = (LinkedHashSet<String>) cache.get(MODULES_CACHE_KEY, new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          return StaticDatasetFramework.super.getAvailableModuleClasses(namespace);
-        }
-      });
+      LinkedHashSet<String> modules = (LinkedHashSet<String>) cache.get(MODULES_CACHE_KEY,
+          new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              return StaticDatasetFramework.super.getAvailableModuleClasses(namespace);
+            }
+          });
       return modules;
     } catch (ExecutionException e) {
       throw Throwables.propagate(e);
@@ -84,25 +87,25 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework {
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module) {
     throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
+        + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module,
-                        Location jarLocation) throws DatasetManagementException {
+      Location jarLocation) throws DatasetManagementException {
     throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
+        + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void deleteModule(DatasetModuleId moduleId) {
     throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
+        + StaticDatasetFramework.class.getSimpleName());
   }
 
   @Override
   public void deleteAllModules(NamespaceId namespaceId) {
     throw new UnsupportedOperationException("Cannot change modules of "
-                                              + StaticDatasetFramework.class.getSimpleName());
+        + StaticDatasetFramework.class.getSimpleName());
   }
 }

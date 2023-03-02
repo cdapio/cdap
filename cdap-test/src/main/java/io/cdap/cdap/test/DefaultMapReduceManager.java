@@ -22,7 +22,8 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 /**
  * A default implementation of {@link MapReduceManager}.
  */
-public class DefaultMapReduceManager extends AbstractProgramManager<MapReduceManager> implements MapReduceManager {
+public class DefaultMapReduceManager extends AbstractProgramManager<MapReduceManager> implements
+    MapReduceManager {
 
   public DefaultMapReduceManager(Id.Program programId, ApplicationManager applicationManager) {
     super(programId, applicationManager);

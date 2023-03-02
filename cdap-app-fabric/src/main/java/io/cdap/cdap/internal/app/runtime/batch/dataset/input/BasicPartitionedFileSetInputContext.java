@@ -39,12 +39,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 /**
  * A basic implementation of {@link PartitionedFileSetInputContext}.
  */
-class BasicPartitionedFileSetInputContext extends BasicInputContext implements PartitionedFileSetInputContext {
+class BasicPartitionedFileSetInputContext extends BasicInputContext implements
+    PartitionedFileSetInputContext {
 
   private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
+      new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
 
-  private static final Type STRING_PARTITION_KEY_MAP_TYPE = new TypeToken<Map<String, PartitionKey>>() { }.getType();
+  private static final Type STRING_PARTITION_KEY_MAP_TYPE = new TypeToken<Map<String, PartitionKey>>() {
+  }.getType();
 
   private final Map<String, PartitionKey> pathToPartitionMapping;
 
@@ -65,20 +67,21 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     if (inputSplit instanceof FileSplit) {
       isCombineInputFormat = false;
       Path path = ((FileSplit) inputSplit).getPath();
-      inputPaths = new Path[] { path };
+      inputPaths = new Path[]{path};
     } else if (inputSplit instanceof CombineFileSplit) {
       isCombineInputFormat = true;
       inputPaths = ((CombineFileSplit) inputSplit).getPaths();
     } else {
-      throw new IllegalArgumentException(String.format("Expected either a '%s' or a '%s', but got '%s'.",
-                                                       FileSplit.class.getName(), CombineFileSplit.class.getName(),
-                                                       inputSplit.getClass().getName()));
+      throw new IllegalArgumentException(
+          String.format("Expected either a '%s' or a '%s', but got '%s'.",
+              FileSplit.class.getName(), CombineFileSplit.class.getName(),
+              inputSplit.getClass().getName()));
     }
 
     this.conf = multiInputTaggedSplit.getConf();
     String mappingString = conf.get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
     this.pathToPartitionMapping =
-      GSON.fromJson(Objects.requireNonNull(mappingString), STRING_PARTITION_KEY_MAP_TYPE);
+        GSON.fromJson(Objects.requireNonNull(mappingString), STRING_PARTITION_KEY_MAP_TYPE);
   }
 
   @Override
@@ -88,9 +91,11 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
       String inputFileName = conf.get(MRJobConfig.MAP_INPUT_FILE);
       if (inputFileName == null) {
         throw new IllegalStateException(
-          String.format("The value of '%s' in the configuration must be set by the RecordReader in case of using an " +
-                          "InputFormat that returns CombineFileSplit.",
-                        MRJobConfig.MAP_INPUT_FILE));
+            String.format(
+                "The value of '%s' in the configuration must be set by the RecordReader in case of using an "
+                    +
+                    "InputFormat that returns CombineFileSplit.",
+                MRJobConfig.MAP_INPUT_FILE));
       }
       if (!inputFileName.equals(currentInputfileName)) {
         currentPartitionKey = getPartitionKey(URI.create(inputFileName));
@@ -103,7 +108,7 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     Set<PartitionKey> inputPartitionKeys = getInputPartitionKeys();
     if (inputPartitionKeys.size() != 1) {
       throw new IllegalStateException(String.format("Expected a single PartitionKey, but found: %s",
-                                                    inputPartitionKeys));
+          inputPartitionKeys));
     }
     return inputPartitionKeys.iterator().next();
   }
@@ -128,15 +133,17 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
         return pathEntry.getValue();
       }
     }
-    StringBuilder errorMessage = new StringBuilder(String.format("Failed to derive PartitionKey from input path '%s'.",
-                                                                 inputPathURI));
+    StringBuilder errorMessage = new StringBuilder(
+        String.format("Failed to derive PartitionKey from input path '%s'.",
+            inputPathURI));
     if (pathToPartitionMapping.size() <= 1000) {
-      errorMessage.append(String.format("Keys of path to key mapping: '%s'", pathToPartitionMapping.keySet()));
+      errorMessage.append(
+          String.format("Keys of path to key mapping: '%s'", pathToPartitionMapping.keySet()));
     } else {
       // uncommon case, but if there are too many partitions being processed by a single task, and if the partition
       // key can not be derived from the path, omit the mapping from the logs
       errorMessage.append(String.format("Path to key mapping had too many entries (%s) to log.",
-                                        pathToPartitionMapping.size()));
+          pathToPartitionMapping.size()));
     }
     throw new IllegalArgumentException(errorMessage.toString());
   }

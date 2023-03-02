@@ -25,18 +25,12 @@ public interface CapabilityWriter {
 
   /**
    * Adds or updates the capability status
-   *
-   * @param capability
-   * @param status
-   * @throws IOException
    */
-  void addOrUpdateCapability(String capability, CapabilityStatus status, CapabilityConfig config) throws IOException;
+  void addOrUpdateCapability(String capability, CapabilityStatus status, CapabilityConfig config)
+      throws IOException;
 
   /**
    * Delete this capability
-   *
-   * @param capability
-   * @throws IOException
    */
   void deleteCapability(String capability) throws IOException;
 }

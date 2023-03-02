@@ -24,24 +24,28 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Table;
 
 /**
- * This class implements the reading of the {@link CConfiguration} from HBase, when inside a coprocessor.
+ * This class implements the reading of the {@link CConfiguration} from HBase, when inside a
+ * coprocessor.
  */
-public final class CoprocessorCConfigurationReader extends ConfigurationReader implements CConfigurationReader {
+public final class CoprocessorCConfigurationReader extends ConfigurationReader implements
+    CConfigurationReader {
 
   /**
    * Constructor using the coprocessor environment. In order to construct the correct table name,
-   * the CDAP table namespace prefix must be provided. This is configured in the {@link CConfiguration}
-   * as well as an attribute for the HBase tables created by CDAP; in both cases with the key
-   * {@link Constants.Dataset#TABLE_PREFIX}.
+   * the CDAP table namespace prefix must be provided. This is configured in the {@link
+   * CConfiguration} as well as an attribute for the HBase tables created by CDAP; in both cases
+   * with the key {@link Constants.Dataset#TABLE_PREFIX}.
    *
    * @param env the coprocessor environment
    * @param tablePrefix the namespace prefix used for CDAP tables
    */
-  public CoprocessorCConfigurationReader(final CoprocessorEnvironment env, final String tablePrefix) {
+  public CoprocessorCConfigurationReader(final CoprocessorEnvironment env,
+      final String tablePrefix) {
     super(new ConfigurationTableProvider() {
 
       private final TableName tableName =
-        TableName.valueOf(HTableNameConverter.getSystemNamespace(tablePrefix), ConfigurationReader.TABLE_NAME);
+          TableName.valueOf(HTableNameConverter.getSystemNamespace(tablePrefix),
+              ConfigurationReader.TABLE_NAME);
 
       @Override
       public Table get() throws IOException {

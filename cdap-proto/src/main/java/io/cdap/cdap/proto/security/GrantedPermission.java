@@ -18,11 +18,14 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.id.EntityId;
 import java.util.Objects;
+
 /**
- * Represents a permission granted to a {@link Principal user}, {@link Principal group} or a {@link Principal role}.
- * It determines if the user or group can perform a given action on an {@link EntityId}.
+ * Represents a permission granted to a {@link Principal user}, {@link Principal group} or a {@link
+ * Principal role}. It determines if the user or group can perform a given action on an {@link
+ * EntityId}.
  */
 public class GrantedPermission {
+
   private final Authorizable authorizable;
   private final Permission permission;
 
@@ -53,7 +56,8 @@ public class GrantedPermission {
     }
 
     GrantedPermission privilege = (GrantedPermission) o;
-    return Objects.equals(authorizable, privilege.authorizable) && Objects.equals(permission, privilege.permission);
+    return Objects.equals(authorizable, privilege.authorizable) && Objects.equals(permission,
+        privilege.permission);
   }
 
   @Override
@@ -64,7 +68,8 @@ public class GrantedPermission {
   @Override
   public String toString() {
     return "GrantedPermission {" +
-      "authorizable=" + authorizable +
-      ", permission=" + permission +
-      '}';
-  }}
+        "authorizable=" + authorizable +
+        ", permission=" + permission +
+        '}';
+  }
+}

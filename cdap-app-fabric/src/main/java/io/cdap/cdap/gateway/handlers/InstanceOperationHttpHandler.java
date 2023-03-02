@@ -58,25 +58,26 @@ public class InstanceOperationHttpHandler extends AbstractHttpHandler {
   @Path("/export/apps")
   public void appsExport(HttpRequest request, HttpResponder responder) throws Exception {
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     DirUtils.mkdirs(tempDir);
     java.nio.file.Path tmpPath = Files.createTempFile(tempDir.toPath(), "export", ".zip");
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       try (ZipOutputStream zipOut = new ZipOutputStream(new DigestOutputStream(
-        Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
+          Files.newOutputStream(tmpPath, StandardOpenOption.TRUNCATE_EXISTING), digest))) {
 
         lifecycleService.createAppDetailsArchive(zipOut);
       }
 
       responder.sendFile(
-        tmpPath.toFile(),
-        new DefaultHttpHeaders()
-          .add("digest", String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
-                                       Base64.getEncoder().encodeToString(digest.digest())))
-          .add(HttpHeaderNames.CONTENT_TYPE, "application/zip")
-          .add(HttpHeaderNames.CONTENT_DISPOSITION,
-               String.format("attachment; filename=\"export-%d.zip\"", System.currentTimeMillis()))
+          tmpPath.toFile(),
+          new DefaultHttpHeaders()
+              .add("digest", String.format("%s=%s", digest.getAlgorithm().toLowerCase(),
+                  Base64.getEncoder().encodeToString(digest.digest())))
+              .add(HttpHeaderNames.CONTENT_TYPE, "application/zip")
+              .add(HttpHeaderNames.CONTENT_DISPOSITION,
+                  String.format("attachment; filename=\"export-%d.zip\"",
+                      System.currentTimeMillis()))
       );
     } finally {
       Files.deleteIfExists(tmpPath);

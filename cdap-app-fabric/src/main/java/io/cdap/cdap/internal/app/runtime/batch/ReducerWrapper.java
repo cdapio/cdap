@@ -35,7 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wraps user-defined implementation of {@link Reducer} class which allows perform extra configuration.
+ * Wraps user-defined implementation of {@link Reducer} class which allows perform extra
+ * configuration.
  */
 public class ReducerWrapper extends Reducer {
 
@@ -44,6 +45,7 @@ public class ReducerWrapper extends Reducer {
 
   /**
    * Wraps the reducer defined in the job with this {@link ReducerWrapper} if it is defined.
+   *
    * @param job The MapReduce job
    */
   public static void wrap(Job job) {
@@ -59,17 +61,20 @@ public class ReducerWrapper extends Reducer {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(
+        context.getConfiguration());
     ClassLoader weakReferenceClassLoader = new WeakReferenceDelegatorClassLoader(classLoader);
 
-    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider()
+        .get(context);
     long metricsReportInterval = basicMapReduceContext.getMetricsReportIntervalMillis();
     final ReduceTaskMetricsWriter reduceTaskMetricsWriter = new ReduceTaskMetricsWriter(
-      basicMapReduceContext.getProgramMetrics(), context);
+        basicMapReduceContext.getProgramMetrics(), context);
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-    WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext,
-                                                                       reduceTaskMetricsWriter);
+    WrappedReducer.Context flushingContext = createAutoFlushingContext(context,
+        basicMapReduceContext,
+        reduceTaskMetricsWriter);
     basicMapReduceContext.setHadoopContext(flushingContext);
 
     String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
@@ -79,9 +84,9 @@ public class ReducerWrapper extends Reducer {
     // injecting runtime components, like datasets, etc.
     try {
       Reflections.visit(delegate, delegate.getClass(),
-                        new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
-                        new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
-                        new DataSetFieldSetter(basicMapReduceContext));
+          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
+          new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
+          new DataSetFieldSetter(basicMapReduceContext));
     } catch (Throwable t) {
       LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
       throw Throwables.propagate(t);
@@ -91,7 +96,8 @@ public class ReducerWrapper extends Reducer {
     if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
-        ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
+        ((ProgramLifecycle) delegate).initialize(
+            new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
         LOG.error("Failed to initialize reducer with {}", basicMapReduceContext, e);
         throw Throwables.propagate(e);
@@ -135,8 +141,8 @@ public class ReducerWrapper extends Reducer {
   }
 
   private WrappedReducer.Context createAutoFlushingContext(final Context context,
-                                                           final BasicMapReduceTaskContext basicMapReduceContext,
-                                                           final ReduceTaskMetricsWriter metricsWriter) {
+      final BasicMapReduceTaskContext basicMapReduceContext,
+      final ReduceTaskMetricsWriter metricsWriter) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.reducer.flush.freq", 10000);

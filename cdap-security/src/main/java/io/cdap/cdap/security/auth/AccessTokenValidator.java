@@ -25,10 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class validates the accessToken and returns the different states
- * of accessToken validation.
+ * This class validates the accessToken and returns the different states of accessToken validation.
  */
 public class AccessTokenValidator extends AbstractIdleService implements TokenValidator {
+
   private static final Logger LOG = LoggerFactory.getLogger(AccessTokenValidator.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;

@@ -42,15 +42,16 @@ final class PayloadTableStoreRequestWriter extends StoreRequestWriter<PayloadTab
   }
 
   @Override
-  PayloadTable.Entry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
-                              long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
+  PayloadTable.Entry getEntry(TopicMetadata metadata, boolean transactional,
+      long transactionWritePointer,
+      long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
-      .setTopicId(metadata.getTopicId())
-      .setGeneration(metadata.getGeneration())
-      .setTransactionWritePointer(transactionWritePointer)
-      .setPayloadWriteTimestamp(writeTimestamp)
-      .setPayloadSequenceId(sequenceId)
-      .setPayload(payload);
+        .setTopicId(metadata.getTopicId())
+        .setGeneration(metadata.getGeneration())
+        .setTransactionWritePointer(transactionWritePointer)
+        .setPayloadWriteTimestamp(writeTimestamp)
+        .setPayloadSequenceId(sequenceId)
+        .setPayload(payload);
   }
 
   @Override

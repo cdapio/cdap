@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
  * A DAG (directed acyclic graph).
  */
 public class Dag implements Serializable {
+
   protected final Set<String> nodes;
   protected final Set<String> sources;
   protected final Set<String> sinks;
@@ -50,7 +51,8 @@ public class Dag implements Serializable {
   protected final SetMultimap<String, String> incomingConnections;
 
   public Dag(Collection<Connection> connections) {
-    Preconditions.checkArgument(!connections.isEmpty(), "Cannot create a DAG without any connections");
+    Preconditions.checkArgument(!connections.isEmpty(),
+        "Cannot create a DAG without any connections");
     this.outgoingConnections = HashMultimap.create();
     this.incomingConnections = HashMultimap.create();
     for (Connection connection : connections) {
@@ -64,7 +66,8 @@ public class Dag implements Serializable {
     validate();
   }
 
-  protected Dag(SetMultimap<String, String> outgoingConnections, SetMultimap<String, String> incomingConnections) {
+  protected Dag(SetMultimap<String, String> outgoingConnections,
+      SetMultimap<String, String> incomingConnections) {
     this.outgoingConnections = HashMultimap.create(outgoingConnections);
     this.incomingConnections = HashMultimap.create(incomingConnections);
     this.sources = new HashSet<>();
@@ -78,19 +81,21 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Validate the DAG is a valid DAG without cycles, and no islands. This should only be called before any
-   * mutating operations like {@link #removeSource()} are called.
+   * Validate the DAG is a valid DAG without cycles, and no islands. This should only be called
+   * before any mutating operations like {@link #removeSource()} are called.
    *
    * @throws IllegalStateException if there is a cycle in the graph, or an island in the graph
    */
   void validate() {
     // if there are no sources, we must have a cycle.
     if (sources.isEmpty()) {
-      throw new IllegalStateException("DAG does not have any sources. Please remove cycles from the graph.");
+      throw new IllegalStateException(
+          "DAG does not have any sources. Please remove cycles from the graph.");
     }
     // similarly, if there are no sinks, we must have a cycle
     if (sinks.isEmpty()) {
-      throw new IllegalStateException("DAG does not have any sinks. Please remove cycles from the graph.");
+      throw new IllegalStateException(
+          "DAG does not have any sinks. Please remove cycles from the graph.");
     }
 
     // check for cycles
@@ -130,8 +135,9 @@ public class Dag implements Serializable {
       // if this is empty, no sources were added to the island. That means the island really is an island.
       if (sourcesAdded.isEmpty()) {
         throw new DisjointConnectionsException(
-          String.format("Invalid DAG. There is an island made up of stages %s (no other stages connect to them).",
-                        Joiner.on(',').join(islandNodes)));
+            String.format(
+                "Invalid DAG. There is an island made up of stages %s (no other stages connect to them).",
+                Joiner.on(',').join(islandNodes)));
       }
       potentialIslandSources.removeAll(sourcesAdded);
     }
@@ -139,25 +145,20 @@ public class Dag implements Serializable {
 
   /**
    * Split the dag based on the input control nodes. Control nodes represent actions or conditions.
-   * Actions can only be at the front or end of the dag. Condition nodes can be anywhere in the dag, but can only
-   * have at most 2 output branches. Output branches must never intersect.
+   * Actions can only be at the front or end of the dag. Condition nodes can be anywhere in the dag,
+   * but can only have at most 2 output branches. Output branches must never intersect.
    *
-   * This method will break up the dag into a set of interconnected subdags, where control nodes are guaranteed to
-   * be either a source or a sink in a subdag, but not somewhere in the middle. There will be a subdag for each
-   * branch of a condition. All connected non-control nodes are guaranteed to be placed in the same subdag.
-   * Subdags are connected if a sink in one subdag is a source in another subdag.
+   * This method will break up the dag into a set of interconnected subdags, where control nodes are
+   * guaranteed to be either a source or a sink in a subdag, but not somewhere in the middle. There
+   * will be a subdag for each branch of a condition. All connected non-control nodes are guaranteed
+   * to be placed in the same subdag. Subdags are connected if a sink in one subdag is a source in
+   * another subdag.
    *
-   * For example:
-   *                                                      |-- action1
-   *             |-- n0 --|                |-- n2 -- n3 --|
-   *   action0 --|        |-- condition0 --|              |-- action2
-   *             |-- n1 --|                |-- n4
+   * For example: |-- action1 |-- n0 --|                |-- n2 -- n3 --| action0 --|        |--
+   * condition0 --|              |-- action2 |-- n1 --|                |-- n4
    *
-   * will be split into:
-   *                                                                  |-- action1
-   *             |-- n0 --|                  condition0 -- n2 -- n3 --|
-   *   action0 --|        |-- condition0                              |-- action2
-   *             |-- n1 --|                  condition0 -- n4
+   * will be split into: |-- action1 |-- n0 --|                  condition0 -- n2 -- n3 --| action0
+   * --|        |-- condition0                              |-- action2 |-- n1 --| condition0 -- n4
    *
    * @param conditionNodes condition nodes
    * @param actionNodes action nodes
@@ -294,8 +295,9 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return all stages accessible from the starting stages, without going past any node in stopNodes.
-   * Starting stages are not treated as stop nodes, even if they are in the stop nodes set.
+   * Return all stages accessible from the starting stages, without going past any node in
+   * stopNodes. Starting stages are not treated as stop nodes, even if they are in the stop nodes
+   * set.
    *
    * @param stages the stages to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -311,8 +313,8 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return all stages that are parents of an ending stage. Stage X is a parent of stage Y if there is a path
-   * from X to Y.
+   * Return all stages that are parents of an ending stage. Stage X is a parent of stage Y if there
+   * is a path from X to Y.
    *
    * @param stage the stage to start at
    * @return all parents of that stage
@@ -322,9 +324,9 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return all stages that are parents of an ending stage, without going past any node in stopNodes.
-   * A stage counts as a parent of itself. The starting stage is not counted as a stop node, even if it is
-   * in the set of stop nodes.
+   * Return all stages that are parents of an ending stage, without going past any node in
+   * stopNodes. A stage counts as a parent of itself. The starting stage is not counted as a stop
+   * node, even if it is in the set of stop nodes.
    *
    * @param stage the stage to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -339,8 +341,8 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return a subset of this dag starting from the specified stage.
-   * This is equivalent to calling {@link #subsetFrom(String, Set)} with an empty set for stop nodes
+   * Return a subset of this dag starting from the specified stage. This is equivalent to calling
+   * {@link #subsetFrom(String, Set)} with an empty set for stop nodes
    *
    * @param stage the stage to start at
    * @return a dag created from the nodes accessible from the specified stage
@@ -350,8 +352,9 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return a subset of this dag starting from the specified stage, without going past any node in stopNodes.
-   * This is equivalent to taking the nodes from {@link #accessibleFrom(String, Set)} and building a dag from them.
+   * Return a subset of this dag starting from the specified stage, without going past any node in
+   * stopNodes. This is equivalent to taking the nodes from {@link #accessibleFrom(String, Set)} and
+   * building a dag from them.
    *
    * @param stage the stage to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -362,8 +365,8 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return a subset of this dag starting from the specified stages.
-   * This is equivalent to calling {@link #subsetFrom(Set, Set)} with an empty set for stop nodes
+   * Return a subset of this dag starting from the specified stages. This is equivalent to calling
+   * {@link #subsetFrom(Set, Set)} with an empty set for stop nodes
    *
    * @param stages the stage to start at
    * @return a dag created from the nodes accessible from the specified stage
@@ -373,8 +376,9 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return a subset of this dag starting from the specified stage, without going past any node in stopNodes.
-   * This is equivalent to taking the nodes from {@link #accessibleFrom(Set, Set)} and building a dag from them.
+   * Return a subset of this dag starting from the specified stage, without going past any node in
+   * stopNodes. This is equivalent to taking the nodes from {@link #accessibleFrom(Set, Set)} and
+   * building a dag from them.
    *
    * @param stages the stages to start at
    * @param stopNodes set of nodes to stop traversal on
@@ -394,19 +398,20 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Return a subset of this dag starting from the specified stage, without going past any node in the
-   * child stop nodes and parent stop nodes. If the parent or child stop nodes contain the starting stage, it
-   * will be ignored.
-   * This is equivalent to taking the nodes from {@link #accessibleFrom(Set, Set)}, {@link #parentsOf(String, Set)},
-   * and building a dag from them.
+   * Return a subset of this dag starting from the specified stage, without going past any node in
+   * the child stop nodes and parent stop nodes. If the parent or child stop nodes contain the
+   * starting stage, it will be ignored. This is equivalent to taking the nodes from {@link
+   * #accessibleFrom(Set, Set)}, {@link #parentsOf(String, Set)}, and building a dag from them.
    *
    * @param stage the stage to start at
    * @param childStopNodes set of nodes to stop traversing forwards on
    * @param parentStopNodes set of nodes to stop traversing backwards on
-   * @return a dag created from the stages given and child nodes of those stages and parent nodes of those stages.
+   * @return a dag created from the stages given and child nodes of those stages and parent nodes of
+   *     those stages.
    */
   public Dag subsetAround(String stage, Set<String> childStopNodes, Set<String> parentStopNodes) {
-    Set<String> nodes = Sets.union(accessibleFrom(stage, childStopNodes), parentsOf(stage, parentStopNodes));
+    Set<String> nodes = Sets.union(accessibleFrom(stage, childStopNodes),
+        parentsOf(stage, parentStopNodes));
     Set<Connection> connections = new HashSet<>();
     for (String node : nodes) {
       for (String outputNode : outgoingConnections.get(node)) {
@@ -420,6 +425,7 @@ public class Dag implements Serializable {
 
   /**
    * Creates dag from provided list of nodes
+   *
    * @param nodes list of nodes to create subdag
    * @return Dag with connections among nodes
    */
@@ -436,11 +442,11 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Get the dag in topological order.
-   * The returned list guarantees that for each item in the list, that item has no path to an
-   * item that comes before it in the list. In the process, if a cycle is found, an exception will be thrown.
-   * Topological sort means we pop off a source from the dag, re-calculate sources, and continue until there
-   * are no more nodes left. Popping will be done on a copy of the dag so that this is not a destructive operation.
+   * Get the dag in topological order. The returned list guarantees that for each item in the list,
+   * that item has no path to an item that comes before it in the list. In the process, if a cycle
+   * is found, an exception will be thrown. Topological sort means we pop off a source from the dag,
+   * re-calculate sources, and continue until there are no more nodes left. Popping will be done on
+   * a copy of the dag so that this is not a destructive operation.
    *
    * @return the dag in topological order
    * @throws IllegalStateException if there is a cycle in the dag
@@ -463,13 +469,14 @@ public class Dag implements Serializable {
     } while (removed != null);
     Set<String> cycle = accessibleFrom(copy.outgoingConnections.keySet().iterator().next());
     throw new IllegalStateException(
-      String.format("Invalid DAG. Stages %s form a cycle.", Joiner.on(',').join(cycle)));
+        String.format("Invalid DAG. Stages %s form a cycle.", Joiner.on(',').join(cycle)));
   }
 
   /**
-   * Get the branch the given node is on, in the order the nodes appear on the branch, ending with the given node.
-   * Every node returned has exactly one input except for the first node, which can have any number of inputs.
-   * Every node returned has exactly one output except for the last node, which can have any number of outputs.
+   * Get the branch the given node is on, in the order the nodes appear on the branch, ending with
+   * the given node. Every node returned has exactly one input except for the first node, which can
+   * have any number of inputs. Every node returned has exactly one output except for the last node,
+   * which can have any number of outputs.
    *
    * @param node the branch node
    * @param stopNodes any nodes to stop on
@@ -499,10 +506,10 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Traverse the dag starting at the specified node and stopping when a node has no outputs, when it has already
-   * been visited, or when it meets the specified stop condition. All nodes that were visited will be added to
-   * the specified visitedNodes collection in the order that they are traversed. The stop condition will be applied
-   * to the starting node as well.
+   * Traverse the dag starting at the specified node and stopping when a node has no outputs, when
+   * it has already been visited, or when it meets the specified stop condition. All nodes that were
+   * visited will be added to the specified visitedNodes collection in the order that they are
+   * traversed. The stop condition will be applied to the starting node as well.
    *
    * @param node the node to start at
    * @param visitedNodes collection to add all visited nodes to
@@ -510,7 +517,7 @@ public class Dag implements Serializable {
    * @param stopCondition condition to stop traversing
    */
   protected void traverse(String node, Collection<String> visitedNodes,
-                          SetMultimap<String, String> connections, Predicate<String> stopCondition) {
+      SetMultimap<String, String> connections, Predicate<String> stopCondition) {
     if (!visitedNodes.add(node) || stopCondition.apply(node)) {
       return;
     }
@@ -534,8 +541,8 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Remove the specified connection. Does not check that the connection actually exists.
-   * It is possible to break apart the dag with this call.
+   * Remove the specified connection. Does not check that the connection actually exists. It is
+   * possible to break apart the dag with this call.
    */
   protected void removeConnection(String from, String to) {
     outgoingConnections.remove(from, to);
@@ -551,8 +558,9 @@ public class Dag implements Serializable {
   }
 
   /**
-   * Remove a specific node from the dag. Removing a node will remove all connections into the node and all
-   * connection coming out of the node. Removing a node will also re-compute the sources and sinks of the dag.
+   * Remove a specific node from the dag. Removing a node will remove all connections into the node
+   * and all connection coming out of the node. Removing a node will also re-compute the sources and
+   * sinks of the dag.
    *
    * @param node the node to remove
    */
@@ -581,11 +589,13 @@ public class Dag implements Serializable {
     nodes.remove(node);
   }
 
-  private void traverseForwards(String node, Collection<String> visitedNodes, Predicate<String> stopCondition) {
+  private void traverseForwards(String node, Collection<String> visitedNodes,
+      Predicate<String> stopCondition) {
     traverse(node, visitedNodes, outgoingConnections, stopCondition);
   }
 
-  private void traverseBackwards(String node, Collection<String> visitedNodes, Predicate<String> stopCondition) {
+  private void traverseBackwards(String node, Collection<String> visitedNodes,
+      Predicate<String> stopCondition) {
     traverse(node, visitedNodes, incomingConnections, stopCondition);
   }
 
@@ -618,6 +628,7 @@ public class Dag implements Serializable {
    * Returns true if an input is in a set of stop nodes.
    */
   private static class StopNodeCondition implements Predicate<String> {
+
     private final Set<String> stopNodes;
 
     private StopNodeCondition(Set<String> stopNodes) {
@@ -642,10 +653,10 @@ public class Dag implements Serializable {
     Dag that = (Dag) o;
 
     return Objects.equals(nodes, that.nodes) &&
-      Objects.equals(sources, that.sources) &&
-      Objects.equals(sinks, that.sinks) &&
-      Objects.equals(outgoingConnections, that.outgoingConnections) &&
-      Objects.equals(incomingConnections, that.incomingConnections);
+        Objects.equals(sources, that.sources) &&
+        Objects.equals(sinks, that.sinks) &&
+        Objects.equals(outgoingConnections, that.outgoingConnections) &&
+        Objects.equals(incomingConnections, that.incomingConnections);
   }
 
   @Override
@@ -656,11 +667,11 @@ public class Dag implements Serializable {
   @Override
   public String toString() {
     return "Dag{" +
-      "nodes=" + nodes +
-      ", sources=" + sources +
-      ", sinks=" + sinks +
-      ", outgoingConnections=" + outgoingConnections +
-      ", incomingConnections=" + incomingConnections +
-      '}';
+        "nodes=" + nodes +
+        ", sources=" + sources +
+        ", sinks=" + sinks +
+        ", outgoingConnections=" + outgoingConnections +
+        ", incomingConnections=" + incomingConnections +
+        '}';
   }
 }

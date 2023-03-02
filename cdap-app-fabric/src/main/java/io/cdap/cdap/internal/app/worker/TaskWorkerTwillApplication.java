@@ -23,7 +23,8 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * The {@link TwillApplication} for launching task workers along with artifact localizers as sidecar containers.
+ * The {@link TwillApplication} for launching task workers along with artifact localizers as sidecar
+ * containers.
  */
 public class TaskWorkerTwillApplication implements TwillApplication {
 
@@ -35,8 +36,8 @@ public class TaskWorkerTwillApplication implements TwillApplication {
   private final ResourceSpecification artifactLocalizerResourceSpec;
 
   public TaskWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI,
-                                    ResourceSpecification taskworkerResourceSpec,
-                                    ResourceSpecification artifactLocalizerResourceSpec) {
+      ResourceSpecification taskworkerResourceSpec,
+      ResourceSpecification artifactLocalizerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
     this.taskworkerResourceSpec = taskworkerResourceSpec;
@@ -46,20 +47,20 @@ public class TaskWorkerTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     return TwillSpecification.Builder.with()
-      .setName(NAME)
-      .withRunnable()
+        .setName(NAME)
+        .withRunnable()
         .add(new TaskWorkerTwillRunnable("cConf.xml", "hConf.xml"), taskworkerResourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFileURI)
         .add("hConf.xml", hConfFileURI)
-      .apply()
+        .apply()
         .add(new ArtifactLocalizerTwillRunnable("cConf.xml", "hConf.xml"),
-             artifactLocalizerResourceSpec)
+            artifactLocalizerResourceSpec)
         .withLocalFiles()
         .add("cConf.xml", cConfFileURI)
         .add("hConf.xml", hConfFileURI)
-      .apply()
-      .anyOrder()
-      .build();
+        .apply()
+        .anyOrder()
+        .build();
   }
 }

@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
  * A Metadata search request.
  */
 public class SearchRequest {
+
   private final NamespaceId namespaceId;
   private final String query;
   private final Set<String> types;
@@ -45,28 +46,35 @@ public class SearchRequest {
   private final Set<EntityScope> entityScope;
 
   /**
-   * Represents a request for a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of entity types in the specified {@link MetadataScope}.
+   * Represents a request for a search for CDAP entities in the specified namespace with the
+   * specified search query and an optional set of entity types in the specified {@link
+   * MetadataScope}.
    *
-   * @param namespaceId the namespace id to filter the search by. Null if the search is across all namespaces
+   * @param namespaceId the namespace id to filter the search by. Null if the search is across
+   *     all namespaces
    * @param query the search query
-   * @param types the types of CDAP entity to be searched. If empty all possible types will be searched
-   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return search results without
-   *                 sorting (which implies that the sort order is by relevance to the search query)
-   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
-   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
-   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
-   *                   next page for pagination purposes. Defaults to {@code 0}
-   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
-   *               #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
-   *               the cursor. If {@code null}, the first row is used as the cursor
-   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
-   *                    or not.
+   * @param types the types of CDAP entity to be searched. If empty all possible types will be
+   *     searched
+   * @param sortInfo represents sorting information. Use {@link SortInfo#DEFAULT} to return
+   *     search results without sorting (which implies that the sort order is by relevance to the
+   *     search query)
+   * @param offset the index to start with in the search results. To return results from the
+   *     beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass
+   *     {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the
+   *     first index of the next page for pagination purposes. Defaults to {@code 0}
+   * @param cursor the cursor that acts as the starting index for the requested page. This is
+   *     only applicable when #sortInfo is not {@link SortInfo#DEFAULT}. If offset is also
+   *     specified, it is applied starting at the cursor. If {@code null}, the first row is used as
+   *     the cursor
+   * @param showHidden boolean which specifies whether to display hidden entities (entity whose
+   *     name start with "_") or not.
    * @param entityScope a set which specifies which scope of entities to display.
    */
   public SearchRequest(@Nullable NamespaceId namespaceId, String query, Set<String> types,
-                       SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
-                       boolean showHidden, Set<EntityScope> entityScope) {
+      SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
+      boolean showHidden, Set<EntityScope> entityScope) {
     if (query == null || query.isEmpty()) {
       throw new IllegalArgumentException("query must be specified");
     }
@@ -109,7 +117,8 @@ public class SearchRequest {
   }
 
   /**
-   * The search query can be of two form: [key]:[value] or just [value] and can have '*' at the end for a prefix search.
+   * The search query can be of two form: [key]:[value] or just [value] and can have '*' at the end
+   * for a prefix search.
    *
    * @return the search query
    */
@@ -134,8 +143,8 @@ public class SearchRequest {
   }
 
   /**
-   * The offset to start with in the search results. {@code 0} means results should be returned from the beginning.
-   * Only applies when {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}.
+   * The offset to start with in the search results. {@code 0} means results should be returned from
+   * the beginning. Only applies when {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}.
    *
    * @return the offset to start the results at
    */
@@ -144,8 +153,8 @@ public class SearchRequest {
   }
 
   /**
-   * The max number of results to return, starting from {@link #getOffset()}. Only applies when {@link #getSortInfo()}
-   * is not {@link SortInfo#DEFAULT}.
+   * The max number of results to return, starting from {@link #getOffset()}. Only applies when
+   * {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}.
    *
    * @return the maximum number of results to return
    */
@@ -154,8 +163,9 @@ public class SearchRequest {
   }
 
   /**
-   * The number of cursors to return in the response. A cursor identifies the first index of the next page for
-   * pagination purposes. Only applies when {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}.
+   * The number of cursors to return in the response. A cursor identifies the first index of the
+   * next page for pagination purposes. Only applies when {@link #getSortInfo()} is not {@link
+   * SortInfo#DEFAULT}.
    *
    * @return number of cursors to return in the response
    */
@@ -165,8 +175,8 @@ public class SearchRequest {
 
   /**
    * The cursor that acts as the starting index for the request page. This is only applicable when
-   * {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}. If offset is also specified, it is applied starting at
-   * the cursor. If not present, the first row is used as the cursor.
+   * {@link #getSortInfo()} is not {@link SortInfo#DEFAULT}. If offset is also specified, it is
+   * applied starting at the cursor. If not present, the first row is used as the cursor.
    *
    * @return the cursor for search results, or null if there is no cursor
    */
@@ -176,16 +186,17 @@ public class SearchRequest {
   }
 
   /**
-   * @return whether to display hidden entities (entities whose name start with '_').
-   *   Hidden entities are system entities like streams, dataset, programs for system applications like tracker.
+   * @return whether to display hidden entities (entities whose name start with '_'). Hidden
+   *     entities are system entities like streams, dataset, programs for system applications like
+   *     tracker.
    */
   public boolean shouldShowHidden() {
     return showHidden;
   }
 
   /**
-   * @return whether the search is done on the system metadata table or user metadata table.
-   *   If a scope not defined the scan is performed on both and results are aggregated .
+   * @return whether the search is done on the system metadata table or user metadata table. If a
+   *     scope not defined the scan is performed on both and results are aggregated .
    */
   public Set<EntityScope> getEntityScopes() {
     return entityScope;
@@ -201,36 +212,37 @@ public class SearchRequest {
     }
     SearchRequest that = (SearchRequest) o;
     return offset == that.offset &&
-      limit == that.limit &&
-      numCursors == that.numCursors &&
-      showHidden == that.showHidden &&
-      Objects.equals(namespaceId, that.namespaceId) &&
-      Objects.equals(query, that.query) &&
-      Objects.equals(types, that.types) &&
-      Objects.equals(sortInfo, that.sortInfo) &&
-      Objects.equals(cursor, that.cursor) &&
-      Objects.equals(entityScope, that.entityScope);
+        limit == that.limit &&
+        numCursors == that.numCursors &&
+        showHidden == that.showHidden &&
+        Objects.equals(namespaceId, that.namespaceId) &&
+        Objects.equals(query, that.query) &&
+        Objects.equals(types, that.types) &&
+        Objects.equals(sortInfo, that.sortInfo) &&
+        Objects.equals(cursor, that.cursor) &&
+        Objects.equals(entityScope, that.entityScope);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceId, query, types, sortInfo, offset, limit, numCursors, cursor, showHidden,
-                        entityScope);
+    return Objects.hash(namespaceId, query, types, sortInfo, offset, limit, numCursors, cursor,
+        showHidden,
+        entityScope);
   }
 
   @Override
   public String toString() {
     return "SearchRequest{" +
-      "namespaceId=" + namespaceId +
-      ", query='" + query + '\'' +
-      ", types=" + types +
-      ", sortInfo=" + sortInfo +
-      ", offset=" + offset +
-      ", limit=" + limit +
-      ", numCursors=" + numCursors +
-      ", cursor='" + cursor + '\'' +
-      ", showHidden=" + showHidden +
-      ", entityScope=" + entityScope +
-      '}';
+        "namespaceId=" + namespaceId +
+        ", query='" + query + '\'' +
+        ", types=" + types +
+        ", sortInfo=" + sortInfo +
+        ", offset=" + offset +
+        ", limit=" + limit +
+        ", numCursors=" + numCursors +
+        ", cursor='" + cursor + '\'' +
+        ", showHidden=" + showHidden +
+        ", entityScope=" + entityScope +
+        '}';
   }
 }

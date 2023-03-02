@@ -33,13 +33,14 @@ import javax.annotation.Nullable;
 public class TableProperties {
 
   private static final Gson GSON = new Gson();
-  private static final byte[] DEFAULT_COLUMN_FAMILY_BYTES = Bytes.toBytes(Table.DEFAULT_COLUMN_FAMILY);
+  private static final byte[] DEFAULT_COLUMN_FAMILY_BYTES = Bytes.toBytes(
+      Table.DEFAULT_COLUMN_FAMILY);
 
   /**
-   * Set the ACLs that should be granted for this table. The value must be a map from user name to
-   * a permission string that consists of the letters 'r', 'w', 'c', 'x', and 'a'. To grant a privilege
-   * to a group, prefix the group name with the character '@'. For example, the mapping
-   * "{ 'joe': 'RW', '@admins': 'RWCXA' }" grants only read and write privileges to the user joe, but
+   * Set the ACLs that should be granted for this table. The value must be a map from user name to a
+   * permission string that consists of the letters 'r', 'w', 'c', 'x', and 'a'. To grant a
+   * privilege to a group, prefix the group name with the character '@'. For example, the mapping "{
+   * 'joe': 'RW', '@admins': 'RWCXA' }" grants only read and write privileges to the user joe, but
    * grants all privileges to members of the admins group.
    */
   @Beta
@@ -48,29 +49,32 @@ public class TableProperties {
   /**
    * Set a conflict detection level in dataset properties.
    */
-  public static void setConflictDetection(DatasetProperties.Builder builder, ConflictDetection level) {
+  public static void setConflictDetection(DatasetProperties.Builder builder,
+      ConflictDetection level) {
     builder.add(Table.PROPERTY_CONFLICT_LEVEL, level.name());
   }
 
   /**
-   * @return the conflict detection level from the properties if present, otherwise the defaultLevel.
-   *
-   * @throws IllegalArgumentException if the property value is not a valid conflict detection level.
+   * @return the conflict detection level from the properties if present, otherwise the
+   *     defaultLevel.
+   * @throws IllegalArgumentException if the property value is not a valid conflict detection
+   *     level.
    */
   @Nullable
   public static ConflictDetection getConflictDetection(DatasetProperties props,
-                                                       @Nullable ConflictDetection defaultLevel) {
+      @Nullable ConflictDetection defaultLevel) {
     return getConflictDetection(props.getProperties(), defaultLevel);
   }
 
   /**
-   * @return the conflict detection level from the properties if present, otherwise the defaultLevel.
-   *
-   * @throws IllegalArgumentException if the property value is not a valid conflict detection level.
+   * @return the conflict detection level from the properties if present, otherwise the
+   *     defaultLevel.
+   * @throws IllegalArgumentException if the property value is not a valid conflict detection
+   *     level.
    */
   @Nullable
   public static ConflictDetection getConflictDetection(Map<String, String> props,
-                                                       @Nullable ConflictDetection defaultLevel) {
+      @Nullable ConflictDetection defaultLevel) {
     String value = props.get(Table.PROPERTY_CONFLICT_LEVEL);
     if (value == null) {
       return defaultLevel;
@@ -85,7 +89,8 @@ public class TableProperties {
   /**
    * Configure read-less increment support in a table's dataset properties.
    */
-  public static void setReadlessIncrementSupport(DatasetProperties.Builder builder, boolean enabled) {
+  public static void setReadlessIncrementSupport(DatasetProperties.Builder builder,
+      boolean enabled) {
     builder.add(Table.PROPERTY_READLESS_INCREMENT, String.valueOf(enabled));
   }
 
@@ -112,7 +117,6 @@ public class TableProperties {
 
   /**
    * @return the time-to-live (TTL) of the table, in seconds, or null if no TTL is specified.
-   *
    * @throws NumberFormatException if the value is not a valid long.
    */
   @Nullable
@@ -122,7 +126,6 @@ public class TableProperties {
 
   /**
    * @return the time-to-live (TTL) of the table, in seconds, or null if no TTL is specified.
-   *
    * @throws NumberFormatException if the value is not a valid long.
    */
   @Nullable
@@ -150,14 +153,16 @@ public class TableProperties {
   }
 
   /**
-   * @return the column family of the table, as specified in the properties, or the default column family.
+   * @return the column family of the table, as specified in the properties, or the default column
+   *     family.
    */
   public static String getColumnFamily(DatasetProperties props) {
     return getColumnFamily(props.getProperties());
   }
 
   /**
-   * @return the column family of the table, as specified in the properties, or the default column family.
+   * @return the column family of the table, as specified in the properties, or the default column
+   *     family.
    */
   public static String getColumnFamily(Map<String, String> props) {
     String value = props.get(Table.PROPERTY_COLUMN_FAMILY);
@@ -165,14 +170,16 @@ public class TableProperties {
   }
 
   /**
-   * @return the column family of the table, as specified in the properties, or the default column family.
+   * @return the column family of the table, as specified in the properties, or the default column
+   *     family.
    */
   public static byte[] getColumnFamilyBytes(DatasetProperties props) {
     return getColumnFamilyBytes(props.getProperties());
   }
 
   /**
-   * @return the column family of the table, as specified in the properties, or the default column family.
+   * @return the column family of the table, as specified in the properties, or the default column
+   *     family.
    */
   public static byte[] getColumnFamilyBytes(Map<String, String> props) {
     String value = props.get(Table.PROPERTY_COLUMN_FAMILY);
@@ -188,7 +195,6 @@ public class TableProperties {
 
   /**
    * @return the schema, parsed as JSON, from the properties.
-   *
    * @throws IllegalArgumentException if the schema cannot be parsed.
    */
   @Nullable
@@ -198,7 +204,6 @@ public class TableProperties {
 
   /**
    * @return the schema, parsed as JSON, from the properties.
-   *
    * @throws IllegalArgumentException if the schema cannot be parsed.
    */
   @Nullable
@@ -245,14 +250,16 @@ public class TableProperties {
     if (propertyValue == null) {
       return null;
     }
-    return GSON.fromJson(propertyValue, new TypeToken<Map<String, String>>() { }.getType());
+    return GSON.fromJson(propertyValue, new TypeToken<Map<String, String>>() {
+    }.getType());
   }
 
   /**
    * Set the table permissions as a map from user name to a permission string.
    */
   @Beta
-  public static void setTablePermissions(DatasetProperties.Builder builder, Map<String, String> permissions) {
+  public static void setTablePermissions(DatasetProperties.Builder builder,
+      Map<String, String> permissions) {
     builder.add(PROPERTY_TABLE_PERMISSIONS, GSON.toJson(permissions));
   }
 
@@ -263,7 +270,9 @@ public class TableProperties {
   /**
    * A builder for dataset properties for a Table.
    */
-  public static class Builder extends AbstractBuilder<Builder> { }
+  public static class Builder extends AbstractBuilder<Builder> {
+
+  }
 
   /**
    * A builder of dataset properties for a Table.
@@ -271,7 +280,7 @@ public class TableProperties {
    * @param <B> the type of the builder.
    */
   public abstract static class AbstractBuilder<B extends AbstractBuilder>
-    extends DatasetProperties.Builder {
+      extends DatasetProperties.Builder {
 
     /**
      * Set the conflict detection level.

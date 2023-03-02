@@ -22,6 +22,7 @@ import io.cdap.cdap.api.data.batch.InputContext;
  * A basic implementation of {@link InputContext}.
  */
 class BasicInputContext implements InputContext {
+
   private final String inputName;
 
   BasicInputContext(String inputName) {

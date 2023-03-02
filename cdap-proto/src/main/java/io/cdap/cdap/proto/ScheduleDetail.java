@@ -27,9 +27,9 @@ import javax.annotation.Nullable;
 /**
  * Represents a schedule in a REST request/response.
  *
- * All fields are nullable because after Json deserialization, they may be null. Also, this is used both
- * for creating a schedule and for updating a schedule. When updating, all fields are optional - only the
- * fields that are present will be updated.
+ * All fields are nullable because after Json deserialization, they may be null. Also, this is used
+ * both for creating a schedule and for updating a schedule. When updating, all fields are optional
+ * - only the fields that are present will be updated.
  */
 public class ScheduleDetail {
 
@@ -46,26 +46,27 @@ public class ScheduleDetail {
   private final Long lastUpdateTime;
 
   public ScheduleDetail(@Nullable String name,
-                        @Nullable String description,
-                        @Nullable ScheduleProgramInfo program,
-                        @Nullable Map<String, String> properties,
-                        @Nullable Trigger trigger,
-                        @Nullable List<? extends Constraint> constraints,
-                        @Nullable Long timeoutMillis) {
-    this(null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null, null);
+      @Nullable String description,
+      @Nullable ScheduleProgramInfo program,
+      @Nullable Map<String, String> properties,
+      @Nullable Trigger trigger,
+      @Nullable List<? extends Constraint> constraints,
+      @Nullable Long timeoutMillis) {
+    this(null, null, name, description, program, properties, trigger, constraints, timeoutMillis,
+        null, null);
   }
 
   public ScheduleDetail(@Nullable String namespace,
-                        @Nullable String application,
-                        @Nullable String name,
-                        @Nullable String description,
-                        @Nullable ScheduleProgramInfo program,
-                        @Nullable Map<String, String> properties,
-                        @Nullable Trigger trigger,
-                        @Nullable List<? extends Constraint> constraints,
-                        @Nullable Long timeoutMillis,
-                        @Nullable String status,
-                        @Nullable Long lastUpdateTime) {
+      @Nullable String application,
+      @Nullable String name,
+      @Nullable String description,
+      @Nullable ScheduleProgramInfo program,
+      @Nullable Map<String, String> properties,
+      @Nullable Trigger trigger,
+      @Nullable List<? extends Constraint> constraints,
+      @Nullable Long timeoutMillis,
+      @Nullable String status,
+      @Nullable Long lastUpdateTime) {
     this.namespace = namespace;
     this.application = application;
     this.name = name;
@@ -144,29 +145,30 @@ public class ScheduleDetail {
     }
     ScheduleDetail that = (ScheduleDetail) o;
     return Objects.equals(name, that.name) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(program, that.program) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(trigger, that.trigger) &&
-      Objects.equals(constraints, that.constraints) &&
-      Objects.equals(timeoutMillis, that.timeoutMillis);
+        Objects.equals(description, that.description) &&
+        Objects.equals(program, that.program) &&
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(trigger, that.trigger) &&
+        Objects.equals(constraints, that.constraints) &&
+        Objects.equals(timeoutMillis, that.timeoutMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, program, properties, trigger, constraints, timeoutMillis);
+    return Objects.hash(name, description, program, properties, trigger, constraints,
+        timeoutMillis);
   }
 
   @Override
   public String toString() {
     return "ScheduleDetail{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", program=" + program +
-      ", properties=" + properties +
-      ", trigger=" + trigger +
-      ", constraints=" + constraints +
-      ", timeoutMillis=" + timeoutMillis +
-      '}';
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", program=" + program +
+        ", properties=" + properties +
+        ", trigger=" + trigger +
+        ", constraints=" + constraints +
+        ", timeoutMillis=" + timeoutMillis +
+        '}';
   }
 }

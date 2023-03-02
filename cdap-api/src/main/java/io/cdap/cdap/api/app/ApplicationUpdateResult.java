@@ -21,7 +21,8 @@ import io.cdap.cdap.api.Config;
 /**
  * Stores results of upgrading an application config.
  *
- * @param <T> {@link Config} config class that represents the configuration type of an Application.
+ * @param <T> {@link Config} config class that represents the configuration type of an
+ *     Application.
  */
 public class ApplicationUpdateResult<T extends Config> {
 

@@ -23,6 +23,7 @@ import java.io.IOException;
  * Admin for {@link ExternalDataset}.
  */
 public class ExternalDatasetAdmin implements DatasetAdmin {
+
   @Override
   public boolean exists() throws IOException {
     // this dataset always exists since it is a trivial implementation

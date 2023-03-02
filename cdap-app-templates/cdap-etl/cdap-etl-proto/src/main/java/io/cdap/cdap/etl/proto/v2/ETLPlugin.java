@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * Plugin Configuration that is part of {@link ETLStage}.
  */
 public class ETLPlugin {
+
   private final String name;
   private final String type;
   private final Map<String, String> properties;
@@ -41,17 +42,17 @@ public class ETLPlugin {
   }
 
   public ETLPlugin(String name,
-                   String type,
-                   Map<String, String> properties,
-                   @Nullable ArtifactSelectorConfig artifact) {
+      String type,
+      Map<String, String> properties,
+      @Nullable ArtifactSelectorConfig artifact) {
     this(name, type, properties, artifact, null);
   }
 
   public ETLPlugin(String name,
-                   String type,
-                   Map<String, String> properties,
-                   @Nullable ArtifactSelectorConfig artifact,
-                   String label) {
+      String type,
+      Map<String, String> properties,
+      @Nullable ArtifactSelectorConfig artifact,
+      String label) {
     this.name = name;
     this.type = type;
     this.properties = Collections.unmodifiableMap(properties);
@@ -88,28 +89,30 @@ public class ETLPlugin {
   }
 
   /**
-   * Validate correctness. Since this object is created through deserialization, some fields that should not be null
-   * may be null.
+   * Validate correctness. Since this object is created through deserialization, some fields that
+   * should not be null may be null.
    *
    * @throws IllegalArgumentException if the object is invalid
    */
   public void validate() {
     if (name == null || name.isEmpty()) {
-      throw new IllegalArgumentException("Invalid plugin " + toString() + ": name must be specified.");
+      throw new IllegalArgumentException(
+          "Invalid plugin " + toString() + ": name must be specified.");
     }
     if (type == null || type.isEmpty()) {
-      throw new IllegalArgumentException("Invalid plugin " + toString() + ": type must be specified.");
+      throw new IllegalArgumentException(
+          "Invalid plugin " + toString() + ": type must be specified.");
     }
   }
 
   @Override
   public String toString() {
     return "Plugin{" +
-      "name='" + name + '\'' +
-      ", type='" + type + '\'' +
-      ", properties=" + properties +
-      ", artifact=" + artifact +
-      '}';
+        "name='" + name + '\'' +
+        ", type='" + type + '\'' +
+        ", properties=" + properties +
+        ", artifact=" + artifact +
+        '}';
   }
 
   @Override
@@ -124,9 +127,9 @@ public class ETLPlugin {
     ETLPlugin that = (ETLPlugin) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(artifact, that.artifact);
+        Objects.equals(type, that.type) &&
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(artifact, that.artifact);
   }
 
   @Override

@@ -50,10 +50,13 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
   public DefaultCompleters(Injector injector) {
     this.completers = ImmutableMap.<String, Completer>builder()
         .put(ArgumentName.APP.getName(), injector.getInstance(AppIdCompleter.class))
-        .put(ArgumentName.ARTIFACT_NAME.getName(), injector.getInstance(ArtifactNameCompleter.class))
-        .put(ArgumentName.DATASET_MODULE.getName(), injector.getInstance(DatasetModuleNameCompleter.class))
+        .put(ArgumentName.ARTIFACT_NAME.getName(),
+            injector.getInstance(ArtifactNameCompleter.class))
+        .put(ArgumentName.DATASET_MODULE.getName(),
+            injector.getInstance(DatasetModuleNameCompleter.class))
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
-        .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
+        .put(ArgumentName.DATASET_TYPE.getName(),
+            injector.getInstance(DatasetTypeNameCompleter.class))
         .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleter())
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
@@ -62,23 +65,27 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.HTTP_METHOD.getName(), new EndpointCompleter())
         .put(ArgumentName.ENDPOINT.getName(), new EndpointCompleter())
         .put(ArgumentName.RUN_STATUS.getName(), new EnumCompleter(ProgramRunStatus.class))
-        .put(ArgumentName.NAMESPACE_NAME.getName(), injector.getInstance(NamespaceNameCompleter.class))
+        .put(ArgumentName.NAMESPACE_NAME.getName(),
+            injector.getInstance(NamespaceNameCompleter.class))
         .put(ArgumentName.COMMAND_CATEGORY.getName(), new EnumCompleter(CommandCategory.class))
         .put(ArgumentName.TABLE_RENDERER.getName(), new EnumCompleter(RenderAsCommand.Type.class))
-        .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(), new EnumCompleter(WorkflowToken.Scope.class))
+        .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(),
+            new EnumCompleter(WorkflowToken.Scope.class))
         .put(ArgumentName.METADATA_SCOPE.getName(), new EnumCompleter(MetadataScope.class))
-        .put(ArgumentName.PRINCIPAL_TYPE.getName(), new EnumCompleter(Principal.PrincipalType.class))
+        .put(ArgumentName.PRINCIPAL_TYPE.getName(),
+            new EnumCompleter(Principal.PrincipalType.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }
 
-  private static Map<? extends String, ? extends Completer> generateProgramIdCompleters(Injector injector) {
+  private static Map<? extends String, ? extends Completer> generateProgramIdCompleters(
+      Injector injector) {
     ImmutableMap.Builder<String, Completer> result = ImmutableMap.builder();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.isListable()) {
         result.put(elementType.getArgumentName().getName(),
-                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class),
-                                          injector.getInstance(CLIConfig.class),
-                                          elementType.getProgramType()));
+            new ProgramIdCompleter(injector.getInstance(ApplicationClient.class),
+                injector.getInstance(CLIConfig.class),
+                elementType.getProgramType()));
       }
     }
     return result.build();

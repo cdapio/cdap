@@ -31,8 +31,8 @@ public interface MetricsWriterContext {
   String CDAP_VERSION = "cdap.version";
 
   /**
-   * Properties are derived from the CDAP configuration. Configuration file path will be
-   * added as an entry in the  properties.
+   * Properties are derived from the CDAP configuration. Configuration file path will be added as an
+   * entry in the  properties.
    *
    * @return unmodifiable properties for the metrics writer.
    */

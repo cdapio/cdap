@@ -25,13 +25,14 @@ import java.util.List;
  * Request to validate a pipeline stage.
  */
 public class StageValidationRequest {
+
   private final ETLStage stage;
   private final List<StageSchema> inputSchemas;
   private final Boolean resolveMacrosFromPreferences;
 
   public StageValidationRequest(ETLStage stage,
-                                List<StageSchema> inputSchemas,
-                                boolean resolveMacrosFromPreferences) {
+      List<StageSchema> inputSchemas,
+      boolean resolveMacrosFromPreferences) {
     this.stage = stage;
     this.inputSchemas = inputSchemas;
     this.resolveMacrosFromPreferences = resolveMacrosFromPreferences;
@@ -50,14 +51,15 @@ public class StageValidationRequest {
   }
 
   /**
-   * Validate that the request contains all required information. This should be called whenever this instance is
-   * created by deserializing user provided input.
+   * Validate that the request contains all required information. This should be called whenever
+   * this instance is created by deserializing user provided input.
    *
    * @throws IllegalArgumentException if the request is invalid
    */
   public void validate() {
     if (stage == null) {
-      throw new IllegalArgumentException("Pipeline stage config must be provided in the validation request.");
+      throw new IllegalArgumentException(
+          "Pipeline stage config must be provided in the validation request.");
     }
     stage.validate();
     for (StageSchema inputSchema : getInputSchemas()) {

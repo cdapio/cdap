@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
  * Runs some sanity checks that indicate whether the CDAP master will be able to start right away.
  */
 public class MasterStartupTool {
+
   private static final Logger LOG = LoggerFactory.getLogger(MasterStartupTool.class);
   private final CheckRunner checkRunner;
 
@@ -94,14 +95,15 @@ public class MasterStartupTool {
     if (!failures.isEmpty()) {
       for (CheckRunner.Failure failure : failures) {
         LOG.error("{} failed with {}: {}", failure.getName(),
-                  failure.getException().getClass().getSimpleName(),
-                  failure.getException().getMessage(), failure.getException());
+            failure.getException().getClass().getSimpleName(),
+            failure.getException().getMessage(), failure.getException());
         if (failure.getException().getCause() != null) {
-          LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
+          LOG.error("  Root cause: {}",
+              ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
         }
       }
       LOG.error("Errors detected while starting up master. " +
-                  "Please check the logs, address all errors, then try again.");
+          "Please check the logs, address all errors, then try again.");
       return false;
     }
     return true;
@@ -120,7 +122,8 @@ public class MasterStartupTool {
           checkRunnerBuilder.addChecksInPackage(checkPackage);
         } catch (IOException e) {
           // not expected unless something is weird with the local filesystem
-          LOG.error("Unable to examine classpath to look for startup checks in package {}.", checkPackage, e);
+          LOG.error("Unable to examine classpath to look for startup checks in package {}.",
+              checkPackage, e);
           throw new RuntimeException(e);
         }
       }
@@ -135,7 +138,8 @@ public class MasterStartupTool {
           checkRunnerBuilder.addClass(className);
         } catch (ClassNotFoundException e) {
           LOG.error("Startup check {} not found. " +
-                      "Please check for typos and ensure the class is available on the classpath.", className);
+                  "Please check for typos and ensure the class is available on the classpath.",
+              className);
           throw new RuntimeException(e);
         }
       }
@@ -147,13 +151,13 @@ public class MasterStartupTool {
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new IOModule(),
-      new KafkaClientModule(),
-      new DFSLocationModule()
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new IOModule(),
+        new KafkaClientModule(),
+        new DFSLocationModule()
     );
   }
 }

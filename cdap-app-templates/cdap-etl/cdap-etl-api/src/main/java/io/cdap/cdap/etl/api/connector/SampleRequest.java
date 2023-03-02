@@ -27,12 +27,14 @@ import javax.annotation.Nullable;
  * Request for sampling operations
  */
 public class SampleRequest {
+
   private final String path;
   private final int limit;
   private final Map<String, String> properties;
   private final Long timeoutMs;
 
-  protected SampleRequest(@Nullable String path, int limit, Map<String, String> properties, @Nullable Long timeoutMs) {
+  protected SampleRequest(@Nullable String path, int limit, Map<String, String> properties,
+      @Nullable Long timeoutMs) {
     this.path = path;
     this.limit = limit;
     this.properties = properties;
@@ -40,8 +42,8 @@ public class SampleRequest {
   }
 
   /**
-   * Get the entity path for the sample request, if the path is null, that means the properties contains
-   * all the path related configs required for the sampling
+   * Get the entity path for the sample request, if the path is null, that means the properties
+   * contains all the path related configs required for the sampling
    */
   @Nullable
   public String getPath() {
@@ -74,9 +76,9 @@ public class SampleRequest {
 
     SampleRequest that = (SampleRequest) o;
     return limit == that.limit &&
-             Objects.equals(path, that.path) &&
-             Objects.equals(properties, that.properties) &&
-             Objects.equals(timeoutMs, that.timeoutMs);
+        Objects.equals(path, that.path) &&
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(timeoutMs, that.timeoutMs);
   }
 
   @Override
@@ -95,6 +97,7 @@ public class SampleRequest {
    * Builder for {@link SampleRequest}
    */
   public static class Builder {
+
     private String path;
     private int limit;
     private final Map<String, String> properties;

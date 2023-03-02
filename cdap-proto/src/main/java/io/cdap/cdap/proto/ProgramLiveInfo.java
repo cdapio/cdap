@@ -19,10 +19,11 @@ package io.cdap.cdap.proto;
 import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * Represents information about running programs. This class can be extended to add information for specific runtime
- * environments.
+ * Represents information about running programs. This class can be extended to add information for
+ * specific runtime environments.
  */
 public abstract class ProgramLiveInfo {
+
   private final String app;
   private final String type;
   private final String name;

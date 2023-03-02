@@ -71,6 +71,7 @@ import javax.annotation.Nullable;
  * Default implementation of {@link MetricStore}.
  */
 public class DefaultMetricStore implements MetricStore {
+
   public static final Map<String, Aggregation> AGGREGATIONS;
 
   private static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
@@ -87,9 +88,9 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_SCHEDULE = "schedule";
   private static final String BY_ONLY_COMPONENT = "only_component";
   private static final Map<String, AggregationAlias> AGGREGATIONS_ALIAS_DIMENSIONS =
-    ImmutableMap.of(BY_WORKFLOW,
-                    new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
-                                                         Constants.Metrics.Tag.WORKFLOW_RUN_ID)));
+      ImmutableMap.of(BY_WORKFLOW,
+          new AggregationAlias(ImmutableMap.of(Constants.Metrics.Tag.RUN_ID,
+              Constants.Metrics.Tag.WORKFLOW_RUN_ID)));
 
   private final Supplier<Cube> cube;
   private final Supplier<MetricsConsumerMetaTable> metaTableSupplier;
@@ -106,13 +107,15 @@ public class DefaultMetricStore implements MetricStore {
     Map<String, Aggregation> aggs = Maps.newHashMap();
 
     // Namespaces:
-    aggs.put(BY_NAMESPACE, new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
+    aggs.put(BY_NAMESPACE,
+        new DefaultAggregation(ImmutableList.of(Constants.Metrics.Tag.NAMESPACE)));
 
     // Applications:
     aggs.put(BY_APP, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP, Constants.Metrics.Tag.DATASET),
-      // i.e. for programs only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.DATASET),
+        // i.e. for programs only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP)));
 
     // Programs:
 
@@ -125,87 +128,87 @@ public class DefaultMetricStore implements MetricStore {
 
     // mapreduce
     aggs.put(BY_MAPREDUCE, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.MR_TASK_TYPE,
-                       Constants.Metrics.Tag.INSTANCE_ID),
-      // i.e. for mapreduce only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.MAPREDUCE)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.MAPREDUCE, Constants.Metrics.Tag.DATASET,
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.MR_TASK_TYPE,
+            Constants.Metrics.Tag.INSTANCE_ID),
+        // i.e. for mapreduce only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.MAPREDUCE)));
     // service
     aggs.put(BY_SERVICE, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
-                       Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.THREAD, Constants.Metrics.Tag.APP_ENTITY_TYPE,
-                       Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
-      // i.e. for service only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SERVICE)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.SERVICE, Constants.Metrics.Tag.DATASET,
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.HANDLER,
+            Constants.Metrics.Tag.METHOD, Constants.Metrics.Tag.INSTANCE_ID,
+            Constants.Metrics.Tag.THREAD, Constants.Metrics.Tag.APP_ENTITY_TYPE,
+            Constants.Metrics.Tag.APP_ENTITY_TYPE_NAME),
+        // i.e. for service only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.SERVICE)));
 
     // worker
     aggs.put(BY_WORKER, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.WORKER, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID,
-                       Constants.Metrics.Tag.PROGRAM_ENTITY),
-      // i.e. for worker only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.WORKER)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.WORKER, Constants.Metrics.Tag.DATASET,
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID,
+            Constants.Metrics.Tag.PROGRAM_ENTITY),
+        // i.e. for worker only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.WORKER)));
 
     // workflow
     aggs.put(BY_WORKFLOW, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.NODE),
-      // i.e. for workflow only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.WORKFLOW)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.WORKFLOW, Constants.Metrics.Tag.DATASET,
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.NODE),
+        // i.e. for workflow only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.WORKFLOW)));
 
     // spark
     aggs.put(BY_SPARK, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID),
-      // i.e. for spark only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.SPARK)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.SPARK, Constants.Metrics.Tag.DATASET,
+            Constants.Metrics.Tag.RUN_ID),
+        // i.e. for spark only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
+            Constants.Metrics.Tag.SPARK)));
 
     // Datasets:
     aggs.put(BY_DATASET, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
-      // i.e. for datasets only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET),
+        // i.e. for datasets only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.DATASET)));
 
     // Profiles:
     aggs.put(BY_PROFILE, new DefaultAggregation(
-      // The required dimension for profile is the scope and profile name
-      // These tags are ordered because of the efficiency, since we only have limited number program types, so it
-      // comes before the app
-      ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE,
-                       Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROGRAM_TYPE,
-                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.PROVISIONER,
-                       Constants.Metrics.Tag.CLUSTER_STATUS, Constants.Metrics.Tag.EXISTING_STATUS),
-      ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE)));
+        // The required dimension for profile is the scope and profile name
+        // These tags are ordered because of the efficiency, since we only have limited number program types, so it
+        // comes before the app
+        ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE,
+            Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.PROGRAM_TYPE,
+            Constants.Metrics.Tag.APP, Constants.Metrics.Tag.PROGRAM,
+            Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.PROVISIONER,
+            Constants.Metrics.Tag.CLUSTER_STATUS, Constants.Metrics.Tag.EXISTING_STATUS),
+        ImmutableList.of(Constants.Metrics.Tag.PROFILE_SCOPE, Constants.Metrics.Tag.PROFILE)));
 
     // System components:
     aggs.put(BY_COMPONENT, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                       Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
-      // i.e. for components only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+            Constants.Metrics.Tag.HANDLER, Constants.Metrics.Tag.METHOD),
+        // i.e. for components only
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     aggs.put(BY_SCHEDULE, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
-                       Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+            Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE),
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT,
+            Constants.Metrics.Tag.APP, Constants.Metrics.Tag.SCHEDULE)));
 
     aggs.put(BY_ONLY_COMPONENT, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT),
+        ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
@@ -215,16 +218,20 @@ public class DefaultMetricStore implements MetricStore {
     int writeParallelism = cConf.getInt(Constants.Metrics.METRICS_TABLE_WRITE_PARRALELISM);
     int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
     int[] resolutions = minimumResolution < 60 ?
-      new int[] {minimumResolution, 60, 3600, TOTALS_RESOLUTION} : new int[] {60, 3600, TOTALS_RESOLUTION};
-    long minRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION +
-                                            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
-    long hourRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION +
-                                             Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+        new int[]{minimumResolution, 60, 3600, TOTALS_RESOLUTION}
+        : new int[]{60, 3600, TOTALS_RESOLUTION};
+    long minRetentionSecs = cConf.getLong(
+        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION +
+            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    long hourRetentionSecs = cConf.getLong(
+        Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.HOUR_RESOLUTION +
+            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
     ImmutableMap.Builder<Integer, Long> builder = ImmutableMap.<Integer, Long>builder()
-      .put(60, minRetentionSecs)
-      .put(3600, hourRetentionSecs);
+        .put(60, minRetentionSecs)
+        .put(3600, hourRetentionSecs);
     if (minimumResolution < 60) {
-      builder.put(minimumResolution, cConf.getLong(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS));
+      builder.put(minimumResolution,
+          cConf.getLong(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS));
     }
     this.resolutionTTLMap = builder.build();
     FactTableSupplier factTableSupplier = (resolution, ignoredRollTime) -> {
@@ -235,8 +242,9 @@ public class DefaultMetricStore implements MetricStore {
     this.cube = Suppliers.memoize(new Supplier<Cube>() {
       @Override
       public Cube get() {
-        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS, AGGREGATIONS_ALIAS_DIMENSIONS,
-                                           writeParallelism);
+        DefaultCube cube = new DefaultCube(resolutions, factTableSupplier, AGGREGATIONS,
+            AGGREGATIONS_ALIAS_DIMENSIONS,
+            writeParallelism);
         cube.setMetricsCollector(metricsContext);
         return cube;
       }
@@ -275,13 +283,14 @@ public class DefaultMetricStore implements MetricStore {
           // https://cdap.atlassian.net/browse/CDAP-18769
           continue;
         }
-        MeasureType type = metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
+        MeasureType type =
+            metric.getType() == MetricType.COUNTER ? MeasureType.COUNTER : MeasureType.GAUGE;
         metrics.add(new Measurement(measureName, type, metric.getValue()));
       }
 
       CubeFact fact = new CubeFact(metricValue.getTimestamp())
-        .addDimensionValues(metricValue.getTags())
-        .addMeasurements(metrics);
+          .addDimensionValues(metricValue.getTags())
+          .addMeasurements(metrics);
       facts.add(fact);
     }
     cube.get().add(facts);
@@ -293,17 +302,17 @@ public class DefaultMetricStore implements MetricStore {
     List<MetricTimeSeries> result = Lists.newArrayList();
     for (TimeSeries timeSeries : cubeResult) {
       result.add(new MetricTimeSeries(timeSeries.getMeasureName(),
-                                      timeSeries.getDimensionValues(),
-                                      timeSeries.getTimeValues()));
+          timeSeries.getDimensionValues(),
+          timeSeries.getTimeValues()));
     }
     return result;
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery query) {
     return new CubeQuery(null, query.getStartTs(), query.getEndTs(),
-                         query.getResolution(), query.getLimit(), query.getMetrics(),
-                         query.getSliceByTags(), query.getGroupByTags(), query.getAggregationOption(),
-                         query.getInterpolator());
+        query.getResolution(), query.getLimit(), query.getMetrics(),
+        query.getSliceByTags(), query.getGroupByTags(), query.getAggregationOption(),
+        query.getInterpolator());
   }
 
   @Override
@@ -331,7 +340,7 @@ public class DefaultMetricStore implements MetricStore {
   public void deleteAll() {
     // this will delete all aggregates metrics data
     delete(new MetricDeleteQuery(0, System.currentTimeMillis() / 1000, Collections.emptySet(),
-                                 Collections.emptyMap(), Collections.emptyList()));
+        Collections.emptyMap(), Collections.emptyList()));
     // this will delete all timeseries data
     deleteBefore(System.currentTimeMillis() / 1000);
   }
@@ -340,7 +349,7 @@ public class DefaultMetricStore implements MetricStore {
     // note: delete query currently usually executed synchronously,
     //       so we only attempt to delete totals, to avoid timeout
     return new CubeDeleteQuery(query.getStartTs(), query.getEndTs(), TOTALS_RESOLUTION,
-                               query.getSliceByTags(), query.getMetricNames(), query.getTagPredicate());
+        query.getSliceByTags(), query.getMetricNames(), query.getTagPredicate());
   }
 
   @Override
@@ -355,7 +364,7 @@ public class DefaultMetricStore implements MetricStore {
 
   private CubeExploreQuery buildCubeSearchQuery(MetricSearchQuery query) {
     return new CubeExploreQuery(query.getStartTs(), query.getEndTs(), query.getResolution(),
-                                query.getLimit(), toTagValues(query.getTagValues()));
+        query.getLimit(), toTagValues(query.getTagValues()));
   }
 
   @Override
@@ -364,28 +373,30 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   /**
-   * Read the metrics processing stats from meta table and return the map of topic information to stats
+   * Read the metrics processing stats from meta table and return the map of topic information to
+   * stats
+   *
    * @return Map of topic to metrics processing stats
-   * @throws Exception
    */
   @Override
   public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
     MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
     Map<String, MetricsProcessorStatus> processMap = new HashMap<>();
     for (TopicId topicId : metricsTopics) {
-      TopicProcessMeta topicProcessMeta = metaTable.getTopicProcessMeta(new TopicIdMetaKey(topicId));
+      TopicProcessMeta topicProcessMeta = metaTable.getTopicProcessMeta(
+          new TopicIdMetaKey(topicId));
       if (topicProcessMeta != null) {
         MessageId messageId = new MessageId(topicProcessMeta.getMessageId());
         MetricsMessageId metricsMessageId = new MetricsMessageId(messageId.getPublishTimestamp(),
-                                                                 messageId.getSequenceId(),
-                                                                 messageId.getPayloadWriteTimestamp(),
-                                                                 messageId.getPayloadSequenceId());
+            messageId.getSequenceId(),
+            messageId.getPayloadWriteTimestamp(),
+            messageId.getPayloadSequenceId());
         processMap.put(
-          topicId.getTopic(), new MetricsProcessorStatus(metricsMessageId,
-                                                         topicProcessMeta.getOldestMetricsTimestamp(),
-                                                         topicProcessMeta.getLatestMetricsTimestamp(),
-                                                         topicProcessMeta.getMessagesProcessed(),
-                                                         topicProcessMeta.getLastProcessedTimestamp()));
+            topicId.getTopic(), new MetricsProcessorStatus(metricsMessageId,
+                topicProcessMeta.getOldestMetricsTimestamp(),
+                topicProcessMeta.getLatestMetricsTimestamp(),
+                topicProcessMeta.getMessagesProcessed(),
+                topicProcessMeta.getLastProcessedTimestamp()));
       }
     }
     return processMap;
@@ -393,21 +404,22 @@ public class DefaultMetricStore implements MetricStore {
 
   private void deleteMetricsBeforeTimestamp(long timestamp, int resolution) {
     CubeDeleteQuery query = new CubeDeleteQuery(0, timestamp, resolution, Collections.emptyMap(),
-                                                Collections.emptySet(), strings -> true);
+        Collections.emptySet(), strings -> true);
     cube.get().delete(query);
   }
 
   private List<DimensionValue> toTagValues(List<io.cdap.cdap.api.metrics.TagValue> input) {
-    return Lists.transform(input, new Function<io.cdap.cdap.api.metrics.TagValue, DimensionValue>() {
-      @Nullable
-      @Override
-      public DimensionValue apply(io.cdap.cdap.api.metrics.TagValue input) {
-        if (input == null) {
-          // SHOULD NEVER happen
-          throw new NullPointerException();
-        }
-        return new DimensionValue(input.getName(), input.getValue());
-      }
-    });
+    return Lists.transform(input,
+        new Function<io.cdap.cdap.api.metrics.TagValue, DimensionValue>() {
+          @Nullable
+          @Override
+          public DimensionValue apply(io.cdap.cdap.api.metrics.TagValue input) {
+            if (input == null) {
+              // SHOULD NEVER happen
+              throw new NullPointerException();
+            }
+            return new DimensionValue(input.getName(), input.getValue());
+          }
+        });
   }
 }

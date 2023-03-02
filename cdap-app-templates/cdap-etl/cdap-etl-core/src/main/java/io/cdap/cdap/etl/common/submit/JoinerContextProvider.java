@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
  * Creates DefaultJoinerContexts.
  */
 public class JoinerContextProvider implements ContextProvider<DefaultJoinerContext> {
+
   private final PipelineRuntime pipelineRuntime;
   private final StageSpec stageSpec;
   private final Admin admin;

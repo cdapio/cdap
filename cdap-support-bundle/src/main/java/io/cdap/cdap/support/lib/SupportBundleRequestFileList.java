@@ -19,12 +19,11 @@ package io.cdap.cdap.support.lib;
 import java.util.List;
 
 /**
- * Customer request for a list of files' names
- * EX: "files":["testpipeline/82b21b3e-11c6-11ec-81af-0000009bb312.json",
- *              "testpipeline/status.json"]
- *
+ * Customer request for a list of files' names EX: "files":["testpipeline/82b21b3e-11c6-11ec-81af-0000009bb312.json",
+ * "testpipeline/status.json"]
  */
 public class SupportBundleRequestFileList {
+
   private final List<String> files;
 
   public SupportBundleRequestFileList(List<String> files) {

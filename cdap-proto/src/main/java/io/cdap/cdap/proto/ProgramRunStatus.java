@@ -38,10 +38,12 @@ public enum ProgramRunStatus {
   KILLED,
   REJECTED;
 
-  private static final Set<ProgramRunStatus> UNSUCCESSFUL_STATES = EnumSet.of(FAILED, KILLED, REJECTED);
-  private static final Set<ProgramRunStatus> END_STATES = EnumSet.of(COMPLETED, FAILED, KILLED, REJECTED);
+  private static final Set<ProgramRunStatus> UNSUCCESSFUL_STATES = EnumSet.of(FAILED, KILLED,
+      REJECTED);
+  private static final Set<ProgramRunStatus> END_STATES = EnumSet.of(COMPLETED, FAILED, KILLED,
+      REJECTED);
   private static final Set<String> END_STATE_NAMES =
-    END_STATES.stream().map(ProgramRunStatus::name).collect(Collectors.toSet());
+      END_STATES.stream().map(ProgramRunStatus::name).collect(Collectors.toSet());
 
   /**
    * Return whether this state can transition to the specified state.
@@ -67,15 +69,17 @@ public enum ProgramRunStatus {
         // FAILED happens if the run failed while starting
         // COMPLETED happens somehow? Not sure when we expect this but we test that this transition can happen
         // SUSPENDED happens if you suspend while starting. Not sure why this is allowed, seems wrong (CDAP-13551)
-        return status == RUNNING || status == STOPPING || status == SUSPENDED || status == COMPLETED ||
-          status == KILLED || status == FAILED;
+        return status == RUNNING || status == STOPPING || status == SUSPENDED || status == COMPLETED
+            ||
+            status == KILLED || status == FAILED;
       case RUNNING:
         // SUSPENDED happens if the run was suspended
         // STOPPING happens if the run was manually stopped gracefully(may include a timeout)
         // COMPLETED is the happy path
         // KILLED happens if the run was manually stopped
         // FAILED happens if the run failed
-        return status == SUSPENDED || status == STOPPING || status == COMPLETED || status == KILLED || status == FAILED;
+        return status == SUSPENDED || status == STOPPING || status == COMPLETED || status == KILLED
+            || status == FAILED;
       case STOPPING:
         // COMPLETED is the happy path
         // KILLED happens if the run was manually stopped
@@ -120,11 +124,12 @@ public enum ProgramRunStatus {
 
   /**
    * Conversion from program run status to Workflow node status.
+   *
    * @param status the program run status to be converted
    * @return the converted Workflow node status
    */
   public static NodeStatus toNodeStatus(ProgramRunStatus status) {
-    switch(status) {
+    switch (status) {
       case STARTING:
         return NodeStatus.STARTING;
       case RUNNING:
@@ -138,13 +143,14 @@ public enum ProgramRunStatus {
       case KILLED:
         return NodeStatus.KILLED;
       default:
-        throw new IllegalArgumentException(String.format("No node status available corresponding to program status %s",
-                                                         status.name()));
+        throw new IllegalArgumentException(
+            String.format("No node status available corresponding to program status %s",
+                status.name()));
     }
   }
 
   public static ProgramStatus toProgramStatus(ProgramRunStatus status) {
-    switch(status) {
+    switch (status) {
       case PENDING:
       case STARTING:
         return ProgramStatus.INITIALIZING;
@@ -159,8 +165,9 @@ public enum ProgramRunStatus {
       case KILLED:
         return ProgramStatus.KILLED;
       default:
-        throw new IllegalArgumentException(String.format("No program status available corresponding to program run " +
-                                                         "status %s", status.name()));
+        throw new IllegalArgumentException(
+            String.format("No program status available corresponding to program run " +
+                "status %s", status.name()));
     }
   }
 }

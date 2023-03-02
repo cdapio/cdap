@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
- * This interface defines sampling on log events. It is mainly used in conjunction with the
- * {@link Loggers#sampling(Logger, LogSampler)} method.
- * Common implementations can be found in {@link LogSamplers}.
+ * This interface defines sampling on log events. It is mainly used in conjunction with the {@link
+ * Loggers#sampling(Logger, LogSampler)} method. Common implementations can be found in {@link
+ * LogSamplers}.
  */
 public interface LogSampler {
 

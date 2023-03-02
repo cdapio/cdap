@@ -74,7 +74,8 @@ final class WorkflowProgramController extends AbstractProgramController {
 
       @Override
       public void terminated(Service.State from) {
-        LOG.debug("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
+        LOG.debug("Workflow service terminated from {}. Un-registering service {}.", from,
+            serviceName);
         if (getState() != State.STOPPING) {
           // service completed itself.
           complete();
@@ -96,7 +97,7 @@ final class WorkflowProgramController extends AbstractProgramController {
     ProgramId programId = getProgramRunId().getParent();
     RunId runId = getRunId();
     return String.format("workflow.%s.%s.%s.%s",
-                         programId.getNamespace(), programId.getApplication(), programId.getProgram(),
-                         runId.getId());
+        programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+        runId.getId());
   }
 }

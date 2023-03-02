@@ -45,9 +45,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
- * Mock sink that writes records to a Table and has a utility method for getting all records written.
+ * Mock sink that writes records to a Table and has a utility method for getting all records
+ * written.
  */
 public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[], Put> {
+
   public static final String INITIALIZED_COUNT_METRIC = "initialized.count";
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
@@ -62,6 +64,7 @@ public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private ConnectionConfig connectionConfig;
   }
@@ -70,6 +73,7 @@ public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[
    * Connection config for mock sink
    */
   public static class ConnectionConfig extends PluginConfig {
+
     @Macro
     private String tableName;
   }
@@ -91,9 +95,9 @@ public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[
     Schema schema = context.getInputSchema();
     if (schema != null && schema.getFields() != null) {
       schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList())
-        .forEach(field -> context.record(Collections.singletonList(
-          new FieldWriteOperation("Mock sink " + field, "Write to mock sink",
-                                  EndPoint.of(context.getNamespace(), config.connectionConfig.tableName), field))));
+          .forEach(field -> context.record(Collections.singletonList(
+              new FieldWriteOperation("Mock sink " + field, "Write to mock sink",
+                  EndPoint.of(context.getNamespace(), config.connectionConfig.tableName), field))));
     }
   }
 
@@ -104,11 +108,12 @@ public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter)
+      throws Exception {
     byte[] rowkey = Bytes.concat(
-      Bytes.toBytes(System.currentTimeMillis()),
-      Bytes.toBytes(inputCounter.incrementAndGet()),
-      Bytes.toBytes(UUID.randomUUID())
+        Bytes.toBytes(System.currentTimeMillis()),
+        Bytes.toBytes(inputCounter.incrementAndGet()),
+        Bytes.toBytes(UUID.randomUUID())
     );
     Put put = new Put(rowkey);
     put.add(SCHEMA_COL, input.getSchema().toString());
@@ -121,7 +126,8 @@ public abstract class AbstractMockSink extends BatchSink<StructuredRecord, byte[
    *
    * @param tableManager dataset manager used to get the sink dataset to read from
    */
-  public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager) throws Exception {
+  public static List<StructuredRecord> readOutput(DataSetManager<Table> tableManager)
+      throws Exception {
     tableManager.flush();
     Table table = tableManager.get();
 

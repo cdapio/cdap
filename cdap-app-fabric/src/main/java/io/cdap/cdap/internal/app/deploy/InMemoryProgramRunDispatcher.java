@@ -113,8 +113,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * In-memory Implementation for {@link ProgramRunDispatcher} which runs the program in the same service from which it's
- * invoked.
+ * In-memory Implementation for {@link ProgramRunDispatcher} which runs the program in the same
+ * service from which it's invoked.
  */
 public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
@@ -137,12 +137,13 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private String hostname;
 
   @Inject
-  public InMemoryProgramRunDispatcher(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                      Impersonator impersonator,
-                                      LocationFactory locationFactory, RemoteClientFactory remoteClientFactory,
-                                      @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                        ArtifactRepository artifactRepository,
-                                      PluginFinder pluginFinder) {
+  public InMemoryProgramRunDispatcher(CConfiguration cConf,
+      ProgramRunnerFactory programRunnerFactory,
+      Impersonator impersonator,
+      LocationFactory locationFactory, RemoteClientFactory remoteClientFactory,
+      @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+          ArtifactRepository artifactRepository,
+      PluginFinder pluginFinder) {
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
     this.impersonator = impersonator;
@@ -152,16 +153,19 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     this.pluginFinder = pluginFinder;
 
     this.artifactsComputeHash = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH);
-    this.artifactsComputeHashSnapshot = cConf.getBoolean(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT);
-    this.artifactsComputeHashTimeBucketDays = cConf.getInt(Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS);
+    this.artifactsComputeHashSnapshot = cConf.getBoolean(
+        Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_SNAPSHOT);
+    this.artifactsComputeHashTimeBucketDays = cConf.getInt(
+        Constants.AppFabric.ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS);
   }
 
   /**
-   * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is optional because in
-   * unit-test we don't have need for that.
+   * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is
+   * optional because in unit-test we don't have need for that.
    */
   @Inject(optional = true)
-  public void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+  public void setRemoteProgramRunnerFactory(
+      @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 
@@ -174,12 +178,13 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
 
   @Inject(optional = true)
   public void setRemoteAuthenticator(@Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
-                                       RemoteAuthenticator remoteAuthenticator) {
+      RemoteAuthenticator remoteAuthenticator) {
     this.remoteAuthenticator = remoteAuthenticator;
   }
 
   @Override
-  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext) throws Exception {
+  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext)
+      throws Exception {
     RunId runId = dispatcherContext.getRunId();
     LOG.debug("Preparing to dispatch program run: {}", runId);
     ProgramDescriptor programDescriptor = dispatcherContext.getProgramDescriptor();
@@ -191,23 +196,26 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     ProgramRunnerFactory progRunnerFactory = programRunnerFactory;
     if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
       progRunnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
-        .orElseThrow(UnsupportedOperationException::new);
+          .orElseThrow(UnsupportedOperationException::new);
     }
     ArtifactRepository artifactRepository = noAuthArtifactRepository;
     String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
     if (peer != null) {
       // For tethered pipeline runs, fetch artifacts from ArtifactCacheService
-      String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3, peer);
+      String basePath = String.format("%s/peers/%s", Constants.Gateway.INTERNAL_API_VERSION_3,
+          peer);
       // Set longer timeouts because we fetch from remote appfabric the first time we get an artifact. Subsequent
       // reads are served by the cache.
       HttpRequestConfig requestConfig = new HttpRequestConfig(600000,
-                                                              600000,
-                                                              false);
-      RemoteClient client = remoteClientFactory.createRemoteClient(Constants.Service.ARTIFACT_CACHE_SERVICE,
-                                                                   requestConfig,
-                                                                   basePath);
-      RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(locationFactory,
-                                                                                                   client);
+          600000,
+          false);
+      RemoteClient client = remoteClientFactory.createRemoteClient(
+          Constants.Service.ARTIFACT_CACHE_SERVICE,
+          requestConfig,
+          basePath);
+      RemoteArtifactRepositoryReader artifactRepositoryReader = new RemoteArtifactRepositoryReader(
+          locationFactory,
+          client);
       artifactRepository = new RemoteArtifactRepository(cConf, artifactRepositoryReader);
     }
 
@@ -226,13 +234,13 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     ProgramOptions updatedOptions = options;
     if (tetheredRun) {
       updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
-                                            Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
-                                                               null),
-                                            isDistributed);
+          Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+              null),
+          isDistributed);
       // Take a snapshot of all the plugin artifacts used by the program
       updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
-                                            newProgramDescriptor.getApplicationSpecification(),
-                                            isDistributed, artifactRepository);
+          newProgramDescriptor.getApplicationSpecification(),
+          isDistributed, artifactRepository);
       // Download the program jar into the target directory
       // This hack is here because the program jar won't actually exist in a tethered run
       // TODO: (CDAP-19150) remove hack once Location is removed form ArtifactDetail
@@ -242,19 +250,21 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       Path target = targetFile.toPath();
       downloadArtifact(aId, target, artifactRepository);
       Location location = Locations.toLocation(target);
-      ArtifactDescriptor descriptor = new ArtifactDescriptor(artifactDetail.getDescriptor().getNamespace(),
-                                                             artifactDetail.getDescriptor().getArtifactId(),
-                                                             location);
+      ArtifactDescriptor descriptor = new ArtifactDescriptor(
+          artifactDetail.getDescriptor().getNamespace(),
+          artifactDetail.getDescriptor().getArtifactId(),
+          location);
       artifactDetail = new ArtifactDetail(descriptor, artifactDetail.getMeta());
     }
 
     boolean isPreview =
-      Boolean.parseBoolean(options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
+        Boolean.parseBoolean(
+            options.getArguments().getOption(ProgramOptionConstants.IS_PREVIEW, "false"));
     // Do the app spec regeneration if the mode is on premise or if it's a tethered run.
     // For non-tethered run in isolated mode, the regeneration is done on the runtime environment before the program
     // launch. For preview we already have a resolved app spec, so no need to regenerate the app spec again
     if (!isPreview && appSpec != null &&
-      (ClusterMode.ON_PREMISE.equals(clusterMode) || tetheredRun)) {
+        (ClusterMode.ON_PREMISE.equals(clusterMode) || tetheredRun)) {
       RemoteClientFactory factory = remoteClientFactory;
 
       PluginFinder pf = pluginFinder;
@@ -262,29 +272,32 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         // Configure remote client to talk to the specified tethered peer endpoint.
         // For example, if the peer endpoint is https://my.host.com/api and a remote client is created with
         // basePath = /v3, then some/path should resolve to https://my.host.com/api/v3/some/path.
-        String peerEndpoint = options.getArguments().getOption(ProgramOptionConstants.PEER_ENDPOINT);
+        String peerEndpoint = options.getArguments()
+            .getOption(ProgramOptionConstants.PEER_ENDPOINT);
         String pathPrefix = new URI(peerEndpoint).getPath();
         factory = new RemoteClientFactory(new NoOpDiscoveryServiceClient(peerEndpoint),
-                                          new NoOpInternalAuthenticator(),
-                                          remoteAuthenticator, pathPrefix);
+            new NoOpInternalAuthenticator(),
+            remoteAuthenticator, pathPrefix);
         pf = new RemoteIsolatedPluginFinder(locationFactory, factory,
-                                            tempDir.getAbsolutePath());
+            tempDir.getAbsolutePath());
       }
       try {
         ApplicationSpecification generatedAppSpec =
-          regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, updatedOptions, pf, factory,
-                            artifactRepository);
+            regenerateAppSpec(artifactDetail, programId, artifactId, appSpec, updatedOptions, pf,
+                factory,
+                artifactRepository);
         appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
         newProgramDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
       } catch (Exception e) {
-        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId, e);
+        LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
+            programId, e);
       }
     }
 
     if (!tetheredRun) {
       ArtifactDescriptor artifactDescriptor = artifactDetail.getDescriptor();
       if (artifactsComputeHash && (artifactsComputeHashSnapshot ||
-        !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
+          !artifactDescriptor.getArtifactId().getVersion().isSnapshot())) {
         Hasher hasher = Hashing.sha256().newHasher();
         hasher.putString(artifactDescriptor.getNamespace());
         hasher.putString(artifactDescriptor.getArtifactId().getName());
@@ -294,23 +307,23 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
         arguments.put(ProgramOptionConstants.PROGRAM_JAR_HASH, getArtifactHash(hasher));
 
         options = new SimpleProgramOptions(options.getProgramId(), new BasicArguments(arguments),
-                                           new BasicArguments(options.getUserArguments().asMap()), options.isDebug());
+            new BasicArguments(options.getUserArguments().asMap()), options.isDebug());
       }
 
       updatedOptions = updateProgramOptions(artifactId, programId, options, runId, clusterMode,
-                                            Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
-                                                               null),
-                                            isDistributed);
+          Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+              null),
+          isDistributed);
       // Take a snapshot of plugin artifacts. In the tethered case, we did this before regenerating app spec because
       // PLUGIN_DIR program option is set in createPluginSnapshot(). This option is read while regenerating app spec.
       updatedOptions = createPluginSnapshot(updatedOptions, programId, tempDir,
-                                            newProgramDescriptor.getApplicationSpecification(),
-                                            isDistributed, artifactRepository);
+          newProgramDescriptor.getApplicationSpecification(),
+          isDistributed, artifactRepository);
     }
 
     // Create and run the program
     Program executableProgram = createProgram(cConf, runner, newProgramDescriptor, artifactDetail,
-                                              tempDir, tetheredRun);
+        tempDir, tetheredRun);
     dispatcherContext.addCleanupTask(createCleanupTask(executableProgram));
     return runner.run(executableProgram, updatedOptions);
   }
@@ -318,38 +331,42 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   /**
    * Regenerates the app spec before the program start
    *  TODO(CDAP-19275): Consolidate appspec regeneration logic - on_premise, tethered and runs on Dataproc.
+   *
    * @return the regenerated app spec, or null if there is any exception generating the app spec.
    */
   @Nullable
-  protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail, ProgramId programId,
-                                                       ArtifactId artifactId, ApplicationSpecification existingAppSpec,
-                                                       ProgramOptions options, PluginFinder pluginFinder,
-                                                       RemoteClientFactory factory,
-                                                       ArtifactRepository artifactRepository)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+  protected ApplicationSpecification regenerateAppSpec(ArtifactDetail artifactDetail,
+      ProgramId programId,
+      ArtifactId artifactId, ApplicationSpecification existingAppSpec,
+      ProgramOptions options, PluginFinder pluginFinder,
+      RemoteClientFactory factory,
+      ArtifactRepository artifactRepository)
+      throws InterruptedException, ExecutionException, TimeoutException {
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(),
+        null);
     if (appClass == null) {
       // This should never happen.
       throw new IllegalStateException(
-        String.format("No application class found in artifact '%s' in namespace '%s'.",
-                      artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
+          String.format("No application class found in artifact '%s' in namespace '%s'.",
+              artifactDetail.getDescriptor().getArtifactId(), programId.getNamespace()));
     }
 
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
-      .setArtifactId(artifactId)
-      .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
-      .setNamespaceId(programId.getNamespaceId())
-      .setApplicationClass(appClass)
-      .setAppName(existingAppSpec.getName())
-      .setAppVersion(existingAppSpec.getAppVersion())
-      .setConfigString(existingAppSpec.getConfiguration())
-      .setUpdateSchedules(false)
-      .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec,
-                                                   options.getUserArguments().asMap(), options.getArguments().asMap()))
-      .setDeployedApplicationSpec(existingAppSpec)
-      .build();
-    Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator, artifactRepository,
-                                                         factory, deploymentInfo);
+        .setArtifactId(artifactId)
+        .setArtifactLocation(artifactDetail.getDescriptor().getLocation())
+        .setNamespaceId(programId.getNamespaceId())
+        .setApplicationClass(appClass)
+        .setAppName(existingAppSpec.getName())
+        .setAppVersion(existingAppSpec.getAppVersion())
+        .setConfigString(existingAppSpec.getConfiguration())
+        .setUpdateSchedules(false)
+        .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec,
+            options.getUserArguments().asMap(), options.getArguments().asMap()))
+        .setDeployedApplicationSpec(existingAppSpec)
+        .build();
+    Configurator configurator = new InMemoryConfigurator(cConf, pluginFinder, impersonator,
+        artifactRepository,
+        factory, deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
     ConfigResponse response = future.get(120, TimeUnit.SECONDS);
 
@@ -365,19 +382,21 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   /**
    * Downloads the artifact to the given path.
    */
-  protected void downloadArtifact(Id.Artifact artifactId, Path target, ArtifactRepository artifactRepository)
-    throws NotFoundException, IOException {
+  protected void downloadArtifact(Id.Artifact artifactId, Path target,
+      ArtifactRepository artifactRepository)
+      throws NotFoundException, IOException {
     try (InputStream is = artifactRepository.newInputStream(artifactId)) {
       Files.copy(is, target);
     }
   }
 
   /**
-   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link Location}.
+   * Creates a {@link Program} for the given {@link ProgramRunner} from the given program jar {@link
+   * Location}.
    */
   protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                  ProgramDescriptor programDescriptor, ArtifactDetail artifactDetail,
-                                  File tempDir, boolean isTetheredRun) throws IOException {
+      ProgramDescriptor programDescriptor, ArtifactDetail artifactDetail,
+      File tempDir, boolean isTetheredRun) throws IOException {
 
     // TODO: (CDAP-19150) remove Location usage from ArtifactDetail
     Location programJarLocation = artifactDetail.getDescriptor().getLocation();
@@ -391,17 +410,21 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
           programJarLocation = Locations.toLocation(targetFile);
         } else {
           try {
-            programJarLocation = Locations.toLocation(Locations.linkOrCopyOverwrite(programJarLocation, targetFile));
+            programJarLocation = Locations.toLocation(
+                Locations.linkOrCopyOverwrite(programJarLocation, targetFile));
           } catch (FileAlreadyExistsException ex) {
-            LOG.warn("Program file {} already exists and can not be replaced.", targetFile.getAbsolutePath());
+            LOG.warn("Program file {} already exists and can not be replaced.",
+                targetFile.getAbsolutePath());
           }
         }
       }
       // Unpack the JAR file
       ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-        programJarLocation, () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
+          programJarLocation,
+          () -> Files.createTempDirectory(tempDir.toPath(), "unpacked").toFile());
 
-      return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
+      return Programs.create(cConf, programRunner, programDescriptor, programJarLocation,
+          classLoaderFolder.getDir());
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {
@@ -410,8 +433,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
   }
 
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId, ArtifactRepository artifactRepository)
-    throws Exception {
+  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId,
+      ArtifactRepository artifactRepository)
+      throws Exception {
     return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 
@@ -420,11 +444,12 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
    */
   private File createTempDirectory(ProgramId programId, RunId runId) {
     File tempDir =
-      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File dir = new File(tempDir,
-                        String.format("%s.%s.%s.%s.%s", programId.getType().name().toLowerCase(),
-                                      programId.getNamespace(), programId.getApplication(), programId.getProgram(),
-                                      runId.getId()));
+        String.format("%s.%s.%s.%s.%s", programId.getType().name().toLowerCase(),
+            programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+            runId.getId()));
     dir.mkdirs();
     return dir;
   }
@@ -463,22 +488,23 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   /**
-   * Updates the given {@link ProgramOptions} and return a new instance. It copies the {@link ProgramOptions}. Then it
-   * adds all entries returned by {@link #getExtraProgramOptions(boolean)} followed by adding the {@link RunId} to the
-   * system arguments.
+   * Updates the given {@link ProgramOptions} and return a new instance. It copies the {@link
+   * ProgramOptions}. Then it adds all entries returned by {@link #getExtraProgramOptions(boolean)}
+   * followed by adding the {@link RunId} to the system arguments.
    * <p>
    * Also scope resolution will be performed on the user arguments on the application and program.
    *
-   * @param programId        the program id
-   * @param options          The {@link ProgramOptions} in which the RunId to be included
-   * @param runId            The RunId to be included
-   * @param clusterMode      clustermode for the program run
+   * @param programId the program id
+   * @param options The {@link ProgramOptions} in which the RunId to be included
+   * @param runId The RunId to be included
+   * @param clusterMode clustermode for the program run
    * @param applicationClass application class for the program
    * @return the copy of the program options with RunId included in them
    */
-  private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId, ProgramOptions options,
-                                              RunId runId, ClusterMode clusterMode, ApplicationClass applicationClass,
-                                              boolean isDistributed) {
+  private ProgramOptions updateProgramOptions(ArtifactId artifactId, ProgramId programId,
+      ProgramOptions options,
+      RunId runId, ClusterMode clusterMode, ApplicationClass applicationClass,
+      boolean isDistributed) {
     // Build the system arguments
     Map<String, String> systemArguments = new HashMap<>(options.getArguments().asMap());
     // don't add these system arguments if they're already there
@@ -488,9 +514,11 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       systemArguments.putIfAbsent(extraOption.getKey(), extraOption.getValue());
     }
     systemArguments.putIfAbsent(ProgramOptionConstants.RUN_ID, runId.getId());
-    systemArguments.putIfAbsent(ProgramOptionConstants.ARTIFACT_ID, Joiner.on(':').join(artifactId.toIdParts()));
+    systemArguments.putIfAbsent(ProgramOptionConstants.ARTIFACT_ID,
+        Joiner.on(':').join(artifactId.toIdParts()));
     if (clusterMode == ClusterMode.ISOLATED) {
-      systemArguments.putIfAbsent(ProgramOptionConstants.APPLICATION_CLASS, applicationClass.getClassName());
+      systemArguments.putIfAbsent(ProgramOptionConstants.APPLICATION_CLASS,
+          applicationClass.getClassName());
     }
 
     // Resolves the user arguments
@@ -501,13 +529,15 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       userArguments = RuntimeArguments.extractScope(CLUSTER_SCOPE, clusterName, userArguments);
     }
     // Then resolves at the application scope
-    userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(), userArguments);
+    userArguments = RuntimeArguments.extractScope(APPLICATION_SCOPE, programId.getApplication(),
+        userArguments);
     // Then resolves at the program level
     userArguments =
-      RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(), userArguments);
+        RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
+            userArguments);
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemArguments),
-                                    new BasicArguments(userArguments), options.isDebug());
+        new BasicArguments(userArguments), options.isDebug());
   }
 
   private static void hashArtifactId(Hasher hasher, ArtifactId artifactId) {
@@ -519,16 +549,18 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   /**
    * Return the copy of the {@link ProgramOptions} including locations of plugin artifacts in it.
    *
-   * @param options   the {@link ProgramOptions} in which the locations of plugin artifacts needs to be included
+   * @param options the {@link ProgramOptions} in which the locations of plugin artifacts needs
+   *     to be included
    * @param programId Id of the Program
-   * @param tempDir   Temporary Directory to create the plugin artifact snapshot
-   * @param appSpec   program's Application Specification
+   * @param tempDir Temporary Directory to create the plugin artifact snapshot
+   * @param appSpec program's Application Specification
    * @return the copy of the program options with locations of plugin artifacts included in them
    */
-  private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId, File tempDir,
-                                              @Nullable ApplicationSpecification appSpec,
-                                              boolean isDistributed, ArtifactRepository artifactRepository)
-    throws Exception {
+  private ProgramOptions createPluginSnapshot(ProgramOptions options, ProgramId programId,
+      File tempDir,
+      @Nullable ApplicationSpecification appSpec,
+      boolean isDistributed, ArtifactRepository artifactRepository)
+      throws Exception {
     // appSpec is null in an unit test
     if (appSpec == null) {
       return options;
@@ -545,8 +577,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
      * which should only be used in testings.
      */
     boolean computeHash = artifactsComputeHash && !appSpec.getPlugins().isEmpty() &&
-      (artifactsComputeHashSnapshot ||
-        appSpec.getPlugins().values().stream().allMatch(plugin -> !plugin.getArtifactId().getVersion().isSnapshot()));
+        (artifactsComputeHashSnapshot ||
+            appSpec.getPlugins().values().stream()
+                .allMatch(plugin -> !plugin.getArtifactId().getVersion().isSnapshot()));
 
     // Sort plugins based on keys so generated hashes remain identical
     SortedMap<String, Plugin> sortedMap = new TreeMap<>(appSpec.getPlugins());
@@ -559,15 +592,18 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
       }
 
       try {
-        ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
+        ArtifactId artifactId = Artifacts.toProtoArtifactId(programId.getNamespaceId(),
+            plugin.getArtifactId());
         if (computeHash) {
           hashArtifactId(hasher, artifactId);
         }
         String peer = options.getArguments().getOption(ProgramOptionConstants.PEER_NAME);
         ArtifactDetail artifactDetail = getArtifactDetail(artifactId, artifactRepository);
-        copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed, peer != null);
+        copyArtifact(artifactId, artifactDetail, destFile, artifactRepository, isDistributed,
+            peer != null);
       } catch (ArtifactNotFoundException e) {
-        throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
+        throw new IllegalArgumentException(
+            String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
 
     }
@@ -576,24 +612,26 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     if (computeHash) {
       arguments.put(ProgramOptionConstants.PLUGIN_DIR_HASH, getArtifactHash(hasher));
     }
-    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(ImmutableMap.copyOf(arguments)),
-                                    options.getUserArguments(), options.isDebug());
+    return new SimpleProgramOptions(options.getProgramId(),
+        new BasicArguments(ImmutableMap.copyOf(arguments)),
+        options.getUserArguments(), options.isDebug());
   }
 
   /**
-   * Copies the artifact jar to the given target file. Copies artifact from ArtifactCacheService if the program run is
-   * for a tethered peer, else copies the artifact from the filesystem.
+   * Copies the artifact jar to the given target file. Copies artifact from ArtifactCacheService if
+   * the program run is for a tethered peer, else copies the artifact from the filesystem.
    *
-   * @param artifactId     artifact id of the artifact to be copied
+   * @param artifactId artifact id of the artifact to be copied
    * @param artifactDetail detail information of the artifact to be copied
-   * @param targetFile     target file to copy to
+   * @param targetFile target file to copy to
    * @throws IOException if the copying failed
    */
   private void copyArtifact(ArtifactId artifactId, ArtifactDetail artifactDetail, File targetFile,
-                            ArtifactRepository artifactRepository, boolean isDistributed, boolean isTetheredPeer)
-    throws Exception {
+      ArtifactRepository artifactRepository, boolean isDistributed, boolean isTetheredPeer)
+      throws Exception {
     if (isTetheredPeer) {
-      try (InputStream in = artifactRepository.newInputStream(Id.Artifact.fromEntityId(artifactId))) {
+      try (InputStream in = artifactRepository.newInputStream(
+          Id.Artifact.fromEntityId(artifactId))) {
         copyArtifact(artifactId, targetFile, isDistributed, () -> {
           Files.copy(in, targetFile.toPath());
           return null;
@@ -607,8 +645,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
     }
   }
 
-  private void copyArtifact(ArtifactId artifactId, File targetFile, boolean isDistributed, Callable<Object> operation)
-    throws Exception {
+  private void copyArtifact(ArtifactId artifactId, File targetFile, boolean isDistributed,
+      Callable<Object> operation)
+      throws Exception {
     if (isDistributed) {
       try {
         impersonator.doAs(artifactId, operation);
@@ -625,32 +664,32 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   }
 
   private Map<String, String> getExtraProgramOptions(boolean isDistributed) {
-    return !isDistributed && Objects.nonNull(hostname) ? Collections.singletonMap(ProgramOptionConstants.HOST, hostname)
-      : Collections.emptyMap();
+    return !isDistributed && Objects.nonNull(hostname) ? Collections.singletonMap(
+        ProgramOptionConstants.HOST, hostname)
+        : Collections.emptyMap();
   }
 
   private String getArtifactHash(Hasher hasher) {
     String hashVal = hasher.hash().toString();
     if (artifactsComputeHashTimeBucketDays > 0) {
-      return timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays, System.currentTimeMillis());
+      return timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays,
+          System.currentTimeMillis());
     }
     return hashVal;
   }
 
   /**
-   * Return timed bucketed hash value. Therefore, for a given hash, result is identical as long as call to this
-   * method has happened within the given window.
-   * This method also uses a jitter based on provided hash to reduce likelihood of two time bucket with different hashes
-   * to be identical.
+   * Return timed bucketed hash value. Therefore, for a given hash, result is identical as long as
+   * call to this method has happened within the given window. This method also uses a jitter based
+   * on provided hash to reduce likelihood of two time bucket with different hashes to be identical.
    * For a given n as the jitter chosen from 0 to window-1, time bucket windows will be as follows:
-   * [window -n, 2*window -n), [2*window -n , 3*window -n), ...
-   * The beginning of an above time bucket window which currentTime lies in uniquely identifies the time bucket window
-   * for the given hash.
+   * [window -n, 2*window -n), [2*window -n , 3*window -n), ... The beginning of an above time
+   * bucket window which currentTime lies in uniquely identifies the time bucket window for the
+   * given hash.
    *
-   * @param hash        value that needs to be time bucketed.
-   * @param window      in days
+   * @param hash value that needs to be time bucketed.
+   * @param window in days
    * @param currentTime current time in millisecond
-   * @return
    */
   @VisibleForTesting
   public static String timeBucketHash(String hash, int window, long currentTime) {

@@ -29,31 +29,31 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Abstraction for a table that contains rows and columns.
- * The schema of the table is fixed, and has to be specified in the
- * {@link StructuredTableSpecification} during the table creation.
+ * Abstraction for a table that contains rows and columns. The schema of the table is fixed, and has
+ * to be specified in the {@link StructuredTableSpecification} during the table creation.
  */
 @Beta
 public interface StructuredTable extends Closeable {
+
   /**
-   * Insert or replace the collection of fields to the table.
-   * The fields contain both the primary key and the rest of the columns to write.
-   * Note that if the row does not exist in the table, it will get created. Otherwise it will get replaced.
+   * Insert or replace the collection of fields to the table. The fields contain both the primary
+   * key and the rest of the columns to write. Note that if the row does not exist in the table, it
+   * will get created. Otherwise it will get replaced.
    *
    * @param fields the fields to write
-   * @throws InvalidFieldException if any of the fields are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the fields are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error writing to the table
    */
   void upsert(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
 
   /**
-   * Update the collection of fields to the table.
-   * The fields contain the primary key and other columns to update.
+   * Update the collection of fields to the table. The fields contain the primary key and other
+   * columns to update.
    *
    * @param fields the fields to write
-   * @throws InvalidFieldException if any of the fields are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the fields are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error writing to the table
    */
   void update(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
@@ -62,41 +62,42 @@ public interface StructuredTable extends Closeable {
    * Read a single row with all the columns from the table.
    *
    * @param keys the primary key of the row to read
-   * @return if the optional is not empty, the row addressed by the primary key.
-   *         If the optional is empty then the row is missing in the table.
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match.
+   * @return if the optional is not empty, the row addressed by the primary key. If the optional is
+   *     empty then the row is missing in the table.
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match.
    * @throws IOException if there is an error reading from the table
    */
   Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
 
   /**
-   * Read a single row with the specified columns from the table. The primary keys will also be contained in the
-   * columns.
+   * Read a single row with the specified columns from the table. The primary keys will also be
+   * contained in the columns.
    *
    * @param keys the primary key of the row to read
-   * @param columns the columns to read. This collection must not be empty, otherwise InvalidFieldException will be
-   *                thrown
+   * @param columns the columns to read. This collection must not be empty, otherwise
+   *     InvalidFieldException will be thrown
    * @return the row addressed by the primary key
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error reading from the table
    */
   Optional<StructuredRow> read(Collection<Field<?>> keys,
-                               Collection<String> columns) throws InvalidFieldException, IOException;
+      Collection<String> columns) throws InvalidFieldException, IOException;
 
   /**
    * Reads multiple rows with all the columns from the table. The default implementation is to call
-   * {@link #read(Collection)} one by one. Implementations of this interface can provide an optimized version.
+   * {@link #read(Collection)} one by one. Implementations of this interface can provide an
+   * optimized version.
    *
    * @param multiKeys a collection of keys to read
    * @return a {@link Collection} of {@link StructuredRow} that are present in the table
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error reading from the table
    */
   default Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
-    throws InvalidFieldException, IOException {
+      throws InvalidFieldException, IOException {
     List<StructuredRow> result = new ArrayList<>();
     for (Collection<Field<?>> keys : multiKeys) {
       read(keys).ifPresent(result::add);
@@ -105,34 +106,35 @@ public interface StructuredTable extends Closeable {
   }
 
   /**
-   * Read a set of rows from the table matching the key range.
-   * The rows returned will be sorted on the primary key order.
+   * Read a set of rows from the table matching the key range. The rows returned will be sorted on
+   * the primary key order.
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error scanning the table
    */
-  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
+  CloseableIterator<StructuredRow> scan(Range keyRange, int limit)
+      throws InvalidFieldException, IOException;
 
   /**
-   * Read a set of rows from the table matching the key range.
-   * The rows returned will be sorted on the primary key according to sortOrder parameter.
+   * Read a set of rows from the table matching the key range. The rows returned will be sorted on
+   * the primary key according to sortOrder parameter.
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
-   * @param sortOrder defined primary key sort order. Note that the comparator used is specific to the underlying
-   *                  store and is not necessarily lexicographic.
+   * @param sortOrder defined primary key sort order. Note that the comparator used is specific
+   *     to the underlying store and is not necessarily lexicographic.
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error scanning the table
    * @throws UnsupportedOperationException if sort order is not supported
    */
   default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+      throws InvalidFieldException, IOException {
     if (sortOrder == SortOrder.ASC) {
       return scan(keyRange, limit);
     }
@@ -140,51 +142,52 @@ public interface StructuredTable extends Closeable {
   }
 
   /**
-   * Read a set of rows from the table matching the index.
-   * The rows returned will be sorted on the primary key order.
+   * Read a set of rows from the table matching the index. The rows returned will be sorted on the
+   * primary key order.
    *
    * @param index the index value
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
-   *                               or the type does not match the schema
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *     indexed column, or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
   CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException;
 
   /**
-   * Read a set of rows from the table matching the index and the key range.
-   * The rows returned will be sorted on the primary key order.
+   * Read a set of rows from the table matching the index and the key range. The rows returned will
+   * be sorted on the primary key order.
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
    * @param filterIndexes the indexes to filter upon, OR logic will be applied
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
-   *                               or the type does not match the schema
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *     indexed column, or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
-    throws InvalidFieldException, IOException {
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes)
+      throws InvalidFieldException, IOException {
     throw new UnsupportedOperationException("No supported implementation.");
   }
 
   /**
-   * Read a set of rows from the table matching the index and the key range.
-   * The rows returned will be sorted on the primary key order.
+   * Read a set of rows from the table matching the index and the key range. The rows returned will
+   * be sorted on the primary key order.
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
    * @param filterIndexes the index to filter upon
-   * @param sortOrder defined primary key sort order. Note that the comparator used is specific to the underlying
-   *                  store and is not necessarily lexicographic.
+   * @param sortOrder defined primary key sort order. Note that the comparator used is specific
+   *     to the underlying store and is not necessarily lexicographic.
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
-   *                               or the type does not match the schema
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *     indexed column, or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
   default CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
-                                                Collection<Field<?>> filterIndexes, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+      Collection<Field<?>> filterIndexes, SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
     if (sortOrder == SortOrder.ASC) {
       return scan(keyRange, limit, filterIndexes);
     }
@@ -192,51 +195,55 @@ public interface StructuredTable extends Closeable {
   }
 
   /**
-   * Read a set of rows from the table matching the key range, return by sortOrder of specified index field.
+   * Read a set of rows from the table matching the key range, return by sortOrder of specified
+   * index field.
    *
    * @param keyRange key range for the scan
    * @param limit maximum number of rows to return
    * @param orderByField the field to sort upon
    * @param sortOrder the sort order of the index field
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
-   *                               or the type does not match the schema
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an
+   *     indexed column, or the type does not match the schema
    * @throws IOException if there is an error scanning the table
    */
-  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
+  default CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField,
+      SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
     throw new UnsupportedOperationException("No supported implementation.");
   }
 
   /**
-   * Read a set of rows from the table matching the set of key ranges.
-   * The rows returned will be sorted on the primary key order.
+   * Read a set of rows from the table matching the set of key ranges. The rows returned will be
+   * sorted on the primary key order.
    *
    * @param keyRanges collection of key ranges for the scan
    * @param limit maximum number of rows to return
    * @return a {@link CloseableIterator} of rows
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error scanning the table
    */
   CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
-                                             int limit) throws InvalidFieldException, IOException;
+      int limit) throws InvalidFieldException, IOException;
 
   /**
-   * Atomically compare and swap the value of a column in a row if the expected value matches.
-   * To match a non-existent value, the value of the expected field should be null.
+   * Atomically compare and swap the value of a column in a row if the expected value matches. To
+   * match a non-existent value, the value of the expected field should be null.
    *
    * @param keys the primary key of row
-   * @param oldValue the expected value in the table. The field cannot be part of the primary key
+   * @param oldValue the expected value in the table. The field cannot be part of the primary
+   *     key
    * @param newValue the new value to write if the expected value matches
    * @return true if the compare and swap was successful, false otherwise
-   * @throws InvalidFieldException if any of the keys/fields are not part of table schema,
-   *                               or their types do not match the schema
+   * @throws InvalidFieldException if any of the keys/fields are not part of table schema, or
+   *     their types do not match the schema
    * @throws IOException if there is an error reading or writing to the table
-   * @throws IllegalArgumentException if the field name or the type of the oldValue and newValue do not match
+   * @throws IllegalArgumentException if the field name or the type of the oldValue and newValue
+   *     do not match
    */
   boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
-    throws InvalidFieldException, IOException, IllegalArgumentException;
+      throws InvalidFieldException, IOException, IllegalArgumentException;
 
   /**
    * Atomically increment a column of type LONG in a row.
@@ -244,20 +251,20 @@ public interface StructuredTable extends Closeable {
    * @param keys the primary key of row
    * @param column the column name to increment, cannot be part of the primary key
    * @param amount the amount of increment
-   * @throws InvalidFieldException if any of the keys/column are not part of table schema,
-   *    *                          or their types do not match the schema
+   * @throws InvalidFieldException if any of the keys/column are not part of table schema, * or
+   *     their types do not match the schema
    * @throws IOException if there is an error reading or writing to the table
    * @throws IllegalArgumentException if the column type is not LONG
    */
   void increment(Collection<Field<?>> keys, String column, long amount)
-    throws InvalidFieldException, IOException, IllegalArgumentException;
+      throws InvalidFieldException, IOException, IllegalArgumentException;
 
   /**
    * Delete a single row from the table.
    *
    * @param keys the primary key of the row to delete
-   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match
+   * @throws InvalidFieldException if any of the keys are not part of the table schema, or the
+   *     types of the value do not match
    * @throws IOException if there is an error deleting from the table
    */
   void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
@@ -266,8 +273,8 @@ public interface StructuredTable extends Closeable {
    * Delete a range of rows from the table.
    *
    * @param keyRange key range of the rows to delete
-   * @throws InvalidFieldException if any of the keys are not part of table schema,
-   *                               or their types do not match the schema
+   * @throws InvalidFieldException if any of the keys are not part of table schema, or their
+   *     types do not match the schema
    * @throws IOException if there is an error reading or deleting from the table
    */
   void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
@@ -277,14 +284,16 @@ public interface StructuredTable extends Closeable {
    *
    * @param keyRange key range of the rows to update: cab only be a primary key prefix
    * @param fields the fields to write to
-   * @throws InvalidFieldException if any of the keys are not part of table schema,
-   *                               or their types do not match the schema
+   * @throws InvalidFieldException if any of the keys are not part of table schema, or their
+   *     types do not match the schema
    * @throws IOException if there is an error reading from or updating the table
    */
-  void updateAll(Range keyRange, Collection<Field<?>> fields) throws InvalidFieldException, IOException;
+  void updateAll(Range keyRange, Collection<Field<?>> fields)
+      throws InvalidFieldException, IOException;
 
   /**
    * Get the number of records in the table.
+   *
    * @param keyRanges key ranges of the rows to count
    * @return number of records in the table
    * @throws IOException if there is an error reading from the table

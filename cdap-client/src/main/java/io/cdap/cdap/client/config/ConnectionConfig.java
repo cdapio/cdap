@@ -36,7 +36,8 @@ public class ConnectionConfig {
   private static final CConfiguration CONF = CConfiguration.create();
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
-  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false);
+  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(
+      Constants.Security.SSL.EXTERNAL_ENABLED, false);
   private static final String DEFAULT_HOST = tryResolveAddress(CONF.get(Constants.Router.ADDRESS));
 
   private static String tryResolveAddress(String addressString) {
@@ -66,8 +67,10 @@ public class ConnectionConfig {
     this(hostname, port, sslEnabled, null);
   }
 
-  public ConnectionConfig(String hostname, Integer port, boolean sslEnabled, @Nullable String apiPath) {
-    Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
+  public ConnectionConfig(String hostname, Integer port, boolean sslEnabled,
+      @Nullable String apiPath) {
+    Preconditions.checkArgument(hostname != null && !hostname.isEmpty(),
+        "hostname cannot be empty");
     this.hostname = hostname;
     this.port = port;
     this.sslEnabled = sslEnabled;
@@ -87,12 +90,13 @@ public class ConnectionConfig {
   }
 
   public URI resolveURI(String apiVersion, String path) {
-    return getURI().resolve(String.format("/%s%s/%s", apiPath == null ? "" : apiPath, apiVersion, path));
+    return getURI().resolve(
+        String.format("/%s%s/%s", apiPath == null ? "" : apiPath, apiVersion, path));
   }
 
   public URI resolveNamespacedURI(NamespaceId namespace, String apiVersion, String path) {
     return getURI().resolve(String.format("/%s%s/namespaces/%s/%s", apiPath == null ? "" : apiPath,
-                                          apiVersion, namespace.getNamespace(), path));
+        apiVersion, namespace.getNamespace(), path));
   }
 
   public String getHostname() {
@@ -126,18 +130,18 @@ public class ConnectionConfig {
     }
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
-      Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled) &&
-      Objects.equal(this.apiPath, other.apiPath);
+        Objects.equal(this.port, other.port) &&
+        Objects.equal(this.sslEnabled, other.sslEnabled) &&
+        Objects.equal(this.apiPath, other.apiPath);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("hostname", hostname)
-      .add("port", port)
-      .add("sslEnabled", sslEnabled)
-      .toString();
+        .add("hostname", hostname)
+        .add("port", port)
+        .add("sslEnabled", sslEnabled)
+        .toString();
   }
 
   public static Builder builder() {
@@ -152,6 +156,7 @@ public class ConnectionConfig {
    * Builder for {@link ConnectionConfig}.
    */
   public static class Builder {
+
     private String hostname = DEFAULT_HOST;
     private Integer port;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
@@ -173,8 +178,8 @@ public class ConnectionConfig {
     }
 
     /**
-     * @param port connection port - use null if you want to use the default non-SSL or SSL port,
-     *             depending on sslEnabled
+     * @param port connection port - use null if you want to use the default non-SSL or SSL
+     *     port, depending on sslEnabled
      * @return this
      */
     public Builder setPort(@Nullable Integer port) {

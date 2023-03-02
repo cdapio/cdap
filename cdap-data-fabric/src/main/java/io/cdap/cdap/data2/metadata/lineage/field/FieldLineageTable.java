@@ -63,16 +63,20 @@ public class FieldLineageTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(FieldLineageTable.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-    .create();
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+      .create();
 
   private static final String INCOMING_DIRECTION_MARKER = "i";
   private static final String OUTGOING_DIRECTION_MARKER = "o";
 
-  private static final Type SET_FIELD_TYPE = new TypeToken<HashSet<String>>() { }.getType();
-  private static final Type SET_ENDPOINT_FIELD_TYPE = new TypeToken<HashSet<EndPointField>>() { }.getType();
-  private static final Type SET_OPERATION_TYPE = new TypeToken<HashSet<Operation>>() { }.getType();
-  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type SET_FIELD_TYPE = new TypeToken<HashSet<String>>() {
+  }.getType();
+  private static final Type SET_ENDPOINT_FIELD_TYPE = new TypeToken<HashSet<EndPointField>>() {
+  }.getType();
+  private static final Type SET_OPERATION_TYPE = new TypeToken<HashSet<Operation>>() {
+  }.getType();
+  private static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private final StructuredTableContext structuredTableContext;
   private StructuredTable endpointChecksumTable;
@@ -98,7 +102,8 @@ public class FieldLineageTable {
   private StructuredTable getEndpointChecksumTable() {
     if (endpointChecksumTable == null) {
       endpointChecksumTable =
-        structuredTableContext.getTable(StoreDefinition.FieldLineageStore.ENDPOINT_CHECKSUM_TABLE);
+          structuredTableContext.getTable(
+              StoreDefinition.FieldLineageStore.ENDPOINT_CHECKSUM_TABLE);
     }
     return endpointChecksumTable;
   }
@@ -106,7 +111,7 @@ public class FieldLineageTable {
   private StructuredTable getOperationsTable() {
     if (operationsTable == null) {
       operationsTable =
-        structuredTableContext.getTable(StoreDefinition.FieldLineageStore.OPERATIONS_TABLE);
+          structuredTableContext.getTable(StoreDefinition.FieldLineageStore.OPERATIONS_TABLE);
     }
     return operationsTable;
   }
@@ -114,7 +119,8 @@ public class FieldLineageTable {
   private StructuredTable getDestinationFieldsTable() {
     if (destinationFieldsTable == null) {
       destinationFieldsTable =
-        structuredTableContext.getTable(StoreDefinition.FieldLineageStore.DESTINATION_FIELDS_TABLE);
+          structuredTableContext.getTable(
+              StoreDefinition.FieldLineageStore.DESTINATION_FIELDS_TABLE);
     }
     return destinationFieldsTable;
   }
@@ -122,7 +128,7 @@ public class FieldLineageTable {
   private StructuredTable getSummaryFieldsTable() {
     if (summaryFieldsTable == null) {
       summaryFieldsTable =
-        structuredTableContext.getTable(StoreDefinition.FieldLineageStore.SUMMARY_FIELDS_TABLE);
+          structuredTableContext.getTable(StoreDefinition.FieldLineageStore.SUMMARY_FIELDS_TABLE);
     }
     return summaryFieldsTable;
   }
@@ -132,7 +138,8 @@ public class FieldLineageTable {
    *
    * @param info the field lineage information
    */
-  public void addFieldLineageInfo(ProgramRunId programRunId, FieldLineageInfo info) throws IOException {
+  public void addFieldLineageInfo(ProgramRunId programRunId, FieldLineageInfo info)
+      throws IOException {
     long checksum = info.getChecksum();
     if (readOperations(checksum) == null) {
       writeOperation(checksum, info.getOperations());
@@ -164,71 +171,80 @@ public class FieldLineageTable {
     if (!row.isPresent()) {
       return null;
     }
-    return GSON.fromJson(row.get().getString(StoreDefinition.FieldLineageStore.OPERATIONS_FIELD), SET_OPERATION_TYPE);
+    return GSON.fromJson(row.get().getString(StoreDefinition.FieldLineageStore.OPERATIONS_FIELD),
+        SET_OPERATION_TYPE);
   }
 
   private void writeOperation(long checksum, Set<Operation> operations) throws IOException {
     List<Field<?>> fields = getOperationsKey(checksum);
-    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.OPERATIONS_FIELD, GSON.toJson(operations)));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.OPERATIONS_FIELD,
+        GSON.toJson(operations)));
 
     getOperationsTable().upsert(fields);
   }
 
-  private void addSummary(long checksum, String direction, Map<EndPointField, Set<EndPointField>> summary)
-    throws IOException {
+  private void addSummary(long checksum, String direction,
+      Map<EndPointField, Set<EndPointField>> summary)
+      throws IOException {
     for (Map.Entry<EndPointField, Set<EndPointField>> entry : summary.entrySet()) {
       addSummaryEntry(checksum, direction, entry.getKey(), GSON.toJson(entry.getValue()));
     }
   }
 
   /**
-   * Add records referring to the common operation record having the given checksum.
-   * Operations represent transformations from source endpoints to the destination endpoints.
-   * From source perspective the operations are added as lineage in outgoing direction, while from
-   * destination perspective they are added as lineage in incoming direction.
+   * Add records referring to the common operation record having the given checksum. Operations
+   * represent transformations from source endpoints to the destination endpoints. From source
+   * perspective the operations are added as lineage in outgoing direction, while from destination
+   * perspective they are added as lineage in incoming direction.
    *
    * @param programRunId program run for which lineage is to be added
    * @param info the FieldLineageInfo created by program run
    */
   private void addFieldLineageInfoReferenceRecords(ProgramRunId programRunId, FieldLineageInfo info)
-    throws IOException {
+      throws IOException {
     // For all the destinations, operations represents incoming lineage
     for (EndPoint destination : info.getDestinations()) {
-      addOperationReferenceRecord(INCOMING_DIRECTION_MARKER, destination, programRunId, info.getChecksum());
+      addOperationReferenceRecord(INCOMING_DIRECTION_MARKER, destination, programRunId,
+          info.getChecksum());
     }
 
     // For all the sources, operations represents the outgoing lineage
     for (EndPoint source : info.getSources()) {
-      addOperationReferenceRecord(OUTGOING_DIRECTION_MARKER, source, programRunId, info.getChecksum());
+      addOperationReferenceRecord(OUTGOING_DIRECTION_MARKER, source, programRunId,
+          info.getChecksum());
     }
   }
 
-  private void addOperationReferenceRecord(String direction, EndPoint endPoint, ProgramRunId programRunId,
-                                           long checksum) throws IOException {
+  private void addOperationReferenceRecord(String direction, EndPoint endPoint,
+      ProgramRunId programRunId,
+      long checksum) throws IOException {
     List<Field<?>> fields = getOperationReferenceRowKey(direction, endPoint, programRunId);
     fields.add(Fields.longField(StoreDefinition.FieldLineageStore.CHECKSUM_FIELD, checksum));
-    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD, GSON.toJson(programRunId)));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD,
+        GSON.toJson(programRunId)));
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD,
-                                  GSON.toJson(endPoint.getProperties())));
+        GSON.toJson(endPoint.getProperties())));
     getEndpointChecksumTable().upsert(fields);
   }
 
-  private void addSummaryEntry(long checksum, String direction, EndPointField endPointField, String data)
-    throws IOException {
+  private void addSummaryEntry(long checksum, String direction, EndPointField endPointField,
+      String data)
+      throws IOException {
     List<Field<?>> fields = getSummaryKey(checksum, direction, endPointField);
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.DESTINATION_DATA_FIELD, data));
     getSummaryFieldsTable().upsert(fields);
   }
 
-  private void addDestinationEntry(long checksum, EndPoint endPoint, String data) throws IOException {
+  private void addDestinationEntry(long checksum, EndPoint endPoint, String data)
+      throws IOException {
     List<Field<?>> fields = getDestinationKeys(checksum, endPoint);
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.DESTINATION_DATA_FIELD, data));
     getDestinationFieldsTable().upsert(fields);
   }
 
   /**
-   * Get the set of fields read and/or written to the EndPoint by field lineage {@link ReadOperation} and/or
-   * {@link WriteOperation}, over the given time range.
+   * Get the set of fields read and/or written to the EndPoint by field lineage {@link
+   * ReadOperation} and/or {@link WriteOperation}, over the given time range.
    *
    * @param endPoint the EndPoint for which the fields need to be returned
    * @param start start time (inclusive) in milliseconds
@@ -245,8 +261,10 @@ public class FieldLineageTable {
     return fields;
   }
 
-  private Set<String> getDestinationFields(EndPoint endPoint, long start, long end) throws IOException {
-    Set<Long> checksums = getChecksumsWithProgramRunsInRange(INCOMING_DIRECTION_MARKER, endPoint, start, end).keySet();
+  private Set<String> getDestinationFields(EndPoint endPoint, long start, long end)
+      throws IOException {
+    Set<Long> checksums = getChecksumsWithProgramRunsInRange(INCOMING_DIRECTION_MARKER, endPoint,
+        start, end).keySet();
     Set<String> result = new HashSet<>();
     for (long checksum : checksums) {
       List<Field<?>> keys = getDestinationKeys(checksum, endPoint);
@@ -269,12 +287,13 @@ public class FieldLineageTable {
   }
 
   private Set<String> getSourceFields(EndPoint endPoint, long start, long end) throws IOException {
-    Set<Long> checksums = getChecksumsWithProgramRunsInRange(OUTGOING_DIRECTION_MARKER, endPoint, start, end).keySet();
+    Set<Long> checksums = getChecksumsWithProgramRunsInRange(OUTGOING_DIRECTION_MARKER, endPoint,
+        start, end).keySet();
     Set<String> fields = new HashSet<>();
     for (long checksum : checksums) {
       List<Field<?>> prefix = getSummaryPrefix(checksum, OUTGOING_DIRECTION_MARKER, endPoint);
       try (CloseableIterator<StructuredRow> iterator =
-        getSummaryFieldsTable().scan(Range.singleton(prefix), Integer.MAX_VALUE)) {
+          getSummaryFieldsTable().scan(Range.singleton(prefix), Integer.MAX_VALUE)) {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
           fields.add(row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_FIELD));
@@ -285,37 +304,40 @@ public class FieldLineageTable {
   }
 
   /**
-   * Get the incoming summary for the specified EndPointField over a given time range.
-   * Incoming summary consists of set of EndPointFields which participated in the computation
-   * of the given EndPointField.
+   * Get the incoming summary for the specified EndPointField over a given time range. Incoming
+   * summary consists of set of EndPointFields which participated in the computation of the given
+   * EndPointField.
    *
    * @param endPointField the EndPointField for which incoming summary to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the set of EndPointFields
    */
-  public Set<EndPointField> getIncomingSummary(EndPointField endPointField, long start, long end) throws IOException {
+  public Set<EndPointField> getIncomingSummary(EndPointField endPointField, long start, long end)
+      throws IOException {
     return getSummary(INCOMING_DIRECTION_MARKER, endPointField, start, end);
   }
 
   /**
-   * Get the outgoing summary for the specified EndPointField in a given time range.
-   * Outgoing summary consists of set of EndPointFields which were computed from the
-   * specified EndPointField.
+   * Get the outgoing summary for the specified EndPointField in a given time range. Outgoing
+   * summary consists of set of EndPointFields which were computed from the specified
+   * EndPointField.
    *
    * @param endPointField the EndPointField for which outgoing summary to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the set of EndPointFields
    */
-  public Set<EndPointField> getOutgoingSummary(EndPointField endPointField, long start, long end) throws IOException {
+  public Set<EndPointField> getOutgoingSummary(EndPointField endPointField, long start, long end)
+      throws IOException {
     return getSummary(OUTGOING_DIRECTION_MARKER, endPointField, start, end);
   }
 
-  private Set<EndPointField> getSummary(String direction, EndPointField endPointField, long start, long end)
-    throws IOException {
+  private Set<EndPointField> getSummary(String direction, EndPointField endPointField, long start,
+      long end)
+      throws IOException {
     Set<Long> checksums = getChecksumsWithProgramRunsInRange(direction, endPointField.getEndPoint(),
-                                                             start, end).keySet();
+        start, end).keySet();
     Set<EndPointField> result = new HashSet<>();
 
     for (long checksum : checksums) {
@@ -341,37 +363,40 @@ public class FieldLineageTable {
   }
 
   /**
-   * Get the set of operations which were responsible for computing the fields
-   * of the specified EndPoint over a given time range. Along with the operations, program
-   * runs are also returned which performed these operations.
+   * Get the set of operations which were responsible for computing the fields of the specified
+   * EndPoint over a given time range. Along with the operations, program runs are also returned
+   * which performed these operations.
    *
    * @param endPoint the EndPoint for which incoming operations are to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the operations and program run information
    */
-  public Set<ProgramRunOperations> getIncomingOperations(EndPoint endPoint, long start, long end) throws IOException {
+  public Set<ProgramRunOperations> getIncomingOperations(EndPoint endPoint, long start, long end)
+      throws IOException {
     return getOperations(INCOMING_DIRECTION_MARKER, endPoint, start, end);
   }
 
   /**
-   * Get the set of operations which were performed on the specified EndPoint to compute the
-   * fields of the downstream EndPoints. Along with the operations, program runs are also returned
-   * which performed these operations.
+   * Get the set of operations which were performed on the specified EndPoint to compute the fields
+   * of the downstream EndPoints. Along with the operations, program runs are also returned which
+   * performed these operations.
    *
    * @param endPoint the EndPoint for which outgoing operations are to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @return the operations and program run information
    */
-  public Set<ProgramRunOperations> getOutgoingOperations(EndPoint endPoint, long start, long end) throws IOException {
+  public Set<ProgramRunOperations> getOutgoingOperations(EndPoint endPoint, long start, long end)
+      throws IOException {
     return getOperations(OUTGOING_DIRECTION_MARKER, endPoint, start, end);
   }
 
-  private Set<ProgramRunOperations> getOperations(String direction, EndPoint endPoint, long start, long end)
-    throws IOException {
+  private Set<ProgramRunOperations> getOperations(String direction, EndPoint endPoint, long start,
+      long end)
+      throws IOException {
     Map<Long, Set<ProgramRunId>> checksumsWithProgramRunsInRange =
-      getChecksumsWithProgramRunsInRange(direction, endPoint, start, end);
+        getChecksumsWithProgramRunsInRange(direction, endPoint, start, end);
 
     Set<ProgramRunOperations> result = new LinkedHashSet<>();
 
@@ -387,7 +412,8 @@ public class FieldLineageTable {
       try {
         operations = GSON.fromJson(value, SET_OPERATION_TYPE);
       } catch (JsonSyntaxException e) {
-        LOG.warn(String.format("Failed to parse json from checksum %d'. Ignoring operations.", checksum));
+        LOG.warn(String.format("Failed to parse json from checksum %d'. Ignoring operations.",
+            checksum));
         continue;
       }
 
@@ -399,21 +425,24 @@ public class FieldLineageTable {
     return result;
   }
 
-  private Map<Long, Set<ProgramRunId>> getChecksumsWithProgramRunsInRange(String direction, EndPoint endPoint,
-                                                                          long start, long end) throws IOException {
+  private Map<Long, Set<ProgramRunId>> getChecksumsWithProgramRunsInRange(String direction,
+      EndPoint endPoint,
+      long start, long end) throws IOException {
     // time is inverted, hence we need to pass end-time for getting start key
     List<Field<?>> scanStartKey = getScanKey(direction, endPoint, end);
     // time is inverted, hence we need to pass start-time for getting end key
     List<Field<?>> scanEndKey = getScanKey(direction, endPoint, start);
     Map<Long, Set<ProgramRunId>> result = new LinkedHashMap<>();
     try (CloseableIterator<StructuredRow> iterator =
-      getEndpointChecksumTable().scan(
-        Range.create(scanStartKey, Range.Bound.INCLUSIVE, scanEndKey, Range.Bound.INCLUSIVE), Integer.MAX_VALUE)) {
+        getEndpointChecksumTable().scan(
+            Range.create(scanStartKey, Range.Bound.INCLUSIVE, scanEndKey, Range.Bound.INCLUSIVE),
+            Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         long checksum = row.getLong(StoreDefinition.FieldLineageStore.CHECKSUM_FIELD);
         ProgramRunId programRunId =
-          GSON.fromJson(row.getString(StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD), ProgramRunId.class);
+            GSON.fromJson(row.getString(StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD),
+                ProgramRunId.class);
         Set<ProgramRunId> programRuns = result.computeIfAbsent(checksum, k -> new HashSet<>());
         programRuns.add(programRunId);
       }
@@ -444,12 +473,14 @@ public class FieldLineageTable {
     return fields;
   }
 
-  private List<Field<?>> getOperationReferenceRowKey(String direction, EndPoint endPoint, ProgramRunId programRunId) {
+  private List<Field<?>> getOperationReferenceRowKey(String direction, EndPoint endPoint,
+      ProgramRunId programRunId) {
     long invertedStartTime = getInvertedStartTime(programRunId);
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, direction));
     addEndPoint(fields, endPoint);
-    fields.add(Fields.longField(StoreDefinition.FieldLineageStore.START_TIME_FIELD, invertedStartTime));
+    fields.add(
+        Fields.longField(StoreDefinition.FieldLineageStore.START_TIME_FIELD, invertedStartTime));
     return fields;
   }
 
@@ -465,20 +496,25 @@ public class FieldLineageTable {
   }
 
   private long getInvertedStartTime(ProgramRunId run) {
-    return invertTime(RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.MILLISECONDS));
+    return invertTime(
+        RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.MILLISECONDS));
   }
 
   private void addEndPoint(List<Field<?>> fields, EndPoint endPoint) {
-    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD, endPoint.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAME_FIELD, endPoint.getName()));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD,
+        endPoint.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAME_FIELD,
+        endPoint.getName()));
   }
 
-  private List<Field<?>> getSummaryKey(long checksum, String direction, EndPointField endPointField) {
+  private List<Field<?>> getSummaryKey(long checksum, String direction,
+      EndPointField endPointField) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.longField(StoreDefinition.FieldLineageStore.CHECKSUM_FIELD, checksum));
     fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, direction));
     addEndPoint(fields, endPointField.getEndPoint());
-    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_FIELD, endPointField.getField()));
+    fields.add(Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_FIELD,
+        endPointField.getField()));
     return fields;
   }
 
@@ -488,27 +524,31 @@ public class FieldLineageTable {
     return fields;
   }
 
-  public List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference, RunId runId)
-    throws IOException {
+  public List<EndPoint> getEndpoints(String namespaceId, ProgramReference programReference,
+      RunId runId)
+      throws IOException {
     List<Range> multiRanges = new ArrayList<>();
     multiRanges.add(getNamespaceIncomingRange(namespaceId));
     multiRanges.add(getNamespaceOutgoingRange(namespaceId));
     List<EndPoint> result = new ArrayList<>();
-    try (CloseableIterator<StructuredRow> iterator = getEndpointChecksumTable().multiScan(multiRanges,
-                                                                                          Integer.MAX_VALUE)) {
+    try (CloseableIterator<StructuredRow> iterator = getEndpointChecksumTable().multiScan(
+        multiRanges,
+        Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         ProgramRunId retrievedProgramRunId = GSON.fromJson(row.getString(
-          StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD), ProgramRunId.class);
+            StoreDefinition.FieldLineageStore.PROGRAM_RUN_FIELD), ProgramRunId.class);
         if (!programRunMatches(retrievedProgramRunId, programReference, runId)) {
           continue;
         }
-        String namespace = row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD);
+        String namespace = row.getString(
+            StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD);
         String name = row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_NAME_FIELD);
         Map<String, String> existingProperties = GSON.fromJson(
-          row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD), MAP_STRING_TYPE);
+            row.getString(StoreDefinition.FieldLineageStore.ENDPOINT_PROPERTIES_FIELD),
+            MAP_STRING_TYPE);
         EndPoint matchingEndPoint = EndPoint.of(namespace, name, existingProperties != null ?
-          existingProperties : Collections.emptyMap());
+            existingProperties : Collections.emptyMap());
         result.add(matchingEndPoint);
       }
     }
@@ -516,22 +556,26 @@ public class FieldLineageTable {
   }
 
   private boolean programRunMatches(ProgramRunId programRunId,
-                                    ProgramReference programReference, RunId runId) {
+      ProgramReference programReference, RunId runId) {
     return programRunId.getParent().getProgramReference().equals(programReference) &&
-      RunIds.fromString(programRunId.getRun()).equals(runId);
+        RunIds.fromString(programRunId.getRun()).equals(runId);
   }
 
   private Range getNamespaceIncomingRange(String namespaceId) {
     return Range.singleton(
-      ImmutableList.of(
-        Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, INCOMING_DIRECTION_MARKER),
-        Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD, namespaceId)));
+        ImmutableList.of(
+            Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD,
+                INCOMING_DIRECTION_MARKER),
+            Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD,
+                namespaceId)));
   }
 
   private Range getNamespaceOutgoingRange(String namespaceId) {
     return Range.singleton(
-      ImmutableList.of(
-        Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD, OUTGOING_DIRECTION_MARKER),
-        Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD, namespaceId)));
+        ImmutableList.of(
+            Fields.stringField(StoreDefinition.FieldLineageStore.DIRECTION_FIELD,
+                OUTGOING_DIRECTION_MARKER),
+            Fields.stringField(StoreDefinition.FieldLineageStore.ENDPOINT_NAMESPACE_FIELD,
+                namespaceId)));
   }
 }

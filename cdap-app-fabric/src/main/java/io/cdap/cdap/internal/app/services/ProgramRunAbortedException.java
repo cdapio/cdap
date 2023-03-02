@@ -17,9 +17,9 @@
 package io.cdap.cdap.internal.app.services;
 
 /**
- * An exception to indicate a program run was aborted abnormally without CDAP knowing.
- * This is exception is mainly used by the {@link RunRecordCorrectorService} as the failure reason
- * when it fixes run records for non-running programs.
+ * An exception to indicate a program run was aborted abnormally without CDAP knowing. This is
+ * exception is mainly used by the {@link RunRecordCorrectorService} as the failure reason when it
+ * fixes run records for non-running programs.
  */
 public class ProgramRunAbortedException extends RuntimeException {
 

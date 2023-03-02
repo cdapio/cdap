@@ -33,21 +33,25 @@ import java.util.List;
  * Restarts one or more programs in an application.
  */
 public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
+
   private final ProgramClient programClient;
 
   @Inject
-  public RestartProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  public RestartProgramsCommand(ApplicationClient appClient, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
 
   @Override
   protected BatchProgram createProgram(ProgramRecord programRecord) {
-    return new BatchProgram(programRecord.getApp(), programRecord.getType(), programRecord.getName());
+    return new BatchProgram(programRecord.getApp(), programRecord.getType(),
+        programRecord.getName());
   }
 
   @Override
-  protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args) throws Exception {
+  protected void runBatchCommand(PrintStream printStream, Args<BatchProgram> args)
+      throws Exception {
     NamespaceId namespace = args.appId.getParent();
 
     printStream.print("Stopping programs...\n");
@@ -63,7 +67,8 @@ public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
 
   @Override
   public String getPattern() {
-    return String.format("restart app <%s> programs [of type <%s>]", ArgumentName.APP, ArgumentName.PROGRAM_TYPES);
+    return String.format("restart app <%s> programs [of type <%s>]", ArgumentName.APP,
+        ArgumentName.PROGRAM_TYPES);
   }
 
   @Override

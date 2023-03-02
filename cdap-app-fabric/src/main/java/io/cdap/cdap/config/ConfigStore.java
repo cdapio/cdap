@@ -25,6 +25,7 @@ public interface ConfigStore {
 
   /**
    * Create a Configuration.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @param config configuration object
@@ -34,6 +35,7 @@ public interface ConfigStore {
 
   /**
    * Create or update a Configuration.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @param config configuration object
@@ -42,6 +44,7 @@ public interface ConfigStore {
 
   /**
    * Delete a Configuration.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @param name name of the configuration
@@ -51,6 +54,7 @@ public interface ConfigStore {
 
   /**
    * List all Configurations which are of a specific type.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @return list of {@link Config} objects
@@ -59,6 +63,7 @@ public interface ConfigStore {
 
   /**
    * Read a Configuration.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @param name name of the configuration
@@ -69,6 +74,7 @@ public interface ConfigStore {
 
   /**
    * Update a Configuration.
+   *
    * @param namespace namespace
    * @param type configuration type
    * @param config {@link Config}

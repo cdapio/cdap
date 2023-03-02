@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Guice {@link Provider} for {@link FileContext} created created with {@link UserGroupInformation} of
- * {@link Constants#CFG_HDFS_USER}
+ * Guice {@link Provider} for {@link FileContext} created created with {@link UserGroupInformation}
+ * of {@link Constants#CFG_HDFS_USER}
  */
 public class FileContextProvider implements Provider<FileContext> {
 
@@ -59,7 +59,8 @@ public class FileContextProvider implements Provider<FileContext> {
     try {
       if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
         if (hdfsUser != null) {
-          LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
+          LOG.debug("Ignoring configuration {}={}, running on secure Hadoop",
+              Constants.CFG_HDFS_USER, hdfsUser);
         }
         LOG.debug("Getting filesystem for current user");
         return UserGroupInformation.getCurrentUser();
@@ -83,8 +84,10 @@ public class FileContextProvider implements Provider<FileContext> {
       } catch (UnsupportedFileSystemException e) {
         // If failed to create FileContext, try to use FileSystem
         FileSystem fs = FileSystem.get(hConf);
-        return FileContext.getFileContext(new DelegateToFileSystem(fs.getUri(), fs, hConf, fs.getScheme(), false) { },
-                                          hConf);
+        return FileContext.getFileContext(
+            new DelegateToFileSystem(fs.getUri(), fs, hConf, fs.getScheme(), false) {
+            },
+            hConf);
       }
     } catch (IOException | URISyntaxException e) {
       throw new RuntimeException(e);

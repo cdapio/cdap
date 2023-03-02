@@ -29,8 +29,8 @@ public interface OutputFormatProvider {
   String getOutputFormatClassName();
 
   /**
-   * @return the configuration properties that the output format expects to
-   *         find in the Hadoop configuration.
+   * @return the configuration properties that the output format expects to find in the Hadoop
+   *     configuration.
    */
   Map<String, String> getOutputFormatConfiguration();
 

@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
  * flush into HBase periodically.
  */
 public class HBase12CDH570TableUpdater extends TableUpdater {
+
   private static final Logger LOG = LoggerFactory.getLogger(HBase12CDH570TableUpdater.class);
   private final HTableInterface hTableInterface;
 
-  public HBase12CDH570TableUpdater(String rowType, Configuration conf, HTableInterface hTableInterface) {
+  public HBase12CDH570TableUpdater(String rowType, Configuration conf,
+      HTableInterface hTableInterface) {
     super(rowType, conf);
     this.hTableInterface = hTableInterface;
   }
@@ -53,8 +55,8 @@ public class HBase12CDH570TableUpdater extends TableUpdater {
     for (Map.Entry<String, Long> entry : cachedUpdates.entrySet()) {
       Put put = new Put(getRowKey(entry.getKey()));
       put.addColumn(columnFamily,
-                    Bytes.toBytes(rowType),
-                    Bytes.toBytes(entry.getValue()));
+          Bytes.toBytes(rowType),
+          Bytes.toBytes(entry.getValue()));
       puts.add(put);
     }
 

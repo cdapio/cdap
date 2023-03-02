@@ -24,16 +24,18 @@ import io.cdap.cdap.etl.common.RecordInfo;
 
 
 /**
- * Processing any stages that can be represented as a Transformation. Gets the value from a RecordInfo before
- * passing it on to the underlying transformation.
+ * Processing any stages that can be represented as a Transformation. Gets the value from a
+ * RecordInfo before passing it on to the underlying transformation.
  *
  * @param <T> type of input object
  */
 public class UnwrapPipeStage<T> extends PipeStage<RecordInfo<T>> {
+
   private final Transformation<T, Object> transform;
   private final Emitter<Object> emitter;
 
-  public UnwrapPipeStage(String stageName, Transformation<T, Object> transform, Emitter<Object> emitter) {
+  public UnwrapPipeStage(String stageName, Transformation<T, Object> transform,
+      Emitter<Object> emitter) {
     super(stageName);
     this.transform = transform;
     this.emitter = emitter;

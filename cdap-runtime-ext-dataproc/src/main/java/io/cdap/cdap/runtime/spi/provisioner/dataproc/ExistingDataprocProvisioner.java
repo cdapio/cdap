@@ -43,8 +43,8 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
   private static final Logger LOG = LoggerFactory.getLogger(ExistingDataprocProvisioner.class);
 
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "gcp-existing-dataproc", "Existing Dataproc",
-    "Connect and Execute jobs on existing Dataproc cluster.");
+      "gcp-existing-dataproc", "Existing Dataproc",
+      "Connect and Execute jobs on existing Dataproc cluster.");
   // Keys for looking up system properties
 
   private static final String CLUSTER_NAME = "clusterName";
@@ -81,12 +81,13 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       String sshUser = contextProperties.get(SSH_USER);
       String sshKey = contextProperties.get(SSH_KEY);
       if (Strings.isNullOrEmpty(sshUser) || Strings.isNullOrEmpty(sshKey)) {
-        throw new DataprocRuntimeException("SSH User and key are required for monitoring through SSH.",
-          ErrorTag.CONFIGURATION);
+        throw new DataprocRuntimeException(
+            "SSH User and key are required for monitoring through SSH.",
+            ErrorTag.CONFIGURATION);
       }
 
       SSHKeyPair sshKeyPair = new SSHKeyPair(new SSHPublicKey(sshUser, ""),
-                                             () -> sshKey.getBytes(StandardCharsets.UTF_8));
+          () -> sshKey.getBytes(StandardCharsets.UTF_8));
       // The ssh context shouldn't be null, but protect it in case there is platform bug
       Optional.ofNullable(context.getSSHContext()).ifPresent(c -> c.setSSHKeyPair(sshKeyPair));
     }
@@ -105,10 +106,10 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
         }
       }
       Cluster cluster = client.getCluster(clusterName)
-        .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
-        .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
-                                                          " does not exist or not in running state.",
-          ErrorTag.CONFIGURATION));
+          .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
+          .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
+              " does not exist or not in running state.",
+              ErrorTag.CONFIGURATION));
 
       // Determine cluster version and fail if version is smaller than 1.5
       Optional<String> optImageVer = client.getClusterImageVersion(clusterName);
@@ -118,8 +119,9 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
       } else if (!optComparableImageVer.isPresent()) {
         LOG.warn("Unable to extract Dataproc version from string '{}'.", optImageVer.get());
       } else if (DATAPROC_1_5_VERSION.compareTo(optComparableImageVer.get()) > 0) {
-        throw new DataprocRuntimeException("Dataproc cluster must be version 1.5 or greater for pipeline execution.",
-          ErrorTag.CONFIGURATION);
+        throw new DataprocRuntimeException(
+            "Dataproc cluster must be version 1.5 or greater for pipeline execution.",
+            ErrorTag.CONFIGURATION);
       }
 
       return cluster;

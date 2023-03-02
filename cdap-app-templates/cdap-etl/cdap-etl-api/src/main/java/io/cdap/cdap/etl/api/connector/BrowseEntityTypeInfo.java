@@ -24,6 +24,7 @@ import java.util.Objects;
  * The browse entity type information, containing the sampling properties expected from the type
  */
 public class BrowseEntityTypeInfo {
+
   private final String type;
   private final Collection<SamplePropertyField> properties;
 
@@ -52,7 +53,7 @@ public class BrowseEntityTypeInfo {
 
     BrowseEntityTypeInfo that = (BrowseEntityTypeInfo) o;
     return Objects.equals(type, that.type) &&
-             Objects.equals(properties, that.properties);
+        Objects.equals(properties, that.properties);
   }
 
   @Override

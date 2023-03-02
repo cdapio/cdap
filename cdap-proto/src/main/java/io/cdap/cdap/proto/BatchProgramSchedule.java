@@ -30,13 +30,14 @@ public class BatchProgramSchedule extends BatchProgramResult {
   private final List<ScheduledRuntime> schedules;
 
   public BatchProgramSchedule(ProgramId programId, int statusCode, @Nullable String error,
-                              @Nullable List<ScheduledRuntime> schedules) {
-    super(programId.getApplication(), programId.getType(), programId.getProgram(), statusCode, error, null);
+      @Nullable List<ScheduledRuntime> schedules) {
+    super(programId.getApplication(), programId.getType(), programId.getProgram(), statusCode,
+        error, null);
     this.schedules = schedules;
   }
 
   public BatchProgramSchedule(ProgramReference ref, int statusCode, @Nullable String error,
-                              @Nullable List<ScheduledRuntime> schedules) {
+      @Nullable List<ScheduledRuntime> schedules) {
     super(ref.getApplication(), ref.getType(), ref.getProgram(), statusCode, error, null);
     this.schedules = schedules;
   }

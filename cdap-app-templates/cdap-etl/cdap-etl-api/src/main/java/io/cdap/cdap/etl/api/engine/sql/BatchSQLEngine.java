@@ -21,13 +21,10 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 /**
  * Base implementation for the SQLEngine interface.
- * @param <KEY_IN>
- * @param <VALUE_IN>
- * @param <KEY_OUT>
- * @param <VALUE_OUT>
  */
 public abstract class BatchSQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT>
-  implements SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> {
+    implements SQLEngine<KEY_IN, VALUE_IN, KEY_OUT, VALUE_OUT> {
+
   public static final String PLUGIN_TYPE = "sqlengine";
 
   @Override

@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class TetheringServerHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(TetheringServerHandler.class);
   private static final Gson GSON = new GsonBuilder().create();
   private final CConfiguration cConf;
@@ -80,9 +81,10 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   private final ProgramStatePublisher programStatePublisher;
 
   @Inject
-  TetheringServerHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-                         ContextAccessEnforcer contextAccessEnforcer,
-                         MessagingProgramStatePublisher programStatePublisher) {
+  TetheringServerHandler(CConfiguration cConf, TetheringStore store,
+      MessagingService messagingService,
+      ContextAccessEnforcer contextAccessEnforcer,
+      MessagingProgramStatePublisher programStatePublisher) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
@@ -98,13 +100,14 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Sends control commands to the client and receives program status updates from the client.
-   * NOTE: This endpoint is deprecated in favor of POST /tethering/channels/{peer}.
+   * Sends control commands to the client and receives program status updates from the client. NOTE:
+   * This endpoint is deprecated in favor of POST /tethering/channels/{peer}.
    */
   @POST
   @Path("/tethering/controlchannels/{peer}")
-  public void connectControlChannel(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws IOException, NotImplementedException, PeerNotFoundException, ForbiddenException, BadRequestException {
+  public void connectControlChannel(FullHttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws IOException, NotImplementedException, PeerNotFoundException, ForbiddenException, BadRequestException {
     checkTetheringServerEnabled();
     store.updatePeerTimestamp(peer);
     TetheringStatus tetheringStatus = store.getPeer(peer).getTetheringStatus();
@@ -122,11 +125,12 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     String lastMessageId = messageId;
     int batchSize = cConf.getInt(Constants.Tethering.CONTROL_MESSAGE_BATCH_SIZE);
     try (CloseableIterator<Message> iterator =
-           fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, messageId)) {
+        fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, messageId)) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
-        TetheringControlMessage controlMessage = GSON.fromJson(message.getPayloadAsString(StandardCharsets.UTF_8),
-                                                               TetheringControlMessage.class);
+        TetheringControlMessage controlMessage = GSON.fromJson(
+            message.getPayloadAsString(StandardCharsets.UTF_8),
+            TetheringControlMessage.class);
         lastMessageId = message.getId();
         controlResponses.add(new TetheringControlResponse(lastMessageId, controlMessage));
       }
@@ -138,11 +142,11 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
     if (controlResponses.isEmpty()) {
       controlResponses.add(new TetheringControlResponse(
-        lastMessageId, new TetheringControlMessage(TetheringControlMessage.Type.KEEPALIVE)));
+          lastMessageId, new TetheringControlMessage(TetheringControlMessage.Type.KEEPALIVE)));
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(controlResponses.toArray(new TetheringControlResponse[0]),
-                                   TetheringControlResponse[].class));
+        GSON.toJson(controlResponses.toArray(new TetheringControlResponse[0]),
+            TetheringControlResponse[].class));
   }
 
   /**
@@ -150,16 +154,17 @@ public class TetheringServerHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("/tethering/channels/{peer}")
-  public void pollControlChannel(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws IOException, NotImplementedException, BadRequestException, TopicNotFoundException {
+  public void pollControlChannel(FullHttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws IOException, NotImplementedException, BadRequestException, TopicNotFoundException {
     checkTetheringServerEnabled();
     PeerInfo peerInfo;
     try {
       peerInfo = store.getPeer(peer);
     } catch (PeerNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
-                                                                      TetheringStatus.NOT_FOUND)));
+          GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
+              TetheringStatus.NOT_FOUND)));
       return;
     }
     store.updatePeerTimestamp(peer);
@@ -167,7 +172,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     if (tetheringStatus != TetheringStatus.ACCEPTED) {
       // Don't send control messages to a peer that's not in ACCEPTED state.
       TetheringControlResponseV2 response = new TetheringControlResponseV2(Collections.emptyList(),
-                                                                           tetheringStatus);
+          tetheringStatus);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
       return;
     }
@@ -187,7 +192,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
     }
 
     TetheringControlResponseV2 response = new TetheringControlResponseV2(controlMessages,
-                                                                         tetheringStatus);
+        tetheringStatus);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
   }
 
@@ -196,25 +201,28 @@ public class TetheringServerHandler extends AbstractHttpHandler {
    */
   @PUT
   @Path("/tethering/connections/{peer}")
-  public void createTethering(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotImplementedException, IOException {
+  public void createTethering(FullHttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws NotImplementedException, IOException {
     checkTetheringServerEnabled();
 
     contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
 
     String content = request.content().toString(StandardCharsets.UTF_8);
-    TetheringConnectionRequest tetherRequest = GSON.fromJson(content, TetheringConnectionRequest.class);
+    TetheringConnectionRequest tetherRequest = GSON.fromJson(content,
+        TetheringConnectionRequest.class);
 
     // We don't need to keep track of the client metadata on the server side.
-    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(), Collections.emptyMap(),
-                                                 tetherRequest.getDescription());
+    PeerMetadata peerMetadata = new PeerMetadata(tetherRequest.getNamespaceAllocations(),
+        Collections.emptyMap(),
+        tetherRequest.getDescription());
     // We don't store the peer endpoint on the server side because the connection is initiated by the client.
     PeerInfo peerInfo = new PeerInfo(peer, null, TetheringStatus.PENDING, peerMetadata,
-                                     tetherRequest.getRequestTime());
+        tetherRequest.getRequestTime());
     if (store.writePeer(peerInfo)) {
       // Peer doesn't already exist. Create tethering topic.
       TopicId topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                                    topicPrefix + peer);
+          topicPrefix + peer);
       createTopicIfNeeded(topicId);
     } else {
       // Recreate topic if the client deletes and recreates tethering.
@@ -229,19 +237,21 @@ public class TetheringServerHandler extends AbstractHttpHandler {
    */
   @POST
   @Path("/tethering/connections/{peer}")
-  public void tetheringAction(FullHttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotImplementedException, BadRequestException, IOException {
+  public void tetheringAction(FullHttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws NotImplementedException, BadRequestException, IOException {
     checkTetheringServerEnabled();
 
     String content = request.content().toString(StandardCharsets.UTF_8);
-    TetheringActionRequest tetheringActionRequest = GSON.fromJson(content, TetheringActionRequest.class);
+    TetheringActionRequest tetheringActionRequest = GSON.fromJson(content,
+        TetheringActionRequest.class);
     PeerInfo peerInfo;
     try {
       peerInfo = store.getPeer(peer);
     } catch (PeerNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND,
-                           GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
-                                                                      TetheringStatus.NOT_FOUND)));
+          GSON.toJson(new TetheringControlResponseV2(Collections.emptyList(),
+              TetheringStatus.NOT_FOUND)));
       return;
     }
     if (peerInfo.getTetheringStatus() != TetheringStatus.PENDING) {
@@ -258,22 +268,25 @@ public class TetheringServerHandler extends AbstractHttpHandler {
         responder.sendStatus(HttpResponseStatus.OK);
         break;
       default:
-        throw new BadRequestException(String.format("Invalid action: %s", tetheringActionRequest.getAction()));
+        throw new BadRequestException(
+            String.format("Invalid action: %s", tetheringActionRequest.getAction()));
     }
   }
 
-  private List<TetheringControlMessageWithId> getControlMessages(String peer, @Nullable String afterMessageId)
-    throws TopicNotFoundException, IOException {
+  private List<TetheringControlMessageWithId> getControlMessages(String peer,
+      @Nullable String afterMessageId)
+      throws TopicNotFoundException, IOException {
     MessageFetcher fetcher = messagingContext.getMessageFetcher();
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(), topicPrefix + peer);
     int batchSize = cConf.getInt(Constants.Tethering.CONTROL_MESSAGE_BATCH_SIZE);
     List<TetheringControlMessageWithId> messages = new ArrayList<>();
     try (CloseableIterator<Message> iterator =
-           fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, afterMessageId)) {
+        fetcher.fetch(topic.getNamespace(), topic.getTopic(), batchSize, afterMessageId)) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
-        TetheringControlMessage controlMessage = GSON.fromJson(message.getPayloadAsString(StandardCharsets.UTF_8),
-                                                               TetheringControlMessage.class);
+        TetheringControlMessage controlMessage = GSON.fromJson(
+            message.getPayloadAsString(StandardCharsets.UTF_8),
+            TetheringControlMessage.class);
         messages.add(new TetheringControlMessageWithId(controlMessage, message.getId()));
       }
     }
@@ -297,7 +310,7 @@ public class TetheringServerHandler extends AbstractHttpHandler {
 
   private void deleteTopicForPeer(String peer) throws IOException {
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                                topicPrefix + peer);
+        topicPrefix + peer);
     try {
       // If topic deletion fails here, the client will receive any leftover messages if it recreates tethering.
       // TODO(CDAP-19612): figure out how to handle this case better.
@@ -308,14 +321,17 @@ public class TetheringServerHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Processes and publishes the list of tethering program updates received from the client
-   * Returns lastMessageId sent by the client
+   * Processes and publishes the list of tethering program updates received from the client Returns
+   * lastMessageId sent by the client
    */
-  private String processRequestContent(FullHttpRequest request, String peer) throws BadRequestException {
+  private String processRequestContent(FullHttpRequest request, String peer)
+      throws BadRequestException {
     String lastControlMessageId;
     List<Notification> notificationList;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
-      TetheringControlChannelRequest content = GSON.fromJson(reader, TetheringControlChannelRequest.class);
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()),
+        StandardCharsets.UTF_8)) {
+      TetheringControlChannelRequest content = GSON.fromJson(reader,
+          TetheringControlChannelRequest.class);
       lastControlMessageId = content.getLastControlMessageId();
       notificationList = content.getNotificationList();
     } catch (JsonSyntaxException | IOException e) {
@@ -328,8 +344,9 @@ public class TetheringServerHandler extends AbstractHttpHandler {
       String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
 
       LOG.debug("Received notification from peer {} about program run {} in state {}",
-               peer, programRunId, programStatus);
-      programStatePublisher.publish(notification.getNotificationType(), notification.getProperties());
+          peer, programRunId, programStatus);
+      programStatePublisher.publish(notification.getNotificationType(),
+          notification.getProperties());
     }
     return lastControlMessageId;
   }

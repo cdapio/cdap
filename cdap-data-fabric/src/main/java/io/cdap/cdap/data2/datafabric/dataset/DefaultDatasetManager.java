@@ -32,7 +32,8 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Default implementation of {@link DatasetManager} that performs operation via {@link DatasetFramework}.
+ * Default implementation of {@link DatasetManager} that performs operation via {@link
+ * DatasetFramework}.
  */
 public class DefaultDatasetManager implements DatasetManager {
 
@@ -44,15 +45,17 @@ public class DefaultDatasetManager implements DatasetManager {
 
   /**
    * Constructor.
-   * @param datasetFramework the {@link DatasetFramework} to use for performing the actual operation
+   *
+   * @param datasetFramework the {@link DatasetFramework} to use for performing the actual
+   *     operation
    * @param namespaceId the {@link NamespaceId} for all dataset managed through this class
    * @param retryStrategy the {@link RetryStrategy} to use for {@link RetryableException}.
    * @param principalId the {@link KerberosPrincipalId} for all datasets created.
    */
   public DefaultDatasetManager(DatasetFramework datasetFramework,
-                               NamespaceId namespaceId,
-                               RetryStrategy retryStrategy,
-                               @Nullable KerberosPrincipalId principalId) {
+      NamespaceId namespaceId,
+      RetryStrategy retryStrategy,
+      @Nullable KerberosPrincipalId principalId) {
     this.datasetFramework = datasetFramework;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
@@ -84,22 +87,24 @@ public class DefaultDatasetManager implements DatasetManager {
   }
 
   @Override
-  public DatasetProperties getDatasetProperties(final String name) throws DatasetManagementException {
-    return Retries.callWithRetries(new Retries.Callable<DatasetProperties, DatasetManagementException>() {
-      @Override
-      public DatasetProperties call() throws DatasetManagementException {
-        DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
-        if (spec == null) {
-          throw new InstanceNotFoundException(name);
-        }
-        return DatasetProperties.of(spec.getOriginalProperties());
-      }
-    }, retryStrategy);
+  public DatasetProperties getDatasetProperties(final String name)
+      throws DatasetManagementException {
+    return Retries.callWithRetries(
+        new Retries.Callable<DatasetProperties, DatasetManagementException>() {
+          @Override
+          public DatasetProperties call() throws DatasetManagementException {
+            DatasetSpecification spec = datasetFramework.getDatasetSpec(createInstanceId(name));
+            if (spec == null) {
+              throw new InstanceNotFoundException(name);
+            }
+            return DatasetProperties.of(spec.getOriginalProperties());
+          }
+        }, retryStrategy);
   }
 
   @Override
   public void createDataset(final String name, final String type,
-                            final DatasetProperties properties) throws DatasetManagementException {
+      final DatasetProperties properties) throws DatasetManagementException {
     Retries.runWithRetries(() -> {
       try {
         // we have to do this check since addInstance method can only be used when app impersonation is enabled
@@ -111,20 +116,22 @@ public class DefaultDatasetManager implements DatasetManager {
       } catch (IOException ioe) {
         // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
         throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                           name, ioe.getMessage()), ioe);
+            name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
 
   @Override
-  public void updateDataset(final String name, final DatasetProperties properties) throws DatasetManagementException {
+  public void updateDataset(final String name, final DatasetProperties properties)
+      throws DatasetManagementException {
     Retries.runWithRetries(() -> {
       try {
         datasetFramework.updateInstance(createInstanceId(name), properties);
       } catch (IOException ioe) {
         // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-        throw new DatasetManagementException(String.format("Failed to update instance %s, details: %s",
-                                                           name, ioe.getMessage()), ioe);
+        throw new DatasetManagementException(
+            String.format("Failed to update instance %s, details: %s",
+                name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
@@ -136,8 +143,9 @@ public class DefaultDatasetManager implements DatasetManager {
         datasetFramework.deleteInstance(createInstanceId(name));
       } catch (IOException ioe) {
         // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-        throw new DatasetManagementException(String.format("Failed to delete instance %s, details: %s",
-                                                           name, ioe.getMessage()), ioe);
+        throw new DatasetManagementException(
+            String.format("Failed to delete instance %s, details: %s",
+                name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }
@@ -149,8 +157,9 @@ public class DefaultDatasetManager implements DatasetManager {
         datasetFramework.truncateInstance(createInstanceId(name));
       } catch (IOException ioe) {
         // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
-        throw new DatasetManagementException(String.format("Failed to truncate instance %s, details: %s",
-                                                           name, ioe.getMessage()), ioe);
+        throw new DatasetManagementException(
+            String.format("Failed to truncate instance %s, details: %s",
+                name, ioe.getMessage()), ioe);
       }
     }, retryStrategy);
   }

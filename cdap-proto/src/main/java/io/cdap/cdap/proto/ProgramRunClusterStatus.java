@@ -51,7 +51,8 @@ public enum ProgramRunClusterStatus {
         // DEPROVISIONING happens if there was an error after trying to create the cluster
         // DEPROVISIONED happens if there was an error prior to trying to create the cluster
         // ORPHANED happens if the cluster was created but got into a bad state and could not be deleted
-        return status == PROVISIONED || status == DEPROVISIONING || status == DEPROVISIONED || status == ORPHANED;
+        return status == PROVISIONED || status == DEPROVISIONING || status == DEPROVISIONED
+            || status == ORPHANED;
       case PROVISIONED:
         // WAITING if the run fails or is stopped and there is an expiry set to keep the cluster around for some time
         // DEPROVISIONING if the run completes or is stopped and there is no expiry set

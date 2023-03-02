@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
  * Handles Dataset admin operations.
  */
 public class DatasetAdminService {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminService.class);
 
   private final RemoteDatasetFramework dsFramework;
@@ -65,8 +66,9 @@ public class DatasetAdminService {
   private final Impersonator impersonator;
 
   @Inject
-  public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf, LocationFactory locationFactory,
-                             SystemDatasetInstantiatorFactory datasetInstantiatorFactory, Impersonator impersonator) {
+  public DatasetAdminService(RemoteDatasetFramework dsFramework, CConfiguration cConf,
+      LocationFactory locationFactory,
+      SystemDatasetInstantiatorFactory datasetInstantiatorFactory, Impersonator impersonator) {
     this.dsFramework = dsFramework;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
@@ -83,18 +85,19 @@ public class DatasetAdminService {
    * @param existing if dataset already exists (in case of update), the existing properties
    * @return dataset specification
    */
-  public DatasetCreationResponse createOrUpdate(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
-                                                final DatasetProperties props,
-                                                @Nullable final DatasetSpecification existing) throws Exception {
+  public DatasetCreationResponse createOrUpdate(final DatasetId datasetInstanceId,
+      final DatasetTypeMeta typeMeta,
+      final DatasetProperties props,
+      @Nullable final DatasetSpecification existing) throws Exception {
 
     if (existing == null) {
       LOG.info("Creating dataset instance {}, type meta: {}", datasetInstanceId, typeMeta);
     } else {
       LOG.info("Updating dataset instance {}, type meta: {}, existing: {}",
-               datasetInstanceId, typeMeta, existing);
+          datasetInstanceId, typeMeta, existing);
     }
     try (DatasetClassLoaderProvider classLoaderProvider =
-           new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+        new DirectoryClassLoaderProvider(cConf, locationFactory)) {
       final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespace());
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
@@ -103,17 +106,21 @@ public class DatasetAdminService {
         DatasetType type1 = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
         if (type1 == null) {
           throw new BadRequestException(
-            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+              String.format("Cannot instantiate dataset type using provided type meta: %s",
+                  typeMeta));
         }
         LOG.trace("Got dataset type {}", typeMeta.getName());
         return type1;
       });
 
       DatasetSpecification spec = ImpersonationUtils.doAs(ugi, () -> {
-        LOG.trace("Configuring dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
-        DatasetSpecification spec1 = existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
-          : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
-        LOG.trace("Configured dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
+        LOG.trace("Configuring dataset {} of type {}", datasetInstanceId.getDataset(),
+            typeMeta.getName());
+        DatasetSpecification spec1 =
+            existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
+                : type.reconfigure(datasetInstanceId.getEntityName(), props, existing);
+        LOG.trace("Configured dataset {} of type {}", datasetInstanceId.getDataset(),
+            typeMeta.getName());
 
         DatasetAdmin admin = type.getAdmin(context, spec1);
         try {
@@ -124,9 +131,11 @@ public class DatasetAdminService {
               admin.upgrade();
             }
           } else {
-            LOG.trace("Creating dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
+            LOG.trace("Creating dataset {} of type {}", datasetInstanceId.getDataset(),
+                typeMeta.getName());
             admin.create();
-            LOG.trace("Created dataset {} of type {}", datasetInstanceId.getDataset(), typeMeta.getName());
+            LOG.trace("Created dataset {} of type {}", datasetInstanceId.getDataset(),
+                typeMeta.getName());
           }
         } finally {
           Closeables.closeQuietly(admin);
@@ -137,7 +146,7 @@ public class DatasetAdminService {
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
       LOG.trace("Computing metadata for dataset {}", datasetInstanceId.getDataset());
       SystemMetadata metadata = computeSystemMetadata(
-        datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+          datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
       LOG.trace("Computed metadata for dataset {}", datasetInstanceId.getDataset());
       return new DatasetCreationResponse(spec, metadata);
     } catch (Exception e) {
@@ -146,23 +155,25 @@ public class DatasetAdminService {
         LOG.debug("Incompatible update for dataset '{}'", datasetInstanceId, e);
       } else {
         LOG.error("Error {} dataset '{}': {}",
-                  existing == null ? "creating" : "updating", datasetInstanceId, e.getMessage(), e);
+            existing == null ? "creating" : "updating", datasetInstanceId, e.getMessage(), e);
       }
       throw e;
     }
   }
 
-  private SystemMetadata computeSystemMetadata(DatasetId datasetInstanceId, final DatasetSpecification spec,
-                                             DatasetProperties props, final DatasetTypeMeta typeMeta,
-                                             final DatasetType type, final DatasetContext context,
-                                             boolean existing, UserGroupInformation ugi)
-    throws IOException {
+  private SystemMetadata computeSystemMetadata(DatasetId datasetInstanceId,
+      final DatasetSpecification spec,
+      DatasetProperties props, final DatasetTypeMeta typeMeta,
+      final DatasetType type, final DatasetContext context,
+      boolean existing, UserGroupInformation ugi)
+      throws IOException {
     // add system metadata for user datasets only
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       Dataset dataset = null;
       try {
         try {
-          dataset = ImpersonationUtils.doAs(ugi, () -> type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS));
+          dataset = ImpersonationUtils.doAs(ugi,
+              () -> type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS));
         } catch (Exception e) {
           LOG.warn("Exception while instantiating Dataset {}", datasetInstanceId, e);
         }
@@ -172,17 +183,17 @@ public class DatasetAdminService {
         DatasetSystemMetadataProvider metadataProvider;
         if (existing) {
           metadataProvider =
-            new DatasetSystemMetadataProvider(datasetInstanceId, props,
-                                              dataset, typeMeta.getName(), spec.getDescription());
+              new DatasetSystemMetadataProvider(datasetInstanceId, props,
+                  dataset, typeMeta.getName(), spec.getDescription());
         } else {
           long createTime = System.currentTimeMillis();
           metadataProvider =
-            new DatasetSystemMetadataProvider(datasetInstanceId, props, createTime,
-                                              dataset, typeMeta.getName(), spec.getDescription());
+              new DatasetSystemMetadataProvider(datasetInstanceId, props, createTime,
+                  dataset, typeMeta.getName(), spec.getDescription());
         }
         return new SystemMetadata(metadataProvider.getSystemPropertiesToAdd(),
-                                  metadataProvider.getSystemTagsToAdd(),
-                                  metadataProvider.getSchemaToAdd());
+            metadataProvider.getSystemTagsToAdd(),
+            metadataProvider.getSchemaToAdd());
       } finally {
         if (dataset != null) {
           dataset.close();
@@ -193,10 +204,10 @@ public class DatasetAdminService {
   }
 
   public void drop(final DatasetId datasetInstanceId, final DatasetTypeMeta typeMeta,
-                   final DatasetSpecification spec) throws Exception {
+      final DatasetSpecification spec) throws Exception {
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
-           new DirectoryClassLoaderProvider(cConf, locationFactory)) {
+        new DirectoryClassLoaderProvider(cConf, locationFactory)) {
       UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
       ImpersonationUtils.doAs(ugi, (Callable<Void>) () -> {
@@ -204,9 +215,11 @@ public class DatasetAdminService {
 
         if (type == null) {
           throw new BadRequestException(
-            String.format("Cannot instantiate dataset type using provided type meta: %s", typeMeta));
+              String.format("Cannot instantiate dataset type using provided type meta: %s",
+                  typeMeta));
         }
-        DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()), spec);
+        DatasetAdmin admin = type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespace()),
+            spec);
         try {
           admin.drop();
         } finally {
@@ -231,19 +244,22 @@ public class DatasetAdminService {
     performDatasetAdmin(datasetInstanceId, DatasetAdmin::upgrade);
   }
 
-  private void performDatasetAdmin(final DatasetId datasetInstanceId, VoidOperation operation) throws Exception {
+  private void performDatasetAdmin(final DatasetId datasetInstanceId, VoidOperation operation)
+      throws Exception {
     performDatasetAdmin(datasetInstanceId, (Operation<Void>) admin -> {
       operation.perform(admin);
       return null;
     });
   }
 
-  private <T> T performDatasetAdmin(final DatasetId datasetInstanceId, Operation<T> operation) throws Exception {
+  private <T> T performDatasetAdmin(final DatasetId datasetInstanceId, Operation<T> operation)
+      throws Exception {
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       DatasetAdmin admin = impersonator.doAs(datasetInstanceId, (Callable<DatasetAdmin>) () -> {
         DatasetAdmin admin1 = datasetInstantiator.getDatasetAdmin(datasetInstanceId);
         if (admin1 == null) {
-          throw new NotFoundException("Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
+          throw new NotFoundException(
+              "Couldn't obtain DatasetAdmin for dataset instance " + datasetInstanceId);
         }
         // returns a DatasetAdmin that executes operations as a particular user, for a particular namespace
         return new ImpersonatingDatasetAdmin(admin1, impersonator, datasetInstanceId);
@@ -256,8 +272,9 @@ public class DatasetAdminService {
     }
   }
 
-  private static UserGroupInformation getUgiForDataset(Impersonator impersonator, DatasetId datasetInstanceId)
-    throws IOException, AccessException {
+  private static UserGroupInformation getUgiForDataset(Impersonator impersonator,
+      DatasetId datasetInstanceId)
+      throws IOException, AccessException {
     // for system dataset do not look up owner information in store as we know that it will be null.
     // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
     // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
@@ -272,10 +289,12 @@ public class DatasetAdminService {
   }
 
   private interface Operation<T> {
+
     T perform(DatasetAdmin admin) throws Exception;
   }
 
   private interface VoidOperation {
+
     void perform(DatasetAdmin admin) throws Exception;
   }
 }

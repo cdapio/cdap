@@ -40,15 +40,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Performs steps to provision a cluster for a program run. Before any operation is performed, state is persisted
- * to the ProvisionerStore to record what we are doing. This is done in case we crash in the middle of the task
- * and the task is later restarted. The operation state transition looks like:
+ * Performs steps to provision a cluster for a program run. Before any operation is performed, state
+ * is persisted to the ProvisionerStore to record what we are doing. This is done in case we crash
+ * in the middle of the task and the task is later restarted. The operation state transition looks
+ * like:
  *
- *         --------------------------------- (state == NOT_FOUND) -------------------------------------|
- *         |                                                                                           |
- *         v                            |-- (state == FAILED) --> RequestingDelete --> PollingDelete --|
- * RequestingCreate --> PollingCreate --|
- *                                      |-- (state == RUNNING) --> Initializing --> Created
+ * --------------------------------- (state == NOT_FOUND) -------------------------------------| | |
+ * v |-- (state == FAILED) --> RequestingDelete --> PollingDelete --| RequestingCreate -->
+ * PollingCreate --| |-- (state == RUNNING) --> Initializing --> Created
  *
  *
  * PollingCreate -- (state == NOT_EXISTS) --> RequestCreate
@@ -68,32 +67,34 @@ import org.slf4j.LoggerFactory;
  * PollingDelete -- (state == NOT_FOUND and timeout reached) --> Failed
  */
 public class ProvisionTask extends ProvisioningTask {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProvisionTask.class);
   private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
-                                                           Constants.Logging.USER_LOG_TAG_VALUE);
+      Constants.Logging.USER_LOG_TAG_VALUE);
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
   public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
-                       Provisioner provisioner, ProvisionerContext provisionerContext,
-                       ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
-                       int retryTimeLimitSecs) {
+      Provisioner provisioner, ProvisionerContext provisionerContext,
+      ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
+      int retryTimeLimitSecs) {
     super(provisioner, provisionerContext, initialTaskInfo, transactionRunner, retryTimeLimitSecs);
     this.provisionerNotifier = provisionerNotifier;
     this.programStateWriter = programStateWriter;
   }
 
   @Override
-  protected Map<ProvisioningOp.Status, ProvisioningSubtask> createSubTasks(ProvisioningTaskInfo initialTaskInfo) {
+  protected Map<ProvisioningOp.Status, ProvisioningSubtask> createSubTasks(
+      ProvisioningTaskInfo initialTaskInfo) {
     Map<ProvisioningOp.Status, ProvisioningSubtask> subtasks = new HashMap<>();
 
     subtasks.put(ProvisioningOp.Status.REQUESTING_CREATE, createClusterCreateSubtask());
     subtasks.put(ProvisioningOp.Status.POLLING_CREATE, createPollingCreateSubtask());
     subtasks.put(ProvisioningOp.Status.REQUESTING_DELETE,
-                 new ClusterDeleteSubtask(provisioner, provisionerContext,
-                                          cluster -> Optional.of(cluster.getStatus() == ClusterStatus.RUNNING
-                                                                   ? ProvisioningOp.Status.REQUESTING_DELETE
-                                                                   : ProvisioningOp.Status.POLLING_DELETE)));
+        new ClusterDeleteSubtask(provisioner, provisionerContext,
+            cluster -> Optional.of(cluster.getStatus() == ClusterStatus.RUNNING
+                ? ProvisioningOp.Status.REQUESTING_DELETE
+                : ProvisioningOp.Status.POLLING_DELETE)));
     subtasks.put(ProvisioningOp.Status.POLLING_DELETE, createPollingDeleteSubtask());
     subtasks.put(ProvisioningOp.Status.INITIALIZING, createInitializeSubtask(initialTaskInfo));
     subtasks.put(ProvisioningOp.Status.FAILED, EndSubtask.INSTANCE);
@@ -115,17 +116,19 @@ public class ProvisionTask extends ProvisioningTask {
 
   private ProvisioningSubtask createClusterCreateSubtask() {
     return new ClusterCreateSubtask(provisioner, provisionerContext, cluster -> {
-      if (!Objects.equals(provisionerContext.getCDAPVersionInfo(), provisionerContext.getAppCDAPVersionInfo())) {
+      if (!Objects.equals(provisionerContext.getCDAPVersionInfo(),
+          provisionerContext.getAppCDAPVersionInfo())) {
         USERLOG.info("Starting a pipeline created with a previous version. " +
-                   "Please consider upgrading the pipeline to employ all the enhancements");
-        LOG.debug("Starting a pipeline created with a previous version. Pipeline version {}, platform version {}",
-                  provisionerContext.getAppCDAPVersionInfo(), provisionerContext.getCDAPVersionInfo());
+            "Please consider upgrading the pipeline to employ all the enhancements");
+        LOG.debug(
+            "Starting a pipeline created with a previous version. Pipeline version {}, platform version {}",
+            provisionerContext.getAppCDAPVersionInfo(), provisionerContext.getCDAPVersionInfo());
       }
       if (cluster == null) {
         // this is in violation of the provisioner contract, but in case somebody writes a provisioner that
         // returns a null cluster.
         LOG.warn("Provisioner {} returned an invalid null cluster. " +
-                    "Sending notification to de-provision it.", provisioner.getSpec().getName());
+            "Sending notification to de-provision it.", provisioner.getSpec().getName());
         notifyFailed(new IllegalStateException("Provisioner returned an invalid null cluster."));
         // RequestingCreate --> Failed
         return Optional.of(ProvisioningOp.Status.FAILED);
@@ -150,13 +153,15 @@ public class ProvisionTask extends ProvisioningTask {
           // create failed, log the reason for failure and then issue a request to delete the cluster
           try {
             String errorMsg =
-              Retries.callWithRetries(() -> provisioner.getClusterFailureMsg(provisionerContext, cluster),
-                                      RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
-                                      RetryableProvisionException.class::isInstance);
+                Retries.callWithRetries(
+                    () -> provisioner.getClusterFailureMsg(provisionerContext, cluster),
+                    RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
+                    RetryableProvisionException.class::isInstance);
             LOG.error("Cluster creation failed with error: {}", errorMsg);
           } catch (Exception ex) {
-            LOG.error("Cluster creation failed but there was an error while retrieving the error message: {0}",
-                      ex.toString());
+            LOG.error(
+                "Cluster creation failed but there was an error while retrieving the error message: {0}",
+                ex.toString());
           }
           return Optional.of(ProvisioningOp.Status.REQUESTING_DELETE);
         case DELETING:
@@ -169,8 +174,9 @@ public class ProvisionTask extends ProvisioningTask {
           return Optional.of(ProvisioningOp.Status.FAILED);
       }
       // should never get here
-      throw new IllegalStateException(String.format("Unexpected cluster state %s while polling for cluster state.",
-                                                    cluster.getStatus()));
+      throw new IllegalStateException(
+          String.format("Unexpected cluster state %s while polling for cluster state.",
+              cluster.getStatus()));
     });
   }
 
@@ -186,7 +192,8 @@ public class ProvisionTask extends ProvisioningTask {
           return Optional.of(ProvisioningOp.Status.INITIALIZING);
         case NOT_EXISTS:
           // delete succeeded, try to re-create cluster unless we've timed out
-          if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartTime) > retryTimeLimitSecs) {
+          if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - taskStartTime)
+              > retryTimeLimitSecs) {
             // over the time out. Give up and transition to deprovisioning to clean up task state
             // and ensure the cluster is gone
             notifyFailed(new TimeoutException("Timed out trying to create the cluster."));
@@ -204,16 +211,17 @@ public class ProvisionTask extends ProvisioningTask {
           return Optional.of(ProvisioningOp.Status.FAILED);
       }
       // should never get here
-      throw new IllegalStateException(String.format("Unexpected cluster state %s while polling for cluster state.",
-                                                    cluster.getStatus()));
+      throw new IllegalStateException(
+          String.format("Unexpected cluster state %s while polling for cluster state.",
+              cluster.getStatus()));
     });
   }
 
   private ProvisioningSubtask createInitializeSubtask(ProvisioningTaskInfo initialTaskInfo) {
     return new ClusterInitializeSubtask(provisioner, provisionerContext, cluster -> {
       provisionerNotifier.provisioned(programRunId, initialTaskInfo.getProgramOptions(),
-                                      initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),
-                                      cluster, initialTaskInfo.getSecureKeysDir());
+          initialTaskInfo.getProgramDescriptor(), initialTaskInfo.getUser(),
+          cluster, initialTaskInfo.getSecureKeysDir());
       return Optional.of(ProvisioningOp.Status.CREATED);
     });
   }

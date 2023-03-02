@@ -21,7 +21,8 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.etl.api.action.SettableArguments;
 
 /**
- * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
+ * Similar to {@link TransformContext}, but also exposing functionality of {@link
+ * MessagingContext}.
  */
 public interface StageSubmitterContext extends MessagingContext, MessagingAdmin, TransformContext {
 

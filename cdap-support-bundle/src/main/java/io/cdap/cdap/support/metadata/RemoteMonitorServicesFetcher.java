@@ -45,33 +45,38 @@ public class RemoteMonitorServicesFetcher {
   @Inject
   RemoteMonitorServicesFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient =
-      remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP, new DefaultHttpRequestConfig(false),
-                                             Gateway.API_VERSION_3);
+        remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
+            new DefaultHttpRequestConfig(false),
+            Gateway.API_VERSION_3);
   }
 
   /**
    * Lists all system services.
    *
    * @return list of {@link SystemServiceMeta}s.
-   * @throws IOException              if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public Iterable<SystemServiceMeta> listSystemServices() throws NotFoundException, IOException {
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(HttpMethod.GET, Constants.Monitor.SYSTEM_LOG_SERVICE_URL);
+        remoteClient.requestBuilder(HttpMethod.GET, Constants.Monitor.SYSTEM_LOG_SERVICE_URL);
     HttpResponse response;
     response = execute(requestBuilder.build());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SystemServiceMeta>>() {
+    }).getResponseObject();
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
+  private HttpResponse execute(HttpRequest request)
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException(String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
-                                          httpResponse.getResponseCode()));
+      throw new IOException(
+          String.format("Request failed %s with code %d ", httpResponse.getResponseBodyAsString(),
+              httpResponse.getResponseCode()));
     }
     return httpResponse;
   }

@@ -59,13 +59,15 @@ public class DatasetTypeClient {
    *
    * @return list of {@link DatasetTypeMeta}s.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<DatasetTypeMeta> list(NamespaceId namespace)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/types");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() {
+    }).getResponseObject();
   }
 
   /**
@@ -75,14 +77,16 @@ public class DatasetTypeClient {
    * @return {@link DatasetTypeMeta} of the dataset type
    * @throws DatasetTypeNotFoundException if the dataset type could not be found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public DatasetTypeMeta get(DatasetTypeId type)
-    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(type.getParent(), String.format("data/types/%s", type.getType()));
+    URL url = config.resolveNamespacedURLV3(type.getParent(),
+        String.format("data/types/%s", type.getType()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetTypeNotFoundException(type);
     }
@@ -96,13 +100,15 @@ public class DatasetTypeClient {
    * @param type the dataset type to check
    * @return true if the dataset type exists
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public boolean exists(DatasetTypeId type)
-    throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(type.getParent(), String.format("data/types/%s", type.getType()));
+      throws DatasetTypeNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(type.getParent(),
+        String.format("data/types/%s", type.getType()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
 }

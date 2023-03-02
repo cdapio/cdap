@@ -46,12 +46,12 @@ public final class PluginClassLoaders {
   };
 
   /**
-   * Returns a {@link ClassLoader} that only allows loading of plugin classes and plugin exported classes.
-   * It should only be used in context when a single ClassLoader is needed to load all different kinds of user classes
-   * (e.g. in MapReduce/Spark).
+   * Returns a {@link ClassLoader} that only allows loading of plugin classes and plugin exported
+   * classes. It should only be used in context when a single ClassLoader is needed to load all
+   * different kinds of user classes (e.g. in MapReduce/Spark).
    */
   public static ClassLoader createFilteredPluginsClassLoader(Map<String, Plugin> plugins,
-                                                             @Nullable PluginInstantiator pluginInstantiator) {
+      @Nullable PluginInstantiator pluginInstantiator) {
     if (plugins.isEmpty() || pluginInstantiator == null) {
       return new CombineClassLoader(null);
     }
@@ -68,11 +68,13 @@ public final class PluginClassLoaders {
           // A ClassLoader to allow loading of all plugin classes used by the program.
           Collection<String> pluginClasses = artifactPluginClasses.get(plugin);
           if (!pluginClasses.isEmpty()) {
-            pluginClassLoaders.add(createClassFilteredClassLoader(pluginClasses, pluginClassLoader));
+            pluginClassLoaders.add(
+                createClassFilteredClassLoader(pluginClasses, pluginClassLoader));
           }
 
           // A ClassLoader to allow all export package classes to be loadable.
-          pluginClassLoaders.add(((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
+          pluginClassLoaders.add(
+              ((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
         }
       }
       return new CombineClassLoader(null, pluginClassLoaders);
@@ -93,9 +95,9 @@ public final class PluginClassLoaders {
   }
 
   private static ClassLoader createClassFilteredClassLoader(Iterable<String> allowedClasses,
-                                                            ClassLoader parentClassLoader) {
+      ClassLoader parentClassLoader) {
     final Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses,
-                                                                                 CLASS_TO_RESOURCE_NAME));
+        CLASS_TO_RESOURCE_NAME));
     return new FilterClassLoader(parentClassLoader, new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {

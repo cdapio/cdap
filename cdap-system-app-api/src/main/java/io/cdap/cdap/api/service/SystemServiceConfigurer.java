@@ -20,9 +20,11 @@ import io.cdap.cdap.api.SystemTableConfigurer;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Configurer for system application services, allowing additional capabilities beyond those available to user services.
- * System configurers can only be used by applications that are deployed in the system namespace.
+ * Configurer for system application services, allowing additional capabilities beyond those
+ * available to user services. System configurers can only be used by applications that are deployed
+ * in the system namespace.
  */
 @Beta
 public interface SystemServiceConfigurer extends ServiceConfigurer, SystemTableConfigurer {
+
 }

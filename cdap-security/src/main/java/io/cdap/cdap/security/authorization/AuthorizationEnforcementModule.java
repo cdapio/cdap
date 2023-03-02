@@ -45,9 +45,11 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
-          .to(NoOpAccessController.class).in(Scopes.SINGLETON);
-        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
+            .in(Scopes.SINGLETON);
       }
     };
   }
@@ -58,16 +60,18 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
-          .to(NoOpAccessController.class).in(Scopes.SINGLETON);
-        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .to(NoOpAccessController.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
+            .in(Scopes.SINGLETON);
       }
     };
   }
 
   /**
-   * Used by program containers and system services (viz explore service, stream service) that need to enforce
-   * authorization in distributed mode.
+   * Used by program containers and system services (viz explore service, stream service) that need
+   * to enforce authorization in distributed mode.
    */
   @Override
   public Module getDistributedModules() {
@@ -75,29 +79,34 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
+            .in(Scopes.SINGLETON);
       }
     };
   }
 
   /**
-   * Returns an {@link AbstractModule} containing bindings for authorization enforcement to be used in the Master.
+   * Returns an {@link AbstractModule} containing bindings for authorization enforcement to be used
+   * in the Master.
    */
   public AbstractModule getMasterModule() {
     return new AbstractModule() {
       @Override
       protected void configure() {
         bind(AccessEnforcer.class).to(DefaultAccessEnforcer.class).in(Scopes.SINGLETON);
-        bind(AccessEnforcer.class).annotatedWith(Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
-          .toProvider(InternalAccessEnforcerProvider.class).in(Scopes.SINGLETON);
-        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).annotatedWith(
+                Names.named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER))
+            .toProvider(InternalAccessEnforcerProvider.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
+            .in(Scopes.SINGLETON);
       }
     };
   }
 
   /**
-   * Returns an {@link AbstractModule} containing bindings for a No-Op Access Enforcer. These modules should primarily
-   * be used in workers in which user code is executed which should not have any owned data to enforce access on.
+   * Returns an {@link AbstractModule} containing bindings for a No-Op Access Enforcer. These
+   * modules should primarily be used in workers in which user code is executed which should not
+   * have any owned data to enforce access on.
    */
   public AbstractModule getNoOpModules() {
     return new AbstractModule() {
@@ -111,7 +120,8 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
           }
 
           @Override
-          public void enforceOnParent(EntityType entityType, EntityId parentId, Permission permission) {
+          public void enforceOnParent(EntityType entityType, EntityId parentId,
+              Permission permission) {
             // no-op
           }
 
@@ -125,10 +135,12 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
   }
 
   /**
-   * A {@link Provider} for internally-used {@link AccessEnforcer} which returns {@link InternalAccessEnforcer} when
-   * internal auth is enabled, but returns {@link NoOpAccessController} otherwise.
+   * A {@link Provider} for internally-used {@link AccessEnforcer} which returns {@link
+   * InternalAccessEnforcer} when internal auth is enabled, but returns {@link NoOpAccessController}
+   * otherwise.
    */
   private static final class InternalAccessEnforcerProvider implements Provider<AccessEnforcer> {
+
     private final CConfiguration cConf;
     private final Injector injector;
 

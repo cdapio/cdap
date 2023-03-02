@@ -49,13 +49,15 @@ public class HBaseTableDefinition extends AbstractTableDefinition<Table, HBaseTa
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseTable(datasetContext, spec, arguments, cConf, hConf, hBaseTableUtilProvider.get());
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    return new HBaseTable(datasetContext, spec, arguments, cConf, hConf,
+        hBaseTableUtilProvider.get());
   }
 
   @Override
   public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                  ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtilProvider.get(), cConf, locationFactory);
+      ClassLoader classLoader) throws IOException {
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtilProvider.get(), cConf,
+        locationFactory);
   }
 }

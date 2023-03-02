@@ -47,18 +47,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Secure Store implementation backed by Hadoop KMS. This assumes that KMS is setup and running.
- * The URI for KMS endpoint is retrieved from Hadoop core-site.xml. The property that has the URI
- * is "hadoop.security.key.provider.path". The ACL for KMS is in kms-acls.xml located by default under
- * "/etc/hadoop-kms/conf/".
- * This class is loaded using reflection if the provider is set to kms and Hadoop version is 2.6.0 or higher.
- * The class is public to allow javadoc to build.
+ * Secure Store implementation backed by Hadoop KMS. This assumes that KMS is setup and running. The
+ * URI for KMS endpoint is retrieved from Hadoop core-site.xml. The property that has the URI is
+ * "hadoop.security.key.provider.path". The ACL for KMS is in kms-acls.xml located by default under
+ * "/etc/hadoop-kms/conf/". This class is loaded using reflection if the provider is set to kms and
+ * Hadoop version is 2.6.0 or higher. The class is public to allow javadoc to build.
  */
 // TODO: Find a better way to handle javadoc so this class does not need to be public.
 @SuppressWarnings("unused")
-public class KMSSecureStoreService extends AbstractIdleService implements SecureStoreService, DelegationTokensUpdater {
+public class KMSSecureStoreService extends AbstractIdleService implements SecureStoreService,
+    DelegationTokensUpdater {
+
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStoreService.class);
-  /** Separator between the namespace name and the key name */
+  /**
+   * Separator between the namespace name and the key name
+   */
   private static final String NAME_SEPARATOR = ":";
   /**
    * Hadoop KeyProvider interface. This is used to interact with KMS.
@@ -69,6 +72,7 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
 
   /**
    * Sets up the key provider. It reads the KMS URI from Hadoop conf to initialize the provider.
+   *
    * @param conf Hadoop configuration. core-site.xml contains the key provider URI.
    * @param namespaceQueryAdmin For querying namespace.
    * @throws IllegalArgumentException If the key provider URI is not set.
@@ -77,30 +81,34 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
    */
   @Inject
   KMSSecureStoreService(Configuration conf,
-                        NamespaceQueryAdmin namespaceQueryAdmin) throws IOException, URISyntaxException {
+      NamespaceQueryAdmin namespaceQueryAdmin) throws IOException, URISyntaxException {
     this.conf = conf;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     try {
       String keyProviderPath = conf.get(KeyProviderFactory.KEY_PROVIDER_PATH);
       if (Strings.isNullOrEmpty(keyProviderPath)) {
-        throw new IllegalArgumentException("Could not find the key provider URI. Please make sure that " +
-                                             "hadoop.security.key.provider.path is set to the KMS URI in your " +
-                                             "core-site.xml.");
+        throw new IllegalArgumentException(
+            "Could not find the key provider URI. Please make sure that " +
+                "hadoop.security.key.provider.path is set to the KMS URI in your " +
+                "core-site.xml.");
       }
       URI providerUri = new URI(keyProviderPath);
       provider = KMSClientProvider.Factory.get(providerUri, conf);
     } catch (URISyntaxException e) {
-      throw new URISyntaxException("Secure store could not be loaded. The value for hadoop.security.key.provider.path" +
-                                     "in core-site.xml is not a valid URI.", e.getReason());
+      throw new URISyntaxException(
+          "Secure store could not be loaded. The value for hadoop.security.key.provider.path" +
+              "in core-site.xml is not a valid URI.", e.getReason());
     } catch (IOException e) {
-      throw new IOException("Secure store could not be loaded. KMS KeyProvider failed to initialize", e);
+      throw new IOException(
+          "Secure store could not be loaded. KMS KeyProvider failed to initialize", e);
     }
     LOG.debug("KMS backed secure store initialized successfully.");
   }
 
   /**
-   * Stores an element in the secure store. The key is stored as namespace:name in the backing store,
-   * assuming ":" is the name separator.
+   * Stores an element in the secure store. The key is stored as namespace:name in the backing
+   * store, assuming ":" is the name separator.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
@@ -114,11 +122,12 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   // the underlying cause except in the message, so we can not throw a more specific exception.
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     if (provider.getMetadata(keyName) != null) {
-      throw new AlreadyExistsException(String.format("Updating existing key %s is not supported.", name));
+      throw new AlreadyExistsException(
+          String.format("Updating existing key %s is not supported.", name));
     }
     KeyProvider.Options options = new KeyProvider.Options(conf);
     options.setDescription(description);
@@ -133,14 +142,17 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   }
 
   /**
-   * Deletes the element with the given name. An IOException is thrown if the key does not exist. We can not check the
-   * existence of the key and then delete it atomically. So, there is no easy way to disambiguate between the key
-   * not existing or a failure to delete because of some other reason apart from the message in the exception.
+   * Deletes the element with the given name. An IOException is thrown if the key does not exist. We
+   * can not check the existence of the key and then delete it atomically. So, there is no easy way
+   * to disambiguate between the key not existing or a failure to delete because of some other
+   * reason apart from the message in the exception.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to be deleted.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
-   * @throws IOException If it failed to delete the key in the store. Unfortunately KeyProvider does not specify
-   * the underlying cause except in the message, so we can not throw a more specific exception.
+   * @throws IOException If it failed to delete the key in the store. Unfortunately KeyProvider
+   *     does not specify the underlying cause except in the message, so we can not throw a more
+   *     specific exception.
    */
   @Override
   public void delete(String namespace, String name) throws Exception {
@@ -148,20 +160,24 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
     try {
       provider.deleteKey(getKeyName(namespace, name));
     } catch (IOException e) {
-      throw new IOException("Failed to delete the key " + name + " under namespace " + namespace, e);
+      throw new IOException("Failed to delete the key " + name + " under namespace " + namespace,
+          e);
     }
   }
 
   /**
-   * List of all the entries in the secure store. No filtering or authentication is done here.
-   * This method makes two calls to the KMS provider, one to get the list of keys and then another call to
-   * get the metadata for all the keys in the requested namespace.
-   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * List of all the entries in the secure store. No filtering or authentication is done here. This
+   * method makes two calls to the KMS provider, one to get the list of keys and then another call
+   * to get the metadata for all the keys in the requested namespace.
+   *
    * @param namespace The namespace this key belongs to.
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the
+   *     store.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
-   * @throws ConcurrentModificationException If a key was deleted between the time we got the list of keys and when
-   * we got their metadata.
-   * @throws IOException If there was a problem getting the list from the underlying key provider.
+   * @throws ConcurrentModificationException If a key was deleted between the time we got the
+   *     list of keys and when we got their metadata.
+   * @throws IOException If there was a problem getting the list from the underlying key
+   *     provider.
    */
 
   // Unfortunately KeyProvider does not specify the underlying cause except in the message, so we can not throw a
@@ -178,33 +194,38 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
           keysInNamespace.add(key);
         }
       }
-      metadatas = provider.getKeysMetadata(keysInNamespace.toArray(new String[keysInNamespace.size()]));
+      metadatas = provider.getKeysMetadata(
+          keysInNamespace.toArray(new String[keysInNamespace.size()]));
     } catch (IOException e) {
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     }
     // If a key was deleted between the time we get the list of keys and their metadatas then throw an exception
     if (metadatas.length != keysInNamespace.size()) {
-      throw new ConcurrentModificationException("A key was deleted while listing was in progress. Please try again.");
+      throw new ConcurrentModificationException(
+          "A key was deleted while listing was in progress. Please try again.");
     }
 
     List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>(metadatas.length);
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
-      secureStoreMetadatas.add(new SecureStoreMetadata(keysInNamespace.get(i).substring(prefix.length()),
-                                                       metadata.getDescription(),
-                                                       metadata.getCreated().getTime(), metadata.getAttributes()));
+      secureStoreMetadatas.add(
+          new SecureStoreMetadata(keysInNamespace.get(i).substring(prefix.length()),
+              metadata.getDescription(),
+              metadata.getCreated().getTime(), metadata.getAttributes()));
     }
     return secureStoreMetadatas;
   }
 
   /**
-   * Returns the data stored in the secure store. Makes two calls to the provider, one to get the metadata and another
-   * to get the data.
+   * Returns the data stored in the secure store. Makes two calls to the provider, one to get the
+   * metadata and another to get the data.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the key.
    * @return An object representing the securely stored data associated with the name.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
-   * @throws IOException If there was a problem getting the key or the metadata from the underlying key provider.
+   * @throws IOException If there was a problem getting the key or the metadata from the
+   *     underlying key provider.
    */
   // Unfortunately KeyProvider does not specify the underlying cause except in the message, so we can not throw a
   // more specific exception.
@@ -218,13 +239,14 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
       throw new NotFoundException(new SecureKeyId(namespace, name));
     }
     SecureStoreMetadata meta = new SecureStoreMetadata(name, metadata.getDescription(),
-                                                       metadata.getCreated().getTime(), metadata.getAttributes());
+        metadata.getCreated().getTime(), metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);
     return new SecureStoreData(meta, keyVersion.getMaterial());
   }
 
   /**
    * Uses the KeyProviderDelegationTokenExtension to get the delegation token for KMS.
+   *
    * @param renewer User used to renew the delegation tokens
    * @param credentials Credentials in which to add new delegation tokens
    * @return credentials with KMS delegation token added if it was successfully retrieved.
@@ -232,7 +254,7 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   @Override
   public Credentials addDelegationTokens(String renewer, Credentials credentials) {
     KeyProviderDelegationTokenExtension tokenExtension =
-      KeyProviderDelegationTokenExtension.createKeyProviderDelegationTokenExtension(provider);
+        KeyProviderDelegationTokenExtension.createKeyProviderDelegationTokenExtension(provider);
     try {
       tokenExtension.addDelegationTokens(renewer, credentials);
     } catch (IOException e) {

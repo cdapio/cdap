@@ -26,6 +26,7 @@ import java.util.Objects;
  */
 @Deprecated
 public class ProgramRun {
+
   private final String namespace;
   private final String application;
   private final String program;
@@ -66,9 +67,9 @@ public class ProgramRun {
     ProgramRun that = (ProgramRun) o;
 
     return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application) &&
-      Objects.equals(program, that.program) &&
-      Objects.equals(run, that.run);
+        Objects.equals(application, that.application) &&
+        Objects.equals(program, that.program) &&
+        Objects.equals(run, that.run);
   }
 
   @Override

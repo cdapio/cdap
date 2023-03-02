@@ -27,7 +27,8 @@ public interface ExtendedTwillContext extends TwillContext {
   /**
    * Returns an unique ID of the current container.
    *
-   * @return the unique ID, or {@code null} if there is no unique ID in the current execution environment.
+   * @return the unique ID, or {@code null} if there is no unique ID in the current execution
+   *     environment.
    */
   @Nullable
   String getUID();

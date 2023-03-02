@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
  * Represents all information for a schedule in the schedule store.
  */
 public class ProgramScheduleRecord {
+
   private final ProgramSchedule schedule;
   private final ProgramScheduleMeta meta;
 
@@ -53,7 +54,7 @@ public class ProgramScheduleRecord {
     ProgramScheduleRecord that = (ProgramScheduleRecord) o;
 
     return Objects.equal(this.schedule, that.schedule) &&
-      Objects.equal(this.meta, that.meta);
+        Objects.equal(this.meta, that.meta);
   }
 
   @Override
@@ -64,19 +65,19 @@ public class ProgramScheduleRecord {
   @Override
   public String toString() {
     return "ProgramScheduleRecord{" +
-      "schedule=" + schedule +
-      ", meta=" + meta +
-      '}';
+        "schedule=" + schedule +
+        ", meta=" + meta +
+        '}';
   }
 
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
-      new ScheduleProgramInfo(schedule.getProgramId().getType().getSchedulableType(),
-                              schedule.getProgramId().getProgram());
+        new ScheduleProgramInfo(schedule.getProgramId().getType().getSchedulableType(),
+            schedule.getProgramId().getProgram());
     ScheduleId scheduleId = schedule.getScheduleId();
     return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(),
-                              scheduleId.getSchedule(), schedule.getDescription(), programInfo,
-                              schedule.getProperties(), schedule.getTrigger(), schedule.getConstraints(),
-                              schedule.getTimeoutMillis(), meta.getStatus().name(), meta.getLastUpdated());
+        scheduleId.getSchedule(), schedule.getDescription(), programInfo,
+        schedule.getProperties(), schedule.getTrigger(), schedule.getConstraints(),
+        schedule.getTimeoutMillis(), meta.getStatus().name(), meta.getLastUpdated());
   }
 }

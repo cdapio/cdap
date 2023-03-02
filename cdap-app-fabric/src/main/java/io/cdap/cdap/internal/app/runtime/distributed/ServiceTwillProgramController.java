@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  A ProgramController for Services that are launched through Twill.
+ * A ProgramController for Services that are launched through Twill.
  */
 final class ServiceTwillProgramController extends AbstractTwillProgramController {
 
@@ -44,8 +44,8 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
     Map<String, String> command = (Map<String, String>) value;
     try {
       changeInstances(command.get("runnable"),
-                      Integer.parseInt(command.get("newInstances")),
-                      Integer.parseInt(command.get("oldInstances")));
+          Integer.parseInt(command.get("newInstances")),
+          Integer.parseInt(command.get("oldInstances")));
     } catch (Throwable t) {
       LOG.error(String.format("Failed to change instances: %s", command), t);
       throw t;
@@ -53,10 +53,12 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
   }
 
   private synchronized void changeInstances(String runnableId,
-                                            int newInstanceCount, int oldInstanceCount) throws Exception {
-    LOG.info("Changing instances of {} from {} to {}", getProgramRunId(), oldInstanceCount, newInstanceCount);
+      int newInstanceCount, int oldInstanceCount) throws Exception {
+    LOG.info("Changing instances of {} from {} to {}", getProgramRunId(), oldInstanceCount,
+        newInstanceCount);
     getTwillController().changeInstances(runnableId, newInstanceCount).get();
-    LOG.info("Completed changing instances of {} from {} to {}", getProgramRunId(), oldInstanceCount, newInstanceCount);
+    LOG.info("Completed changing instances of {} from {} to {}", getProgramRunId(),
+        oldInstanceCount, newInstanceCount);
 
   }
 }

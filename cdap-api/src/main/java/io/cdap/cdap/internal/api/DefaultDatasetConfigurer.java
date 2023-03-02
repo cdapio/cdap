@@ -44,9 +44,11 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   }
 
   public void addDatasetSpecs(Map<String, DatasetCreationSpec> datasetSpecs) {
-    Set<String> duplicateDatasetSpecs = findDuplicates(datasetSpecs.keySet(), this.datasetSpecs.keySet());
+    Set<String> duplicateDatasetSpecs = findDuplicates(datasetSpecs.keySet(),
+        this.datasetSpecs.keySet());
     checkArgument(duplicateDatasetSpecs.isEmpty(),
-                  "Dataset Instances %s have already been added. Remove the duplicates.", duplicateDatasetSpecs);
+        "Dataset Instances %s have already been added. Remove the duplicates.",
+        duplicateDatasetSpecs);
     this.datasetSpecs.putAll(datasetSpecs);
   }
 
@@ -54,9 +56,9 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     for (Map.Entry<String, String> newEntry : datasetModules.entrySet()) {
       if (this.datasetModules.containsKey(newEntry.getKey())) {
         checkArgument(this.datasetModules.get(newEntry.getKey()).equals(newEntry.getValue()),
-                      String.format(
-                        "DatasetModule %s has been already added with different class %s",
-                        newEntry.getKey(), this.datasetModules.get(newEntry.getKey())));
+            String.format(
+                "DatasetModule %s has been already added with different class %s",
+                newEntry.getKey(), this.datasetModules.get(newEntry.getKey())));
       }
     }
     this.datasetModules.putAll(datasetModules);
@@ -76,8 +78,10 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     String moduleClassName = moduleClass.getName();
     String existingModuleClass = datasetModules.get(moduleName);
     if (existingModuleClass != null && !existingModuleClass.equals(moduleClass.getName())) {
-      throw new IllegalArgumentException(String.format("Module '%s' added multiple times with different classes " +
-        "'%s' and '%s'. Please resolve the conflict.", moduleName, existingModuleClass, moduleClassName));
+      throw new IllegalArgumentException(
+          String.format("Module '%s' added multiple times with different classes " +
+                  "'%s' and '%s'. Please resolve the conflict.", moduleName, existingModuleClass,
+              moduleClassName));
     }
     datasetModules.put(moduleName, moduleClassName);
   }
@@ -89,16 +93,19 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     String className = datasetClass.getName();
     String existingClassName = datasetModules.get(datasetClass.getName());
     if (existingClassName != null && !existingClassName.equals(className)) {
-      throw new IllegalArgumentException(String.format("Dataset class '%s' was added already as a module with class " +
-        "'%s'. Please resolve the conflict so there is only one class.", className, existingClassName));
+      throw new IllegalArgumentException(
+          String.format("Dataset class '%s' was added already as a module with class " +
+                  "'%s'. Please resolve the conflict so there is only one class.", className,
+              existingClassName));
     }
     datasetModules.put(datasetClass.getName(), className);
   }
 
   /**
-   * This adds the dataset class as a dataset type that needs to be deployed implicitly, as the results of a
-   * {@link #createDataset(String, Class)} or {@link #createDataset(String, Class, DatasetProperties)} call.
-   * The class name is recorded with a ".implicit." prefix, which can never collide with an actual class name.
+   * This adds the dataset class as a dataset type that needs to be deployed implicitly, as the
+   * results of a {@link #createDataset(String, Class)} or {@link #createDataset(String, Class,
+   * DatasetProperties)} call. The class name is recorded with a ".implicit." prefix, which can
+   * never collide with an actual class name.
    *
    * @param datasetClass the dataset class to add
    */
@@ -109,7 +116,8 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   }
 
   @Override
-  public void createDataset(String datasetInstanceName, String typeName, DatasetProperties properties) {
+  public void createDataset(String datasetInstanceName, String typeName,
+      DatasetProperties properties) {
     checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     checkArgument(typeName != null, "Dataset type name cannot be null.");
     checkArgument(properties != null, "Instance properties name cannot be null.");
@@ -117,9 +125,11 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     DatasetCreationSpec spec = new DatasetCreationSpec(datasetInstanceName, typeName, properties);
     DatasetCreationSpec existingSpec = datasetSpecs.get(datasetInstanceName);
     if (existingSpec != null && !existingSpec.equals(spec)) {
-      throw new IllegalArgumentException(String.format("DatasetInstance '%s' was added multiple times with " +
-        "different specifications. Please resolve the conflict so that there is only one specification for " +
-        "the dataset instance.", datasetInstanceName));
+      throw new IllegalArgumentException(
+          String.format("DatasetInstance '%s' was added multiple times with " +
+              "different specifications. Please resolve the conflict so that there is only one specification for "
+              +
+              "the dataset instance.", datasetInstanceName));
     }
     datasetSpecs.put(datasetInstanceName, spec);
   }
@@ -131,7 +141,7 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
   @Override
   public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
-                            DatasetProperties properties) {
+      DatasetProperties properties) {
     createDataset(datasetInstanceName, datasetClass.getName(), properties);
     addImplicitDatasetType(datasetClass);
   }
@@ -141,7 +151,7 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     createDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 
-  private void checkArgument(boolean condition, String template, Object...args) {
+  private void checkArgument(boolean condition, String template, Object... args) {
     if (!condition) {
       throw new IllegalArgumentException(String.format(template, args));
     }

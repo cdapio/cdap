@@ -24,13 +24,14 @@ import org.apache.tephra.coprocessor.ReferenceCountedSupplier;
  * Supplies instances of {@link CConfigurationCache} implementations.
  */
 public class CConfigurationCacheSupplier implements CacheSupplier<CConfigurationCache> {
+
   private static final ReferenceCountedSupplier<CConfigurationCache> referenceCountedSupplier
-    = new ReferenceCountedSupplier<>(CConfigurationCache.class.getSimpleName());
+      = new ReferenceCountedSupplier<>(CConfigurationCache.class.getSimpleName());
 
   private final Supplier<CConfigurationCache> supplier;
 
   public CConfigurationCacheSupplier(final CoprocessorEnvironment env, final String tablePrefix,
-                                     final String maxLifetimeProperty, final int defaultMaxLifetime) {
+      final String maxLifetimeProperty, final int defaultMaxLifetime) {
     this.supplier = new Supplier<CConfigurationCache>() {
       @Override
       public CConfigurationCache get() {

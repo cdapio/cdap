@@ -22,5 +22,6 @@ import io.cdap.cdap.data2.dataset2.lib.timeseries.FactTable;
  * Provider for {@link FactTable}s.
  */
 public interface FactTableSupplier {
+
   FactTable get(int resolution, int rollTime);
 }

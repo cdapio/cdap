@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * A class which contains the config of a provisioner
  */
 public class ProvisionerDetail {
+
   private final String name;
   private final String label;
   private final String description;
@@ -37,8 +38,9 @@ public class ProvisionerDetail {
   @SerializedName("beta")
   private final boolean beta;
 
-  public ProvisionerDetail(String name, String label, String description, List<Object> configurationGroups,
-                           @Nullable List<Object> filters, @Nullable Object icon, boolean beta) {
+  public ProvisionerDetail(String name, String label, String description,
+      List<Object> configurationGroups,
+      @Nullable List<Object> filters, @Nullable Object icon, boolean beta) {
     this.name = name;
     this.label = label;
     this.description = description;
@@ -71,12 +73,12 @@ public class ProvisionerDetail {
     ProvisionerDetail that = (ProvisionerDetail) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(label, that.label) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(configurationGroups, that.configurationGroups) &&
-      Objects.equals(filters, that.filters) &&
-      Objects.equals(icon, that.icon) &&
-      Objects.equals(beta, that.beta);
+        Objects.equals(label, that.label) &&
+        Objects.equals(description, that.description) &&
+        Objects.equals(configurationGroups, that.configurationGroups) &&
+        Objects.equals(filters, that.filters) &&
+        Objects.equals(icon, that.icon) &&
+        Objects.equals(beta, that.beta);
   }
 
   @Override

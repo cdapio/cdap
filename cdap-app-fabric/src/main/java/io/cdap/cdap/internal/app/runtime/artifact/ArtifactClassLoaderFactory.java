@@ -40,10 +40,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
- * cleaning up the directory when the classloader is closed.
+ * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the
+ * artifact and cleaning up the directory when the classloader is closed.
  */
 final class ArtifactClassLoaderFactory {
+
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
 
   private final CConfiguration cConf;
@@ -57,22 +58,23 @@ final class ArtifactClassLoaderFactory {
   }
 
   ArtifactClassLoaderFactory(CConfiguration cConf,
-                             @Nullable ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+      @Nullable ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.cConf = cConf;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
 
   /**
-   * Create a classloader that loads classes from a directory where an artifact jar has been expanded, with access to
-   * packages that all program type has access to. The classloader created is only for artifact inspection purpose
-   * and shouldn't be used for program execution as it doesn't have the proper class filtering for the specific
-   * program type for the program being executed.
+   * Create a classloader that loads classes from a directory where an artifact jar has been
+   * expanded, with access to packages that all program type has access to. The classloader created
+   * is only for artifact inspection purpose and shouldn't be used for program execution as it
+   * doesn't have the proper class filtering for the specific program type for the program being
+   * executed.
    *
    * @param unpackDir the directory where the artifact jar has been expanded
-   * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
-   *         all temporary resources created for the classloader will be removed
+   * @return a closeable classloader based off the specified artifact; on closing the returned
+   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    */
   CloseableClassLoader createClassLoader(File unpackDir) {
     ClassLoader sparkClassLoader = null;
@@ -82,7 +84,7 @@ final class ArtifactClassLoaderFactory {
         // It is needed because we don't know what program types that an artifact might have.
         // TODO: CDAP-5613. We shouldn't always expose the Spark classes.
         sparkClassLoader = programRuntimeProviderLoader.get(ProgramType.SPARK)
-          .createProgramClassLoader(cConf, ProgramType.SPARK);
+            .createProgramClassLoader(cConf, ProgramType.SPARK);
       } catch (Exception e) {
         // If Spark is not supported, exception is expected. We'll use the default filter.
         LOG.warn("Spark is not supported. Not using ProgramClassLoader from Spark");
@@ -95,7 +97,7 @@ final class ArtifactClassLoaderFactory {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir, sparkClassLoader);
     } else {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
-                                                  FilterClassLoader.create(getClass().getClassLoader()));
+          FilterClassLoader.create(getClass().getClassLoader()));
     }
 
     final ClassLoader finalProgramClassLoader = programClassLoader;
@@ -107,18 +109,20 @@ final class ArtifactClassLoaderFactory {
   }
 
   /**
-   * Unpack the given {@code artifactLocation} to a temporary directory and call
-   * {@link #createClassLoader(File)} to create the {@link ClassLoader}.
+   * Unpack the given {@code artifactLocation} to a temporary directory and call {@link
+   * #createClassLoader(File)} to create the {@link ClassLoader}.
    *
    * @param artifactLocation the location of the artifact to create the classloader from
-   * @return a closeable classloader based off the specified artifact; on closing the returned {@link ClassLoader},
-   *         all temporary resources created for the classloader will be removed
+   * @return a closeable classloader based off the specified artifact; on closing the returned
+   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
-  CloseableClassLoader createClassLoader(Location artifactLocation, EntityImpersonator entityImpersonator) {
+  CloseableClassLoader createClassLoader(Location artifactLocation,
+      EntityImpersonator entityImpersonator) {
     try {
       ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
-        () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
+          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
+              () -> DirUtils.createTempDir(tmpDir)));
 
       CloseableClassLoader classLoader = createClassLoader(classLoaderFolder.getDir());
       return new CloseableClassLoader(classLoader, () -> {
@@ -131,16 +135,16 @@ final class ArtifactClassLoaderFactory {
   }
 
   /**
-   * Creates a multi level classloader where each location in the specified iterator corresponds to a classloader whose
-   * parent is built from the location behind it.
+   * Creates a multi level classloader where each location in the specified iterator corresponds to
+   * a classloader whose parent is built from the location behind it.
    *
    * @param artifactLocations the locations of the artifact to create the classloader from
-   * @return a closeable classloader based off the specified artifacts; on closing the returned {@link ClassLoader},
-   *         all temporary resources created for the classloader will be removed
+   * @return a closeable classloader based off the specified artifacts; on closing the returned
+   *     {@link ClassLoader}, all temporary resources created for the classloader will be removed
    * @see #createClassLoader(File)
    */
   CloseableClassLoader createClassLoader(Iterator<Location> artifactLocations,
-                                         EntityImpersonator entityImpersonator) {
+      EntityImpersonator entityImpersonator) {
     if (!artifactLocations.hasNext()) {
       throw new IllegalArgumentException("Cannot create a classloader without an artifact.");
     }
@@ -152,11 +156,13 @@ final class ArtifactClassLoaderFactory {
 
     try {
       ClassLoaderFolder classLoaderFolder = entityImpersonator.impersonate(
-        () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation, () -> DirUtils.createTempDir(tmpDir)));
+          () -> BundleJarUtil.prepareClassLoaderFolder(artifactLocation,
+              () -> DirUtils.createTempDir(tmpDir)));
 
-      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations, entityImpersonator);
+      CloseableClassLoader parentClassLoader = createClassLoader(artifactLocations,
+          entityImpersonator);
       return new CloseableClassLoader(new DirectoryClassLoader(classLoaderFolder.getDir(),
-                                                               parentClassLoader, "lib"), () -> {
+          parentClassLoader, "lib"), () -> {
         Closeables.closeQuietly(parentClassLoader);
         Closeables.closeQuietly(classLoaderFolder);
       });

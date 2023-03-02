@@ -56,7 +56,8 @@ public class ByteCodeClassLoader extends ClassLoader {
   }
 
   @Override
-  public synchronized Class<?> loadClass(String className, boolean resolveIt) throws ClassNotFoundException {
+  public synchronized Class<?> loadClass(String className, boolean resolveIt)
+      throws ClassNotFoundException {
 
     Class<?> result = findLoadedClass(className);
     if (result != null) {

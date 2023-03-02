@@ -24,7 +24,8 @@ import java.util.TimeZone;
 /**
  * A Constraint that defines a time range in which the schedule is allowed to execute.
  */
-public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint implements CheckableConstraint {
+public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint implements
+    CheckableConstraint {
 
   // only is satisfied within the range [startTime, endTime)
   // this are transient so they don't get serialized to Json
@@ -71,8 +72,10 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
     int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
 
-    boolean pastOrEqualStartRange = hourOfDay > startHour || (hourOfDay == startHour && minute >= startMinute);
-    boolean pastOrEqualEndRange = hourOfDay > endHour || (hourOfDay == endHour && minute >= endMinute);
+    boolean pastOrEqualStartRange =
+        hourOfDay > startHour || (hourOfDay == startHour && minute >= startMinute);
+    boolean pastOrEqualEndRange =
+        hourOfDay > endHour || (hourOfDay == endHour && minute >= endMinute);
 
     if (isStartTimeSmaller) {
       // [6AM,10PM)
@@ -103,6 +106,6 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                calendar.getTimeInMillis());
+        calendar.getTimeInMillis());
   }
 }

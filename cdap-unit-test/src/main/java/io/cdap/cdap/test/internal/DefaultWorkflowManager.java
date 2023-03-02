@@ -39,12 +39,14 @@ import javax.annotation.Nullable;
 /**
  * A default implementation of {@link WorkflowManager}.
  */
-public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements WorkflowManager {
+public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManager> implements
+    WorkflowManager {
+
   private final Id.Program programId;
   private final AppFabricClient appFabricClient;
 
   public DefaultWorkflowManager(Id.Program programId, AppFabricClient appFabricClient,
-                                DefaultApplicationManager applicationManager) {
+      DefaultApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.programId = programId;
     this.appFabricClient = appFabricClient;
@@ -54,7 +56,7 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
   public List<ScheduleDetail> getProgramSchedules() throws UnauthorizedException {
     try {
       return appFabricClient.getProgramSchedules(
-        programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
+          programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
     } catch (NotFoundException e) {
       // this can only happen if the workflow was deleted, unlikely during a test but if so, empty list is correct
       return Collections.emptyList();
@@ -63,24 +65,28 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
 
   @Override
   public WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
-                                      @Nullable String key) throws NotFoundException, UnauthorizedException {
-    return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                            runId, scope, key);
+      @Nullable String key) throws NotFoundException, UnauthorizedException {
+    return appFabricClient.getWorkflowToken(programId.getNamespaceId(),
+        programId.getApplicationId(), programId.getId(),
+        runId, scope, key);
   }
 
   @Override
-  public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
-                                                @Nullable String key) throws NotFoundException, UnauthorizedException {
-    return appFabricClient.getWorkflowToken(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                            runId, nodeName, scope, key);
+  public WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName,
+      @Nullable WorkflowToken.Scope scope,
+      @Nullable String key) throws NotFoundException, UnauthorizedException {
+    return appFabricClient.getWorkflowToken(programId.getNamespaceId(),
+        programId.getApplicationId(), programId.getId(),
+        runId, nodeName, scope, key);
   }
 
   @Override
   public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
-    throws NotFoundException, UnauthorizedException {
+      throws NotFoundException, UnauthorizedException {
     return appFabricClient.getWorkflowNodeStates(
-      new ProgramRunId(programId.getNamespaceId(), programId.getApplicationId(), programId.getType(),
-                       programId.getId(), workflowRunId));
+        new ProgramRunId(programId.getNamespaceId(), programId.getApplicationId(),
+            programId.getType(),
+            programId.getId(), workflowRunId));
   }
 
   @Override
@@ -90,7 +96,8 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
       @Override
       public void suspend() throws AccessException {
         try {
-          appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+          appFabricClient.suspend(programId.getNamespaceId(), programId.getApplicationId(),
+              schedName);
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
@@ -101,7 +108,8 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
       @Override
       public void resume() throws AccessException {
         try {
-          appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(), schedName);
+          appFabricClient.resume(programId.getNamespaceId(), programId.getApplicationId(),
+              schedName);
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {
@@ -112,8 +120,9 @@ public class DefaultWorkflowManager extends AbstractProgramManager<WorkflowManag
       @Override
       public String status(int expectedCode) throws AccessException {
         try {
-          return appFabricClient.scheduleStatus(programId.getNamespaceId(), programId.getApplicationId(),
-                                                schedName, expectedCode);
+          return appFabricClient.scheduleStatus(programId.getNamespaceId(),
+              programId.getApplicationId(),
+              schedName, expectedCode);
         } catch (AccessException e) {
           throw e;
         } catch (Exception e) {

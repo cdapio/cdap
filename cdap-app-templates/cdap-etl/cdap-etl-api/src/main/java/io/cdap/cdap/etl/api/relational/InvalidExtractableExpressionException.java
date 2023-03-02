@@ -17,9 +17,11 @@
 package io.cdap.cdap.etl.api.relational;
 
 /**
- * This exception is thrown when {@link ExtractableExpression#extract()} is called on an invalid expression.
+ * This exception is thrown when {@link ExtractableExpression#extract()} is called on an invalid
+ * expression.
  */
 public class InvalidExtractableExpressionException extends RuntimeException {
+
   public InvalidExtractableExpressionException() {
     super("ExtractableExpression is not valid");
   }

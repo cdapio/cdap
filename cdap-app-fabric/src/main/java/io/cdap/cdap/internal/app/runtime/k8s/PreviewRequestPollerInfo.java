@@ -43,8 +43,8 @@ public class PreviewRequestPollerInfo {
   @Override
   public String toString() {
     return "PreviewRequestPollerInfo{" +
-      "instanceId=" + instanceId +
-      ", instanceUid='" + instanceUid + '\'' +
-      '}';
+        "instanceId=" + instanceId +
+        ", instanceUid='" + instanceUid + '\'' +
+        '}';
   }
 }

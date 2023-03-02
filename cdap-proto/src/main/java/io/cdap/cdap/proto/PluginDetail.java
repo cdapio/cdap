@@ -19,6 +19,7 @@ package io.cdap.cdap.proto;
  * Represents a plugin id and name in an HTTP response.
  */
 public class PluginDetail {
+
   private final String id;
   private final String name;
   private final String type;

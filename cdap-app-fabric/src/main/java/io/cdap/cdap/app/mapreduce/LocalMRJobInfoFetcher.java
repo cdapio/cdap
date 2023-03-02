@@ -78,40 +78,41 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
     Table<String, String, Long> mapTaskMetrics = HashBasedTable.create();
     Table<String, String, Long> reduceTaskMetrics = HashBasedTable.create();
 
-
     // Populate mapTaskMetrics and reduce Task Metrics via MetricStore. Used to construct MRTaskInfo below.
     Map<String, String> metricNamesToCounters = Maps.newHashMap();
     metricNamesToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS),
-                             TaskCounter.MAP_INPUT_RECORDS.name());
+        TaskCounter.MAP_INPUT_RECORDS.name());
     metricNamesToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS),
-                             TaskCounter.MAP_OUTPUT_RECORDS.name());
+        TaskCounter.MAP_OUTPUT_RECORDS.name());
     metricNamesToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_BYTES),
-                             TaskCounter.MAP_OUTPUT_BYTES.name());
+        TaskCounter.MAP_OUTPUT_BYTES.name());
     metricNamesToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_COMPLETION),
-                             MapReduceMetrics.METRIC_TASK_COMPLETION);
+        MapReduceMetrics.METRIC_TASK_COMPLETION);
 
     // get metrics grouped by instance-id for the map tasks
     queryGroupedAggregates(mapTags, mapTaskMetrics, metricNamesToCounters);
 
     Map<String, Long> mapProgress = Maps.newHashMap();
     if (mapTaskMetrics.columnMap().containsKey(MapReduceMetrics.METRIC_TASK_COMPLETION)) {
-      mapProgress = Maps.newHashMap(mapTaskMetrics.columnMap().remove(MapReduceMetrics.METRIC_TASK_COMPLETION));
+      mapProgress = Maps.newHashMap(
+          mapTaskMetrics.columnMap().remove(MapReduceMetrics.METRIC_TASK_COMPLETION));
     }
 
     Map<String, String> reduceMetricsToCounters = Maps.newHashMap();
     reduceMetricsToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_INPUT_RECORDS),
-                                TaskCounter.REDUCE_INPUT_RECORDS.name());
+        TaskCounter.REDUCE_INPUT_RECORDS.name());
     reduceMetricsToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_OUTPUT_RECORDS),
-                                TaskCounter.REDUCE_OUTPUT_RECORDS.name());
+        TaskCounter.REDUCE_OUTPUT_RECORDS.name());
     reduceMetricsToCounters.put(prependSystem(MapReduceMetrics.METRIC_TASK_COMPLETION),
-                                MapReduceMetrics.METRIC_TASK_COMPLETION);
+        MapReduceMetrics.METRIC_TASK_COMPLETION);
 
     // get metrics grouped by instance-id for the map tasks
     queryGroupedAggregates(reduceTags, reduceTaskMetrics, reduceMetricsToCounters);
 
     Map<String, Long> reduceProgress = Maps.newHashMap();
     if (reduceTaskMetrics.columnMap().containsKey(MapReduceMetrics.METRIC_TASK_COMPLETION)) {
-      reduceProgress = Maps.newHashMap(reduceTaskMetrics.columnMap().remove(MapReduceMetrics.METRIC_TASK_COMPLETION));
+      reduceProgress = Maps.newHashMap(
+          reduceTaskMetrics.columnMap().remove(MapReduceMetrics.METRIC_TASK_COMPLETION));
     }
 
     // Construct MRTaskInfos from the information we can get from Metric system.
@@ -119,14 +120,14 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
     for (Map.Entry<String, Map<String, Long>> taskEntry : mapTaskMetrics.rowMap().entrySet()) {
       String mapTaskId = taskEntry.getKey();
       mapTaskInfos.add(new MRTaskInfo(mapTaskId, null, null, null,
-                                      mapProgress.get(mapTaskId) / 100.0F, taskEntry.getValue()));
+          mapProgress.get(mapTaskId) / 100.0F, taskEntry.getValue()));
     }
 
     List<MRTaskInfo> reduceTaskInfos = Lists.newArrayList();
     for (Map.Entry<String, Map<String, Long>> taskEntry : reduceTaskMetrics.rowMap().entrySet()) {
       String reduceTaskId = taskEntry.getKey();
       reduceTaskInfos.add(new MRTaskInfo(reduceTaskId, null, null, null,
-                                         reduceProgress.get(reduceTaskId) / 100.0F, taskEntry.getValue()));
+          reduceProgress.get(reduceTaskId) / 100.0F, taskEntry.getValue()));
     }
 
     return getJobCounters(mapTags, reduceTags, mapTaskInfos, reduceTaskInfos, runId);
@@ -134,27 +135,32 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
 
 
   private MRJobInfo getJobCounters(Map<String, String> mapTags, Map<String, String> reduceTags,
-                                   List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos,
-                                   Id.Run runId) throws IOException {
+      List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos,
+      Id.Run runId) throws IOException {
     HashMap<String, Long> metrics = Maps.newHashMap();
 
     Map<String, String> mapMetricsToCounters =
-      ImmutableMap.of(prependSystem(MapReduceMetrics.METRIC_INPUT_RECORDS), TaskCounter.MAP_INPUT_RECORDS.name(),
-                      prependSystem(MapReduceMetrics.METRIC_OUTPUT_RECORDS), TaskCounter.MAP_OUTPUT_RECORDS.name(),
-                      prependSystem(MapReduceMetrics.METRIC_BYTES), TaskCounter.MAP_OUTPUT_BYTES.name(),
-                      prependSystem(MapReduceMetrics.METRIC_COMPLETION), MapReduceMetrics.METRIC_COMPLETION);
+        ImmutableMap.of(prependSystem(MapReduceMetrics.METRIC_INPUT_RECORDS),
+            TaskCounter.MAP_INPUT_RECORDS.name(),
+            prependSystem(MapReduceMetrics.METRIC_OUTPUT_RECORDS),
+            TaskCounter.MAP_OUTPUT_RECORDS.name(),
+            prependSystem(MapReduceMetrics.METRIC_BYTES), TaskCounter.MAP_OUTPUT_BYTES.name(),
+            prependSystem(MapReduceMetrics.METRIC_COMPLETION), MapReduceMetrics.METRIC_COMPLETION);
 
     getAggregates(mapTags, mapMetricsToCounters, metrics);
     float mapProgress = metrics.remove(MapReduceMetrics.METRIC_COMPLETION) / 100.0F;
 
     Map<String, String> reduceMetricsToCounters =
-      ImmutableMap.of(prependSystem(MapReduceMetrics.METRIC_INPUT_RECORDS), TaskCounter.REDUCE_INPUT_RECORDS.name(),
-                      prependSystem(MapReduceMetrics.METRIC_OUTPUT_RECORDS), TaskCounter.REDUCE_OUTPUT_RECORDS.name(),
-                      prependSystem(MapReduceMetrics.METRIC_COMPLETION), MapReduceMetrics.METRIC_COMPLETION);
+        ImmutableMap.of(prependSystem(MapReduceMetrics.METRIC_INPUT_RECORDS),
+            TaskCounter.REDUCE_INPUT_RECORDS.name(),
+            prependSystem(MapReduceMetrics.METRIC_OUTPUT_RECORDS),
+            TaskCounter.REDUCE_OUTPUT_RECORDS.name(),
+            prependSystem(MapReduceMetrics.METRIC_COMPLETION), MapReduceMetrics.METRIC_COMPLETION);
 
     getAggregates(reduceTags, reduceMetricsToCounters, metrics);
     float reduceProgress = metrics.remove(MapReduceMetrics.METRIC_COMPLETION) / 100.0F;
-    return new MRJobInfo(mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos, false);
+    return new MRJobInfo(mapProgress, reduceProgress, metrics, mapTaskInfos, reduceTaskInfos,
+        false);
   }
 
   private String prependSystem(String metric) {
@@ -162,8 +168,9 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
   }
 
   private void getAggregates(Map<String, String> tags, Map<String, String> metricsToCounters,
-                             Map<String, Long> result) throws IOException {
-    Collection<MetricTimeSeries> query = metricsSystemClient.query(tags, metricsToCounters.keySet());
+      Map<String, Long> result) throws IOException {
+    Collection<MetricTimeSeries> query = metricsSystemClient.query(tags,
+        metricsToCounters.keySet());
     // initialize elements to zero
     for (String counterName : metricsToCounters.values()) {
       result.put(counterName, 0L);
@@ -176,17 +183,19 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
   }
 
   // queries MetricStore for one metric across all tasks of a certain TaskType, using GroupBy InstanceId
-  private void queryGroupedAggregates(Map<String, String> tags, Table<String, String, Long> allTaskMetrics,
-                                      Map<String, String> metricsToCounters) throws IOException {
+  private void queryGroupedAggregates(Map<String, String> tags,
+      Table<String, String, Long> allTaskMetrics,
+      Map<String, String> metricsToCounters) throws IOException {
 
     Collection<MetricTimeSeries> query = metricsSystemClient.query(
-      tags, metricsToCounters.keySet(), Collections.singleton(Constants.Metrics.Tag.INSTANCE_ID));
+        tags, metricsToCounters.keySet(), Collections.singleton(Constants.Metrics.Tag.INSTANCE_ID));
 
     for (MetricTimeSeries metricTimeSeries : query) {
       List<TimeValue> timeValues = metricTimeSeries.getTimeValues();
       TimeValue timeValue = Iterables.getOnlyElement(timeValues);
       String taskId = metricTimeSeries.getTagValues().get(Constants.Metrics.Tag.INSTANCE_ID);
-      allTaskMetrics.put(taskId, metricsToCounters.get(metricTimeSeries.getMetricName()), timeValue.getValue());
+      allTaskMetrics.put(taskId, metricsToCounters.get(metricTimeSeries.getMetricName()),
+          timeValue.getValue());
     }
   }
 }

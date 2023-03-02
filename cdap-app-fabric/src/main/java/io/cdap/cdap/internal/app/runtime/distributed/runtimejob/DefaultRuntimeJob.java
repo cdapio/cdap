@@ -153,19 +153,20 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
- * Default implementation of a {@link RuntimeJob}. This class is responsible for submitting cdap program to a
- * {@link TwillRunner} provided by {@link RuntimeJobEnvironment}.
+ * Default implementation of a {@link RuntimeJob}. This class is responsible for submitting cdap
+ * program to a {@link TwillRunner} provided by {@link RuntimeJobEnvironment}.
  */
 public class DefaultRuntimeJob implements RuntimeJob {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultRuntimeJob.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG,
+      LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
   private static final long STOP_PROPAGATION_DELAY_SECS = 30L;
 
   private static final Gson GSON =
-    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+      ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+          .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+          .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
 
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
   private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
@@ -180,31 +181,38 @@ public class DefaultRuntimeJob implements RuntimeJob {
     SLF4JBridgeHandler.install();
 
     // Get Program Options
-    ProgramOptions programOpts = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
-                                              ProgramOptions.class);
-    ProgramRunId programRunId = programOpts.getProgramId().run(ProgramRunners.getRunId(programOpts));
+    ProgramOptions programOpts = readJsonFile(
+        new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
+        ProgramOptions.class);
+    ProgramRunId programRunId = programOpts.getProgramId()
+        .run(ProgramRunners.getRunId(programOpts));
     ProgramId programId = programRunId.getParent();
 
     Arguments systemArgs = programOpts.getArguments();
 
     // Setup logging context for the program
-    LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
-                                                                                             systemArgs.asMap()));
+    LoggingContextAccessor.setLoggingContext(
+        LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+            systemArgs.asMap()));
     // Get the cluster launch type
-    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
+    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER),
+        Cluster.class);
 
     // Get App spec
-    ApplicationSpecification appSpec = readJsonFile(new File(DistributedProgramRunner.APP_SPEC_FILE_NAME),
-                                                    ApplicationSpecification.class);
+    ApplicationSpecification appSpec = readJsonFile(
+        new File(DistributedProgramRunner.APP_SPEC_FILE_NAME),
+        ApplicationSpecification.class);
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv, programOpts),
-                                                           programRunId, programOpts));
+    Injector injector = Guice.createInjector(
+        createModules(runtimeJobEnv, createCConf(runtimeJobEnv, programOpts),
+            programRunId, programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
     // Initialize log appender
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(
+        LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
     SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
 
@@ -219,8 +227,9 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     try {
       Map<String, String> systemArguments = new HashMap<>(programOpts.getArguments().asMap());
-      File pluginDir = new File(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
-                                                                     DistributedProgramRunner.PLUGIN_DIR));
+      File pluginDir = new File(
+          programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+              DistributedProgramRunner.PLUGIN_DIR));
       // create a directory to store plugin artifacts for the regeneration of app spec to fetch plugin artifacts
       DirUtils.mkdirs(pluginDir);
 
@@ -230,18 +239,19 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
       // remember the file names in the artifact folder before app regeneration
       List<String> pluginFiles = DirUtils.listFiles(pluginDir, File::isFile).stream()
-        .map(File::getName)
-        .collect(Collectors.toList());
+          .map(File::getName)
+          .collect(Collectors.toList());
 
       ApplicationSpecification generatedAppSpec =
-        regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId, appSpec,
-                          programDescriptor, configuratorFactory);
+          regenerateAppSpec(systemArguments, programOpts.getUserArguments().asMap(), programId,
+              appSpec,
+              programDescriptor, configuratorFactory);
       appSpec = generatedAppSpec != null ? generatedAppSpec : appSpec;
       programDescriptor = new ProgramDescriptor(programDescriptor.getProgramId(), appSpec);
 
       List<String> pluginFilesAfter = DirUtils.listFiles(pluginDir, File::isFile).stream()
-        .map(File::getName)
-        .collect(Collectors.toList());
+          .map(File::getName)
+          .collect(Collectors.toList());
 
       if (pluginFilesAfter.isEmpty()) {
         systemArguments.remove(ProgramOptionConstants.PLUGIN_DIR);
@@ -254,16 +264,19 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
 
       // update program options
-      programOpts = new SimpleProgramOptions(programOpts.getProgramId(), new BasicArguments(systemArguments),
-                                             programOpts.getUserArguments(), programOpts.isDebug());
+      programOpts = new SimpleProgramOptions(programOpts.getProgramId(),
+          new BasicArguments(systemArguments),
+          programOpts.getUserArguments(), programOpts.isDebug());
     } catch (Exception e) {
-      LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec", programId, e);
+      LOG.warn("Failed to regenerate the app spec for program {}, using the existing app spec",
+          programId, e);
     }
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
-      ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
+      ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class)
+          .create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
@@ -271,12 +284,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
         controllerFuture.complete(controller);
         runtimeClientService.onProgramStopRequested(terminateTs -> {
           long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
-            - System.currentTimeMillis();
+              - System.currentTimeMillis();
 
           if (timeout < 0) {
             // If the timeout is smaller than the propagation delay, use the propagation delay as timeout
             // to give the remote process some time to shutdown
-            LOG.debug("Terminating program run {} short timeout {} seconds", programRunId, STOP_PROPAGATION_DELAY_SECS);
+            LOG.debug("Terminating program run {} short timeout {} seconds", programRunId,
+                STOP_PROPAGATION_DELAY_SECS);
             controller.stop(STOP_PROPAGATION_DELAY_SECS, TimeUnit.SECONDS);
           } else {
             LOG.debug("Terminating program run {} with timeout {} ms", programRunId, timeout);
@@ -342,25 +356,27 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
   @Nullable
   private ApplicationSpecification regenerateAppSpec(
-    Map<String, String> systemArguments, Map<String, String> userArguments, ProgramId programId,
-    ApplicationSpecification existingAppSpec, ProgramDescriptor programDescriptor,
-    ConfiguratorFactory configuratorFactory) throws InterruptedException, ExecutionException, TimeoutException {
+      Map<String, String> systemArguments, Map<String, String> userArguments, ProgramId programId,
+      ApplicationSpecification existingAppSpec, ProgramDescriptor programDescriptor,
+      ConfiguratorFactory configuratorFactory)
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     String appClassName = systemArguments.get(ProgramOptionConstants.APPLICATION_CLASS);
     Location programJarLocation = Locations.toLocation(
-      new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
-    
+        new File(systemArguments.get(ProgramOptionConstants.PROGRAM_JAR)));
+
     AppDeploymentInfo deploymentInfo = AppDeploymentInfo.builder()
-      .setArtifactId(programDescriptor.getArtifactId())
-      .setArtifactLocation(programJarLocation)
-      .setApplicationClass(new ApplicationClass(appClassName, "", null))
-      .setApplicationId(programId.getParent())
-      .setConfigString(existingAppSpec.getConfiguration())
-      .setOwnerPrincipal(null)
-      .setUpdateSchedules(false)
-      .setRuntimeInfo(new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
-      .setDeployedApplicationSpec(existingAppSpec)
-      .build();
+        .setArtifactId(programDescriptor.getArtifactId())
+        .setArtifactLocation(programJarLocation)
+        .setApplicationClass(new ApplicationClass(appClassName, "", null))
+        .setApplicationId(programId.getParent())
+        .setConfigString(existingAppSpec.getConfiguration())
+        .setOwnerPrincipal(null)
+        .setUpdateSchedules(false)
+        .setRuntimeInfo(
+            new AppDeploymentRuntimeInfo(existingAppSpec, userArguments, systemArguments))
+        .setDeployedApplicationSpec(existingAppSpec)
+        .build();
 
     Configurator configurator = configuratorFactory.create(deploymentInfo);
     ListenableFuture<ConfigResponse> future = configurator.config();
@@ -392,12 +408,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   /**
-   * Create {@link CConfiguration} with the given {@link RuntimeJobEnvironment}.
-   * Properties returned by the {@link RuntimeJobEnvironment#getProperties()} will be set into the returned
-   * {@link CConfiguration} instance.
+   * Create {@link CConfiguration} with the given {@link RuntimeJobEnvironment}. Properties returned
+   * by the {@link RuntimeJobEnvironment#getProperties()} will be set into the returned {@link
+   * CConfiguration} instance.
    */
   private CConfiguration createCConf(RuntimeJobEnvironment runtimeJobEnv,
-                                     ProgramOptions programOpts) throws IOException {
+      ProgramOptions programOpts) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(DistributedProgramRunner.CDAP_CONF_FILE_NAME).toURI().toURL());
@@ -415,7 +431,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
       Path serviceProxySecretFile = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
       if (Files.exists(serviceProxySecretFile)) {
         cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
-                  new String(Files.readAllBytes(serviceProxySecretFile), StandardCharsets.UTF_8));
+            new String(Files.readAllBytes(serviceProxySecretFile), StandardCharsets.UTF_8));
       }
     }
 
@@ -423,7 +439,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     Path tokenFile = Paths.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
     if (Files.exists(tokenFile)) {
       cConf.set(Constants.Security.Authentication.RUNTIME_TOKEN,
-                new String(Files.readAllBytes(tokenFile), StandardCharsets.UTF_8));
+          new String(Files.readAllBytes(tokenFile), StandardCharsets.UTF_8));
     }
 
     return cConf;
@@ -434,28 +450,30 @@ public class DefaultRuntimeJob implements RuntimeJob {
       return GSON.fromJson(reader, type);
     } catch (Exception e) {
       throw new IllegalArgumentException(
-        String.format("Unable to read %s file at %s", type.getSimpleName(), file.getAbsolutePath()), e);
+          String.format("Unable to read %s file at %s", type.getSimpleName(),
+              file.getAbsolutePath()), e);
     }
   }
 
   private Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                ProgramDescriptor programDescriptor, ProgramOptions options) throws IOException {
+      ProgramDescriptor programDescriptor, ProgramOptions options) throws IOException {
 
     Location programJarLocation = Locations.toLocation(
-      new File(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR)));
+        new File(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR)));
 
     ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-      programJarLocation, () -> createTempDirectory(cConf, options.getProgramId(),
-                                                    options.getArguments().getOption(ProgramOptionConstants.RUN_ID)));
-    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation, classLoaderFolder.getDir());
+        programJarLocation, () -> createTempDirectory(cConf, options.getProgramId(),
+            options.getArguments().getOption(ProgramOptionConstants.RUN_ID)));
+    return Programs.create(cConf, programRunner, programDescriptor, programJarLocation,
+        classLoaderFolder.getDir());
   }
 
   private File createTempDirectory(CConfiguration cConf, ProgramId programId, String runId) {
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)).getAbsoluteFile();
     File dir = new File(tempDir, String.format("%s.%s.%s.%s.%s",
-                                               programId.getType().name().toLowerCase(),
-                                               programId.getNamespace(), programId.getApplication(),
-                                               programId.getProgram(), runId));
+        programId.getType().name().toLowerCase(),
+        programId.getNamespace(), programId.getApplication(),
+        programId.getProgram(), runId));
     DirUtils.mkdirs(dir);
     return dir;
   }
@@ -464,12 +482,14 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * Returns list of guice modules used to start the program run.
    */
   @VisibleForTesting
-  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId,
-                             ProgramOptions programOpts) {
+  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf,
+      ProgramRunId programRunId,
+      ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
 
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
+        programOpts);
     modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
 
     modules.add(new IOModule());
@@ -488,38 +508,43 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
         // Bindings from the environment
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-          .toInstance(runtimeJobEnv.getTwillRunner());
+            .toInstance(runtimeJobEnv.getTwillRunner());
         bind(LocationFactory.class).toInstance(runtimeJobEnv.getLocationFactory());
 
         MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
-          binder(), ProgramType.class, ProgramRunner.class);
+            binder(), ProgramType.class, ProgramRunner.class);
 
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
         bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-          .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class).in(Scopes.SINGLETON);
+            .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class)
+            .in(Scopes.SINGLETON);
         bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
 
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE)
+            .to(DistributedMapReduceProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW)
+            .to(DistributedWorkflowProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER)
+            .to(DistributedWorkerProgramRunner.class);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
         bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
 
         install(
-          new FactoryModuleBuilder()
-            .implement(Configurator.class, InMemoryConfigurator.class)
-            .build(ConfiguratorFactory.class)
+            new FactoryModuleBuilder()
+                .implement(Configurator.class, InMemoryConfigurator.class)
+                .build(ConfiguratorFactory.class)
         );
 
         bind(String.class)
-          .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
-          .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
-                                                           DistributedProgramRunner.PLUGIN_DIR));
+            .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
+            .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,
+                DistributedProgramRunner.PLUGIN_DIR));
         bind(PluginFinder.class).to(RemoteIsolatedPluginFinder.class);
-        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
+            .in(Scopes.SINGLETON);
         bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
       }
     });
@@ -540,7 +565,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     services.add(injector.getInstance(MessagingHttpService.class));
 
     // Metrics need TMS, hence start it after TMS.
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    MetricsCollectionService metricsCollectionService = injector.getInstance(
+        MetricsCollectionService.class);
     services.add(metricsCollectionService);
 
     // Starts the traffic relay if monitoring is done through SSH tunnel
@@ -552,10 +578,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // Creates a service to emit profile metrics
     ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
-    ProfileId profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs.asMap())
-      .orElseThrow(() -> new IllegalStateException("Missing profile information for program run " + programRunId));
+    ProfileId profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(),
+            systemArgs.asMap())
+        .orElseThrow(() -> new IllegalStateException(
+            "Missing profile information for program run " + programRunId));
     services.add(new ProfileMetricService(metricsCollectionService, programRunId, profileId,
-                                          cluster.getNodes().size()));
+        cluster.getNodes().size()));
     return services;
   }
 
@@ -567,7 +595,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
   }
 
-  private void stopCoreServices(Deque<Service> coreServices, LogAppenderInitializer logAppenderInitializer) {
+  private void stopCoreServices(Deque<Service> coreServices,
+      LogAppenderInitializer logAppenderInitializer) {
     // Close the log appender first to make sure all important logs are published.
     logAppenderInitializer.close();
 
@@ -577,7 +606,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try {
         service.stopAndWait();
       } catch (Exception e) {
-        LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
+        LOG.warn("Exception raised when stopping service {} during program termination.", service,
+            e);
       }
     }
   }
@@ -606,7 +636,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
       // Set the traffic relay service address to cConf. It will be used as the proxy address for all worker processes
       Networks.setAddress(cConf, Constants.RuntimeMonitor.SERVICE_PROXY_ADDRESS,
-                          ResolvingDiscoverable.resolve(relayServer.getBindAddress()));
+          ResolvingDiscoverable.resolve(relayServer.getBindAddress()));
 
       LOG.info("Runtime traffic relay server started on {}", relayServer.getBindAddress());
     }
@@ -620,7 +650,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     @Nullable
     private InetSocketAddress getTrafficRelayTarget() {
       File serviceProxyFile = getServiceProxyFile();
-      try (Reader reader = Files.newBufferedReader(serviceProxyFile.toPath(), StandardCharsets.UTF_8)) {
+      try (Reader reader = Files.newBufferedReader(serviceProxyFile.toPath(),
+          StandardCharsets.UTF_8)) {
         int port = GSON.fromJson(reader, ServiceSocksProxyInfo.class).getPort();
         return port == 0 ? null : new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
       } catch (Exception e) {
@@ -630,7 +661,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
 
     private File getServiceProxyFile() {
-      return new File("/tmp", Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json");
+      return new File("/tmp",
+          Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json");
     }
   }
 }

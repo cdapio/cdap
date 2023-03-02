@@ -77,7 +77,8 @@ public class DatasetTypeTable {
   private StructuredTable getModuleTable() {
     if (moduleTable == null) {
       try {
-        moduleTable = structuredTableContext.getTable(StoreDefinition.DatasetTypeStore.MODULE_TYPES);
+        moduleTable = structuredTableContext.getTable(
+            StoreDefinition.DatasetTypeStore.MODULE_TYPES);
       } catch (TableNotFoundException e) {
         throw new RuntimeException(e);
       }
@@ -90,23 +91,26 @@ public class DatasetTypeTable {
    * Retrieves a module from the given namespace
    *
    * @param datasetModuleId the {@link DatasetModuleId} for the module to retrieve
-   * @return {@link DatasetModuleMeta} for the module if found in the specified namespace, null otherwise
+   * @return {@link DatasetModuleMeta} for the module if found in the specified namespace, null
+   *     otherwise
    */
   @Nullable
   public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws IOException {
     return get(getModuleKey(datasetModuleId.getNamespace(), datasetModuleId.getEntityName()),
-               getModuleTable(), DatasetModuleMeta.class);
+        getModuleTable(), DatasetModuleMeta.class);
   }
 
   /**
-   * Tries to find a module in the specified namespace first. If it fails, tries to find it in the system namespace
+   * Tries to find a module in the specified namespace first. If it fails, tries to find it in the
+   * system namespace
    *
    * @param datasetModuleId {@link DatasetModuleId} for the module to retrieve
-   * @return {@link DatasetModuleMeta} for the module if found either in the specified namespace or in the system
-   * namespace, null otherwise
+   * @return {@link DatasetModuleMeta} for the module if found either in the specified namespace or
+   *     in the system namespace, null otherwise
    */
   @Nullable
-  public DatasetModuleMeta getModuleWithFallback(DatasetModuleId datasetModuleId) throws IOException {
+  public DatasetModuleMeta getModuleWithFallback(DatasetModuleId datasetModuleId)
+      throws IOException {
     // Try to find module in the specified namespace first
     DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
     // if not found, try to load it from system namespace
@@ -119,8 +123,9 @@ public class DatasetTypeTable {
   @Nullable
   public DatasetModuleMeta getModuleByType(DatasetTypeId datasetTypeId) throws IOException {
     DatasetModuleId datasetModuleId =
-      get(getTypeKey(
-        datasetTypeId.getNamespace(), datasetTypeId.getEntityName()), getTypeTable(), DatasetModuleId.class);
+        get(getTypeKey(
+                datasetTypeId.getNamespace(), datasetTypeId.getEntityName()), getTypeTable(),
+            DatasetModuleId.class);
 
     if (datasetModuleId == null) {
       return null;
@@ -137,30 +142,34 @@ public class DatasetTypeTable {
   }
 
   public Collection<DatasetModuleMeta> getModules(NamespaceId namespaceId) throws IOException {
-    return list(getModulePrefix(namespaceId.getEntityName()), getModuleTable(), DatasetModuleMeta.class);
+    return list(getModulePrefix(namespaceId.getEntityName()), getModuleTable(),
+        DatasetModuleMeta.class);
   }
 
   public Collection<DatasetTypeMeta> getTypes(NamespaceId namespaceId) throws IOException {
     List<DatasetTypeMeta> types = Lists.newArrayList();
     try (CloseableIterator<StructuredRow> iterator =
-      getTypeTable().scan(Range.singleton(getModulePrefix(namespaceId.getEntityName())), Integer.MAX_VALUE)) {
+        getTypeTable().scan(Range.singleton(getModulePrefix(namespaceId.getEntityName())),
+            Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         String typeName = row.getString(StoreDefinition.DatasetTypeStore.TYPE_NAME_FIELD);
         DatasetModuleId moduleId =
-          GSON.fromJson(row.getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD),
-                        DatasetModuleId.class);
+            GSON.fromJson(row.getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD),
+                DatasetModuleId.class);
         types.add(getTypeMeta(namespaceId, typeName, moduleId));
       }
     }
     return types;
   }
 
-  public void writeModule(NamespaceId namespaceId, DatasetModuleMeta moduleMeta) throws IOException {
+  public void writeModule(NamespaceId namespaceId, DatasetModuleMeta moduleMeta)
+      throws IOException {
     DatasetModuleId datasetModuleId = namespaceId.datasetModule(moduleMeta.getName());
     DatasetModuleMeta existing = getModule(datasetModuleId);
     List<Field<?>> fields = getModuleKey(namespaceId.getEntityName(), moduleMeta.getName());
-    fields.add(Fields.stringField(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD, GSON.toJson(moduleMeta)));
+    fields.add(Fields.stringField(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD,
+        GSON.toJson(moduleMeta)));
     getModuleTable().upsert(fields);
     for (String type : moduleMeta.getTypes()) {
       writeTypeToModuleMapping(namespaceId.datasetType(type), datasetModuleId);
@@ -182,7 +191,8 @@ public class DatasetTypeTable {
     }
 
     getModuleTable().deleteAll(
-      Range.singleton(getModuleKey(datasetModuleId.getNamespace(), datasetModuleId.getEntityName())));
+        Range.singleton(
+            getModuleKey(datasetModuleId.getNamespace(), datasetModuleId.getEntityName())));
 
     for (String type : module.getTypes()) {
       getTypeTable().deleteAll(Range.singleton(getTypeKey(datasetModuleId.getNamespace(), type)));
@@ -196,23 +206,26 @@ public class DatasetTypeTable {
     }
   }
 
-  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName, DatasetModuleId datasetModuleId)
-    throws IOException {
+  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName,
+      DatasetModuleId datasetModuleId)
+      throws IOException {
     DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
     return getTypeMeta(namespaceId, typeName, moduleMeta);
   }
 
-  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName, DatasetModuleMeta moduleMeta)
-    throws IOException {
+  private DatasetTypeMeta getTypeMeta(NamespaceId namespaceId, String typeName,
+      DatasetModuleMeta moduleMeta)
+      throws IOException {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
       // Try to find module in the specified namespace first, then the system namespace
-      DatasetModuleMeta usedModuleMeta = getModuleWithFallback(namespaceId.datasetModule(usedModule));
+      DatasetModuleMeta usedModuleMeta = getModuleWithFallback(
+          namespaceId.datasetModule(usedModule));
       // Module could not be found in either user or system namespace, bail out
       Preconditions.checkState(usedModuleMeta != null,
-                               String.format("Unable to find metadata about module %s that module %s uses.",
-                                             usedModule, moduleMeta.getName()));
+          String.format("Unable to find metadata about module %s that module %s uses.",
+              usedModule, moduleMeta.getName()));
       modulesToLoad.add(usedModuleMeta);
     }
     modulesToLoad.add(moduleMeta);
@@ -220,11 +233,12 @@ public class DatasetTypeTable {
     return new DatasetTypeMeta(typeName, modulesToLoad);
   }
 
-  private void writeTypeToModuleMapping(DatasetTypeId datasetTypeId, DatasetModuleId datasetModuleId)
-    throws IOException {
+  private void writeTypeToModuleMapping(DatasetTypeId datasetTypeId,
+      DatasetModuleId datasetModuleId)
+      throws IOException {
     List<Field<?>> fields = getTypeKey(datasetTypeId.getNamespace(), datasetTypeId.getEntityName());
     fields.add(Fields.stringField(
-      StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD, GSON.toJson(datasetModuleId)));
+        StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD, GSON.toJson(datasetModuleId)));
     getTypeTable().upsert(fields);
   }
 
@@ -258,16 +272,20 @@ public class DatasetTypeTable {
     if (!row.isPresent()) {
       return null;
     }
-    return GSON.fromJson(row.get().getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD), typeofT);
+    return GSON.fromJson(
+        row.get().getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD), typeofT);
   }
 
   private <T> Collection<T> list(List<Field<?>> prefix, StructuredTable table, Type typeofT)
-    throws IOException {
+      throws IOException {
     List<T> result = new ArrayList<>();
-    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(prefix), Integer.MAX_VALUE)) {
+    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(prefix),
+        Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         result.add(
-          GSON.fromJson(iterator.next().getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD), typeofT));
+            GSON.fromJson(
+                iterator.next().getString(StoreDefinition.DatasetTypeStore.DATASET_METADATA_FIELD),
+                typeofT));
       }
     }
     return result;

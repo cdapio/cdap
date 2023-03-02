@@ -21,5 +21,6 @@ package io.cdap.cdap.internal.app.runtime;
  * Runnable that can throw an exception.
  */
 public interface ThrowingRunnable {
+
   void run() throws Exception;
 }

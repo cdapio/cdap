@@ -21,19 +21,20 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 
 /**
- * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed inside
- * a transaction.
+ * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed
+ * inside a transaction.
  */
 @Beta
 public interface TransactionRunner {
 
   /**
-   * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
-   * The {@link TxRunnable} can gain access to a {@link StructuredTable} through the
+   * Executes a set of operations via a {@link TxRunnable} that are committed as a single
+   * transaction. The {@link TxRunnable} can gain access to a {@link StructuredTable} through the
    * provided {@link StructuredTableContext}.
    *
    * @param runnable the runnable to be executed in the transaction
-   * @throws TransactionException if failed to execute the given {@link TxRunnable} in a transaction
+   * @throws TransactionException if failed to execute the given {@link TxRunnable} in a
+   *     transaction
    */
   void run(TxRunnable runnable) throws TransactionException;
 }

@@ -22,8 +22,8 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.ClientMessagingService;
 
 /**
- * The Guice module to provide binding for messaging system client.
- * This module should only be used in containers in distributed mode.
+ * The Guice module to provide binding for messaging system client. This module should only be used
+ * in containers in distributed mode.
  */
 public class MessagingClientModule extends AbstractModule {
 

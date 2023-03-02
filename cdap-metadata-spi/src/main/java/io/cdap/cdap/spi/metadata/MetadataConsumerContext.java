@@ -26,10 +26,10 @@ import java.util.Map;
 public interface MetadataConsumerContext {
 
   /**
-   * Returns the {@link Map} of properties associated with the Metadata Consumer extension.
-   * The properties for the extension can be specified in the <code>cdap-site.xml</code>
-   * prefixed with <code>metadata.consumer.</code>. The returned {@link Map} will have all
-   * such properties, but with prefix <code>metadata.consumer.</code> stripped.
+   * Returns the {@link Map} of properties associated with the Metadata Consumer extension. The
+   * properties for the extension can be specified in the <code>cdap-site.xml</code> prefixed with
+   * <code>metadata.consumer.</code>. The returned {@link Map} will have all such properties, but
+   * with prefix <code>metadata.consumer.</code> stripped.
    *
    * @return the MetadataConsumer properties for the program run
    */

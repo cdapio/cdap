@@ -45,8 +45,8 @@ import java.util.concurrent.ExecutionException;
 import org.objectweb.asm.Type;
 
 /**
- * Class used by {@link AuthEnforceRewriter} to rewrite classes with {@link AuthEnforce} annotation and call
- * enforcement methods in this class to perform authorization enforcement.
+ * Class used by {@link AuthEnforceRewriter} to rewrite classes with {@link AuthEnforce} annotation
+ * and call enforcement methods in this class to perform authorization enforcement.
  */
 // Note: Do no remove the public modifier of this class. This class is marked public even though its only usage is
 // from the package because after class rewrite AuthEnforce annotations are rewritten to make call to the methods
@@ -74,23 +74,24 @@ public final class AuthEnforceUtil {
    * Performs authorization enforcement
    *
    * @param accessEnforcer the {@link AccessEnforcer} to use for performing the enforcement
-   * @param entities an {@link Object}[] of Strings from which an entity on which enforcement needs to be
-   * performed
-   * can be created of just {@link EntityId} on which on whose parent enforcement needs
-   * to be performed
-   * @param authenticationContext the {@link AuthenticationContext}  of the user that performs the action
+   * @param entities an {@link Object}[] of Strings from which an entity on which enforcement
+   *     needs to be performed can be created of just {@link EntityId} on which on whose parent
+   *     enforcement needs to be performed
+   * @param authenticationContext the {@link AuthenticationContext}  of the user that performs
+   *     the action
    * @param permissions the {@link Permission}s to check for during enforcement
-   * @throws Exception {@link UnauthorizedException} if the given authenticationContext is not authorized to perform
-   * the specified permissions on the entity
+   * @throws Exception {@link UnauthorizedException} if the given authenticationContext is not
+   *     authorized to perform the specified permissions on the entity
    */
   public static void enforce(AccessEnforcer accessEnforcer, Object[] entities,
-                             Class<? extends EntityId> entityClass, AuthenticationContext authenticationContext,
-                             Set<? extends Permission> permissions) throws Exception {
-    accessEnforcer.enforce(getEntityId(entities, entityClass), authenticationContext.getPrincipal(), permissions);
+      Class<? extends EntityId> entityClass, AuthenticationContext authenticationContext,
+      Set<? extends Permission> permissions) throws Exception {
+    accessEnforcer.enforce(getEntityId(entities, entityClass), authenticationContext.getPrincipal(),
+        permissions);
   }
 
   private static EntityId getEntityId(Object[] entities, Class<? extends EntityId> entityClass)
-    throws IllegalAccessException, InstantiationException, InvocationTargetException {
+      throws IllegalAccessException, InstantiationException, InvocationTargetException {
     if (entities.length == 1 && entities[0] instanceof EntityId) {
       // If EntityId was passed in then the size of the array should be one
       // if entities length is 1 and the first element is an instance of EntityId then we know that the enforcement is
@@ -108,20 +109,23 @@ public final class AuthEnforceUtil {
         }
       }
 
-      throw new IllegalArgumentException(String.format("Enforcement was specified on %s but an instance of %s was " +
-                                                         "provided.", entityClass, entityId.getClass()));
+      throw new IllegalArgumentException(
+          String.format("Enforcement was specified on %s but an instance of %s was " +
+              "provided.", entityClass, entityId.getClass()));
     } else {
       return createEntityId(entityClass, entities);
     }
   }
 
   /**
-   * Return the required size of entity parts to create the {@link EntityId} on which authorization enforcement
-   * needs to be done as specified in {@link AuthEnforce#enforceOn()}
+   * Return the required size of entity parts to create the {@link EntityId} on which authorization
+   * enforcement needs to be done as specified in {@link AuthEnforce#enforceOn()}
    *
-   * @param enforceOn the {@link Type} of {@link EntityId} on which enforcement needs to be done
+   * @param enforceOn the {@link Type} of {@link EntityId} on which enforcement needs to be
+   *     done
    * @return the size of entity parts needed to create the above {@link EntityId}
-   * @throws IllegalArgumentException of the given enforceOn is not of supported {@link EntityId} type
+   * @throws IllegalArgumentException of the given enforceOn is not of supported {@link
+   *     EntityId} type
    */
   static int getEntityIdPartsCount(Type enforceOn) {
     if (enforceOn.equals(Type.getType(InstanceId.class))) {
@@ -142,24 +146,27 @@ public final class AuthEnforceUtil {
     if (enforceOn.equals(Type.getType(ProgramId.class))) {
       return CONS_CACHE.get(ProgramId.class).getParameterTypes().length;
     }
-    throw new IllegalArgumentException(String.format("Failed to determine required number of entity parts " +
-                                                       "needed for %s. Please make sure its a valid %s class " +
-                                                       "for authorization enforcement",
-                                                     enforceOn.getClassName(), EntityId.class.getSimpleName()));
+    throw new IllegalArgumentException(
+        String.format("Failed to determine required number of entity parts " +
+                "needed for %s. Please make sure its a valid %s class " +
+                "for authorization enforcement",
+            enforceOn.getClassName(), EntityId.class.getSimpleName()));
   }
 
   private static EntityId createEntityId(Class<? extends EntityId> entityClass, Object[] args)
-    throws IllegalAccessException, InvocationTargetException, InstantiationException {
+      throws IllegalAccessException, InvocationTargetException, InstantiationException {
     Constructor<? extends EntityId> constructor = CONS_CACHE.get(entityClass);
 
-    Preconditions.checkNotNull(constructor, String.format("Failed to find constructor for entity class %s. Please " +
-                                                            "make sure it exists.", entityClass));
+    Preconditions.checkNotNull(constructor,
+        String.format("Failed to find constructor for entity class %s. Please " +
+            "make sure it exists.", entityClass));
     // its okay to call with object [] without checking that all of these are string because if one of them is not
     // then newInstance call will throw IllegalArgumentException.
     return constructor.newInstance(args);
   }
 
-  private static Constructor<? extends EntityId> findConstructor(Class<? extends EntityId> entityClass) {
+  private static Constructor<? extends EntityId> findConstructor(
+      Class<? extends EntityId> entityClass) {
     // Find the constructor with all String parameters
     for (Constructor<?> curConstructor : entityClass.getConstructors()) {
       if (Arrays.stream(curConstructor.getParameterTypes()).allMatch(String.class::equals)) {
@@ -167,8 +174,9 @@ public final class AuthEnforceUtil {
       }
     }
     // since constructor was not found throw an exception
-    throw new IllegalStateException(String.format("Failed to find constructor for %s whose parameters are only of " +
-                                                    "String type", entityClass.getName()));
+    throw new IllegalStateException(
+        String.format("Failed to find constructor for %s whose parameters are only of " +
+            "String type", entityClass.getName()));
   }
 
   /**
@@ -189,13 +197,15 @@ public final class AuthEnforceUtil {
     for (java.lang.reflect.Type implementedInterface : implementedInterfaces) {
       if (implementedInterface instanceof ParameterizedType) {
         ParameterizedType parameterizedType = (ParameterizedType) implementedInterface;
-        if (parameterizedType.getRawType().getTypeName().equals(ParentedId.class.getCanonicalName())) {
+        if (parameterizedType.getRawType().getTypeName()
+            .equals(ParentedId.class.getCanonicalName())) {
           java.lang.reflect.Type[] parameterTypes = parameterizedType.getActualTypeArguments();
           if (parameterTypes.length != 1) {
             return false;
           }
           java.lang.reflect.Type parameter = parameterTypes[0];
-          if (parameter instanceof Class && verifyEntityIdParents((Class) parameter, enforceOnClass)) {
+          if (parameter instanceof Class && verifyEntityIdParents((Class) parameter,
+              enforceOnClass)) {
             return true;
           }
         }
@@ -206,7 +216,8 @@ public final class AuthEnforceUtil {
   }
 
   public static AccessException propagateAccessException(Throwable e) throws AccessException {
-    if (e.getCause() != null && (e instanceof ExecutionException || e instanceof UncheckedExecutionException)) {
+    if (e.getCause() != null && (e instanceof ExecutionException
+        || e instanceof UncheckedExecutionException)) {
       propagateAccessException(e.getCause());
     }
     Throwables.propagateIfPossible(e, AccessException.class);

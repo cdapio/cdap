@@ -22,18 +22,19 @@ import java.util.Objects;
 import org.apache.twill.filesystem.Location;
 
 /**
- * Uniquely describes an artifact. Artifact descriptors are ordered by scope,
- * then by name, and finally by version.
+ * Uniquely describes an artifact. Artifact descriptors are ordered by scope, then by name, and
+ * finally by version.
  */
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
+
   private final String namespace;
   private final ArtifactId artifactId;
 
   /**
-   * Mark with transient to not serialize it. Store the location URI in separate field "locationURI" that
-   * gets serialized when this object needs to be transferred through the network.
-   * The recipient should instantiate a {@link Location} based on the received "locationURI"
-   * (e.g. {@link RemoteArtifactRepositoryReader#getArtifact}
+   * Mark with transient to not serialize it. Store the location URI in separate field "locationURI"
+   * that gets serialized when this object needs to be transferred through the network. The
+   * recipient should instantiate a {@link Location} based on the received "locationURI" (e.g.
+   * {@link RemoteArtifactRepositoryReader#getArtifact}
    */
   private final transient Location location;
   private final URI locationURI;
@@ -82,11 +83,11 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
-      " artifactId=" + artifactId +
-      ", namespace=" + namespace +
-      ", locationURI=" + locationURI +
-      ", location=" + location +
-      '}';
+        " artifactId=" + artifactId +
+        ", namespace=" + namespace +
+        ", locationURI=" + locationURI +
+        ", location=" + location +
+        '}';
   }
 
   @Override

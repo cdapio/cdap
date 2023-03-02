@@ -22,17 +22,19 @@ import org.apache.spark.api.java.JavaRDD;
 
 
 /**
- * SparkSink composes a final, optional stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
- * can also perform RDD operations on the key value pairs provided by the Batch run.
+ * SparkSink composes a final, optional stage of a Batch ETL Pipeline. In addition to configuring
+ * the Batch run, it can also perform RDD operations on the key value pairs provided by the Batch
+ * run.
  *
- * {@link SparkSink#run} method is called inside the Batch Run while {@link SparkSink#prepareRun} and
- * {@link SparkSink#onRunFinish} methods are called on the client side, which launches the Batch run, before the
- * Batch run starts and after it finishes respectively.
+ * {@link SparkSink#run} method is called inside the Batch Run while {@link SparkSink#prepareRun}
+ * and {@link SparkSink#onRunFinish} methods are called on the client side, which launches the Batch
+ * run, before the Batch run starts and after it finishes respectively.
  *
  * @param <IN> The type of input record to the SparkSink.
  */
 @Beta
-public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext> implements Serializable {
+public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext> implements
+    Serializable {
 
   public static final String PLUGIN_TYPE = "sparksink";
 

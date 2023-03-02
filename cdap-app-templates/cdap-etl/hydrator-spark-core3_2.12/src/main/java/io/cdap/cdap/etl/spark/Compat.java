@@ -17,12 +17,12 @@
 package io.cdap.cdap.etl.spark;
 
 /**
- * Utility class to handle incompatibilities between Spark2 and Spark3. All hydrator-spark-core modules must have this
- * class with the exact same method signatures. Incompatibilities are in a few places. Should not contain any
- * classes from Spark streaming.
- *
+ * Utility class to handle incompatibilities between Spark2 and Spark3. All hydrator-spark-core
+ * modules must have this class with the exact same method signatures. Incompatibilities are in a
+ * few places. Should not contain any classes from Spark streaming.
  */
 public final class Compat {
+
   public static final String SPARK_COMPAT = "spark3_2.12";
 
   private Compat() {

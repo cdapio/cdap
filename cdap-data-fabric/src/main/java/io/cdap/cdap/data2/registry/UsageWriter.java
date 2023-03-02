@@ -21,8 +21,8 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * Store program -> dataset/stream usage information. Differs from UsageRegistry in that UsageRegistry does not have
- * a remote implementation, usable from program runtime.
+ * Store program -> dataset/stream usage information. Differs from UsageRegistry in that
+ * UsageRegistry does not have a remote implementation, usable from program runtime.
  */
 public interface UsageWriter {
 

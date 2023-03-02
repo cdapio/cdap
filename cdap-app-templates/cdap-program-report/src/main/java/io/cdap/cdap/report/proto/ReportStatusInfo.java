@@ -22,17 +22,19 @@ import javax.annotation.Nullable;
  * Represents the status information of a report.
  */
 public class ReportStatusInfo extends ReportMetaInfo {
+
   private final String id;
 
   public ReportStatusInfo(String id, String name, @Nullable String description,
-                          long created, @Nullable Long expiry, ReportStatus status) {
+      long created, @Nullable Long expiry, ReportStatus status) {
     super(name, description, created, expiry, status);
     this.id = id;
   }
 
   public ReportStatusInfo(String id, ReportMetaInfo metaInfo) {
-    this(id, metaInfo.getName(), metaInfo.getDescription(), metaInfo.getCreated(), metaInfo.getExpiry(),
-         metaInfo.getStatus());
+    this(id, metaInfo.getName(), metaInfo.getDescription(), metaInfo.getCreated(),
+        metaInfo.getExpiry(),
+        metaInfo.getStatus());
   }
 
   /**

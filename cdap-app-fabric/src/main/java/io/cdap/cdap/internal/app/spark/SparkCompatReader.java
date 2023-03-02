@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  * Determines the SparkCompat version.
  */
 public class SparkCompatReader {
+
   private static final Logger LOG = LoggerFactory.getLogger(SparkCompatReader.class);
 
   private SparkCompatReader() {
@@ -35,8 +36,9 @@ public class SparkCompatReader {
   }
 
   /**
-   * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
-   * Tries to detect or falls back to {@link SparkCompat#SPARK3_2_12} if it is not defined in any place.
+   * Read {@link SparkCompat} from the system properties, environment, or the {@link
+   * CConfiguration}. Tries to detect or falls back to {@link SparkCompat#SPARK3_2_12} if it is not
+   * defined in any place.
    *
    * @param cConf the {@link CConfiguration} for CDAP
    * @return the configured {@link SparkCompat}
@@ -65,6 +67,7 @@ public class SparkCompatReader {
     }
 
     throw new IllegalArgumentException(
-      String.format("Invalid SparkCompat version '%s'. Must be one of %s", compatStr, allowedCompatStrings));
+        String.format("Invalid SparkCompat version '%s'. Must be one of %s", compatStr,
+            allowedCompatStrings));
   }
 }

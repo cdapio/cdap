@@ -26,6 +26,7 @@ import java.util.Set;
  * An provision exception that indicates a failure that may succeed after a retry.
  */
 public class RetryableProvisionException extends Exception implements ErrorTagProvider {
+
   private final Set<ErrorTag> errorTags = new HashSet<>();
 
   public RetryableProvisionException(String message) {

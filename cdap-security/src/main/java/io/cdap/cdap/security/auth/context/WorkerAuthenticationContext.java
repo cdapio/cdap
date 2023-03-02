@@ -25,15 +25,18 @@ import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
  * Authentication context for workers.
  */
 public class WorkerAuthenticationContext implements AuthenticationContext {
+
   private static final Principal EMPTY_PRINCIPAL = new Principal("empty-worker-user-id",
-                                                                 Principal.PrincipalType.USER,
-                                                                 new Credential("empty-worker-user-credential",
-                                                                                Credential.CredentialType.INTERNAL));
+      Principal.PrincipalType.USER,
+      new Credential("empty-worker-user-credential",
+          Credential.CredentialType.INTERNAL));
+
   /**
-   * Return {@link Principal} associated with current request stored in {@link SecurityRequestContext}.
-   * Typically, there is always a {@link Principal} as worker normally performs some operations on behalf of
-   * end user, thus the {@link Principal} should capture the credential of end user. But when there is none,
-   * use placeholder values to construct the {@link Principal}.
+   * Return {@link Principal} associated with current request stored in {@link
+   * SecurityRequestContext}. Typically, there is always a {@link Principal} as worker normally
+   * performs some operations on behalf of end user, thus the {@link Principal} should capture the
+   * credential of end user. But when there is none, use placeholder values to construct the {@link
+   * Principal}.
    */
   @Override
   public Principal getPrincipal() {

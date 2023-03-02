@@ -31,7 +31,7 @@ import java.util.Map;
  */
 @Beta
 public class TimeseriesTableDefinition
-  extends CompositeDatasetDefinition<TimeseriesTable> {
+    extends CompositeDatasetDefinition<TimeseriesTable> {
 
   public TimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, "ts", tableDef);
@@ -39,31 +39,35 @@ public class TimeseriesTableDefinition
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     validateNewIntervalSize(newProperties, currentSpec);
     return super.reconfigure(instanceName, newProperties, currentSpec);
   }
 
   @Override
   public TimeseriesTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new TimeseriesTable(spec, this.<Table>getDataset(datasetContext, "ts", spec, arguments, classLoader));
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+    return new TimeseriesTable(spec,
+        this.<Table>getDataset(datasetContext, "ts", spec, arguments, classLoader));
   }
 
   /**
-   * Utility method to validate that a properties update does not change the time interval stored per row.
+   * Utility method to validate that a properties update does not change the time interval stored
+   * per row.
+   *
    * @param newProperties the new dataset properties
    * @param currentSpec the existing dataset specification
    * @throws IncompatibleUpdateException if the interval size is changed
    */
   static void validateNewIntervalSize(DatasetProperties newProperties,
-                                      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     long oldIntervalSize = TimeseriesDataset.getIntervalSize(currentSpec.getProperties());
     long newIntervalSize = TimeseriesDataset.getIntervalSize(newProperties.getProperties());
     if (oldIntervalSize != newIntervalSize) {
       throw new IncompatibleUpdateException(String.format(
-        "Attempt to change the time interval stored per row from %d to %d", oldIntervalSize, newIntervalSize));
+          "Attempt to change the time interval stored per row from %d to %d", oldIntervalSize,
+          newIntervalSize));
     }
   }
 }

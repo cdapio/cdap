@@ -34,6 +34,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class ValidationFailure {
+
   private static final Gson GSON = new Gson();
   private final String message;
   private final List<Cause> causes;
@@ -68,8 +69,9 @@ public class ValidationFailure {
    * @param stageName stage name
    * @param inputSchemas map of stage name to input schemas
    */
-  public ValidationFailure(String message, @Nullable String correctiveAction, @Nullable String stageName,
-                           Map<String, Schema> inputSchemas) {
+  public ValidationFailure(String message, @Nullable String correctiveAction,
+      @Nullable String stageName,
+      Map<String, Schema> inputSchemas) {
     this.message = message;
     this.correctiveAction = correctiveAction;
     this.causes = new ArrayList<>();
@@ -96,7 +98,8 @@ public class ValidationFailure {
    * @param pluginType plugin type
    * @return validation failure with plugin not found cause
    */
-  public ValidationFailure withPluginNotFound(String pluginId, String pluginName, String pluginType) {
+  public ValidationFailure withPluginNotFound(String pluginId, String pluginName,
+      String pluginType) {
     return withPluginNotFound(pluginId, pluginName, pluginType, null, null);
   }
 
@@ -111,21 +114,25 @@ public class ValidationFailure {
    * @return validation failure with plugin not found cause
    */
   public ValidationFailure withPluginNotFound(String pluginId, String pluginName, String pluginType,
-                                              @Nullable ArtifactId requestedArtifact,
-                                              @Nullable ArtifactId suggestedArtifact) {
+      @Nullable ArtifactId requestedArtifact,
+      @Nullable ArtifactId suggestedArtifact) {
     Cause cause = new Cause().addAttribute(CauseAttributes.PLUGIN_ID, pluginId)
-      .addAttribute(CauseAttributes.PLUGIN_NAME, pluginName)
-      .addAttribute(CauseAttributes.PLUGIN_TYPE, pluginType);
+        .addAttribute(CauseAttributes.PLUGIN_NAME, pluginName)
+        .addAttribute(CauseAttributes.PLUGIN_TYPE, pluginType);
     if (requestedArtifact != null) {
       cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_NAME, requestedArtifact.getName());
-      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_SCOPE, requestedArtifact.getScope().name());
-      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_VERSION, requestedArtifact.getVersion().getVersion());
+      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_SCOPE,
+          requestedArtifact.getScope().name());
+      cause.addAttribute(CauseAttributes.REQUESTED_ARTIFACT_VERSION,
+          requestedArtifact.getVersion().getVersion());
     }
 
     if (suggestedArtifact != null) {
       cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_NAME, suggestedArtifact.getName());
-      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_SCOPE, suggestedArtifact.getScope().name());
-      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_VERSION, suggestedArtifact.getVersion().getVersion());
+      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_SCOPE,
+          suggestedArtifact.getScope().name());
+      cause.addAttribute(CauseAttributes.SUGGESTED_ARTIFACT_VERSION,
+          suggestedArtifact.getVersion().getVersion());
     }
     causes.add(cause);
     return this;
@@ -143,8 +150,8 @@ public class ValidationFailure {
   }
 
   /**
-   * Adds cause attributes for failure cause that represents an invalid element in the list associated with given stage
-   * configure property.
+   * Adds cause attributes for failure cause that represents an invalid element in the list
+   * associated with given stage configure property.
    *
    * @param stageConfigProperty stage config property
    * @param element element in the list associated by a given stageConfigProperty
@@ -152,7 +159,7 @@ public class ValidationFailure {
    */
   public ValidationFailure withConfigElement(String stageConfigProperty, String element) {
     causes.add(new Cause().addAttribute(CauseAttributes.STAGE_CONFIG, stageConfigProperty)
-                 .addAttribute(CauseAttributes.CONFIG_ELEMENT, element));
+        .addAttribute(CauseAttributes.CONFIG_ELEMENT, element));
     return this;
   }
 
@@ -165,7 +172,8 @@ public class ValidationFailure {
    */
   public ValidationFailure withInputSchemaField(String fieldName, @Nullable String inputStage) {
     Cause cause = new Cause().addAttribute(CauseAttributes.INPUT_SCHEMA_FIELD, fieldName);
-    cause = inputStage == null ? cause : cause.addAttribute(CauseAttributes.INPUT_STAGE, inputStage);
+    cause =
+        inputStage == null ? cause : cause.addAttribute(CauseAttributes.INPUT_STAGE, inputStage);
     causes.add(cause);
     return this;
   }
@@ -196,7 +204,8 @@ public class ValidationFailure {
    */
   public ValidationFailure withOutputSchemaField(String fieldName, @Nullable String outputPort) {
     Cause cause = new Cause().addAttribute(CauseAttributes.OUTPUT_SCHEMA_FIELD, fieldName);
-    cause = outputPort == null ? cause : cause.addAttribute(CauseAttributes.OUTPUT_PORT, outputPort);
+    cause =
+        outputPort == null ? cause : cause.addAttribute(CauseAttributes.OUTPUT_PORT, outputPort);
     causes.add(cause);
     return this;
   }
@@ -218,7 +227,8 @@ public class ValidationFailure {
    * @return validation failure with stacktrace
    */
   public ValidationFailure withStacktrace(StackTraceElement[] stacktraceElements) {
-    causes.add(new Cause().addAttribute(CauseAttributes.STACKTRACE, GSON.toJson(stacktraceElements)));
+    causes.add(
+        new Cause().addAttribute(CauseAttributes.STACKTRACE, GSON.toJson(stacktraceElements)));
     return this;
   }
 
@@ -268,7 +278,7 @@ public class ValidationFailure {
     }
     ValidationFailure failure = (ValidationFailure) o;
     return message.equals(failure.message) &&
-      Objects.equals(correctiveAction, failure.correctiveAction) && causes.equals(failure.causes);
+        Objects.equals(correctiveAction, failure.correctiveAction) && causes.equals(failure.causes);
   }
 
   @Override
@@ -281,6 +291,7 @@ public class ValidationFailure {
    */
   @Beta
   public static class Cause {
+
     private final Map<String, String> attributes;
 
     /**

@@ -41,29 +41,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tool to build and upload required HBase coprocessors. Should be run before the CDAP master starts up.
- * Should also be run on slave clusters to ensure that the required coprocessors exist on HDFS.
+ * Tool to build and upload required HBase coprocessors. Should be run before the CDAP master starts
+ * up. Should also be run on slave clusters to ensure that the required coprocessors exist on HDFS.
  */
 public class CoprocessorBuildTool {
+
   private static final Logger LOG = LoggerFactory.getLogger(CoprocessorBuildTool.class);
 
   public static void main(final String[] args) throws ParseException {
 
     Options options = new Options()
-      .addOption(new Option("h", "help", false, "Print this usage message."))
-      .addOption(new Option("f", "force", false, "Overwrites any coprocessors that already exist."));
+        .addOption(new Option("h", "help", false, "Print this usage message."))
+        .addOption(
+            new Option("f", "force", false, "Overwrites any coprocessors that already exist."));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
     String[] commandArgs = commandLine.getArgs();
 
     // if help is an option, or if there isn't a single 'ensure' command, print usage and exit.
-    if (commandLine.hasOption("h") || commandArgs.length != 1 || !"check".equalsIgnoreCase(commandArgs[0])) {
+    if (commandLine.hasOption("h") || commandArgs.length != 1 || !"check".equalsIgnoreCase(
+        commandArgs[0])) {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
-        CoprocessorBuildTool.class.getName() + " check",
-        "Checks that HBase coprocessors required by CDAP are loaded onto HDFS. " +
-          "If not, the coprocessors are built and placed on HDFS.", options, "");
+          CoprocessorBuildTool.class.getName() + " check",
+          "Checks that HBase coprocessors required by CDAP are loaded onto HDFS. " +
+              "If not, the coprocessors are built and placed on HDFS.", options, "");
       System.exit(0);
     }
 
@@ -73,8 +76,8 @@ public class CoprocessorBuildTool {
     Configuration hConf = HBaseConfiguration.create();
 
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new DFSLocationModule()
+        new ConfigModule(cConf, hConf),
+        new DFSLocationModule()
     );
 
     try {
@@ -86,7 +89,8 @@ public class CoprocessorBuildTool {
 
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
-    CoprocessorManager coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    CoprocessorManager coprocessorManager = new CoprocessorManager(cConf, locationFactory,
+        tableUtil);
 
     try {
       Location location = coprocessorManager.ensureCoprocessorExists(overwrite);

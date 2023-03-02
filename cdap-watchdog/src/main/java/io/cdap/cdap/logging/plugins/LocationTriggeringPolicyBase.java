@@ -25,7 +25,9 @@ import org.apache.twill.filesystem.Location;
 /**
  * Location triggering policy base class
  */
-public abstract class LocationTriggeringPolicyBase extends ContextAwareBase implements LocationTriggeringPolicy {
+public abstract class LocationTriggeringPolicyBase extends ContextAwareBase implements
+    LocationTriggeringPolicy {
+
   private Location activeLocation;
   private long activeLocationSize;
   private boolean start;
@@ -55,7 +57,8 @@ public abstract class LocationTriggeringPolicyBase extends ContextAwareBase impl
   }
 
   @Override
-  public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event) throws LogbackException {
+  public boolean isTriggeringEvent(final File activeFile, final ILoggingEvent event)
+      throws LogbackException {
     return isTriggeringEvent(event);
   }
 

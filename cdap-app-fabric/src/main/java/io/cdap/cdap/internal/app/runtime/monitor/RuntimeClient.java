@@ -59,7 +59,7 @@ import org.apache.avro.io.EncoderFactory;
  * The client for talking to the {@link RuntimeServer}.
  */
 public class RuntimeClient {
-  
+
   private static final Gson GSON = new Gson();
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
@@ -71,9 +71,9 @@ public class RuntimeClient {
   public RuntimeClient(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     this.compression = cConf.getBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED);
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.RUNTIME,
-      new DefaultHttpRequestConfig(false),
-      Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
+        Constants.Service.RUNTIME,
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
 
     // Validate the schema is what as expected by the logic of this client.
     // This is to make sure unit test will fail if schema is changed without changing the logic in this class.
@@ -81,7 +81,8 @@ public class RuntimeClient {
     if (schema == null) {
       throw new IllegalStateException("Missing MonitorRequest schema");
     }
-    if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
+    if (schema.getType() != Schema.Type.ARRAY
+        || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
     }
     this.stopFuture = new CompletableFuture<>();
@@ -99,21 +100,21 @@ public class RuntimeClient {
    * @throws ServiceUnavailableException if the server is not available
    */
   public void sendMessages(ProgramRunId programRunId,
-                           TopicId topicId, Iterator<Message> messages)
-    throws IOException, BadRequestException, GoneException {
+      TopicId topicId, Iterator<Message> messages)
+      throws IOException, BadRequestException, GoneException {
 
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
     }
 
     String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/topics/%s",
-                                programRunId.getNamespace(),
-                                programRunId.getApplication(),
-                                programRunId.getVersion(),
-                                programRunId.getType().getCategoryName(),
-                                programRunId.getProgram(),
-                                programRunId.getRun(),
-                                topicId.getTopic());
+        programRunId.getNamespace(),
+        programRunId.getApplication(),
+        programRunId.getVersion(),
+        programRunId.getType().getCategoryName(),
+        programRunId.getProgram(),
+        programRunId.getRun(),
+        topicId.getTopic());
 
     // Stream out the messages
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
@@ -126,7 +127,8 @@ public class RuntimeClient {
       }
 
       throwIfError(programRunId, urlConn);
-      try (Reader reader = new InputStreamReader(urlConn.getInputStream(), StandardCharsets.UTF_8)) {
+      try (Reader reader = new InputStreamReader(urlConn.getInputStream(),
+          StandardCharsets.UTF_8)) {
         ProgramRunInfo programRunInfo = GSON.fromJson(reader, ProgramRunInfo.class);
         if (programRunInfo.getProgramRunStatus() == ProgramRunStatus.STOPPING) {
           stopFuture.complete(programRunInfo.getTerminateTimestamp());
@@ -140,8 +142,8 @@ public class RuntimeClient {
   /**
    * Sets the consumer to run on the program being requested to stop.
    *
-   * @param stopper A {@link LongConsumer} that will be executed in a daemon thread,
-   *                with the termination timestamp in seconds as the argument
+   * @param stopper A {@link LongConsumer} that will be executed in a daemon thread, with the
+   *     termination timestamp in seconds as the argument
    */
   public void onProgramStopRequested(LongConsumer stopper) {
     stopFuture.thenAcceptAsync(stopper::accept, command -> {
@@ -161,13 +163,13 @@ public class RuntimeClient {
    */
   public void uploadSparkEventLogs(ProgramRunId programRunId, File eventFile) throws IOException {
     String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/spark-event-logs/%s",
-                                programRunId.getNamespace(),
-                                programRunId.getApplication(),
-                                programRunId.getVersion(),
-                                programRunId.getType().getCategoryName(),
-                                programRunId.getProgram(),
-                                programRunId.getRun(),
-                                eventFile.getName());
+        programRunId.getNamespace(),
+        programRunId.getApplication(),
+        programRunId.getVersion(),
+        programRunId.getType().getCategoryName(),
+        programRunId.getProgram(),
+        programRunId.getRun(),
+        eventFile.getName());
 
     // Stream out the messages
     HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
@@ -189,8 +191,9 @@ public class RuntimeClient {
   }
 
   /**
-   * Opens a {@link OutputStream} to the given {@link URLConnection}. If {@link #compression} is {@code true},
-   * the output stream will be wrapped with a {@link GZIPOutputStream} with appropriate request header set.
+   * Opens a {@link OutputStream} to the given {@link URLConnection}. If {@link #compression} is
+   * {@code true}, the output stream will be wrapped with a {@link GZIPOutputStream} with
+   * appropriate request header set.
    */
   private OutputStream openOutputStream(URLConnection urlConn) throws IOException {
     if (!compression) {
@@ -219,10 +222,11 @@ public class RuntimeClient {
   }
 
   /**
-   * Validates the responds from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
+   * Validates the responds from the given {@link HttpURLConnection} to be 200, or throws exception
+   * if it is not 200.
    */
   private void throwIfError(ProgramRunId programRunId,
-                            HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException {
+      HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -241,8 +245,9 @@ public class RuntimeClient {
           throw new GoneException(errorMsg);
       }
 
-      throw new IOException("Failed to send message for program run " + programRunId + " to " + urlConn.getURL()
-                              + ". Respond code: " + responseCode + ". Error: " + errorMsg);
+      throw new IOException(
+          "Failed to send message for program run " + programRunId + " to " + urlConn.getURL()
+              + ". Respond code: " + responseCode + ". Error: " + errorMsg);
     }
   }
 
@@ -260,8 +265,8 @@ public class RuntimeClient {
   }
 
   /**
-   * Streaming encode the given list of messages based on the schema
-   * as defined by the {@link MonitorSchemas.V2.MonitorRequest}.
+   * Streaming encode the given list of messages based on the schema as defined by the {@link
+   * MonitorSchemas.V2.MonitorRequest}.
    */
   private void writeMessages(Iterator<Message> messages, Encoder encoder) throws IOException {
     encoder.writeArrayStart();

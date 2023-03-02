@@ -82,6 +82,7 @@ import org.apache.twill.filesystem.LocationFactory;
  * Provides bindings required to create injector for running preview.
  */
 public class PreviewRunnerModule extends PrivateModule {
+
   private final CConfiguration cConf;
   private final AccessEnforcer accessEnforcer;
   private final ContextAccessEnforcer contextAccessEnforcer;
@@ -90,10 +91,10 @@ public class PreviewRunnerModule extends PrivateModule {
 
   @Inject
   PreviewRunnerModule(CConfiguration cConf,
-                      AccessEnforcer accessEnforcer,
-                      ContextAccessEnforcer contextAccessEnforcer,
-                      ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                      MessagingService messagingService) {
+      AccessEnforcer accessEnforcer,
+      ContextAccessEnforcer contextAccessEnforcer,
+      ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+      MessagingService messagingService) {
     this.cConf = cConf;
     this.accessEnforcer = accessEnforcer;
     this.contextAccessEnforcer = contextAccessEnforcer;
@@ -109,11 +110,11 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(ArtifactRepository.class).to(RemoteArtifactRepositoryWithLocalization.class);
     expose(ArtifactRepository.class);
     bind(ArtifactRepository.class)
-      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-      .to(RemoteArtifactRepositoryWithLocalization.class)
-      .in(Scopes.SINGLETON);
-    expose(ArtifactRepository.class).annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
-
+        .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+        .to(RemoteArtifactRepositoryWithLocalization.class)
+        .in(Scopes.SINGLETON);
+    expose(ArtifactRepository.class).annotatedWith(
+        Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
 
     // Use preview implementation to fetch plugin metadata from AppFab.
     // Preview implementation internally uses artifact localizer to fetch and cache artifacts locally.
@@ -129,8 +130,8 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(PreferencesFetcher.class);
 
     bind(MessagingService.class)
-      .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
-      .toInstance(messagingService);
+        .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
+        .toInstance(messagingService);
     expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
 
     bind(AccessEnforcer.class).toInstance(accessEnforcer);
@@ -144,9 +145,9 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
     install(
-      new FactoryModuleBuilder()
-        .implement(Configurator.class, InMemoryConfigurator.class)
-        .build(ConfiguratorFactory.class)
+        new FactoryModuleBuilder()
+            .implement(Configurator.class, InMemoryConfigurator.class)
+            .build(ConfiguratorFactory.class)
     );
     // expose this binding so program runner modules can use
     expose(ConfiguratorFactory.class);
@@ -155,10 +156,13 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(InMemoryProgramRunDispatcher.class);
 
     install(
-      new FactoryModuleBuilder()
-        .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },
-                   new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
-        .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
+        new FactoryModuleBuilder()
+            .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                       },
+                new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                })
+            .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+            })
     );
 
     bind(Store.class).to(DefaultStore.class);
@@ -171,7 +175,8 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(WorkflowStateWriter.class);
 
     // we don't delete namespaces in preview as we just delete preview directory when its done
-    bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+    bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class)
+        .in(Scopes.SINGLETON);
     bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
     expose(NamespaceAdmin.class);
@@ -194,7 +199,7 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-    
+
     bind(CapabilityReader.class).to(CapabilityStatusStore.class);
   }
 

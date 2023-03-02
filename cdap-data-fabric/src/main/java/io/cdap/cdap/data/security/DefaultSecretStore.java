@@ -43,6 +43,7 @@ import java.util.Optional;
  * Default implementation of secret store to persist secrets.
  */
 public class DefaultSecretStore implements SecretStore {
+
   private final TransactionRunner transactionRunner;
 
   @Inject
@@ -51,12 +52,13 @@ public class DefaultSecretStore implements SecretStore {
   }
 
   @Override
-  public <T> T get(String namespace, String name, Decoder<T> decoder) throws SecretNotFoundException, IOException {
+  public <T> T get(String namespace, String name, Decoder<T> decoder)
+      throws SecretNotFoundException, IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.SecretStore.SECRET_STORE_TABLE);
       List<Field<?>> keyFields = ImmutableList.<Field<?>>builder()
-        .addAll(getKeyFields(namespace, name))
-        .build();
+          .addAll(getKeyFields(namespace, name))
+          .build();
       Optional<StructuredRow> optionalRow = table.read(keyFields);
       if (!optionalRow.isPresent()) {
         throw new SecretNotFoundException(namespace, name);
@@ -71,9 +73,10 @@ public class DefaultSecretStore implements SecretStore {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.SecretStore.SECRET_STORE_TABLE);
       Collection<Field<?>> partialKey = Collections.singletonList(Fields.stringField(StoreDefinition
-                                                                                       .SecretStore.NAMESPACE_FIELD,
-                                                                                     namespace));
-      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(partialKey), Integer.MAX_VALUE)) {
+              .SecretStore.NAMESPACE_FIELD,
+          namespace));
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(partialKey),
+          Integer.MAX_VALUE)) {
         List<T> list = new ArrayList<>();
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
@@ -86,13 +89,15 @@ public class DefaultSecretStore implements SecretStore {
   }
 
   @Override
-  public <T> void store(String namespace, String name, Encoder<T> encoder, T data) throws IOException {
+  public <T> void store(String namespace, String name, Encoder<T> encoder, T data)
+      throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.SecretStore.SECRET_STORE_TABLE);
       List<Field<?>> fields = ImmutableList.<Field<?>>builder()
-        .addAll(getKeyFields(namespace, name))
-        .add(Fields.bytesField(StoreDefinition.SecretStore.SECRET_DATA_FIELD, encoder.encode(data)))
-        .build();
+          .addAll(getKeyFields(namespace, name))
+          .add(Fields.bytesField(StoreDefinition.SecretStore.SECRET_DATA_FIELD,
+              encoder.encode(data)))
+          .build();
       table.upsert(fields);
     }, IOException.class);
   }
@@ -102,8 +107,8 @@ public class DefaultSecretStore implements SecretStore {
     TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.SecretStore.SECRET_STORE_TABLE);
       List<Field<?>> keyFields = ImmutableList.<Field<?>>builder()
-        .addAll(getKeyFields(namespace, name))
-        .build();
+          .addAll(getKeyFields(namespace, name))
+          .build();
       if (!table.read(keyFields).isPresent()) {
         throw new SecretNotFoundException(namespace, name);
       }
@@ -113,6 +118,6 @@ public class DefaultSecretStore implements SecretStore {
 
   private Collection<Field<?>> getKeyFields(String namespace, String name) {
     return Arrays.asList(Fields.stringField(StoreDefinition.SecretStore.NAMESPACE_FIELD, namespace),
-                         Fields.stringField(StoreDefinition.SecretStore.SECRET_NAME_FIELD, name));
+        Fields.stringField(StoreDefinition.SecretStore.SECRET_NAME_FIELD, name));
   }
 }

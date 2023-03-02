@@ -23,6 +23,7 @@ import java.util.Objects;
  * Represents a single Metadata entry.
  */
 public class MetadataEntry {
+
   private final MetadataEntity metadataEntity;
   private final String key;
   private final String value;
@@ -70,8 +71,8 @@ public class MetadataEntry {
     MetadataEntry that = (MetadataEntry) o;
 
     return Objects.equals(metadataEntity, that.metadataEntity) &&
-      Objects.equals(key, that.key) &&
-      Objects.equals(value, that.value);
+        Objects.equals(key, that.key) &&
+        Objects.equals(value, that.value);
   }
 
   @Override
@@ -82,9 +83,9 @@ public class MetadataEntry {
   @Override
   public String toString() {
     return "MetadataEntry{" +
-      "metadataEntity=" + metadataEntity +
-      ", key='" + key + '\'' +
-      ", value='" + value + '\'' +
-      '}';
+        "metadataEntity=" + metadataEntity +
+        ", key='" + key + '\'' +
+        ", value='" + value + '\'' +
+        '}';
   }
 }

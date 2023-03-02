@@ -45,7 +45,8 @@ public class BasicWorkflowStateWriter implements WorkflowStateWriter {
   }
 
   @Override
-  public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+  public void addWorkflowNodeState(ProgramRunId workflowRunId,
+      WorkflowNodeStateDetail nodeStateDetail) {
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore.create(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });

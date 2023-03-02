@@ -55,13 +55,14 @@ import org.slf4j.LoggerFactory;
  * Implements some of the methods in a generic way (not necessarily in most efficient way).
  */
 public abstract class AbstractTable implements Table, TransactionAware {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTable.class);
 
   // empty immutable row's column->value map constant
   // Using ImmutableSortedMap instead of Maps.unmodifiableNavigableMap to avoid conflicts with
   // Hadoop, which uses an older version of guava without that method.
   protected static final NavigableMap<byte[], byte[]> EMPTY_ROW_MAP =
-    ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
+      ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).build();
 
   // the full table schema, which can include the row key
   private final Schema tableSchema;
@@ -74,7 +75,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
     this.tableSchema = TableProperties.getSchema(props);
     this.rowFieldName = TableProperties.getRowFieldName(props);
     this.recordPutTransformer = (tableSchema == null || rowFieldName == null) ?
-      null : new RecordPutTransformer(rowFieldName, tableSchema);
+        null : new RecordPutTransformer(rowFieldName, tableSchema);
   }
 
   @ReadOnly
@@ -104,7 +105,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @WriteOnly
   @Override
-  public void put(byte [] row, byte [] column, byte[] value) {
+  public void put(byte[] row, byte[] column, byte[] value) {
     put(row, new byte[][]{column}, new byte[][]{value});
   }
 
@@ -133,7 +134,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @ReadWrite
   @Override
   public Row incrementAndGet(Increment increment) {
-    Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
+    Preconditions.checkArgument(!increment.getValues().isEmpty(),
+        "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
     int i = 0;
@@ -154,7 +156,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @WriteOnly
   @Override
   public void increment(Increment increment) {
-    Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
+    Preconditions.checkArgument(!increment.getValues().isEmpty(),
+        "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
     int i = 0;
@@ -209,7 +212,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @ReadOnly
   @Override
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
-    Preconditions.checkArgument(tableSchema != null, "Table has no schema and is not record scannable.");
+    Preconditions.checkArgument(tableSchema != null,
+        "Table has no schema and is not record scannable.");
     return new StructuredRecordScanner(createSplitReader(split));
   }
 
@@ -217,14 +221,17 @@ public abstract class AbstractTable implements Table, TransactionAware {
   @Override
   public void write(StructuredRecord structuredRecord) throws IOException {
     if (recordPutTransformer == null) {
-      throw new IllegalStateException(String.format("Table must have both '%s' and '%s' properties set in " +
-        "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA, Table.PROPERTY_SCHEMA_ROW_FIELD));
+      throw new IllegalStateException(
+          String.format("Table must have both '%s' and '%s' properties set in " +
+                  "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA,
+              Table.PROPERTY_SCHEMA_ROW_FIELD));
     }
     Put put = recordPutTransformer.toPut(structuredRecord);
     put(put);
   }
 
   private class StructuredRecordScanner extends RecordScanner<StructuredRecord> {
+
     private final ReflectionRowRecordReader rowReader;
     private final SplitReader<byte[], Row> tableSplitReader;
 
@@ -261,8 +268,8 @@ public abstract class AbstractTable implements Table, TransactionAware {
   }
 
   /**
-   * Implements a split reader for a key range of a table, based on the Scanner implementation of the underlying
-   * table implementation.
+   * Implements a split reader for a key range of a table, based on the Scanner implementation of
+   * the underlying table implementation.
    */
   public class TableScanner extends SplitReader<byte[], Row> {
 

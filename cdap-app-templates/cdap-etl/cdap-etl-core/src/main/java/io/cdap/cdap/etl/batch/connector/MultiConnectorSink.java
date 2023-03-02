@@ -27,9 +27,10 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
 /**
- * Connector sink that needs to preserve which stage each record came from and the record type.
- * This is used in the MapReduce engine, where connectors can store output from multiple stages.
- * Connectors store the stage name each record came from in case they are placed in front of a joiner.
+ * Connector sink that needs to preserve which stage each record came from and the record type. This
+ * is used in the MapReduce engine, where connectors can store output from multiple stages.
+ * Connectors store the stage name each record came from in case they are placed in front of a
+ * joiner.
  */
 public class MultiConnectorSink extends ConnectorSink<RecordInfo<StructuredRecord>> {
 
@@ -38,21 +39,22 @@ public class MultiConnectorSink extends ConnectorSink<RecordInfo<StructuredRecor
   }
 
   @Override
-  public void transform(RecordInfo<StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
-    throws Exception {
+  public void transform(RecordInfo<StructuredRecord> input,
+      Emitter<KeyValue<NullWritable, Text>> emitter)
+      throws Exception {
     StructuredRecord modifiedRecord = modifyRecord(input);
     emitter.emit(new KeyValue<>(NullWritable.get(),
-                                new Text(StructuredRecordStringConverter.toJsonString(modifiedRecord))));
+        new Text(StructuredRecordStringConverter.toJsonString(modifiedRecord))));
   }
 
   private StructuredRecord modifyRecord(RecordInfo<StructuredRecord> input) throws IOException {
     String stageName = input.getFromStage();
     Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(MultiConnectorSource.RECORD_WITH_SCHEMA)
-      .set("stageName", stageName)
-      .set("type", input.getType().name())
-      .set("schema", inputSchema.toString())
-      .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
-      .build();
+        .set("stageName", stageName)
+        .set("type", input.getType().name())
+        .set("schema", inputSchema.toString())
+        .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
+        .build();
   }
 }

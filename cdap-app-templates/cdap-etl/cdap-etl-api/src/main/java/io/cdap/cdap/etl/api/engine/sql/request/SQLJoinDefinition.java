@@ -29,19 +29,20 @@ import java.util.Collections;
  */
 @Beta
 public class SQLJoinDefinition implements Serializable {
+
   private static final long serialVersionUID = 8608629892525128233L;
   protected final String datasetName;
   protected final Schema datasetSchema;
   protected final JoinDefinition joinDefinition;
 
   public SQLJoinDefinition(String datasetName,
-                           JoinDefinition joinDefinition) {
+      JoinDefinition joinDefinition) {
     this(datasetName, joinDefinition, Collections.emptyList());
   }
 
   public SQLJoinDefinition(String datasetName,
-                           JoinDefinition joinDefinition,
-                           Collection<SQLDataset> inputDatasets) {
+      JoinDefinition joinDefinition,
+      Collection<SQLDataset> inputDatasets) {
     this.datasetName = datasetName;
     this.datasetSchema = joinDefinition.getOutputSchema();
     this.joinDefinition = joinDefinition;

@@ -36,7 +36,8 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapreduce.InputSplit;
 
 /**
- * An {@link InputSplit} that delegates to another {@link InputSplit} and also carries record limit information.
+ * An {@link InputSplit} that delegates to another {@link InputSplit} and also carries record limit
+ * information.
  */
 public class LimitingInputSplit extends InputSplit implements Writable, Configurable {
 
@@ -51,7 +52,8 @@ public class LimitingInputSplit extends InputSplit implements Writable, Configur
     // no-op, for deserialization
   }
 
-  LimitingInputSplit(Configuration conf, List<InputSplit> inputSplits, int recordLimit) throws IOException {
+  LimitingInputSplit(Configuration conf, List<InputSplit> inputSplits, int recordLimit)
+      throws IOException {
     this.conf = conf;
     this.inputSplits = inputSplits;
     this.recordLimit = recordLimit;
@@ -115,7 +117,8 @@ public class LimitingInputSplit extends InputSplit implements Writable, Configur
     for (int i = 0; i < size; i++) {
       String className = Text.readString(in);
       try {
-        Class<? extends InputSplit> cls = getConf().getClassLoader().loadClass(className).asSubclass(InputSplit.class);
+        Class<? extends InputSplit> cls = getConf().getClassLoader().loadClass(className)
+            .asSubclass(InputSplit.class);
         Deserializer deserializer = new SerializationFactory(getConf()).getDeserializer(cls);
         deserializer.open((InputStream) in);
         //noinspection unchecked

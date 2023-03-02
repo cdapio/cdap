@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * Port -> service lookup.
  */
 public class RouterServiceLookup {
+
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceLookup.class);
 
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -48,17 +49,17 @@ public class RouterServiceLookup {
 
   @Inject
   RouterServiceLookup(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                      RouterPathLookup routerPathLookup) {
+      RouterPathLookup routerPathLookup) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .build(new CacheLoader<RouteDestination, EndpointStrategy>() {
-        @Override
-        public EndpointStrategy load(RouteDestination key) {
-          return discover(key);
-        }
-      });
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build(new CacheLoader<RouteDestination, EndpointStrategy>() {
+          @Override
+          public EndpointStrategy load(RouteDestination key) {
+            return discover(key);
+          }
+        });
   }
 
   /**
@@ -76,7 +77,7 @@ public class RouterServiceLookup {
       // Check if the requested path shouldn't be routed (internal URL).
       RouteDestination destService = routerPathLookup.getRoutingService(path, httpRequest);
       if (destService == null || Strings.isNullOrEmpty(destService.getServiceName())
-        || destService.getServiceName().equals(Constants.Router.DONT_ROUTE_SERVICE)) {
+          || destService.getServiceName().equals(Constants.Router.DONT_ROUTE_SERVICE)) {
         return null;
       }
 
@@ -97,7 +98,8 @@ public class RouterServiceLookup {
       // If the request is from the versioned endpoint, filter the discoverables by the version
       if (version != null) {
         return new RandomEndpointStrategy(
-          () -> new VersionFilteredServiceDiscovered(discoveryServiceClient.discover(serviceName), version));
+            () -> new VersionFilteredServiceDiscovered(discoveryServiceClient.discover(serviceName),
+                version));
       }
     }
 

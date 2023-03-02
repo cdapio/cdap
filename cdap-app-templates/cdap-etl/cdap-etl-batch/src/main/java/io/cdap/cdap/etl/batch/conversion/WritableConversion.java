@@ -26,7 +26,9 @@ import org.apache.hadoop.io.Writable;
  * @param <W> the Writable type to convert to
  */
 public abstract class WritableConversion<T, W extends Writable> {
-  private final Class<? super W> cls = new TypeToken<W>(getClass()) { }.getRawType();
+
+  private final Class<? super W> cls = new TypeToken<W>(getClass()) {
+  }.getRawType();
 
   public Class<? super W> getWritableClass() {
     return cls;

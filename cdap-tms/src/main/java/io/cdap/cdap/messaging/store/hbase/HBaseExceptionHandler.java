@@ -27,7 +27,8 @@ interface HBaseExceptionHandler {
   <T extends Exception> T handle(T exception) throws T;
 
   /**
-   * Handles the given exception and throws a {@link RuntimeException} by wrapping the given exception.
+   * Handles the given exception and throws a {@link RuntimeException} by wrapping the given
+   * exception.
    */
   <T extends Exception> RuntimeException handleAndWrap(T exception) throws RuntimeException;
 }

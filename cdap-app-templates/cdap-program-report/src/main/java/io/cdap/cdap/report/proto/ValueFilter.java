@@ -25,12 +25,13 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Represents a filter that checks whether a given value of a field is one of the allowed values and is not one of
- * the disallowed values.
+ * Represents a filter that checks whether a given value of a field is one of the allowed values and
+ * is not one of the disallowed values.
  *
  * @param <T> type of the values
  */
 public class ValueFilter<T> extends Filter<T> {
+
   @Nullable
   private final Set<T> whitelist;
   @Nullable
@@ -71,22 +72,23 @@ public class ValueFilter<T> extends Filter<T> {
       errors.add("Only one of 'whitelist' and 'blacklist' can be non-empty");
     }
     return errors.isEmpty() ? null :
-      String.format("Filter %s contains these errors: %s", getFieldName(), String.join("; ", errors));
+        String.format("Filter %s contains these errors: %s", getFieldName(),
+            String.join("; ", errors));
   }
 
   @Override
   public boolean apply(T value) {
     return (getWhitelist().isEmpty() || getWhitelist().contains(value))
-      && (getBlacklist().isEmpty() || !getBlacklist().contains(value));
+        && (getBlacklist().isEmpty() || !getBlacklist().contains(value));
   }
 
   @Override
   public String toString() {
     return "ValueFilter{" +
-      "fieldName=" + getFieldName() +
-      ", whitelist=" + whitelist +
-      ", blacklist=" + blacklist +
-      '}';
+        "fieldName=" + getFieldName() +
+        ", whitelist=" + whitelist +
+        ", blacklist=" + blacklist +
+        '}';
   }
 
   @Override
@@ -109,6 +111,6 @@ public class ValueFilter<T> extends Filter<T> {
 
     ValueFilter that = (ValueFilter) o;
     return Objects.equals(this.whitelist, that.whitelist) &&
-      Objects.equals(this.blacklist, that.blacklist);
+        Objects.equals(this.blacklist, that.blacklist);
   }
 }

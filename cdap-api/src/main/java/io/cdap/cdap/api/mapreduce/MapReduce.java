@@ -17,8 +17,8 @@
 package io.cdap.cdap.api.mapreduce;
 
 /**
- * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing MapReduce jobs
- * that rely on the Hadoop MapReduce APIs.
+ * Defines an interface for the MapReduce job. Use it for easy integration (re-use) of existing
+ * MapReduce jobs that rely on the Hadoop MapReduce APIs.
  */
 public interface MapReduce {
 

@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * Validating input format provider.
  */
 public interface ValidatingInputFormat extends InputFormatProvider {
+
   String PLUGIN_TYPE = "validatingInputFormat";
 
   /**

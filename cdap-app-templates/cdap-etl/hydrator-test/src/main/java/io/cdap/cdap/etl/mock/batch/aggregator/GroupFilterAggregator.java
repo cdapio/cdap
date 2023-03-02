@@ -38,7 +38,9 @@ import java.util.Map;
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name("GroupFilter")
-public class GroupFilterAggregator extends BatchAggregator<String, StructuredRecord, StructuredRecord> {
+public class GroupFilterAggregator extends
+    BatchAggregator<String, StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private Config config;
 
@@ -54,7 +56,8 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
       throw new IllegalArgumentException(config.field + " is not in the input schema");
     }
     Schema groupSchema = groupField.getSchema();
-    Schema.Type groupType = groupSchema.isNullable() ? groupSchema.getNonNullable().getType() : groupSchema.getType();
+    Schema.Type groupType =
+        groupSchema.isNullable() ? groupSchema.getNonNullable().getType() : groupSchema.getType();
     if (groupType != Schema.Type.STRING) {
       throw new IllegalArgumentException(config.field + " is not of type string");
     }
@@ -71,7 +74,7 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
 
   @Override
   public void aggregate(String groupKey, Iterator<StructuredRecord> groupValues,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+      Emitter<StructuredRecord> emitter) throws Exception {
     if (config.value.equals(groupKey)) {
       while (groupValues.hasNext()) {
         emitter.emitError(new InvalidEntry<>(3, "bad val", groupValues.next()));
@@ -87,6 +90,7 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
    * The plugin config
    */
   public static class Config extends PluginConfig {
+
     String field;
     String value;
   }
@@ -103,7 +107,8 @@ public class GroupFilterAggregator extends BatchAggregator<String, StructuredRec
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "string", true, false));
     return PluginClass.builder().setName("GroupFilter").setType(BatchAggregator.PLUGIN_TYPE)
-             .setDescription("").setClassName(GroupFilterAggregator.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(GroupFilterAggregator.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

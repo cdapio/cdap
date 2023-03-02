@@ -48,7 +48,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Secret manager based secure store service to call {@link SecretManager} methods.
  */
-public class SecretManagerSecureStoreService extends AbstractIdleService implements SecureStoreService {
+public class SecretManagerSecureStoreService extends AbstractIdleService implements
+    SecureStoreService {
+
   private static final Logger LOG = LoggerFactory.getLogger(SecretManagerSecureStoreService.class);
 
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -57,17 +59,19 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   private SecretManager secretManager;
 
   @Inject
-  SecretManagerSecureStoreService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin, SecretStore store) {
+  SecretManagerSecureStoreService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin,
+      SecretStore store) {
     this(namespaceQueryAdmin,
-         new DefaultSecretManagerContext(cConf, store),
-         cConf.get(Constants.Security.Store.PROVIDER),
-         new SecretManagerExtensionLoader(cConf.get(Constants.Security.Store.EXTENSIONS_DIR))
-           .get(cConf.get(Constants.Security.Store.PROVIDER)));
+        new DefaultSecretManagerContext(cConf, store),
+        cConf.get(Constants.Security.Store.PROVIDER),
+        new SecretManagerExtensionLoader(cConf.get(Constants.Security.Store.EXTENSIONS_DIR))
+            .get(cConf.get(Constants.Security.Store.PROVIDER)));
   }
 
   @VisibleForTesting
-  SecretManagerSecureStoreService(NamespaceQueryAdmin namespaceQueryAdmin, SecretManagerContext context,
-                                  String type, SecretManager secretManager) {
+  SecretManagerSecureStoreService(NamespaceQueryAdmin namespaceQueryAdmin,
+      SecretManagerContext context,
+      String type, SecretManager secretManager) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.context = context;
     this.type = type;
@@ -92,7 +96,7 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
     List<SecureStoreMetadata> metadataList = new ArrayList<>();
     for (SecretMetadata metadata : secretManager.list(namespace)) {
       metadataList.add(new SecureStoreMetadata(metadata.getName(), metadata.getDescription(),
-                                               metadata.getCreationTimeMs(), metadata.getProperties()));
+          metadata.getCreationTimeMs(), metadata.getProperties()));
     }
     return metadataList;
   }
@@ -103,9 +107,10 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
     try {
       Secret secret = secretManager.get(namespace, name);
       SecretMetadata metadata = secret.getMetadata();
-      return new SecureStoreData(new SecureStoreMetadata(metadata.getName(), metadata.getDescription(),
-                                                         metadata.getCreationTimeMs(), metadata.getProperties()),
-                                 secret.getData());
+      return new SecureStoreData(
+          new SecureStoreMetadata(metadata.getName(), metadata.getDescription(),
+              metadata.getCreationTimeMs(), metadata.getProperties()),
+          secret.getData());
     } catch (SecretNotFoundException e) {
       throw new SecureKeyNotFoundException(new SecureKeyId(namespace, name), e);
     }
@@ -113,11 +118,11 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     validate(namespace);
     secretManager.store(namespace, new Secret(data.getBytes(StandardCharsets.UTF_8),
-                                              new SecretMetadata(name, description, System.currentTimeMillis(),
-                                                                 ImmutableMap.copyOf(properties))));
+        new SecretMetadata(name, description, System.currentTimeMillis(),
+            ImmutableMap.copyOf(properties))));
   }
 
   @Override
@@ -145,8 +150,9 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
 
   private void initializeSecretManager() {
     if (this.secretManager == null) {
-      LOG.error(String.format("Secure store extension %s was not loaded. Make sure the name of the " +
-                                "implementation matches %s property.", type, Constants.Security.Store.PROVIDER));
+      LOG.error(
+          String.format("Secure store extension %s was not loaded. Make sure the name of the " +
+              "implementation matches %s property.", type, Constants.Security.Store.PROVIDER));
       return;
     }
 
@@ -154,7 +160,8 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
       this.secretManager.initialize(context);
       LOG.info("Initialized secure store of type {}.", type);
     } catch (IOException e) {
-      LOG.error(String.format("Error occurred while initializing secure store of type %s.", type), e);
+      LOG.error(String.format("Error occurred while initializing secure store of type %s.", type),
+          e);
       this.secretManager = null;
     }
   }

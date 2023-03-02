@@ -32,7 +32,9 @@ import io.cdap.cdap.api.security.store.SecureStore;
  * Context for {@link Service}.
  */
 public interface ServiceContext extends RuntimeContext, ServiceDiscoverer, MessagingContext,
-  DatasetContext, PluginContext, Transactional, SecureStore, MetadataReader, MetadataWriter, ArtifactManager {
+    DatasetContext, PluginContext, Transactional, SecureStore, MetadataReader, MetadataWriter,
+    ArtifactManager {
+
   /**
    * Returns the specification used to configure {@link Service} bounded to this context.
    */

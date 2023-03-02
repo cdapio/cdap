@@ -42,19 +42,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Dataset definition of {@link CubeDataset}, the dataset that implements {@link io.cdap.cdap.api.dataset.lib.cube.Cube}
- * to store and query {@link io.cdap.cdap.api.dataset.lib.cube.CubeFact}s.
+ * Dataset definition of {@link CubeDataset}, the dataset that implements {@link
+ * io.cdap.cdap.api.dataset.lib.cube.Cube} to store and query {@link
+ * io.cdap.cdap.api.dataset.lib.cube.CubeFact}s.
  * <p/>
  * Cube dataset can be configured with aggregation resolutions and aggregations. E.g.
-    <pre>
-     dataset.cube.resolutions=1,60
-     dataset.cube.aggregation.userPages.dimensions=user,page
-     dataset.cube.aggregation.userPages.requiredDimensions=page
-     dataset.cube.aggregation.userActions.dimensions=user,action
-     dataset.cube.aggregation.userActions.requiredDimensions=action
-     dataset.cube.coarse.lag.factor=5
-     dataset.cube.coarse.round.factor=4
-    </pre>
+ * <pre>
+ * dataset.cube.resolutions=1,60
+ * dataset.cube.aggregation.userPages.dimensions=user,page
+ * dataset.cube.aggregation.userPages.requiredDimensions=page
+ * dataset.cube.aggregation.userActions.dimensions=user,action
+ * dataset.cube.aggregation.userActions.requiredDimensions=action
+ * dataset.cube.coarse.lag.factor=5
+ * dataset.cube.coarse.round.factor=4
+ * </pre>
  *
  * <ul>
  *   <li>
@@ -81,8 +82,8 @@ import java.util.Set;
  * if it contains all required dimensions which non-null value.
  */
 public class CubeDatasetDefinition
-  extends AbstractDatasetDefinition<CubeDataset, DatasetAdmin>
-  implements Reconfigurable {
+    extends AbstractDatasetDefinition<CubeDataset, DatasetAdmin>
+    implements Reconfigurable {
 
   public static final String PROPERTY_AGGREGATION_PREFIX = "dataset.cube.aggregation.";
   public static final String PROPERTY_DIMENSIONS = "dimensions";
@@ -106,13 +107,13 @@ public class CubeDatasetDefinition
    *
    * @param name this dataset type name
    * @param tableDef {@link Table} dataset definition, used to create tables to store cube data
-   * @param metricsTableDef {@link MetricsTable} dataset definition, used to create tables to store encoding mappings
-   *                        (see "entity" table).
-   *                        Has to be non-transactional: Cube dataset uses in-memory non-transactional cache in front
-   *                        of it, so all writes must be durable independent on transaction completion.
+   * @param metricsTableDef {@link MetricsTable} dataset definition, used to create tables to
+   *     store encoding mappings (see "entity" table). Has to be non-transactional: Cube dataset
+   *     uses in-memory non-transactional cache in front of it, so all writes must be durable
+   *     independent on transaction completion.
    */
   public CubeDatasetDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef,
-                               DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef) {
+      DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef) {
     super(name);
     this.tableDef = tableDef;
     this.metricsTableDef = metricsTableDef;
@@ -133,75 +134,80 @@ public class CubeDatasetDefinition
     }
 
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(datasetSpecs)
-      .build();
+        .properties(properties.getProperties())
+        .datasets(datasetSpecs)
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProps,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProps,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
 
     DatasetProperties factTableProperties = computeFactTableProperties(newProps);
     List<DatasetSpecification> datasetSpecs = Lists.newArrayList();
 
     // Configuring table that hold mappings of tag names and values and such
-    datasetSpecs.add(reconfigure(metricsTableDef, "entity", newProps, currentSpec.getSpecification("entity")));
+    datasetSpecs.add(
+        reconfigure(metricsTableDef, "entity", newProps, currentSpec.getSpecification("entity")));
 
     for (int resolution : getResolutions(newProps.getProperties())) {
       String factTableName = String.valueOf(resolution);
       DatasetSpecification existing = currentSpec.getSpecification(factTableName);
       DatasetSpecification factTableSpec = existing == null
-        ? tableDef.configure(factTableName, factTableProperties)
-        : reconfigure(tableDef, factTableName, factTableProperties, existing);
+          ? tableDef.configure(factTableName, factTableProperties)
+          : reconfigure(tableDef, factTableName, factTableProperties, existing);
       datasetSpecs.add(factTableSpec);
     }
 
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(newProps.getProperties())
-      .datasets(datasetSpecs)
-      .build();
+        .properties(newProps.getProperties())
+        .datasets(datasetSpecs)
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     Map<String, DatasetAdmin> admins = new HashMap<>();
 
-    admins.put("entity", metricsTableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
+    admins.put("entity",
+        metricsTableDef.getAdmin(datasetContext, spec.getSpecification("entity"), classLoader));
 
     int[] resolutions = getResolutions(spec.getProperties());
     for (int resolution : resolutions) {
       String resolutionTable = String.valueOf(resolution);
       admins.put(resolutionTable,
-                 tableDef.getAdmin(datasetContext, spec.getSpecification(resolutionTable), classLoader));
+          tableDef.getAdmin(datasetContext, spec.getSpecification(resolutionTable), classLoader));
     }
     return new CubeDatasetAdmin(spec, admins);
   }
 
   @Override
   public CubeDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     MetricsTable entityTable =
-      metricsTableDef.getDataset(datasetContext, spec.getSpecification("entity"), arguments, classLoader);
+        metricsTableDef.getDataset(datasetContext, spec.getSpecification("entity"), arguments,
+            classLoader);
 
     int[] resolutions = getResolutions(spec.getProperties());
     Map<Integer, Table> resolutionTables = Maps.newHashMap();
     for (int resolution : resolutions) {
       resolutionTables.put(resolution,
-                           tableDef.getDataset(datasetContext, spec.getSpecification(String.valueOf(resolution)),
-                                               arguments, classLoader));
+          tableDef.getDataset(datasetContext, spec.getSpecification(String.valueOf(resolution)),
+              arguments, classLoader));
     }
 
     Map<String, Aggregation> aggregations = getAggregations(spec.getProperties());
 
-    int coarseLagFactor = spec.getIntProperty(PROPERTY_COARSE_LAG_FACTOR, DEFAULT_COARSE_LAG_FACTOR);
-    int coarseRoundFactor = spec.getIntProperty(PROPERTY_COARSE_ROUND_FACTOR, DEFAULT_COARSE_ROUND_FACTOR);
+    int coarseLagFactor = spec.getIntProperty(PROPERTY_COARSE_LAG_FACTOR,
+        DEFAULT_COARSE_LAG_FACTOR);
+    int coarseRoundFactor = spec.getIntProperty(PROPERTY_COARSE_ROUND_FACTOR,
+        DEFAULT_COARSE_ROUND_FACTOR);
 
     return new CubeDataset(spec.getName(), entityTable, resolutionTables, aggregations,
-                           coarseLagFactor, coarseRoundFactor);
+        coarseLagFactor, coarseRoundFactor);
   }
 
   private DatasetProperties computeFactTableProperties(DatasetProperties props) {
@@ -211,9 +217,9 @@ public class CubeDatasetDefinition
     byte[][] splits = FactTable.getSplits(aggregations.size());
     // and combine them
     return DatasetProperties.builder()
-      .addAll(props.getProperties())
-      .add(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits))
-      .build();
+        .addAll(props.getProperties())
+        .add(HBaseTableAdmin.PROPERTY_SPLITS, GSON.toJson(splits))
+        .build();
   }
 
   private Map<String, Aggregation> getAggregations(Map<String, String> properties) {
@@ -244,9 +250,10 @@ public class CubeDatasetDefinition
     Map<String, Aggregation> aggregations = Maps.newHashMap();
     for (Map.Entry<String, List<String>> aggDimensionsEntry : aggDimensions.entrySet()) {
       Set<String> requiredDimensions = aggRequiredDimensions.get(aggDimensionsEntry.getKey());
-      requiredDimensions = requiredDimensions == null ? Collections.<String>emptySet() : requiredDimensions;
+      requiredDimensions =
+          requiredDimensions == null ? Collections.<String>emptySet() : requiredDimensions;
       aggregations.put(aggDimensionsEntry.getKey(),
-                       new DefaultAggregation(aggDimensionsEntry.getValue(), requiredDimensions));
+          new DefaultAggregation(aggDimensionsEntry.getValue(), requiredDimensions));
     }
     return aggregations;
   }
@@ -263,15 +270,16 @@ public class CubeDatasetDefinition
       String[] seconds = resProp.split(",");
       if (seconds.length == 0) {
         throw new IllegalArgumentException(String.format("Invalid value %s for property %s.",
-                                                         resProp, Cube.PROPERTY_RESOLUTIONS));
+            resProp, Cube.PROPERTY_RESOLUTIONS));
       }
       resolutions = new int[seconds.length];
       for (int i = 0; i < seconds.length; i++) {
         try {
           resolutions[i] = Integer.valueOf(seconds[i]);
         } catch (NumberFormatException e) {
-          throw new IllegalArgumentException(String.format("Invalid resolution value %s in property %s.",
-                                                           seconds[i], Cube.PROPERTY_RESOLUTIONS));
+          throw new IllegalArgumentException(
+              String.format("Invalid resolution value %s in property %s.",
+                  seconds[i], Cube.PROPERTY_RESOLUTIONS));
         }
       }
     }

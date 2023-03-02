@@ -22,14 +22,16 @@ import javax.annotation.Nullable;
  * Information about a tethered peer.
  */
 public class PeerBase {
+
   private final String name;
   private final String endpoint;
   private final TetheringStatus tetheringStatus;
   private final PeerMetadata metadata;
   private final long requestTime;
 
-  public PeerBase(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
-                  long requestTime) {
+  public PeerBase(String name, @Nullable String endpoint, TetheringStatus tetheringStatus,
+      PeerMetadata metadata,
+      long requestTime) {
     this.name = name;
     this.endpoint = endpoint;
     this.tetheringStatus = tetheringStatus;
@@ -68,10 +70,10 @@ public class PeerBase {
     }
     PeerBase that = (PeerBase) other;
     return Objects.equals(this.name, that.name) &&
-      Objects.equals(this.endpoint, that.endpoint) &&
-      Objects.equals(this.tetheringStatus, that.tetheringStatus) &&
-      Objects.equals(this.metadata, that.metadata) &&
-      Objects.equals(this.requestTime, that.requestTime);
+        Objects.equals(this.endpoint, that.endpoint) &&
+        Objects.equals(this.tetheringStatus, that.tetheringStatus) &&
+        Objects.equals(this.metadata, that.metadata) &&
+        Objects.equals(this.requestTime, that.requestTime);
   }
 
   @Override

@@ -26,20 +26,22 @@ import java.util.function.BiFunction;
 /**
  * Compares schemas.
  *
- * If they are of different physical types, they are compared according to the natural ordering of their types.
- * If they are of different logical types, they are compared according to the natural ordering of their logical types.
+ * If they are of different physical types, they are compared according to the natural ordering of
+ * their types. If they are of different logical types, they are compared according to the natural
+ * ordering of their logical types.
  *
- * Union schemas are first compared by the number of schemas they have.
- * A union with fewer schemas is less than a union with more.
- * If the number of schemas are the same, the schemas are compared in order.
+ * Union schemas are first compared by the number of schemas they have. A union with fewer schemas
+ * is less than a union with more. If the number of schemas are the same, the schemas are compared
+ * in order.
  *
  * Array schemas are compared by their component schemas.
  *
- * Record schemas are first compared by the number of fields they have.
- * A record with fewer fields is less than a record with more.
- * If the number of fields are the same, their fields are compared in order.
+ * Record schemas are first compared by the number of fields they have. A record with fewer fields
+ * is less than a record with more. If the number of fields are the same, their fields are compared
+ * in order.
  *
- * A schema field is first compared by field name. If the names are the same, they are compared by schema.
+ * A schema field is first compared by field name. If the names are the same, they are compared by
+ * schema.
  *
  * Map schemas are compared first by the key schema, then by the value schema.
  */

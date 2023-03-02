@@ -22,14 +22,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to declare a parameter to be used in {@link io.cdap.cdap.api.dataset.Dataset} constructor
- * which will be injected with {@link io.cdap.cdap.api.dataset.Dataset} instance.
+ * Annotation to declare a parameter to be used in {@link io.cdap.cdap.api.dataset.Dataset}
+ * constructor which will be injected with {@link io.cdap.cdap.api.dataset.Dataset} instance.
  *
- * See
- * {@link io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType
- * io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt; datasetClass)
- * }
- * for details. 
+ * See {@link io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType
+ * io.cdap.cdap.api.app.ApplicationConfigurer#addDatasetType(Class &lt;&#63; extends Dataset&gt;
+ * datasetClass) } for details.
  *
  * Example of usage:
  *
@@ -45,9 +43,8 @@ import java.lang.annotation.Target;
  * </code>
  * </pre>
  *
- * Here, upon creation the table parameter will be a dataset that points to a embedded dataset of name "data"
- * (namespaced with this dataset name).
- *
+ * Here, upon creation the table parameter will be a dataset that points to a embedded dataset of
+ * name "data" (namespaced with this dataset name).
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
@@ -61,8 +58,8 @@ public @interface EmbeddedDataset {
   String value();
 
   /**
-   * Optionally returns name of the type of the underlying dataset. If not set, then type of the parameter will be used
-   * to resolve it
+   * Optionally returns name of the type of the underlying dataset. If not set, then type of the
+   * parameter will be used to resolve it
    */
   String type() default DEFAULT_TYPE_NAME;
 }

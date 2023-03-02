@@ -35,15 +35,17 @@ import org.slf4j.LoggerFactory;
  * LogReader BodyProducer to encode log events, as text.
  */
 public class TextChunkedLogProducer extends AbstractChunkedLogProducer {
+
   private final PatternLayout patternLayout;
   private final boolean escape;
 
-  public TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern, boolean escape) {
+  public TextChunkedLogProducer(CloseableIterator<LogEvent> logEventIter, String logPattern,
+      boolean escape) {
     super(logEventIter);
     this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
-      (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     LoggerContext loggerContext = rootLogger.getLoggerContext();
 
     patternLayout = new PatternLayout();

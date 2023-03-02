@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 @ThreadSafe
 public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRequestQueue.class);
   private final PreviewStore previewStore;
   private final BlockingDeque<PreviewRequest> requestQueue;
@@ -55,14 +56,14 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
 
   @Inject
   DefaultPreviewRequestQueue(@Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration cConf,
-                             PreviewStore previewStore) {
+      PreviewStore previewStore) {
     this.previewStore = previewStore;
     this.capacity = cConf.getInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 50);
     this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 60);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.preview.store.update.");
     this.requestQueue = previewStore.getAllInWaitingState().stream()
-      .filter(r -> isValid(r, waitTimeOut))
-      .collect(Collectors.toCollection(() -> new LinkedBlockingDeque<>(capacity)));
+        .filter(r -> isValid(r, waitTimeOut))
+        .collect(Collectors.toCollection(() -> new LinkedBlockingDeque<>(capacity)));
   }
 
   @Override
@@ -75,27 +76,30 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
 
       if (!isValid(previewRequest, waitTimeOut)) {
         LOG.warn("Preview request wth application id {} is timed out. Ignoring it.",
-                 previewRequest.getProgram().getParent());
+            previewRequest.getProgram().getParent());
         continue;
       }
 
       try {
-        PreviewRequest request = Retries.callWithRetries((Retries.Callable<PreviewRequest, Exception>) () -> {
-          try {
-            previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
-            return previewRequest;
-          } catch (ConflictException e) {
-            LOG.debug("Preview application with id {} is not present in WAITING state. Ignoring the preview.",
-                      previewRequest.getProgram().getParent());
-            return null;
-          }
-        }, retryStrategy, Retries.ALWAYS_TRUE);
+        PreviewRequest request = Retries.callWithRetries(
+            (Retries.Callable<PreviewRequest, Exception>) () -> {
+              try {
+                previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(),
+                    pollerInfo);
+                return previewRequest;
+              } catch (ConflictException e) {
+                LOG.debug(
+                    "Preview application with id {} is not present in WAITING state. Ignoring the preview.",
+                    previewRequest.getProgram().getParent());
+                return null;
+              }
+            }, retryStrategy, Retries.ALWAYS_TRUE);
         if (request != null) {
           return Optional.of(request);
         }
       } catch (Exception e) {
         LOG.error("Failed to set the poller info for preview application {}. Ignoring it.",
-                  previewRequest.getProgram().getParent());
+            previewRequest.getProgram().getParent());
       }
     }
   }
@@ -103,12 +107,13 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   @Override
   public void add(PreviewRequest previewRequest) {
     previewStore.add(previewRequest.getProgram().getParent(),
-                     previewRequest.getAppRequest(),
-                     previewRequest.getPrincipal());
+        previewRequest.getAppRequest(),
+        previewRequest.getPrincipal());
     if (!requestQueue.offer(previewRequest)) {
       previewStore.remove(previewRequest.getProgram().getParent());
-      throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.",
-                                                    requestQueue.size()));
+      throw new IllegalStateException(
+          String.format("Preview request waiting queue is full with %d requests.",
+              requestQueue.size()));
     }
   }
 

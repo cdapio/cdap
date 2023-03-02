@@ -27,12 +27,13 @@ import java.util.Map;
 
 /**
  * A {@link DatumWriter} that uses java reflection to encode data. The encoding schema it uses is
- * the same as the binary encoding as specified in Avro, with the enhancement of support for non-string
- * map keys.
+ * the same as the binary encoding as specified in Avro, with the enhancement of support for
+ * non-string map keys.
  *
  * @param <T> Type T to be written.
  */
-public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T> implements DatumWriter<T> {
+public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T> implements
+    DatumWriter<T> {
 
   public ReflectionDatumWriter(Schema schema) {
     super(schema);
@@ -102,7 +103,8 @@ public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T>
   }
 
   @Override
-  protected void writeArray(Encoder encoder, Collection<?> col, Schema componentSchema) throws IOException {
+  protected void writeArray(Encoder encoder, Collection<?> col, Schema componentSchema)
+      throws IOException {
     int size = col.size();
     encoder.writeInt(size);
     for (Object obj : col) {
@@ -114,7 +116,8 @@ public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T>
   }
 
   @Override
-  protected void writeArray(Encoder encoder, Object array, Schema componentSchema) throws IOException {
+  protected void writeArray(Encoder encoder, Object array, Schema componentSchema)
+      throws IOException {
     int size = Array.getLength(array);
     encoder.writeInt(size);
     for (int i = 0; i < size; i++) {
@@ -126,7 +129,8 @@ public final class ReflectionDatumWriter<T> extends ReflectionWriter<Encoder, T>
   }
 
   @Override
-  protected void writeMap(Encoder encoder, Map<?, ?> map, Map.Entry<Schema, Schema> mapSchema) throws IOException {
+  protected void writeMap(Encoder encoder, Map<?, ?> map, Map.Entry<Schema, Schema> mapSchema)
+      throws IOException {
     int size = map.size();
     encoder.writeInt(size);
     Schema keySchema = mapSchema.getKey();

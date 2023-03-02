@@ -63,12 +63,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This {@link io.cdap.cdap.pipeline.Stage} is responsible for verifying
- * the specification and components of specification. Verification of each
- * component of specification is achieved by the {@link Verifier}
- * concrete implementations.
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for verifying the specification and
+ * components of specification. Verification of each component of specification is achieved by the
+ * {@link Verifier} concrete implementations.
  */
 public class ApplicationVerificationStage extends AbstractStage<ApplicationDeployable> {
+
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationVerificationStage.class);
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
@@ -77,7 +77,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   private final AuthenticationContext authenticationContext;
 
   public ApplicationVerificationStage(Store store, DatasetFramework dsFramework,
-                                      OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
+      OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
@@ -86,8 +86,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   /**
-   * Receives an input containing application specification and location
-   * and verifies both.
+   * Receives an input containing application specification and location and verifies both.
    *
    * @param input An instance of {@link ApplicationDeployable}
    */
@@ -103,7 +102,8 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       SecurityUtil.validateKerberosPrincipal(input.getOwnerPrincipal());
     }
 
-    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(appId.getAppReference());
+    Collection<ApplicationId> allAppVersionsAppIds = store.getAllAppVersionsAppIds(
+        appId.getAppReference());
     // if allAppVersionsAppIds.isEmpty() is false that means some version of this app already exists so we should
     // verify that the owner is same
     if (!allAppVersionsAppIds.isEmpty()) {
@@ -122,7 +122,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifySpec(ApplicationId appId,
-                          ApplicationSpecification specification) {
+      ApplicationSpecification specification) {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
@@ -130,7 +130,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   private void verifyData(ApplicationId appId, ApplicationSpecification specification,
-                          @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+      @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
@@ -142,19 +142,21 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       final DatasetId datasetInstanceId = appId.getParent().dataset(dsName);
       // get the authorizing user
       String authorizingUser =
-        AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, appId, ownerPrincipal);
+          AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, appId,
+              ownerPrincipal);
       DatasetSpecification existingSpec =
-        AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
-          @Override
-          public DatasetSpecification call() throws Exception {
-            return dsFramework.getDatasetSpec(datasetInstanceId);
-          }
-        });
+          AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
+            @Override
+            public DatasetSpecification call() throws Exception {
+              return dsFramework.getDatasetSpec(datasetInstanceId);
+            }
+          });
       if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
         // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
         throw new DataSetException
-          (String.format("Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
-                         dsName, dataSetCreateSpec.getTypeName()));
+            (String.format(
+                "Cannot Deploy Dataset : %s with Type : %s : Dataset with different Type Already Exists",
+                dsName, dataSetCreateSpec.getTypeName()));
       }
 
       // if the dataset existed verify its owner is same.
@@ -164,20 +166,22 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
   }
 
-  private void verifyOwner(NamespacedEntityId entityId, @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
-    throws DatasetManagementException, UnauthorizedException {
+  private void verifyOwner(NamespacedEntityId entityId,
+      @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
+      throws DatasetManagementException, UnauthorizedException {
     try {
       SecurityUtil.verifyOwnerPrincipal(entityId,
-                                        specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal(),
-                                        ownerAdmin);
+          specifiedOwnerPrincipal == null ? null : specifiedOwnerPrincipal.getPrincipal(),
+          ownerAdmin);
     } catch (IOException e) {
       throw new DatasetManagementException(e.getMessage(), e);
     }
   }
 
   protected void verifyPrograms(ApplicationId appId, ApplicationSpecification specification) {
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getMapReduce().values(),
-                                                                   specification.getWorkflows().values());
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(
+        specification.getMapReduce().values(),
+        specification.getWorkflows().values());
     VerifyResult result;
     for (ProgramSpecification programSpec : programSpecs) {
       Verifier<ProgramSpecification> verifier = getVerifier(programSpec.getClass());
@@ -191,30 +195,34 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       verifyWorkflowSpecifications(specification, entry.getValue());
     }
 
-    for (Map.Entry<String, ScheduleCreationSpec> entry : specification.getProgramSchedules().entrySet()) {
+    for (Map.Entry<String, ScheduleCreationSpec> entry : specification.getProgramSchedules()
+        .entrySet()) {
       String programName = entry.getValue().getProgramName();
       if (!specification.getWorkflows().containsKey(programName)) {
-        throw new RuntimeException(String.format("Schedule '%s' is invalid: Workflow '%s' is not configured " +
-                                                   "in application '%s'",
-                                                 entry.getValue().getName(), programName, specification.getName()));
+        throw new RuntimeException(
+            String.format("Schedule '%s' is invalid: Workflow '%s' is not configured " +
+                    "in application '%s'",
+                entry.getValue().getName(), programName, specification.getName()));
       }
     }
   }
 
-  private void verifyWorkflowSpecifications(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec) {
+  private void verifyWorkflowSpecifications(ApplicationSpecification appSpec,
+      WorkflowSpecification workflowSpec) {
     Set<String> existingNodeNames = new HashSet<>();
     verifyWorkflowNodeList(appSpec, workflowSpec, workflowSpec.getNodes(), existingNodeNames);
   }
 
-  private void verifyWorkflowNode(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                  WorkflowNode node, Set<String> existingNodeNames) {
+  private void verifyWorkflowNode(ApplicationSpecification appSpec,
+      WorkflowSpecification workflowSpec,
+      WorkflowNode node, Set<String> existingNodeNames) {
     WorkflowNodeType nodeType = node.getType();
     // TODO CDAP-5640 Add check so that node id in the Workflow should not be same as name of the Workflow.
     if (node.getNodeId().equals(workflowSpec.getName())) {
       String msg = String.format("Node used in Workflow has same name as that of Workflow '%s'." +
-                                   " This will conflict while getting the Workflow token details associated with" +
-                                   " the node. Please use name for the node other than the name of the Workflow.",
-                                 workflowSpec.getName());
+              " This will conflict while getting the Workflow token details associated with" +
+              " the node. Please use name for the node other than the name of the Workflow.",
+          workflowSpec.getName());
       LOG.warn(msg);
     }
     switch (nodeType) {
@@ -232,30 +240,35 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
   }
 
-  private void verifyWorkflowFork(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                  WorkflowNode node, Set<String> existingNodeNames) {
+  private void verifyWorkflowFork(ApplicationSpecification appSpec,
+      WorkflowSpecification workflowSpec,
+      WorkflowNode node, Set<String> existingNodeNames) {
     WorkflowForkNode forkNode = (WorkflowForkNode) node;
-    Preconditions.checkNotNull(forkNode.getBranches(), String.format("Fork is added in the Workflow '%s' without" +
-                                                                       " any branches", workflowSpec.getName()));
+    Preconditions.checkNotNull(forkNode.getBranches(),
+        String.format("Fork is added in the Workflow '%s' without" +
+            " any branches", workflowSpec.getName()));
 
     for (List<WorkflowNode> branch : forkNode.getBranches()) {
       verifyWorkflowNodeList(appSpec, workflowSpec, branch, existingNodeNames);
     }
   }
 
-  private void verifyWorkflowCondition(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                       WorkflowNode node, Set<String> existingNodeNames) {
+  private void verifyWorkflowCondition(ApplicationSpecification appSpec,
+      WorkflowSpecification workflowSpec,
+      WorkflowNode node, Set<String> existingNodeNames) {
     WorkflowConditionNode condition = (WorkflowConditionNode) node;
     verifyWorkflowNodeList(appSpec, workflowSpec, condition.getIfBranch(), existingNodeNames);
     verifyWorkflowNodeList(appSpec, workflowSpec, condition.getElseBranch(), existingNodeNames);
   }
 
-  private void verifyWorkflowNodeList(ApplicationSpecification appSpec, WorkflowSpecification workflowSpec,
-                                      List<WorkflowNode> nodeList, Set<String> existingNodeNames) {
+  private void verifyWorkflowNodeList(ApplicationSpecification appSpec,
+      WorkflowSpecification workflowSpec,
+      List<WorkflowNode> nodeList, Set<String> existingNodeNames) {
     for (WorkflowNode n : nodeList) {
       if (existingNodeNames.contains(n.getNodeId())) {
-        throw new RuntimeException(String.format("Node '%s' already exists in workflow '%s'.", n.getNodeId(),
-                                                 workflowSpec.getName()));
+        throw new RuntimeException(
+            String.format("Node '%s' already exists in workflow '%s'.", n.getNodeId(),
+                workflowSpec.getName()));
       }
       existingNodeNames.add(n.getNodeId());
       verifyWorkflowNode(appSpec, workflowSpec, n, existingNodeNames);
@@ -268,20 +281,20 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     switch (program.getProgramType()) {
       case MAPREDUCE:
         Preconditions.checkArgument(appSpec.getMapReduce().containsKey(program.getProgramName()),
-                                    String.format("MapReduce program '%s' is not configured with the Application.",
-                                                  program.getProgramName()));
+            String.format("MapReduce program '%s' is not configured with the Application.",
+                program.getProgramName()));
         break;
       case SPARK:
         Preconditions.checkArgument(appSpec.getSpark().containsKey(program.getProgramName()),
-                                    String.format("Spark program '%s' is not configured with the Application.",
-                                                  program.getProgramName()));
+            String.format("Spark program '%s' is not configured with the Application.",
+                program.getProgramName()));
         break;
       case CUSTOM_ACTION:
         // no-op
         break;
       default:
         throw new RuntimeException(String.format("Unknown Program '%s' in the Workflow.",
-                                                 program.getProgramName()));
+            program.getProgramName()));
     }
   }
 

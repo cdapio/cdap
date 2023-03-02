@@ -38,6 +38,7 @@ public class ConfigurableProgramsApp extends AbstractApplication<ConfigurablePro
    * Application Config Class.
    */
   public static class Programs extends Config {
+
     @Nullable
     private String worker;
     @Nullable

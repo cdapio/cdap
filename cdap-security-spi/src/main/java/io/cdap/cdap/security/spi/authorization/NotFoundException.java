@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
  * Exception thrown for handling unknown entities
  */
 public class NotFoundException extends AccessException implements HttpErrorStatusProvider {
+
   public NotFoundException(Role role) {
     super(String.format("%s not found.", role));
   }

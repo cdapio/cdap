@@ -47,19 +47,21 @@ public final class LoggingContextHelper {
   private static final String ACCOUNT_ID = ".accountId";
 
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
-    ImmutableMap.<String, String>builder()
-      .put(WorkflowLoggingContext.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
-      .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
-      .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
-      .put(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID, Constants.Metrics.Tag.MAPREDUCE)
-      .put(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID, Constants.Metrics.Tag.SPARK)
-      .put(UserServiceLoggingContext.TAG_USER_SERVICE_ID, Constants.Metrics.Tag.SERVICE)
-      .put(UserServiceLoggingContext.TAG_HANDLER_ID, Constants.Metrics.Tag.HANDLER)
-      .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
-      .put(ApplicationLoggingContext.TAG_INSTANCE_ID, Constants.Metrics.Tag.INSTANCE_ID)
-    .build();
+      ImmutableMap.<String, String>builder()
+          .put(WorkflowLoggingContext.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
+          .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
+          .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
+          .put(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID,
+              Constants.Metrics.Tag.MAPREDUCE)
+          .put(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID, Constants.Metrics.Tag.SPARK)
+          .put(UserServiceLoggingContext.TAG_USER_SERVICE_ID, Constants.Metrics.Tag.SERVICE)
+          .put(UserServiceLoggingContext.TAG_HANDLER_ID, Constants.Metrics.Tag.HANDLER)
+          .put(WorkerLoggingContext.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
+          .put(ApplicationLoggingContext.TAG_INSTANCE_ID, Constants.Metrics.Tag.INSTANCE_ID)
+          .build();
 
-  private LoggingContextHelper() {}
+  private LoggingContextHelper() {
+  }
 
   /**
    * Gives the {@link NamespaceId} for  the given logging context.
@@ -68,13 +70,14 @@ public final class LoggingContextHelper {
    * @return {@link NamespaceId} for the given logging context
    */
   public static NamespaceId getNamespaceId(LoggingContext loggingContext) {
-    Preconditions.checkArgument(loggingContext.getSystemTagsMap().containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID),
-                                String.format("Failed to identify the namespace in the logging context '%s' since " +
-                                                "it does not contains a '%s'. LoggingContexts should have a " +
-                                                "namespace.", loggingContext.getSystemTagsMap(),
-                                              NamespaceLoggingContext.TAG_NAMESPACE_ID));
+    Preconditions.checkArgument(
+        loggingContext.getSystemTagsMap().containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID),
+        String.format("Failed to identify the namespace in the logging context '%s' since " +
+                "it does not contains a '%s'. LoggingContexts should have a " +
+                "namespace.", loggingContext.getSystemTagsMap(),
+            NamespaceLoggingContext.TAG_NAMESPACE_ID));
     return new NamespaceId(loggingContext.getSystemTagsMap()
-                             .get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
+        .get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue());
   }
 
   public static LoggingContext getLoggingContext(Map<String, String> tags) {
@@ -97,46 +100,48 @@ public final class LoggingContextHelper {
     if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
       if (tags.containsKey(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID)) {
         return new WorkflowProgramLoggingContext(namespaceId, applicationId,
-                                                 tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
-                                                 tags.get(ApplicationLoggingContext.TAG_RUN_ID), ProgramType.MAPREDUCE,
-                                                 tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID),
-                                                 tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
+            tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
+            tags.get(ApplicationLoggingContext.TAG_RUN_ID), ProgramType.MAPREDUCE,
+            tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID),
+            tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
       }
 
       if (tags.containsKey(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID)) {
         return new WorkflowProgramLoggingContext(namespaceId, applicationId,
-                                                 tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
-                                                 tags.get(ApplicationLoggingContext.TAG_RUN_ID), ProgramType.SPARK,
-                                                 tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID),
-                                                 tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
+            tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
+            tags.get(ApplicationLoggingContext.TAG_RUN_ID), ProgramType.SPARK,
+            tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID),
+            tags.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
       }
 
       return new WorkflowLoggingContext(namespaceId, applicationId,
-                                        tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
-                                        tags.get(ApplicationLoggingContext.TAG_RUN_ID));
+          tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
+          tags.get(ApplicationLoggingContext.TAG_RUN_ID));
     } else if (tags.containsKey(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID)) {
       return new MapReduceLoggingContext(namespaceId, applicationId,
-                                         tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
-                                         tags.get(ApplicationLoggingContext.TAG_RUN_ID));
+          tags.get(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID),
+          tags.get(ApplicationLoggingContext.TAG_RUN_ID));
     } else if (tags.containsKey(SparkLoggingContext.TAG_SPARK_JOB_ID)) {
-        return new SparkLoggingContext(namespaceId, applicationId, tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
-                                       tags.get(ApplicationLoggingContext.TAG_RUN_ID));
+      return new SparkLoggingContext(namespaceId, applicationId,
+          tags.get(SparkLoggingContext.TAG_SPARK_JOB_ID),
+          tags.get(ApplicationLoggingContext.TAG_RUN_ID));
     } else if (tags.containsKey(UserServiceLoggingContext.TAG_USER_SERVICE_ID)) {
       if (!tags.containsKey(UserServiceLoggingContext.TAG_HANDLER_ID)) {
         return null;
       }
       return new UserServiceLoggingContext(namespaceId, applicationId,
-                                           tags.get(UserServiceLoggingContext.TAG_USER_SERVICE_ID),
-                                           tags.get(UserServiceLoggingContext.TAG_HANDLER_ID),
-                                           tags.get(ApplicationLoggingContext.TAG_RUN_ID),
-                                           tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
+          tags.get(UserServiceLoggingContext.TAG_USER_SERVICE_ID),
+          tags.get(UserServiceLoggingContext.TAG_HANDLER_ID),
+          tags.get(ApplicationLoggingContext.TAG_RUN_ID),
+          tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     } else if (tags.containsKey(ServiceLoggingContext.TAG_SERVICE_ID)) {
       return new ServiceLoggingContext(namespaceId, componentId,
-                                       tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
+          tags.get(ServiceLoggingContext.TAG_SERVICE_ID));
     } else if (tags.containsKey(WorkerLoggingContext.TAG_WORKER_ID)) {
-      return new WorkerLoggingContext(namespaceId, applicationId, tags.get(WorkerLoggingContext.TAG_WORKER_ID),
-                                      tags.get(ApplicationLoggingContext.TAG_RUN_ID),
-                                      tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
+      return new WorkerLoggingContext(namespaceId, applicationId,
+          tags.get(WorkerLoggingContext.TAG_WORKER_ID),
+          tags.get(ApplicationLoggingContext.TAG_RUN_ID),
+          tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
     }
 
     throw new IllegalArgumentException("Unsupported logging context");
@@ -144,48 +149,53 @@ public final class LoggingContextHelper {
 
   /**
    * get log path identifier from the logging context
-   * @param loggingContext
-   * @return
    */
   public static LogPathIdentifier getLogPathIdentifier(LoggingContext loggingContext) {
     Map<String, LoggingContext.SystemTag> tagMap = loggingContext.getSystemTagsMap();
     String namespace = tagMap.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ?
-      tagMap.get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue() :
-      tagMap.get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
+        tagMap.get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue() :
+        tagMap.get(ServiceLoggingContext.TAG_SYSTEM_ID).getValue();
 
     if (loggingContext instanceof ServiceLoggingContext) {
-      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
+      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID)
+          .getValue();
       return new LogPathIdentifier(namespace, Constants.Logging.COMPONENT_NAME, entityId);
     } else {
-      String appId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
+      String appId = loggingContext.getSystemTagsMap()
+          .get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
       String entityId = LoggingContextHelper.getEntityId(loggingContext).getValue();
       return new LogPathIdentifier(namespace, appId, entityId);
     }
   }
 
-  public static LoggingContext getLoggingContext(String systemId, String componentId, String serviceId) {
+  public static LoggingContext getLoggingContext(String systemId, String componentId,
+      String serviceId) {
     return new ServiceLoggingContext(systemId, componentId, serviceId);
   }
 
-  public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
-                                                 ProgramType programType) {
+  public static LoggingContext getLoggingContext(String namespaceId, String applicationId,
+      String entityId,
+      ProgramType programType) {
     return getLoggingContext(namespaceId, applicationId, entityId, programType, null, null);
   }
 
   public static LoggingContext getLoggingContextWithRunId(ProgramRunId programRun,
-                                                          @Nullable Map<String, String> systemArgs) {
-    return getLoggingContextWithRunId(programRun.getParent().getProgramReference(), programRun.getRun(), systemArgs);
+      @Nullable Map<String, String> systemArgs) {
+    return getLoggingContextWithRunId(programRun.getParent().getProgramReference(),
+        programRun.getRun(), systemArgs);
   }
 
   public static LoggingContext getLoggingContextWithRunId(ProgramReference programRef, String runId,
-                                                          @Nullable Map<String, String> systemArgs) {
-    return getLoggingContext(programRef.getNamespace(), programRef.getApplication(), programRef.getProgram(),
-                             programRef.getType(), runId, systemArgs);
+      @Nullable Map<String, String> systemArgs) {
+    return getLoggingContext(programRef.getNamespace(), programRef.getApplication(),
+        programRef.getProgram(),
+        programRef.getType(), runId, systemArgs);
   }
 
-  public static LoggingContext getLoggingContext(String namespaceId, String applicationId, String entityId,
-                                                 ProgramType programType, @Nullable String runId,
-                                                 @Nullable Map<String, String> systemArgs) {
+  public static LoggingContext getLoggingContext(String namespaceId, String applicationId,
+      String entityId,
+      ProgramType programType, @Nullable String runId,
+      @Nullable Map<String, String> systemArgs) {
     switch (programType) {
       case WORKFLOW:
         return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
@@ -193,46 +203,52 @@ public final class LoggingContextHelper {
         if (systemArgs != null && systemArgs.containsKey("workflowRunId")) {
           String workflowRunId = systemArgs.get("workflowRunId");
           String workflowId = systemArgs.get("workflowName");
-          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId, workflowRunId, programType,
-                                                   entityId, runId);
+          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId,
+              workflowRunId, programType,
+              entityId, runId);
         }
         return new MapReduceLoggingContext(namespaceId, applicationId, entityId, runId);
       case SPARK:
         if (systemArgs != null && systemArgs.containsKey("workflowRunId")) {
           String workflowRunId = systemArgs.get("workflowRunId");
           String workflowId = systemArgs.get("workflowName");
-          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId, workflowRunId, programType,
-                                                   entityId, runId);
+          return new WorkflowProgramLoggingContext(namespaceId, applicationId, workflowId,
+              workflowRunId, programType,
+              entityId, runId);
         }
         return new SparkLoggingContext(namespaceId, applicationId, entityId, runId);
       case SERVICE:
         return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", runId,
-                                             systemArgs == null ? null : systemArgs.get("instanceId"));
+            systemArgs == null ? null : systemArgs.get("instanceId"));
       case WORKER:
         return new WorkerLoggingContext(namespaceId, applicationId, entityId, runId,
-                                        systemArgs == null ? null : systemArgs.get("instanceId"));
+            systemArgs == null ? null : systemArgs.get("instanceId"));
       default:
-        throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
+        throw new IllegalArgumentException(
+            String.format("Illegal entity type for logging context: %s", programType));
     }
   }
 
   public static Filter createFilter(LoggingContext loggingContext) {
     if (loggingContext instanceof ServiceLoggingContext) {
-      LoggingContext.SystemTag systemTag = getByNamespaceOrSystemID(loggingContext.getSystemTagsMap());
+      LoggingContext.SystemTag systemTag = getByNamespaceOrSystemID(
+          loggingContext.getSystemTagsMap());
       if (systemTag == null) {
         throw new IllegalArgumentException("No namespace or system id present");
       }
       String systemId = systemTag.getValue();
-      String componentId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
+      String componentId = loggingContext.getSystemTagsMap()
+          .get(ServiceLoggingContext.TAG_COMPONENT_ID).getValue();
       String tagName = ServiceLoggingContext.TAG_SERVICE_ID;
-      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue();
+      String entityId = loggingContext.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID)
+          .getValue();
       ImmutableList.Builder<Filter> filterBuilder = ImmutableList.builder();
       // In CDAP 3.5 we removed SystemLoggingContext which had tag .systemId and now we use .namespaceId but to
       // support backward compatibility have an or filter so that we can read old logs too. See CDAP-7482
       OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
-                                                                 NamespaceLoggingContext.TAG_NAMESPACE_ID, systemId),
-                                                               new MdcExpression(ServiceLoggingContext.TAG_SYSTEM_ID,
-                                                                                 systemId)));
+              NamespaceLoggingContext.TAG_NAMESPACE_ID, systemId),
+          new MdcExpression(ServiceLoggingContext.TAG_SYSTEM_ID,
+              systemId)));
 
       filterBuilder.add(namespaceFilter);
       filterBuilder.add(new MdcExpression(ServiceLoggingContext.TAG_COMPONENT_ID, componentId));
@@ -241,8 +257,10 @@ public final class LoggingContextHelper {
       return new AndFilter(filterBuilder.build());
 
     } else {
-      String namespaceId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_NAMESPACE_ID).getValue();
-      String applId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
+      String namespaceId = loggingContext.getSystemTagsMap()
+          .get(ApplicationLoggingContext.TAG_NAMESPACE_ID).getValue();
+      String applId = loggingContext.getSystemTagsMap()
+          .get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
 
       LoggingContext.SystemTag entityTag = getEntityId(loggingContext);
 
@@ -251,9 +269,9 @@ public final class LoggingContextHelper {
       // For backward compatibility: The old logs before namespace have .accountId and developer as value so we don't
       // want them to get filtered out if they belong to this application and entity
       OrFilter namespaceFilter = new OrFilter(ImmutableList.of(new MdcExpression(
-                                                                 NamespaceLoggingContext.TAG_NAMESPACE_ID, namespaceId),
-                                                               new MdcExpression(ACCOUNT_ID,
-                                                                                 Constants.DEVELOPER_ACCOUNT)));
+              NamespaceLoggingContext.TAG_NAMESPACE_ID, namespaceId),
+          new MdcExpression(ACCOUNT_ID,
+              Constants.DEVELOPER_ACCOUNT)));
       filterBuilder.add(namespaceFilter);
       filterBuilder.add(new MdcExpression(ApplicationLoggingContext.TAG_APPLICATION_ID, applId));
       filterBuilder.add(new MdcExpression(entityTag.getName(), entityTag.getValue()));
@@ -262,22 +280,25 @@ public final class LoggingContextHelper {
         // Program is started by Workflow. Add Program information to filter.
         Map<String, LoggingContext.SystemTag> systemTagsMap = loggingContext.getSystemTagsMap();
         LoggingContext.SystemTag programTag
-          = systemTagsMap.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID);
+            = systemTagsMap.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID);
         if (programTag != null) {
-          filterBuilder.add(new MdcExpression(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID,
-                                              programTag.getValue()));
+          filterBuilder.add(
+              new MdcExpression(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID,
+                  programTag.getValue()));
         }
         programTag = systemTagsMap.get(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID);
         if (programTag != null) {
           filterBuilder.add(new MdcExpression(WorkflowProgramLoggingContext.TAG_WORKFLOW_SPARK_ID,
-                                              programTag.getValue()));
+              programTag.getValue()));
         }
       }
 
       // Add runid filter if required
-      LoggingContext.SystemTag runId = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_RUN_ID);
+      LoggingContext.SystemTag runId = loggingContext.getSystemTagsMap()
+          .get(ApplicationLoggingContext.TAG_RUN_ID);
       if (runId != null && runId.getValue() != null) {
-        filterBuilder.add(new MdcExpression(ApplicationLoggingContext.TAG_RUN_ID, runId.getValue()));
+        filterBuilder.add(
+            new MdcExpression(ApplicationLoggingContext.TAG_RUN_ID, runId.getValue()));
       }
 
       return new AndFilter(filterBuilder.build());
@@ -298,7 +319,8 @@ public final class LoggingContextHelper {
     } else if (loggingContext instanceof WorkerLoggingContext) {
       tagName = WorkerLoggingContext.TAG_WORKER_ID;
     } else {
-      throw new IllegalArgumentException(String.format("Invalid logging context: %s", loggingContext));
+      throw new IllegalArgumentException(
+          String.format("Invalid logging context: %s", loggingContext));
     }
 
     final String entityId = loggingContext.getSystemTagsMap().get(tagName).getValue();
@@ -315,9 +337,10 @@ public final class LoggingContextHelper {
     };
   }
 
-  public static Map<String, String> getMetricsTags(LoggingContext context) throws IllegalArgumentException {
+  public static Map<String, String> getMetricsTags(LoggingContext context)
+      throws IllegalArgumentException {
     if (context instanceof ServiceLoggingContext) {
-     return getMetricsTagsFromSystemContext((ServiceLoggingContext) context);
+      return getMetricsTagsFromSystemContext((ServiceLoggingContext) context);
     } else {
       return getMetricsTagsFromLoggingContext(context);
     }
@@ -333,7 +356,8 @@ public final class LoggingContextHelper {
     }
     builder.put(Constants.Metrics.Tag.NAMESPACE, namespace);
 
-    String applicationId = getValueFromTag(loggingTags.get(ApplicationLoggingContext.TAG_APPLICATION_ID));
+    String applicationId = getValueFromTag(
+        loggingTags.get(ApplicationLoggingContext.TAG_APPLICATION_ID));
     // Must be an application
     if (Strings.isNullOrEmpty(applicationId)) {
       throw new IllegalArgumentException("Missing application id");
@@ -351,7 +375,7 @@ public final class LoggingContextHelper {
       // For programs that are launched by Workflow, they use WorkflowProgramLoggingContext and they have two runids
       if (context instanceof WorkflowProgramLoggingContext) {
         String programRunId = getValueFromTag(loggingTags.get(
-          WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
+            WorkflowProgramLoggingContext.TAG_WORKFLOW_PROGRAM_RUN_ID));
         if (!Strings.isNullOrEmpty(programRunId)) {
           builder.put(Constants.Metrics.Tag.RUN_ID, programRunId);
         }
@@ -379,11 +403,12 @@ public final class LoggingContextHelper {
     return tag == null ? null : tag.getValue();
   }
 
-  private static Map<String, String> getMetricsTagsFromSystemContext(ServiceLoggingContext context) {
+  private static Map<String, String> getMetricsTagsFromSystemContext(
+      ServiceLoggingContext context) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId());
     builder.put(Constants.Metrics.Tag.COMPONENT,
-                context.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue());
+        context.getSystemTagsMap().get(ServiceLoggingContext.TAG_SERVICE_ID).getValue());
     return builder.build();
   }
 
@@ -393,6 +418,6 @@ public final class LoggingContextHelper {
     // .TAG_NAMESPACE_ID does not exist we use ServiceLoggingContext.TAG_SYSTEM_ID to support backward
     // compatibility for the logs which are in kafka and needs to be written to HDFS through log saver. See CDAP-7482
     return tags.containsKey(NamespaceLoggingContext.TAG_NAMESPACE_ID) ? tags.get
-      (NamespaceLoggingContext.TAG_NAMESPACE_ID) : tags.get(ServiceLoggingContext.TAG_SYSTEM_ID);
+        (NamespaceLoggingContext.TAG_NAMESPACE_ID) : tags.get(ServiceLoggingContext.TAG_SYSTEM_ID);
   }
 }

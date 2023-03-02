@@ -33,7 +33,7 @@ import java.util.Set;
  * Loads provisioners from the extensions directory.
  */
 public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, Provisioner>
-  implements ProvisionerProvider {
+    implements ProvisionerProvider {
 
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
   private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
@@ -42,10 +42,11 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
   private static Set<String> createAllowedResources() {
     try {
-      return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(), Provisioner.class);
+      return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(),
+          Provisioner.class);
     } catch (IOException e) {
       throw new RuntimeException("Failed to trace dependencies for provisioner extension. " +
-                                   "Usage of provisioner might fail.", e);
+          "Usage of provisioner might fail.", e);
     }
   }
 

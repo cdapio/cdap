@@ -46,20 +46,21 @@ import org.apache.twill.filesystem.Location;
 /**
  * Batch Source that reads from a FileSet that has its data formatted as text.
  *
- * LongWritable is the first parameter because that is the key used by Hadoop's {@link TextInputFormat}.
- * Similarly, Text is the second parameter because that is the value used by Hadoop's {@link TextInputFormat}.
- * {@link StructuredRecord} is the third parameter because that is what the source will output.
- * All the plugins included with Hydrator operate on StructuredRecord.
+ * LongWritable is the first parameter because that is the key used by Hadoop's {@link
+ * TextInputFormat}. Similarly, Text is the second parameter because that is the value used by
+ * Hadoop's {@link TextInputFormat}. {@link StructuredRecord} is the third parameter because that is
+ * what the source will output. All the plugins included with Hydrator operate on StructuredRecord.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(TextFileSetSource.NAME)
 @Description("Reads from a FileSet that has its data formatted as text.")
 public class TextFileSetSource extends BatchSource<LongWritable, Text, StructuredRecord> {
+
   public static final String NAME = "TextFileSet";
   public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
-    "textRecord",
-    Schema.Field.of("position", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("text", Schema.of(Schema.Type.STRING))
+      "textRecord",
+      Schema.Field.of("position", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("text", Schema.of(Schema.Type.STRING))
   );
   private final Conf config;
 
@@ -67,6 +68,7 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     public static final String FILESET_NAME = "fileSetName";
     public static final String FILES = "files";
     public static final String CREATE_IF_NOT_EXISTS = "createIfNotExists";
@@ -115,14 +117,14 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
     // if the user has set createIfNotExists to true, create the FileSet here.
     if (config.createIfNotExists) {
       pipelineConfigurer.createDataset(config.fileSetName,
-                                       FileSet.class,
-                                       FileSetProperties.builder()
-                                         .setInputFormat(TextInputFormat.class)
-                                         .setOutputFormat(TextOutputFormat.class)
-                                         .setEnableExploreOnCreate(true)
-                                         .setExploreFormat("text")
-                                         .setExploreSchema("text string")
-                                         .build()
+          FileSet.class,
+          FileSetProperties.builder()
+              .setInputFormat(TextInputFormat.class)
+              .setOutputFormat(TextOutputFormat.class)
+              .setEnableExploreOnCreate(true)
+              .setExploreFormat("text")
+              .setExploreSchema("text string")
+              .build()
       );
     }
     // set the output schema of this stage so that stages further down the pipeline will know their input schema.
@@ -177,11 +179,12 @@ public class TextFileSetSource extends BatchSource<LongWritable, Text, Structure
   // The output should be a StructuredRecord if you want the source to be compatible with the plugins included
   // with Hydrator.
   @Override
-  public void transform(KeyValue<LongWritable, Text> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<LongWritable, Text> input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     emitter.emit(StructuredRecord.builder(OUTPUT_SCHEMA)
-                   .set("position", input.getKey().get())
-                   .set("text", input.getValue().toString())
-                   .build()
+        .set("position", input.getKey().get())
+        .set("text", input.getValue().toString())
+        .build()
     );
   }
 }

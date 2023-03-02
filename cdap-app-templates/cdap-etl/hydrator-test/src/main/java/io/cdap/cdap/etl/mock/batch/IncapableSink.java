@@ -56,12 +56,13 @@ public class IncapableSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   private static PluginClass getPluginClass() {
     return PluginClass.builder()
-      .setName(IncapableSink.NAME)
-      .setType(BatchSink.PLUGIN_TYPE)
-      .setDescription("")
-      .setClassName(IncapableSink.class.getName())
-      .setRequirements(new io.cdap.cdap.api.plugin.Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
-      .build();
+        .setName(IncapableSink.NAME)
+        .setType(BatchSink.PLUGIN_TYPE)
+        .setDescription("")
+        .setClassName(IncapableSink.class.getName())
+        .setRequirements(new io.cdap.cdap.api.plugin.Requirements(
+            ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)))
+        .build();
   }
 }
 

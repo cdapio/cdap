@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * ETL Stage Configuration.
  */
 public final class ETLStage {
+
   private final String name;
   private final ETLPlugin plugin;
   private final StageInformation information;
@@ -60,8 +61,9 @@ public final class ETLStage {
   }
 
   // Used only for upgrade stage purpose.
-  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema, String id,
-                   StageInformation info) {
+  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema,
+      Object outputSchema, String id,
+      StageInformation info) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = null;
@@ -81,25 +83,29 @@ public final class ETLStage {
   }
 
   /**
-   * Validate correctness. Since this object is created through deserialization, some fields that should not be null
-   * may be null.
+   * Validate correctness. Since this object is created through deserialization, some fields that
+   * should not be null may be null.
    *
    * @throws IllegalArgumentException if the object is invalid
    */
   public void validate() {
     if (name == null || name.isEmpty()) {
-      throw new IllegalArgumentException(String.format("Invalid stage '%s': name must be specified.",
-                                                       toString()));
+      throw new IllegalArgumentException(
+          String.format("Invalid stage '%s': name must be specified.",
+              toString()));
     }
     if (plugin == null) {
-      throw new IllegalArgumentException(String.format("Invalid stage '%s': plugin must be specified.",
-                                                       name));
+      throw new IllegalArgumentException(
+          String.format("Invalid stage '%s': plugin must be specified.",
+              name));
     }
     if (errorDatasetName != null) {
       throw new IllegalArgumentException(
-        String.format("Invalid stage '%s'. Error datasets have been replaced by error collectors. " +
-                        "Please connect stage '%s' to an error collector, then connect the error collector " +
-                        "to a sink.", name, name));
+          String.format(
+              "Invalid stage '%s'. Error datasets have been replaced by error collectors. " +
+                  "Please connect stage '%s' to an error collector, then connect the error collector "
+                  +
+                  "to a sink.", name, name));
     }
     plugin.validate();
   }
@@ -108,52 +114,54 @@ public final class ETLStage {
   @Deprecated
   public ETLStage upgradeStage(UpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig =
-      upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
+        upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
     io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
-      plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig, plugin.getLabel());
+        plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig,
+        plugin.getLabel());
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
   /**
-   * Updates stage by performing update action logic provided in context.
-   * Current relevant update actions for stages are:
-   *  1. UPGRADE_ARTIFACT: Upgrades plugin artifact by finding the latest version of plugin to use.
+   * Updates stage by performing update action logic provided in context. Current relevant update
+   * actions for stages are: 1. UPGRADE_ARTIFACT: Upgrades plugin artifact by finding the latest
+   * version of plugin to use.
    *
    * @param updateContext Context to use for updating stage.
    * @return new (updated) ETLStage.
    */
   public ETLStage updateStage(ApplicationUpdateContext updateContext) throws Exception {
-    for (ApplicationConfigUpdateAction updateAction: updateContext.getUpdateActions()) {
+    for (ApplicationConfigUpdateAction updateAction : updateContext.getUpdateActions()) {
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
-          return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), label, inputSchema,
-                                                        outputSchema, id, information);
+          return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), label,
+              inputSchema,
+              outputSchema, id, information);
         default:
           return this;
-        }
       }
+    }
 
     // No update action provided so return stage as is.
     return this;
   }
 
   /**
-   * Upgrade plugin used in the stage.
-   * 1. If plugin is using fixed version and a new plugin artifact is found with higher version in SYSTEM scope,
-   *    use the new plugin.
-   * 2. If plugin is using a plugin range and a new plugin artifact is found with higher version in SYSTEM scope,
-   *    move the upper bound of the range to include the new plugin artifact. Also change plugin scope.
-   *    If new plugin is in range, do not change range. (Note: It would not change range even though new plugin is in
-   *    different scope).
+   * Upgrade plugin used in the stage. 1. If plugin is using fixed version and a new plugin artifact
+   * is found with higher version in SYSTEM scope, use the new plugin. 2. If plugin is using a
+   * plugin range and a new plugin artifact is found with higher version in SYSTEM scope, move the
+   * upper bound of the range to include the new plugin artifact. Also change plugin scope. If new
+   * plugin is in range, do not change range. (Note: It would not change range even though new
+   * plugin is in different scope).
    *
    * @param updateContext To use helper functions like getPluginArtifacts.
-   * @return Updated plugin object to be used for the udated stage. Returned null if no changes to current plugin.
+   * @return Updated plugin object to be used for the udated stage. Returned null if no changes to
+   *     current plugin.
    */
   private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) throws Exception {
     // Find the plugin with max version from available candidates.
     Optional<ArtifactId> newPluginCandidate =
-      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), null).stream()
-        .max(Comparator.comparing(artifactId -> artifactId.getVersion()));
+        updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), null).stream()
+            .max(Comparator.comparing(artifactId -> artifactId.getVersion()));
     if (!newPluginCandidate.isPresent()) {
       // This should not happen as there should be at least one plugin candidate same as current.
       // TODO: Consider throwing exception here.
@@ -168,34 +176,36 @@ public final class ETLStage {
     }
 
     ArtifactSelectorConfig newArtifactSelectorConfig =
-      new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
-                                 newVersion);
+        new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
+            newVersion);
     io.cdap.cdap.etl.proto.v2.ETLPlugin upgradedEtlPlugin =
-      new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
-                                              plugin.getProperties(),
-                                              newArtifactSelectorConfig, plugin.getLabel());
+        new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
+            plugin.getProperties(),
+            newArtifactSelectorConfig, plugin.getLabel());
     return upgradedEtlPlugin;
   }
 
   /**
-   * Returns new valid version string for plugin upgrade if any changes are required. Returns null if no change to
-   * current plugin version.
-   * Artifact selector config only stores plugin version as string, it can be either fixed version or range.
-   * Hence, if the plugin version is fixed, replace the fixed version with newer fixed version. If it is a range,
-   * move the upper bound of the range to the newest version.
+   * Returns new valid version string for plugin upgrade if any changes are required. Returns null
+   * if no change to current plugin version. Artifact selector config only stores plugin version as
+   * string, it can be either fixed version or range. Hence, if the plugin version is fixed, replace
+   * the fixed version with newer fixed version. If it is a range, move the upper bound of the range
+   * to the newest version.
    *
    * @param newPlugin New candidate plugin for updating plugin artifact.
-   * @return version string to be used for new plugin. Might be fixed version/version range string depending on
-   *         current use.
+   * @return version string to be used for new plugin. Might be fixed version/version range string
+   *     depending on current use.
    */
   @Nullable
   private String getUpgradedVersionString(ArtifactId newPlugin) {
     ArtifactVersionRange currentVersionRange;
     try {
       currentVersionRange =
-        io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(plugin.getArtifactConfig().getVersion());
+          io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(
+              plugin.getArtifactConfig().getVersion());
     } catch (Exception e) {
-      LOG.warn("Issue in parsing version string for plugin {}, ignoring stage {} for upgrade.", plugin, name, e);
+      LOG.warn("Issue in parsing version string for plugin {}, ignoring stage {} for upgrade.",
+          plugin, name, e);
       return null;
     }
 
@@ -217,13 +227,14 @@ public final class ETLStage {
       // Current lower version is higher than newer latest version. This should not happen.
       if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
         LOG.warn("Error in updating stage {}. Invalid new plugin artifact {} upgrading plugin {}.",
-                 name, newPlugin, plugin);
+            name, newPlugin, plugin);
         return null;
       }
       // Increase the upper bound to latest available version.
       ArtifactVersionRange newVersionRange =
-        new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
-                                 newPlugin.getVersion(), true);
+          new ArtifactVersionRange(currentVersionRange.getLower(),
+              currentVersionRange.isLowerInclusive(),
+              newPlugin.getVersion(), true);
       return newVersionRange.getVersionString();
     }
     return null;
@@ -232,9 +243,9 @@ public final class ETLStage {
   @Override
   public String toString() {
     return "ETLStage{" +
-      "name='" + name + '\'' +
-      ", plugin=" + plugin +
-      '}';
+        "name='" + name + '\'' +
+        ", plugin=" + plugin +
+        '}';
   }
 
   @Override
@@ -249,7 +260,7 @@ public final class ETLStage {
     ETLStage that = (ETLStage) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin);
+        Objects.equals(plugin, that.plugin);
   }
 
   @Override

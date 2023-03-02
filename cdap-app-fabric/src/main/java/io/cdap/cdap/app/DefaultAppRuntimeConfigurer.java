@@ -28,14 +28,16 @@ import javax.annotation.Nullable;
 /**
  * Default app configurer for runtime deployment
  */
-public class DefaultAppRuntimeConfigurer extends AbstractServiceDiscoverer implements RuntimeConfigurer {
+public class DefaultAppRuntimeConfigurer extends AbstractServiceDiscoverer implements
+    RuntimeConfigurer {
+
   private final RemoteClientFactory remoteClientFactory;
   private final Map<String, String> userArguments;
   private final ApplicationSpecification deployedAppSpec;
 
   public DefaultAppRuntimeConfigurer(String namespace,
-                                     RemoteClientFactory remoteClientFactory, Map<String, String> userArguments,
-                                     @Nullable ApplicationSpecification deployedAppSpec) {
+      RemoteClientFactory remoteClientFactory, Map<String, String> userArguments,
+      @Nullable ApplicationSpecification deployedAppSpec) {
     super(namespace);
     this.remoteClientFactory = remoteClientFactory;
     this.userArguments = new HashMap<>(userArguments);

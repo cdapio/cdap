@@ -21,13 +21,15 @@ package io.cdap.cdap.messaging.store;
  * Request to rollback transactionally published messages in a given key range.
  */
 public class RollbackRequest {
+
   private final byte[] startRow;
   private final byte[] stopRow;
   private final byte[] txWritePointer;
   private final long startTime;
   private final long stopTime;
 
-  public RollbackRequest(byte[] startRow, byte[] stopRow, byte[] txWritePointer, long startTime, long stopTime) {
+  public RollbackRequest(byte[] startRow, byte[] stopRow, byte[] txWritePointer, long startTime,
+      long stopTime) {
     this.startRow = startRow;
     this.stopRow = stopRow;
     this.txWritePointer = txWritePointer;

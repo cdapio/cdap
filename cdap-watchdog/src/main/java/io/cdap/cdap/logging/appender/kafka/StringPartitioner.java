@@ -29,19 +29,20 @@ import kafka.utils.VerifiableProperties;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class StringPartitioner implements Partitioner {
+
   private final int numPartitions;
 
   public StringPartitioner(VerifiableProperties props) {
     this.numPartitions = Integer.parseInt(props.getProperty(Constants.Logging.NUM_PARTITIONS));
     Preconditions.checkArgument(this.numPartitions > 0,
-                                "numPartitions should be at least 1. Got %s", this.numPartitions);
+        "numPartitions should be at least 1. Got %s", this.numPartitions);
   }
 
   @Inject
   public StringPartitioner(CConfiguration cConf) {
     this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
     Preconditions.checkArgument(this.numPartitions > 0,
-                                "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
+        "numPartitions should be greater than 0. Got numPartitions=%s", this.numPartitions);
   }
 
   @Override

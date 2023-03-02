@@ -46,8 +46,8 @@ public final class Transactions {
   private static final Logger LOG = LoggerFactory.getLogger(Transactions.class);
 
   /**
-   * Invalidates the given transaction without throwing any exception. If there is exception raised during invalidation,
-   * it will get logged as an error.
+   * Invalidates the given transaction without throwing any exception. If there is exception raised
+   * during invalidation, it will get logged as an error.
    */
   public static void invalidateQuietly(TransactionSystemClient txClient, Transaction tx) {
     try {
@@ -60,16 +60,17 @@ public final class Transactions {
   }
 
   /**
-   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
-   * {@link TransactionFailureException}.
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already
+   * an instance of {@link TransactionFailureException}.
    */
   public static TransactionFailureException asTransactionFailure(Throwable t) {
-    return asTransactionFailure(t, "Exception raised in transactional execution. Cause: " + t.getMessage());
+    return asTransactionFailure(t,
+        "Exception raised in transactional execution. Cause: " + t.getMessage());
   }
 
   /**
-   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already an instance of
-   * {@link TransactionFailureException}.
+   * Wraps the given {@link Throwable} as a {@link TransactionFailureException} if it is not already
+   * an instance of {@link TransactionFailureException}.
    *
    * @param t the original exception
    * @param message the exception message to use in case wrapping is needed
@@ -85,45 +86,50 @@ public final class Transactions {
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
-                                                              final TransactionSystemClient txClient,
-                                                              final Iterable<? extends TransactionAware> txAwares) {
+      final TransactionSystemClient txClient,
+      final Iterable<? extends TransactionAware> txAwares) {
     return factory.createExecutor(
-      () -> new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity())));
+        () -> new TransactionContext(txClient,
+            Iterables.transform(txAwares, Functions.<TransactionAware>identity())));
   }
 
   /**
    * Handy method to create {@link TransactionExecutor} with single {@link TransactionAware}.
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
-                                                              TransactionSystemClient txClient,
-                                                              TransactionAware txAware) {
+      TransactionSystemClient txClient,
+      TransactionAware txAware) {
     return createTransactionExecutor(factory, txClient, ImmutableList.of(txAware));
   }
 
   /**
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
-  public static TransactionExecutor createTransactionExecutor(org.apache.tephra.TransactionExecutorFactory factory,
-                                                              Iterable<? extends TransactionAware> txAwares) {
-    return factory.createExecutor(Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+  public static TransactionExecutor createTransactionExecutor(
+      org.apache.tephra.TransactionExecutorFactory factory,
+      Iterable<? extends TransactionAware> txAwares) {
+    return factory.createExecutor(
+        Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
   }
 
-  public static TransactionExecutor createTransactionExecutor(org.apache.tephra.TransactionExecutorFactory factory,
-                                                              TransactionAware txAware) {
+  public static TransactionExecutor createTransactionExecutor(
+      org.apache.tephra.TransactionExecutorFactory factory,
+      TransactionAware txAware) {
     return factory.createExecutor(Collections.singleton(txAware));
   }
 
   /**
-   * Executes the given {@link Runnable} in a short transaction using the given {@link TransactionContext}.
+   * Executes the given {@link Runnable} in a short transaction using the given {@link
+   * TransactionContext}.
    *
    * @param txContext the {@link TransactionContext} for managing the transaction lifecycle
    * @param name descriptive name for the runnable
    * @param runnable the Runnable to be executed inside a transaction
-   * @throws TransactionFailureException if failed to execute in a transaction. The cause of the exception carries the
-   *                                     reason of failure.
+   * @throws TransactionFailureException if failed to execute in a transaction. The cause of the
+   *     exception carries the reason of failure.
    */
   public static void execute(TransactionContext txContext, String name,
-                             final Runnable runnable) throws TransactionFailureException {
+      final Runnable runnable) throws TransactionFailureException {
     execute(txContext, name, (Callable<Void>) () -> {
       runnable.run();
       return null;
@@ -131,24 +137,26 @@ public final class Transactions {
   }
 
   /**
-   * Executes the given {@link Callable} in a short transaction using the given {@link TransactionContext}.
+   * Executes the given {@link Callable} in a short transaction using the given {@link
+   * TransactionContext}.
    *
    * @param txContext the {@link TransactionContext} for managing the transaction lifecycle
    * @param name descriptive name for the runnable
    * @param callable the Callable to be executed inside a transaction
    * @return the result returned by {@link Callable#call()}
-   * @throws TransactionFailureException if failed to execute in a transaction. The cause of the exception carries the
-   *                                     reason of failure.
+   * @throws TransactionFailureException if failed to execute in a transaction. The cause of the
+   *     exception carries the reason of failure.
    */
   public static <V> V execute(TransactionContext txContext, String name,
-                              Callable<V> callable) throws TransactionFailureException {
+      Callable<V> callable) throws TransactionFailureException {
     V result = null;
     txContext.start();
     try {
       result = callable.call();
     } catch (Throwable t) {
       // Abort will always throw with the TransactionFailureException.
-      txContext.abort(new TransactionFailureException("Failed to execute method " + name + " inside a transaction", t));
+      txContext.abort(new TransactionFailureException(
+          "Failed to execute method " + name + " inside a transaction", t));
     }
 
     // If commit failed, the tx will be aborted and exception will be raised
@@ -160,8 +168,8 @@ public final class Transactions {
    * Creates a new instance of {@link Transactional} for {@link TxRunnable} execution using the
    * given {@link DynamicDatasetCache}.
    *
-   * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well as provided to the
-   *                     {@link TxRunnable} for access to dataset
+   * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well
+   *     as provided to the {@link TxRunnable} for access to dataset
    * @return a new instance of {@link Transactional}
    */
   public static Transactional createTransactional(final DynamicDatasetCache datasetCache) {
@@ -172,17 +180,18 @@ public final class Transactions {
    * Creates a new instance of {@link Transactional} for {@link TxRunnable} execution using the
    * given {@link DynamicDatasetCache}.
    *
-   * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well as provided to the
-   *                     {@link TxRunnable} for access to dataset
-   * @param defaultTimeout The default transaction timeout, used for starting the transaction for
-   *                       {@link Transactional#execute(TxRunnable)}
+   * @param datasetCache The {@link DynamicDatasetCache} to use fo transaction creation as well
+   *     as provided to the {@link TxRunnable} for access to dataset
+   * @param defaultTimeout The default transaction timeout, used for starting the transaction
+   *     for {@link Transactional#execute(TxRunnable)}
    * @return a new instance of {@link Transactional}
    */
   public static Transactional createTransactional(final DynamicDatasetCache datasetCache,
-                                                  final int defaultTimeout) {
+      final int defaultTimeout) {
     return new CacheBasedTransactional(datasetCache) {
       @Override
-      protected void startTransaction(TransactionContext txContext) throws TransactionFailureException {
+      protected void startTransaction(TransactionContext txContext)
+          throws TransactionFailureException {
         txContext.start(defaultTimeout);
       }
     };
@@ -197,9 +206,11 @@ public final class Transactions {
     }
 
     /**
-     * Starts a short transaction with default timeout. Subclasses can override this to change the default.
+     * Starts a short transaction with default timeout. Subclasses can override this to change the
+     * default.
      */
-    protected void startTransaction(TransactionContext txContext) throws TransactionFailureException {
+    protected void startTransaction(TransactionContext txContext)
+        throws TransactionFailureException {
       txContext.start();
     }
 
@@ -218,11 +229,13 @@ public final class Transactions {
     }
 
     private void finishExecute(TransactionContext txContext, TxRunnable runnable)
-      throws TransactionFailureException {
+        throws TransactionFailureException {
       try {
         runnable.run(datasetCache);
       } catch (Exception e) {
-        txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
+        txContext.abort(
+            new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable,
+                e));
       }
       // The call the txContext.abort above will always have exception thrown
       // Hence we'll only reach here if and only if the runnable.run() returns normally.
@@ -234,12 +247,12 @@ public final class Transactions {
    * Creates a new {@link Transactional} that will automatically retry upon transaction failure.
    *
    * @param transactional The {@link Transactional} to delegate the transaction execution to
-   * @param retryStrategy the {@link RetryStrategy} to use when there is a {@link TransactionFailureException}
-   *                      raised from the transaction execution.
+   * @param retryStrategy the {@link RetryStrategy} to use when there is a {@link
+   *     TransactionFailureException} raised from the transaction execution.
    * @return a new instance of {@link Transactional}.
    */
   public static Transactional createTransactionalWithRetry(final Transactional transactional,
-                                                           final RetryStrategy retryStrategy) {
+      final RetryStrategy retryStrategy) {
     return new Transactional() {
 
       @Override
@@ -248,11 +261,13 @@ public final class Transactions {
       }
 
       @Override
-      public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+      public void execute(int timeoutInSeconds, TxRunnable runnable)
+          throws TransactionFailureException {
         executeInternal(timeoutInSeconds, runnable);
       }
 
-      private void executeInternal(Integer timeout, TxRunnable runnable) throws TransactionFailureException {
+      private void executeInternal(Integer timeout, TxRunnable runnable)
+          throws TransactionFailureException {
         int retries = 0;
         while (true) {
           try {
@@ -290,21 +305,22 @@ public final class Transactions {
   }
 
   /**
-   * Determines the transaction control of a method, as (optionally) annotated with @TransactionPolicy.
-   * If the program's class does not implement the method, the superclass is inspected up to and including
-   * the given base class.
+   * Determines the transaction control of a method, as (optionally) annotated with
    *
    * @param defaultValue returned if no annotation is present
    * @param baseClass upper bound for the super classes to be inspected
    * @param program the program
    * @param methodName the name of the method
    * @param params the parameter types of the method
-   *
-   * @return the transaction control annotated for the method of the program class or its nearest superclass that
-   *         is annotated; or defaultValue if no annotation is present in any of the superclasses
+   * @return the transaction control annotated for the method of the program class or its nearest
+   *     superclass that is annotated; or defaultValue if no annotation is present in any of the
+   *     superclasses
+   * @TransactionPolicy. If the program's class does not implement the method, the superclass is
+   *     inspected up to and including the given base class.
    */
-  public static TransactionControl getTransactionControl(TransactionControl defaultValue, Class<?> baseClass,
-                                                         Object program, String methodName, Class<?>... params) {
+  public static TransactionControl getTransactionControl(TransactionControl defaultValue,
+      Class<?> baseClass,
+      Object program, String methodName, Class<?>... params) {
     Class<?> cls = program.getClass();
     while (Object.class != cls) { // we know that Object cannot have this annotation :)
       TransactionControl txControl = getTransactionControl(cls, methodName, params);
@@ -326,7 +342,8 @@ public final class Transactions {
     return defaultValue;
   }
 
-  private static TransactionControl getTransactionControl(Class<?> cls, String methodName, Class<?>[] params) {
+  private static TransactionControl getTransactionControl(Class<?> cls, String methodName,
+      Class<?>[] params) {
     try {
       Method method = cls.getDeclaredMethod(methodName, params);
       TransactionPolicy annotation = method.getAnnotation(TransactionPolicy.class);

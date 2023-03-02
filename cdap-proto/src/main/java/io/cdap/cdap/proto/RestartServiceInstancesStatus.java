@@ -21,14 +21,16 @@ import java.util.Set;
  * Class to describe status of restart instances of service request.
  */
 public class RestartServiceInstancesStatus {
+
   private final Set<Integer> instanceIds;
   private final String serviceName;
   private final long startTimeInMs;
   private final long endTimeInMs;
   private final RestartStatus status;
 
-  public RestartServiceInstancesStatus(String serviceName, long startMs, long endMs, RestartStatus status,
-                                       Set<Integer> instanceIds) {
+  public RestartServiceInstancesStatus(String serviceName, long startMs, long endMs,
+      RestartStatus status,
+      Set<Integer> instanceIds) {
     this.serviceName = serviceName;
     this.startTimeInMs = startMs;
     this.endTimeInMs = endMs;

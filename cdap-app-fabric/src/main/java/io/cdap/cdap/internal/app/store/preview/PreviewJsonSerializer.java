@@ -36,11 +36,14 @@ import org.slf4j.LoggerFactory;
  * Preview structured record serializer.
  */
 public class PreviewJsonSerializer implements JsonSerializer<StructuredRecord> {
+
   private static final Logger LOG = LoggerFactory.getLogger(PreviewJsonSerializer.class);
-  private static final JsonStructuredRecordDatumWriter JSON_DATUM_WRITER = new JsonStructuredRecordDatumWriter(true);
+  private static final JsonStructuredRecordDatumWriter JSON_DATUM_WRITER = new JsonStructuredRecordDatumWriter(
+      true);
 
   @Override
-  public JsonElement serialize(StructuredRecord src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(StructuredRecord src, Type typeOfSrc,
+      JsonSerializationContext context) {
     StringWriter strWriter = new StringWriter();
     try (JsonWriter writer = new JsonWriter(strWriter)) {
       // serialize schema

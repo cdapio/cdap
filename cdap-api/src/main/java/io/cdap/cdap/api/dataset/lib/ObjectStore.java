@@ -34,7 +34,7 @@ import java.util.List;
  *   <li>a parametrized class</li>
  *   <li>a static inner class of one of the above</li>
  * </ul>
- *</p>
+ * </p>
  * Interfaces and not-static inner classes are not supported. An ObjectStore will serialize the entire object and
  * store it in a single column. See {@link ObjectMappedTable} if you want object fields to be mapped to their own
  * columns.
@@ -42,7 +42,8 @@ import java.util.List;
  * @param <T> the type of objects in the store
  */
 @Beta
-public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, BatchWritable<byte[], T> {
+public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>,
+    BatchWritable<byte[], T> {
 
   /**
    * Type name
@@ -68,6 +69,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Read an object with a given key.
+   *
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
@@ -75,6 +77,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Read an object with a given key.
+   *
    * @param key the key of the object
    * @return the object if found, or null if not found
    */
@@ -82,15 +85,18 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
 
   /**
    * Scans table.
+   *
    * @param startRow start row inclusive. {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} over
-   * {@link KeyValue KeyValue&lt;byte[], T&gt;}
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the
+   *     table
+   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} over {@link KeyValue
+   *     KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
 
   /**
    * Delete the object for the specified key.
+   *
    * @param key key of the object to be deleted
    */
   void delete(byte[] key);
@@ -98,9 +104,10 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
   /**
    * Returns splits for a range of keys in the table.
    *
-   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less than or equal to zero, any number of splits can be returned.
-   * @param start if non-null, the returned splits will only cover keys that are greater or equal
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits
+   *     will be returned. If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or
+   *     equal
    * @param stop if non-null, the returned splits will only cover keys that are less
    * @return list of {@link Split}
    */

@@ -19,13 +19,14 @@ package io.cdap.cdap.k8s.runtime;
 import io.kubernetes.client.openapi.ApiException;
 
 /**
- * Represents a wrapped {@link io.kubernetes.client.openapi.ApiException} which has the status code and response body
- * in the message.
+ * Represents a wrapped {@link io.kubernetes.client.openapi.ApiException} which has the status code
+ * and response body in the message.
  */
 public class KubeAPIException extends Exception {
 
   KubeAPIException(String messagePrefix, ApiException cause) {
-    super(String.format("%s\nReceived status code %d with response: %s", messagePrefix, cause.getCode(),
-                        cause.getResponseBody()), cause);
+    super(String.format("%s\nReceived status code %d with response: %s", messagePrefix,
+        cause.getCode(),
+        cause.getResponseBody()), cause);
   }
 }

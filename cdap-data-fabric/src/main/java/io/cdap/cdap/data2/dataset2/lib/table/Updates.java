@@ -48,13 +48,13 @@ public final class Updates {
    * <p><emphasis>Note:</emphasis> the map returned is <strong>not thread safe</strong>.</p>
    */
   public static NavigableMap<byte[], NavigableMap<Long, byte[]>> rowToBytes(
-    NavigableMap<byte[], NavigableMap<Long, Update>> row) {
+      NavigableMap<byte[], NavigableMap<Long, Update>> row) {
     if (row == null) {
       return null;
     }
 
     NavigableMap<byte[], NavigableMap<Long, byte[]>> returnMap =
-      new TreeMap<>(Bytes.BYTES_COMPARATOR);
+        new TreeMap<>(Bytes.BYTES_COMPARATOR);
     // TODO: make this use a wrapper to represent the existing map as <Long, byte[]> instead of copying
     for (Map.Entry<byte[], NavigableMap<Long, Update>> entry : row.entrySet()) {
       for (Map.Entry<Long, Update> cellEntry : entry.getValue().entrySet()) {
@@ -81,6 +81,7 @@ public final class Updates {
    *   <li>Increment a + Put b = Put b</li>
    *   <li>Increment a + Increment b = new Increment(a + b)</li>
    * </ul>
+   *
    * @param base The currently stored or buffered update
    * @param modifier The new update to combine
    * @return A new update combining the base update and modifier, according to the rules above
@@ -95,7 +96,8 @@ public final class Updates {
         PutValue put = (PutValue) base;
         byte[] putBytes = put.getBytes();
         if (putBytes != null && putBytes.length != Bytes.SIZEOF_LONG) {
-          throw new NumberFormatException("Attempted to increment a value that is not convertible to long");
+          throw new NumberFormatException(
+              "Attempted to increment a value that is not convertible to long");
         }
 
         long newValue = (putBytes == null ? 0L : Bytes.toLong(putBytes)) + increment.getValue();

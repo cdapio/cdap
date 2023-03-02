@@ -37,7 +37,8 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -49,7 +50,8 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
     String appId = programIdParts[0];
     String startString = arguments.getOptional(ArgumentName.START_TIME.toString(), "0");
     long start = TimeMathParser.parseTimeInSeconds(startString);
-    String stopString = arguments.getOptional(ArgumentName.END_TIME.toString(), Long.toString(Integer.MAX_VALUE));
+    String stopString = arguments.getOptional(ArgumentName.END_TIME.toString(),
+        Long.toString(Integer.MAX_VALUE));
     long stop = TimeMathParser.parseTimeInSeconds(stopString);
 
     String logs;
@@ -58,8 +60,9 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
         throw new CommandInputError(this);
       }
       String programName = programIdParts[1];
-      ProgramId programId = cliConfig.getCurrentNamespace().app(appId).program(elementType.getProgramType(),
-                                                                               programName);
+      ProgramId programId = cliConfig.getCurrentNamespace().app(appId)
+          .program(elementType.getProgramType(),
+              programName);
       logs = programClient.getProgramLogs(programId, start, stop);
     } else {
       throw new IllegalArgumentException("Cannot get logs for " + elementType.getNamePlural());
@@ -70,8 +73,9 @@ public class GetProgramLogsCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
-                         ArgumentName.START_TIME, ArgumentName.END_TIME);
+    return String.format("get %s logs <%s> [<%s>] [<%s>]", elementType.getShortName(),
+        elementType.getArgumentName(),
+        ArgumentName.START_TIME, ArgumentName.END_TIME);
   }
 
   @Override

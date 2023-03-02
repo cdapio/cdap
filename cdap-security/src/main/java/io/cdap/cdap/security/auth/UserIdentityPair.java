@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * Contains a {@link UserIdentity} backed by a user credential in String form.
  */
 public class UserIdentityPair {
+
   private final String userCredential;
   private final UserIdentity userIdentityObj;
 
@@ -31,8 +32,9 @@ public class UserIdentityPair {
   }
 
   /**
-   * Returns the user credential representing the included {@link UserIdentity}.
-   * The format of the credential may change depending on the {@link UserIdentityExtractor} implementation used.
+   * Returns the user credential representing the included {@link UserIdentity}. The format of the
+   * credential may change depending on the {@link UserIdentityExtractor} implementation used.
+   *
    * @return the end-user credential
    */
   @Nullable

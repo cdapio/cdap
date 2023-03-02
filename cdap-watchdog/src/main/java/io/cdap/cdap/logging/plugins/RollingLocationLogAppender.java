@@ -41,7 +41,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Rolling Appender for {@link Location}
  */
-public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEvent> implements Flushable, Syncable {
+public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEvent> implements
+    Flushable, Syncable {
+
   private static final Logger LOG = LoggerFactory.getLogger(RollingLocationLogAppender.class);
 
   private TriggeringPolicy<ILoggingEvent> triggeringPolicy;
@@ -80,8 +82,10 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
     // These should all passed. The settings are from the custom-log-pipeline.xml and
     // the context must be AppenderContext
     Preconditions.checkState(basePath != null, "Property basePath must be base directory.");
-    Preconditions.checkState(filePath != null, "Property filePath must be filePath along with filename.");
-    Preconditions.checkState(triggeringPolicy != null, "Property triggeringPolicy must be specified.");
+    Preconditions.checkState(filePath != null,
+        "Property filePath must be filePath along with filename.");
+    Preconditions.checkState(triggeringPolicy != null,
+        "Property triggeringPolicy must be specified.");
     Preconditions.checkState(rollingPolicy != null, "Property rollingPolicy must be specified");
     Preconditions.checkState(encoder != null, "Property encoder must be specified.");
     Preconditions.checkState(dirPermissions != null, "Property dirPermissions cannot be null");
@@ -89,12 +93,14 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
-      locationManager = new LocationManager(context.getLocationFactory(), basePath, dirPermissions, filePermissions,
-                                            fileMaxInactiveTimeMs);
+      locationManager = new LocationManager(context.getLocationFactory(), basePath, dirPermissions,
+          filePermissions,
+          fileMaxInactiveTimeMs);
       filePath = filePath.replace("instanceId", Integer.toString(context.getInstanceId()));
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {
-      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
-                                        " but got " + context.getClass().getName());
+      throw new IllegalStateException(
+          "Expected logger context instance of " + AppenderContext.class.getName() +
+              " but got " + context.getClass().getName());
     }
 
     started = true;
@@ -107,9 +113,10 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
 
       if (namespaceId != null && !namespaceId.equals(NamespaceId.SYSTEM.getNamespace())) {
         LocationIdentifier logLocationIdentifier = locationManager.getLocationIdentifier(eventObject
-                                                                                           .getMDCPropertyMap());
+            .getMDCPropertyMap());
         rollover(logLocationIdentifier, eventObject);
-        OutputStream locationOutputStream = locationManager.getLocationOutputStream(logLocationIdentifier, filePath);
+        OutputStream locationOutputStream = locationManager.getLocationOutputStream(
+            logLocationIdentifier, filePath);
 
         //change the locationOutputStream to which outputStream in the OutputStreamAppender points
         delegatingOutputStream.setDelegate((FilterOutputStream) locationOutputStream);
@@ -126,7 +133,8 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
     }
   }
 
-  private void rollover(final LocationIdentifier identifier, ILoggingEvent event) throws RolloverFailure, IOException {
+  private void rollover(final LocationIdentifier identifier, ILoggingEvent event)
+      throws RolloverFailure, IOException {
     // Close unclosed outputstream before proceeding further
     closeInvalidStream();
 
@@ -134,7 +142,8 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
       return;
     }
 
-    final LocationOutputStream locationOutputStream = locationManager.getActiveLocations().get(identifier);
+    final LocationOutputStream locationOutputStream = locationManager.getActiveLocations()
+        .get(identifier);
 
     if (triggeringPolicy instanceof LocationTriggeringPolicy) {
       // no need to type cast on every event
@@ -164,8 +173,9 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
                 // If there is an exception while closing the outputstream, remember it and throw an exception so
                 // that it can be closed on another event append
                 locationManager.setInvalidOutputStream(locationOutputStream);
-                LOG.trace("Exception while closing the output stream for {}, will retry to close it later",
-                          identifier, e);
+                LOG.trace(
+                    "Exception while closing the output stream for {}, will retry to close it later",
+                    identifier, e);
                 throw e;
               }
             }
@@ -186,8 +196,9 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
         // because close was successful make this output stream null
         locationManager.setInvalidOutputStream(null);
       } catch (IOException e) {
-        LOG.warn("Exception while closing invalid output stream for {}, will retry to close it later",
-                 invalidOutputStream.getLocation().toURI().toString(), e);
+        LOG.warn(
+            "Exception while closing invalid output stream for {}, will retry to close it later",
+            invalidOutputStream.getLocation().toURI().toString(), e);
         throw e;
       }
     }
@@ -272,6 +283,7 @@ public class RollingLocationLogAppender extends OutputStreamAppender<ILoggingEve
 
   //Implement the class that handles delegation of locationOutputStream to outputStream defined in OutputStreamAppender
   private class DelegatingOutputStream extends FilterOutputStream {
+
     DelegatingOutputStream(OutputStream outputStream) {
       super(outputStream);
     }

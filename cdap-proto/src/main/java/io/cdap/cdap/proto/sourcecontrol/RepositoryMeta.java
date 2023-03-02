@@ -20,6 +20,7 @@ package io.cdap.cdap.proto.sourcecontrol;
  * Metadata for repository configuration.
  */
 public class RepositoryMeta {
+
   private final RepositoryConfig config;
   private final long updatedTimeMillis;
 

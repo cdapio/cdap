@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * Support bundle configuration for gathering post api parameters.
  */
 public class SupportBundleConfiguration {
+
   /**
    * pipeline namespace id
    */
@@ -46,12 +47,14 @@ public class SupportBundleConfiguration {
    */
   @Nullable
   private final String run;
-  /** max num of run log customer request for each program run */
+  /**
+   * max num of run log customer request for each program run
+   */
   private final int maxRunsPerProgram;
 
   public SupportBundleConfiguration(@Nullable String namespace, @Nullable String app,
-                                    @Nullable String run, ProgramType programType, String programName,
-                                    int maxRunsPerProgram) {
+      @Nullable String run, ProgramType programType, String programName,
+      int maxRunsPerProgram) {
     this.namespace = namespace;
     this.app = app;
     this.run = run;

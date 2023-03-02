@@ -22,12 +22,14 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A {@link AssignmentStrategy} that tries to balance partition replica assignment with minimum movement.
+ * A {@link AssignmentStrategy} that tries to balance partition replica assignment with minimum
+ * movement.
  */
 public class BalancedAssignmentStrategy implements AssignmentStrategy {
 
   @Override
-  public <T> void assign(ResourceRequirement requirement, Set<T> handlers, ResourceAssigner<T> assigner) {
+  public <T> void assign(ResourceRequirement requirement, Set<T> handlers,
+      ResourceAssigner<T> assigner) {
     MinMaxPriorityQueue<HandlerSize<T>> handlerQueue = MinMaxPriorityQueue.create();
     Multimap<T, PartitionReplica> assignments = assigner.get();
 
@@ -72,13 +74,14 @@ public class BalancedAssignmentStrategy implements AssignmentStrategy {
   /**
    * Balance the assignment by spreading it across all handlers evenly.
    *
-   * @param handlerQueue The priority queue for tracking number of resources assigned to a given handler.
+   * @param handlerQueue The priority queue for tracking number of resources assigned to a given
+   *     handler.
    * @param assigner The assigner for changing the assignment.
-   * @param maxDiff The maximum differences between the handlers that has the most resources assigned vs the one with
-   *                the least resources assigned.
+   * @param maxDiff The maximum differences between the handlers that has the most resources
+   *     assigned vs the one with the least resources assigned.
    */
   private <T> void balance(MinMaxPriorityQueue<HandlerSize<T>> handlerQueue,
-                           ResourceAssigner<T> assigner, int maxDiff) {
+      ResourceAssigner<T> assigner, int maxDiff) {
     HandlerSize<T> minHandler = handlerQueue.peekFirst();
     HandlerSize<T> maxHandler = handlerQueue.peekLast();
 
@@ -86,7 +89,8 @@ public class BalancedAssignmentStrategy implements AssignmentStrategy {
     // differences is within the desired range.
     Multimap<T, PartitionReplica> assignments = assigner.get();
     while (maxHandler.getSize() - minHandler.getSize() > maxDiff) {
-      PartitionReplica partitionReplica = assignments.get(maxHandler.getHandler()).iterator().next();
+      PartitionReplica partitionReplica = assignments.get(maxHandler.getHandler()).iterator()
+          .next();
 
       // Remove min and max from the queue, and perform the reassignment.
       handlerQueue.removeFirst();
@@ -105,12 +109,13 @@ public class BalancedAssignmentStrategy implements AssignmentStrategy {
 
 
   /**
-   * This class records number of partition replica assigned to a handler. It is used for priority queue for
-   * fast retrieval of handler with the min/max number of resources assigned.
+   * This class records number of partition replica assigned to a handler. It is used for priority
+   * queue for fast retrieval of handler with the min/max number of resources assigned.
    *
    * @param <T> Type of resource handler.
    */
   private static final class HandlerSize<T> implements Comparable<HandlerSize<T>> {
+
     private final T handler;
 
     // This is a live view from the assignments multimap. Updates to the multimap will update this view.

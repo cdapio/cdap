@@ -19,17 +19,18 @@ package io.cdap.cdap.api.dataset;
 import java.io.IOException;
 
 /**
- * Interface implemented by DatasetAdmin that have a way to update the dataset after reconfiguration.
- * It is optional for a DatasetAdmin to implement this interface; if not implemented, the dataset system
- * will assume that this dataset does need any actions to be performed on update (other than updating its spec).
+ * Interface implemented by DatasetAdmin that have a way to update the dataset after
+ * reconfiguration. It is optional for a DatasetAdmin to implement this interface; if not
+ * implemented, the dataset system will assume that this dataset does need any actions to be
+ * performed on update (other than updating its spec).
  */
 public interface Updatable {
 
   /**
-   * Updates the dataset instance after it has been reconfigured. This method that will be called during
-   * dataset update, on a {@link DatasetAdmin} that was created using the new dataset spec, before that
-   * new spec is saved. That is, if this method fails, then the update fails and no dataset metadata has
-   * been changed.
+   * Updates the dataset instance after it has been reconfigured. This method that will be called
+   * during dataset update, on a {@link DatasetAdmin} that was created using the new dataset spec,
+   * before that new spec is saved. That is, if this method fails, then the update fails and no
+   * dataset metadata has been changed.
    *
    * @param oldSpec the specification of the dataset before reconfiguration
    */

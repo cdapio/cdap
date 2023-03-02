@@ -47,7 +47,8 @@ import javax.annotation.Nullable;
 /**
  * Implementation of partitioned datasets using a Table to store the meta data.
  */
-public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset implements TimePartitionedFileSet {
+public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset implements
+    TimePartitionedFileSet {
 
   // the fixed partitioning that time maps to
   private static final String FIELD_YEAR = "year";
@@ -57,23 +58,24 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   private static final String FIELD_MINUTE = "minute";
 
   public static final Partitioning PARTITIONING = Partitioning.builder()
-    .addIntField(FIELD_YEAR)
-    .addIntField(FIELD_MONTH)
-    .addIntField(FIELD_DAY)
-    .addIntField(FIELD_HOUR)
-    .addIntField(FIELD_MINUTE)
-    .build();
+      .addIntField(FIELD_YEAR)
+      .addIntField(FIELD_MONTH)
+      .addIntField(FIELD_DAY)
+      .addIntField(FIELD_HOUR)
+      .addIntField(FIELD_MINUTE)
+      .build();
 
   public TimePartitionedFileSetDataset(DatasetContext datasetContext, String name,
-                                       FileSet fileSet, IndexedTable partitionTable,
-                                       DatasetSpecification spec, Map<String, String> arguments) {
+      FileSet fileSet, IndexedTable partitionTable,
+      DatasetSpecification spec, Map<String, String> arguments) {
     super(datasetContext, name, PARTITIONING, fileSet, partitionTable, spec, arguments);
 
     // the first version of TPFS in CDAP 2.7 did not have the partitioning in the properties. It is not supported.
     if (PartitionedFileSetProperties.getPartitioning(spec.getProperties()) == null) {
-      throw new DataSetException("Unsupported version of TimePartitionedFileSet. Dataset '" + name + "' is missing " +
-                                   "the partitioning property. This probably means that it was created in CDAP 2.7, " +
-                                   "which is not supported any longer.");
+      throw new DataSetException(
+          "Unsupported version of TimePartitionedFileSet. Dataset '" + name + "' is missing " +
+              "the partitioning property. This probably means that it was created in CDAP 2.7, " +
+              "which is not supported any longer.");
     }
   }
 
@@ -122,8 +124,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public TimePartitionDetail getPartitionByTime(long time) {
     PartitionDetail partitionDetail = getPartition(partitionKeyForTime(time));
     return partitionDetail == null ? null
-      : new BasicTimePartitionDetail(this, partitionDetail.getRelativePath(), partitionDetail.getPartitionKey(),
-                                     partitionDetail.getMetadata());
+        : new BasicTimePartitionDetail(this, partitionDetail.getRelativePath(),
+            partitionDetail.getPartitionKey(),
+            partitionDetail.getMetadata());
   }
 
   @Override
@@ -133,7 +136,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
       super.getPartitions(filter, new PartitionedFileSetDataset.PartitionConsumer() {
         @Override
         public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
-          partitions.add(new BasicTimePartitionDetail(TimePartitionedFileSetDataset.this, path, key, metadata));
+          partitions.add(new BasicTimePartitionDetail(TimePartitionedFileSetDataset.this, path, key,
+              metadata));
         }
       });
     }
@@ -157,7 +161,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   public TimePartitionOutput getPartitionOutput(long time) {
     if (isExternal) {
       throw new UnsupportedOperationException(
-        "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
+          "Output is not supported for external time-partitioned file set '" + spec.getName()
+              + "'");
     }
     PartitionKey key = partitionKeyForTime(time);
     assertNotExists(key, true);
@@ -192,12 +197,12 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     int hour = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
     return PartitionKey.builder()
-      .addIntField(FIELD_YEAR, year)
-      .addIntField(FIELD_MONTH, month)
-      .addIntField(FIELD_DAY, day)
-      .addIntField(FIELD_HOUR, hour)
-      .addIntField(FIELD_MINUTE, minute)
-      .build();
+        .addIntField(FIELD_YEAR, year)
+        .addIntField(FIELD_MONTH, month)
+        .addIntField(FIELD_DAY, day)
+        .addIntField(FIELD_HOUR, hour)
+        .addIntField(FIELD_MINUTE, minute)
+        .build();
   }
 
   @VisibleForTesting
@@ -233,7 +238,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
 
     List<PartitionFilter> filters = Lists.newArrayList();
-    String[] allFields = PARTITIONING.getFields().keySet().toArray(new String[PARTITIONING.getFields().size()]);
+    String[] allFields = PARTITIONING.getFields().keySet()
+        .toArray(new String[PARTITIONING.getFields().size()]);
 
     // if there is no lower bound, we only need the filters for the upper bound
     if (keyLower == null) {
@@ -255,9 +261,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   // for example, if fields only contains day, hour and minute, then the supplier will return builders
   // that already have conditions for the year and the month.
   private static List<PartitionFilter> filtersFor(String[] fields, int position,
-                                                  PartitionKey keyLower, PartitionKey keyUpper,
-                                                  List<PartitionFilter> filters,
-                                                  final Supplier<PartitionFilter.Builder> supplier) {
+      PartitionKey keyLower, PartitionKey keyUpper,
+      List<PartitionFilter> filters,
+      final Supplier<PartitionFilter.Builder> supplier) {
     // examined all fields? -> done, build a filter and return.
     if (position >= fields.length) {
       filters.add(supplier.get().build());
@@ -270,7 +276,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     // both upper and lower bound specify the same value for this field.
     // Add an equality constraint for this field and value and continue with the next field
     if (lower == upper) {
-      return filtersFor(fields, position + 1, keyLower, keyUpper, filters, nextSupplier(supplier, fieldName, lower));
+      return filtersFor(fields, position + 1, keyLower, keyUpper, filters,
+          nextSupplier(supplier, fieldName, lower));
     }
 
     // we have two different value. For example, if year and month are already provided by the supplier, we are
@@ -283,7 +290,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     // - day is 20, and hour/minute are less than h2/m2 (addUpperFilters)
 
     // generate the filters for the lower bound on the next level
-    addLowerFilters(fields, position + 1, keyLower, filters, nextSupplier(supplier, fieldName, lower));
+    addLowerFilters(fields, position + 1, keyLower, filters,
+        nextSupplier(supplier, fieldName, lower));
 
     // if this field is at the finest granularity (minutes), we must include its value in the range and finish.
     // for example, lower = y/m/d/h/10, upper = y/m/d/h/15, then we need to add a range condition: minute in [10...15]
@@ -305,13 +313,15 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
 
     // generate the filters for the upper bound on the next level
-    return addUpperFilters(fields, position + 1, keyUpper, filters, nextSupplier(supplier, fieldName, upper));
+    return addUpperFilters(fields, position + 1, keyUpper, filters,
+        nextSupplier(supplier, fieldName, upper));
   }
 
   // adds filters for the lower bound, starting at a given field, with conditions on the higher levels supplied
-  private static List<PartitionFilter> addLowerFilters(String[] fields, int position, PartitionKey keyLower,
-                                                       List<PartitionFilter> filters,
-                                                       Supplier<PartitionFilter.Builder> supplier) {
+  private static List<PartitionFilter> addLowerFilters(String[] fields, int position,
+      PartitionKey keyLower,
+      List<PartitionFilter> filters,
+      Supplier<PartitionFilter.Builder> supplier) {
     if (position >= fields.length) {
       return filters;
     }
@@ -329,13 +339,15 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     if (isSatisfiableLowerBound(fieldName, lowerBound)) {
       filters.add(supplier.get().addRangeCondition(fieldName, lowerBound, null).build());
     }
-    return addLowerFilters(fields, position + 1, keyLower, filters, nextSupplier(supplier, fieldName, lower));
+    return addLowerFilters(fields, position + 1, keyLower, filters,
+        nextSupplier(supplier, fieldName, lower));
   }
 
   // adds filters for the upper bound, starting at a given field, with conditions on the higher levels supplied
-  private static List<PartitionFilter> addUpperFilters(String[] fields, int position, PartitionKey keyUpper,
-                                                       List<PartitionFilter> filters,
-                                                       Supplier<PartitionFilter.Builder> supplier) {
+  private static List<PartitionFilter> addUpperFilters(String[] fields, int position,
+      PartitionKey keyUpper,
+      List<PartitionFilter> filters,
+      Supplier<PartitionFilter.Builder> supplier) {
     if (position >= fields.length) {
       return filters;
     }
@@ -345,7 +357,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     if (isSatisfiableUpperBound(fieldName, upper)) {
       filters.add(supplier.get().addRangeCondition(fieldName, null, upper).build());
     }
-    return addUpperFilters(fields, position + 1, keyUpper, filters, nextSupplier(supplier, fieldName, upper));
+    return addUpperFilters(fields, position + 1, keyUpper, filters,
+        nextSupplier(supplier, fieldName, upper));
   }
 
   private static Supplier<PartitionFilter.Builder> initialSupplier() {
@@ -357,8 +370,9 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     };
   }
 
-  private static Supplier<PartitionFilter.Builder> nextSupplier(final Supplier<PartitionFilter.Builder> supplier,
-                                                                final String field, final int value) {
+  private static Supplier<PartitionFilter.Builder> nextSupplier(
+      final Supplier<PartitionFilter.Builder> supplier,
+      final String field, final int value) {
     return new Supplier<PartitionFilter.Builder>() {
       @Override
       public PartitionFilter.Builder get() {
@@ -389,7 +403,8 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
 
   private static boolean isSatisfiableUpperBound(String fieldName, int upperBound) {
     if (fieldName.equals(FIELD_YEAR)) {
-      return upperBound > 1; // this could be 1968 because no time is before the epoch. But just to be sure...
+      return upperBound
+          > 1; // this could be 1968 because no time is before the epoch. But just to be sure...
     }
     if (fieldName.equals(FIELD_MONTH)) {
       return upperBound > 1;
@@ -400,12 +415,14 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     return upperBound > 0;
   }
 
-  private static class BasicTimePartitionDetail extends BasicPartitionDetail implements TimePartitionDetail {
+  private static class BasicTimePartitionDetail extends BasicPartitionDetail implements
+      TimePartitionDetail {
 
     private final Long time;
 
-    private BasicTimePartitionDetail(TimePartitionedFileSetDataset timePartitionedFileSetDataset, String relativePath,
-                                     PartitionKey key, PartitionMetadata metadata) {
+    private BasicTimePartitionDetail(TimePartitionedFileSetDataset timePartitionedFileSetDataset,
+        String relativePath,
+        PartitionKey key, PartitionMetadata metadata) {
       super(timePartitionedFileSetDataset, relativePath, key, metadata);
       this.time = timeForPartitionKey(key);
     }
@@ -416,12 +433,14 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
     }
   }
 
-  private static class BasicTimePartitionOutput extends BasicPartitionOutput implements TimePartitionOutput {
+  private static class BasicTimePartitionOutput extends BasicPartitionOutput implements
+      TimePartitionOutput {
 
     private final Long time;
 
-    private BasicTimePartitionOutput(TimePartitionedFileSetDataset timePartitionedFileSetDataset, String relativePath,
-                                     PartitionKey key) {
+    private BasicTimePartitionOutput(TimePartitionedFileSetDataset timePartitionedFileSetDataset,
+        String relativePath,
+        PartitionKey key) {
       super(timePartitionedFileSetDataset, relativePath, key);
       this.time = timeForPartitionKey(key);
     }

@@ -47,11 +47,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A class to load extensions for supported extension types from a configured extensions directory. It uses the Java
- * {@link ServiceLoader} architecture to load extensions from the specified directory. It first tries to load
- * extensions using a {@link URLClassLoader} consisting of all jars in the configured extensions directory. For unit
- * tests, it loads extensions using the system classloader. If an extension is not found via the extensions classloader
- * or the system classloader, it returns a default extension.
+ * A class to load extensions for supported extension types from a configured extensions directory.
+ * It uses the Java {@link ServiceLoader} architecture to load extensions from the specified
+ * directory. It first tries to load extensions using a {@link URLClassLoader} consisting of all
+ * jars in the configured extensions directory. For unit tests, it loads extensions using the system
+ * classloader. If an extension is not found via the extensions classloader or the system
+ * classloader, it returns a default extension.
  *
  * The supported directory structure is:
  * <pre>
@@ -70,11 +71,13 @@ import org.slf4j.LoggerFactory;
  *
  * Each extensions jar file above can contain multiple extensions.
  *
- * @param <EXTENSION_TYPE> the data type of the objects that a given extension can be used for. e.g. for a program
- *                        runtime extension, the list of program types that the extension can be used for
+ * @param <EXTENSION_TYPE> the data type of the objects that a given extension can be used for.
+ *     e.g. for a program runtime extension, the list of program types that the extension can be
+ *     used for
  * @param <EXTENSION> the data type of the extension
  */
 public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractExtensionLoader.class);
 
   private final List<String> extDirs;
@@ -87,18 +90,19 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
 
   protected static Set<String> createPackageSets(Set<String> resources) {
     return resources.stream()
-      .filter(resource -> resource.endsWith(".class"))
-      .map(resource -> {
-        int idx = resource.lastIndexOf("/");
-        return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
-      })
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toSet());
+        .filter(resource -> resource.endsWith(".class"))
+        .map(resource -> {
+          int idx = resource.lastIndexOf("/");
+          return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
+        })
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.toSet());
   }
 
   @SuppressWarnings("unchecked")
   protected AbstractExtensionLoader(String extDirs) {
-    this.extDirs = ImmutableList.copyOf(Splitter.on(';').omitEmptyStrings().trimResults().split(extDirs));
+    this.extDirs = ImmutableList.copyOf(
+        Splitter.on(';').omitEmptyStrings().trimResults().split(extDirs));
     Type type = TypeToken.of(getClass()).getSupertype(AbstractExtensionLoader.class).getType();
     // type should always be an instance of ParameterizedType
     Preconditions.checkState(type instanceof ParameterizedType);
@@ -112,7 +116,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Returns the extension for the specified object if one is found, otherwise returns {@code null}.
+   * Returns the extension for the specified object if one is found, otherwise returns {@code
+   * null}.
    */
   @Nullable
   public EXTENSION get(EXTENSION_TYPE type) {
@@ -148,7 +153,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
         try {
           putEntriesIfAbsent(result, getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)));
         } catch (Exception e) {
-          LOG.warn("Exception raised when loading an extension from {}. Extension ignored.", moduleDir, e);
+          LOG.warn("Exception raised when loading an extension from {}. Extension ignored.",
+              moduleDir, e);
         }
       }
     }
@@ -161,9 +167,9 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Returns the set of objects that the extension supports. Implementations should return the set of objects of type
-   * #EXTENSION_TYPE that the specified extension applies to. A given extension can then be loaded for the specified
-   * type by using the #getExtension method.
+   * Returns the set of objects that the extension supports. Implementations should return the set
+   * of objects of type #EXTENSION_TYPE that the specified extension applies to. A given extension
+   * can then be loaded for the specified type by using the #getExtension method.
    *
    * @param extension the extension for which supported types are requested
    * @return the set of objects that the specified extension supports.
@@ -171,8 +177,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   protected abstract Set<EXTENSION_TYPE> getSupportedTypesForProvider(EXTENSION extension);
 
   /**
-   * Creates a {@link FilterClassLoader.Filter} to decide what classes and resources from the parent classloader is
-   * available to the extension. By default, it permits all classes and resources.
+   * Creates a {@link FilterClassLoader.Filter} to decide what classes and resources from the parent
+   * classloader is available to the extension. By default, it permits all classes and resources.
    *
    * @return a {@link FilterClassLoader.Filter} instance
    */
@@ -191,8 +197,9 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Prepares the given system {@link EXTENSION}. A system extension is loaded from the same classloader as the
-   * class of the {@link EXTENSION_TYPE}, which typically allows it to have access to CDAP system class.
+   * Prepares the given system {@link EXTENSION}. A system extension is loaded from the same
+   * classloader as the class of the {@link EXTENSION_TYPE}, which typically allows it to have
+   * access to CDAP system class.
    *
    * @param extension the extension instance
    * @return an extension instance
@@ -201,7 +208,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     return extension;
   }
 
-  private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result, Map<EXTENSION_TYPE, EXTENSION> entries) {
+  private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result,
+      Map<EXTENSION_TYPE, EXTENSION> entries) {
     for (Map.Entry<EXTENSION_TYPE, EXTENSION> entry : entries.entrySet()) {
       if (!result.containsKey(entry.getKey())) {
         result.put(entry.getKey(), entry.getValue());
@@ -210,22 +218,24 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   private LoadingCache<EXTENSION_TYPE, AtomicReference<EXTENSION>> createExtensionsCache() {
-    return CacheBuilder.newBuilder().build(new CacheLoader<EXTENSION_TYPE, AtomicReference<EXTENSION>>() {
-      @Override
-      public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) {
-        EXTENSION extension = null;
-        try {
-          extension = findExtension(extensionType);
-        } catch (Throwable t) {
-          LOG.warn("Failed to load extension for type {}.", extensionType, t);
-        }
-        return new AtomicReference<>(extension);
-      }
-    });
+    return CacheBuilder.newBuilder()
+        .build(new CacheLoader<EXTENSION_TYPE, AtomicReference<EXTENSION>>() {
+          @Override
+          public AtomicReference<EXTENSION> load(EXTENSION_TYPE extensionType) {
+            EXTENSION extension = null;
+            try {
+              extension = findExtension(extensionType);
+            } catch (Throwable t) {
+              LOG.warn("Failed to load extension for type {}.", extensionType, t);
+            }
+            return new AtomicReference<>(extension);
+          }
+        });
   }
 
   /**
-   * Finds the first extension from the given {@link ServiceLoader} that supports the specified key.
+   * Finds the first extension from the given {@link ServiceLoader} that supports the specified
+   * key.
    */
   @Nullable
   private EXTENSION findExtension(EXTENSION_TYPE type) {
@@ -243,7 +253,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
           continue;
         }
         // Try to find a provider that can support the given program type.
-        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(type);
+        EXTENSION extension = getAllExtensions(serviceLoaderCache.getUnchecked(moduleDir)).get(
+            type);
         if (extension != null) {
           return extension;
         }
@@ -255,7 +266,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Returns all the extensions in the extensions directory using the specified {@link ServiceLoader}.
+   * Returns all the extensions in the extensions directory using the specified {@link
+   * ServiceLoader}.
    */
   private Map<EXTENSION_TYPE, EXTENSION> getAllExtensions(ServiceLoader<EXTENSION> serviceLoader) {
     Map<EXTENSION_TYPE, EXTENSION> extensions = new HashMap<>();
@@ -297,7 +309,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   }
 
   /**
-   * Creates a {@link ServiceLoader} from the {@link ClassLoader} created by all jar files under the given directory.
+   * Creates a {@link ServiceLoader} from the {@link ClassLoader} created by all jar files under the
+   * given directory.
    */
   private ServiceLoader<EXTENSION> createServiceLoader(File dir) {
     List<File> files = new ArrayList<>(DirUtils.listFiles(dir, "jar"));

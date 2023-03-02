@@ -30,7 +30,8 @@ import io.cdap.cdap.spi.data.sql.PostgreSqlStorageProvider;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 /**
- * A {@link StorageProvider} that delegates to the actual storage provider implementation based on the configuration.
+ * A {@link StorageProvider} that delegates to the actual storage provider implementation based on
+ * the configuration.
  */
 public class DefaultStorageProvider implements StorageProvider {
 
@@ -44,14 +45,15 @@ public class DefaultStorageProvider implements StorageProvider {
 
   @Inject
   DefaultStorageProvider(Injector injector, CConfiguration cConf, SConfiguration sConf,
-                         StorageProviderExtensionLoader extensionLoader,
-                         MetricsCollectionService metricsCollectionService) {
+      StorageProviderExtensionLoader extensionLoader,
+      MetricsCollectionService metricsCollectionService) {
     this.injector = injector;
     this.cConf = cConf;
     this.sConf = sConf;
     this.storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     this.extensionLoader = extensionLoader;
-    this.metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
+    this.metricsCollector = metricsCollectionService.getContext(
+        Constants.Metrics.STORAGE_METRICS_TAGS);
   }
 
   @Override
@@ -106,7 +108,8 @@ public class DefaultStorageProvider implements StorageProvider {
         throw new IllegalArgumentException("Unsupported storage implementation " + storageImpl);
       }
 
-      provider.initialize(new DefaultStorageProviderContext(cConf, sConf, provider.getName(), metricsCollector));
+      provider.initialize(
+          new DefaultStorageProviderContext(cConf, sConf, provider.getName(), metricsCollector));
 
       this.delegate = provider;
       return provider;

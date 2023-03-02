@@ -20,7 +20,8 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Provides access to the environment, application configuration, and application (deployment) arguments.
+ * Provides access to the environment, application configuration, and application (deployment)
+ * arguments.
  *
  * @param <T> {@link Config} config class that represents the configuration of the Application.
  */

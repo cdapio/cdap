@@ -29,7 +29,8 @@ import java.util.Set;
 /**
  * An extension loader for {@link MasterEnvironment}.
  */
-public class MasterEnvironmentExtensionLoader extends AbstractExtensionLoader<String, MasterEnvironment> {
+public class MasterEnvironmentExtensionLoader extends
+    AbstractExtensionLoader<String, MasterEnvironment> {
 
   private volatile Set<String> allowedResources;
   private volatile Set<String> allowedPackages;
@@ -76,8 +77,9 @@ public class MasterEnvironmentExtensionLoader extends AbstractExtensionLoader<St
       try {
         // All cdap-master-spi classes and its dependencies are visible to extensions
         // The set of dependencies for cdap-master-spi should be kept at minimal to reduce dependency conflicts
-        this.allowedResources = resources = ClassPathResources.getResourcesWithDependencies(getClass().getClassLoader(),
-                                                                                            MasterEnvironment.class);
+        this.allowedResources = resources = ClassPathResources.getResourcesWithDependencies(
+            getClass().getClassLoader(),
+            MasterEnvironment.class);
         return resources;
       } catch (IOException e) {
         throw new RuntimeException("Failed to find master SPI resources", e);

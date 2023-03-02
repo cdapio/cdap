@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
  * Utility to determine Metric System's HBase table.
  */
 public class MetricHBaseTableUtil {
+
   private final HBaseTableUtil tableUtil;
 
   public MetricHBaseTableUtil(HBaseTableUtil tableUtil) {
@@ -45,7 +46,7 @@ public class MetricHBaseTableUtil {
     // 2) If cdap.version property is not available, then it is 2.7 or 2.6 & older.
     // 2a) If table has no increment handler coprocessor, it is 2.6 or older
     // 2b) If table has increment handler coprocessor, it is 2.7
-    
+
     ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
     // note: major version is 0 if table doesn't have the cdap version property
     if (version.getMajor() > 0) {
@@ -61,7 +62,8 @@ public class MetricHBaseTableUtil {
       return Version.VERSION_2_8_OR_HIGHER;
     }
 
-    Map<String, HBaseTableUtil.CoprocessorInfo> cpsInfo = HBaseTableUtil.getCoprocessorInfo(tableDescriptor);
+    Map<String, HBaseTableUtil.CoprocessorInfo> cpsInfo = HBaseTableUtil.getCoprocessorInfo(
+        tableDescriptor);
     if (cpsInfo.containsKey(tableUtil.getIncrementHandlerClassForVersion().getName())) {
       // note: if the version is 2.8 or higher, it would have cdap.version property
       return Version.VERSION_2_7;

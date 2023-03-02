@@ -80,11 +80,13 @@ import org.slf4j.LoggerFactory;
  * The main class to run the remote agent service.
  */
 public class TetheringAgentService extends AbstractRetryableScheduledService {
+
   private static final Logger LOG = LoggerFactory.getLogger(TetheringAgentService.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
   public static final String REMOTE_TETHERING_AUTHENTICATOR = "remoteTetheringAuthenticator";
 
   private final CConfiguration cConf;
@@ -102,13 +104,14 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
 
   @Inject
   TetheringAgentService(CConfiguration cConf, TetheringStore store,
-                        ProgramStateWriter programStateWriter, MessagingService messagingService,
-                        @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
-                        LocationFactory locationFactory,
-                        ProvisionerNotifier provisionerNotifier,
-                        NamespaceQueryAdmin namespaceQueryAdmin) {
+      ProgramStateWriter programStateWriter, MessagingService messagingService,
+      @Named(REMOTE_TETHERING_AUTHENTICATOR) RemoteAuthenticator remoteAuthenticator,
+      LocationFactory locationFactory,
+      ProvisionerNotifier provisionerNotifier,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
-    this.connectionInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
+    this.connectionInterval = TimeUnit.SECONDS.toMillis(
+        cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
     this.cConf = cConf;
     this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     this.store = store;
@@ -128,24 +131,25 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   /**
-   * Creates a map between peered instances and the list of Notifications to be sent over. Then connects to the control
-   * channel and processes the TetheringControlResponses.
+   * Creates a map between peered instances and the list of Notifications to be sent over. Then
+   * connects to the control channel and processes the TetheringControlResponses.
    */
   @Override
   protected long runTask() throws IOException {
     List<PeerInfo> peers = store.getPeers().stream()
-      // Ignore peers in REJECTED state.
-      .filter(p -> p.getTetheringStatus() != TetheringStatus.REJECTED)
-      .collect(Collectors.toList());
+        // Ignore peers in REJECTED state.
+        .filter(p -> p.getTetheringStatus() != TetheringStatus.REJECTED)
+        .collect(Collectors.toList());
 
     for (PeerInfo peer : peers) {
       // Endpoint should never be null here. Endpoint is only null on the server side.
       Preconditions.checkArgument(peer.getEndpoint() != null,
-                                  "Peer %s doesn't have an endpoint", peer.getName());
+          "Peer %s doesn't have an endpoint", peer.getName());
       String lastControlMessageId = subscriberState.getLastMessageIdReceived(peer.getName());
       ProgramStateUpdates p = getProgramStateUpdates(peer.getName());
-      TetheringControlChannelRequest channelRequest = new TetheringControlChannelRequest(lastControlMessageId,
-                                                                                         p.notifications);
+      TetheringControlChannelRequest channelRequest = new TetheringControlChannelRequest(
+          lastControlMessageId,
+          p.notifications);
       TetheringControlResponseV2 response;
       try {
         response = tetheringClient.pollControlChannel(peer, channelRequest);
@@ -172,7 +176,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
           break;
         default:
           LOG.error("Received unexpected tethering status {} from peer {}",
-                    response.getTetheringStatus(), peer.getName());
+              response.getTetheringStatus(), peer.getName());
       }
     }
 
@@ -186,8 +190,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     List<String> peers;
     try {
       peers = store.getPeers().stream()
-        .map(PeerInfo::getName)
-        .collect(Collectors.toList());
+          .map(PeerInfo::getName)
+          .collect(Collectors.toList());
     } catch (IOException e) {
       LOG.warn("Failed to get peer information", e);
       return;
@@ -201,7 +205,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
    * Returns null if no messages were processed.
    */
   @Nullable
-  private String processTetheringControlResponse(TetheringControlResponseV2 response, PeerInfo peerInfo) {
+  private String processTetheringControlResponse(TetheringControlResponseV2 response,
+      PeerInfo peerInfo) {
     String lastMessageId = null;
     for (TetheringControlMessageWithId messageWithId : response.getControlMessages()) {
       TetheringControlMessage controlMessage = messageWithId.getControlMessage();
@@ -223,7 +228,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
         lastMessageId = messageWithId.getMessageId();
       } catch (IOException e) {
         LOG.warn("Failed to process control message of type {} from peer {}",
-                 controlMessage.getType(), peerInfo.getName(), e);
+            controlMessage.getType(), peerInfo.getName(), e);
         return lastMessageId;
       }
     }
@@ -231,9 +236,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
   }
 
   /**
-   * Modify received files to reference the namespace in this instance and to include the peer name for RunRecord.
-   * Use these files to start the program through ProgramStateWriter.
-   * Save the rest of the files into a temp dir (to be loaded when the Program is created in DistributedProgramRunner).
+   * Modify received files to reference the namespace in this instance and to include the peer name
+   * for RunRecord. Use these files to start the program through ProgramStateWriter. Save the rest
+   * of the files into a temp dir (to be loaded when the Program is created in
+   * DistributedProgramRunner).
    */
   private void publishStartProgram(String runPayload, PeerInfo peerInfo) throws IOException {
     TetheringLaunchMessage message = GSON.fromJson(runPayload, TetheringLaunchMessage.class);
@@ -245,32 +251,41 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
 
     Map<String, String> files = new HashMap<>();
     for (Map.Entry<String, byte[]> file : message.getFiles().entrySet()) {
-      try (GZIPInputStream inputStream = new GZIPInputStream(new ByteArrayInputStream(file.getValue()))) {
+      try (GZIPInputStream inputStream = new GZIPInputStream(
+          new ByteArrayInputStream(file.getValue()))) {
         files.put(file.getKey(), IOUtils.toString(inputStream));
       }
     }
 
-    ApplicationSpecification appSpec = GSON.fromJson(files.get(DistributedProgramRunner.APP_SPEC_FILE_NAME),
-                                                     ApplicationSpecification.class);
-    ProgramOptions programOpts = GSON.fromJson(files.get(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
-                                               ProgramOptions.class);
+    ApplicationSpecification appSpec = GSON.fromJson(
+        files.get(DistributedProgramRunner.APP_SPEC_FILE_NAME),
+        ApplicationSpecification.class);
+    ProgramOptions programOpts = GSON.fromJson(
+        files.get(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
+        ProgramOptions.class);
     ProgramId programId = programOpts.getProgramId();
-    ProgramRunId programRunId = programId.run(programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID));
+    ProgramRunId programRunId = programId.run(
+        programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
-    Location programDir = locationFactory.create(String.format("%s/%s", cConf.get(Constants.Tethering.PROGRAM_DIR),
-                                                               programRunId.getRun()));
+    Location programDir = locationFactory.create(
+        String.format("%s/%s", cConf.get(Constants.Tethering.PROGRAM_DIR),
+            programRunId.getRun()));
     programDir.mkdirs();
-    try (OutputStream os = programDir.append(DistributedProgramRunner.LOGBACK_FILE_NAME).getOutputStream()) {
-      os.write(files.get(DistributedProgramRunner.LOGBACK_FILE_NAME).getBytes(StandardCharsets.UTF_8));
+    try (OutputStream os = programDir.append(DistributedProgramRunner.LOGBACK_FILE_NAME)
+        .getOutputStream()) {
+      os.write(
+          files.get(DistributedProgramRunner.LOGBACK_FILE_NAME).getBytes(StandardCharsets.UTF_8));
     }
-    try (OutputStream os = programDir.append(DistributedProgramRunner.TETHER_CONF_FILE_NAME).getOutputStream()) {
+    try (OutputStream os = programDir.append(DistributedProgramRunner.TETHER_CONF_FILE_NAME)
+        .getOutputStream()) {
       cConfCopy.writeXml(os);
     }
     if (files.containsKey(Constants.Security.Authentication.RUNTIME_TOKEN_FILE)) {
       try (OutputStream os = programDir
-        .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE).getOutputStream()) {
-        os.write(files.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE).getBytes(StandardCharsets.UTF_8));
+          .append(Constants.Security.Authentication.RUNTIME_TOKEN_FILE).getOutputStream()) {
+        os.write(files.get(Constants.Security.Authentication.RUNTIME_TOKEN_FILE)
+            .getBytes(StandardCharsets.UTF_8));
       }
     }
 
@@ -287,7 +302,8 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // add namespace configs, which can contain things like the k8s namespace to execute in.
     Exception namespaceLookupFailure = null;
     try {
-      NamespaceMeta namespaceMeta = namespaceQueryAdmin.get(new NamespaceId(message.getRuntimeNamespace()));
+      NamespaceMeta namespaceMeta = namespaceQueryAdmin.get(
+          new NamespaceId(message.getRuntimeNamespace()));
       SystemArguments.addNamespaceConfigs(systemArgs, namespaceMeta.getConfig());
     } catch (Exception e) {
       // can happen if the namespace doesn't exist for some reason, or for transient issues.
@@ -295,7 +311,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     }
 
     ProgramOptions updatedOpts = new SimpleProgramOptions(programId, new BasicArguments(systemArgs),
-                                                          programOpts.getUserArguments());
+        programOpts.getUserArguments());
     // Even if there was a failure earlier, need to send a provisioning message to make sure the run record is added.
     // Then send a failed message to fail the run.
     provisionerNotifier.provisioning(programRunId, updatedOpts, programDescriptor, "");
@@ -303,12 +319,12 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     // Check if the peer is allowed to run programs on the namespace specified in the launch message
     // We first publish the PROVISIONING message to ensure that the run record is created.
     if (peerInfo.getMetadata().getNamespaceAllocations().stream()
-      .noneMatch(n -> n.getNamespace().equals(message.getRuntimeNamespace()))) {
+        .noneMatch(n -> n.getNamespace().equals(message.getRuntimeNamespace()))) {
       LOG.warn("Namespace {} is not in the peer namespaces for peer {}",
-               message.getRuntimeNamespace(), peerInfo.getName());
+          message.getRuntimeNamespace(), peerInfo.getName());
       programStateWriter.error(programRunId,
-                               new IllegalArgumentException(String.format("Cannot run program on namespace %s",
-                                                                          message.getRuntimeNamespace())));
+          new IllegalArgumentException(String.format("Cannot run program on namespace %s",
+              message.getRuntimeNamespace())));
     } else if (namespaceLookupFailure != null) {
       programStateWriter.error(programRunId, namespaceLookupFailure);
       LOG.debug("Published program failed message for run {}", programRunId.getRun());
@@ -317,9 +333,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
 
   private void publishStopProgram(String stopPayload) {
     ProgramRunInfo programRunInfo = GSON.fromJson(stopPayload, ProgramRunInfo.class);
-    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
-                                                 ProgramType.valueOf(programRunInfo.getProgramType()),
-                                                 programRunInfo.getProgram(), programRunInfo.getRun());
+    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(),
+        programRunInfo.getApplication(),
+        ProgramType.valueOf(programRunInfo.getProgramType()),
+        programRunInfo.getProgram(), programRunInfo.getRun());
     // Do a graceful stop without a timeout. ProgramStopSubscriberService on the tethered peer will send a kill if the
     // graceful shutdown time is exceeded.
     programStateWriter.stop(programRunId, Integer.MAX_VALUE);
@@ -328,9 +345,10 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
 
   private void publishKillProgram(String stopPayload) {
     ProgramRunInfo programRunInfo = GSON.fromJson(stopPayload, ProgramRunInfo.class);
-    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
-                                                 ProgramType.valueOf(programRunInfo.getProgramType()),
-                                                 programRunInfo.getProgram(), programRunInfo.getRun());
+    ProgramRunId programRunId = new ProgramRunId(programRunInfo.getNamespace(),
+        programRunInfo.getApplication(),
+        ProgramType.valueOf(programRunInfo.getProgramType()),
+        programRunInfo.getProgram(), programRunInfo.getRun());
     // Kill the program
     programStateWriter.stop(programRunId, 0);
     LOG.debug("Published program kill message for program run {}", programRunId);
@@ -343,10 +361,11 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
     String topic = programStateTopicPrefix + peerName;
     String lastMessageId = subscriberState.getLastMessageIdSent(peerName);
     List<Notification> notifications = new ArrayList<>();
-    try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                                    topic,
-                                                                    programUpdateFetchSize,
-                                                                    subscriberState.getLastMessageIdSent(peerName))) {
+    try (CloseableIterator<Message> iterator = messageFetcher.fetch(
+        NamespaceId.SYSTEM.getNamespace(),
+        topic,
+        programUpdateFetchSize,
+        subscriberState.getLastMessageIdSent(peerName))) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
         notifications.add(message.decodePayload(r -> GSON.fromJson(r, Notification.class)));
@@ -356,7 +375,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
       LOG.error("Topic {} does not exist", topic);
     } catch (IOException e) {
       LOG.error("Exception when fetching program updates from per-peer topic at message id {}",
-                subscriberState.getLastMessageIdSent(peerName), e);
+          subscriberState.getLastMessageIdSent(peerName), e);
     }
     return new ProgramStateUpdates(notifications, lastMessageId);
   }
@@ -365,6 +384,7 @@ public class TetheringAgentService extends AbstractRetryableScheduledService {
    * Program status notifications for tethered peers.
    */
   private static class ProgramStateUpdates {
+
     // List of notifications
     private final List<Notification> notifications;
     // Last message id read from TMS

@@ -27,10 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Detects the currently loaded HBase version.  It is assumed that only one HBase version is loaded at a time,
- * since using more than one HBase version within the same process will require classloader isolation anyway.
+ * Detects the currently loaded HBase version.  It is assumed that only one HBase version is loaded
+ * at a time, since using more than one HBase version within the same process will require
+ * classloader isolation anyway.
  */
 public class HBaseVersion {
+
   private static final String HBASE_94_VERSION = "0.94";
   private static final String HBASE_96_VERSION = "0.96";
   private static final String HBASE_98_VERSION = "0.98";
@@ -106,7 +108,8 @@ public class HBaseVersion {
   }
 
   /**
-   * Prints out the HBase {@link Version} enum value for the current version of HBase on the classpath.
+   * Prints out the HBase {@link Version} enum value for the current version of HBase on the
+   * classpath.
    */
   public static void main(String[] args) {
     // Suppress any output to stdout
@@ -125,28 +128,32 @@ public class HBaseVersion {
   }
 
   /**
-   * Utility class to parse apart version number components.  The version string provided is expected to be in
-   * one of the formats below.
+   * Utility class to parse apart version number components.  The version string provided is
+   * expected to be in one of the formats below.
    *
    * <p>Only the major version number and classifier are actually required.</p>
    */
   public static class VersionNumber {
+
     // Common pattern (for CDH, open source distro, etc.)
     // major[.minor[.patch[.last]][-classifier][-SNAPSHOT]
     private static final Pattern PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-SNAPSHOT)?");
+        Pattern.compile(
+            "(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-SNAPSHOT)?");
 
     // HDP has a different format:
     // major.minor.patch.hdp_major.hdp_minor.hdp_patch.hdp_last-package_number[-hadoop2],
     // For now, we support only non-snapshot versions
     private static final Pattern HDP_PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(-(\\d+))(-hadoop2)?");
+        Pattern.compile(
+            "(\\d+)(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(-(\\d+))(-hadoop2)?");
 
     // IBM has a different format where they add build number at the end,
     // major[.minor[.patch[.last]][-classifier][-buildNumber],
     // we ignore build number for now and support only non-snapshot versions.
     private static final Pattern IBM_PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-(\\d+))?");
+        Pattern.compile(
+            "(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-(\\d+))?");
 
     private Integer major;
     private Integer minor;
@@ -156,7 +163,7 @@ public class HBaseVersion {
     private boolean snapshot;
 
     private VersionNumber(Integer major, Integer minor, Integer patch, Integer last,
-                          String classifier, boolean snapshot) {
+        String classifier, boolean snapshot) {
       this.major = major;
       this.minor = minor;
       this.patch = patch;
@@ -201,19 +208,19 @@ public class HBaseVersion {
         String classifier = matcher.group(9);
         String snapshotString = matcher.group(10);
         return new VersionNumber(new Integer(majorString),
-                                 minorString != null ? new Integer(minorString) : null,
-                                 patchString != null ? new Integer(patchString) : null,
-                                 last != null ? new Integer(last) : null,
-                                 classifier,
-                                 "-SNAPSHOT".equals(snapshotString));
+            minorString != null ? new Integer(minorString) : null,
+            patchString != null ? new Integer(patchString) : null,
+            last != null ? new Integer(last) : null,
+            classifier,
+            "-SNAPSHOT".equals(snapshotString));
       } else if (hdpMatcher.matches()) {
         String majorString = hdpMatcher.group(1);
         String minorString = hdpMatcher.group(3);
         String patchString = hdpMatcher.group(5);
         return new VersionNumber(new Integer(majorString),
-                                 minorString != null ? new Integer(minorString) : null,
-                                 patchString != null ? new Integer(patchString) : null,
-                                 null, null, false);
+            minorString != null ? new Integer(minorString) : null,
+            patchString != null ? new Integer(patchString) : null,
+            null, null, false);
       } else if (ibmMatcher.matches()) {
         String majorString = ibmMatcher.group(1);
         String minorString = ibmMatcher.group(3);
@@ -221,14 +228,15 @@ public class HBaseVersion {
         String last = ibmMatcher.group(7);
         String classifier = ibmMatcher.group(9);
         return new VersionNumber(new Integer(majorString),
-                                 minorString != null ? new Integer(minorString) : null,
-                                 patchString != null ? new Integer(patchString) : null,
-                                 last != null ? new Integer(last) : null,
-                                 classifier,
-                                 false);
+            minorString != null ? new Integer(minorString) : null,
+            patchString != null ? new Integer(patchString) : null,
+            last != null ? new Integer(last) : null,
+            classifier,
+            false);
       }
       throw new ParseException(
-        "Input string did not match expected pattern: major[.minor[.patch]][-classifier][-SNAPSHOT]", 0);
+          "Input string did not match expected pattern: major[.minor[.patch]][-classifier][-SNAPSHOT]",
+          0);
     }
   }
 
@@ -300,15 +308,15 @@ public class HBaseVersion {
   private static Version getHBase12VersionFromVersion(VersionNumber ver) {
     if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
       if (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-        // CDH 5.7 compat module can be re-used with CDH 5.[8-14].x
-        ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH511_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH512_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH513_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH514_CLASSIFIER) ||
-        ver.getClassifier().startsWith(CDH515_CLASSIFIER)) {
+          // CDH 5.7 compat module can be re-used with CDH 5.[8-14].x
+          ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH511_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH512_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH513_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH514_CLASSIFIER) ||
+          ver.getClassifier().startsWith(CDH515_CLASSIFIER)) {
         return Version.HBASE_12_CDH57;
       }
       return Version.UNKNOWN_CDH;

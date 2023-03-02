@@ -47,18 +47,19 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Store for profile information, and profile assignments to entities.
- * This dataset does not wrap its operations in a transaction. It is up to the caller
- * to decide what operations belong in a transaction.
+ * Store for profile information, and profile assignments to entities. This dataset does not wrap
+ * its operations in a transaction. It is up to the caller to decide what operations belong in a
+ * transaction.
  *
- * The table will look like:
- * primary key                                                 column -> value
- * [namespace][profile-id]                                     profile_data -> Profile{@link Profile}
- * [namespace][profile-id][entity-id]                          entity_data -> EntityId{@link EntityId}
+ * The table will look like: primary key                                                 column ->
+ * value [namespace][profile-id]                                     profile_data -> Profile{@link
+ * Profile} [namespace][profile-id][entity-id]                          entity_data ->
+ * EntityId{@link EntityId}
  */
 public class ProfileStore {
+
   private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
+      new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
 
   private final StructuredTable profileTable;
   private final StructuredTable profileEntityTable;
@@ -71,8 +72,8 @@ public class ProfileStore {
   public static ProfileStore get(StructuredTableContext context) {
     try {
       return new ProfileStore(
-        context.getTable(StoreDefinition.ProfileStore.PROFILE_STORE_TABLE),
-        context.getTable(StoreDefinition.ProfileStore.PROFILE_ENTITY_STORE_TABLE)
+          context.getTable(StoreDefinition.ProfileStore.PROFILE_STORE_TABLE),
+          context.getTable(StoreDefinition.ProfileStore.PROFILE_ENTITY_STORE_TABLE)
       );
     } catch (TableNotFoundException e) {
       throw new RuntimeException(e);
@@ -101,7 +102,8 @@ public class ProfileStore {
    * @param includeSystem whether to include profiles in system namespace
    * @return the list of profiles which is in this namespace
    */
-  public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) throws IOException {
+  public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem)
+      throws IOException {
     List<Profile> profiles = new ArrayList<>();
     scanProfiles(namespaceId, profiles);
     if (includeSystem && !namespaceId.equals(NamespaceId.SYSTEM)) {
@@ -111,18 +113,18 @@ public class ProfileStore {
   }
 
   /**
-   * Get all profiles in all namespaces
-   * NOTE: This is an expensive query, use with caution.
+   * Get all profiles in all namespaces NOTE: This is an expensive query, use with caution.
    *
    * @return the list of all profiles
    */
   public List<Profile> getProfiles() throws IOException {
     List<Profile> profiles = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator =
-           profileTable.scan(Range.all(), Integer.MAX_VALUE)) {
+        profileTable.scan(Range.all(), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
-        profiles.add(GSON.fromJson(iterator.next().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
-                                   Profile.class));
+        profiles.add(GSON.fromJson(
+            iterator.next().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
+            Profile.class));
       }
     }
     return profiles;
@@ -138,12 +140,14 @@ public class ProfileStore {
     Collection<Field<?>> fields = getProfileKeys(profileId);
     Profile oldProfile = getProfileInternal(fields);
     Profile newProfile =
-      new Profile(profile.getName(), profile.getLabel(), profile.getDescription(), profile.getScope(),
-                  oldProfile == null ? ProfileStatus.ENABLED : oldProfile.getStatus(),
-                  profile.getProvisioner(),
-                  oldProfile == null ? profile.getCreatedTsSeconds() : oldProfile.getCreatedTsSeconds());
+        new Profile(profile.getName(), profile.getLabel(), profile.getDescription(),
+            profile.getScope(),
+            oldProfile == null ? ProfileStatus.ENABLED : oldProfile.getStatus(),
+            profile.getProvisioner(),
+            oldProfile == null ? profile.getCreatedTsSeconds() : oldProfile.getCreatedTsSeconds());
 
-    fields.add(Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, GSON.toJson(newProfile)));
+    fields.add(Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD,
+        GSON.toJson(newProfile)));
     profileTable.upsert(fields);
   }
 
@@ -155,12 +159,13 @@ public class ProfileStore {
    */
   public void createIfNotExists(ProfileId profileId, Profile profile) throws IOException {
     Collection<Field<?>> keys = getProfileKeys(profileId);
-    Profile newProfile = new Profile(profile.getName(), profile.getLabel(), profile.getDescription(),
-                                     profile.getScope(), ProfileStatus.ENABLED, profile.getProvisioner());
+    Profile newProfile = new Profile(profile.getName(), profile.getLabel(),
+        profile.getDescription(),
+        profile.getScope(), ProfileStatus.ENABLED, profile.getProvisioner());
     profileTable.compareAndSwap(
-      keys,
-      Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, null),
-      Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, GSON.toJson(newProfile))
+        keys,
+        Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, null),
+        Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, GSON.toJson(newProfile))
     );
   }
 
@@ -171,7 +176,8 @@ public class ProfileStore {
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is enabled
    */
-  public void deleteProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException, IOException {
+  public void deleteProfile(ProfileId profileId)
+      throws NotFoundException, ProfileConflictException, IOException {
     Collection<Field<?>> fields = getProfileKeys(profileId);
     Profile value = getProfileInternal(fields);
     if (value == null) {
@@ -179,9 +185,10 @@ public class ProfileStore {
     }
     if (value.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
-        String.format("Profile %s in namespace %s is currently enabled. A profile can " +
-                        "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
-        profileId);
+          String.format("Profile %s in namespace %s is currently enabled. A profile can " +
+                  "only be deleted if it is disabled", profileId.getProfile(),
+              profileId.getNamespace()),
+          profileId);
     }
     profileTable.delete(getProfileKeys(profileId));
   }
@@ -196,29 +203,33 @@ public class ProfileStore {
   }
 
   /**
-   * Enable the profile. After the profile is enabled, any program/schedule can be associated with this profile.
+   * Enable the profile. After the profile is enabled, any program/schedule can be associated with
+   * this profile.
    *
    * @param profileId the id of the profile to enable
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is already enabled
    */
-  public void enableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException, IOException {
+  public void enableProfile(ProfileId profileId)
+      throws NotFoundException, ProfileConflictException, IOException {
     changeProfileStatus(profileId, ProfileStatus.ENABLED);
   }
 
   /**
-   * Disable the profile. After the profile is disabled, any program/schedule cannot be associated with this profile.
+   * Disable the profile. After the profile is disabled, any program/schedule cannot be associated
+   * with this profile.
    *
    * @param profileId the id of the profile to disable
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is already disabled
    */
-  public void disableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException, IOException {
+  public void disableProfile(ProfileId profileId)
+      throws NotFoundException, ProfileConflictException, IOException {
     changeProfileStatus(profileId, ProfileStatus.DISABLED);
   }
 
   private void changeProfileStatus(ProfileId profileId, ProfileStatus expectedStatus)
-    throws NotFoundException, ProfileConflictException, IOException {
+      throws NotFoundException, ProfileConflictException, IOException {
     Collection<Field<?>> fields = getProfileKeys(profileId);
     Profile oldProfile = getProfileInternal(fields);
     if (oldProfile == null) {
@@ -226,12 +237,15 @@ public class ProfileStore {
     }
     if (oldProfile.getStatus() == expectedStatus) {
       throw new ProfileConflictException(
-        String.format("Profile %s already %s", profileId.getProfile(), expectedStatus.toString()), profileId);
+          String.format("Profile %s already %s", profileId.getProfile(), expectedStatus.toString()),
+          profileId);
     }
-    Profile newProfile = new Profile(oldProfile.getName(), oldProfile.getLabel(), oldProfile.getDescription(),
-                                     oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner(),
-                                     oldProfile.getCreatedTsSeconds());
-    fields.add(Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD, GSON.toJson(newProfile)));
+    Profile newProfile = new Profile(oldProfile.getName(), oldProfile.getLabel(),
+        oldProfile.getDescription(),
+        oldProfile.getScope(), expectedStatus, oldProfile.getProvisioner(),
+        oldProfile.getCreatedTsSeconds());
+    fields.add(Fields.stringField(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD,
+        GSON.toJson(newProfile)));
     profileTable.upsert(fields);
   }
 
@@ -242,7 +256,8 @@ public class ProfileStore {
    * @return the set of entities that the profile is assigned to
    * @throws NotFoundException if the profile is not found
    */
-  public Set<EntityId> getProfileAssignments(ProfileId profileId) throws NotFoundException, IOException {
+  public Set<EntityId> getProfileAssignments(ProfileId profileId)
+      throws NotFoundException, IOException {
     Collection<Field<?>> fields = getProfileKeys(profileId);
     Profile profile = getProfileInternal(fields);
     if (profile == null) {
@@ -261,7 +276,7 @@ public class ProfileStore {
    * @param entityId the entity to add to the assgiment
    */
   public void addProfileAssignment(ProfileId profileId,
-                                   EntityId entityId) throws ProfileConflictException, NotFoundException, IOException {
+      EntityId entityId) throws ProfileConflictException, NotFoundException, IOException {
     Collection<Field<?>> fields = getProfileKeys(profileId);
     Profile profile = getProfileInternal(fields);
     if (profile == null) {
@@ -269,10 +284,12 @@ public class ProfileStore {
     }
     if (profile.getStatus() == ProfileStatus.DISABLED) {
       throw new ProfileConflictException(
-        String.format("Profile %s is DISABLED. No entity can be assigned to it.", profileId.getProfile()), profileId);
+          String.format("Profile %s is DISABLED. No entity can be assigned to it.",
+              profileId.getProfile()), profileId);
     }
     addEntityIdKey(fields, entityId);
-    fields.add(Fields.stringField(StoreDefinition.ProfileStore.ENTITY_DATA_FIELD, GSON.toJson(entityId)));
+    fields.add(
+        Fields.stringField(StoreDefinition.ProfileStore.ENTITY_DATA_FIELD, GSON.toJson(entityId)));
     profileEntityTable.upsert(fields);
   }
 
@@ -283,7 +300,8 @@ public class ProfileStore {
    * @param entityId the entity to remove from the assignment
    * @throws NotFoundException if the profile is not found
    */
-  public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException, IOException {
+  public void removeProfileAssignment(ProfileId profileId, EntityId entityId)
+      throws NotFoundException, IOException {
     Collection<Field<?>> keys = getProfileKeys(profileId);
     Profile profile = getProfileInternal(keys);
     if (profile == null) {
@@ -300,39 +318,45 @@ public class ProfileStore {
     if (!rowOptional.isPresent()) {
       return null;
     }
-    return GSON.fromJson(rowOptional.get().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD), Profile.class);
+    return GSON.fromJson(
+        rowOptional.get().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
+        Profile.class);
   }
 
   private void scanProfiles(NamespaceId namespaceId, List<Profile> profiles) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
-           profileTable.scan(Range.singleton(getNamespaceKey(namespaceId)), Integer.MAX_VALUE)) {
+        profileTable.scan(Range.singleton(getNamespaceKey(namespaceId)), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
-        profiles.add(GSON.fromJson(iterator.next().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
-                                   Profile.class));
+        profiles.add(GSON.fromJson(
+            iterator.next().getString(StoreDefinition.ProfileStore.PROFILE_DATA_FIELD),
+            Profile.class));
       }
     }
   }
 
   private void scanEntities(ProfileId profileId, Collection<EntityId> entities) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
-           profileEntityTable.scan(Range.singleton(getProfileKeys(profileId)), Integer.MAX_VALUE)) {
+        profileEntityTable.scan(Range.singleton(getProfileKeys(profileId)), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
-        entities.add(GSON.fromJson(iterator.next().getString(StoreDefinition.ProfileStore.ENTITY_DATA_FIELD),
-                                   EntityId.class));
+        entities.add(
+            GSON.fromJson(iterator.next().getString(StoreDefinition.ProfileStore.ENTITY_DATA_FIELD),
+                EntityId.class));
       }
     }
   }
 
   private Collection<Field<?>> getProfileKeys(ProfileId profileId) {
     List<Field<?>> keys = new ArrayList<>();
-    keys.add(Fields.stringField(StoreDefinition.ProfileStore.NAMESPACE_FIELD, profileId.getNamespace()));
-    keys.add(Fields.stringField(StoreDefinition.ProfileStore.PROFILE_ID_FIELD, profileId.getProfile()));
+    keys.add(
+        Fields.stringField(StoreDefinition.ProfileStore.NAMESPACE_FIELD, profileId.getNamespace()));
+    keys.add(
+        Fields.stringField(StoreDefinition.ProfileStore.PROFILE_ID_FIELD, profileId.getProfile()));
     return keys;
   }
 
   private Collection<Field<?>> getNamespaceKey(NamespaceId namespaceId) {
     return Collections.singleton(
-      Fields.stringField(StoreDefinition.ProfileStore.NAMESPACE_FIELD, namespaceId.getNamespace())
+        Fields.stringField(StoreDefinition.ProfileStore.NAMESPACE_FIELD, namespaceId.getNamespace())
     );
   }
 

@@ -47,12 +47,14 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * @return A new {@link PluginInstantiator} or {@code null} if no plugin is available.
    */
   @Nullable
-  protected PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader) {
+  protected PluginInstantiator createPluginInstantiator(ProgramOptions options,
+      ClassLoader classLoader) {
     if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       return null;
     }
     return new PluginInstantiator(
-      cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
+        cConf, classLoader,
+        new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
   }
 
   /**

@@ -49,7 +49,7 @@ public final class ResourceAssignment {
     this.name = name;
 
     TreeMultimap<Discoverable, PartitionReplica> multimap
-      = TreeMultimap.create(DiscoverableComparator.COMPARATOR, PartitionReplica.COMPARATOR);
+        = TreeMultimap.create(DiscoverableComparator.COMPARATOR, PartitionReplica.COMPARATOR);
     multimap.putAll(assignments);
     this.assignments = Multimaps.unmodifiableSortedSetMultimap(multimap);
   }

@@ -44,10 +44,11 @@ public class LimitingRecordReader<K, V> extends RecordReader<K, V> {
   }
 
   @Override
-  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+  public void initialize(InputSplit split, TaskAttemptContext context)
+      throws IOException, InterruptedException {
     if (!(split instanceof LimitingInputSplit)) {
       throw new IOException("Expected input split class " + LimitingInputSplit.class.getName()
-                              + ", but got " + split.getClass().getName());
+          + ", but got " + split.getClass().getName());
     }
     this.context = context;
     this.inputSplit = (LimitingInputSplit) split;
@@ -55,7 +56,8 @@ public class LimitingRecordReader<K, V> extends RecordReader<K, V> {
 
     // Round up the per split limit so that each reader at most is opened once
     int numberOfSplits = inputSplit.getInputSplits().size();
-    int perSplitLimit = numberOfSplits == 0 ? 0 : (inputSplit.getRecordLimit() + numberOfSplits - 1) / numberOfSplits;
+    int perSplitLimit = numberOfSplits == 0 ? 0
+        : (inputSplit.getRecordLimit() + numberOfSplits - 1) / numberOfSplits;
     this.perSplitLimit = Math.max(1, perSplitLimit);
   }
 

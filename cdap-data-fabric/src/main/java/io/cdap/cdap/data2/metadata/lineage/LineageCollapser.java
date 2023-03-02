@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  * Collapses {@link Relation Relations} based on {@link CollapseType}
  */
 public final class LineageCollapser {
+
   private LineageCollapser() {
     // cannot instantiate objects
   }
@@ -44,12 +45,13 @@ public final class LineageCollapser {
 
   /**
    * Collapse {@link Relation}s based on {@link CollapseType}
+   *
    * @param relations lineage relations
    * @param collapseTypes fields to collapse relations on
    * @return collapsed relations
    */
   public static Set<CollapsedRelation> collapseRelations(Iterable<Relation> relations,
-                                                         Set<CollapseType> collapseTypes) {
+      Set<CollapseType> collapseTypes) {
     Set<CollapsedRelation> collapsedRelations = new HashSet<>();
 
     Multimap<CollapseKey, Relation> multimap = HashMultimap.create();
@@ -58,7 +60,8 @@ public final class LineageCollapser {
     }
     LOG.trace("Collapsed relations: {}", multimap.asMap());
 
-    for (Map.Entry<CollapseKey, Collection<Relation>> collapsedEntry : multimap.asMap().entrySet()) {
+    for (Map.Entry<CollapseKey, Collection<Relation>> collapsedEntry : multimap.asMap()
+        .entrySet()) {
       NamespacedEntityId data = collapsedEntry.getKey().data;
       ProgramId program = collapsedEntry.getKey().program;
 
@@ -91,6 +94,7 @@ public final class LineageCollapser {
   }
 
   private static final class CollapseKeyBuilder {
+
     private final NamespacedEntityId data;
     private final ProgramId program;
     private AccessType access;
@@ -120,13 +124,15 @@ public final class LineageCollapser {
   }
 
   private static CollapsedRelation toCollapsedRelation(NamespacedEntityId data, ProgramId program,
-                                                       Set<AccessType> accesses, Set<RunId> runs,
-                                                       Set<NamespacedEntityId> components) {
-    Preconditions.checkState(data instanceof DatasetId, "%s should be an instance of dataset", data);
+      Set<AccessType> accesses, Set<RunId> runs,
+      Set<NamespacedEntityId> components) {
+    Preconditions.checkState(data instanceof DatasetId, "%s should be an instance of dataset",
+        data);
     return new CollapsedRelation((DatasetId) data, program, accesses, runs, components);
   }
 
   private static final class CollapseKey {
+
     private final NamespacedEntityId data;
     private final ProgramId program;
     private final AccessType access;
@@ -134,7 +140,7 @@ public final class LineageCollapser {
     private final Set<? extends NamespacedEntityId> components;
 
     CollapseKey(NamespacedEntityId data, ProgramId program, AccessType access, RunId run,
-                Set<? extends NamespacedEntityId> components) {
+        Set<? extends NamespacedEntityId> components) {
       this.data = data;
       this.program = program;
       this.access = access;
@@ -152,10 +158,10 @@ public final class LineageCollapser {
       }
       CollapseKey that = (CollapseKey) o;
       return Objects.equals(data, that.data) &&
-        Objects.equals(program, that.program) &&
-        Objects.equals(access, that.access) &&
-        Objects.equals(run, that.run) &&
-        Objects.equals(components, that.components);
+          Objects.equals(program, that.program) &&
+          Objects.equals(access, that.access) &&
+          Objects.equals(run, that.run) &&
+          Objects.equals(components, that.components);
     }
 
     @Override
@@ -166,12 +172,12 @@ public final class LineageCollapser {
     @Override
     public String toString() {
       return "CollapseKey{" +
-        "data=" + data +
-        ", program=" + program +
-        ", access=" + access +
-        ", run=" + run +
-        ", components=" + components +
-        '}';
+          "data=" + data +
+          ", program=" + program +
+          ", access=" + access +
+          ", run=" + run +
+          ", components=" + components +
+          '}';
     }
   }
 }

@@ -20,6 +20,7 @@ package io.cdap.cdap.app.program;
  * This interface defines the version.
  */
 public interface Version {
+
   /**
    * @return A version.
    */

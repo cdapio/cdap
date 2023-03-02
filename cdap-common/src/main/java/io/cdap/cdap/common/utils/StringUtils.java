@@ -23,10 +23,13 @@ import java.util.Collection;
  * General string utils.
  */
 public class StringUtils {
-  public static final  String[] EMPTY_STRING_ARRAY = {};
+
+  public static final String[] EMPTY_STRING_ARRAY = {};
 
   /**
-   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on each value.
+   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on
+   * each value.
+   *
    * @param str a comma separated <String> with values
    * @return a <code>Collection</code> of <code>String</code> values
    */
@@ -35,7 +38,9 @@ public class StringUtils {
   }
 
   /**
-   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on each value.
+   * Splits a comma separated value <code>String</code>, trimming leading and trailing whitespace on
+   * each value.
+   *
    * @param str a comma separated <String> with values
    * @return an array of <code>String</code> values
    */

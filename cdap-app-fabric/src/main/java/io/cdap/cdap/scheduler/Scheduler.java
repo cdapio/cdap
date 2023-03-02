@@ -42,33 +42,40 @@ public interface Scheduler {
    *
    * @param schedule the schedule to add
    * @throws AlreadyExistsException if the schedule already exists
-   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
-   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not
+   *     exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is
+   *     diabled
    */
   void addSchedule(ProgramSchedule schedule)
-    throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException;
+      throws ProfileConflictException, BadRequestException, NotFoundException, AlreadyExistsException;
 
   /**
    * Add one or more schedules to the store.
    *
    * @param schedules the schedules to add
    * @throws AlreadyExistsException if one of the schedules already exists
-   * @throws NotFoundException if there is a profile assigned to the schedule and it does not exist
-   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
+   * @throws NotFoundException if there is a profile assigned to the schedule and it does not
+   *     exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is
+   *     diabled
    */
   void addSchedules(Iterable<? extends ProgramSchedule> schedules)
-    throws AlreadyExistsException, BadRequestException, NotFoundException, ProfileConflictException;
+      throws AlreadyExistsException, BadRequestException, NotFoundException, ProfileConflictException;
 
   /**
-   * Updates a schedule in the store. The schedule with the same {@link ScheduleId}
-   * as the given {@code schedule} will be replaced.
+   * Updates a schedule in the store. The schedule with the same {@link ScheduleId} as the given
+   * {@code schedule} will be replaced.
    *
-   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
-   * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the store or
-   *                           if there is a profile assigned to the schedule and it does not exist
-   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is diabled
+   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId}
+   *     will be replaced
+   * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the
+   *     store or if there is a profile assigned to the schedule and it does not exist
+   * @throws ProfileConflictException if there is a profile assigned to the schedule and it is
+   *     diabled
    */
-  void updateSchedule(ProgramSchedule schedule) throws NotFoundException, BadRequestException, ProfileConflictException;
+  void updateSchedule(ProgramSchedule schedule)
+      throws NotFoundException, BadRequestException, ProfileConflictException;
 
   /**
    * Enables a schedule. The schedule must be currently disabled.
@@ -119,10 +126,10 @@ public interface Scheduler {
   void deleteSchedules(ProgramId programId);
 
   /**
-   * Update all schedules that can be triggered by the given deleted program. Schedules will be removed if they
-   * contain single {@link io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}. Schedules with
-   * composite triggers will be updated if the composite trigger can still be satisfied after the program is deleted,
-   * otherwise the schedules will be deleted.
+   * Update all schedules that can be triggered by the given deleted program. Schedules will be
+   * removed if they contain single {@link io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}.
+   * Schedules with composite triggers will be updated if the composite trigger can still be
+   * satisfied after the program is deleted, otherwise the schedules will be deleted.
    *
    * @param programId id of the deleted program
    */
@@ -203,12 +210,16 @@ public interface Scheduler {
   Collection<ProgramScheduleRecord> findSchedules(String triggerKey);
 
   /**
-   * Enables all schedules which were disabled or added between startTimeMillis and endTimeMillis in a given namespace.
+   * Enables all schedules which were disabled or added between startTimeMillis and endTimeMillis in
+   * a given namespace.
    *
    * @param namespaceId the namespace to re-enable schedules in
-   * @param startTimeMillis the lower bound in millis for when the schedule was disabled (inclusive)
-   * @param endTimeMillis the upper bound in millis for when the schedule was disabled (exclusive)
+   * @param startTimeMillis the lower bound in millis for when the schedule was disabled
+   *     (inclusive)
+   * @param endTimeMillis the upper bound in millis for when the schedule was disabled
+   *     (exclusive)
    * @throws ConflictException if the schedule was already enabled
    */
-  void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis) throws ConflictException;
+  void reEnableSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
+      throws ConflictException;
 }

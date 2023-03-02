@@ -23,15 +23,16 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Wrapper around another emitter that will transform objects before emitting them.
- * This is meant to be used in situations where the emitter is passed to something that emits objects
- * of type EMIT, but we need to eventually fetch objects of type FETCH. For example, a BatchSink
- * emits KeyValue objects, but in some Spark classes, we want to get back Tuple2 objects.
+ * Wrapper around another emitter that will transform objects before emitting them. This is meant to
+ * be used in situations where the emitter is passed to something that emits objects of type EMIT,
+ * but we need to eventually fetch objects of type FETCH. For example, a BatchSink emits KeyValue
+ * objects, but in some Spark classes, we want to get back Tuple2 objects.
  *
  * @param <EMIT> the type of objects emitted
  * @param <FETCH> the type of objects fetched
  */
 public class TransformingEmitter<EMIT, FETCH> implements Emitter<EMIT> {
+
   private final DefaultEmitter<FETCH> emitter;
   private final Function<EMIT, FETCH> function;
 
@@ -52,7 +53,7 @@ public class TransformingEmitter<EMIT, FETCH> implements Emitter<EMIT> {
   @Override
   public void emitError(InvalidEntry<EMIT> value) {
     emitter.emitError(new InvalidEntry<>(value.getErrorCode(), value.getErrorMsg(),
-                                         function.apply(value.getInvalidRecord())));
+        function.apply(value.getInvalidRecord())));
   }
 
   @Override

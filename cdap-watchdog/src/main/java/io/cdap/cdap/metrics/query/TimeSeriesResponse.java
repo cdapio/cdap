@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /**
- * Represents timeseries data response to REST calls. Use {@link #builder(long, long)}
- * to construct and GSON to serialize.
+ * Represents timeseries data response to REST calls. Use {@link #builder(long, long)} to construct
+ * and GSON to serialize.
  */
 final class TimeSeriesResponse {
 
@@ -55,6 +55,7 @@ final class TimeSeriesResponse {
    * Represents metric data point. Used to construct JSON response.
    */
   static final class TimeValue {
+
     private final long time;
     private final long value;
 
@@ -65,6 +66,7 @@ final class TimeSeriesResponse {
   }
 
   public interface Builder {
+
     Builder addData(long timestamp, long value);
 
     TimeSeriesResponse build();

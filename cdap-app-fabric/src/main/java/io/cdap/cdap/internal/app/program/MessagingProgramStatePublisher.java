@@ -54,11 +54,12 @@ import org.slf4j.LoggerFactory;
  * Publishes program state and heartbeat messages through the messaging service
  */
 public class MessagingProgramStatePublisher implements ProgramStatePublisher {
+
   private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStatePublisher.class);
   private static final Gson GSON =
-    ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
+      ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+          .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+          .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
   private final MessagingService messagingService;
   private final List<TopicId> topicIds;
   private final RetryStrategy retryStrategy;
@@ -66,24 +67,24 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
   @Inject
   public MessagingProgramStatePublisher(CConfiguration cConf, MessagingService messagingService) {
     this(
-      messagingService,
-      cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
-      cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS),
-      RetryStrategies.fromConfiguration(
-        cConf, Constants.AppFabric.PROGRAM_STATUS_RETRY_STRATEGY_PREFIX)
+        messagingService,
+        cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+        cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS),
+        RetryStrategies.fromConfiguration(
+            cConf, Constants.AppFabric.PROGRAM_STATUS_RETRY_STRATEGY_PREFIX)
     );
   }
 
   @VisibleForTesting
   public MessagingProgramStatePublisher(MessagingService messagingService,
-                                        String topicPrefix, int numTopics, RetryStrategy retryStrategy) {
+      String topicPrefix, int numTopics, RetryStrategy retryStrategy) {
     this.messagingService = messagingService;
     this.topicIds =
-      numTopics == 1 ? Collections.singletonList(NamespaceId.SYSTEM.topic(topicPrefix)) :
-        Collections.unmodifiableList(IntStream
-                                       .range(0, numTopics)
-                                       .mapToObj(i -> NamespaceId.SYSTEM.topic(topicPrefix + i))
-                                       .collect(Collectors.toList()));
+        numTopics == 1 ? Collections.singletonList(NamespaceId.SYSTEM.topic(topicPrefix)) :
+            Collections.unmodifiableList(IntStream
+                .range(0, numTopics)
+                .mapToObj(i -> NamespaceId.SYSTEM.topic(topicPrefix + i))
+                .collect(Collectors.toList()));
     this.retryStrategy = retryStrategy;
   }
 
@@ -91,9 +92,10 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     if (topicIds.size() == 1) {
       return topicIds.get(0);
     }
-    String programRunIdStr = programStatusNotification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
+    String programRunIdStr = programStatusNotification.getProperties()
+        .get(ProgramOptionConstants.PROGRAM_RUN_ID);
     if (programRunIdStr == null) {
-       return topicIds.get(0);
+      return topicIds.get(0);
     }
     ProgramRunId programRunId = GSON.fromJson(programRunIdStr, ProgramRunId.class);
     return topicIds.get(Math.abs(programRunId.getRun().hashCode()) % topicIds.size());
@@ -111,8 +113,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     while (!done) {
       try {
         messagingService.publish(StoreRequestBuilder.of(getTopic(programStatusNotification))
-                                   .addPayload(GSON.toJson(programStatusNotification))
-                                   .build());
+            .addPayload(GSON.toJson(programStatusNotification))
+            .build());
         LOG.trace("Published program status notification: {}", programStatusNotification);
         done = true;
       } catch (IOException | AccessException e) {
@@ -128,7 +130,7 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
           throw Throwables.propagate(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
-                  e.getMessage(), retryMillis);
+            e.getMessage(), retryMillis);
         try {
           TimeUnit.MILLISECONDS.sleep(retryMillis);
         } catch (InterruptedException e1) {

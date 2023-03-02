@@ -23,10 +23,11 @@ import org.apache.twill.filesystem.LocationFactory;
  * Context object available to {@link MasterEnvironment} for access to CDAP resources.
  */
 public interface MasterEnvironmentContext {
+
   /**
-   * Prefix added to environment properties returned by <code>getConfigurations</code>.
-   * This prefix can be used by main services to filter out all environment specific config properties
-   * which are set by {@link MasterEnvironment} implementations.
+   * Prefix added to environment properties returned by <code>getConfigurations</code>. This prefix
+   * can be used by main services to filter out all environment specific config properties which are
+   * set by {@link MasterEnvironment} implementations.
    */
   String ENVIRONMENT_PROPERTY_PREFIX = "environment.property.";
 
@@ -41,13 +42,15 @@ public interface MasterEnvironmentContext {
   Map<String, String> getConfigurations();
 
   /**
-   * Returns the program arguments for running the given {@link MasterEnvironmentRunnable} class. The list of arguments
-   * returned is for providing to Java command for the main class execution.
+   * Returns the program arguments for running the given {@link MasterEnvironmentRunnable} class.
+   * The list of arguments returned is for providing to Java command for the main class execution.
    *
-   * @param runnableClass the {@link MasterEnvironmentRunnable} class to be executed by the master environment runner
-   * @param runnableArgs the list of arguments to be provided to the {@link MasterEnvironmentRunnable#run(String[])}
-   *
+   * @param runnableClass the {@link MasterEnvironmentRunnable} class to be executed by the
+   *     master environment runner
+   * @param runnableArgs the list of arguments to be provided to the {@link
+   *     MasterEnvironmentRunnable#run(String[])}
    * @return a list of program arguments
    */
-  String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass, String... runnableArgs);
+  String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass,
+      String... runnableArgs);
 }

@@ -65,17 +65,20 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
   /**
    * Creates instance of {@link ResourceBalancerService}.
+   *
    * @param serviceName name of the service
    * @param partitionCount number of partitions of the resource to balance
-   * @param zkClient ZooKeeper place to keep metadata for sync; will be further namespaced with service name
+   * @param zkClient ZooKeeper place to keep metadata for sync; will be further namespaced with
+   *     service name
    * @param discoveryService discovery service to register this service
-   * @param discoveryServiceClient discovery service client to discover other instances of this service
+   * @param discoveryServiceClient discovery service client to discover other instances of this
+   *     service
    */
   protected ResourceBalancerService(String serviceName,
-                                    int partitionCount,
-                                    ZKClient zkClient,
-                                    DiscoveryService discoveryService,
-                                    final DiscoveryServiceClient discoveryServiceClient) {
+      int partitionCount,
+      ZKClient zkClient,
+      DiscoveryService discoveryService,
+      final DiscoveryServiceClient discoveryServiceClient) {
     this.serviceName = serviceName;
     this.partitionCount = partitionCount;
     this.discoveryService = discoveryService;
@@ -83,25 +86,25 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     final ZKClient zk = ZKClients.namespace(zkClient, "/" + serviceName);
 
     this.election =
-      new LeaderElection(zk, serviceName, new ElectionHandler() {
-        private ResourceCoordinator coordinator;
+        new LeaderElection(zk, serviceName, new ElectionHandler() {
+          private ResourceCoordinator coordinator;
 
-        @Override
-        public void leader() {
-          coordinator = new ResourceCoordinator(zk,
-                                                discoveryServiceClient,
-                                                new BalancedAssignmentStrategy());
-          coordinator.startAndWait();
-        }
-
-        @Override
-        public void follower() {
-          if (coordinator != null) {
-            coordinator.stopAndWait();
-            coordinator = null;
+          @Override
+          public void leader() {
+            coordinator = new ResourceCoordinator(zk,
+                discoveryServiceClient,
+                new BalancedAssignmentStrategy());
+            coordinator.startAndWait();
           }
-        }
-      });
+
+          @Override
+          public void follower() {
+            if (coordinator != null) {
+              coordinator.stopAndWait();
+              coordinator = null;
+            }
+          }
+        });
 
     this.resourceClient = new ResourceCoordinatorClient(zk);
     this.completion = SettableFuture.create();
@@ -109,6 +112,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
   /**
    * Creates an instance of {@link Service} that gets assigned the given partitions.
+   *
    * @param partitions partitions to process
    * @return instance of {@link Service}
    */
@@ -120,7 +124,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
     // We first submit requirement before starting coordinator to make sure all needed paths in ZK are created
     ResourceRequirement requirement =
-      ResourceRequirement.builder(serviceName).addPartitions("", partitionCount, 1).build();
+        ResourceRequirement.builder(serviceName).addPartitions("", partitionCount, 1).build();
     resourceClient.submitRequirement(requirement).get();
 
     Discoverable discoverable = createDiscoverable(serviceName);
@@ -130,7 +134,7 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
     resourceClient.startAndWait();
 
     cancelResourceHandler = resourceClient.subscribe(serviceName,
-                                                     createResourceHandler(discoverable));
+        createResourceHandler(discoverable));
     LOG.info("Started ResourceBalancer {} service...", serviceName);
   }
 
@@ -165,52 +169,52 @@ public abstract class ResourceBalancerService extends AbstractIdleService {
 
   private ResourceHandler createResourceHandler(Discoverable discoverable) {
     return new ResourceHandler(discoverable) {
-        private Service service;
+      private Service service;
 
-        @Override
-        public void onChange(Collection<PartitionReplica> partitionReplicas) {
-          Set<Integer> partitions = Sets.newHashSet();
-          for (PartitionReplica replica : partitionReplicas) {
-            partitions.add(Integer.valueOf(replica.getName()));
-          }
-
-          LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
-          try {
-            if (service != null) {
-              service.stopAndWait();
-            }
-            if (partitions.isEmpty() || !election.isRunning()) {
-              service = null;
-            } else {
-              service = createService(partitions);
-              service.startAndWait();
-            }
-          } catch (Throwable t) {
-            LOG.error("Failed to change partitions, service: {}.", serviceName, t);
-            completion.setException(t);
-            stop();
-          }
+      @Override
+      public void onChange(Collection<PartitionReplica> partitionReplicas) {
+        Set<Integer> partitions = Sets.newHashSet();
+        for (PartitionReplica replica : partitionReplicas) {
+          partitions.add(Integer.valueOf(replica.getName()));
         }
 
-        @Override
-        public void finished(Throwable failureCause) {
-          try {
-            if (service != null) {
-              service.stopAndWait();
-              service = null;
-            }
-            completion.set(null);
-          } catch (Throwable t) {
-            LOG.error("Exception when stopping service {}", service, t);
-            Throwable cause = failureCause == null ? t : failureCause;
-            if (cause != t) {
-              cause.addSuppressed(t);
-            }
-            completion.setException(t);
-            // No need to call stop as this callback only happen during shutdown of this service
+        LOG.info("Partitions changed {}, service: {}", partitions, serviceName);
+        try {
+          if (service != null) {
+            service.stopAndWait();
           }
+          if (partitions.isEmpty() || !election.isRunning()) {
+            service = null;
+          } else {
+            service = createService(partitions);
+            service.startAndWait();
+          }
+        } catch (Throwable t) {
+          LOG.error("Failed to change partitions, service: {}.", serviceName, t);
+          completion.setException(t);
+          stop();
         }
-      };
+      }
+
+      @Override
+      public void finished(Throwable failureCause) {
+        try {
+          if (service != null) {
+            service.stopAndWait();
+            service = null;
+          }
+          completion.set(null);
+        } catch (Throwable t) {
+          LOG.error("Exception when stopping service {}", service, t);
+          Throwable cause = failureCause == null ? t : failureCause;
+          if (cause != t) {
+            cause.addSuppressed(t);
+          }
+          completion.setException(t);
+          // No need to call stop as this callback only happen during shutdown of this service
+        }
+      }
+    };
   }
 
   private Discoverable createDiscoverable(final String serviceName) {

@@ -41,8 +41,9 @@ public class SystemServiceMeta {
   private final int instancesProvisioned;
 
 
-  public SystemServiceMeta(String name, String description, String status, String logs, int minInstances,
-                           int maxInstances, int instancesRequested, int instancesProvisioned) {
+  public SystemServiceMeta(String name, String description, String status, String logs,
+      int minInstances,
+      int maxInstances, int instancesRequested, int instancesProvisioned) {
     this.name = name;
     this.description = description;
     this.status = status;

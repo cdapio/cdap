@@ -22,14 +22,15 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 
 /**
-   * Helper class to represent a type parameter in a serializable form. It would be simple if we could just use 
-   * the class name, but we would lose the type parameters of generic classes. If we'd use java.lang.reflect.Type,
-   * we'd not be able to serialize easily. So here we implement our own representation of the type: it supports 
-   * classes and parametrized classes, it also supports static inner classes. However, it does not support 
-   * interfaces (yet). 
-   * 
-   * This class can be serialized to Json and deserialized back without loss. Because it implements ParametrizedType,
-   * this class is compatible with TypeToken and we can use it to decode an encoded object of this type. 
+ * Helper class to represent a type parameter in a serializable form. It would be simple if we could
+ * just use the class name, but we would lose the type parameters of generic classes. If we'd use
+ * java.lang.reflect.Type, we'd not be able to serialize easily. So here we implement our own
+ * representation of the type: it supports classes and parametrized classes, it also supports static
+ * inner classes. However, it does not support interfaces (yet).
+ *
+ * This class can be serialized to Json and deserialized back without loss. Because it implements
+ * ParametrizedType, this class is compatible with TypeToken and we can use it to decode an encoded
+ * object of this type.
  */
 public final class TypeRepresentation implements ParameterizedType {
 
@@ -41,6 +42,7 @@ public final class TypeRepresentation implements ParameterizedType {
 
   /**
    * Set the class loader to be used by toType(), getRawType(), etc.
+   *
    * @param loader the class loader to use
    */
   public void setClassLoader(ClassLoader loader) {
@@ -51,17 +53,17 @@ public final class TypeRepresentation implements ParameterizedType {
       this.enclosingType.setClassLoader(loader);
     }
     if (this.parameters != null) {
-      for (TypeRepresentation param: this.parameters) {
+      for (TypeRepresentation param : this.parameters) {
         param.setClassLoader(loader);
       }
     }
   }
 
   /**
-   * Constructor from a java Type. For a class, we only remember its name; for a parametrized type, we remember the
-   * name, the enclosing class, and the type parameters.
+   * Constructor from a java Type. For a class, we only remember its name; for a parametrized type,
+   * we remember the name, the enclosing class, and the type parameters.
+   *
    * @param type The type to represent
-   * @throws UnsupportedTypeException
    */
   public TypeRepresentation(Type type) throws UnsupportedTypeException {
     if (type instanceof Class<?>) {
@@ -75,10 +77,11 @@ public final class TypeRepresentation implements ParameterizedType {
       if (raw instanceof Class<?>) {
         this.rawType = ((Class) raw).getName();
       } else {
-        throw new UnsupportedTypeException("can't represent type " + type + " (enclosing type is not a class)");
+        throw new UnsupportedTypeException(
+            "can't represent type " + type + " (enclosing type is not a class)");
       }
       Type owner = pType.getOwnerType();
-      this.enclosingType = owner == null ?  null : new TypeRepresentation(owner);
+      this.enclosingType = owner == null ? null : new TypeRepresentation(owner);
       Type[] typeArgs = pType.getActualTypeArguments();
       this.parameters = new TypeRepresentation[typeArgs.length];
       for (int i = 0; i < typeArgs.length; i++) {
@@ -86,13 +89,14 @@ public final class TypeRepresentation implements ParameterizedType {
       }
       this.isClass = false;
     } else {
-      throw new UnsupportedTypeException("can't represent type " + type + " (must be a class or a parametrized type)");
+      throw new UnsupportedTypeException(
+          "can't represent type " + type + " (must be a class or a parametrized type)");
     }
   }
 
   /**
    * @return the represented Type. Note that for a parametrized type, we can just return this,
-   * because it implements the ParametrizedType interface.
+   *     because it implements the ParametrizedType interface.
    */
   public Type toType() {
     if (this.isClass) {

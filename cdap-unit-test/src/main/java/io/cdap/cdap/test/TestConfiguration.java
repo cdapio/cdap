@@ -51,15 +51,14 @@ public class TestConfiguration extends ExternalResource {
   /**
    * Creates a new instance with the give list of configurations.
    *
-   * @param configs list of configuration pairs.
-   *                The list must be in the form of {@code (key1, value1, key2, value2, ...)},
-   *                hence the length of configs must be even.
-   *                The {@link Object#toString()} method will be called to obtain the keys and values that go into
-   *                the configuration.
+   * @param configs list of configuration pairs. The list must be in the form of {@code (key1,
+   *     value1, key2, value2, ...)}, hence the length of configs must be even. The {@link
+   *     Object#toString()} method will be called to obtain the keys and values that go into the
+   *     configuration.
    */
   public TestConfiguration(Object... configs) {
     Preconditions.checkArgument(configs.length % 2 == 0,
-                                "Arguments must be in pair form like (k1, v1, k2, v2): %s", Arrays.toString(configs));
+        "Arguments must be in pair form like (k1, v1, k2, v2): %s", Arrays.toString(configs));
 
     this.configs = new HashMap<>();
     for (int i = 0; i < configs.length; i += 2) {
@@ -78,8 +77,8 @@ public class TestConfiguration extends ExternalResource {
 
   /**
    * Enables authorization for this test
+   *
    * @return this TestConfiguration
-   * @param temporaryFolder
    */
   public TestConfiguration enableAuthorization(TemporaryFolder temporaryFolder) {
     this.temporaryFolder = temporaryFolder;
@@ -90,7 +89,8 @@ public class TestConfiguration extends ExternalResource {
   @Override
   protected void before() throws Throwable {
     if (enableAuthorization) {
-      AppFabricTestHelper.enableAuthorization((k, v) -> configs.put(PROPERTY_PREFIX + k, v), temporaryFolder);
+      AppFabricTestHelper.enableAuthorization((k, v) -> configs.put(PROPERTY_PREFIX + k, v),
+          temporaryFolder);
     }
     // Use the system properties map as a mean to communicate unit-test specific CDAP configurations to the
     // TestBase class, which it will use to setup the CConfiguration.
@@ -108,7 +108,7 @@ public class TestConfiguration extends ExternalResource {
     // Using @ClassRule gives a much cleaner solution.
     for (Map.Entry<String, String> entry : configs.entrySet()) {
       Optional.ofNullable(System.getProperty(entry.getKey())).ifPresent(
-        currentValue -> original.put(entry.getKey(), currentValue)
+          currentValue -> original.put(entry.getKey(), currentValue)
       );
       System.setProperty(entry.getKey(), entry.getValue());
     }

@@ -48,30 +48,30 @@ public class GetMetadataCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     MetadataEntity metadataEntity =
-      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
+        MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
     Set<MetadataRecord> metadata = scope == null ? client.getMetadata(metadataEntity) :
-      client.getMetadata(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
+        client.getMetadata(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = getTableBuilder().setRows(
-      metadata.stream().map(record -> Lists.newArrayList(
-        record.toString(),
-        Joiner.on("\n").join(record.getTags()),
-        Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
-        record.getScope().name())).collect(Collectors.toList())
+        metadata.stream().map(record -> Lists.newArrayList(
+            record.toString(),
+            Joiner.on("\n").join(record.getTags()),
+            Joiner.on("\n").withKeyValueSeparator(":").join(record.getProperties()),
+            record.getScope().name())).collect(Collectors.toList())
     ).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   private Table.Builder getTableBuilder() {
     return Table.builder()
-      .setHeader("entity", "tags", "properties", "scope");
+        .setHeader("entity", "tags", "properties", "scope");
   }
 
   @Override
   public String getPattern() {
     return String.format("get metadata <%s> [scope <%s>]",
-                         ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
+        ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
   }
 
   @Override

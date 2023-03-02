@@ -36,7 +36,9 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 /**
  * Push Dataset implementation for unit test
  */
-public class MockPushDataset implements SQLPushDataset<StructuredRecord, Object, Object>, Serializable {
+public class MockPushDataset implements SQLPushDataset<StructuredRecord, Object, Object>,
+    Serializable {
+
   private final AtomicLong numRows = new AtomicLong(0L);
   private final SQLPushRequest pushRequest;
   private final String dirName;
@@ -65,7 +67,8 @@ public class MockPushDataset implements SQLPushDataset<StructuredRecord, Object,
   public Transform<StructuredRecord, KeyValue<Object, Object>> toKeyValue() {
     return new SerializableTransform<StructuredRecord, KeyValue<Object, Object>>() {
       @Override
-      public void transform(StructuredRecord input, Emitter<KeyValue<Object, Object>> emitter) throws Exception {
+      public void transform(StructuredRecord input, Emitter<KeyValue<Object, Object>> emitter)
+          throws Exception {
         numRows.incrementAndGet();
         String output = StructuredRecordStringConverter.toJsonString(input);
         emitter.emit(new KeyValue<>(output, output));

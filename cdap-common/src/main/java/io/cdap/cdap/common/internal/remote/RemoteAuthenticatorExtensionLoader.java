@@ -30,7 +30,9 @@ import java.util.Set;
 /**
  * Loads the {@link RemoteAuthenticator} from the extensions directory.
  */
-public class RemoteAuthenticatorExtensionLoader extends AbstractExtensionLoader<String, RemoteAuthenticator> {
+public class RemoteAuthenticatorExtensionLoader extends
+    AbstractExtensionLoader<String, RemoteAuthenticator> {
+
   private volatile Set<String> allowedResources;
   private volatile Set<String> allowedPackages;
 
@@ -77,8 +79,9 @@ public class RemoteAuthenticatorExtensionLoader extends AbstractExtensionLoader<
       try {
         // All cdap-security-spi classes and its dependencies are visible to extensions
         // The set of dependencies for cdap-security-spi should be kept at minimal to reduce dependency conflicts
-        this.allowedResources = resources = ClassPathResources.getResourcesWithDependencies(getClass().getClassLoader(),
-                                                                                            RemoteAuthenticator.class);
+        this.allowedResources = resources = ClassPathResources.getResourcesWithDependencies(
+            getClass().getClassLoader(),
+            RemoteAuthenticator.class);
         return resources;
       } catch (IOException e) {
         throw new RuntimeException("Failed to find security SPI resources", e);

@@ -52,7 +52,7 @@ public class SystemAppEnableExecutor {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemAppEnableExecutor.class);
   private static final Logger LIMITED_LOGGER = Loggers
-    .sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(100)));
+      .sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(100)));
 
   private static final Gson GSON = new Gson();
   private final ApplicationLifecycleService appLifecycleService;
@@ -60,7 +60,7 @@ public class SystemAppEnableExecutor {
 
   @Inject
   SystemAppEnableExecutor(ApplicationLifecycleService appLifecycleService,
-                          ProgramLifecycleService programLifecycleService) {
+      ProgramLifecycleService programLifecycleService) {
     this.appLifecycleService = appLifecycleService;
     this.programLifecycleService = programLifecycleService;
   }
@@ -80,7 +80,8 @@ public class SystemAppEnableExecutor {
       try {
         startProgram(program.getProgramId());
       } catch (Exception ex) {
-        LOG.error("Failed to start program {} for app {}.", program.getProgramId(), arguments.getId(), ex);
+        LOG.error("Failed to start program {} for app {}.", program.getProgramId(),
+            arguments.getId(), ex);
       }
     }
   }
@@ -89,14 +90,14 @@ public class SystemAppEnableExecutor {
   private ApplicationWithPrograms retryableDeploySystemApp(Arguments arguments) {
     try {
       return Retries.callWithRetries(() -> {
-        try {
-          return deploySystemApp(arguments);
-        } catch (RetryableException ex) {
-          LIMITED_LOGGER.debug("Failed to deploy app {}. Will retry", arguments.getId(), ex);
-          throw ex;
-        }
-      },
-      RetryStrategies.fixDelay(6, TimeUnit.SECONDS));
+            try {
+              return deploySystemApp(arguments);
+            } catch (RetryableException ex) {
+              LIMITED_LOGGER.debug("Failed to deploy app {}. Will retry", arguments.getId(), ex);
+              throw ex;
+            }
+          },
+          RetryStrategies.fixDelay(6, TimeUnit.SECONDS));
     } catch (Exception ex) {
       LOG.error("Failed to deploy app {} with exception", arguments.getId(), ex);
       return null;
@@ -108,16 +109,19 @@ public class SystemAppEnableExecutor {
     ArtifactSummary artifactSummary = arguments.getArtifact();
 
     KerberosPrincipalId ownerPrincipalId =
-      arguments.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(arguments.getOwnerPrincipal());
+        arguments.getOwnerPrincipal() == null ? null
+            : new KerberosPrincipalId(arguments.getOwnerPrincipal());
 
     // if we don't null check, it gets serialized to "null"
     String configString = arguments.getConfig() == null ? null : GSON.toJson(arguments.getConfig());
 
     try {
-      return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                           artifactSummary, configString, null, null, x -> { },
-                                           ownerPrincipalId, arguments.canUpdateSchedules(), false,
-                                           Collections.emptyMap());
+      return appLifecycleService.deployApp(appId.getParent(), appId.getApplication(),
+          appId.getVersion(),
+          artifactSummary, configString, null, null, x -> {
+          },
+          ownerPrincipalId, arguments.canUpdateSchedules(), false,
+          Collections.emptyMap());
 
     } catch (UnauthorizedException | InvalidArtifactException e) {
       throw e;
@@ -153,7 +157,8 @@ public class SystemAppEnableExecutor {
       // ignore this, as it means the program is running as expected
     } catch (NotFoundException e) {
       // use a nicer error message
-      throw new IllegalArgumentException(String.format("Cannot start %s because it does not exist.", programId), e);
+      throw new IllegalArgumentException(
+          String.format("Cannot start %s because it does not exist.", programId), e);
     }
   }
 }

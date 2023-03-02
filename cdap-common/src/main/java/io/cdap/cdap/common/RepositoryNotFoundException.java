@@ -21,7 +21,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 /**
  * Thrown when a namespace repository configuration is not found in CDAP.
  */
-public class RepositoryNotFoundException extends NotFoundException  {
+public class RepositoryNotFoundException extends NotFoundException {
 
   private final NamespaceId namespace;
 

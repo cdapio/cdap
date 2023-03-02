@@ -65,22 +65,23 @@ public class SystemWorkerService extends AbstractIdleService {
 
   @Inject
   SystemWorkerService(CConfiguration cConf,
-                      SConfiguration sConf,
-                      DiscoveryService discoveryService,
-                      MetricsCollectionService metricsCollectionService,
-                      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                      TokenManager tokenManager, TwillRunnerService twillRunnerService,
-                      @Constants.AppFabric.RemoteExecution TwillRunnerService remoteTwillRunnerService,
-                      ProvisioningService provisioningService, Injector injector,
-                      AuthenticationContext authenticationContext,
-                      @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer) {
+      SConfiguration sConf,
+      DiscoveryService discoveryService,
+      MetricsCollectionService metricsCollectionService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      TokenManager tokenManager, TwillRunnerService twillRunnerService,
+      @Constants.AppFabric.RemoteExecution TwillRunnerService remoteTwillRunnerService,
+      ProvisioningService provisioningService, Injector injector,
+      AuthenticationContext authenticationContext,
+      @Named(DefaultAccessEnforcer.INTERNAL_ACCESS_ENFORCER) AccessEnforcer internalAccessEnforcer) {
     this.discoveryService = discoveryService;
     this.tokenManager = tokenManager;
     this.twillRunnerService = twillRunnerService;
     this.remoteTwillRunnerService = remoteTwillRunnerService;
     this.provisioningService = provisioningService;
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.SYSTEM_WORKER)
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.SYSTEM_WORKER)
         .setHost(cConf.get(Constants.SystemWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.SystemWorker.PORT))
         .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
@@ -92,8 +93,9 @@ public class SystemWorkerService extends AbstractIdleService {
             pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
           }
         })
-        .setHttpHandlers(new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
-                                                             authenticationContext, internalAccessEnforcer));
+        .setHttpHandlers(
+            new SystemWorkerHttpHandlerInternal(cConf, metricsCollectionService, injector,
+                authenticationContext, internalAccessEnforcer));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -111,7 +113,8 @@ public class SystemWorkerService extends AbstractIdleService {
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
-        ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.SYSTEM_WORKER, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.SYSTEM_WORKER, httpService)));
     LOG.debug("Starting SystemWorkerService has completed");
   }
 

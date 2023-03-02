@@ -23,4 +23,5 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
  * Configurer for a connector
  */
 public interface ConnectorConfigurer extends PluginConfigurer {
+
 }

@@ -62,31 +62,31 @@ public class SystemMetricsExporterServiceMain extends AbstractServiceMain<Enviro
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options,
-                                           CConfiguration cConf) {
+      EnvironmentOptions options,
+      CConfiguration cConf) {
     return Arrays.asList(
-      // required by some module added in super class
-      new MessagingClientModule(),
-      new SystemMetricsExporterModule()
+        // required by some module added in super class
+        new MessagingClientModule(),
+        new SystemMetricsExporterModule()
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv,
-                             MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv,
+      MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     Map<String, String> conf = masterEnvContext.getConfigurations();
     Map<String, String> metricTags = filterByKeyPrefix(
-      conf, MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX);
+        conf, MasterEnvironmentContext.ENVIRONMENT_PROPERTY_PREFIX);
     services.add(injector.getInstance(JMXMetricsCollectorFactory.class).create(metricTags));
   }
 
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.SYSTEM_METRICS_EXPORTER);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.SYSTEM_METRICS_EXPORTER);
   }
 }

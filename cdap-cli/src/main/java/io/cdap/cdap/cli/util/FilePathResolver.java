@@ -39,7 +39,7 @@ public class FilePathResolver {
   @Inject
   public FilePathResolver() {
     this(new File(System.getProperty("user.home")), new File(System.getProperty("user.dir")),
-         System.getenv(CDAP_HOME) == null ? null : new File(System.getenv(CDAP_HOME)));
+        System.getenv(CDAP_HOME) == null ? null : new File(System.getenv(CDAP_HOME)));
   }
 
   FilePathResolver(File homeDir, File workingDir, @Nullable File cdapHomeDir) {
@@ -92,7 +92,8 @@ public class FilePathResolver {
 
   private String resolveVariables(String path) {
     if (cdapHomeDir != null) {
-      path = path.replaceAll("\\$" + CDAP_HOME + "(?=[^a-zA-Z0-9_])", cdapHomeDir.getAbsolutePath());
+      path = path.replaceAll("\\$" + CDAP_HOME + "(?=[^a-zA-Z0-9_])",
+          cdapHomeDir.getAbsolutePath());
     }
 
     return path;

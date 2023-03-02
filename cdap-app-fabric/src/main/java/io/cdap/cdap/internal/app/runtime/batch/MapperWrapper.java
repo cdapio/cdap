@@ -43,17 +43,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Wraps user-defined implementation of {@link Mapper} class which allows perform extra configuration.
+ * Wraps user-defined implementation of {@link Mapper} class which allows perform extra
+ * configuration.
  */
 public class MapperWrapper extends Mapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
   private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
-                                                           Constants.Logging.USER_LOG_TAG_VALUE);
+      Constants.Logging.USER_LOG_TAG_VALUE);
   private static final String ATTR_MAPPER_CLASS = "c.mapper.class";
 
   /**
    * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
+   *
    * @param job The MapReduce job
    */
   public static void wrap(Job job) {
@@ -79,38 +81,44 @@ public class MapperWrapper extends Mapper {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(
+        context.getConfiguration());
     ClassLoader weakReferenceClassLoader = new WeakReferenceDelegatorClassLoader(classLoader);
 
-    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider()
+        .get(context);
     String program = basicMapReduceContext.getProgramName();
 
     final MapTaskMetricsWriter mapTaskMetricsWriter = new MapTaskMetricsWriter(
-      basicMapReduceContext.getProgramMetrics(), context);
+        basicMapReduceContext.getProgramMetrics(), context);
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-    WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext,
-                                                                      mapTaskMetricsWriter);
+    WrappedMapper.Context flushingContext = createAutoFlushingContext(context,
+        basicMapReduceContext,
+        mapTaskMetricsWriter);
 
     basicMapReduceContext.setHadoopContext(flushingContext);
     InputSplit inputSplit = context.getInputSplit();
     if (inputSplit instanceof MultiInputTaggedSplit) {
-      basicMapReduceContext.setInputContext(InputContexts.create((MultiInputTaggedSplit) inputSplit));
+      basicMapReduceContext.setInputContext(
+          InputContexts.create((MultiInputTaggedSplit) inputSplit));
     }
 
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
-    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context,
-                                           program);
+    Mapper delegate = createMapperInstance(programClassLoader,
+        getWrappedMapper(context.getConfiguration()), context,
+        program);
 
     // injecting runtime components, like datasets, etc.
     try {
       Reflections.visit(delegate, delegate.getClass(),
-                        new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
-                        new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
-                        new DataSetFieldSetter(basicMapReduceContext));
+          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
+          new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
+          new DataSetFieldSetter(basicMapReduceContext));
     } catch (Throwable t) {
       Throwable rootCause = Throwables.getRootCause(t);
-      USERLOG.error("Failed to initialize program '{}' with error: {}. Please check the system logs for more details.",
-                    program, rootCause.getMessage(), rootCause);
+      USERLOG.error(
+          "Failed to initialize program '{}' with error: {}. Please check the system logs for more details.",
+          program, rootCause.getMessage(), rootCause);
       throw new IOException(String.format("Failed to inject fields to %s", delegate.getClass()), t);
     }
 
@@ -118,12 +126,16 @@ public class MapperWrapper extends Mapper {
     if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
-        ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
+        ((ProgramLifecycle) delegate).initialize(
+            new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
         Throwable rootCause = Throwables.getRootCause(e);
-        USERLOG.error("Failed to initialize program '{}' with error: {}. Please check the system logs for more " +
-                        "details.", program, rootCause.getMessage(), rootCause);
-        throw new IOException(String.format("Failed to initialize mapper with %s", basicMapReduceContext), e);
+        USERLOG.error(
+            "Failed to initialize program '{}' with error: {}. Please check the system logs for more "
+                +
+                "details.", program, rootCause.getMessage(), rootCause);
+        throw new IOException(
+            String.format("Failed to initialize mapper with %s", basicMapReduceContext), e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -141,7 +153,8 @@ public class MapperWrapper extends Mapper {
     try {
       basicMapReduceContext.flushOperations();
     } catch (Exception e) {
-      throw new IOException("Failed to flush operations at the end of mapper of " + basicMapReduceContext, e);
+      throw new IOException(
+          "Failed to flush operations at the end of mapper of " + basicMapReduceContext, e);
     }
 
     // Close all writers created by MultipleOutputs
@@ -164,8 +177,8 @@ public class MapperWrapper extends Mapper {
   }
 
   private WrappedMapper.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceTaskContext basicMapReduceContext,
-                                                          final MapTaskMetricsWriter metricsWriter) {
+      final BasicMapReduceTaskContext basicMapReduceContext,
+      final MapTaskMetricsWriter metricsWriter) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.mapper.flush.freq", 10000);
@@ -208,7 +221,8 @@ public class MapperWrapper extends Mapper {
       }
 
       @Override
-      public Class<? extends InputFormat<?, ?>> getInputFormatClass() throws ClassNotFoundException {
+      public Class<? extends InputFormat<?, ?>> getInputFormatClass()
+          throws ClassNotFoundException {
         InputSplit inputSplit = super.getInputSplit();
         if (inputSplit instanceof MultiInputTaggedSplit) {
           // expose the delegate InputFormat to the user
@@ -220,7 +234,8 @@ public class MapperWrapper extends Mapper {
     return flushingContext;
   }
 
-  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context, String program) {
+  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context,
+      String program) {
     if (context.getInputSplit() instanceof MultiInputTaggedSplit) {
       // Find the delegate Mapper from the MultiInputTaggedSplit.
       userMapper = ((MultiInputTaggedSplit) context.getInputSplit()).getMapperClassName();
@@ -230,8 +245,10 @@ public class MapperWrapper extends Mapper {
     } catch (Exception e) {
       Throwable rootCause = Throwables.getRootCause(e);
       LOG.error("Failed to create instance of the user-defined Mapper class: " + userMapper);
-      USERLOG.error("Failed to create mapper instance for program '{}' with error: {}. Please check the system logs " +
-                      "for more details.", program, rootCause.getMessage(), rootCause);
+      USERLOG.error(
+          "Failed to create mapper instance for program '{}' with error: {}. Please check the system logs "
+              +
+              "for more details.", program, rootCause.getMessage(), rootCause);
       throw Throwables.propagate(e);
     }
   }

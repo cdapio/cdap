@@ -22,6 +22,7 @@ import io.cdap.cdap.api.security.AccessException;
  * This interface is for managing the schedule of a workflow
  */
 public interface ScheduleManager {
+
   /**
    * suspends the workflow schedule
    */

@@ -38,25 +38,25 @@ import java.util.Map;
 public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader {
 
   private static final Map<Schema.Type, JsonToken> SCHEMA_TO_JSON_TYPE = new EnumMap<>(
-    ImmutableMap.<Schema.Type, JsonToken>builder()
-      .put(Schema.Type.NULL, JsonToken.NULL)
-      .put(Schema.Type.BOOLEAN, JsonToken.BOOLEAN)
-      .put(Schema.Type.INT, JsonToken.NUMBER)
-      .put(Schema.Type.LONG, JsonToken.NUMBER)
-      .put(Schema.Type.FLOAT, JsonToken.NUMBER)
-      .put(Schema.Type.DOUBLE, JsonToken.NUMBER)
-      .put(Schema.Type.STRING, JsonToken.STRING)
-      .put(Schema.Type.BYTES, JsonToken.BEGIN_ARRAY)
-      .put(Schema.Type.ARRAY, JsonToken.BEGIN_ARRAY)
-      .put(Schema.Type.MAP, JsonToken.BEGIN_OBJECT)
-      .put(Schema.Type.RECORD, JsonToken.BEGIN_OBJECT)
-      .build()
+      ImmutableMap.<Schema.Type, JsonToken>builder()
+          .put(Schema.Type.NULL, JsonToken.NULL)
+          .put(Schema.Type.BOOLEAN, JsonToken.BOOLEAN)
+          .put(Schema.Type.INT, JsonToken.NUMBER)
+          .put(Schema.Type.LONG, JsonToken.NUMBER)
+          .put(Schema.Type.FLOAT, JsonToken.NUMBER)
+          .put(Schema.Type.DOUBLE, JsonToken.NUMBER)
+          .put(Schema.Type.STRING, JsonToken.STRING)
+          .put(Schema.Type.BYTES, JsonToken.BEGIN_ARRAY)
+          .put(Schema.Type.ARRAY, JsonToken.BEGIN_ARRAY)
+          .put(Schema.Type.MAP, JsonToken.BEGIN_OBJECT)
+          .put(Schema.Type.RECORD, JsonToken.BEGIN_OBJECT)
+          .build()
   );
 
   private static final Map<Schema.LogicalType, JsonToken> LOGICAL_SCHEMA_TO_JSON_TYPE = new EnumMap<>(
       ImmutableMap.<Schema.LogicalType, JsonToken>builder()
-      .put(Schema.LogicalType.DECIMAL, JsonToken.NUMBER)
-      .build()
+          .put(Schema.LogicalType.DECIMAL, JsonToken.NUMBER)
+          .build()
   );
 
   private final boolean fieldNameIgnoreCase;
@@ -80,7 +80,8 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
   @Override
   public StructuredRecord read(Decoder decoder, Schema sourceSchema) throws IOException {
     if (!(decoder instanceof JsonDecoder)) {
-      throw new IOException("The JsonStructuredRecordDatumReader can only decode using a JsonDecoder");
+      throw new IOException(
+          "The JsonStructuredRecordDatumReader can only decode using a JsonDecoder");
     }
 
     return super.read(decoder, sourceSchema);
@@ -117,7 +118,8 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
   }
 
   @Override
-  protected Map<?, ?> decodeMap(Decoder decoder, Schema keySchema, Schema valueSchema) throws IOException {
+  protected Map<?, ?> decodeMap(Decoder decoder, Schema keySchema, Schema valueSchema)
+      throws IOException {
     if (!keySchema.isCompatible(Schema.of(Schema.Type.STRING))) {
       throw new IOException("Complex key type in maps are not supported: " + keySchema);
     }
@@ -172,14 +174,16 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
       }
     }
 
-    throw new IOException(String.format("No matching schema found for union type: %s for token: %s", unionSchema,
-                                        token));
+    throw new IOException(
+        String.format("No matching schema found for union type: %s for token: %s", unionSchema,
+            token));
   }
 
   protected ByteBuffer decodeDecimal(Decoder decoder, Schema decimalSchema) throws IOException {
     JsonReader jsonReader = getJsonReader(decoder);
     String strVal = jsonReader.nextString();
-    return ByteBuffer.wrap(FormatUtils.parseDecimal(decimalSchema, strVal).unscaledValue().toByteArray());
+    return ByteBuffer.wrap(
+        FormatUtils.parseDecimal(decimalSchema, strVal).unscaledValue().toByteArray());
   }
 
   private JsonReader getJsonReader(Decoder decoder) {

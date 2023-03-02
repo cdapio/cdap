@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.DatasetTypeMeta;
  * Dataset instance metadata.
  */
 public class DatasetInstanceMeta {
+
   private final DatasetSpecification spec;
 
   // todo: meta of modules inside will have list of all types in the module that is redundant here

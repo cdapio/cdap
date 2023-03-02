@@ -48,17 +48,22 @@ public final class Parameter implements AnnotatedElement {
     this.annotations = Arrays.asList(annotations);
   }
 
-  /** Returns the type of the parameter. */
+  /**
+   * Returns the type of the parameter.
+   */
   public TypeToken<?> getType() {
     return type;
   }
 
-  /** Returns the {@link Invokable} that declares this parameter. */
+  /**
+   * Returns the {@link Invokable} that declares this parameter.
+   */
   public Invokable<?, ?> getDeclaringInvokable() {
     return declaration;
   }
 
-  @Override public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
+  @Override
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {
     return getAnnotation(annotationType) != null;
   }
 
@@ -74,7 +79,8 @@ public final class Parameter implements AnnotatedElement {
     return null;
   }
 
-  @Override public Annotation[] getAnnotations() {
+  @Override
+  public Annotation[] getAnnotations() {
     return getDeclaredAnnotations();
   }
 
@@ -91,7 +97,8 @@ public final class Parameter implements AnnotatedElement {
    * @since 18.0
    */
   // @Override on JDK8
-  @Override public Annotation[] getDeclaredAnnotations() {
+  @Override
+  public Annotation[] getDeclaredAnnotations() {
     return annotations.toArray(new Annotation[annotations.size()]);
   }
 
@@ -113,13 +120,15 @@ public final class Parameter implements AnnotatedElement {
   // @Override on JDK8
   @Override
   public <A extends Annotation> A[] getDeclaredAnnotationsByType(Class<A> annotationType) {
-    List<A> list = Iterables.addAll(Iterables.filter(annotations, annotationType), new ArrayList<A>());
+    List<A> list = Iterables.addAll(Iterables.filter(annotations, annotationType),
+        new ArrayList<A>());
     @SuppressWarnings("unchecked")
     A[] array = (A[]) Array.newInstance(annotationType, list.size());
     return list.toArray(array);
   }
 
-  @Override public boolean equals(@Nullable Object obj) {
+  @Override
+  public boolean equals(@Nullable Object obj) {
     if (obj instanceof Parameter) {
       Parameter that = (Parameter) obj;
       return position == that.position && declaration.equals(that.declaration);
@@ -127,11 +136,13 @@ public final class Parameter implements AnnotatedElement {
     return false;
   }
 
-  @Override public int hashCode() {
+  @Override
+  public int hashCode() {
     return position;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return type + " arg" + position;
   }
 }

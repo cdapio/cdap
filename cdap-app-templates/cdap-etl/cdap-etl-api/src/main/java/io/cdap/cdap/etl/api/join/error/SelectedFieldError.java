@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * An error with one of the selected output fields.
  */
 public class SelectedFieldError extends JoinError {
+
   private final JoinField field;
 
   public SelectedFieldError(JoinField field, String message) {

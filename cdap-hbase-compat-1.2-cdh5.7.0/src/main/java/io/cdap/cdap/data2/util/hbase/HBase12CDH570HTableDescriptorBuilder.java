@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.TableName;
  * Implementation of {@link HTableDescriptorBuilder} for CDH 5.7.0 version of HBase 1.2.x
  */
 public class HBase12CDH570HTableDescriptorBuilder extends HTableDescriptorBuilder {
+
   HBase12CDH570HTableDescriptorBuilder(TableName tableName) {
     super(tableName);
   }
@@ -62,7 +63,7 @@ public class HBase12CDH570HTableDescriptorBuilder extends HTableDescriptorBuilde
 
   @Override
   public HTableDescriptorBuilder addCoprocessor(String className, Path jarFilePath, int priority,
-                                                Map<String, String> keyValues) throws IOException {
+      Map<String, String> keyValues) throws IOException {
     instance.addCoprocessor(className, jarFilePath, priority, keyValues);
     return this;
   }

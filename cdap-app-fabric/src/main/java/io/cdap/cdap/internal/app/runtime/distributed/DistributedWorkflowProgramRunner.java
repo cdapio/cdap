@@ -81,11 +81,12 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
   @Inject
   DistributedWorkflowProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
-                                   Impersonator impersonator, ClusterMode clusterMode,
-                                   @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
-                                   @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory,
-                                   Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
+      Impersonator impersonator, ClusterMode clusterMode,
+      @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+      @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory,
+      Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner,
+        injector.getInstance(LocationFactory.class));
     this.programRunnerFactory = programRunnerFactory;
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
@@ -102,7 +103,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW, "Only WORKFLOW process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW,
+        "Only WORKFLOW process type is supported.");
 
     WorkflowSpecification spec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(spec, "Missing WorkflowSpecification for %s", program.getName());
@@ -110,34 +112,37 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
     for (WorkflowNode node : spec.getNodes()) {
       if (node.getType().equals(WorkflowNodeType.ACTION)) {
         SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(),
-                                                   cConf, "action", node.getNodeId());
+            cConf, "action", node.getNodeId());
       }
     }
   }
 
   @Override
-  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+  public ProgramController createProgramController(ProgramRunId programRunId,
+      TwillController twillController) {
     return new WorkflowTwillProgramController(programRunId, twillController).startListen();
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
-                                   CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program,
+      ProgramOptions options,
+      CConfiguration cConf, Configuration hConf, File tempDir) throws IOException {
 
-    WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
+    WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows()
+        .get(program.getName());
     List<ClassAcceptor> acceptors = new ArrayList<>();
     acceptors.add(launchConfig.getClassAcceptor());
 
     // Only interested in MapReduce and Spark nodes.
     // This is because CUSTOM_ACTION types are running inside the driver
     Set<SchedulableProgramType> runnerTypes = EnumSet.of(SchedulableProgramType.MAPREDUCE,
-                                                         SchedulableProgramType.SPARK);
+        SchedulableProgramType.SPARK);
 
     Iterable<ScheduleProgramInfo> programInfos = spec.getNodeIdMap().values().stream()
-      .filter(WorkflowActionNode.class::isInstance)
-      .map(WorkflowActionNode.class::cast)
-      .map(WorkflowActionNode::getProgram)
-      .filter(programInfo -> runnerTypes.contains(programInfo.getProgramType()))::iterator;
+        .filter(WorkflowActionNode.class::isInstance)
+        .map(WorkflowActionNode.class::cast)
+        .map(WorkflowActionNode::getProgram)
+        .filter(programInfo -> runnerTypes.contains(programInfo.getProgramType()))::iterator;
 
     // Can't use Stream.forEach as we want to preserve the IOException being thrown
     for (ScheduleProgramInfo programInfo : programInfos) {
@@ -147,16 +152,19 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
         if (runner instanceof DistributedProgramRunner) {
           // Call setupLaunchConfig with the corresponding program.
           // Need to constructs a new ProgramOptions with the scope extracted for the given program
-          ProgramId programId = program.getId().getParent().program(programType, programInfo.getProgramName());
-          Map<String, String> programUserArgs = RuntimeArguments.extractScope(programId.getType().getScope(),
-                                                                              programId.getProgram(),
-                                                                              options.getUserArguments().asMap());
-          ProgramOptions programOptions = new SimpleProgramOptions(programId, options.getArguments(),
-                                                                   new BasicArguments(programUserArgs));
+          ProgramId programId = program.getId().getParent()
+              .program(programType, programInfo.getProgramName());
+          Map<String, String> programUserArgs = RuntimeArguments.extractScope(
+              programId.getType().getScope(),
+              programId.getProgram(),
+              options.getUserArguments().asMap());
+          ProgramOptions programOptions = new SimpleProgramOptions(programId,
+              options.getArguments(),
+              new BasicArguments(programUserArgs));
 
           ((DistributedProgramRunner) runner).setupLaunchConfig(launchConfig,
-                                                                Programs.create(cConf, program, programId, runner),
-                                                                programOptions, cConf, hConf, tempDir);
+              Programs.create(cConf, program, programId, runner),
+              programOptions, cConf, hConf, tempDir);
           acceptors.add(launchConfig.getClassAcceptor());
         }
       } finally {
@@ -171,24 +179,26 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
     // Find out the default resources requirements based on the programs inside the workflow
     // At least gives the Workflow driver 768 mb of container memory
-    Map<String, Resources> runnablesResources = Maps.transformValues(launchConfig.getRunnables(), this::getResources);
+    Map<String, Resources> runnablesResources = Maps.transformValues(launchConfig.getRunnables(),
+        this::getResources);
     Resources defaultResources = maxResources(new Resources(768),
-                                              findDriverResources(spec.getNodes(), runnablesResources));
+        findDriverResources(spec.getNodes(), runnablesResources));
 
     // Clear and set the runnable for the workflow driver.
     launchConfig.clearRunnables();
     // Extract scoped runtime arguments that only meant for the workflow but not for child nodes
     Map<String, String> runtimeArgs = RuntimeArguments.extractScope("task", "workflow",
-                                                                    options.getUserArguments().asMap());
+        options.getUserArguments().asMap());
     launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), 1,
-                             runtimeArgs, defaultResources, 0);
+        runtimeArgs, defaultResources, 0);
   }
 
   /**
-   * Returns the {@link Resources} requirement for the workflow runnable deduced by Spark
-   * or MapReduce driver resources requirement.
+   * Returns the {@link Resources} requirement for the workflow runnable deduced by Spark or
+   * MapReduce driver resources requirement.
    */
-  private Resources findDriverResources(Collection<WorkflowNode> nodes, Map<String, Resources> runnablesResources) {
+  private Resources findDriverResources(Collection<WorkflowNode> nodes,
+      Map<String, Resources> runnablesResources) {
     // Find the resource requirements for the workflow based on the nodes memory requirements
     Resources resources = new Resources();
 
@@ -203,15 +213,17 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
           break;
         case FORK:
           Resources forkResources = ((WorkflowForkNode) node).getBranches().stream()
-            .map(branches -> findDriverResources(branches, runnablesResources))
-            .reduce(this::mergeForkResources)
-            .orElse(resources);
+              .map(branches -> findDriverResources(branches, runnablesResources))
+              .reduce(this::mergeForkResources)
+              .orElse(resources);
           resources = maxResources(resources, forkResources);
           break;
         case CONDITION:
           Resources branchesResources =
-            maxResources(findDriverResources(((WorkflowConditionNode) node).getIfBranch(), runnablesResources),
-                         findDriverResources(((WorkflowConditionNode) node).getElseBranch(), runnablesResources));
+              maxResources(findDriverResources(((WorkflowConditionNode) node).getIfBranch(),
+                      runnablesResources),
+                  findDriverResources(((WorkflowConditionNode) node).getElseBranch(),
+                      runnablesResources));
 
           resources = maxResources(resources, branchesResources);
           break;
@@ -225,7 +237,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
   }
 
   /**
-   * Returns a {@link Resources} that has the maximum of memory and virtual cores among two Resources.
+   * Returns a {@link Resources} that has the maximum of memory and virtual cores among two
+   * Resources.
    */
   private Resources maxResources(Resources r1, Resources r2) {
     int memory1 = r1.getMemoryMB();
@@ -240,7 +253,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
       return r2;
     }
     return new Resources(Math.max(memory1, memory2),
-                         Math.max(vcores1, vcores2));
+        Math.max(vcores1, vcores2));
   }
 
   /**
@@ -248,7 +261,8 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
    * sum up the memory and take the max of the vcores.
    */
   private Resources mergeForkResources(Resources r1, Resources r2) {
-    return new Resources(r1.getMemoryMB() + r2.getMemoryMB(), Math.max(r1.getVirtualCores(), r2.getVirtualCores()));
+    return new Resources(r1.getMemoryMB() + r2.getMemoryMB(),
+        Math.max(r1.getVirtualCores(), r2.getVirtualCores()));
   }
 
   private Resources getResources(RunnableDefinition runnableDefinition) {

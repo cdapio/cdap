@@ -26,6 +26,7 @@ import java.util.Objects;
  * Uniquely identifies a schedule.
  */
 public class ScheduleId extends NamespacedEntityId implements ParentedId<ApplicationId> {
+
   private final String application;
   private final String schedule;
   private transient Integer hashCode;
@@ -56,9 +57,9 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .append(MetadataEntity.APPLICATION, application)
-      .appendAsType(MetadataEntity.SCHEDULE, schedule)
-      .build();
+        .append(MetadataEntity.APPLICATION, application)
+        .appendAsType(MetadataEntity.SCHEDULE, schedule)
+        .build();
   }
 
   public String getApplication() {
@@ -81,8 +82,8 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
     }
     ScheduleId that = (ScheduleId) o;
     return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application) &&
-      Objects.equals(schedule, that.schedule);
+        Objects.equals(application, that.application) &&
+        Objects.equals(schedule, that.schedule);
   }
 
   @Override
@@ -103,8 +104,8 @@ public class ScheduleId extends NamespacedEntityId implements ParentedId<Applica
   public static ScheduleId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ScheduleId(
-      next(iterator, "namespace"), next(iterator, "application"),
-      nextAndEnd(iterator, "schedule"));
+        next(iterator, "namespace"), next(iterator, "application"),
+        nextAndEnd(iterator, "schedule"));
   }
 
   @Override

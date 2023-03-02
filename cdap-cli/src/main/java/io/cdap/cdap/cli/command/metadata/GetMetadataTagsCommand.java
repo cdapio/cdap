@@ -49,22 +49,22 @@ public class GetMetadataTagsCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     MetadataEntity metadataEntity =
-      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
+        MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
     Set<String> tags = scope == null ? client.getTags(metadataEntity) :
-      client.getTags(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
+        client.getTags(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
-      .setHeader("tags")
-      .setRows(
-        Iterables.transform(tags, new Function<String, List<String>>() {
-          @Nullable
-          @Override
-          public List<String> apply(@Nullable String tag) {
-            return Lists.newArrayList(tag);
-          }
-        })
-      ).build();
+        .setHeader("tags")
+        .setRows(
+            Iterables.transform(tags, new Function<String, List<String>>() {
+              @Nullable
+              @Override
+              public List<String> apply(@Nullable String tag) {
+                return Lists.newArrayList(tag);
+              }
+            })
+        ).build();
 
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
@@ -72,7 +72,7 @@ public class GetMetadataTagsCommand extends AbstractCommand {
   @Override
   public String getPattern() {
     return String.format("get metadata-tags <%s> [scope <%s>]",
-                         ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
+        ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
   }
 
   @Override

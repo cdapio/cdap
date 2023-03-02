@@ -21,8 +21,8 @@ import io.cdap.cdap.proto.id.TopicId;
 import java.util.Arrays;
 
 /**
- * TopicSubscriberMetaKey provides an implementation of {@link MetricsMetaKey}
- * that uses {@link TopicId} and a {@link String} subscriberId
+ * TopicSubscriberMetaKey provides an implementation of {@link MetricsMetaKey} that uses {@link
+ * TopicId} and a {@link String} subscriberId
  */
 public class TopicSubscriberMetaKey implements MetricsMetaKey {
 
@@ -32,7 +32,8 @@ public class TopicSubscriberMetaKey implements MetricsMetaKey {
   private final byte[] key;
 
   TopicSubscriberMetaKey(TopicId topicId, String subscriberId) {
-    String formattedKey = String.format(KEY_FORMAT, topicId.getNamespace(), topicId.getTopic(), subscriberId);
+    String formattedKey = String.format(KEY_FORMAT, topicId.getNamespace(), topicId.getTopic(),
+        subscriberId);
     this.key = Bytes.toBytes(formattedKey);
   }
 

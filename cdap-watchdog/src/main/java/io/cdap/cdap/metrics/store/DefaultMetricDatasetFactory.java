@@ -40,8 +40,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default implementation of {@link MetricDatasetFactory}, which uses {@link DatasetDefinition} to create
- * {@link MetricsTable} instances.
+ * Default implementation of {@link MetricDatasetFactory}, which uses {@link DatasetDefinition} to
+ * create {@link MetricsTable} instances.
  */
 public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
@@ -54,13 +54,13 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   @Inject
   public DefaultMetricDatasetFactory(CConfiguration cConf,
-                                     DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition) {
+      DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition) {
     this.cConf = cConf;
     this.metricsTableDefinition = metricsTableDefinition;
     this.existingDatasets = Collections.newSetFromMap(new ConcurrentHashMap<>());
     this.entityTable = Suppliers.memoize(() -> {
       String tableName = cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
-                                   Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
+          Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
       return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
     });
     this.coarseLagFactor = cConf.getInt(Constants.Metrics.COARSE_LAG_FACTOR);
@@ -71,14 +71,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   @Override
   public FactTable getOrCreateFactTable(int resolution) {
     String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                 Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+        Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
 
     TableProperties.Builder props = TableProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
     if (resolution != Integer.MAX_VALUE) {
-      int ttl = resolution < 60 ? cConf.getInt(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS) :
-        cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
-                       Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+      int ttl =
+          resolution < 60 ? cConf.getInt(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS) :
+              cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
+                  Constants.Metrics.RETENTION_SECONDS_SUFFIX);
       if (ttl > 0) {
         props.setTTL(ttl);
       }
@@ -86,7 +87,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution),
-                         coarseLagFactor, coarseRoundFactor);
+        coarseLagFactor, coarseRoundFactor);
   }
 
   @Override
@@ -105,13 +106,15 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
   }
 
-  private MetricsTable getOrCreateTable(DatasetId tableId, DatasetProperties props) throws IOException {
+  private MetricsTable getOrCreateTable(DatasetId tableId, DatasetProperties props)
+      throws IOException {
     DatasetContext datasetContext = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
     DatasetSpecification spec = metricsTableDefinition.configure(tableId.getDataset(), props);
 
     if (!existingDatasets.contains(tableId)) {
       // Check and create if we don't know if the table exists or not
-      DatasetAdmin admin = metricsTableDefinition.getAdmin(datasetContext, spec, getClass().getClassLoader());
+      DatasetAdmin admin = metricsTableDefinition.getAdmin(datasetContext, spec,
+          getClass().getClassLoader());
       if (!admin.exists()) {
         // All admin.create() implementations handled race condition for concurrent create.
         // Not sure if that's the API contract or just the implementations since it is not specified in the API
@@ -121,7 +124,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       existingDatasets.add(tableId);
     }
 
-    return metricsTableDefinition.getDataset(datasetContext, spec, Collections.emptyMap(), getClass().getClassLoader());
+    return metricsTableDefinition.getDataset(datasetContext, spec, Collections.emptyMap(),
+        getClass().getClassLoader());
   }
 
   private int getRollTime(int resolution) {
@@ -131,6 +135,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       return cConf.getInt(key, Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
     }
     return cConf.getInt(Constants.Metrics.TIME_SERIES_TABLE_ROLL_TIME,
-                        Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
+        Constants.Metrics.DEFAULT_TIME_SERIES_TABLE_ROLL_TIME);
   }
 }

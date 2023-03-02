@@ -48,7 +48,7 @@ public class FileSecureStoreImporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreImporter.class);
   private static final Class<? extends FileSecureStoreCodec>[] HISTORICAL_CODECS = new Class[]{
-    SecureStoreDataCodecV1.class
+      SecureStoreDataCodecV1.class
   };
 
   private final FileSecureStoreCodec currentCodec;
@@ -59,6 +59,7 @@ public class FileSecureStoreImporter {
 
   /**
    * Attempts to import a prior KeyStore file from the specified path.
+   *
    * @param keyStore The keystore to import into
    * @param path The filepath of the prior keystore
    * @param password The password to use
@@ -66,7 +67,7 @@ public class FileSecureStoreImporter {
    * @throws IllegalArgumentException If an invalid argument was specified
    */
   public void importFromPath(KeyStore keyStore, Path path, char[] password) throws IOException,
-    IllegalArgumentException {
+      IllegalArgumentException {
     try (InputStream in = new DataInputStream(Files.newInputStream(path))) {
       keyStore.load(in, password);
     } catch (Exception e) {
@@ -75,7 +76,7 @@ public class FileSecureStoreImporter {
   }
 
   private void attemptUpgrade(KeyStore keyStore, Path path, char[] password) throws IOException,
-    IllegalArgumentException {
+      IllegalArgumentException {
     // Instantiate a new KeyStore.
     try {
       keyStore.load(null, password);
@@ -136,8 +137,9 @@ public class FileSecureStoreImporter {
   }
 
   /**
-   * Upgrades the key by reading the key from the historical keystore, deserializing the historical key using the
-   * historical codec, re-serializing it using the current codec, and adding it to the current keystore.
+   * Upgrades the key by reading the key from the historical keystore, deserializing the historical
+   * key using the historical codec, re-serializing it using the current codec, and adding it to the
+   * current keystore.
    *
    * @param currentKeyStore The current keystore
    * @param historicalKeyStore The historical keystore
@@ -146,15 +148,17 @@ public class FileSecureStoreImporter {
    * @param password The password to use for both keystores
    * @throws IOException If upgrading the key fails
    */
-  private void upgradeKey(KeyStore currentKeyStore, KeyStore historicalKeyStore, String historicalAlias,
-                          FileSecureStoreCodec historicalCodec, char[] password) throws IOException {
+  private void upgradeKey(KeyStore currentKeyStore, KeyStore historicalKeyStore,
+      String historicalAlias,
+      FileSecureStoreCodec historicalCodec, char[] password) throws IOException {
 
     KeyInfo historicalKeyInfo = historicalCodec.getKeyInfoFromAlias(historicalAlias);
     Key historicalKey;
     try {
       historicalKey = historicalKeyStore.getKey(historicalAlias, password);
     } catch (KeyStoreException e) {
-      throw new IOException(String.format("Failed to load historical key alias '%s':", historicalAlias), e);
+      throw new IOException(
+          String.format("Failed to load historical key alias '%s':", historicalAlias), e);
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException e) {
       // These exceptions indicate a single key load failure, so we skip instead of failing the entire import.
       LOG.warn("Failed to import historical key alias '{}':", historicalAlias, e);
@@ -163,17 +167,18 @@ public class FileSecureStoreImporter {
     SecureStoreData historicalData = historicalCodec.decode(historicalKey.getEncoded());
     try {
       SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(FileSecureStoreService
-                                                                         .SECRET_KEY_FACTORY_ALGORITHM);
+          .SECRET_KEY_FACTORY_ALGORITHM);
       // Convert byte[] directly to char[] and avoid using String due
       // to it being stored in memory until garbage collected.
       PBEKeySpec pbeKeySpec = new PBEKeySpec(StandardCharsets.UTF_8
-                                               .decode(ByteBuffer.wrap(currentCodec.encode(historicalData)))
-                                               .array());
+          .decode(ByteBuffer.wrap(currentCodec.encode(historicalData)))
+          .array());
       currentKeyStore.setKeyEntry(currentCodec.getKeyAliasFromInfo(historicalKeyInfo),
-                                  secretKeyFactory.generateSecret(pbeKeySpec), password, null);
+          secretKeyFactory.generateSecret(pbeKeySpec), password, null);
     } catch (KeyStoreException | NoSuchAlgorithmException e) {
-      throw new IllegalArgumentException(String.format("Failed to import secret key alias '%s':", historicalAlias),
-                                         e);
+      throw new IllegalArgumentException(
+          String.format("Failed to import secret key alias '%s':", historicalAlias),
+          e);
     } catch (InvalidKeySpecException e) {
       LOG.warn("Failed to generate PBE key", e);
     }

@@ -20,13 +20,15 @@ package io.cdap.cdap.logging.pipeline.logbuffer;
  * Config for log buffer pipeline.
  */
 public class LogBufferPipelineConfig {
+
   private final long maxBufferSize;
   private final long eventDelayMillis;
   private final long checkpointIntervalMillis;
   private final long batchSize;
 
-  public LogBufferPipelineConfig(long maxBufferSize, long eventDelayMillis, long checkpointIntervalMillis,
-                                 long batchSize) {
+  public LogBufferPipelineConfig(long maxBufferSize, long eventDelayMillis,
+      long checkpointIntervalMillis,
+      long batchSize) {
     this.maxBufferSize = maxBufferSize;
     this.eventDelayMillis = eventDelayMillis;
     this.checkpointIntervalMillis = checkpointIntervalMillis;

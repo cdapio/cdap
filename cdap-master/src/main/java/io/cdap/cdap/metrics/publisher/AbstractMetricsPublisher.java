@@ -30,14 +30,14 @@ import java.util.concurrent.TimeUnit;
 abstract class AbstractMetricsPublisher implements MetricsPublisher {
 
   /**
-   * Function that adds timestamp and tags to collection of {@link MetricValue} to
-   * convert it into a  Collection of {@link MetricValues} and calls the
-   * overloaded publish method with the Collection of {@link MetricValues}.
+   * Function that adds timestamp and tags to collection of {@link MetricValue} to convert it into a
+   * Collection of {@link MetricValues} and calls the overloaded publish method with the Collection
+   * of {@link MetricValues}.
    *
    * @param metrics List of {@link MetricValue} to be published.
-   * @param tags    Map of tags that specify the context of the metrics that are published.
-   * @throws Exception When the publisher isn't initialized or an exception is raised during the publishing
-   *                   process.
+   * @param tags Map of tags that specify the context of the metrics that are published.
+   * @throws Exception When the publisher isn't initialized or an exception is raised during the
+   *     publishing process.
    */
   @Override
   public void publish(Collection<MetricValue> metrics, Map<String, String> tags) throws Exception {
@@ -45,8 +45,8 @@ abstract class AbstractMetricsPublisher implements MetricsPublisher {
     for (MetricValue metric : metrics) {
       long now = System.currentTimeMillis();
       metricValues.add(new MetricValues(tags, metric.getName(),
-                                        TimeUnit.MILLISECONDS.toSeconds(now),
-                                        metric.getValue(), metric.getType()));
+          TimeUnit.MILLISECONDS.toSeconds(now),
+          metric.getValue(), metric.getType()));
     }
     this.publish(metricValues);
   }

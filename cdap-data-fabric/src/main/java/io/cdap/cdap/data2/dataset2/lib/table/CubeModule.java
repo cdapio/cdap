@@ -28,6 +28,7 @@ import io.cdap.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
  * {@link io.cdap.cdap.api.dataset.module.DatasetModule} for {@link io.cdap.cdap.api.dataset.lib.cube.Cube}.
  */
 public class CubeModule implements DatasetModule {
+
   public static final String SHORT_NAME = Cube.TYPE;
   public static final String FULL_NAME = Cube.class.getName();
 
@@ -35,7 +36,7 @@ public class CubeModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, ? extends DatasetAdmin> tableDef = registry.get(Table.TYPE);
     DatasetDefinition<MetricsTable, ? extends DatasetAdmin> metricsTableDef =
-      registry.get(MetricsTable.class.getName());
+        registry.get(MetricsTable.class.getName());
     registry.add(new CubeDatasetDefinition(FULL_NAME, tableDef, metricsTableDef));
     registry.add(new CubeDatasetDefinition(SHORT_NAME, tableDef, metricsTableDef));
   }

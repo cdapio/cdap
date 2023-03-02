@@ -20,6 +20,7 @@ package io.cdap.cdap.error;
  *
  */
 public final class Errors {
+
   private final String format;
 
   public Errors(String format) {

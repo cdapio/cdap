@@ -30,6 +30,7 @@ public interface MetadataMessageProcessor {
   /**
    * Processes one {@link MetadataMessage}.
    */
-  void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException, ConflictException;
+  void processMessage(MetadataMessage message, StructuredTableContext context)
+      throws IOException, ConflictException;
 
 }

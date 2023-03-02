@@ -41,9 +41,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
+ * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been
+ * achieved.
  */
-public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements SatisfiableTrigger {
+public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements
+    SatisfiableTrigger {
+
   private static final Gson GSON = new Gson();
 
   public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
@@ -75,29 +78,31 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
     Function<ProgramRunInfo, List<TriggerInfo>> function = new Function<ProgramRunInfo, List<TriggerInfo>>() {
       @Override
       public List<TriggerInfo> apply(ProgramRunInfo runInfo) {
-        Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
+        Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(
+            runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
-          new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
-                                              programId.getParent().getApplication(),
-                                              ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
-                                              RunIds.fromString(runInfo.getProgramRunId().getRun()),
-                                              runInfo.getProgramStatus(),
-                                              context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
+            new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
+                programId.getParent().getApplication(),
+                ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
+                RunIds.fromString(runInfo.getProgramRunId().getRun()),
+                runInfo.getProgramStatus(),
+                context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
         return Collections.singletonList(triggerInfo);
       }
     };
-    return getTriggerSatisfiedResult(context.getNotifications(), ImmutableList.<TriggerInfo>of(), function);
+    return getTriggerSatisfiedResult(context.getNotifications(), ImmutableList.<TriggerInfo>of(),
+        function);
   }
 
   @Override
   public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
-                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+      Map<String, String> systemArgs, Map<String, String> userArgs) {
     // no-op
   }
 
   /**
-   * Helper method to return a result from the given supplier if the trigger is satisfied with the given notifications,
-   * or return the default result if the trigger is not satisfied.
+   * Helper method to return a result from the given supplier if the trigger is satisfied with the
+   * given notifications, or return the default result if the trigger is not satisfied.
    *
    * @param notifications notifications used to determine whether the trigger is satisfied
    * @param defaultResult the default result to return if the trigger is not satisfied
@@ -106,27 +111,31 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
    * @return a result of type T
    */
   private <T> T getTriggerSatisfiedResult(List<Notification> notifications, T defaultResult,
-                                          Function<ProgramRunInfo, T> function) {
+      Function<ProgramRunInfo, T> function) {
     for (Notification notification : notifications) {
       if (!Notification.Type.PROGRAM_STATUS.equals(notification.getNotificationType())) {
         continue;
       }
-      String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+      String programRunIdString = notification.getProperties()
+          .get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      String programRunStatusString = notification.getProperties()
+          .get(ProgramOptionConstants.PROGRAM_STATUS);
       // Ignore notifications which specify an invalid programRunId or programStatus
       if (programRunIdString == null || programRunStatusString == null) {
         continue;
       }
       ProgramStatus programStatus;
       try {
-        programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
+        programStatus = ProgramRunStatus.toProgramStatus(
+            ProgramRunStatus.valueOf(programRunStatusString));
       } catch (IllegalArgumentException e) {
         // Return silently, this happens for statuses that are not meant to be scheduled
         continue;
       }
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramId triggeringProgramId = programRunId.getParent();
-      if (this.programId.isSameProgramExceptVersion(triggeringProgramId) && programStatuses.contains(programStatus)) {
+      if (this.programId.isSameProgramExceptVersion(triggeringProgramId)
+          && programStatuses.contains(programStatus)) {
         return function.apply(new ProgramRunInfo(programStatus, programRunId));
       }
     }
@@ -137,6 +146,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
    * Class for storing program status and run id of a program run.
    */
   private static class ProgramRunInfo {
+
     private final ProgramStatus programStatus;
     private final ProgramRunId programRunId;
 

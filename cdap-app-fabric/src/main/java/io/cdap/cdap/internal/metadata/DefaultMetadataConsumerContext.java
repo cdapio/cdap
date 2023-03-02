@@ -23,7 +23,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Provides an initialized default context for MetadataConsumer implementing {@link MetadataConsumerContext}
+ * Provides an initialized default context for MetadataConsumer implementing {@link
+ * MetadataConsumerContext}
  */
 public class DefaultMetadataConsumerContext implements MetadataConsumerContext {
 
@@ -34,7 +35,8 @@ public class DefaultMetadataConsumerContext implements MetadataConsumerContext {
    * @param metadataConsumerName name of the Metadata Consumer extension
    */
   DefaultMetadataConsumerContext(CConfiguration cConf, String metadataConsumerName) {
-    String prefix = String.format("%s.%s.", Constants.MetadataConsumer.METADATA_CONSUMER_PREFIX, metadataConsumerName);
+    String prefix = String.format("%s.%s.", Constants.MetadataConsumer.METADATA_CONSUMER_PREFIX,
+        metadataConsumerName);
     this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
   }
 

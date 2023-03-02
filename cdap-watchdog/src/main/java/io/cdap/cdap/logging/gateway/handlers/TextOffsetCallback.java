@@ -25,9 +25,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * LogReader callback to encode log events, as {@link FormattedTextLogEvent} that contains log text and log offset
+ * LogReader callback to encode log events, as {@link FormattedTextLogEvent} that contains log text
+ * and log offset
  */
 public class TextOffsetCallback extends AbstractJSONCallback {
+
   private final PatternLayout patternLayout;
   private final boolean escape;
 
@@ -36,7 +38,7 @@ public class TextOffsetCallback extends AbstractJSONCallback {
     this.escape = escape;
 
     ch.qos.logback.classic.Logger rootLogger =
-      (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
     LoggerContext loggerContext = rootLogger.getLoggerContext();
 
     this.patternLayout = new PatternLayout();

@@ -36,15 +36,18 @@ import java.util.function.Supplier;
  * Gets a comparator for a value stored in a {@link StructuredRecord}.
  */
 public class StructuredRecordComparator implements Comparator<StructuredRecord> {
+
   private static final Comparator<Schema> SCHEMA_COMPARATOR = new SchemaComparator();
   private static final Comparator<Object> NULL_COMPARATOR = (x, y) -> 0;
   private static final Comparator<Object> INT_COMPARATOR = Comparator.comparingInt(x -> (int) x);
   private static final Comparator<Object> LONG_COMPARATOR = Comparator.comparingLong(x -> (long) x);
   private static final Comparator<Object> FLOAT_COMPARATOR = Comparator.comparing(x -> (float) x);
-  private static final Comparator<Object> DOUBLE_COMPARATOR = Comparator.comparingDouble(x -> (double) x);
+  private static final Comparator<Object> DOUBLE_COMPARATOR = Comparator.comparingDouble(
+      x -> (double) x);
   private static final Comparator<Object> STRING_COMPARATOR = Comparator.comparing(x -> (String) x);
   private static final Comparator<Object> BOOL_COMPARATOR = Comparator.comparing(x -> (Boolean) x);
-  private static final Comparator<Object> ENUM_COMPARATOR = Comparator.comparingInt(x -> ((Enum) x).ordinal());
+  private static final Comparator<Object> ENUM_COMPARATOR = Comparator.comparingInt(
+      x -> ((Enum) x).ordinal());
 
   @Override
   public int compare(StructuredRecord r1, StructuredRecord r2) {
@@ -78,15 +81,16 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
       case MAP:
         //noinspection unchecked
         return (x, y) -> compareMaps(fieldName, schema.getMapSchema(),
-                                     (Map<Object, Object>) x, (Map<Object, Object>) y);
+            (Map<Object, Object>) x, (Map<Object, Object>) y);
       case UNION:
         //noinspection ConstantConditions
         return (x, y) -> compareUnions(fieldName, schema.getUnionSchemas(), x, y);
     }
 
     // should never happen
-    throw new IllegalStateException(String.format("Cannot compare field '%s' of unexpected type '%s'",
-                                                  fieldName, schema.getType()));
+    throw new IllegalStateException(
+        String.format("Cannot compare field '%s' of unexpected type '%s'",
+            fieldName, schema.getType()));
   }
 
   private int compareRecords(StructuredRecord r1, StructuredRecord r2) {
@@ -110,11 +114,13 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
 
   private int compareUnions(String fieldName, List<Schema> schemas, Object val1, Object val2) {
     Supplier<IllegalArgumentException> schemaNotFoundException = () -> new IllegalArgumentException(
-      String.format("A value for field '%s' is not any of the expected types in its union schema.", fieldName));
+        String.format(
+            "A value for field '%s' is not any of the expected types in its union schema.",
+            fieldName));
     Schema val1Schema = schemas.stream().filter(s -> matchesSchema(val1, s))
-      .findFirst().orElseThrow(schemaNotFoundException);
+        .findFirst().orElseThrow(schemaNotFoundException);
     Schema val2Schema = schemas.stream().filter(s -> matchesSchema(val2, s))
-      .findFirst().orElseThrow(schemaNotFoundException);
+        .findFirst().orElseThrow(schemaNotFoundException);
 
     int comp = SCHEMA_COMPARATOR.compare(val1Schema, val2Schema);
     if (comp != 0) {
@@ -125,10 +131,9 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
   }
 
   /**
-   * Returns whether the given val is of the specified schema.
-   * This method assumes the provided schema is one of the union schemas for the provided value.
-   * Unions cannot contain multiple arrays or multiple maps, so there is no need to check the types
-   * within a Map or Collection.
+   * Returns whether the given val is of the specified schema. This method assumes the provided
+   * schema is one of the union schemas for the provided value. Unions cannot contain multiple
+   * arrays or multiple maps, so there is no need to check the types within a Map or Collection.
    */
   private boolean matchesSchema(Object val, Schema schema) {
     switch (schema.getType()) {
@@ -174,7 +179,7 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
   }
 
   private int compareMaps(String fieldName, Map.Entry<Schema, Schema> mapSchema,
-                          Map<Object, Object> m1, Map<Object, Object> m2) {
+      Map<Object, Object> m1, Map<Object, Object> m2) {
     int comp = Integer.compare(m1.size(), m2.size());
     if (comp != 0) {
       return comp;
@@ -240,15 +245,18 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
     } else if (val instanceof ByteBuffer) {
       return Bytes.toBytes((ByteBuffer) val);
     }
-    throw new IllegalArgumentException(String.format("Field '%s' is of type bytes but is of unexpected Java type '%s'",
-                                                     fieldName, val.getClass().getName()));
+    throw new IllegalArgumentException(
+        String.format("Field '%s' is of type bytes but is of unexpected Java type '%s'",
+            fieldName, val.getClass().getName()));
   }
 
   /**
-   * A wrapper around an "array" value that allows iterating through elements in the array and keeps track of its
-   * total size. This is used because an "array" can be a Java array or a Java collection.
+   * A wrapper around an "array" value that allows iterating through elements in the array and keeps
+   * track of its total size. This is used because an "array" can be a Java array or a Java
+   * collection.
    */
   private static class ArrayWrapper implements Iterable<Object> {
+
     private final Object array;
     private final boolean isCollection;
     private final int size;
@@ -256,8 +264,8 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
     private ArrayWrapper(String fieldName, Object array) {
       if (!(array instanceof Collection) && !array.getClass().isArray()) {
         throw new IllegalArgumentException(String.format(
-          "Field '%s' is of type array but is a Java '%s' instead of an array or collection.",
-          fieldName, array.getClass().getName()));
+            "Field '%s' is of type array but is a Java '%s' instead of an array or collection.",
+            fieldName, array.getClass().getName()));
       }
       this.array = array;
       this.isCollection = array instanceof Collection;

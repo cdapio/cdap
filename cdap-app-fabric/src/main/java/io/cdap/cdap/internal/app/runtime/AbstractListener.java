@@ -20,7 +20,8 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import javax.annotation.Nullable;
 
 /**
- * Base implementation of ProgramController.Listener that does nothing on any its method invocation.
+ * Base implementation of ProgramController.Listener that does nothing on any its method
+ * invocation.
  */
 public abstract class AbstractListener implements ProgramController.Listener {
 

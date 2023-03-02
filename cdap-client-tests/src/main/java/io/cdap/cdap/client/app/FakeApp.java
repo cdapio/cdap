@@ -38,19 +38,21 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
   public static final List<String> MAPREDUCES = Lists.newArrayList();
   public static final List<String> SPARK = Lists.newArrayList(FakeSpark.NAME);
   public static final List<String> WORKFLOWS = Lists.newArrayList(FakeWorkflow.NAME);
-  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME, PrefixedEchoHandler.NAME,
-                                                                 DatasetWriterService.NAME);
+  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME,
+      PrefixedEchoHandler.NAME,
+      DatasetWriterService.NAME);
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
-    .addAll(MAPREDUCES)
-    .addAll(WORKFLOWS)
-    .addAll(SPARK)
-    .addAll(SERVICES)
-    .build();
+      .addAll(MAPREDUCES)
+      .addAll(WORKFLOWS)
+      .addAll(SPARK)
+      .addAll(SERVICES)
+      .build();
 
   /**
    * Application Config Class to control schedule creation
    */
   public static class AppConfig extends Config {
+
     private final boolean addTimeSchedule;
     private final String timeScheduleName;
     private final String timeScheduleCron;
@@ -63,12 +65,13 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
     }
 
     public AppConfig(boolean addTimeSchedule, @Nullable String timeScheduleName,
-                     String timeScheduleCron) {
+        String timeScheduleCron) {
       this.addTimeSchedule = addTimeSchedule;
       this.timeScheduleName = timeScheduleName == null ? TIME_SCHEDULE_NAME : timeScheduleName;
       this.timeScheduleCron = timeScheduleCron == null ? SCHEDULE_CRON : timeScheduleCron;
     }
   }
+
   @Override
   public void configure() {
     setName(NAME);
@@ -79,7 +82,7 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
     AppConfig config = getConfig();
     if (config.addTimeSchedule) {
       schedule(buildSchedule(config.timeScheduleName, ProgramType.WORKFLOW, FakeWorkflow.NAME)
-                 .triggerByTime(config.timeScheduleCron));
+          .triggerByTime(config.timeScheduleCron));
     }
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());

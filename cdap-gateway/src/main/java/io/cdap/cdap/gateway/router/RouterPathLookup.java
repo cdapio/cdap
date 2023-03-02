@@ -36,21 +36,31 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     GET, PUT, POST, DELETE
   }
 
-  public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(Constants.Service.APP_FABRIC_HTTP);
+  public static final RouteDestination APP_FABRIC_HTTP = new RouteDestination(
+      Constants.Service.APP_FABRIC_HTTP);
   public static final RouteDestination METRICS = new RouteDestination(Constants.Service.METRICS);
-  public static final RouteDestination DATASET_MANAGER = new RouteDestination(Constants.Service.DATASET_MANAGER);
-  public static final RouteDestination METADATA_SERVICE = new RouteDestination(Constants.Service.METADATA_SERVICE);
-  public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
-  public static final RouteDestination TRANSACTION = new RouteDestination(Constants.Service.TRANSACTION_HTTP);
-  public static final RouteDestination LOG_QUERY = new RouteDestination(Constants.Service.LOG_QUERY);
+  public static final RouteDestination DATASET_MANAGER = new RouteDestination(
+      Constants.Service.DATASET_MANAGER);
+  public static final RouteDestination METADATA_SERVICE = new RouteDestination(
+      Constants.Service.METADATA_SERVICE);
+  public static final RouteDestination PREVIEW_HTTP = new RouteDestination(
+      Constants.Service.PREVIEW_HTTP);
+  public static final RouteDestination TRANSACTION = new RouteDestination(
+      Constants.Service.TRANSACTION_HTTP);
+  public static final RouteDestination LOG_QUERY = new RouteDestination(
+      Constants.Service.LOG_QUERY);
   public static final RouteDestination LOG_SAVER = new RouteDestination(Constants.Service.LOGSAVER);
-  public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(Constants.Service.METRICS_PROCESSOR);
-  public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
-  public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
+  public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(
+      Constants.Service.METRICS_PROCESSOR);
+  public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(
+      Constants.Service.DATASET_EXECUTOR);
+  public static final RouteDestination MESSAGING = new RouteDestination(
+      Constants.Service.MESSAGING_SERVICE);
   public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
   public static final RouteDestination SUPPORT_BUNDLE_SERVICE =
-    new RouteDestination(Constants.Service.SUPPORT_BUNDLE_SERVICE);
-  public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
+      new RouteDestination(Constants.Service.SUPPORT_BUNDLE_SERVICE);
+  public static final RouteDestination DONT_ROUTE = new RouteDestination(
+      Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
    * Returns the CDAP service which will handle the HttpRequest
@@ -65,8 +75,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       String method = httpRequest.method().name();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StreamSupport
-        .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
-        .toArray(String[]::new);
+          .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
+          .toArray(String[]::new);
 
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);
@@ -87,52 +97,58 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   }
 
   @Nullable
-  private RouteDestination getV3RoutingService(String [] uriParts, AllowedMethod requestMethod) {
+  private RouteDestination getV3RoutingService(String[] uriParts, AllowedMethod requestMethod) {
     if ((uriParts.length >= 2) && uriParts[1].equals("feeds")) {
       // TODO(Rohit) find a better way to handle that - this looks hackish
       // This needs to now changed especially metadata since now it can have custom parts
       return null;
     } else if ("bootstrap".equals(uriParts[1])) {
       return APP_FABRIC_HTTP;
-    } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])
-      && "methods".equals(uriParts[9])) {
+    } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(
+        uriParts[7])
+        && "methods".equals(uriParts[9])) {
       // User defined services (version specific) handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/services/{service-id}/methods/
       //       <user-defined-method-path>"
       String serviceName = ServiceDiscoverable.getName(uriParts[2], uriParts[4],
-                                                       ProgramType.valueOfCategoryName(uriParts[7]), uriParts[8]);
+          ProgramType.valueOfCategoryName(uriParts[7]), uriParts[8]);
       String version = uriParts[6];
       return new RouteDestination(serviceName, version);
-    } else if ((uriParts.length >= 9) && isUserServiceType(uriParts[5]) && "methods".equals(uriParts[7])) {
+    } else if ((uriParts.length >= 9) && isUserServiceType(uriParts[5]) && "methods".equals(
+        uriParts[7])) {
       //User defined services handle methods on them:
       //Path: "/v3/namespaces/{namespace-id}/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
       return new RouteDestination(ServiceDiscoverable.getName(uriParts[2], uriParts[4],
-                                                              ProgramType.valueOfCategoryName(uriParts[5]),
-                                                              uriParts[6]));
+          ProgramType.valueOfCategoryName(uriParts[5]),
+          uriParts[6]));
     } else if (beginsWith(uriParts, "v3", "system", "services", null, "logs")) {
       //Log Handler Path /v3/system/services/<service-id>/logs
       return LOG_QUERY;
-    } else if ((!beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) && (endsWith(uriParts, "metadata") ||
-      // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
-      // SecureStoreHandler
-      endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata", "properties", null) ||
-      endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null) ||
-      endsWith(uriParts, "metadata", "search") ||
-      beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-      endsWith(uriParts, "runs", null, "endpoints") ||
-      beginsWith(uriParts, "v3", "metadata", "search"))) {
+    } else if ((!beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) && (
+        endsWith(uriParts, "metadata") ||
+            // do no intercept the namespaces/<namespace-name>/securekeys/<key>/metadata as that is handled by the
+            // SecureStoreHandler
+            endsWith(uriParts, "metadata", "properties") || endsWith(uriParts, "metadata",
+            "properties", null) ||
+            endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null)
+            ||
+            endsWith(uriParts, "metadata", "search") ||
+            beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
+            endsWith(uriParts, "runs", null, "endpoints") ||
+            beginsWith(uriParts, "v3", "metadata", "search"))) {
       return METADATA_SERVICE;
     } else if (beginsWith(uriParts, "v3", "security", "authorization") ||
-      beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) {
+        beginsWith(uriParts, "v3", "namespaces", null, "securekeys")) {
       // Authorization and Secure Store Handlers currently run in App Fabric
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "security", "store", "namespaces", null)) {
       return APP_FABRIC_HTTP;
-    } else if (beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs") &&
-      requestMethod.equals(AllowedMethod.GET)) {
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")
+        &&
+        requestMethod.equals(AllowedMethod.GET)) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles") ||
-      beginsWith(uriParts, "v3", "profiles")) {
+        beginsWith(uriParts, "v3", "profiles")) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "runs")) {
       return APP_FABRIC_HTTP;
@@ -141,8 +157,8 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
       return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
-      (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
-      (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
+        (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
+        (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
       //Log Handler Paths:
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
@@ -151,22 +167,35 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //Metrics Search Handler Path /v3/metrics
       return METRICS;
     } else if (beginsWith(uriParts, "v3", "system", "services", null, "status")
-      || beginsWith(uriParts, "v3", "system", "services", null, "stacks")) {
+        || beginsWith(uriParts, "v3", "system", "services", null, "stacks")) {
       switch (uriParts[3]) {
-        case Constants.Service.LOGSAVER: return LOG_SAVER;
-        case Constants.Service.TRANSACTION: return TRANSACTION;
-        case Constants.Service.METRICS_PROCESSOR: return METRICS_PROCESSOR;
-        case Constants.Service.METRICS: return METRICS;
-        case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
-        case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
-        case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
-        case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
-        case Constants.Service.RUNTIME: return RUNTIME;
-        case Constants.Service.SUPPORT_BUNDLE_SERVICE: return SUPPORT_BUNDLE_SERVICE;
-        default: return null;
+        case Constants.Service.LOGSAVER:
+          return LOG_SAVER;
+        case Constants.Service.TRANSACTION:
+          return TRANSACTION;
+        case Constants.Service.METRICS_PROCESSOR:
+          return METRICS_PROCESSOR;
+        case Constants.Service.METRICS:
+          return METRICS;
+        case Constants.Service.APP_FABRIC_HTTP:
+          return APP_FABRIC_HTTP;
+        case Constants.Service.DATASET_EXECUTOR:
+          return DATASET_EXECUTOR;
+        case Constants.Service.METADATA_SERVICE:
+          return METADATA_SERVICE;
+        case Constants.Service.MESSAGING_SERVICE:
+          return MESSAGING;
+        case Constants.Service.RUNTIME:
+          return RUNTIME;
+        case Constants.Service.SUPPORT_BUNDLE_SERVICE:
+          return SUPPORT_BUNDLE_SERVICE;
+        default:
+          return null;
       }
-    } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
-      (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
+    } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets")
+        &&
+        (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals(
+            "mapreduce"))) {
       // namespaced app fabric data operations:
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/flows
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/workers
@@ -201,11 +230,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    *
    * @param actual the actual string array to check; must not contain nulls.
    * @param expected the expected string array to match; may contain nulls as wildcards.
-   *
    * @return true if the start of {@code actual} matches {@code expected}
    */
   @VisibleForTesting
-  static boolean beginsWith(String[] actual, String ... expected) {
+  static boolean beginsWith(String[] actual, String... expected) {
     return matches(actual, expected, false);
   }
 
@@ -220,11 +248,10 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    *
    * @param actual the actual string array to check; must not contain nulls.
    * @param expected the expected string array to match; may contain nulls as wildcards.
-   *
    * @return true if the end of {@code actual} matches {@code expected}
    */
   @VisibleForTesting
-  static boolean endsWith(String[] actual, String ... expected) {
+  static boolean endsWith(String[] actual, String... expected) {
     return matches(actual, expected, true);
   }
 
@@ -240,7 +267,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
    * @param actual the actual string array to check; must not contain nulls.
    * @param expected the expected string array to match; may contain nulls as wildcards.
    * @param matchEnd whether to match the end of the actual sequence
-   *
    * @return true if the end of {@code actual} matches {@code expected}
    */
   private static boolean matches(String[] actual, String[] expected, boolean matchEnd) {

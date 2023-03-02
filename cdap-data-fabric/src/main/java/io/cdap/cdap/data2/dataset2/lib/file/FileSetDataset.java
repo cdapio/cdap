@@ -79,6 +79,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
 
   /**
    * Constructor.
+   *
    * @param datasetContext the context for the dataset
    * @param cConf the CDAP configuration
    * @param spec the dataset specification
@@ -87,10 +88,10 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    */
   @SuppressWarnings("WeakerAccess")
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
-                        DatasetSpecification spec,
-                        LocationFactory locationFactory,
-                        NamespacePathLocator namespacePathLocator,
-                        @Nonnull Map<String, String> runtimeArguments) throws IOException {
+      DatasetSpecification spec,
+      LocationFactory locationFactory,
+      NamespacePathLocator namespacePathLocator,
+      @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
     Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
@@ -100,18 +101,20 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
 
     Location baseLocation = determineBaseLocation(datasetContext, cConf, spec,
-                                                  locationFactory, namespacePathLocator);
+        locationFactory, namespacePathLocator);
     this.baseLocation = new FileSetLocation(baseLocation,
-                                            new FileSetLocationFactory(baseLocation.getLocationFactory()));
+        new FileSetLocationFactory(baseLocation.getLocationFactory()));
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
     // runtime arguments can override intputFormatClassName, outputFormatClassName, permissions
-    this.inputFormatClassName = secondIfFirstIsNull(FileSetProperties.getInputFormat(runtimeArguments),
-                                                    FileSetProperties.getInputFormat(spec.getProperties()));
-    this.outputFormatClassName = secondIfFirstIsNull(FileSetProperties.getOutputFormat(runtimeArguments),
-                                                     FileSetProperties.getOutputFormat(spec.getProperties()));
+    this.inputFormatClassName = secondIfFirstIsNull(
+        FileSetProperties.getInputFormat(runtimeArguments),
+        FileSetProperties.getInputFormat(spec.getProperties()));
+    this.outputFormatClassName = secondIfFirstIsNull(
+        FileSetProperties.getOutputFormat(runtimeArguments),
+        FileSetProperties.getOutputFormat(spec.getProperties()));
     this.permissions = secondIfFirstIsNull(FileSetProperties.getFilePermissions(runtimeArguments),
-                                           FileSetProperties.getFilePermissions(spec.getProperties()));
+        FileSetProperties.getFilePermissions(spec.getProperties()));
   }
 
   // similar to Objects.firstNonNull, but we allow both parameters to be null
@@ -130,8 +133,8 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    * TODO: Ideally, this should be done in configure(), but currently it cannot because of CDAP-1721
    */
   static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
-                                        DatasetSpecification spec, LocationFactory locationFactory,
-                                        NamespacePathLocator namespacePathLocator) throws IOException {
+      DatasetSpecification spec, LocationFactory locationFactory,
+      NamespacePathLocator namespacePathLocator) throws IOException {
 
     // older versions of file set incorrectly interpret absolute paths as relative to the namespace's
     // data directory. These file sets do not have the file set version property.
@@ -145,16 +148,19 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     if (basePath.startsWith("/")) {
       // but only if it is not a legacy dataset that interprets absolute paths as relative
       if (hasAbsoluteBasePathBug) {
-        LOG.info("Dataset {} was created with a version of FileSet that treats absolute path {} as relative. " +
-                   "To disable this message, upgrade the dataset properties with a relative path. ",
-                 spec.getName(), basePath);
+        LOG.info(
+            "Dataset {} was created with a version of FileSet that treats absolute path {} as relative. "
+                +
+                "To disable this message, upgrade the dataset properties with a relative path. ",
+            spec.getName(), basePath);
       } else {
         String topLevelPath = locationFactory.create("/").toURI().getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
         Location baseLocation = Locations.getLocationFromAbsolutePath(locationFactory, basePath);
         if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
-          throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
-                                       "It must not be inside the CDAP base path '" + topLevelPath + "'.");
+          throw new DataSetException(
+              "Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
+                  "It must not be inside the CDAP base path '" + topLevelPath + "'.");
         }
         return baseLocation;
       }
@@ -185,14 +191,15 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       return baseLocation.append(relativePath);
     } catch (IOException e) {
       throw new DataSetException("Error constructing path from base '" + baseLocation +
-                                   "' and relative path '" + relativePath + "'", e);
+          "' and relative path '" + relativePath + "'", e);
     }
   }
 
   @Override
   public Location getBaseLocation() {
     // TODO: if the file set is external, we could return a ReadOnlyLocation that prevents writing [CDAP-2934]
-    return new FileSetLocation(baseLocation, new FileSetLocationFactory(baseLocation.getLocationFactory()));
+    return new FileSetLocation(baseLocation,
+        new FileSetLocationFactory(baseLocation.getLocationFactory()));
   }
 
   @Override
@@ -205,7 +212,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   public Location getOutputLocation() {
     if (isExternal) {
       throw new UnsupportedOperationException(
-        "Output is not supported for external file set '" + spec.getName() + "'");
+          "Output is not supported for external file set '" + spec.getName() + "'");
     }
     return outputLocation;
   }
@@ -237,12 +244,13 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     config.putAll(FileSetProperties.getInputProperties(spec.getProperties()));
     // runtime arguments may override the input properties
     config.putAll(FileSetProperties.getInputProperties(runtimeArguments));
-    String inputs = Joiner.on(',').join(Iterables.transform(inputLocs, new Function<Location, String>() {
-      @Override
-      public String apply(@Nullable Location location) {
-        return getFileSystemPath(location);
-      }
-    }));
+    String inputs = Joiner.on(',')
+        .join(Iterables.transform(inputLocs, new Function<Location, String>() {
+          @Override
+          public String apply(@Nullable Location location) {
+            return getFileSystemPath(location);
+          }
+        }));
     config.put(FileInputFormat.INPUT_DIR, inputs);
     return config;
   }
@@ -251,7 +259,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   public String getOutputFormatClassName() {
     if (isExternal) {
       throw new UnsupportedOperationException(
-        "Output is not supported for external file set '" + spec.getName() + "'");
+          "Output is not supported for external file set '" + spec.getName() + "'");
     }
     return outputFormatClassName;
   }
@@ -260,7 +268,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
   public Map<String, String> getOutputFormatConfiguration() {
     if (isExternal) {
       throw new UnsupportedOperationException(
-        "Output is not supported for external file set '" + spec.getName() + "'");
+          "Output is not supported for external file set '" + spec.getName() + "'");
     }
     Map<String, String> config = new HashMap<>();
     config.putAll(FileSetProperties.getOutputProperties(spec.getProperties()));
@@ -311,11 +319,13 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
       // by a different job.
       if (outputLocation.isDirectory() && outputLocation.list().isEmpty()) {
         if (!outputLocation.delete()) {
-          throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation));
+          throw new DataSetException(
+              String.format("Error deleting file(s) at path %s.", outputLocation));
         }
       }
     } catch (IOException ioe) {
-      throw new DataSetException(String.format("Error deleting file(s) at path %s.", outputLocation), ioe);
+      throw new DataSetException(
+          String.format("Error deleting file(s) at path %s.", outputLocation), ioe);
     }
   }
 
@@ -568,7 +578,8 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
 
     /**
-     * Finds the original {@link Location} recursively from the given location if it is a {@link FileSetLocation}.
+     * Finds the original {@link Location} recursively from the given location if it is a {@link
+     * FileSetLocation}.
      */
     private Location getOriginal(Location location) {
       if (!(location instanceof FileSetLocation)) {

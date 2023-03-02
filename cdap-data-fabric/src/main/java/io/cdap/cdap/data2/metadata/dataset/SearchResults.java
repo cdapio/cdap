@@ -19,10 +19,11 @@ package io.cdap.cdap.data2.metadata.dataset;
 import java.util.List;
 
 /**
- * Represents a list of {@link MetadataEntry} that match a search query in the metadata index, along with a
- * list of cursors to start subsequent searches from.
+ * Represents a list of {@link MetadataEntry} that match a search query in the metadata index, along
+ * with a list of cursors to start subsequent searches from.
  */
 public class SearchResults {
+
   private final List<MetadataEntry> results;
   private final List<String> cursors;
 

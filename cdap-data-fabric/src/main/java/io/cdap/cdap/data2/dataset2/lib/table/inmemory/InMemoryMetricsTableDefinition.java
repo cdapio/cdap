@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * In-memory implementation of {@link MetricsTable}.
  */
-public class InMemoryMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
+public class InMemoryMetricsTableDefinition extends
+    AbstractTableDefinition<MetricsTable, DatasetAdmin> {
 
   @Inject
   public InMemoryMetricsTableDefinition(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) String name) {
@@ -39,13 +40,13 @@ public class InMemoryMetricsTableDefinition extends AbstractTableDefinition<Metr
 
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) {
+      Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryMetricsTable(datasetContext, spec.getName(), cConf);
   }
 
   @Override
   public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                     ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     // the table management is the same as in ordered table
     return new InMemoryTableAdmin(datasetContext, spec.getName(), cConf);
   }

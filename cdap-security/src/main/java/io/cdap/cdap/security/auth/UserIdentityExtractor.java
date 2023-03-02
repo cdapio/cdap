@@ -22,9 +22,11 @@ import io.netty.handler.codec.http.HttpRequest;
  * An interface for extracting a {@link UserIdentityPair} from HTTP requests.
  */
 public interface UserIdentityExtractor {
+
   /**
    * @param request The HTTP Request to extract the user identity from
    * @return the {@link UserIdentityExtractionResponse} which contains the state and identity pair
    */
-  UserIdentityExtractionResponse extract(HttpRequest request) throws UserIdentityExtractionException;
+  UserIdentityExtractionResponse extract(HttpRequest request)
+      throws UserIdentityExtractionException;
 }

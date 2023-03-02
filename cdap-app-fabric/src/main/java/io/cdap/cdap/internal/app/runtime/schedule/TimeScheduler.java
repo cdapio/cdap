@@ -66,10 +66,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that extend
- * DefaultSchedulerService.
+ * Class that wraps Quartz scheduler. Needed to delegate start stop operations to classes that
+ * extend DefaultSchedulerService.
  */
 public final class TimeScheduler {
+
   private static final Logger LOG = LoggerFactory.getLogger(TimeScheduler.class);
   private static final String PAUSED_NEW_TRIGGERS_GROUP = "NewPausedTriggers";
 
@@ -83,7 +84,7 @@ public final class TimeScheduler {
 
   @Inject
   TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, MessagingService messagingService,
-                CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
+      CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
     this.schedulerSupplier = schedulerSupplier;
     this.messagingService = messagingService;
     this.scheduler = null;
@@ -95,7 +96,7 @@ public final class TimeScheduler {
   void init() throws SchedulerException {
     try {
       taskExecutorService = MoreExecutors.listeningDecorator(
-        Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
+          Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("time-schedule-task")));
       scheduler = schedulerSupplier.get();
       scheduler.setJobFactory(createJobFactory());
     } catch (org.quartz.SchedulerException e) {
@@ -104,19 +105,19 @@ public final class TimeScheduler {
   }
 
   /**
-   * Creates a paused group TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it if it does not exist
-   * already. This is needed so that we can add new triggers to this paused group and they will be paused too.
-   *
-   * @throws org.quartz.SchedulerException
+   * Creates a paused group TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP by adding a dummy job to it if
+   * it does not exist already. This is needed so that we can add new triggers to this paused group
+   * and they will be paused too.
    */
   private void initNewPausedTriggersGroup() throws org.quartz.SchedulerException {
     // if the dummy job does not already exists in the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
     // then create a dummy job which will create the TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP
-    if (!scheduler.checkExists(new JobKey(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP))) {
+    if (!scheduler.checkExists(
+        new JobKey(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP))) {
       JobDetail job = JobBuilder.newJob(EmptyJob.class)
-        .withIdentity(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP)
-        .storeDurably(true)
-        .build();
+          .withIdentity(EmptyJob.class.getSimpleName(), PAUSED_NEW_TRIGGERS_GROUP)
+          .storeDurably(true)
+          .build();
       scheduler.addJob(job, true);
     }
     // call pause on this group this ensures that all the new triggers added to this group will also be paused
@@ -150,7 +151,8 @@ public final class TimeScheduler {
     }
   }
 
-  public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
+  public void addProgramSchedule(ProgramSchedule schedule)
+      throws AlreadyExistsException, SchedulerException {
     // Verify every trigger does not exist first before adding any of them to Quartz scheduler
     try {
       Map<String, TriggerKey> cronTriggerKeyMap = getCronTriggerKeyMap(schedule);
@@ -193,7 +195,8 @@ public final class TimeScheduler {
     }
   }
 
-  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+  public void suspendProgramSchedule(ProgramSchedule schedule)
+      throws NotFoundException, SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
       // Must assert all trigger keys exist before processing each trigger key
@@ -206,7 +209,8 @@ public final class TimeScheduler {
     }
   }
 
-  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+  public void resumeProgramSchedule(ProgramSchedule schedule)
+      throws NotFoundException, SchedulerException {
     try {
       Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
       // Must assert all trigger keys exist before processing each trigger key
@@ -233,13 +237,15 @@ public final class TimeScheduler {
    *
    * @throws ObjectAlreadyExistsException if the corresponding schedule already exists
    */
-  private void assertTriggerDoesNotExist(TriggerKey triggerKey) throws org.quartz.SchedulerException {
+  private void assertTriggerDoesNotExist(TriggerKey triggerKey)
+      throws org.quartz.SchedulerException {
     // Once the schedule is resumed we move the trigger from TimeScheduler#PAUSED_NEW_TRIGGERS_GROUP to
     // Key#DEFAULT_GROUP so before adding check if this schedule does not exist.
     // We do not need to check for same schedule in the current list as its already checked in app configuration stage
     if (scheduler.checkExists(triggerKey)) {
-      throw new ObjectAlreadyExistsException("Unable to store Trigger with name " + triggerKey.getName() +
-                                               "because one already exists with this identification.");
+      throw new ObjectAlreadyExistsException(
+          "Unable to store Trigger with name " + triggerKey.getName() +
+              "because one already exists with this identification.");
     }
   }
 
@@ -247,24 +253,26 @@ public final class TimeScheduler {
    * Asserts all the given trigger keys exist
    */
   private void assertTriggerKeysExist(Collection<TriggerKey> triggerKeys)
-    throws SchedulerException, org.quartz.SchedulerException {
+      throws SchedulerException, org.quartz.SchedulerException {
     for (TriggerKey triggerKey : triggerKeys) {
       if (!scheduler.checkExists(triggerKey)) {
-        throw new SchedulerException("Trigger with name '" + triggerKey.getName() + "' does not exist");
+        throw new SchedulerException(
+            "Trigger with name '" + triggerKey.getName() + "' does not exist");
       }
     }
   }
 
   /**
-   * Construct a {@link JobDetail} from the given {@link ProgramId} and {@link SchedulableProgramType}.
-   * Add the {@link JobDetail} the scheduler and return it
+   * Construct a {@link JobDetail} from the given {@link ProgramId} and {@link
+   * SchedulableProgramType}. Add the {@link JobDetail} the scheduler and return it
    */
-  private JobDetail addJob(ProgramId program, SchedulableProgramType programType) throws SchedulerException {
+  private JobDetail addJob(ProgramId program, SchedulableProgramType programType)
+      throws SchedulerException {
     String jobKey = jobKeyFor(program, programType).getName();
     JobDetail job = JobBuilder.newJob(DefaultSchedulerService.ScheduledJob.class)
-      .withIdentity(jobKey)
-      .storeDurably(true)
-      .build();
+        .withIdentity(jobKey)
+        .storeDurably(true)
+        .build();
     try {
       scheduler.addJob(job, true);
       return job;
@@ -273,25 +281,27 @@ public final class TimeScheduler {
     }
   }
 
-  private void scheduleJob(TriggerKey triggerKey, String scheduleName, String cronEntry, JobDetail job)
-    throws SchedulerException {
+  private void scheduleJob(TriggerKey triggerKey, String scheduleName, String cronEntry,
+      JobDetail job)
+      throws SchedulerException {
     try {
       LOG.debug("Scheduling job {} with cron {}", scheduleName, cronEntry);
 
       TriggerBuilder trigger = TriggerBuilder.newTrigger()
-        // all new triggers are added to the paused group which will ensure that the triggers are paused too
-        .withIdentity(triggerKey.getName(), PAUSED_NEW_TRIGGERS_GROUP)
-        .forJob(job)
-        .withSchedule(CronScheduleBuilder
-                        .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
-                        .withMisfireHandlingInstructionDoNothing());
+          // all new triggers are added to the paused group which will ensure that the triggers are paused too
+          .withIdentity(triggerKey.getName(), PAUSED_NEW_TRIGGERS_GROUP)
+          .forJob(job)
+          .withSchedule(CronScheduleBuilder
+              .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
+              .withMisfireHandlingInstructionDoNothing());
       scheduler.scheduleJob(trigger.build());
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
   }
 
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException {
+  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program)
+      throws SchedulerException {
     return getScheduledRuntime(program, true);
   }
 
@@ -300,25 +310,25 @@ public final class TimeScheduler {
   }
 
   /**
-   * Get all the scheduled run time of the program within the given time range in the future.
-   * A program may contain multiple schedules. This method returns the scheduled runtimes for all the schedules
-   * within the given time range. This method only takes
-   + into account schedules based on time. For schedules based on data, an empty list will
-   + be returned.
+   * Get all the scheduled run time of the program within the given time range in the future. A
+   * program may contain multiple schedules. This method returns the scheduled runtimes for all the
+   * schedules within the given time range. This method only takes + into account schedules based on
+   * time. For schedules based on data, an empty list will + be returned.
    *
    * @param program program to fetch the next runtime.
    * @param programType type of program.
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
-   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
-   *                    will be returned)
-   * @return list of scheduled runtimes for the program. Empty list if there are no schedules
-   *         or if the program is not found
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time
+   *     larger or equal to the start will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time
+   *     smaller than the end will be returned)
+   * @return list of scheduled runtimes for the program. Empty list if there are no schedules or if
+   *     the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
-                                                        long startTimeSecs, long endTimeSecs)
-    throws SchedulerException {
+  public List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program,
+      SchedulableProgramType programType,
+      long startTimeSecs, long endTimeSecs)
+      throws SchedulerException {
     // decrease the start time by one second to include the next fire time that is equal to the start time
     Date startTime = new Date(TimeUnit.SECONDS.toMillis(startTimeSecs - 1));
     long endTimeMillis = TimeUnit.SECONDS.toMillis(endTimeSecs);
@@ -344,7 +354,7 @@ public final class TimeScheduler {
   }
 
   private List<ScheduledRuntime> getScheduledRuntime(ProgramId program,
-                                                     boolean previousRuntimeRequested) throws SchedulerException {
+      boolean previousRuntimeRequested) throws SchedulerException {
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
     SchedulableProgramType schedulableType = program.getType().getSchedulableType();
     if (schedulableType == null) {
@@ -385,11 +395,12 @@ public final class TimeScheduler {
     return new JobFactory() {
       @Override
       public Job newJob(TriggerFiredBundle bundle, org.quartz.Scheduler scheduler)
-        throws org.quartz.SchedulerException {
+          throws org.quartz.SchedulerException {
         Class<? extends Job> jobClass = bundle.getJobDetail().getJobClass();
 
         if (DefaultSchedulerService.ScheduledJob.class.isAssignableFrom(jobClass)) {
-          return new DefaultSchedulerService.ScheduledJob(messagingService, topicId, metricsCollectionService);
+          return new DefaultSchedulerService.ScheduledJob(messagingService, topicId,
+              metricsCollectionService);
         } else {
           try {
             return jobClass.newInstance();
@@ -403,23 +414,21 @@ public final class TimeScheduler {
 
   /**
    * @return Trigger keys in the map returned by {@link #getCronTriggerKeyMap(ProgramSchedule)}
-   * @throws org.quartz.SchedulerException
    */
   private Collection<TriggerKey> getGroupedTriggerKeys(ProgramSchedule schedule)
-    throws org.quartz.SchedulerException {
+      throws org.quartz.SchedulerException {
     return getCronTriggerKeyMap(schedule).values();
   }
 
   /**
-   * @return A Map with cron expression as keys and corresponding trigger key as values.
-   * Trigger keys are created from program name, programType and scheduleName (and cron expression if the trigger
-   * in the schedule is a composite trigger) and TimeScheuler#PAUSED_NEW_TRIGGERS_GROUP
-   * if it exists in this group else returns the {@link TriggerKey} prepared with null which gets it with
-   * {@link Key#DEFAULT_GROUP}
-   * @throws org.quartz.SchedulerException
+   * @return A Map with cron expression as keys and corresponding trigger key as values. Trigger
+   *     keys are created from program name, programType and scheduleName (and cron expression if
+   *     the trigger in the schedule is a composite trigger) and TimeScheuler#PAUSED_NEW_TRIGGERS_GROUP
+   *     if it exists in this group else returns the {@link TriggerKey} prepared with null which
+   *     gets it with {@link Key#DEFAULT_GROUP}
    */
   private Map<String, TriggerKey> getCronTriggerKeyMap(ProgramSchedule schedule)
-    throws org.quartz.SchedulerException {
+      throws org.quartz.SchedulerException {
     ProgramId program = schedule.getProgramId();
     SchedulableProgramType programType = program.getType().getSchedulableType();
     io.cdap.cdap.api.schedule.Trigger trigger = schedule.getTrigger();
@@ -427,31 +436,35 @@ public final class TimeScheduler {
     // Get a set of TimeTrigger if the schedule's trigger is a composite trigger
     if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
       Set<SatisfiableTrigger> triggerSet =
-        ((AbstractSatisfiableCompositeTrigger) trigger).getUnitTriggers().get(ProtoTrigger.Type.TIME);
+          ((AbstractSatisfiableCompositeTrigger) trigger).getUnitTriggers()
+              .get(ProtoTrigger.Type.TIME);
       if (triggerSet == null) {
         return ImmutableMap.of();
       }
       for (SatisfiableTrigger timeTrigger : triggerSet) {
         String cron = ((TimeTrigger) timeTrigger).getCronExpression();
         String triggerName =
-          AbstractTimeSchedulerService.getTriggerName(program, programType, schedule.getName(), cron);
+            AbstractTimeSchedulerService.getTriggerName(program, programType, schedule.getName(),
+                cron);
         cronTriggerKeyMap.put(cron, triggerKeyForName(triggerName));
       }
       return cronTriggerKeyMap;
     }
     // No need to include cron expression in trigger key if the trigger is not composite trigger
-    String triggerName = AbstractTimeSchedulerService.scheduleIdFor(program, programType, schedule.getName());
-    cronTriggerKeyMap.put(((TimeTrigger) schedule.getTrigger()).getCronExpression(), triggerKeyForName(triggerName));
+    String triggerName = AbstractTimeSchedulerService.scheduleIdFor(program, programType,
+        schedule.getName());
+    cronTriggerKeyMap.put(((TimeTrigger) schedule.getTrigger()).getCronExpression(),
+        triggerKeyForName(triggerName));
     return cronTriggerKeyMap;
   }
 
   /**
-   * @return Trigger keys created from trigger name and TimeScheuler#PAUSED_NEW_TRIGGERS_GROUP
-   * if it exists in this group else returns the {@link TriggerKey} prepared with null which gets it with
-   * {@link Key#DEFAULT_GROUP}
-   * @throws org.quartz.SchedulerException
+   * @return Trigger keys created from trigger name and TimeScheuler#PAUSED_NEW_TRIGGERS_GROUP if it
+   *     exists in this group else returns the {@link TriggerKey} prepared with null which gets it
+   *     with {@link Key#DEFAULT_GROUP}
    */
-  private synchronized TriggerKey triggerKeyForName(String name) throws org.quartz.SchedulerException {
+  private synchronized TriggerKey triggerKeyForName(String name)
+      throws org.quartz.SchedulerException {
     TriggerKey neverResumedTriggerKey = new TriggerKey(name, PAUSED_NEW_TRIGGERS_GROUP);
     if (scheduler.checkExists(neverResumedTriggerKey)) {
       return neverResumedTriggerKey;
@@ -463,11 +476,12 @@ public final class TimeScheduler {
    * Gets a {@link Trigger} associated with this program name, type and schedule name
    */
   private synchronized Trigger getTrigger(TriggerKey key, ProgramId program, String scheduleName)
-    throws org.quartz.SchedulerException, NotFoundException {
+      throws org.quartz.SchedulerException, NotFoundException {
     Trigger trigger = scheduler.getTrigger(key);
     if (trigger == null) {
-      throw new NotFoundException(String.format("Time trigger with trigger key '%s' in schedule '%s' was not found",
-                                                key.getName(), program.getParent().schedule(scheduleName).toString()));
+      throw new NotFoundException(
+          String.format("Time trigger with trigger key '%s' in schedule '%s' was not found",
+              key.getName(), program.getParent().schedule(scheduleName).toString()));
     }
     return trigger;
   }
@@ -476,6 +490,7 @@ public final class TimeScheduler {
    * An empty {@link Job} to create a group in the scheduler
    */
   private final class EmptyJob implements Job {
+
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
       // no-op

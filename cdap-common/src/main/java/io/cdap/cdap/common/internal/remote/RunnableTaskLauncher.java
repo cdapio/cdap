@@ -26,23 +26,25 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run method.
+ * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run
+ * method.
  */
 public class RunnableTaskLauncher {
+
   private final Injector injector;
 
   public RunnableTaskLauncher(CConfiguration cConf,
-                              DiscoveryService discoveryService,
-                              DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient) {
     injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new RunnableTaskModule(discoveryService, discoveryServiceClient)
+        new ConfigModule(cConf),
+        new RunnableTaskModule(discoveryService, discoveryServiceClient)
     );
   }
 
   /**
-   * Returns a {@link RunnableTaskLauncher} using an Injector. This is used to launch a {@link RunnableTask} using the
-   * calling service's guice bindings.
+   * Returns a {@link RunnableTaskLauncher} using an Injector. This is used to launch a {@link
+   * RunnableTask} using the calling service's guice bindings.
    */
   public RunnableTaskLauncher(Injector injector) {
     this.injector = injector;
@@ -59,7 +61,8 @@ public class RunnableTaskLauncher {
     Object obj = injector.getInstance(clazz);
 
     if (!(obj instanceof RunnableTask)) {
-      throw new ClassCastException(String.format("%s is not a RunnableTask", context.getClassName()));
+      throw new ClassCastException(
+          String.format("%s is not a RunnableTask", context.getClassName()));
     }
     RunnableTask runnableTask = (RunnableTask) obj;
     runnableTask.run(context);

@@ -91,19 +91,20 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final AppStateStoreProvider appStateStoreProvider;
 
   @Inject
-  public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                              TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                              MessagingService messagingService,
-                              ArtifactManagerFactory artifactManagerFactory,
-                              MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                              NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
-                              FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
-                              PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
-                              ContextAccessEnforcer contextAccessEnforcer,
-                              CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                              AppStateStoreProvider appStateStoreProvider) {
+  public ServiceProgramRunner(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
+      TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
+      SecureStore secureStore, SecureStoreManager secureStoreManager,
+      MessagingService messagingService,
+      ArtifactManagerFactory artifactManagerFactory,
+      MetadataReader metadataReader, MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
+      FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
+      PreferencesFetcher preferencesFetcher, RemoteClientFactory remoteClientFactory,
+      ContextAccessEnforcer contextAccessEnforcer,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -129,10 +130,12 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
+    int instanceId = Integer.parseInt(
+        options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
     Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
 
-    int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
+    int instanceCount = Integer.parseInt(
+        options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
     RunId runId = ProgramRunners.getRunId(options);
@@ -142,7 +145,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
-    Preconditions.checkArgument(programType == ProgramType.SERVICE, "Only Service process type is supported.");
+    Preconditions.checkArgument(programType == ProgramType.SERVICE,
+        "Only Service process type is supported.");
 
     ServiceSpecification spec = appSpec.getServices().get(program.getName());
 
@@ -152,30 +156,35 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
       ProgramId programId = program.getId();
-      ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
+      ((ProgramContextAware) datasetFramework).setContext(
+          new BasicProgramContext(programId.run(runId)));
     }
 
-    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options,
+        program.getClassLoader());
     try {
-      RetryStrategy retryStrategy = SystemArguments.getRetryStrategy(options.getUserArguments().asMap(),
-                                                                     program.getType(), cConf);
-      ArtifactManager artifactManager = artifactManagerFactory.create(program.getId().getNamespaceId(), retryStrategy);
+      RetryStrategy retryStrategy = SystemArguments.getRetryStrategy(
+          options.getUserArguments().asMap(),
+          program.getType(), cConf);
+      ArtifactManager artifactManager = artifactManagerFactory.create(
+          program.getId().getNamespaceId(), retryStrategy);
       ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
-                                                          instanceId, instanceCount, serviceAnnouncer,
-                                                          metricsCollectionService, datasetFramework,
-                                                          txClient, discoveryServiceClient,
-                                                          pluginInstantiator, secureStore, secureStoreManager,
-                                                          messagingService, artifactManager, metadataReader,
-                                                          metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          fieldLineageWriter, transactionRunner, preferencesFetcher,
-                                                          remoteClientFactory, contextAccessEnforcer,
-                                                          commonNettyHttpServiceFactory, appStateStoreProvider);
+          instanceId, instanceCount, serviceAnnouncer,
+          metricsCollectionService, datasetFramework,
+          txClient, discoveryServiceClient,
+          pluginInstantiator, secureStore, secureStoreManager,
+          messagingService, artifactManager, metadataReader,
+          metadataPublisher, namespaceQueryAdmin, pluginFinder,
+          fieldLineageWriter, transactionRunner, preferencesFetcher,
+          remoteClientFactory, contextAccessEnforcer,
+          commonNettyHttpServiceFactory, appStateStoreProvider);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
-                                                         Threads.SAME_THREAD_EXECUTOR);
+          Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId));
+      ProgramController controller = new ServiceProgramControllerAdapter(component,
+          program.getId().run(runId));
       component.start();
       return controller;
     } catch (Throwable t) {
@@ -184,7 +193,9 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     }
   }
 
-  private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
+  private static final class ServiceProgramControllerAdapter extends
+      ProgramControllerServiceAdapter {
+
     private final ServiceHttpServer service;
 
     ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId) {

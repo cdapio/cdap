@@ -50,9 +50,9 @@ import javax.annotation.Nullable;
 public class WorkflowClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
-    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
-    .create();
+      .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+      .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+      .create();
 
   private final ClientConfig config;
   private final RESTClient restClient;
@@ -74,20 +74,21 @@ public class WorkflowClient {
    * @return {@link WorkflowTokenDetail} for the specified workflow run
    */
   public WorkflowTokenDetail getWorkflowToken(ProgramRunId workflowRunId)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowToken(workflowRunId, null, null);
   }
 
   /**
-   * Retrieve all the keys in the {@link WorkflowToken} with the specified scope for the specified workflow run.
+   * Retrieve all the keys in the {@link WorkflowToken} with the specified scope for the specified
+   * workflow run.
    *
    * @param workflowRunId the run id of the workflow
    * @param scope the specified {@link WorkflowToken.Scope}
-   * @return {@link WorkflowTokenDetail} containing all the keys in the specified {@link WorkflowToken.Scope}
-   * for the specified workflow run
+   * @return {@link WorkflowTokenDetail} containing all the keys in the specified {@link
+   *     WorkflowToken.Scope} for the specified workflow run
    */
   public WorkflowTokenDetail getWorkflowToken(ProgramRunId workflowRunId, WorkflowToken.Scope scope)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowToken(workflowRunId, scope, null);
   }
 
@@ -99,7 +100,7 @@ public class WorkflowClient {
    * @return {@link WorkflowTokenDetail} containing all the values for the specified key
    */
   public WorkflowTokenDetail getWorkflowToken(ProgramRunId workflowRunId, String key)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowToken(workflowRunId, null, key);
   }
 
@@ -108,21 +109,23 @@ public class WorkflowClient {
    * {@link WorkflowToken.Scope} and key.
    *
    * @param workflowRunId the run id of the workflow
-   * @param scope the specified {@link WorkflowToken.Scope}. If null, it returns keys for
-   * {@link WorkflowToken.Scope#USER}
-   * @param key the specified key. If null, it returns all keys in the specified {@link WorkflowToken.Scope}
+   * @param scope the specified {@link WorkflowToken.Scope}. If null, it returns keys for {@link
+   *     WorkflowToken.Scope#USER}
+   * @param key the specified key. If null, it returns all keys in the specified {@link
+   *     WorkflowToken.Scope}
    * @return {@link WorkflowTokenDetail} with the specified filters
    */
-  public WorkflowTokenDetail getWorkflowToken(ProgramRunId workflowRunId, @Nullable WorkflowToken.Scope scope,
-                                              @Nullable String key)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+  public WorkflowTokenDetail getWorkflowToken(ProgramRunId workflowRunId,
+      @Nullable WorkflowToken.Scope scope,
+      @Nullable String key)
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     String path = String.format("apps/%s/workflows/%s/runs/%s/token",
-                                workflowRunId.getApplication(), workflowRunId.getProgram(),
-                                workflowRunId.getRun());
+        workflowRunId.getApplication(), workflowRunId.getProgram(),
+        workflowRunId.getRun());
     URL url = config.resolveNamespacedURLV3(workflowRunId.getNamespaceId(),
-                                            appendScopeAndKeyToUrl(path, scope, key));
+        appendScopeAndKeyToUrl(path, scope, key));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       String msg = "Either the workflow or its run id";
       if (key != null) {
@@ -130,55 +133,61 @@ public class WorkflowClient {
       }
       throw new NotFoundException(workflowRunId, msg);
     }
-    return ObjectResponse.fromJsonBody(response, WorkflowTokenDetail.class, GSON).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, WorkflowTokenDetail.class, GSON)
+        .getResponseObject();
   }
 
   /**
-   * Retrieve all the key-value pairs in a workflow run's {@link WorkflowToken} that were set by the specified node.
+   * Retrieve all the key-value pairs in a workflow run's {@link WorkflowToken} that were set by the
+   * specified node.
    *
    * @param workflowRunId the run id of the workflow
    * @param nodeName the name of the node
-   * @return {@link WorkflowTokenNodeDetail} containing all the key-value pairs set by the specified node in the
-   * specified workflow run's {@link WorkflowToken}
+   * @return {@link WorkflowTokenNodeDetail} containing all the key-value pairs set by the specified
+   *     node in the specified workflow run's {@link WorkflowToken}
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(ProgramRunId workflowRunId, String nodeName)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, null, null);
   }
 
   /**
-   * Retrieve all the key-value pairs in a workflow run's {@link WorkflowToken} that were set by the specified node
-   * in the specified {@link WorkflowToken.Scope}.
+   * Retrieve all the key-value pairs in a workflow run's {@link WorkflowToken} that were set by the
+   * specified node in the specified {@link WorkflowToken.Scope}.
    *
    * @param workflowRunId the run id of the workflow
    * @param nodeName the name of the node
    * @param scope the specified {@link WorkflowToken.Scope}
-   * @return {@link WorkflowTokenNodeDetail} containing all the keys set by the specified node with the
-   * specified {@link WorkflowToken.Scope}in the specified workflow run's {@link WorkflowToken}
+   * @return {@link WorkflowTokenNodeDetail} containing all the keys set by the specified node with
+   *     the specified {@link WorkflowToken.Scope}in the specified workflow run's {@link
+   *     WorkflowToken}
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(ProgramRunId workflowRunId, String nodeName,
-                                                        WorkflowToken.Scope scope)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      WorkflowToken.Scope scope)
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, scope, null);
   }
 
   /**
-   * Retrieve the specified key set by the specified node in a specified workflow run's {@link WorkflowToken}.
+   * Retrieve the specified key set by the specified node in a specified workflow run's {@link
+   * WorkflowToken}.
    *
    * @param workflowRunId the run id of the workflow
    * @param nodeName the name of the node
    * @param key the specified key
-   * @return {@link WorkflowTokenNodeDetail} containing the specified key set by the specified node with the
-   * specified {@link WorkflowToken.Scope}in the specified workflow run's {@link WorkflowToken}
+   * @return {@link WorkflowTokenNodeDetail} containing the specified key set by the specified node
+   *     with the specified {@link WorkflowToken.Scope}in the specified workflow run's {@link
+   *     WorkflowToken}
    */
-  public WorkflowTokenNodeDetail getWorkflowTokenAtNode(ProgramRunId workflowRunId, String nodeName, String key)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+  public WorkflowTokenNodeDetail getWorkflowTokenAtNode(ProgramRunId workflowRunId, String nodeName,
+      String key)
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     return getWorkflowTokenAtNode(workflowRunId, nodeName, null, key);
   }
 
   /**
-   * Retrieve the keys set by the specified node in the {@link WorkflowToken} for the specified workflow run
-   * filtered by the specified {@link WorkflowToken.Scope} and key.
+   * Retrieve the keys set by the specified node in the {@link WorkflowToken} for the specified
+   * workflow run filtered by the specified {@link WorkflowToken.Scope} and key.
    *
    * @param workflowRunId the run id of the workflow
    * @param nodeName the name of the node
@@ -187,15 +196,15 @@ public class WorkflowClient {
    * @return {@link WorkflowTokenDetail} with the specified filters
    */
   public WorkflowTokenNodeDetail getWorkflowTokenAtNode(ProgramRunId workflowRunId, String nodeName,
-                                                        @Nullable WorkflowToken.Scope scope, @Nullable String key)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+      @Nullable WorkflowToken.Scope scope, @Nullable String key)
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/%s/token",
-                                workflowRunId.getApplication(), workflowRunId.getProgram(),
-                                workflowRunId.getRun(), nodeName);
+        workflowRunId.getApplication(), workflowRunId.getProgram(),
+        workflowRunId.getRun(), nodeName);
     URL url = config.resolveNamespacedURLV3(workflowRunId.getNamespaceId(),
-                                            appendScopeAndKeyToUrl(path, scope, key));
+        appendScopeAndKeyToUrl(path, scope, key));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       String msg = "Either the workflow or its run id";
       if (key != null) {
@@ -203,10 +212,12 @@ public class WorkflowClient {
       }
       throw new NotFoundException(workflowRunId, msg);
     }
-    return ObjectResponse.fromJsonBody(response, WorkflowTokenNodeDetail.class, GSON).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, WorkflowTokenNodeDetail.class, GSON)
+        .getResponseObject();
   }
 
-  private String appendScopeAndKeyToUrl(String workflowTokenUrl, @Nullable WorkflowToken.Scope scope, String key) {
+  private String appendScopeAndKeyToUrl(String workflowTokenUrl,
+      @Nullable WorkflowToken.Scope scope, String key) {
     StringBuilder output = new StringBuilder(workflowTokenUrl);
     if (scope != null) {
       output.append(String.format("?scope=%s", scope.name()));
@@ -221,29 +232,36 @@ public class WorkflowClient {
 
   /**
    * Get the local datasets associated with the Workflow run.
+   *
    * @param workflowRunId run id for the Workflow
    * @return the map of local datasets to the {@link DatasetSpecificationSummary}
    * @throws IOException if the error occurred during executing the http request
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws NotFoundException if the workflow with given runid not found
    */
-  public Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(ProgramRunId workflowRunId)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, getWorkflowLocalDatasetURL(workflowRunId),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+  public Map<String, DatasetSpecificationSummary> getWorkflowLocalDatasets(
+      ProgramRunId workflowRunId)
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    HttpResponse response = restClient.execute(HttpMethod.GET,
+        getWorkflowLocalDatasetURL(workflowRunId),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(workflowRunId);
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, DatasetSpecificationSummary>>() { })
-      .getResponseObject();
+    return ObjectResponse.fromJsonBody(response,
+            new TypeToken<Map<String, DatasetSpecificationSummary>>() {
+            })
+        .getResponseObject();
   }
 
   public void deleteWorkflowLocalDatasets(ProgramRunId workflowRunId)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, getWorkflowLocalDatasetURL(workflowRunId),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    HttpResponse response = restClient.execute(HttpMethod.DELETE,
+        getWorkflowLocalDatasetURL(workflowRunId),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(workflowRunId);
@@ -251,8 +269,9 @@ public class WorkflowClient {
   }
 
   private URL getWorkflowLocalDatasetURL(ProgramRunId workflowRunId) throws MalformedURLException {
-    String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowRunId.getApplication(),
-                                workflowRunId.getProgram(), workflowRunId.getRun());
+    String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets",
+        workflowRunId.getApplication(),
+        workflowRunId.getProgram(), workflowRunId.getRun());
 
     NamespaceId namespaceId = workflowRunId.getNamespaceId();
     return config.resolveNamespacedURLV3(namespaceId, path);
@@ -260,26 +279,30 @@ public class WorkflowClient {
 
   /**
    * Get node states associated with the Workflow run.
+   *
    * @param workflowRunId run id for the Workflow
    * @return the map of node id to the {@link WorkflowNodeStateDetail}
    * @throws IOException if the error occurred during executing the http request
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws NotFoundException if the workflow with given runid not found
    */
   public Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(ProgramRunId workflowRunId)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
-    String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state", workflowRunId.getApplication(),
-                                workflowRunId.getProgram(), workflowRunId.getRun());
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+    String path = String.format("apps/%s/workflows/%s/runs/%s/nodes/state",
+        workflowRunId.getApplication(),
+        workflowRunId.getProgram(), workflowRunId.getRun());
     NamespaceId namespaceId = workflowRunId.getNamespaceId();
     URL urlPath = config.resolveNamespacedURLV3(namespaceId, path);
     HttpResponse response = restClient.execute(HttpMethod.GET, urlPath, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(workflowRunId);
     }
 
     return ObjectResponse.fromJsonBody(response,
-                                       new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }).getResponseObject();
+        new TypeToken<Map<String, WorkflowNodeStateDetail>>() {
+        }).getResponseObject();
   }
 }

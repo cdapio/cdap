@@ -53,19 +53,20 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
 
   @Inject
   SystemProgramManagementService(CConfiguration cConf, ProgramRuntimeService programRuntimeService,
-                                 ProgramLifecycleService programLifecycleService) {
+      ProgramLifecycleService programLifecycleService) {
     super(RetryStrategies
-            .fixDelay(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS), TimeUnit.SECONDS));
+        .fixDelay(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS),
+            TimeUnit.SECONDS));
     this.scheduleIntervalInMillis = TimeUnit.SECONDS
-      .toMillis(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS));
+        .toMillis(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS));
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.programsEnabled = new AtomicReference<>();
   }
 
   /**
-   * Sets the map of programs that are currently enabled along with their runtime args.
-   * The programs that are not present in map will be stopped during the next run of the service.
+   * Sets the map of programs that are currently enabled along with their runtime args. The programs
+   * that are not present in map will be stopped during the next run of the service.
    *
    * @param programsEnabled the set of programs to enable
    */
@@ -87,13 +88,14 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
     Map<ProgramId, Arguments> enabledProgramsMap = new HashMap<>(this.programsEnabled.get());
     Set<ProgramRunId> programRunsToStop = new HashSet<>();
     //Get all current runs
-    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.listAll(ProgramType.values());
+    List<ProgramRuntimeService.RuntimeInfo> runtimeInfos = programRuntimeService.listAll(
+        ProgramType.values());
     //sort by descending order of runtime
     runtimeInfos.sort((runtimeInfo1, runtimeInfo2) ->
-                        Long.compare(RunIds.getTime(runtimeInfo2.getController().getProgramRunId().getRun(),
-                                                    TimeUnit.MILLISECONDS),
-                                     RunIds.getTime(runtimeInfo1.getController().getProgramRunId().getRun(),
-                                                    TimeUnit.MILLISECONDS))
+        Long.compare(RunIds.getTime(runtimeInfo2.getController().getProgramRunId().getRun(),
+                TimeUnit.MILLISECONDS),
+            RunIds.getTime(runtimeInfo1.getController().getProgramRunId().getRun(),
+                TimeUnit.MILLISECONDS))
     );
     //Find programs to run and stop
     for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
@@ -132,7 +134,8 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
   private void stopProgram(ProgramRunId programRunId) {
     LOG.debug("Stopping program run {} ", programRunId);
     try {
-      programLifecycleService.stop(programRunId.getParent(), programRunId.getRun(), Integer.MAX_VALUE);
+      programLifecycleService.stop(programRunId.getParent(), programRunId.getRun(),
+          Integer.MAX_VALUE);
     } catch (Exception ex) {
       LOG.warn("Could not stop program run {} , will be retried .", programRunId, ex);
     }

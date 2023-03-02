@@ -25,7 +25,9 @@ import io.cdap.cdap.api.annotation.Beta;
 public class Scannables {
 
   /**
-   * Provides a way to convert a key and a value - as provided by a split reader - in to a single record object.
+   * Provides a way to convert a key and a value - as provided by a split reader - in to a single
+   * record object.
+   *
    * @param <KEY> the key type
    * @param <VALUE> the value type
    * @param <RECORD> the type representing a record
@@ -34,6 +36,7 @@ public class Scannables {
 
     /**
      * Convert a single key/value pair into a record.
+     *
      * @param key the key
      * @param value the value
      * @return the record
@@ -42,12 +45,12 @@ public class Scannables {
   }
 
   /**
-   * Given a split reader and a way to convert its key/value pairs into records, return a split record scanner that
-   * delegates all operations to the underlying split reader.
+   * Given a split reader and a way to convert its key/value pairs into records, return a split
+   * record scanner that delegates all operations to the underlying split reader.
    */
   public static <KEY, VALUE, RECORD>
   RecordScanner<RECORD> splitRecordScanner(final SplitReader<KEY, VALUE> splitReader,
-                                           final RecordMaker<KEY, VALUE, RECORD> recordMaker) {
+      final RecordMaker<KEY, VALUE, RECORD> recordMaker) {
     return new RecordScanner<RECORD>() {
       @Override
       public void initialize(Split split) throws InterruptedException {
@@ -77,8 +80,8 @@ public class Scannables {
   }
 
   /**
-   * Given a split reader and a way to convert its key/value pairs into records, return a record scanner that
-   * delegates all operations to the underlying split reader.
+   * Given a split reader and a way to convert its key/value pairs into records, return a record
+   * scanner that delegates all operations to the underlying split reader.
    */
   public static <KEY, VALUE>
   RecordScanner<VALUE> valueRecordScanner(final SplitReader<KEY, VALUE> splitReader) {

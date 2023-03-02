@@ -38,10 +38,10 @@ public class ProvisionerInfo {
   }
 
   public ProvisionerInfo(String name, @Nullable String totalProcessingCpusLabel,
-                         Collection<ProvisionerPropertyValue> properties) {
+      Collection<ProvisionerPropertyValue> properties) {
     this.name = name;
     this.properties = Collections.unmodifiableSet(
-      properties.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
+        properties.stream().filter(Objects::nonNull).collect(Collectors.toSet()));
 
     if (totalProcessingCpusLabel == null || totalProcessingCpusLabel.isEmpty()) {
       this.totalProcessingCpusLabel = DEFAULT_PROCESSING_CPUS_LABEL;
@@ -67,7 +67,8 @@ public class ProvisionerInfo {
   }
 
   /**
-   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   * Validate this is a valid object. Should be called when this is created through deserialization
+   * of user input.
    *
    * @throws IllegalArgumentException if the object is invalid
    */
@@ -90,8 +91,8 @@ public class ProvisionerInfo {
     ProvisionerInfo that = (ProvisionerInfo) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(totalProcessingCpusLabel, that.totalProcessingCpusLabel) &&
-      Objects.equals(properties, that.properties);
+        Objects.equals(totalProcessingCpusLabel, that.totalProcessingCpusLabel) &&
+        Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -102,9 +103,9 @@ public class ProvisionerInfo {
   @Override
   public String toString() {
     return "ProvisionerInfo{" +
-      "name='" + name + '\'' +
-      "totalProcessingCpusLabel='" + totalProcessingCpusLabel + '\'' +
-      ", properties=" + properties +
-      '}';
+        "name='" + name + '\'' +
+        "totalProcessingCpusLabel='" + totalProcessingCpusLabel + '\'' +
+        ", properties=" + properties +
+        '}';
   }
 }

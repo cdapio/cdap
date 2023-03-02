@@ -35,19 +35,20 @@ import javax.annotation.Nullable;
 /**
  * Keeps track of schemas for various stages of a pipeline and propagates them as they are updated.
  *
- * The {@link DefaultPipelineConfigurer DefaultPipelineConfigurers} keep state about the input, output,
- * and error schemas for each stage. As they are used to configure stages in the pipeline,
- * the output schema set by one stage must be propagated to the configurer for another stage.
- * This class performs that propagation.
+ * The {@link DefaultPipelineConfigurer DefaultPipelineConfigurers} keep state about the input,
+ * output, and error schemas for each stage. As they are used to configure stages in the pipeline,
+ * the output schema set by one stage must be propagated to the configurer for another stage. This
+ * class performs that propagation.
  */
 public class SchemaPropagator {
+
   private final Map<String, DefaultPipelineConfigurer> pluginConfigurers;
   private final Function<String, Set<String>> stageOutputsProvider;
   private final Function<String, String> stageTypeProvider;
 
   public SchemaPropagator(Map<String, DefaultPipelineConfigurer> pluginConfigurers,
-                          Function<String, Set<String>> stageOutputsProvider,
-                          Function<String, String> stageTypeProvider) {
+      Function<String, Set<String>> stageOutputsProvider,
+      Function<String, String> stageTypeProvider) {
     this.pluginConfigurers = pluginConfigurers;
     this.stageOutputsProvider = stageOutputsProvider;
     this.stageTypeProvider = stageTypeProvider;
@@ -64,16 +65,19 @@ public class SchemaPropagator {
 
     for (String nextStageName : nextStages) {
       String nextStageType = stageTypeProvider.apply(nextStageName);
-      Schema nextStageInputSchema = getNextStageInputSchema(stageSpec, nextStageName, nextStageType);
+      Schema nextStageInputSchema = getNextStageInputSchema(stageSpec, nextStageName,
+          nextStageType);
 
-      DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(nextStageName).getStageConfigurer();
+      DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(nextStageName)
+          .getStageConfigurer();
 
       // Do not allow more than one input schema for stages other than Joiner and Action
       if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)
-        && !Action.PLUGIN_TYPE.equals(nextStageType)
-        && !Condition.PLUGIN_TYPE.equals(nextStageType)
-        && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
-        throw new IllegalArgumentException("Two different input schema were set for the stage " + nextStageName);
+          && !Action.PLUGIN_TYPE.equals(nextStageType)
+          && !Condition.PLUGIN_TYPE.equals(nextStageType)
+          && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
+        throw new IllegalArgumentException(
+            "Two different input schema were set for the stage " + nextStageName);
       }
 
       outputStageConfigurer.addInputSchema(stageName, nextStageInputSchema);
@@ -82,11 +86,12 @@ public class SchemaPropagator {
   }
 
   /**
-   * Get the input schemas for the next stage that come from the current stage. Unless the current stage is a
-   * connector source, the map will always contain just a single entry.
+   * Get the input schemas for the next stage that come from the current stage. Unless the current
+   * stage is a connector source, the map will always contain just a single entry.
    */
   @Nullable
-  private Schema getNextStageInputSchema(StageSpec currentStageSpec, String nextStageName, String nextStageType) {
+  private Schema getNextStageInputSchema(StageSpec currentStageSpec, String nextStageName,
+      String nextStageType) {
     if (ErrorTransform.PLUGIN_TYPE.equals(nextStageType)) {
       // if the output stage is an error transform, it takes the error schema of this stage as its input.
       return currentStageSpec.getErrorSchema();
@@ -101,8 +106,9 @@ public class SchemaPropagator {
       } else if (portSpec.getPort() == null) {
         // null if a splitter was connected to another stage without a port specified.
         // Should not happen since it should have been validated earlier, but check here just in case
-        throw new IllegalArgumentException(String.format("Must specify a port when connecting Splitter '%s' to '%s'",
-                                                         currentStageSpec.getName(), nextStageName));
+        throw new IllegalArgumentException(
+            String.format("Must specify a port when connecting Splitter '%s' to '%s'",
+                currentStageSpec.getName(), nextStageName));
       } else {
         return portSpec.getSchema();
       }

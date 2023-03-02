@@ -76,7 +76,8 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
     return new FilterClassLoader(baseClassLoader, new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return defaultFilter.acceptResource(resource) || accessControllerResources.contains(resource);
+        return defaultFilter.acceptResource(resource) || accessControllerResources.contains(
+            resource);
       }
 
       @Override
@@ -90,19 +91,23 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
     try {
       // Trace dependencies for AccessController class. This will make classes from cdap-security-spi as well
       // as cdap-proto and other dependencies of cdap-security-spi available to the access controller extension.
-      return ClassPathResources.getResourcesWithDependencies(baseClassLoader, AccessController.class);
+      return ClassPathResources.getResourcesWithDependencies(baseClassLoader,
+          AccessController.class);
     } catch (IOException e) {
-      LOG.error("Failed to determine resources for access controller class loader while tracing dependencies of " +
-                  "AccessController.", e);
+      LOG.error(
+          "Failed to determine resources for access controller class loader while tracing dependencies of "
+              +
+              "AccessController.", e);
       return ImmutableSet.of();
     }
   }
 
   AccessControllerClassLoader(File tmpDir, File accessControllerExtensionJar,
-                              @Nullable String accessControllerExtraClasspath)
-    throws IOException, InvalidAccessControllerException {
-    super(BundleJarUtil.prepareClassLoaderFolder(accessControllerExtensionJar, () -> tmpDir).getDir(),
-          accessControllerExtraClasspath, createParent(), "lib");
+      @Nullable String accessControllerExtraClasspath)
+      throws IOException, InvalidAccessControllerException {
+    super(
+        BundleJarUtil.prepareClassLoaderFolder(accessControllerExtensionJar, () -> tmpDir).getDir(),
+        accessControllerExtraClasspath, createParent(), "lib");
     this.tmpDir = tmpDir;
     this.extensionJar = accessControllerExtensionJar;
     this.accessControllerClassName = extractAccessControllerClassName();
@@ -144,8 +149,9 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
     }
 
     // Rewrite the AccessController class to wrap every methods call with context classloader change
-    Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class, AccessController.class)
-      .flatMap(c -> Stream.of(c.getMethods())).collect(Collectors.toSet());
+    Set<java.lang.reflect.Method> accessControlMethods = Stream.of(Authorizer.class,
+            AccessController.class)
+        .flatMap(c -> Stream.of(c.getMethods())).collect(Collectors.toSet());
 
     ClassReader cr = new ClassReader(input);
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
@@ -154,14 +160,15 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
       private String superName;
 
       @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      public void visit(int version, int access, String name, String signature, String superName,
+          String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
         this.superName = superName;
       }
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
-                                       String signature, String[] exceptions) {
+          String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 
         Method method = new Method(name, descriptor);
@@ -194,19 +201,23 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
           }
           // Generate the method by calling super.[method]
           String signature = Signatures.getMethodSignature(
-            method, TypeToken.of(m.getGenericReturnType()),
-            Arrays.stream(m.getGenericParameterTypes()).map(TypeToken::of).toArray(TypeToken[]::new));
-          String[] exceptions = Arrays.stream(m.getExceptionTypes()).map(Type::getInternalName).toArray(String[]::new);
+              method, TypeToken.of(m.getGenericReturnType()),
+              Arrays.stream(m.getGenericParameterTypes()).map(TypeToken::of)
+                  .toArray(TypeToken[]::new));
+          String[] exceptions = Arrays.stream(m.getExceptionTypes()).map(Type::getInternalName)
+              .toArray(String[]::new);
 
-          MethodVisitor mv = rewriteMethod(Opcodes.ACC_PUBLIC, method.getName(), method.getDescriptor(),
-                                           visitMethod(Opcodes.ACC_PUBLIC, method.getName(),
-                                                       method.getDescriptor(), signature, exceptions));
+          MethodVisitor mv = rewriteMethod(Opcodes.ACC_PUBLIC, method.getName(),
+              method.getDescriptor(),
+              visitMethod(Opcodes.ACC_PUBLIC, method.getName(),
+                  method.getDescriptor(), signature, exceptions));
 
           GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC, method, mv);
           generator.visitCode();
           generator.loadThis();
           generator.loadArgs();
-          generator.visitMethodInsn(Opcodes.INVOKESPECIAL, superName, method.getName(), method.getDescriptor(), false);
+          generator.visitMethodInsn(Opcodes.INVOKESPECIAL, superName, method.getName(),
+              method.getDescriptor(), false);
           generator.returnValue();
           generator.endMethod();
         });
@@ -218,7 +229,8 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
        * Rewrites the method by wrapping the whole method call with the context classloader switch to the
        * AccessControllerClassLoader.
        */
-      private MethodVisitor rewriteMethod(int access, String name, String descriptor, MethodVisitor mv) {
+      private MethodVisitor rewriteMethod(int access, String name, String descriptor,
+          MethodVisitor mv) {
         return new FinallyAdapter(Opcodes.ASM7, mv, access, name, descriptor) {
 
           int currentThread;
@@ -228,25 +240,26 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
           protected void onMethodEnter() {
             // Thread currentThread = Thread.currentThread();
             invokeStatic(THREAD_TYPE,
-                         new Method("currentThread", THREAD_TYPE, new Type[0]));
+                new Method("currentThread", THREAD_TYPE, new Type[0]));
             currentThread = newLocal(THREAD_TYPE);
             storeLocal(currentThread, THREAD_TYPE);
 
             // ClassLoader oldClassLoader = currentThread.getContextClassLoader();
             loadLocal(currentThread, THREAD_TYPE);
             invokeVirtual(THREAD_TYPE,
-                          new Method("getContextClassLoader", CLASSLOADER_TYPE, new Type[0]));
+                new Method("getContextClassLoader", CLASSLOADER_TYPE, new Type[0]));
             oldClassLoader = newLocal(CLASSLOADER_TYPE);
             storeLocal(oldClassLoader, CLASSLOADER_TYPE);
 
             // currentThread.setContextClassLoader(getClass().getClassLoader());
             loadLocal(currentThread, THREAD_TYPE);
             loadThis();
-            invokeVirtual(Type.getType(Object.class), new Method("getClass", Type.getType(Class.class), new Type[0]));
+            invokeVirtual(Type.getType(Object.class),
+                new Method("getClass", Type.getType(Class.class), new Type[0]));
             invokeVirtual(Type.getType(Class.class),
-                          new Method("getClassLoader", CLASSLOADER_TYPE, new Type[0]));
+                new Method("getClassLoader", CLASSLOADER_TYPE, new Type[0]));
             invokeVirtual(THREAD_TYPE,
-                          new Method("setContextClassLoader", Type.VOID_TYPE, new Type[] { CLASSLOADER_TYPE }));
+                new Method("setContextClassLoader", Type.VOID_TYPE, new Type[]{CLASSLOADER_TYPE}));
             beginTry();
           }
 
@@ -256,7 +269,7 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
             loadLocal(currentThread, THREAD_TYPE);
             loadLocal(oldClassLoader, CLASSLOADER_TYPE);
             invokeVirtual(THREAD_TYPE,
-                          new Method("setContextClassLoader", Type.VOID_TYPE, new Type[] { CLASSLOADER_TYPE }));
+                new Method("setContextClassLoader", Type.VOID_TYPE, new Type[]{CLASSLOADER_TYPE}));
           }
         };
       }
@@ -271,21 +284,25 @@ public class AccessControllerClassLoader extends DirectoryClassLoader {
   private String extractAccessControllerClassName() throws InvalidAccessControllerException {
     Manifest manifest = getManifest();
     if (manifest == null) {
-      throw new InvalidAccessControllerException("Missing Manifest from the Access Control extension");
+      throw new InvalidAccessControllerException(
+          "Missing Manifest from the Access Control extension");
     }
 
     Attributes manifestAttributes = manifest.getMainAttributes();
     if (manifestAttributes == null) {
       throw new InvalidAccessControllerException(
-        String.format("No attributes found in access control extension jar '%s'.", extensionJar));
+          String.format("No attributes found in access control extension jar '%s'.", extensionJar));
     }
     if (!manifestAttributes.containsKey(Attributes.Name.MAIN_CLASS)) {
       throw new InvalidAccessControllerException(
-        String.format("Access Controller class not set in the manifest of the access controle extension jar " +
-                        "located at %s. " +
-                        "Please set the attribute %s to the fully qualified class name of the class that " +
-                        "implements %s in the extension jar's manifest.",
-                      extensionJar, Attributes.Name.MAIN_CLASS, AccessController.class.getName()));
+          String.format(
+              "Access Controller class not set in the manifest of the access controle extension jar "
+                  +
+                  "located at %s. " +
+                  "Please set the attribute %s to the fully qualified class name of the class that "
+                  +
+                  "implements %s in the extension jar's manifest.",
+              extensionJar, Attributes.Name.MAIN_CLASS, AccessController.class.getName()));
     }
     return manifestAttributes.getValue(Attributes.Name.MAIN_CLASS);
   }

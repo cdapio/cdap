@@ -24,7 +24,8 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 /**
  * Configurer for configuring {@link MapReduce}.
  */
-public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer, PluginConfigurer {
+public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigurer,
+    PluginConfigurer {
 
   /**
    * Sets the resources requirement for the driver of the MapReduce.

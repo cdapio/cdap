@@ -22,6 +22,7 @@ import java.util.Map;
  * CDAP namespace details.
  */
 public class NamespaceDetail {
+
   private final String name;
   private final Map<String, String> properties;
 

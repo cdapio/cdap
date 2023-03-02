@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * Holds application metadata
  */
 public class ApplicationMeta {
+
   private static final ApplicationSpecificationAdapter ADAPTER = ApplicationSpecificationAdapter.create();
 
   private final String id;
@@ -37,7 +38,7 @@ public class ApplicationMeta {
   private final SourceControlMeta sourceControlMeta;
 
   public ApplicationMeta(String id, ApplicationSpecification spec,
-                         @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
+      @Nullable ChangeDetail change, @Nullable SourceControlMeta sourceControlMeta) {
     this.id = id;
     this.spec = spec;
     this.change = change;
@@ -69,10 +70,10 @@ public class ApplicationMeta {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("id", id)
-      .add("spec", ADAPTER.toJson(spec))
-      .add("change", change)
-      .add("sourceControlMeta", sourceControlMeta)
-      .toString();
+        .add("id", id)
+        .add("spec", ADAPTER.toJson(spec))
+        .add("change", change)
+        .add("sourceControlMeta", sourceControlMeta)
+        .toString();
   }
 }

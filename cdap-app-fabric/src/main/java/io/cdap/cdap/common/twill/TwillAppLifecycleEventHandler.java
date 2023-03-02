@@ -51,15 +51,15 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
- * A Twill {@link EventHandler} that responds to Twill application lifecycle events and aborts the application if
- * it cannot provision container for some runnable.
+ * A Twill {@link EventHandler} that responds to Twill application lifecycle events and aborts the
+ * application if it cannot provision container for some runnable.
  */
 public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
 
   private RunId twillRunId;
   private ProgramRunId programRunId;
@@ -70,12 +70,13 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private LogAppenderInitializer logAppenderInitializer;
 
   /**
-   * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some runnable has not enough
-   * containers.
-   * @param abortTime Time in milliseconds to pass before aborting the application if no container is given to
-   *                  a runnable.
-   * @param abortIfNotFull If {@code true}, it will abort the application if any runnable doesn't meet the expected
-   *                       number of instances.
+   * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some
+   * runnable has not enough containers.
+   *
+   * @param abortTime Time in milliseconds to pass before aborting the application if no
+   *     container is given to a runnable.
+   * @param abortIfNotFull If {@code true}, it will abort the application if any runnable
+   *     doesn't meet the expected number of instances.
    */
   public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull) {
     super(abortTime, abortIfNotFull);
@@ -89,8 +90,10 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     this.twillRunId = context.getRunId();
 
     // Fetch cConf and hConf from resources jar
-    File cConfFile = new File("resources.jar/resources/" + DistributedProgramRunner.CDAP_CONF_FILE_NAME);
-    File hConfFile = new File("resources.jar/resources/" + DistributedProgramRunner.HADOOP_CONF_FILE_NAME);
+    File cConfFile = new File(
+        "resources.jar/resources/" + DistributedProgramRunner.CDAP_CONF_FILE_NAME);
+    File hConfFile = new File(
+        "resources.jar/resources/" + DistributedProgramRunner.HADOOP_CONF_FILE_NAME);
 
     if (!cConfFile.exists()) {
       // This shouldn't happen, unless CDAP is misconfigured
@@ -110,13 +113,14 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       }
 
       ProgramOptions programOpts = createProgramOptions(
-        new File("resources.jar/resources/" + DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME));
+          new File(
+              "resources.jar/resources/" + DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME));
       ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
       programRunId = programOpts.getProgramId().run(ProgramRunners.getRunId(programOpts));
 
       // Create the injector to create a program state writer
       Injector injector = Guice.createInjector(new DistributedProgramContainerModule(cConf, hConf,
-                                                                                     programRunId, programOpts));
+          programRunId, programOpts));
 
       if (clusterMode == ClusterMode.ON_PREMISE) {
         zkClientService = injector.getInstance(ZKClientService.class);
@@ -124,7 +128,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       }
 
       LoggingContextAccessor.setLoggingContext(
-        LoggingContextHelper.getLoggingContextWithRunId(programRunId, programOpts.getArguments().asMap()));
+          LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+              programOpts.getArguments().asMap()));
 
       logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
       logAppenderInitializer.initialize();
@@ -133,7 +138,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
       MessagingService messagingService = injector.getInstance(MessagingService.class);
       programStateWriterWithHeartBeat =
-        new ProgramStateWriterWithHeartBeat(programRunId, programStateWriter, messagingService, cConf);
+          new ProgramStateWriterWithHeartBeat(programRunId, programStateWriter, messagingService,
+              cConf);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -168,7 +174,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   }
 
   @Override
-  public void containerStopped(String runnableName, int instanceId, String containerId, int exitStatus) {
+  public void containerStopped(String runnableName, int instanceId, String containerId,
+      int exitStatus) {
     super.containerStopped(runnableName, instanceId, containerId, exitStatus);
 
     // Let the completed() method handle when a container has completed with no error
@@ -176,14 +183,15 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       return;
     }
 
-    switch(programRunId.getType()) {
+    switch (programRunId.getType()) {
       case WORKFLOW:
       case SPARK:
       case MAPREDUCE:
         // For workflow, MapReduce, and spark, if there is an error, the program state is failure
         // We defer the actual publish to one of the completion methods (killed, completed, aborted)
         // as we need to know under what condition the container failed.
-        lastContainerFailure = new ContainerFailure(runnableName, instanceId, containerId, exitStatus);
+        lastContainerFailure = new ContainerFailure(runnableName, instanceId, containerId,
+            exitStatus);
         break;
       default:
         // For other programs, the container will be re-launched - the program state will continue to be RUNNING
@@ -197,7 +205,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void aborted() {
     super.aborted();
     programStateWriterWithHeartBeat.error(
-      new Exception(String.format("No containers for %s. Abort the application", programRunId)));
+        new Exception(String.format("No containers for %s. Abort the application", programRunId)));
   }
 
   @Override
@@ -209,16 +217,18 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   }
 
   private ProgramOptions createProgramOptions(File programOptionsFile) throws IOException {
-    try (Reader reader = Files.newBufferedReader(programOptionsFile.toPath(), StandardCharsets.UTF_8)) {
+    try (Reader reader = Files.newBufferedReader(programOptionsFile.toPath(),
+        StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, ProgramOptions.class);
     }
   }
 
   /**
-   * Inner class for hold failure information provided to the {@link #containerStopped(String, int, String, int)}
-   * method.
+   * Inner class for hold failure information provided to the {@link #containerStopped(String, int,
+   * String, int)} method.
    */
   private static final class ContainerFailure {
+
     private final String runnableName;
     private final int instanceId;
     private final String containerId;
@@ -232,8 +242,9 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     }
 
     void writeError(ProgramStateWriterWithHeartBeat writer) {
-      String errorMessage = String.format("Container %s of Runnable %s with instance %s stopped with exit status %d",
-                                          containerId, runnableName, instanceId, exitStatus);
+      String errorMessage = String.format(
+          "Container %s of Runnable %s with instance %s stopped with exit status %d",
+          containerId, runnableName, instanceId, exitStatus);
       writer.error(new Exception(errorMessage));
     }
   }

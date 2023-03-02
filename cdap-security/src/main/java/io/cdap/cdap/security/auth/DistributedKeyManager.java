@@ -38,19 +38,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link KeyManager} implementation that distributes shared secret keys via ZooKeeper to all instances, so that all
- * distributed instances maintain the same local cache of keys.  Instances of this class will perform leader election,
- * so that one instance functions as the "active" leader at a time.  The leader is responsible for periodically
- * generating a new secret key (with the frequency based on the configured value for
- * {@link Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION}.  Prior keys are retained for as long as necessary to
- * ensure that any previously issued, non-expired tokens may be validated.  Once a previously used key's age exceeds
- * {@link Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION} plus {@link Constants.Security#TOKEN_EXPIRATION},
+ * {@link KeyManager} implementation that distributes shared secret keys via ZooKeeper to all
+ * instances, so that all distributed instances maintain the same local cache of keys.  Instances of
+ * this class will perform leader election, so that one instance functions as the "active" leader at
+ * a time.  The leader is responsible for periodically generating a new secret key (with the
+ * frequency based on the configured value for {@link Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION}.
+ * Prior keys are retained for as long as necessary to ensure that any previously issued,
+ * non-expired tokens may be validated.  Once a previously used key's age exceeds {@link
+ * Constants.Security#TOKEN_DIGEST_KEY_EXPIRATION} plus {@link Constants.Security#TOKEN_EXPIRATION},
  * the key can safely be removed.
  */
-public class DistributedKeyManager extends AbstractKeyManager implements ResourceListener<KeyIdentifier> {
+public class DistributedKeyManager extends AbstractKeyManager implements
+    ResourceListener<KeyIdentifier> {
+
   /**
-   * Default execution frequency for the key update thread.  This is normally set much lower than the key expiration
-   * interval to keep rotations happening at approximately the set frequency.
+   * Default execution frequency for the key update thread.  This is normally set much lower than
+   * the key expiration interval to keep rotations happening at approximately the set frequency.
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
@@ -69,13 +72,14 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     this(conf, codec, zookeeper, getACLs(conf));
   }
 
-  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
+  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper,
+      List<ACL> acls) {
     super(conf);
     String parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION);
     this.maxTokenExpiration = Math.max(
-      conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
-      conf.getLong(Constants.Security.TOKEN_EXPIRATION));
+        conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
+        conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
 
     if (acls.isEmpty()) {
@@ -146,7 +150,8 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyIdent : keyCache.getResources()) {
       // we can only remove keys that expired prior to the oldest non-expired token
       if (keyIdent.getExpiration() < (now - maxTokenExpiration)) {
-        LOG.debug("Removing expired key: id={}, expiration={}", keyIdent.getKeyId(), keyIdent.getExpiration());
+        LOG.debug("Removing expired key: id={}, expiration={}", keyIdent.getKeyId(),
+            keyIdent.getExpiration());
         keyCache.remove(Integer.toString(keyIdent.getKeyId()));
       }
     }
@@ -203,6 +208,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   /**
    * Applies Zookeeper ACLs if Kerberos is enabled.
+   *
    * @param cConf configuration object
    * @return Zookeeper ACLs
    */

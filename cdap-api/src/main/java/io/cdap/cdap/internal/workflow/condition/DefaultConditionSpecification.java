@@ -35,7 +35,7 @@ public class DefaultConditionSpecification implements ConditionSpecification {
   private final Set<String> datasets;
 
   public DefaultConditionSpecification(String className, String name, String description,
-                                       Map<String, String> properties, Set<String> datasets) {
+      Map<String, String> properties, Set<String> datasets) {
     this.className = className;
     this.name = name;
     this.description = description;

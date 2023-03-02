@@ -43,20 +43,23 @@ import org.apache.twill.filesystem.LocationFactory;
  * Distributed ProgramRunner for Worker.
  */
 public class DistributedWorkerProgramRunner extends DistributedProgramRunner
-                                            implements LongRunningDistributedProgramRunner {
+    implements LongRunningDistributedProgramRunner {
+
   @Inject
   DistributedWorkerProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
-                                 Impersonator impersonator, ClusterMode clusterMode,
-                                 @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
-                                 Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
+      Impersonator impersonator, ClusterMode clusterMode,
+      @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+      Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner,
+        injector.getInstance(LocationFactory.class));
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     }
   }
 
   @Override
-  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+  public ProgramController createProgramController(ProgramRunId programRunId,
+      TwillController twillController) {
     return new WorkerTwillProgramController(programRunId, twillController).startListen();
   }
 
@@ -69,22 +72,24 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.WORKER, "Only WORKER process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.WORKER,
+        "Only WORKER process type is supported.");
 
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
     Preconditions.checkNotNull(workerSpec, "Missing WorkerSpecification for %s", program.getName());
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
-                                   CConfiguration cConf, Configuration hConf, File tempDir) {
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program,
+      ProgramOptions options,
+      CConfiguration cConf, Configuration hConf, File tempDir) {
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     WorkerSpecification workerSpec = appSpec.getWorkers().get(program.getName());
 
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
-                                                        String.valueOf(workerSpec.getInstances()));
+        String.valueOf(workerSpec.getInstances()));
     launchConfig.addRunnable(workerSpec.getName(), new WorkerTwillRunnable(workerSpec.getName()),
-                             Integer.parseInt(instances), options.getUserArguments().asMap(),
-                             workerSpec.getResources());
+        Integer.parseInt(instances), options.getUserArguments().asMap(),
+        workerSpec.getResources());
   }
 }

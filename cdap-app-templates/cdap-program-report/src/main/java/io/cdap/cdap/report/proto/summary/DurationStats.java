@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents the statistics of durations of all program runs.
  */
 public class DurationStats {
+
   private final long min;
   private final long max;
   private final double average;
@@ -64,8 +65,8 @@ public class DurationStats {
 
     DurationStats that = (DurationStats) o;
     return Objects.equal(min, that.min) &&
-      Objects.equal(max, that.max) &&
-      Objects.equal(average, that.average);
+        Objects.equal(max, that.max) &&
+        Objects.equal(average, that.average);
   }
 
   @Override

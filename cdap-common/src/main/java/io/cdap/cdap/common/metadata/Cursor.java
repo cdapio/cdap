@@ -24,10 +24,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * A cursor represents the continuation of an existing search query. It therefore encapsulates
- * all the search options, such as offset and limit, sorting, namespaces, etc.
+ * A cursor represents the continuation of an existing search query. It therefore encapsulates all
+ * the search options, such as offset and limit, sorting, namespaces, etc.
  */
 public class Cursor {
+
   private final int offset;
   private final int limit;
   private final boolean showHidden;
@@ -41,16 +42,15 @@ public class Cursor {
   /**
    * Constructor from all components.
    *
-   * The only parameter that may contain the ':' character is the query itself. If
-   * other parameters contain a ':', then the {@link #fromString(String)} is not
-   * expected to work properly.
+   * The only parameter that may contain the ':' character is the query itself. If other parameters
+   * contain a ':', then the {@link #fromString(String)} is not expected to work properly.
    */
   public Cursor(int offset, int limit, boolean showHidden,
-                @Nullable MetadataScope scope,
-                @Nullable Set<String> namespaces,
-                @Nullable Set<String> types,
-                @Nullable String sorting,
-                String actualCursor, String query) {
+      @Nullable MetadataScope scope,
+      @Nullable Set<String> namespaces,
+      @Nullable Set<String> types,
+      @Nullable String sorting,
+      String actualCursor, String query) {
     this.offset = offset;
     this.limit = limit;
     this.showHidden = showHidden;
@@ -63,12 +63,13 @@ public class Cursor {
   }
 
   /**
-   * Constructor that inherits all parameters from an existing cursor, except the offset and actual cursor.
+   * Constructor that inherits all parameters from an existing cursor, except the offset and actual
+   * cursor.
    */
   public Cursor(Cursor other, int newOffset, String newActual) {
     this(newOffset, other.limit, other.showHidden,
-         other.scope, other.namespaces, other.types,
-         other.sorting, newActual, other.query);
+        other.scope, other.namespaces, other.types,
+        other.sorting, newActual, other.query);
   }
 
   public int getOffset() {
@@ -117,37 +118,39 @@ public class Cursor {
     }
     Cursor cursor = (Cursor) o;
     return offset == cursor.offset &&
-      limit == cursor.limit &&
-      showHidden == cursor.showHidden &&
-      scope == cursor.scope &&
-      Objects.equals(namespaces, cursor.namespaces) &&
-      Objects.equals(types, cursor.types) &&
-      Objects.equals(sorting, cursor.sorting) &&
-      Objects.equals(actualCursor, cursor.actualCursor) &&
-      Objects.equals(query, cursor.query);
+        limit == cursor.limit &&
+        showHidden == cursor.showHidden &&
+        scope == cursor.scope &&
+        Objects.equals(namespaces, cursor.namespaces) &&
+        Objects.equals(types, cursor.types) &&
+        Objects.equals(sorting, cursor.sorting) &&
+        Objects.equals(actualCursor, cursor.actualCursor) &&
+        Objects.equals(query, cursor.query);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(offset, limit, showHidden, scope, namespaces, types, sorting, actualCursor, query);
+    return Objects.hash(offset, limit, showHidden, scope, namespaces, types, sorting, actualCursor,
+        query);
   }
 
   @Override
   public String toString() {
     return String.format("%s:%s:%s:%s:%s:%s:%s:%s:%s",
-                         offset, limit, showHidden,
-                         scope == null ? "" : scope.name(),
-                         namespaces == null ? "" : Joiner.on(",").join(namespaces),
-                         types == null ? "" : Joiner.on(",").join(types),
-                         sorting == null ? "" : sorting,
-                         actualCursor,
-                         query);
+        offset, limit, showHidden,
+        scope == null ? "" : scope.name(),
+        namespaces == null ? "" : Joiner.on(",").join(namespaces),
+        types == null ? "" : Joiner.on(",").join(types),
+        sorting == null ? "" : sorting,
+        actualCursor,
+        query);
   }
 
   public static Cursor fromString(String str) {
     String[] parts = str.split(":", 9);
     if (parts.length != 9) {
-      throw new IllegalArgumentException("Cursor must have exactly 9 components, but has only " + parts.length);
+      throw new IllegalArgumentException(
+          "Cursor must have exactly 9 components, but has only " + parts.length);
     }
     int offset = Integer.parseInt(parts[0]);
     int limit = Integer.parseInt(parts[1]);

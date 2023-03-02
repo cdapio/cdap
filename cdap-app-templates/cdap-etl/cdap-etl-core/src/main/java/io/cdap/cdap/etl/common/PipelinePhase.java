@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
  */
 public class PipelinePhase implements Iterable<StageSpec>, Serializable {
+
   // plugin type -> stage info
   private final Map<String, Set<StageSpec>> stagesByType;
   private final Map<String, StageSpec> stagesByName;
@@ -78,7 +79,7 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
 
   public Set<StageSpec> getStagesOfType(String... pluginTypes) {
     Set<StageSpec> stageSpecs = new HashSet<>();
-    for (String pluginType: pluginTypes) {
+    for (String pluginType : pluginTypes) {
       Set<StageSpec> typeStages = stagesByType.get(pluginType);
       if (typeStages != null) {
         stageSpecs.addAll(typeStages);
@@ -108,12 +109,14 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
 
   public Set<String> getSources() {
     // null dag means there's just one stage, which is both a source and a sink
-    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName()) : dag.getSources();
+    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName())
+        : dag.getSources();
   }
 
   public Set<String> getSinks() {
     // null dag means there's just one stage, which is both a source and a sink
-    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName()) : dag.getSinks();
+    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName())
+        : dag.getSinks();
   }
 
   public int size() {
@@ -126,8 +129,8 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
   }
 
   /**
-   * Get a subset of the pipeline phase, starting from the sources and going to the specified nodes that will
-   * be the new sinks of the pipeline subset.
+   * Get a subset of the pipeline phase, starting from the sources and going to the specified nodes
+   * that will be the new sinks of the pipeline subset.
    *
    * @param newSinks the new sinks to go to
    * @return subset of the pipeline, starting from current sources and going to the new sinks
@@ -137,10 +140,12 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
   }
 
   /**
-   * Get a subset of the pipeline phase, starting from the specified new sources and going to the current sinks.
+   * Get a subset of the pipeline phase, starting from the specified new sources and going to the
+   * current sinks.
    *
    * @param newSources the new sources to start from
-   * @return subset of the pipeline, starting from specified new sources and going to the current sinks
+   * @return subset of the pipeline, starting from specified new sources and going to the current
+   *     sinks
    */
   public PipelinePhase subsetFrom(Set<String> newSources) {
     return getSubset(dag.subsetFrom(newSources));
@@ -168,8 +173,8 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
     PipelinePhase that = (PipelinePhase) o;
 
     return Objects.equals(stagesByType, that.stagesByType) &&
-      Objects.equals(stagesByName, that.stagesByName) &&
-      Objects.equals(dag, that.dag);
+        Objects.equals(stagesByName, that.stagesByName) &&
+        Objects.equals(dag, that.dag);
   }
 
   @Override
@@ -180,33 +185,36 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
   @Override
   public String toString() {
     return "PipelinePhase{" +
-      "stagesByType=" + stagesByType +
-      ", stagesByName=" + stagesByName +
-      ", dag=" + dag +
-      '}';
+        "stagesByType=" + stagesByType +
+        ", stagesByName=" + stagesByName +
+        ", dag=" + dag +
+        '}';
   }
 
   /**
-   * Registers all the plugin to the given pluginConfigurer by calling {@link PluginConfigurer#usePluginClass(String,
-   * String, String, PluginProperties, PluginSelector)}
+   * Registers all the plugin to the given pluginConfigurer by calling {@link
+   * PluginConfigurer#usePluginClass(String, String, String, PluginProperties, PluginSelector)}
    *
-   * @param pluginConfigurer the {@link PluginConfigurer} to which the plugins in this {@link PipelinePhase} needs to be
-   * registered
-   * @param runtimeConfigurer the runtime configurer to provide runtime arguments to resolve macro better, null
-   *                          if this is the initial deploy
+   * @param pluginConfigurer the {@link PluginConfigurer} to which the plugins in this {@link
+   *     PipelinePhase} needs to be registered
+   * @param runtimeConfigurer the runtime configurer to provide runtime arguments to resolve
+   *     macro better, null if this is the initial deploy
    * @param namespace namespace the app is deployed
    */
-  public void registerPlugins(PluginConfigurer pluginConfigurer, @Nullable RuntimeConfigurer runtimeConfigurer,
-                              String namespace) {
+  public void registerPlugins(PluginConfigurer pluginConfigurer,
+      @Nullable RuntimeConfigurer runtimeConfigurer,
+      String namespace) {
     MacroParserOptions options = MacroParserOptions.builder().skipInvalidMacros().setEscaping(false)
-                                   .setFunctionWhitelist(ConnectionMacroEvaluator.FUNCTION_NAME).build();
+        .setFunctionWhitelist(ConnectionMacroEvaluator.FUNCTION_NAME).build();
     MacroEvaluator runtimeEvaluator = null;
     if (runtimeConfigurer != null) {
       Map<String, MacroEvaluator> evaluators = Collections.singletonMap(
-        ConnectionMacroEvaluator.FUNCTION_NAME, new ConnectionMacroEvaluator(namespace, runtimeConfigurer));
+          ConnectionMacroEvaluator.FUNCTION_NAME,
+          new ConnectionMacroEvaluator(namespace, runtimeConfigurer));
       runtimeEvaluator = new DefaultMacroEvaluator(
-        new BasicArguments(runtimeConfigurer.getRuntimeArguments()), evaluators, Collections.singleton(
-        ConnectionMacroEvaluator.FUNCTION_NAME));
+          new BasicArguments(runtimeConfigurer.getRuntimeArguments()), evaluators,
+          Collections.singleton(
+              ConnectionMacroEvaluator.FUNCTION_NAME));
     }
     for (StageSpec stageSpec : stagesByName.values()) {
       // we don't need to register connectors only source, sink and transform plugins
@@ -216,14 +224,15 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
       PluginSpec pluginSpec = stageSpec.getPlugin();
       ArtifactVersion version = pluginSpec.getArtifact().getVersion();
       ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getArtifact().getScope(),
-                                                               pluginSpec.getArtifact().getName(),
-                                                               new ArtifactVersionRange(version, true, version, true));
+          pluginSpec.getArtifact().getName(),
+          new ArtifactVersionRange(version, true, version, true));
       Map<String, String> prop = pluginSpec.getProperties();
-      pluginConfigurer.usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),
-                                      PluginProperties.builder().addAll(
-                                        runtimeConfigurer == null ? prop :
-                                          pluginConfigurer.evaluateMacros(prop, runtimeEvaluator, options)).build(),
-                                      artifactSelector);
+      pluginConfigurer.usePluginClass(pluginSpec.getType(), pluginSpec.getName(),
+          stageSpec.getName(),
+          PluginProperties.builder().addAll(
+              runtimeConfigurer == null ? prop :
+                  pluginConfigurer.evaluateMacros(prop, runtimeEvaluator, options)).build(),
+          artifactSelector);
     }
   }
 
@@ -246,6 +255,7 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
    * Builder to create a {@link PipelinePhase}.
    */
   public static class Builder {
+
     private final Set<String> supportedPluginTypes;
     private final Set<StageSpec> stages;
     private final Set<io.cdap.cdap.etl.proto.Connection> connections;
@@ -260,8 +270,8 @@ public class PipelinePhase implements Iterable<StageSpec>, Serializable {
       String pluginType = stageSpec.getPluginType();
       if (!supportedPluginTypes.contains(pluginType)) {
         throw new IllegalArgumentException(
-          String.format("%s is an unsupported plugin type. Plugin type must be one of %s.",
-                        pluginType, Joiner.on(',').join(supportedPluginTypes)));
+            String.format("%s is an unsupported plugin type. Plugin type must be one of %s.",
+                pluginType, Joiner.on(',').join(supportedPluginTypes)));
       }
       stages.add(stageSpec);
       return this;

@@ -25,8 +25,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.StoreDefinition;
 
 /**
- * This is to for log handler to access run records. Log handler cannot use Store directly because watchdog module
- * doesn't have dependency on app-fabric.
+ * This is to for log handler to access run records. Log handler cannot use Store directly because
+ * watchdog module doesn't have dependency on app-fabric.
  */
 public class ProgramStore {
 

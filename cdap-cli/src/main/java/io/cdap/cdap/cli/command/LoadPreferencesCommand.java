@@ -38,13 +38,16 @@ import java.util.Map;
  * Command to load a config property file.
  */
 public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
+
   private static final String SUCCESS = "Load Preferences File was successful for the '%s'";
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private final ElementType type;
 
-  protected LoadPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected LoadPreferencesCommand(ElementType type, PreferencesClient client,
+      CLIConfig cliConfig) {
     super(type, client, cliConfig);
     this.type = type;
   }
@@ -69,11 +72,13 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
       if (contentType.equals("json")) {
         args = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
       } else {
-        throw new IllegalArgumentException("Unsupported file format. Only JSON format is supported");
+        throw new IllegalArgumentException(
+            "Unsupported file format. Only JSON format is supported");
       }
     } catch (JsonSyntaxException e) {
       throw new BadRequestException(
-        String.format("JSON syntax in file is invalid. Support only for string-to-string map. %s", e.getMessage()));
+          String.format("JSON syntax in file is invalid. Support only for string-to-string map. %s",
+              e.getMessage()));
     }
     setPreferences(arguments, printStream, args);
   }
@@ -86,6 +91,6 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
   @Override
   public String getDescription() {
     return String.format("Sets the preferences of %s from a local JSON config file",
-                         Fragment.of(Article.A, type.getName()));
+        Fragment.of(Article.A, type.getName()));
   }
 }

@@ -36,9 +36,10 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
   public static final String INPUT_END_TIME = "input.end.time";
 
   /**
-   * Set the time of the output partition when using TimePartitionedFileSet as an OutputFormatProvider.
-   * This time is used as the partition key for the new file, and also to generate an output file path - if that path
-   * is not explicitly given as an argument itself.
+   * Set the time of the output partition when using TimePartitionedFileSet as an
+   * OutputFormatProvider. This time is used as the partition key for the new file, and also to
+   * generate an output file path - if that path is not explicitly given as an argument itself.
+   *
    * @param time The time in milli seconds.
    */
   public static void setOutputPartitionTime(Map<String, String> arguments, long time) {
@@ -58,34 +59,39 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
   }
 
   /**
-   * This is the file extension for each partition when using TimePartitionedFileSet as an OutputFormatProvider.
-   * It's used to generate the end of the output file path for each partition.
+   * This is the file extension for each partition when using TimePartitionedFileSet as an
+   * OutputFormatProvider. It's used to generate the end of the output file path for each
+   * partition.
+   *
    * @param pathFormat The format for the path; for example: 'yyyy-MM-dd/HH-mm,America/Los_Angeles',
-   *                   which will create a file path ending in the format of 2015-01-01/20-42,
-   *                   with the time of the partition being the time in the timezone of Los Angeles (PST or PDT).
-   *                   The pathFormat will be the format provided to
-   *                   {@link java.text.SimpleDateFormat}. If left blank, then the partitions will be of the form
-   *                   2015-01-01/20-42.142017372000, with the time being the time UTC.
-   *                   Note that each partition must have a unique file path or a runtime exception will be thrown.
+   *     which will create a file path ending in the format of 2015-01-01/20-42, with the time of
+   *     the partition being the time in the timezone of Los Angeles (PST or PDT). The pathFormat
+   *     will be the format provided to {@link java.text.SimpleDateFormat}. If left blank, then the
+   *     partitions will be of the form 2015-01-01/20-42.142017372000, with the time being the time
+   *     UTC. Note that each partition must have a unique file path or a runtime exception will be
+   *     thrown.
    */
   public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat) {
     setOutputPathFormat(arguments, pathFormat, null);
   }
 
   /**
-   * This is the file extension for each partition when using TimePartitionedFileSet as an OutputFormatProvider.
-   * It's used to generate the end of the output file path for each partition.
+   * This is the file extension for each partition when using TimePartitionedFileSet as an
+   * OutputFormatProvider. It's used to generate the end of the output file path for each
+   * partition.
+   *
    * @param pathFormat The format for the path; for example: 'yyyy-MM-dd/HH-mm,America/Los_Angeles',
-   *                   which will create a file path ending in the format of 2015-01-01/20-42,
-   *                   with the time of the partition being the time in the timezone of Los Angeles (PST or PDT).
-   *                   The pathFormat will be the format provided to
-   *                   {@link java.text.SimpleDateFormat}. If left blank, then the partitions will be of the form
-   *                   2015-01-01/20-42.142017372000, with the time being the time UTC.
-   *                   Note that each partition must have a unique file path or a runtime exception will be thrown.
-   * @param timeZone The string ID of the time zone. It is parsed by {@link TimeZone#getTimeZone(String)},
-   *                 and if the string ID is not a valid time zone, UTC is used.
+   *     which will create a file path ending in the format of 2015-01-01/20-42, with the time of
+   *     the partition being the time in the timezone of Los Angeles (PST or PDT). The pathFormat
+   *     will be the format provided to {@link java.text.SimpleDateFormat}. If left blank, then the
+   *     partitions will be of the form 2015-01-01/20-42.142017372000, with the time being the time
+   *     UTC. Note that each partition must have a unique file path or a runtime exception will be
+   *     thrown.
+   * @param timeZone The string ID of the time zone. It is parsed by {@link
+   *     TimeZone#getTimeZone(String)}, and if the string ID is not a valid time zone, UTC is used.
    */
-  public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat, @Nullable String timeZone) {
+  public static void setOutputPathFormat(Map<String, String> arguments, String pathFormat,
+      @Nullable String timeZone) {
     long curTime = System.currentTimeMillis();
     boolean hasTimeZone = timeZone != null && !timeZone.isEmpty();
     try {
@@ -104,8 +110,8 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
   }
 
   /**
-   * This is the file extension for each partition when using TimePartitionedFileSet as an OutputFormatProvider.
-   * It's used to generate the end of the output file path for each partition.
+   * This is the file extension for each partition when using TimePartitionedFileSet as an
+   * OutputFormatProvider. It's used to generate the end of the output file path for each partition.
    * May be null.
    */
   @Nullable
@@ -115,8 +121,8 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
 
   /**
    * This is the time zone used to format the date for the output partition.
-   * @return The String ID of the time zone of the date.
-   * May be null.
+   *
+   * @return The String ID of the time zone of the date. May be null.
    */
   @Nullable
   public static String getOutputPathTimeZone(Map<String, String> arguments) {
@@ -125,6 +131,7 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
 
   /**
    * Set the start (inclusive) of the time range to be read as input.
+   *
    * @param time The time in milli seconds.
    */
   public static void setInputStartTime(Map<String, String> arguments, long time) {
@@ -145,6 +152,7 @@ public class TimePartitionedFileSetArguments extends PartitionedFileSetArguments
 
   /**
    * Set the end (exclusive) of the time range to be read as input.
+   *
    * @param time The time in milli seconds.
    */
   public static void setInputEndTime(Map<String, String> arguments, long time) {

@@ -42,18 +42,18 @@ public class ArtifactCommands extends CommandSet<Command> implements Categorized
   @Inject
   public ArtifactCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(DeleteArtifactCommand.class))
-        .add(injector.getInstance(DescribeArtifactCommand.class))
-        .add(injector.getInstance(DescribeArtifactPluginCommand.class))
-        .add(injector.getInstance(GetArtifactPropertiesCommand.class))
-        .add(injector.getInstance(ListArtifactsCommand.class))
-        .add(injector.getInstance(ListArtifactPluginTypesCommand.class))
-        .add(injector.getInstance(ListArtifactPluginsCommand.class))
-        .add(injector.getInstance(ListArtifactVersionsCommand.class))
-        .add(injector.getInstance(LoadArtifactCommand.class))
-        .add(injector.getInstance(SetArtifactPropertiesCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(DeleteArtifactCommand.class))
+            .add(injector.getInstance(DescribeArtifactCommand.class))
+            .add(injector.getInstance(DescribeArtifactPluginCommand.class))
+            .add(injector.getInstance(GetArtifactPropertiesCommand.class))
+            .add(injector.getInstance(ListArtifactsCommand.class))
+            .add(injector.getInstance(ListArtifactPluginTypesCommand.class))
+            .add(injector.getInstance(ListArtifactPluginsCommand.class))
+            .add(injector.getInstance(ListArtifactVersionsCommand.class))
+            .add(injector.getInstance(LoadArtifactCommand.class))
+            .add(injector.getInstance(SetArtifactPropertiesCommand.class))
+            .build());
   }
 
   @Override

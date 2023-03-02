@@ -28,11 +28,13 @@ import java.util.Objects;
  * Represents a single time series defined by a metric name and set of tag values.
  */
 public final class MetricTimeSeries {
+
   private final String metricName;
   private final Map<String, String> tagValues;
   private final List<TimeValue> timeValues;
 
-  public MetricTimeSeries(String metricName, Map<String, String> tagValues, List<TimeValue> timeValues) {
+  public MetricTimeSeries(String metricName, Map<String, String> tagValues,
+      List<TimeValue> timeValues) {
     this.metricName = metricName;
     this.tagValues = Collections.unmodifiableMap(new HashMap<>(tagValues));
     this.timeValues = Collections.unmodifiableList(new ArrayList<>(timeValues));
@@ -62,8 +64,8 @@ public final class MetricTimeSeries {
     MetricTimeSeries that = (MetricTimeSeries) o;
 
     return Objects.equals(metricName, that.metricName) &&
-      Objects.equals(tagValues, that.tagValues) &&
-      Objects.equals(timeValues, that.timeValues);
+        Objects.equals(tagValues, that.tagValues) &&
+        Objects.equals(timeValues, that.timeValues);
   }
 
   @Override
@@ -74,9 +76,9 @@ public final class MetricTimeSeries {
   @Override
   public String toString() {
     return "MetricTimeSeries{" +
-      "metricName='" + metricName + '\'' +
-      ", tagValues=" + tagValues +
-      ", timeValues=" + timeValues +
-      '}';
+        "metricName='" + metricName + '\'' +
+        ", tagValues=" + tagValues +
+        ", timeValues=" + timeValues +
+        '}';
   }
 }

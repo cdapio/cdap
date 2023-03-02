@@ -27,11 +27,14 @@ import org.jboss.resteasy.plugins.guice.GuiceResteasyBootstrapServletContextList
 /**
  * RestEasy context listener used to bind handlers. Enables usage of JAX-RS annotations.
  */
-public class AuthenticationGuiceServletContextListener extends GuiceResteasyBootstrapServletContextListener {
+public class AuthenticationGuiceServletContextListener extends
+    GuiceResteasyBootstrapServletContextListener {
+
   private final Map<String, Object> handlerMap;
 
   /**
    * Create an AuthenticationGuiceServletContextListener that binds handlers.
+   *
    * @param handlerMap map of handlers.
    */
   public AuthenticationGuiceServletContextListener(Map<String, Object> handlerMap) {
@@ -41,13 +44,14 @@ public class AuthenticationGuiceServletContextListener extends GuiceResteasyBoot
   @Override
   protected List<? extends Module> getModules(ServletContext context) {
     return Lists.newArrayList(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(GrantAccessToken.class).toInstance(
-            (GrantAccessToken) handlerMap.get(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
-          );
-        }
-      });
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(GrantAccessToken.class).toInstance(
+                (GrantAccessToken) handlerMap.get(
+                    ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
+            );
+          }
+        });
   }
 }

@@ -33,8 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link MessageFetcher} that fetch messages directly
- * from {@link MessageTable} and {@link PayloadTable}.
+ * Implementation of {@link MessageFetcher} that fetch messages directly from {@link MessageTable}
+ * and {@link PayloadTable}.
  */
 final class CoreMessageFetcher extends MessageFetcher {
 
@@ -45,8 +45,8 @@ final class CoreMessageFetcher extends MessageFetcher {
   private final TableProvider<PayloadTable> payloadTableProvider;
 
   CoreMessageFetcher(TopicMetadata topicMetadata,
-                     TableProvider<MessageTable> messageTableProvider,
-                     TableProvider<PayloadTable> payloadTableProvider) {
+      TableProvider<MessageTable> messageTableProvider,
+      TableProvider<PayloadTable> payloadTableProvider) {
     this.topicMetadata = topicMetadata;
     this.messageTableProvider = messageTableProvider;
     this.payloadTableProvider = payloadTableProvider;
@@ -70,41 +70,49 @@ final class CoreMessageFetcher extends MessageFetcher {
   private MessageId createMessageTableMessageId(MessageId messageId) {
     // Create a new MessageId with write timestamp and payload seqId = 0
     byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
-    MessageId.putRawId(messageId.getPublishTimestamp(), messageId.getSequenceId(), 0L, (short) 0, rawId, 0);
+    MessageId.putRawId(messageId.getPublishTimestamp(), messageId.getSequenceId(), 0L, (short) 0,
+        rawId, 0);
     return new MessageId(rawId);
   }
 
   /**
-   * Creates a raw message id from the given {@link MessageTable.Entry} and {@link PayloadTable.Entry}.
+   * Creates a raw message id from the given {@link MessageTable.Entry} and {@link
+   * PayloadTable.Entry}.
    *
    * @param messageEntry entry in the message table representing a message
-   * @param payloadEntry an optional entry in the payload table if the message payload is stored in the Payload Table
+   * @param payloadEntry an optional entry in the payload table if the message payload is stored
+   *     in the Payload Table
    * @return a byte array representing the raw message id.
    */
-  private byte[] createMessageId(MessageTable.Entry messageEntry, @Nullable PayloadTable.Entry payloadEntry) {
+  private byte[] createMessageId(MessageTable.Entry messageEntry,
+      @Nullable PayloadTable.Entry payloadEntry) {
     long writeTimestamp = payloadEntry == null ? 0L : payloadEntry.getPayloadWriteTimestamp();
     short payloadSeqId = payloadEntry == null ? 0 : payloadEntry.getPayloadSequenceId();
     return createMessageId(messageEntry, writeTimestamp, payloadSeqId);
   }
 
   /**
-   * Creates a raw message id from the given {@link MessageTable.Entry} and the payload write timestamp and sequence id.
+   * Creates a raw message id from the given {@link MessageTable.Entry} and the payload write
+   * timestamp and sequence id.
    *
    * @param messageEntry entry in the message table representing a message
-   * @param payloadWriteTimestamp the timestamp that the entry was written to the payload table.
-   * @param payloadSeqId the sequence id generated when the entry was written to the payload table.
+   * @param payloadWriteTimestamp the timestamp that the entry was written to the payload
+   *     table.
+   * @param payloadSeqId the sequence id generated when the entry was written to the payload
+   *     table.
    * @return a byte array representing the raw message id.
    */
-  private byte[] createMessageId(MessageTable.Entry messageEntry, long payloadWriteTimestamp, short payloadSeqId) {
+  private byte[] createMessageId(MessageTable.Entry messageEntry, long payloadWriteTimestamp,
+      short payloadSeqId) {
     byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
     MessageId.putRawId(messageEntry.getPublishTimestamp(), messageEntry.getSequenceId(),
-                       payloadWriteTimestamp, payloadSeqId, rawId, 0);
+        payloadWriteTimestamp, payloadSeqId, rawId, 0);
     return rawId;
   }
 
   /**
-   * Calls the {@link AutoCloseable#close()} on the given {@link AutoCloseable} without throwing exception.
-   * If there is exception raised, it will be logged but never thrown out.
+   * Calls the {@link AutoCloseable#close()} on the given {@link AutoCloseable} without throwing
+   * exception. If there is exception raised, it will be logged but never thrown out.
    */
   private void closeQuietly(@Nullable AutoCloseable closeable) {
     if (closeable == null) {
@@ -118,8 +126,8 @@ final class CoreMessageFetcher extends MessageFetcher {
   }
 
   /**
-   * A {@link CloseableIterator} of {@link RawMessage} implementation that contains the core message fetching logic
-   * by combine scanning on both {@link MessageTable} and {@link PayloadTable}.
+   * A {@link CloseableIterator} of {@link RawMessage} implementation that contains the core message
+   * fetching logic by combine scanning on both {@link MessageTable} and {@link PayloadTable}.
    */
   private final class MessageCloseableIterator implements CloseableIterator<RawMessage> {
 
@@ -151,17 +159,20 @@ final class CoreMessageFetcher extends MessageFetcher {
       // If there is no startOffset or if the publish time in the startOffset is smaller then TTL,
       // do the scanning based on time. The smallest start time should be the currentTime - TTL.
       if (startOffset == null || startOffset.getPublishTimestamp() < smallestPublishTime) {
-        long fetchStartTime = Math.max(smallestPublishTime, startTime == null ? smallestPublishTime : startTime);
-        messageIterator = messageTable.fetch(topicMetadata, fetchStartTime, messageLimit, getTransaction());
+        long fetchStartTime = Math.max(smallestPublishTime,
+            startTime == null ? smallestPublishTime : startTime);
+        messageIterator = messageTable.fetch(topicMetadata, fetchStartTime, messageLimit,
+            getTransaction());
       } else {
         // Start scanning based on the start message id
         if (startOffset.getPayloadWriteTimestamp() != 0L) {
           // This message ID refer to payload table. Scan the message table with the reference message ID inclusively.
-          messageIterator = messageTable.fetch(topicMetadata, createMessageTableMessageId(startOffset),
-                                               true, messageLimit, getTransaction());
+          messageIterator = messageTable.fetch(topicMetadata,
+              createMessageTableMessageId(startOffset),
+              true, messageLimit, getTransaction());
         } else {
           messageIterator = messageTable.fetch(topicMetadata, startOffset, isIncludeStart(),
-                                               messageLimit, getTransaction());
+              messageLimit, getTransaction());
         }
       }
       this.messageIterator = messageIterator;
@@ -179,7 +190,8 @@ final class CoreMessageFetcher extends MessageFetcher {
         if (payloadIterator != null && payloadIterator.hasNext()) {
           PayloadTable.Entry payloadEntry = payloadIterator.next();
           // messageEntry is guaranteed to be non-null if payloadIterator is non-null
-          nextMessage = new RawMessage(createMessageId(messageEntry, payloadEntry), payloadEntry.getPayload());
+          nextMessage = new RawMessage(createMessageId(messageEntry, payloadEntry),
+              payloadEntry.getPayload());
           break;
         }
 
@@ -196,13 +208,15 @@ final class CoreMessageFetcher extends MessageFetcher {
               closeQuietly(payloadIterator);
 
               MessageId payloadStartOffset = startOffset == null
-                ? new MessageId(createMessageId(messageEntry, null))
-                : new MessageId(createMessageId(messageEntry, startOffset.getPayloadWriteTimestamp(),
-                                                startOffset.getPayloadSequenceId()));
+                  ? new MessageId(createMessageId(messageEntry, null))
+                  : new MessageId(
+                      createMessageId(messageEntry, startOffset.getPayloadWriteTimestamp(),
+                          startOffset.getPayloadSequenceId()));
 
               // If startOffset is not used, always fetch with inclusive.
-              payloadIterator = payloadTable.fetch(topicMetadata, messageEntry.getTransactionWritePointer(),
-                                                   payloadStartOffset, startOffset == null || inclusive, messageLimit);
+              payloadIterator = payloadTable.fetch(topicMetadata,
+                  messageEntry.getTransactionWritePointer(),
+                  payloadStartOffset, startOffset == null || inclusive, messageLimit);
               // The start offset is only used for the first payloadIterator being constructed.
               startOffset = null;
             } catch (IOException e) {
@@ -210,7 +224,8 @@ final class CoreMessageFetcher extends MessageFetcher {
             }
           } else {
             // Otherwise, the message entry is the next message
-            nextMessage = new RawMessage(createMessageId(messageEntry, null), messageEntry.getPayload());
+            nextMessage = new RawMessage(createMessageId(messageEntry, null),
+                messageEntry.getPayload());
           }
         } else {
           // If there is no more message from the message iterator as well, then no more message to fetch

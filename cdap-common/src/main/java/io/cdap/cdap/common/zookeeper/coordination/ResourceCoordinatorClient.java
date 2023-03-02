@@ -55,20 +55,21 @@ public final class ResourceCoordinatorClient extends AbstractService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ResourceCoordinatorClient.class);
   private static final Function<NodeData, ResourceRequirement> NODE_DATA_TO_REQUIREMENT =
-    new Function<NodeData, ResourceRequirement>() {
-      @Override
-      public ResourceRequirement apply(@Nullable NodeData input) {
-        if (input == null) {
-          return null;
+      new Function<NodeData, ResourceRequirement>() {
+        @Override
+        public ResourceRequirement apply(@Nullable NodeData input) {
+          if (input == null) {
+            return null;
+          }
+          try {
+            return CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(input.getData());
+          } catch (Throwable t) {
+            LOG.error("Failed to decode resource requirement: {}",
+                Bytes.toStringBinary(input.getData()), t);
+            throw Throwables.propagate(t);
+          }
         }
-        try {
-          return CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(input.getData());
-        } catch (Throwable t) {
-          LOG.error("Failed to decode resource requirement: {}", Bytes.toStringBinary(input.getData()), t);
-          throw Throwables.propagate(t);
-        }
-      }
-  };
+      };
 
   private final ZKClient zkClient;
   private final Multimap<String, AssignmentChangeListener> changeListeners;
@@ -87,48 +88,51 @@ public final class ResourceCoordinatorClient extends AbstractService {
    * Submits the given {@link ResourceRequirement} for allocation.
    *
    * @param requirement The requirement to be submitted.
-   * @return A {@link ListenableFuture} that will be completed when submission is completed and it'll carry the
-   *         submitted requirement as result. The future will fail if failed to submit the requirement. Calling
-   *         {@link ListenableFuture#cancel(boolean)} has no effect.
+   * @return A {@link ListenableFuture} that will be completed when submission is completed and
+   *     it'll carry the submitted requirement as result. The future will fail if failed to submit
+   *     the requirement. Calling {@link ListenableFuture#cancel(boolean)} has no effect.
    */
   public ListenableFuture<ResourceRequirement> submitRequirement(ResourceRequirement requirement) {
     String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + requirement.getName();
     return ZKExtOperations.createOrSet(zkClient, zkPath, Suppliers.ofInstance(requirement),
-                                       CoordinationConstants.RESOURCE_REQUIREMENT_CODEC,
-                                       CoordinationConstants.MAX_ZK_FAILURE_RETRY);
+        CoordinationConstants.RESOURCE_REQUIREMENT_CODEC,
+        CoordinationConstants.MAX_ZK_FAILURE_RETRY);
   }
 
   /**
    * Modify an existing {@link ResourceRequirement}.
    *
    * @param name Resource name
-   * @param modifier A function to modify an existing requirement. The function might get called multiple times
-   *                 if there are concurrent modifications from multiple clients.
-   * @return A {@link ListenableFuture} that will be completed when submission is completed and it'll carry the
-   *         modified requirement as result or {@code null} if the modifier decided not to modify the requirement.
-   *         The future will fail if failed to submit the requirement.
-   *         Calling {@link ListenableFuture#cancel(boolean)} has no effect.
+   * @param modifier A function to modify an existing requirement. The function might get called
+   *     multiple times if there are concurrent modifications from multiple clients.
+   * @return A {@link ListenableFuture} that will be completed when submission is completed and
+   *     it'll carry the modified requirement as result or {@code null} if the modifier decided not
+   *     to modify the requirement. The future will fail if failed to submit the requirement.
+   *     Calling {@link ListenableFuture#cancel(boolean)} has no effect.
    */
-  public ListenableFuture<ResourceRequirement> modifyRequirement(String name, final ResourceModifier modifier) {
+  public ListenableFuture<ResourceRequirement> modifyRequirement(String name,
+      final ResourceModifier modifier) {
     String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + name;
-    return ZKExtOperations.updateOrCreate(zkClient, zkPath, modifier, CoordinationConstants.RESOURCE_REQUIREMENT_CODEC);
+    return ZKExtOperations.updateOrCreate(zkClient, zkPath, modifier,
+        CoordinationConstants.RESOURCE_REQUIREMENT_CODEC);
   }
 
   /**
    * Fetches the {@link ResourceRequirement} for the given resource.
    *
    * @param resourceName Name of the resource.
-   * @return A {@link ListenableFuture} that will be completed when the requirement is fetch. A {@code null} result
-   *         will be set into the future if no such requirement exists. The future will fail if failed to fetch
-   *         the requirement due to error other than requirement not exists.
-   *         Calling {@link ListenableFuture#cancel(boolean)} has no effect.
+   * @return A {@link ListenableFuture} that will be completed when the requirement is fetch. A
+   *     {@code null} result will be set into the future if no such requirement exists. The future
+   *     will fail if failed to fetch the requirement due to error other than requirement not
+   *     exists. Calling {@link ListenableFuture#cancel(boolean)} has no effect.
    */
   public ListenableFuture<ResourceRequirement> fetchRequirement(String resourceName) {
     String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + resourceName;
 
     return Futures.transform(
-      ZKOperations.ignoreError(zkClient.getData(zkPath), KeeperException.NoNodeException.class, null),
-      NODE_DATA_TO_REQUIREMENT
+        ZKOperations.ignoreError(zkClient.getData(zkPath), KeeperException.NoNodeException.class,
+            null),
+        NODE_DATA_TO_REQUIREMENT
     );
   }
 
@@ -136,21 +140,23 @@ public final class ResourceCoordinatorClient extends AbstractService {
    * Deletes the {@link ResourceRequirement} for the given resource.
    *
    * @param resourceName Name of the resource.
-   * @return A {@link ListenableFuture} that will be completed when the requirement is successfully removed.
-   *         If the requirement doesn't exists, the deletion would still be treated as successful.
+   * @return A {@link ListenableFuture} that will be completed when the requirement is successfully
+   *     removed. If the requirement doesn't exists, the deletion would still be treated as
+   *     successful.
    */
   public ListenableFuture<String> deleteRequirement(String resourceName) {
     String zkPath = CoordinationConstants.REQUIREMENTS_PATH + "/" + resourceName;
 
     return Futures.transform(
-      ZKOperations.ignoreError(zkClient.delete(zkPath), KeeperException.NoNodeException.class, resourceName),
-      Functions.constant(resourceName)
+        ZKOperations.ignoreError(zkClient.delete(zkPath), KeeperException.NoNodeException.class,
+            resourceName),
+        Functions.constant(resourceName)
     );
   }
 
   /**
-   * Subscribes for changes in resource assignment. Upon subscription started,
-   * the {@link AssignmentChangeListener#onChange(ResourceAssignment)} method will be invoked to receive the
+   * Subscribes for changes in resource assignment. Upon subscription started, the {@link
+   * AssignmentChangeListener#onChange(ResourceAssignment)} method will be invoked to receive the
    * current assignment if it exists.
    *
    * @param serviceName Name of the service to watch for changes.
@@ -158,7 +164,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
    * @return A {@link Cancellable} for cancelling the subscription.
    */
   public synchronized Cancellable subscribe(String serviceName, AssignmentChangeListener listener) {
-    AssignmentChangeListenerCaller caller = new AssignmentChangeListenerCaller(serviceName, listener);
+    AssignmentChangeListenerCaller caller = new AssignmentChangeListenerCaller(serviceName,
+        listener);
 
     if (serviceWatched.add(serviceName)) {
       // Not yet watching ZK, add the handler and start watching ZK for changes in assignment.
@@ -179,7 +186,7 @@ public final class ResourceCoordinatorClient extends AbstractService {
   @Override
   protected void doStart() {
     handlerExecutor = Executors.newSingleThreadExecutor(
-      Threads.createDaemonThreadFactory("resource-coordinator-client"));
+        Threads.createDaemonThreadFactory("resource-coordinator-client"));
     notifyStarted();
   }
 
@@ -205,7 +212,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
   /**
    * Calls the {@link ResourceHandler#finished(Throwable)} method on all existing handlers.
    *
-   * @param failureCause Failure reason for finish or {@code null} if finish is not due to failure.
+   * @param failureCause Failure reason for finish or {@code null} if finish is not due to
+   *     failure.
    */
   private synchronized void finishHandlers(Throwable failureCause) {
     for (AssignmentChangeListener listener : changeListeners.values()) {
@@ -220,41 +228,46 @@ public final class ResourceCoordinatorClient extends AbstractService {
     final String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + serviceName;
 
     // Watch for both getData() and exists() call
-    Watcher watcher = wrapWatcher(new AssignmentWatcher(serviceName, EnumSet.of(Watcher.Event.EventType.NodeDataChanged,
-                                                                                Watcher.Event.EventType.NodeDeleted)));
+    Watcher watcher = wrapWatcher(
+        new AssignmentWatcher(serviceName, EnumSet.of(Watcher.Event.EventType.NodeDataChanged,
+            Watcher.Event.EventType.NodeDeleted)));
 
-    Futures.addCallback(zkClient.getData(zkPath, watcher), wrapCallback(new FutureCallback<NodeData>() {
-      @Override
-      public void onSuccess(NodeData result) {
-        try {
-          ResourceAssignment assignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(result.getData());
-          LOG.debug("Received resource assignment for {}. {}", serviceName, assignment.getAssignments());
+    Futures.addCallback(zkClient.getData(zkPath, watcher),
+        wrapCallback(new FutureCallback<NodeData>() {
+          @Override
+          public void onSuccess(NodeData result) {
+            try {
+              ResourceAssignment assignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(
+                  result.getData());
+              LOG.debug("Received resource assignment for {}. {}", serviceName,
+                  assignment.getAssignments());
 
-          handleAssignmentChange(serviceName, assignment);
-        } catch (Exception e) {
-          LOG.error("Failed to decode ResourceAssignment {}", Bytes.toStringBinary(result.getData()), e);
-        }
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        if (t instanceof KeeperException.NoNodeException) {
-          // Treat it as assignment has been removed. If the node doesn't exists for the first time fetch data,
-          // there will be no oldAssignment, hence the following call would be a no-op.
-          handleAssignmentChange(serviceName, new ResourceAssignment(serviceName));
-
-          // Watch for exists if it still interested
-          synchronized (ResourceCoordinatorClient.this) {
-            if (changeListeners.containsKey(serviceName)) {
-              watchAssignmentOnExists(serviceName);
+              handleAssignmentChange(serviceName, assignment);
+            } catch (Exception e) {
+              LOG.error("Failed to decode ResourceAssignment {}",
+                  Bytes.toStringBinary(result.getData()), e);
             }
           }
-        } else {
-          LOG.error("Failed to getData on ZK {}{}", zkClient.getConnectString(), zkPath, t);
-          doNotifyFailed(t);
-        }
-      }
-    }), Threads.SAME_THREAD_EXECUTOR);
+
+          @Override
+          public void onFailure(Throwable t) {
+            if (t instanceof KeeperException.NoNodeException) {
+              // Treat it as assignment has been removed. If the node doesn't exists for the first time fetch data,
+              // there will be no oldAssignment, hence the following call would be a no-op.
+              handleAssignmentChange(serviceName, new ResourceAssignment(serviceName));
+
+              // Watch for exists if it still interested
+              synchronized (ResourceCoordinatorClient.this) {
+                if (changeListeners.containsKey(serviceName)) {
+                  watchAssignmentOnExists(serviceName);
+                }
+              }
+            } else {
+              LOG.error("Failed to getData on ZK {}{}", zkClient.getConnectString(), zkPath, t);
+              doNotifyFailed(t);
+            }
+          }
+        }), Threads.SAME_THREAD_EXECUTOR);
   }
 
   /**
@@ -264,7 +277,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
    */
   private void watchAssignmentOnExists(final String serviceName) {
     final String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + serviceName;
-    Watcher watcher = wrapWatcher(new AssignmentWatcher(serviceName, EnumSet.of(Watcher.Event.EventType.NodeCreated)));
+    Watcher watcher = wrapWatcher(
+        new AssignmentWatcher(serviceName, EnumSet.of(Watcher.Event.EventType.NodeCreated)));
     Futures.addCallback(zkClient.exists(zkPath, watcher), wrapCallback(new FutureCallback<Stat>() {
       @Override
       public void onSuccess(Stat result) {
@@ -286,7 +300,8 @@ public final class ResourceCoordinatorClient extends AbstractService {
    *
    * @param newAssignment The updated assignment.
    */
-  private synchronized void handleAssignmentChange(String serviceName, ResourceAssignment newAssignment) {
+  private synchronized void handleAssignmentChange(String serviceName,
+      ResourceAssignment newAssignment) {
     ResourceAssignment oldAssignment = assignments.get(serviceName);
 
     // Nothing changed.
@@ -355,8 +370,9 @@ public final class ResourceCoordinatorClient extends AbstractService {
   }
 
   /**
-   * Wraps a {@link AssignmentChangeListener} so that it's always invoked from the handler executor. It also make sure
-   * upon {@link AssignmentChangeListener#finished(Throwable)} is called, it get removed from the listener list.
+   * Wraps a {@link AssignmentChangeListener} so that it's always invoked from the handler executor.
+   * It also make sure upon {@link AssignmentChangeListener#finished(Throwable)} is called, it get
+   * removed from the listener list.
    */
   private final class AssignmentChangeListenerCaller implements AssignmentChangeListener {
 
@@ -426,9 +442,11 @@ public final class ResourceCoordinatorClient extends AbstractService {
   }
 
   /**
-   * Cancellable that delegates to the {@link AssignmentChangeListenerCaller#finished(Throwable)} method.
+   * Cancellable that delegates to the {@link AssignmentChangeListenerCaller#finished(Throwable)}
+   * method.
    */
   private static final class AssignmentListenerCancellable implements Cancellable {
+
     private final AssignmentChangeListenerCaller caller;
 
     private AssignmentListenerCancellable(AssignmentChangeListenerCaller caller) {

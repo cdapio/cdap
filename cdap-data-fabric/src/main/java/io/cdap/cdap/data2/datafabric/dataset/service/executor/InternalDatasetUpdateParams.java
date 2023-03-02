@@ -28,7 +28,7 @@ final class InternalDatasetUpdateParams extends InternalDatasetCreationParams {
   private final DatasetSpecification existingSpec;
 
   InternalDatasetUpdateParams(DatasetTypeMeta typeMeta,
-                              DatasetSpecification existingSpec, DatasetProperties instanceProps) {
+      DatasetSpecification existingSpec, DatasetProperties instanceProps) {
     super(typeMeta, instanceProps);
     this.existingSpec = existingSpec;
   }

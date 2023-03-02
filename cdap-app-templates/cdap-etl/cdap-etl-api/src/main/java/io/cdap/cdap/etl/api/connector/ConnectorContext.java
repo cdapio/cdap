@@ -33,9 +33,9 @@ public interface ConnectorContext {
   FailureCollector getFailureCollector();
 
   /**
-   * Returns the plugin configurer.
-   * This is useful when the connector is not able to determine which plugin to use during configure time.
-   * For example, file related connectors do not know which format plugin to use without the path
+   * Returns the plugin configurer. This is useful when the connector is not able to determine which
+   * plugin to use during configure time. For example, file related connectors do not know which
+   * format plugin to use without the path
    *
    * @return the plugin configurer
    */

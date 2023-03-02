@@ -31,6 +31,7 @@ import java.util.Set;
  * {@link EntityExistenceVerifier} for {@link ProgramId programs}.
  */
 public class ProgramExistenceVerifier implements EntityExistenceVerifier<ProgramId> {
+
   private final Store store;
 
   @Inject
@@ -39,7 +40,8 @@ public class ProgramExistenceVerifier implements EntityExistenceVerifier<Program
   }
 
   @Override
-  public void ensureExists(ProgramId programId) throws ApplicationNotFoundException, ProgramNotFoundException {
+  public void ensureExists(ProgramId programId)
+      throws ApplicationNotFoundException, ProgramNotFoundException {
     ApplicationId appId = programId.getParent();
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {

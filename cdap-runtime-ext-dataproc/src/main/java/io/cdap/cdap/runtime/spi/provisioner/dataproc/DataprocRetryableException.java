@@ -23,7 +23,8 @@ import javax.annotation.Nullable;
 /**
  * An exception thrown while performing a Dataproc operation that may succeed after a retry.
  */
-public class DataprocRetryableException extends RetryableProvisionException  {
+public class DataprocRetryableException extends RetryableProvisionException {
+
   public DataprocRetryableException(@Nullable String operationId, Throwable cause) {
     super(createMessage(operationId, cause), cause);
   }
@@ -31,9 +32,10 @@ public class DataprocRetryableException extends RetryableProvisionException  {
   private static String createMessage(@Nullable String operationId, Throwable cause) {
     if (operationId != null) {
       return String.format("Dataproc operation %s failure: %s",
-                           operationId, Throwables.getRootCause(cause).getMessage());
+          operationId, Throwables.getRootCause(cause).getMessage());
     } else {
-      return String.format("Dataproc operation failure: %s", Throwables.getRootCause(cause).getMessage());
+      return String.format("Dataproc operation failure: %s",
+          Throwables.getRootCause(cause).getMessage());
     }
   }
 }

@@ -24,6 +24,7 @@ import java.util.Map;
  * Builder for {@link ColumnFamilyDescriptor}.
  */
 public class ColumnFamilyDescriptorBuilder {
+
   private final String name;
   private final Map<String, String> properties;
 
@@ -48,7 +49,8 @@ public class ColumnFamilyDescriptorBuilder {
     return this;
   }
 
-  public ColumnFamilyDescriptorBuilder setCompressionType(ColumnFamilyDescriptor.CompressionType compressionType) {
+  public ColumnFamilyDescriptorBuilder setCompressionType(
+      ColumnFamilyDescriptor.CompressionType compressionType) {
     this.compressionType = compressionType;
     return this;
   }

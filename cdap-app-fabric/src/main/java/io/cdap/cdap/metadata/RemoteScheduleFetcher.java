@@ -47,20 +47,22 @@ import java.util.List;
  * Fetch schedules via REST API calls
  */
 public class RemoteScheduleFetcher implements ScheduleFetcher {
-  protected static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Trigger.class, new TriggerCodec())
-    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
-    .create();
 
-  private static final Type SCHEDULE_DETAIL_LIST_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
+  protected static final Gson GSON = new GsonBuilder()
+      .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+      .create();
+
+  private static final Type SCHEDULE_DETAIL_LIST_TYPE = new TypeToken<List<ScheduleDetail>>() {
+  }.getType();
 
   private final RemoteClient remoteClient;
 
   @Inject
   public RemoteScheduleFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   /**
@@ -68,10 +70,10 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    */
   @Override
   public ScheduleDetail get(ScheduleId scheduleId)
-    throws IOException, ScheduleNotFoundException, UnauthorizedException {
+      throws IOException, ScheduleNotFoundException, UnauthorizedException {
     String url = String.format(
-      "namespaces/%s/apps/%s/schedules/%s",
-      scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule());
+        "namespaces/%s/apps/%s/schedules/%s",
+        scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getSchedule());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     try {
@@ -87,9 +89,9 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
    */
   @Override
   public List<ScheduleDetail> list(ProgramId programId)
-    throws IOException, ProgramNotFoundException, UnauthorizedException {
+      throws IOException, ProgramNotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
-                               programId.getNamespace(), programId.getApplication(), programId.getVersion());
+        programId.getNamespace(), programId.getApplication(), programId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse = null;
     try {
@@ -98,13 +100,14 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
       throw new ProgramNotFoundException(programId);
     }
     ObjectResponse<List<ScheduleDetail>> objectResponse =
-      ObjectResponse.fromJsonBody(httpResponse, SCHEDULE_DETAIL_LIST_TYPE, GSON);
+        ObjectResponse.fromJsonBody(httpResponse, SCHEDULE_DETAIL_LIST_TYPE, GSON);
     return objectResponse.getResponseObject();
   }
 
   // TODO: refactor out into a util function that can be shared by RemoteApplicationDetailFetcher
   //       RemotePreferencesFetcherInternal and RemoteScheduleFetcher
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
+  private HttpResponse execute(HttpRequest request)
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

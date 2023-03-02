@@ -80,8 +80,8 @@ public final class FetchHandler extends AbstractHttpHandler {
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
   private static final TransactionCodec TRANSACTION_CODEC = new TransactionCodec();
   private static final Set<String> KNOWN_IO_EXCEPTION_MESSAGES = ImmutableSet.of(
-    "Connection reset by peer",
-    "Broken pipe"
+      "Connection reset by peer",
+      "Broken pipe"
   );
 
   private final MessagingService messagingService;
@@ -96,8 +96,8 @@ public final class FetchHandler extends AbstractHttpHandler {
   @POST
   @Path("poll")
   public void poll(FullHttpRequest request, HttpResponder responder,
-                   @PathParam("namespace") String namespace,
-                   @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("topic") String topic) throws Exception {
 
     TopicId topicId = new NamespaceId(namespace).topic(topic);
 
@@ -107,14 +107,18 @@ public final class FetchHandler extends AbstractHttpHandler {
     }
 
     // Decode the poll request
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
-    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.ConsumeRequest.SCHEMA);
+    Decoder decoder = DecoderFactory.get()
+        .directBinaryDecoder(new ByteBufInputStream(request.content()), null);
+    DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(
+        Schemas.V1.ConsumeRequest.SCHEMA);
 
     // Fetch the messages
-    CloseableIterator<RawMessage> iterator = fetchMessages(datumReader.read(null, decoder), topicId);
+    CloseableIterator<RawMessage> iterator = fetchMessages(datumReader.read(null, decoder),
+        topicId);
     try {
-      responder.sendContent(HttpResponseStatus.OK, new MessagesBodyProducer(iterator, messageChunkSize),
-                            new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
+      responder.sendContent(HttpResponseStatus.OK,
+          new MessagesBodyProducer(iterator, messageChunkSize),
+          new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
     } catch (Throwable t) {
       iterator.close();
       throw t;
@@ -125,20 +129,22 @@ public final class FetchHandler extends AbstractHttpHandler {
    * Creates a {@link CloseableIterator} of {@link RawMessage} based on the given fetch request.
    */
   private CloseableIterator<RawMessage> fetchMessages(GenericRecord fetchRequest,
-                                                      TopicId topicId) throws IOException, TopicNotFoundException {
+      TopicId topicId) throws IOException, TopicNotFoundException {
     MessageFetcher fetcher = messagingService.prepareFetch(topicId);
 
     Object startFrom = fetchRequest.get("startFrom");
     if (startFrom != null) {
       if (startFrom instanceof ByteBuffer) {
         // start message id is specified
-        fetcher.setStartMessage(Bytes.toBytes((ByteBuffer) startFrom), (Boolean) fetchRequest.get("inclusive"));
+        fetcher.setStartMessage(Bytes.toBytes((ByteBuffer) startFrom),
+            (Boolean) fetchRequest.get("inclusive"));
       } else if (startFrom instanceof Long) {
         // start by timestamp is specified
         fetcher.setStartTime((Long) startFrom);
       } else {
         // This shouldn't happen as it's guaranteed by the schema
-        LOG.warn("Ignore unrecognized type for startFrom. Type={}, Value={}", startFrom.getClass(), startFrom);
+        LOG.warn("Ignore unrecognized type for startFrom. Type={}, Value={}", startFrom.getClass(),
+            startFrom);
       }
     }
 
@@ -156,9 +162,9 @@ public final class FetchHandler extends AbstractHttpHandler {
   }
 
   /**
-   * A {@link BodyProducer} to encode and send back messages.
-   * Instead of using GenericDatumWriter, we perform the array encoding manually so that we don't have to buffer
-   * all messages in memory before sending out.
+   * A {@link BodyProducer} to encode and send back messages. Instead of using GenericDatumWriter,
+   * we perform the array encoding manually so that we don't have to buffer all messages in memory
+   * before sending out.
    */
   private static class MessagesBodyProducer extends BodyProducer {
 
@@ -180,8 +186,10 @@ public final class FetchHandler extends AbstractHttpHandler {
       this.encoder = EncoderFactory.get().directBinaryEncoder(new ByteBufOutputStream(chunk), null);
 
       // These are for writing individual message (response is an array of messages)
-      this.messageRecord = new GenericData.Record(Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
-      this.messageWriter = new GenericDatumWriter<GenericRecord>(Schemas.V1.ConsumeResponse.SCHEMA.getElementType()) {
+      this.messageRecord = new GenericData.Record(
+          Schemas.V1.ConsumeResponse.SCHEMA.getElementType());
+      this.messageWriter = new GenericDatumWriter<GenericRecord>(
+          Schemas.V1.ConsumeResponse.SCHEMA.getElementType()) {
         @Override
         protected void writeBytes(Object datum, Encoder out) throws IOException {
           if (datum instanceof byte[]) {
@@ -251,10 +259,12 @@ public final class FetchHandler extends AbstractHttpHandler {
       iterator.close();
       // Since response header is already sent, there is nothing we can send back to client. Simply log the failure
       if (cause instanceof SocketException
-        || cause instanceof ClosedChannelException
-        || (cause instanceof IOException && KNOWN_IO_EXCEPTION_MESSAGES.contains(cause.getMessage()))) {
+          || cause instanceof ClosedChannelException
+          || (cause instanceof IOException && KNOWN_IO_EXCEPTION_MESSAGES.contains(
+          cause.getMessage()))) {
         // This can easily caused by client close connection prematurely. Don't want to flood the log.
-        LOG.trace("Connection closed by client prematurely while sending messages back to client", cause);
+        LOG.trace("Connection closed by client prematurely while sending messages back to client",
+            cause);
       } else {
         // Use sampling logger to log to avoid flooding the log if there is any systematic failure
         SAMPLING_LOG.warn("Exception raised when sending messages back to client", cause);

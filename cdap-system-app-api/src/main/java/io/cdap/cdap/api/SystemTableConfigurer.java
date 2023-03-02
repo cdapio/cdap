@@ -26,8 +26,8 @@ import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 public interface SystemTableConfigurer {
 
   /**
-   * Create a system table that conforms to the given table specification when the
-   * application is deployed. If the table already exists, nothing happens.
+   * Create a system table that conforms to the given table specification when the application is
+   * deployed. If the table already exists, nothing happens.
    *
    * @throws UnsupportedOperationException if the application is not a system application
    */

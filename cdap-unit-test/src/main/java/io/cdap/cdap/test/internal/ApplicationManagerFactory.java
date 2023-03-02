@@ -24,5 +24,6 @@ import io.cdap.cdap.test.ApplicationManager;
  *
  */
 public interface ApplicationManagerFactory {
+
   ApplicationManager create(@Assisted("applicationId") ApplicationId applicationId);
 }

@@ -24,6 +24,7 @@ import java.util.Objects;
  * Plugin spec on what plugins are related to the connector
  */
 public class PluginSpec {
+
   private final String name;
   private final String type;
   private final Map<String, String> properties;
@@ -58,8 +59,8 @@ public class PluginSpec {
 
     PluginSpec that = (PluginSpec) o;
     return Objects.equals(name, that.name) &&
-             Objects.equals(type, that.type) &&
-             Objects.equals(properties, that.properties);
+        Objects.equals(type, that.type) &&
+        Objects.equals(properties, that.properties);
   }
 
   @Override

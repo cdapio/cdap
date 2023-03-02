@@ -39,6 +39,7 @@ import javax.annotation.Nullable;
 @Name(StringCaseTransform.NAME)
 @Description("Transforms configured fields to lowercase or uppercase.")
 public class StringCaseTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "StringCase";
   private final Conf config;
   private Set<String> upperFields;
@@ -48,6 +49,7 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     public static final String UPPER_FIELDS = "upperFields";
     public static final String LOWER_FIELDS = "lowerFields";
     private static final Pattern SPLIT_ON = Pattern.compile("\\s*,\\s*");
@@ -117,7 +119,8 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
 
   // transform is called once for each record that goes into this stage
   @Override
-  public void transform(StructuredRecord record, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord record, Emitter<StructuredRecord> emitter)
+      throws Exception {
     StructuredRecord.Builder builder = StructuredRecord.builder(record.getSchema());
     for (Schema.Field field : record.getSchema().getFields()) {
       String fieldName = field.getName();
@@ -136,14 +139,15 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     Schema.Field inputField = schema.getField(fieldName);
     if (inputField == null) {
       throw new IllegalArgumentException(
-        String.format("Field '%s' does not exist in input schema %s.", fieldName, schema));
+          String.format("Field '%s' does not exist in input schema %s.", fieldName, schema));
     }
     Schema fieldSchema = inputField.getSchema();
-    Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+    Schema.Type fieldType =
+        fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
     if (fieldType != Schema.Type.STRING) {
       throw new IllegalArgumentException(
-        String.format("Field '%s' is of illegal type %s. Must be of type %s.",
-                      fieldName, fieldType, Schema.Type.STRING));
+          String.format("Field '%s' is of illegal type %s. Must be of type %s.",
+              fieldName, fieldType, Schema.Type.STRING));
     }
   }
 }

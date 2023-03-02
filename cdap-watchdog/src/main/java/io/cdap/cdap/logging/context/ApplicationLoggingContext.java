@@ -23,12 +23,14 @@ import javax.annotation.Nullable;
  * Application logging context.
  */
 public abstract class ApplicationLoggingContext extends NamespaceLoggingContext {
+
   public static final String TAG_APPLICATION_ID = ".applicationId";
   public static final String TAG_RUN_ID = ".runId";
   public static final String TAG_INSTANCE_ID = ".instanceId";
 
   /**
    * Constructs ApplicationLoggingContext.
+   *
    * @param namespaceId namespace id
    * @param applicationId application id
    * @param runId run id of the application

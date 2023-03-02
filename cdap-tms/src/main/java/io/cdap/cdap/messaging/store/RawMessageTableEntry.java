@@ -22,11 +22,13 @@ import javax.annotation.Nullable;
  * Container class that contains raw bytes corresponding to an entry in the Message Table.
  */
 public class RawMessageTableEntry {
+
   private MessageTableKey key;
   private byte[] txPtr;
   private byte[] payload;
 
-  public RawMessageTableEntry set(MessageTableKey key, @Nullable byte[] txPtr, @Nullable byte[] payload) {
+  public RawMessageTableEntry set(MessageTableKey key, @Nullable byte[] txPtr,
+      @Nullable byte[] payload) {
     this.key = key;
     this.txPtr = txPtr;
     this.payload = payload;

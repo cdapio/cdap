@@ -44,6 +44,7 @@ import javax.annotation.Nullable;
  * Mock context for unit tests
  */
 public class MockTransformContext implements TransformContext {
+
   private static final String MOCK_STAGE_NAME = "mockstage";
   private final PluginProperties pluginProperties;
   private final MockStageMetrics metrics;
@@ -238,7 +239,7 @@ public class MockTransformContext implements TransformContext {
   @Nullable
   @Override
   public HttpURLConnection openConnection(String namespaceId, String applicationId,
-                                          String serviceId, String methodPath) {
+      String serviceId, String methodPath) {
     return null;
   }
 

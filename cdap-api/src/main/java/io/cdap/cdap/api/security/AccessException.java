@@ -20,6 +20,7 @@ package io.cdap.cdap.api.security;
  * General exception thrown from security calls in case of any problems.
  */
 public class AccessException extends RuntimeException {
+
   public AccessException() {
   }
 
@@ -35,7 +36,8 @@ public class AccessException extends RuntimeException {
     super(cause);
   }
 
-  public AccessException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+  public AccessException(String message, Throwable cause, boolean enableSuppression,
+      boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 }

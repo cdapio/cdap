@@ -24,6 +24,7 @@ import org.apache.twill.filesystem.Location;
  * A TriggeringPolicy for locations
  */
 public interface LocationTriggeringPolicy extends TriggeringPolicy<ILoggingEvent> {
+
   /**
    * Should roll-over be triggered at this time?
    *
@@ -41,6 +42,7 @@ public interface LocationTriggeringPolicy extends TriggeringPolicy<ILoggingEvent
 
   /**
    * set {@link Location} size
+   *
    * @param size size of the location
    */
   void setActiveLocationSize(long size);

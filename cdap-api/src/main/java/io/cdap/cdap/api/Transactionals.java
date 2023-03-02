@@ -34,8 +34,9 @@ public final class Transactionals {
    *
    * @param transactional the {@link Transactional} to use for transactional execution.
    * @param runnable the {@link TxRunnable} to be executed inside a transaction
-   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
-   * If the TransactionFailureException has a cause in it, the cause is propagated.
+   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a
+   *     transaction. If the TransactionFailureException has a cause in it, the cause is
+   *     propagated.
    */
   public static void execute(Transactional transactional, TxRunnable runnable) {
     try {
@@ -51,13 +52,14 @@ public final class Transactionals {
    * @param transactional the {@link Transactional} to use for transactional execution.
    * @param runnable the {@link TxRunnable} to be executed inside a transaction
    * @param <X> exception type of propagate type
-   * @throws X if failed to execute the given {@link TxRunnable} in a transaction. If the TransactionFailureException
-   * has a cause in it, the cause is thrown as-is if it is an instance of X.
-   * @throws RuntimeException if cause is not an instance of X. The cause is wrapped with {@link RuntimeException}
-   * if it is not already a {@link RuntimeException}.
+   * @throws X if failed to execute the given {@link TxRunnable} in a transaction. If the
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X.
+   * @throws RuntimeException if cause is not an instance of X. The cause is wrapped with {@link
+   *     RuntimeException} if it is not already a {@link RuntimeException}.
    */
   public static <X extends Throwable> void execute(Transactional transactional,
-                                                   TxRunnable runnable, Class<X> exception) throws X {
+      TxRunnable runnable, Class<X> exception) throws X {
     try {
       transactional.execute(runnable);
     } catch (TransactionFailureException e) {
@@ -73,16 +75,19 @@ public final class Transactionals {
    * @param <X1> exception type of first propagate type
    * @param <X2> exception type of second propagate type
    * @throws X1 if failed to execute the given {@link TxRunnable} in a transaction. If the
-   * TransactionFailureException has a cause in it, the cause is thrown as-is if it is an instance of X1.
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X1.
    * @throws X2 if failed to execute the given {@link TxRunnable} in a transaction. If the
-   * TransactionFailureException has a cause in it, the cause is thrown as-is if it is an instance of X2.
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X2.
    * @throws RuntimeException if cause is not an instance of X1 or X2. The cause is wrapped with
-   * {@link RuntimeException} if it is not already a {@link RuntimeException}.
+   *     {@link RuntimeException} if it is not already a {@link RuntimeException}.
    */
-  public static <X1 extends Throwable, X2 extends Throwable> void execute(Transactional transactional,
-                                                                          TxRunnable runnable,
-                                                                          Class<X1> exception1,
-                                                                          Class<X2> exception2) throws X1, X2 {
+  public static <X1 extends Throwable, X2 extends Throwable> void execute(
+      Transactional transactional,
+      TxRunnable runnable,
+      Class<X1> exception1,
+      Class<X2> exception2) throws X1, X2 {
     try {
       transactional.execute(runnable);
     } catch (TransactionFailureException e) {
@@ -92,12 +97,14 @@ public final class Transactionals {
 
   /**
    * Executes the given {@link TxCallable} using the given {@link Transactional}.
+   *
    * @param transactional the {@link Transactional} to use for transactional execution.
    * @param callable the {@link TxCallable} to be executed inside a transaction
    * @param <V> type of the result
    * @return value returned by the given {@link TxCallable}.
-   * @throws  RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
-   * If the TransactionFailureException has a cause in it, the cause is propagated.
+   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a
+   *     transaction. If the TransactionFailureException has a cause in it, the cause is
+   *     propagated.
    */
   public static <V> V execute(Transactional transactional, TxCallable<V> callable) {
     AtomicReference<V> result = new AtomicReference<>();
@@ -110,14 +117,17 @@ public final class Transactionals {
   }
 
   /**
-   * Executes the given {@link TxCallable} using the given {@link Transactional} with a given timeout in seconds.
+   * Executes the given {@link TxCallable} using the given {@link Transactional} with a given
+   * timeout in seconds.
+   *
    * @param transactional the {@link Transactional} to use for transactional execution.
    * @param timeout the timeout in seconds for transactional execution
    * @param callable the {@link TxCallable} to be executed inside a transaction
    * @param <V> type of the result
    * @return value returned by the given {@link TxCallable}.
-   * @throws  RuntimeException if failed to execute the given {@link TxRunnable} in a transaction.
-   * If the TransactionFailureException has a cause in it, the cause is propagated.
+   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a
+   *     transaction. If the TransactionFailureException has a cause in it, the cause is
+   *     propagated.
    */
   public static <V> V execute(Transactional transactional, int timeout, TxCallable<V> callable) {
     AtomicReference<V> result = new AtomicReference<>();
@@ -137,13 +147,14 @@ public final class Transactionals {
    * @param <V> type of the result
    * @param <X> exception type of propagate type
    * @return value returned by the given {@link TxCallable}.
-   * @throws X if failed to execute the given {@link TxRunnable} in a transaction. If the TransactionFailureException
-   * has a cause in it, the cause is thrown as-is if it is an instance of X.
-   * @throws RuntimeException if cause is not an instance of X. The cause is wrapped with {@link RuntimeException}
-   * if it is not already a {@link RuntimeException}.
+   * @throws X if failed to execute the given {@link TxRunnable} in a transaction. If the
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X.
+   * @throws RuntimeException if cause is not an instance of X. The cause is wrapped with {@link
+   *     RuntimeException} if it is not already a {@link RuntimeException}.
    */
   public static <V, X extends Throwable> V execute(Transactional transactional,
-                                                   TxCallable<V> callable, Class<X> exception) throws X {
+      TxCallable<V> callable, Class<X> exception) throws X {
     AtomicReference<V> result = new AtomicReference<>();
     try {
       transactional.execute(context -> result.set(callable.call(context)));
@@ -163,16 +174,19 @@ public final class Transactionals {
    * @param <X2> exception type of second propagate type
    * @return value returned by the given {@link TxCallable}.
    * @throws X1 if failed to execute the given {@link TxRunnable} in a transaction. If the
-   * TransactionFailureException has a cause in it, the cause is thrown as-is if it is an instance of X1.
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X1.
    * @throws X2 if failed to execute the given {@link TxRunnable} in a transaction. If the
-   * TransactionFailureException has a cause in it, the cause is thrown as-is if it is an instance of X2.
+   *     TransactionFailureException has a cause in it, the cause is thrown as-is if it is an
+   *     instance of X2.
    * @throws RuntimeException if cause is not an instance of X1 or X2. The cause is wrapped with
-   * {@link RuntimeException} if it is not already a {@link RuntimeException}.
+   *     {@link RuntimeException} if it is not already a {@link RuntimeException}.
    */
-  public static <V, X1 extends Throwable, X2 extends Throwable> V execute(Transactional transactional,
-                                                                          TxCallable<V> callable,
-                                                                          Class<X1> exception1,
-                                                                          Class<X2> exception2) throws X1, X2 {
+  public static <V, X1 extends Throwable, X2 extends Throwable> V execute(
+      Transactional transactional,
+      TxCallable<V> callable,
+      Class<X1> exception1,
+      Class<X2> exception2) throws X1, X2 {
     AtomicReference<V> result = new AtomicReference<>();
     try {
       transactional.execute(context -> result.set(callable.call(context)));
@@ -183,9 +197,9 @@ public final class Transactionals {
   }
 
   /**
-   * Propagates {@code throwable} as-is if it is an instance of
-   * {@link RuntimeException} or {@link Error}, or else as a last resort, wraps
-   * it in a {@code RuntimeException} then propagates.
+   * Propagates {@code throwable} as-is if it is an instance of {@link RuntimeException} or {@link
+   * Error}, or else as a last resort, wraps it in a {@code RuntimeException} then propagates.
+   *
    * @param throwable the Throwable to propagate
    * @return nothing will ever be returned; this return type is only for convenience
    */
@@ -195,46 +209,53 @@ public final class Transactionals {
   }
 
   /**
-   * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
-   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
-   * throw the failure exception as-is the given propagated type if the type matches or as {@link RuntimeException}.
-   * This method will always throw exception and the returned exception is for satisfying Java static analysis only.
+   * Propagates the given {@link TransactionFailureException}. If the {@link
+   * TransactionFailureException#getCause()} doesn't return {@code null}, the cause will be used
+   * instead for the propagation. This method will throw the failure exception as-is the given
+   * propagated type if the type matches or as {@link RuntimeException}. This method will always
+   * throw exception and the returned exception is for satisfying Java static analysis only.
    *
    * @param e the {@link TransactionFailureException} to propagate
-   * @param propagateType if the exception is an instance of this type, it will be rethrown as is
+   * @param propagateType if the exception is an instance of this type, it will be rethrown as
+   *     is
    * @param <X> exception type of propagate type
    * @return a exception of type X.
    */
-  public static <X extends Throwable> X propagate(TransactionFailureException e, Class<X> propagateType) throws X {
+  public static <X extends Throwable> X propagate(TransactionFailureException e,
+      Class<X> propagateType) throws X {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType);
     throw propagate(cause);
   }
 
   /**
-   * Propagates the given {@link TransactionFailureException}. If the {@link TransactionFailureException#getCause()}
-   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
-   * throw the failure exception as-is the given propagated types if the type matches or as {@link RuntimeException}.
-   * This method will always throw and the returned exception is for satisfying Java static analysis only.
+   * Propagates the given {@link TransactionFailureException}. If the {@link
+   * TransactionFailureException#getCause()} doesn't return {@code null}, the cause will be used
+   * instead for the propagation. This method will throw the failure exception as-is the given
+   * propagated types if the type matches or as {@link RuntimeException}. This method will always
+   * throw and the returned exception is for satisfying Java static analysis only.
    *
    * @param e the {@link TransactionFailureException} to propagate
-   * @param propagateType1 if the exception is an instance of this type, it will be rethrown as is
-   * @param propagateType2 if the exception is an instance of this type, it will be rethrown as is
+   * @param propagateType1 if the exception is an instance of this type, it will be rethrown as
+   *     is
+   * @param propagateType2 if the exception is an instance of this type, it will be rethrown as
+   *     is
    * @param <X1> exception type of first propagate type
    * @param <X2> exception type of second propagate type
    * @return a exception of type X1,X2.
    */
-  public static <X1 extends Throwable, X2 extends Throwable> X1 propagate(TransactionFailureException e,
-                                                                          Class<X1> propagateType1,
-                                                                          Class<X2> propagateType2) throws X1, X2 {
+  public static <X1 extends Throwable, X2 extends Throwable> X1 propagate(
+      TransactionFailureException e,
+      Class<X1> propagateType1,
+      Class<X2> propagateType2) throws X1, X2 {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType1, propagateType2);
     throw propagate(cause);
   }
 
   /**
-   * Propagates {@code throwable} exactly as-is, if and only if it is an
-   * instance of {@link RuntimeException} or {@link Error}.
+   * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
+   * RuntimeException} or {@link Error}.
    */
   private static void propagateIfPossible(@Nullable Throwable throwable) {
     propagateIfInstanceOf(throwable, Error.class);
@@ -242,50 +263,48 @@ public final class Transactionals {
   }
 
   /**
-   * Propagates {@code throwable} exactly as-is, if and only if it is an
-   * instance of {@link RuntimeException}, {@link Error}, or
-   * {@code declaredType}.
+   * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
+   * RuntimeException}, {@link Error}, or {@code declaredType}.
+   *
    * @param throwable the Throwable to possibly propagate
    * @param declaredType the single checked exception type declared by the calling method
    */
   private static <X extends Throwable> void propagateIfPossible(
-    @Nullable Throwable throwable, Class<X> declaredType) throws X {
+      @Nullable Throwable throwable, Class<X> declaredType) throws X {
     propagateIfInstanceOf(throwable, declaredType);
     propagateIfPossible(throwable);
   }
 
   /**
-   * Propagates {@code throwable} exactly as-is, if and only if it is an
-   * instance of {@link RuntimeException}, {@link Error}, {@code declaredType1},
-   * or {@code declaredType2}.
+   * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@link
+   * RuntimeException}, {@link Error}, {@code declaredType1}, or {@code declaredType2}.
+   *
    * @param throwable the Throwable to possibly propagate
-   * @param declaredType1 any checked exception type declared by the calling
-   *     method
-   * @param declaredType2 any other checked exception type declared by the
-   *     calling method
+   * @param declaredType1 any checked exception type declared by the calling method
+   * @param declaredType2 any other checked exception type declared by the calling method
    */
   private static <X1 extends Throwable, X2 extends Throwable>
   void propagateIfPossible(@Nullable Throwable throwable,
-                           Class<X1> declaredType1, Class<X2> declaredType2) throws X1, X2 {
+      Class<X1> declaredType1, Class<X2> declaredType2) throws X1, X2 {
     requireNonNull(declaredType2);
     propagateIfInstanceOf(throwable, declaredType1);
     propagateIfPossible(throwable, declaredType2);
   }
 
   /**
-   * Propagates {@code throwable} exactly as-is, if and only if it is an
-   * instance of {@code declaredType}.
+   * Propagates {@code throwable} exactly as-is, if and only if it is an instance of {@code
+   * declaredType}.
    */
   private static <X extends Throwable> void propagateIfInstanceOf(
-    @Nullable Throwable throwable, Class<X> declaredType) throws X {
+      @Nullable Throwable throwable, Class<X> declaredType) throws X {
     if (throwable != null && declaredType.isInstance(throwable)) {
       throw declaredType.cast(throwable);
     }
   }
 
   /**
-   * Returns the first of two given parameters that is not {@code null}, if
-   * either is, or otherwise throws a {@link NullPointerException}.
+   * Returns the first of two given parameters that is not {@code null}, if either is, or otherwise
+   * throws a {@link NullPointerException}.
    */
   private static <T> T firstNonNull(@Nullable T first, @Nullable T second) {
     return first != null ? first : requireNonNull(second);

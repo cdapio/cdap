@@ -22,6 +22,7 @@ import java.util.Set;
  * Holds information about a sink and what outputs it writes to.
  */
 class SinkOutput {
+
   private Set<String> sinkOutputs;
 
   SinkOutput(Set<String> sinkOutputs) {

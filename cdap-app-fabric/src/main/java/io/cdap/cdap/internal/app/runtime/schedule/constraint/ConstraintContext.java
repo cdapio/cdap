@@ -28,6 +28,7 @@ import java.util.Map;
  * Context object, exposing information that may be useful during checking constraints.
  */
 public final class ConstraintContext {
+
   private final Job job;
   private final long checkTimeMillis;
   private final Store store;
@@ -46,8 +47,9 @@ public final class ConstraintContext {
     return store.getActiveRuns(programId);
   }
 
-  public Map<ProgramRunId, RunRecordDetail> getProgramRuns(ProgramId programId, ProgramRunStatus status,
-                                                           long startTime, long endTime, int limit) {
+  public Map<ProgramRunId, RunRecordDetail> getProgramRuns(ProgramId programId,
+      ProgramRunStatus status,
+      long startTime, long endTime, int limit) {
     return store.getRuns(programId, status, startTime, endTime, limit);
   }
 

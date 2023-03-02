@@ -23,11 +23,13 @@ import javax.annotation.Nullable;
  * Represents how a run has been triggered and trigger details
  */
 public class StartMetadata {
+
   private final StartType startType;
   @Nullable
   private final TriggeringScheduleInfo triggeringScheduleInfo;
 
-  public StartMetadata(StartType startType, @Nullable TriggeringScheduleInfo triggeringScheduleInfo) {
+  public StartMetadata(StartType startType,
+      @Nullable TriggeringScheduleInfo triggeringScheduleInfo) {
     this.startType = startType;
     this.triggeringScheduleInfo = triggeringScheduleInfo;
   }

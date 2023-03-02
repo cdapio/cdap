@@ -23,6 +23,7 @@ import java.util.Objects;
  * Represents sensitive data to be stored securely.
  */
 public class Secret {
+
   private final byte[] data;
   private final SecretMetadata metadata;
 
@@ -61,7 +62,7 @@ public class Secret {
     }
     Secret secret = (Secret) o;
     return Arrays.equals(data, secret.data) &&
-      Objects.equals(metadata, secret.metadata);
+        Objects.equals(metadata, secret.metadata);
   }
 
   @Override
@@ -74,7 +75,7 @@ public class Secret {
   @Override
   public String toString() {
     return "Secret{" +
-      "metadata=" + metadata +
-      '}';
+        "metadata=" + metadata +
+        '}';
   }
 }

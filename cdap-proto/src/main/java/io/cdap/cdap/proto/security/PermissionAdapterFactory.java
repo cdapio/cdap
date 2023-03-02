@@ -29,11 +29,13 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 
 /**
- * This {@link com.google.gson.Gson} adapter factory allows to serialize actions or permissions,
- * but automatically converts to permissions on read.
- * To maintain backwards compatibility it uses same format (plan string) for actions and json object for permissions.
+ * This {@link com.google.gson.Gson} adapter factory allows to serialize actions or permissions, but
+ * automatically converts to permissions on read. To maintain backwards compatibility it uses same
+ * format (plan string) for actions and json object for permissions.
  */
-public class PermissionAdapterFactory extends TypeAdapter<ActionOrPermission> implements TypeAdapterFactory {
+public class PermissionAdapterFactory extends TypeAdapter<ActionOrPermission> implements
+    TypeAdapterFactory {
+
   @Override
   public ActionOrPermission read(JsonReader in) throws IOException {
     JsonElement json = Streams.parse(in);
@@ -64,10 +66,10 @@ public class PermissionAdapterFactory extends TypeAdapter<ActionOrPermission> im
     }
     Permission permission = (Permission) src;
     out
-      .beginObject()
-      .name("type").value(permission.getPermissionType().name())
-      .name("name").value(permission.name())
-      .endObject();
+        .beginObject()
+        .name("type").value(permission.getPermissionType().name())
+        .name("name").value(permission.name())
+        .endObject();
   }
 
   @Override

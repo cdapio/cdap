@@ -45,23 +45,23 @@ public class ProgramCommands extends CommandSet<Command> implements Categorized 
   @Inject
   public ProgramCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(ListAllProgramsCommand.class))
-        .build(),
-      ImmutableList.<CommandSet<Command>>builder()
-        .add(injector.getInstance(ListProgramsCommandSet.class))
-        .add(injector.getInstance(GetProgramRunsCommandSet.class))
-        .add(injector.getInstance(GetProgramInstancesCommandSet.class))
-        .add(injector.getInstance(GetProgramLiveInfoCommandSet.class))
-        .add(injector.getInstance(GetProgramLogsCommandSet.class))
-        .add(injector.getInstance(GetProgramStatusCommandSet.class))
-        .add(injector.getInstance(GetProgramRuntimeArgsCommandSet.class))
-        .add(injector.getInstance(SetProgramRuntimeArgsCommandSet.class))
-        .add(injector.getInstance(SetProgramInstancesCommandSet.class))
-        .add(injector.getInstance(StartProgramCommandSet.class))
-        .add(injector.getInstance(StopProgramCommandSet.class))
-        .add(injector.getInstance(WorkflowCommandSet.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(ListAllProgramsCommand.class))
+            .build(),
+        ImmutableList.<CommandSet<Command>>builder()
+            .add(injector.getInstance(ListProgramsCommandSet.class))
+            .add(injector.getInstance(GetProgramRunsCommandSet.class))
+            .add(injector.getInstance(GetProgramInstancesCommandSet.class))
+            .add(injector.getInstance(GetProgramLiveInfoCommandSet.class))
+            .add(injector.getInstance(GetProgramLogsCommandSet.class))
+            .add(injector.getInstance(GetProgramStatusCommandSet.class))
+            .add(injector.getInstance(GetProgramRuntimeArgsCommandSet.class))
+            .add(injector.getInstance(SetProgramRuntimeArgsCommandSet.class))
+            .add(injector.getInstance(SetProgramInstancesCommandSet.class))
+            .add(injector.getInstance(StartProgramCommandSet.class))
+            .add(injector.getInstance(StopProgramCommandSet.class))
+            .add(injector.getInstance(WorkflowCommandSet.class))
+            .build());
   }
 
   @Override

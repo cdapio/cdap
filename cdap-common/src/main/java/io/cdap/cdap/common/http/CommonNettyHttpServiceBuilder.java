@@ -38,7 +38,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   private ChannelPipelineModifier additionalModifier;
 
   public CommonNettyHttpServiceBuilder(CConfiguration cConf, String serviceName,
-                                       MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService) {
     super(serviceName);
     if (cConf.getBoolean(Constants.Security.ENABLED)) {
       pipelineModifier = new ChannelPipelineModifier() {
@@ -50,21 +50,22 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
           // to remember the user id.
           EventExecutor executor = pipeline.context("dispatcher").executor();
           pipeline.addBefore(executor, "dispatcher", AUTHENTICATOR_NAME,
-                             new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
-                                                                                 .INTERNAL_AUTH_ENABLED)));
+              new AuthenticationChannelHandler(cConf.getBoolean(Constants.Security
+                  .INTERNAL_AUTH_ENABLED)));
         }
       };
     }
     this.setExceptionHandler(new HttpExceptionHandler());
     this.setHandlerHooks(Collections.singleton(
-      new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
+        new MetricsReporterHook(cConf, metricsCollectionService, serviceName)));
   }
 
   /**
    * Sets pipeline modifier, preserving the security one installed in constructor.
    */
   @Override
-  public NettyHttpService.Builder setChannelPipelineModifier(ChannelPipelineModifier additionalPipelineModifier) {
+  public NettyHttpService.Builder setChannelPipelineModifier(
+      ChannelPipelineModifier additionalPipelineModifier) {
     additionalModifier = additionalPipelineModifier;
     return this;
   }
@@ -73,13 +74,14 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
    * Sets a pipeline modifier replacing the security one installed in constructor.
    */
   public NettyHttpService.Builder replaceDefaultChannelPipelineModifier(
-    ChannelPipelineModifier channelPipelineModifier) {
+      ChannelPipelineModifier channelPipelineModifier) {
 
     pipelineModifier = channelPipelineModifier;
     return this;
   }
 
-  public NettyHttpService.Builder addChannelPipelineModifier(ChannelPipelineModifier additionalPipelineModifier) {
+  public NettyHttpService.Builder addChannelPipelineModifier(
+      ChannelPipelineModifier additionalPipelineModifier) {
     additionalModifier = combine(additionalModifier, additionalPipelineModifier);
     return this;
   }
@@ -94,7 +96,7 @@ public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
   }
 
   private ChannelPipelineModifier combine(@Nullable ChannelPipelineModifier existing,
-                                          @Nullable ChannelPipelineModifier additional) {
+      @Nullable ChannelPipelineModifier additional) {
     if (existing == null) {
       return additional;
     }

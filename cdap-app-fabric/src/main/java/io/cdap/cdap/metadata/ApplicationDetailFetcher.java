@@ -31,21 +31,23 @@ public interface ApplicationDetailFetcher {
 
   /**
    * Get the application detail for the given application reference
+   *
    * @param appRef the versionless ID of the application
    * @return the detail of the given application
    * @throws IOException if failed to get {@code ApplicationDetail}
-   * @throws NotFoundException if the application or namespace identified by the supplied id doesn't exist
+   * @throws NotFoundException if the application or namespace identified by the supplied id
+   *     doesn't exist
    */
-  ApplicationDetail get(ApplicationReference appRef) throws IOException, NotFoundException, UnauthorizedException;
+  ApplicationDetail get(ApplicationReference appRef)
+      throws IOException, NotFoundException, UnauthorizedException;
 
   /**
    * Scans all application details in the given namespace
+   *
    * @param namespace the namespace to scan application details from
    * @param consumer a {@link Consumer} to consume each ApplicationDetail being scanned
    * @param batchSize the number of application details to be scanned in each batch
-   * @throws IOException
-   * @throws NamespaceNotFoundException
    */
   void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)
-    throws IOException, NamespaceNotFoundException, UnauthorizedException;
+      throws IOException, NamespaceNotFoundException, UnauthorizedException;
 }

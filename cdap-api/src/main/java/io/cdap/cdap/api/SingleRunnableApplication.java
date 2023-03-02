@@ -23,9 +23,8 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.api.TwillSpecification;
 
 /**
- * A simple {@link org.apache.twill.api.TwillApplication} that contains
- * only one {@link org.apache.twill.api.TwillRunnable}.
- *
+ * A simple {@link org.apache.twill.api.TwillApplication} that contains only one {@link
+ * org.apache.twill.api.TwillRunnable}.
  */
 public class SingleRunnableApplication implements TwillApplication {
 
@@ -41,10 +40,10 @@ public class SingleRunnableApplication implements TwillApplication {
   public TwillSpecification configure() {
     TwillRunnableSpecification runnableSpec = runnable.configure();
     return TwillSpecification.Builder.with()
-      .setName(runnableSpec.getName())
-      .withRunnable().add(runnableSpec.getName(), runnable, resourceSpec)
-      .noLocalFiles()
-      .anyOrder()
-      .build();
+        .setName(runnableSpec.getName())
+        .withRunnable().add(runnableSpec.getName(), runnable, resourceSpec)
+        .noLocalFiles()
+        .anyOrder()
+        .build();
   }
 }

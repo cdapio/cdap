@@ -23,6 +23,7 @@ import java.util.Objects;
  * Basic information about a Hive table.
  */
 public class TableNameInfo {
+
   @SerializedName("database")
   private final String databaseName;
 
@@ -54,7 +55,7 @@ public class TableNameInfo {
     TableNameInfo that = (TableNameInfo) o;
 
     return Objects.equals(this.databaseName, that.databaseName)
-      && Objects.equals(this.tableName, that.tableName);
+        && Objects.equals(this.tableName, that.tableName);
   }
 
   @Override

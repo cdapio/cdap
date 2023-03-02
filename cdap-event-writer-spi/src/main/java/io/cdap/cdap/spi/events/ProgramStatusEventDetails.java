@@ -45,12 +45,13 @@ public class ProgramStatusEventDetails {
   @Nullable
   private final StartMetadata startMetadata;
 
-  private ProgramStatusEventDetails(String runID, String programName, String namespace, String applicationName,
-                                    String status, long eventTime,
-                                    @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
-                                    @Nullable String error,
-                                    @Nullable ExecutionMetrics[] pipelineMetrics,
-                                    @Nullable String workflowId, @Nullable StartMetadata startMetadata) {
+  private ProgramStatusEventDetails(String runID, String programName, String namespace,
+      String applicationName,
+      String status, long eventTime,
+      @Nullable Map<String, String> userArgs, @Nullable Map<String, String> systemArgs,
+      @Nullable String error,
+      @Nullable ExecutionMetrics[] pipelineMetrics,
+      @Nullable String workflowId, @Nullable StartMetadata startMetadata) {
     this.runID = runID;
     this.programName = programName;
     this.namespace = namespace;
@@ -65,26 +66,27 @@ public class ProgramStatusEventDetails {
     this.startMetadata = startMetadata;
   }
 
-  public static Builder getBuilder(String runID, String applicationName, String programName, String namespace,
-                                   String status, long eventTime) {
+  public static Builder getBuilder(String runID, String applicationName, String programName,
+      String namespace,
+      String status, long eventTime) {
     return new Builder(runID, applicationName, programName, namespace, status, eventTime);
   }
 
   @Override
   public String toString() {
     return "ProgramStatusEventDetails{" +
-      "runID='" + runID + '\'' +
-      ", programName='" + programName + '\'' +
-      ", applicationName='" + applicationName + '\'' +
-      ", namespace='" + namespace + '\'' +
-      ", status='" + status + '\'' +
-      ", eventTime=" + eventTime +
-      ", userArgs=" + userArgs +
-      ", systemArgs=" + systemArgs +
-      ", error='" + error + '\'' +
-      ", pipelineMetrics=" + Arrays.toString(pipelineMetrics) +
-      ", workflowId='" + workflowId + '\'' +
-      '}';
+        "runID='" + runID + '\'' +
+        ", programName='" + programName + '\'' +
+        ", applicationName='" + applicationName + '\'' +
+        ", namespace='" + namespace + '\'' +
+        ", status='" + status + '\'' +
+        ", eventTime=" + eventTime +
+        ", userArgs=" + userArgs +
+        ", systemArgs=" + systemArgs +
+        ", error='" + error + '\'' +
+        ", pipelineMetrics=" + Arrays.toString(pipelineMetrics) +
+        ", workflowId='" + workflowId + '\'' +
+        '}';
   }
 
   public String getNamespace() {
@@ -119,7 +121,8 @@ public class ProgramStatusEventDetails {
     private ExecutionMetrics[] pipelineMetrics;
     private StartMetadata startMetadata;
 
-    Builder(String runID, String applicationName, String programName, String namespace, String status, long eventTime) {
+    Builder(String runID, String applicationName, String programName, String namespace,
+        String status, long eventTime) {
       this.runID = runID;
       this.programName = programName;
       this.namespace = namespace;
@@ -157,9 +160,10 @@ public class ProgramStatusEventDetails {
     }
 
     public ProgramStatusEventDetails build() {
-      return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status, eventTime,
-                                           userArgs, systemArgs,
-                                           error, pipelineMetrics, workflowId, startMetadata);
+      return new ProgramStatusEventDetails(runID, programName, namespace, applicationName, status,
+          eventTime,
+          userArgs, systemArgs,
+          error, pipelineMetrics, workflowId, startMetadata);
     }
   }
 }

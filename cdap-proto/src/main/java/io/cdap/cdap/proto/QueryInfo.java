@@ -37,7 +37,7 @@ public class QueryInfo implements Comparable<QueryInfo> {
   private final boolean isActive;
 
   public QueryInfo(long timestamp, String query, QueryHandle handle,
-                   QueryStatus status, boolean isActive) {
+      QueryStatus status, boolean isActive) {
     this.timestamp = timestamp;
     this.statement = query;
     this.queryHandle = handle.getHandle();

@@ -42,7 +42,8 @@ public final class SuspendScheduleCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream printStream) throws Exception {
-    String[] programIdParts = arguments.get(ElementType.SCHEDULE.getArgumentName().toString()).split("\\.");
+    String[] programIdParts = arguments.get(ElementType.SCHEDULE.getArgumentName().toString())
+        .split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }

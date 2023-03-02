@@ -47,6 +47,7 @@ import org.apache.hadoop.hbase.client.Table;
  * HBase implementation of {@link MessageTable}.
  */
 final class HBaseMessageTable extends AbstractMessageTable {
+
   private static final byte[] PAYLOAD_COL = MessagingUtils.Constants.PAYLOAD_COL;
   private static final byte[] TX_COL = MessagingUtils.Constants.TX_COL;
 
@@ -60,8 +61,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
   private final HBaseExceptionHandler exceptionHandler;
 
   HBaseMessageTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
-                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
+      AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
+      int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
     this.tableUtil = tableUtil;
     this.table = table;
     this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
@@ -73,18 +74,21 @@ final class HBaseMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  protected CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest) throws IOException {
+  protected CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest)
+      throws IOException {
     Scan scan = tableUtil.buildScan()
-      .setStartRow(scanRequest.getStartRow())
-      .setStopRow(scanRequest.getStopRow())
-      .setCaching(scanCacheRows)
-      .build();
+        .setStartRow(scanRequest.getStartRow())
+        .setStopRow(scanRequest.getStopRow())
+        .setCaching(scanCacheRows)
+        .build();
 
     TopicMetadata topicMetadata = scanRequest.getTopicMetadata();
-    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    byte[] topic = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
+        topicMetadata.getGeneration());
     MessageTableKey messageTableKey = MessageTableKey.fromTopic(topic);
     try {
-      final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);
+      final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor,
+          scanExecutor);
       final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
       return new AbstractCloseableIterator<RawMessageTableEntry>() {
         private boolean closed;
@@ -108,8 +112,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
           byte[] originalKey = rowKeyDistributor.getOriginalKey(result.getRow());
           messageTableKey.setFromRowKey(originalKey);
           return tableEntry.set(messageTableKey,
-                                result.getValue(columnFamily, TX_COL),
-                                result.getValue(columnFamily, PAYLOAD_COL));
+              result.getValue(columnFamily, TX_COL),
+              result.getValue(columnFamily, PAYLOAD_COL));
         }
 
         @Override
@@ -132,7 +136,8 @@ final class HBaseMessageTable extends AbstractMessageTable {
     List<Put> batchPuts = new ArrayList<>();
     while (entries.hasNext()) {
       RawMessageTableEntry entry = entries.next();
-      PutBuilder putBuilder = tableUtil.buildPut(rowKeyDistributor.getDistributedKey(entry.getKey().getRowKey()));
+      PutBuilder putBuilder = tableUtil.buildPut(
+          rowKeyDistributor.getDistributedKey(entry.getKey().getRowKey()));
       if (entry.getTxPtr() != null) {
         putBuilder.add(columnFamily, TX_COL, entry.getTxPtr());
       }
@@ -156,13 +161,14 @@ final class HBaseMessageTable extends AbstractMessageTable {
   @Override
   public void rollback(RollbackRequest rollbackRequest) throws IOException {
     Scan scan = tableUtil.buildScan()
-      .setStartRow(rollbackRequest.getStartRow())
-      .setStopRow(rollbackRequest.getStopRow())
-      .setCaching(scanCacheRows)
-      .build();
+        .setStartRow(rollbackRequest.getStartRow())
+        .setStopRow(rollbackRequest.getStopRow())
+        .setCaching(scanCacheRows)
+        .build();
 
     List<Put> batchPuts = new ArrayList<>();
-    try (ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor)) {
+    try (ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor,
+        scanExecutor)) {
       for (Result result : scanner) {
         // No need to turn the key back to the original row key because we want to put with the actual row key
         PutBuilder putBuilder = tableUtil.buildPut(result.getRow());

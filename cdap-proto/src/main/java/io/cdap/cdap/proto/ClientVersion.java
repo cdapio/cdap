@@ -20,6 +20,7 @@ package io.cdap.cdap.proto;
  * Represents the client version.
  */
 public class ClientVersion extends Version {
+
   private final String name;
 
   public ClientVersion(String name, String version) {

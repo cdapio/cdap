@@ -21,11 +21,12 @@ import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.util.FileSize;
 
 /**
- * SizeBasedTriggeringPolicy looks at size of the file being currently written
- * to. If it grows bigger than the specified size, the {@link RollingLocationLogAppender} using the
+ * SizeBasedTriggeringPolicy looks at size of the file being currently written to. If it grows
+ * bigger than the specified size, the {@link RollingLocationLogAppender} using the
  * SizeBasedTriggeringPolicy rolls the file and creates a new one.
  */
 public class SizeBasedTriggeringPolicy extends LocationTriggeringPolicyBase {
+
   /**
    * The default maximum file size.
    */

@@ -26,6 +26,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTableDefinition;
  * Registers HBase-backed implementations of the metrics system datasets
  */
 public class HBaseMetricsTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new HBaseMetricsTableDefinition(HBaseMetricsTable.class.getName()));

@@ -37,7 +37,8 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -50,21 +51,23 @@ public class SetProgramRuntimeArgsCommand extends AbstractAuthCommand {
     String appVersion = programId.getVersion();
     String programName = programId.getProgram();
     String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
-    Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString, ArgumentName.RUNTIME_ARGS.toString());
+    Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString,
+        ArgumentName.RUNTIME_ARGS.toString());
     programClient.setRuntimeArgs(programId, runtimeArgs);
     output.printf("Successfully set runtime args of %s '%s' of application '%s.%s' to '%s'\n",
-                  elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+        elementType.getName(), programName, appName, appVersion, runtimeArgsString);
   }
 
   @Override
   public String getPattern() {
     return String.format("set %s runtimeargs <%s> [version <%s>] <%s>", elementType.getShortName(),
-                         elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUNTIME_ARGS);
+        elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Sets the runtime arguments of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
-                         Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    return String.format(
+        "Sets the runtime arguments of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
+        Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
   }
 }

@@ -51,24 +51,26 @@ public class BasicCustomActionContext extends AbstractContext implements CustomA
   private final WorkflowProgramInfo workflowProgramInfo;
   private ProgramState state;
 
-  public BasicCustomActionContext(Program workflow, ProgramOptions programOptions, CConfiguration cConf,
-                                  CustomActionSpecification customActionSpecification,
-                                  WorkflowProgramInfo workflowProgramInfo,
-                                  MetricsCollectionService metricsCollectionService,
-                                  DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                  DiscoveryServiceClient discoveryServiceClient,
-                                  @Nullable PluginInstantiator pluginInstantiator,
-                                  SecureStore secureStore, SecureStoreManager secureStoreManager,
-                                  MessagingService messagingService, MetadataReader metadataReader,
-                                  MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                                  FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
-                                  AppStateStoreProvider appStateStoreProvider) {
+  public BasicCustomActionContext(Program workflow, ProgramOptions programOptions,
+      CConfiguration cConf,
+      CustomActionSpecification customActionSpecification,
+      WorkflowProgramInfo workflowProgramInfo,
+      MetricsCollectionService metricsCollectionService,
+      DatasetFramework datasetFramework, TransactionSystemClient txClient,
+      DiscoveryServiceClient discoveryServiceClient,
+      @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore, SecureStoreManager secureStoreManager,
+      MessagingService messagingService, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
+      FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+      AppStateStoreProvider appStateStoreProvider) {
 
     super(workflow, programOptions, cConf, customActionSpecification.getDatasets(),
-          datasetFramework, txClient, false,
-          metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<>()), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+        datasetFramework, txClient, false,
+        metricsCollectionService, workflowProgramInfo.updateMetricsTags(new HashMap<>()),
+        secureStore,
+        secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+        namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.customActionSpecification = customActionSpecification;
     this.workflowProgramInfo = workflowProgramInfo;

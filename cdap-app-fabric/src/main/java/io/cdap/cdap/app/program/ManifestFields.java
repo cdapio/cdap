@@ -26,8 +26,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Defines the attributes as constants that are being used in
- * manifest file.
+ * Defines the attributes as constants that are being used in manifest file.
  */
 public final class ManifestFields {
 
@@ -48,22 +47,23 @@ public final class ManifestFields {
   public static final String MANIFEST_SPEC_FILE = "META-INF/specification/application.json";
 
   /**
-   * Regex for extracting one package name from the Export-Package manifest entry.
-   * Refer to OSGI spec r4v43, section 3.6.5 for details. For example:
+   * Regex for extracting one package name from the Export-Package manifest entry. Refer to OSGI
+   * spec r4v43, section 3.6.5 for details. For example:
    *
    * io.cdap.plugin;use:="\"test,test2\"";version="1.0",io.cdap.plugin2
    *
-   * It basically is a comma separated list of package information.
-   * Each package information is started with the package name, followed by number of directives or attributes.
+   * It basically is a comma separated list of package information. Each package information is
+   * started with the package name, followed by number of directives or attributes.
    *
-   * * A "directive" is a key value pair separate by ":="
-   * A "attribute" is a key value pair separated by "=".
+   * * A "directive" is a key value pair separate by ":=" A "attribute" is a key value pair
+   * separated by "=".
    *
-   * The following regex is for just extracting the package name (e.g. "io.cdap.plugin" and "io.cdap.plugin2") while
-   * matching the complete package information pattern.
+   * The following regex is for just extracting the package name (e.g. "io.cdap.plugin" and
+   * "io.cdap.plugin2") while matching the complete package information pattern.
    */
   private static final Pattern EXPORT_PACKAGE_PATTERN =
-    Pattern.compile("([\\w.]+)(?:;[\\w\\-.]+:?=(?:(?:\"(?:\\\\.|[^\\\\\"]++)+\")|[\\w\\-.]+))*,?");
+      Pattern.compile(
+          "([\\w.]+)(?:;[\\w\\-.]+:?=(?:(?:\"(?:\\\\.|[^\\\\\"]++)+\")|[\\w\\-.]+))*,?");
 
   /**
    * Parses the manifest {@link #EXPORT_PACKAGE} attribute and returns a set of export packages.

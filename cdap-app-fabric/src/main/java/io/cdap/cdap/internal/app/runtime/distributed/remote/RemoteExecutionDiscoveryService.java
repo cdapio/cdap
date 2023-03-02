@@ -44,10 +44,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A discovery service implementation used in remote runtime execution. It has a fixed list of services
- * that will go through {@link ServiceSocksProxy}, hence won't resolve the service name to an actual address.
- * It also use the {@link CConfiguration} as the backing store for service announcements, which is suitable for
- * the current remote runtime that has some "mini" system services running in the {@link DefaultRuntimeJob}.
+ * A discovery service implementation used in remote runtime execution. It has a fixed list of
+ * services that will go through {@link ServiceSocksProxy}, hence won't resolve the service name to
+ * an actual address. It also use the {@link CConfiguration} as the backing store for service
+ * announcements, which is suitable for the current remote runtime that has some "mini" system
+ * services running in the {@link DefaultRuntimeJob}.
  */
 public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, DiscoveryService {
 
@@ -67,13 +68,15 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   @Override
   public synchronized Cancellable register(Discoverable discoverable) {
     String serviceName = discoverable.getName();
-    DefaultServiceDiscovered serviceDiscovered = services.computeIfAbsent(serviceName, DefaultServiceDiscovered::new);
+    DefaultServiceDiscovered serviceDiscovered = services.computeIfAbsent(serviceName,
+        DefaultServiceDiscovered::new);
 
     // Add the address to cConf
     String key = Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + serviceName;
     Networks.addDiscoverable(cConf, key, discoverable);
     LOG.debug("Discoverable {} with address {} added to configuration with payload {}",
-              discoverable.getName(), discoverable.getSocketAddress(), Bytes.toString(discoverable.getPayload()));
+        discoverable.getName(), discoverable.getSocketAddress(),
+        Bytes.toString(discoverable.getPayload()));
 
     // Update the ServiceDiscovered
     updateServiceDiscovered(serviceDiscovered, cConf, key);
@@ -92,7 +95,8 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     for (ProgramType programType : ProgramType.values()) {
       if (programType.isDiscoverable()
           && name.startsWith(programType.getDiscoverableTypeName() + ".")
-          && !name.startsWith(programType.getDiscoverableTypeName() + "." + NamespaceId.SYSTEM.getNamespace() + ".")) {
+          && !name.startsWith(
+          programType.getDiscoverableTypeName() + "." + NamespaceId.SYSTEM.getNamespace() + ".")) {
         return new DefaultServiceDiscovered(name);
       }
     }
@@ -116,7 +120,8 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     return serviceDiscovered;
   }
 
-  private void updateServiceDiscovered(DefaultServiceDiscovered serviceDiscovered, CConfiguration cConf, String key) {
+  private void updateServiceDiscovered(DefaultServiceDiscovered serviceDiscovered,
+      CConfiguration cConf, String key) {
     String name = serviceDiscovered.getName();
     Set<Discoverable> discoverables = Networks.getDiscoverables(cConf, key);
 
@@ -129,7 +134,9 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
         // If there is no address from the configuration, assuming it is using the service proxy,
         // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
         // knows that it need to use service proxy.
-        URIScheme scheme = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+        URIScheme scheme =
+            cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS
+                : URIScheme.HTTP;
         discoverable = scheme.createDiscoverable(name, InetSocketAddress.createUnresolved(name, 0));
       }
 
@@ -139,7 +146,7 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     if (LOG.isDebugEnabled()) {
       for (Discoverable d : discoverables) {
         LOG.debug("Update discoverable {} with address {} and payload {}",
-                  d.getName(), d.getSocketAddress(), Bytes.toString(d.getPayload()));
+            d.getName(), d.getSocketAddress(), Bytes.toString(d.getPayload()));
       }
     }
 
@@ -149,7 +156,8 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   /**
    * Creates a {@link Discoverable} for the runtime monitor service.
    */
-  private static Discoverable createMonitorDiscoverable(CConfiguration cConf, RuntimeMonitorType monitorType) {
+  private static Discoverable createMonitorDiscoverable(CConfiguration cConf,
+      RuntimeMonitorType monitorType) {
     if (monitorType == RuntimeMonitorType.URL) {
       // For monitor type URL, the monitor url is always set
       String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
@@ -162,8 +170,9 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
     // If there is no runtime monitor URL, default to the service socks proxy mechanism, in which the
     // hostname is the service name with port == 0.
-    URIScheme scheme = cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+    URIScheme scheme =
+        cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
     return scheme.createDiscoverable(Constants.Service.RUNTIME,
-                                     InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
+        InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
   }
 }

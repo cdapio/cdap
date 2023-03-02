@@ -43,7 +43,8 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer implements SystemHttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer implements
+    SystemHttpServiceConfigurer {
 
   private final HttpServiceHandler handler;
   private final String name;
@@ -52,21 +53,21 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
   private Set<String> datasets;
 
   /**
-   * Instantiates the class with the given {@link HttpServiceHandler}.
-   * The properties and description are set to empty values and the name is the handler class name.
+   * Instantiates the class with the given {@link HttpServiceHandler}. The properties and
+   * description are set to empty values and the name is the handler class name.
    *
    * @param handler the handler for the service
-   * @param pluginFinder
    */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler,
-                                             Id.Namespace deployNamespace,
-                                             Id.Artifact artifactId,
-                                             PluginFinder pluginFinder,
-                                             PluginInstantiator pluginInstantiator,
-                                             SystemTableConfigurer systemTableConfigurer,
-                                             @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                             FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+      Id.Namespace deployNamespace,
+      Id.Artifact artifactId,
+      PluginFinder pluginFinder,
+      PluginInstantiator pluginInstantiator,
+      SystemTableConfigurer systemTableConfigurer,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();
@@ -93,10 +94,11 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
     List<ServiceHttpEndpoint> endpoints = new ArrayList<>();
     // Inspect the handler to grab all @UseDataset, @Property and endpoints.
     Reflections.visit(handler, handler.getClass(),
-                      new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(properties),
-                      new ServiceEndpointExtractor(endpoints));
-    return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints);
+        new DataSetFieldExtractor(datasets),
+        new PropertyFieldExtractor(properties),
+        new ServiceEndpointExtractor(endpoints));
+    return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties,
+        datasets, endpoints);
   }
 
 

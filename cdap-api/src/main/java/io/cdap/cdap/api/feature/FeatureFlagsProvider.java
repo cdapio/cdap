@@ -23,9 +23,10 @@ package io.cdap.cdap.api.feature;
 public interface FeatureFlagsProvider {
 
   /**
-   * This method tells is feature flag is currently enabled. To ensure proper feature life cycle management
-   * and backwards compatibility please define features using {@link io.cdap.cdap.features.Feature} enum
-   * and use {@link io.cdap.cdap.features.Feature#isEnabled} method instead of directly calling this one
+   * This method tells is feature flag is currently enabled. To ensure proper feature life cycle
+   * management and backwards compatibility please define features using {@link
+   * io.cdap.cdap.features.Feature} enum and use {@link io.cdap.cdap.features.Feature#isEnabled}
+   * method instead of directly calling this one
    *
    * @return value of the feature flag if set
    * @throws NullPointerException if feature flag name is not defined

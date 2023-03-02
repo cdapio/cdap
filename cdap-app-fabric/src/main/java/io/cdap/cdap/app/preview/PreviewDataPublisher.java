@@ -22,8 +22,10 @@ import io.cdap.cdap.proto.id.EntityId;
  * This interface exposes functionality for publishing preview data.
  */
 public interface PreviewDataPublisher {
+
   /**
    * Publishes the {@link PreviewMessage} corresponding to the given entity id.
+   *
    * @param entityId id of the entity with which message is to be associated.
    * @param previewMessage preview message
    */

@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * The main class to run router service.
  */
 public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+
   private static final Logger LOG = LoggerFactory.getLogger(RouterServiceMain.class);
 
   /**
@@ -55,7 +56,7 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
 
     modules.add(new MessagingClientModule());
@@ -68,10 +69,11 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }

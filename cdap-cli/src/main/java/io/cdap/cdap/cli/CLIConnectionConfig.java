@@ -23,14 +23,16 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * {@link ConnectionConfig} that stores a username when available. Helps keep connectionConfig thread safe.
+ * {@link ConnectionConfig} that stores a username when available. Helps keep connectionConfig
+ * thread safe.
  */
 public class CLIConnectionConfig extends ConnectionConfig {
 
   private final NamespaceId namespace;
   private final String username;
 
-  public CLIConnectionConfig(ConnectionConfig connectionConfig, NamespaceId namespace, @Nullable String username) {
+  public CLIConnectionConfig(ConnectionConfig connectionConfig, NamespaceId namespace,
+      @Nullable String username) {
     super(connectionConfig);
     this.namespace = namespace;
     this.username = username;
@@ -42,12 +44,14 @@ public class CLIConnectionConfig extends ConnectionConfig {
     this.namespace = namespace;
   }
 
-  public CLIConnectionConfig(NamespaceId namespace, String hostname, Integer port, boolean sslEnabled) {
+  public CLIConnectionConfig(NamespaceId namespace, String hostname, Integer port,
+      boolean sslEnabled) {
     this(namespace, hostname, port, sslEnabled, null);
   }
 
-  public CLIConnectionConfig(NamespaceId namespace, String hostname, Integer port, boolean sslEnabled,
-                             @Nullable String apiPath) {
+  public CLIConnectionConfig(NamespaceId namespace, String hostname, Integer port,
+      boolean sslEnabled,
+      @Nullable String apiPath) {
     super(hostname, port, sslEnabled, apiPath);
     this.namespace = namespace;
     this.username = null;
@@ -64,9 +68,9 @@ public class CLIConnectionConfig extends ConnectionConfig {
   @Override
   public URI getURI() {
     return URI.create(String.format("%s://%s%s/%s%s", super.isSSLEnabled() ? "https" : "http",
-                                    (username == null || username.isEmpty()) ? "" : username + "@",
-                                    getFullHost(), getApiPath() == null ? "" : getApiPath(),
-                                    namespace.getNamespace()));
+        (username == null || username.isEmpty()) ? "" : username + "@",
+        getFullHost(), getApiPath() == null ? "" : getApiPath(),
+        namespace.getNamespace()));
   }
 
   @Override
@@ -79,8 +83,8 @@ public class CLIConnectionConfig extends ConnectionConfig {
     }
     CLIConnectionConfig other = (CLIConnectionConfig) obj;
     return Objects.equals(this.namespace, other.namespace)
-      && Objects.equals(this.username, other.username)
-      && super.equals(obj);
+        && Objects.equals(this.username, other.username)
+        && super.equals(obj);
   }
 
   @Override

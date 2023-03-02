@@ -19,23 +19,25 @@ package io.cdap.cdap.api.data.batch;
 /**
  * Provides an abstract implementation of {@link SplitReader}.
  * <p>
- *   Iterates over split data using the {@link #fetchNextKeyValue()} method.
+ * Iterates over split data using the {@link #fetchNextKeyValue()} method.
  * </p>
+ *
  * @param <KEY> The key type.
  * @param <VALUE> The value type.
  */
 public abstract class SplitReaderBase<KEY, VALUE> extends SplitReader<KEY, VALUE> {
+
   private KEY currentKey;
   private VALUE currentValue;
 
   /**
-   * Fetches the next data item of the split being read. 
+   * Fetches the next data item of the split being read.
    *
-   * If true, use the {@link #setCurrentKeyValue(Object, Object)} method to
-   * set the new current key/value. If false there are no more key/value records to read. 
+   * If true, use the {@link #setCurrentKeyValue(Object, Object)} method to set the new current
+   * key/value. If false there are no more key/value records to read.
    *
-   * See {@link io.cdap.cdap.api.data.batch.IteratorBasedSplitReader} for an implementation 
-   * of the abstract fetchNextKeyValue() method.
+   * See {@link io.cdap.cdap.api.data.batch.IteratorBasedSplitReader} for an implementation of the
+   * abstract fetchNextKeyValue() method.
    *
    * @return false if reached end of the split, true otherwise.
    */

@@ -23,7 +23,8 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * This class implements the client-side reading of the {@link CConfiguration} from HBase.
  */
-public final class ClientCConfigurationReader extends ConfigurationReader implements CConfigurationReader {
+public final class ClientCConfigurationReader extends ConfigurationReader implements
+    CConfigurationReader {
 
   /**
    * Constructor from an HBase and CDAP configuration. This is useful for test cases.

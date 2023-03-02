@@ -90,51 +90,52 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, context.getHost().getHostName());
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.DATASET_EXECUTOR,
-                                      context.getInstanceId());
+        context.getInstanceId());
     injector = createInjector(cConf, hConf, txClientId);
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.DATASET_EXECUTOR));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.DATASET_EXECUTOR));
     return injector;
   }
 
   @VisibleForTesting
   static Injector createInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MessagingClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new DataSetServiceModules().getDistributedModules(),
-      new KafkaLogAppenderModule(),
-      new MetadataServiceModule(),
-      new AuditModule(),
-      new EntityVerifierModule(),
-      new SecureStoreClientModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
-          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
-          bind(PermissionManager.class).to(RemotePermissionManager.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
-          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-        }
-      });
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MessagingClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new DataFabricModules(txClientId).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        new DataSetServiceModules().getDistributedModules(),
+        new KafkaLogAppenderModule(),
+        new MetadataServiceModule(),
+        new AuditModule(),
+        new EntityVerifierModule(),
+        new SecureStoreClientModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(Store.class).to(DefaultStore.class);
+            bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+            bind(PermissionManager.class).to(RemotePermissionManager.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+          }
+        });
   }
 
   @Override

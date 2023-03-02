@@ -53,9 +53,11 @@ public interface Worker extends Runnable, ProgramLifecycle<WorkerContext> {
   void destroy();
 
   /**
-   * Stop the {@code Worker}. This method will be invoked whenever the worker is externally stopped by CDAP.
+   * Stop the {@code Worker}. This method will be invoked whenever the worker is externally stopped
+   * by CDAP.
    *
-   * This method will be invoked from a different thread than the one calling the {@link #run()} method.
+   * This method will be invoked from a different thread than the one calling the {@link #run()}
+   * method.
    */
   void stop();
 }

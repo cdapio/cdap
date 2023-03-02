@@ -22,10 +22,11 @@ import io.cdap.cdap.etl.api.action.ActionContext;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link Action} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around {@link Action} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  */
 public class WrappedAction extends Action implements PluginWrapper<Action> {
+
   private final Action action;
   private final Caller caller;
 

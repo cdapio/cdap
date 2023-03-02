@@ -46,20 +46,24 @@ public class DeleteAppCommand extends AbstractAuthCommand {
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     ApplicationId appId = parseApplicationId(arguments);
     ApplicationDetail appDetail = appClient.get(appId);
-    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(), appDetail.getAppVersion());
+    appId = new ApplicationId(appId.getNamespace(), appId.getApplication(),
+        appDetail.getAppVersion());
     appClient.delete(appId);
-    output.printf("Successfully deleted application '%s.%s'\n", appId.getEntityName(), appId.getVersion());
+    output.printf("Successfully deleted application '%s.%s'\n", appId.getEntityName(),
+        appId.getVersion());
   }
 
   @Override
   public String getPattern() {
-    return String.format("delete app <%s> [version <%s>]", ArgumentName.APP, ArgumentName.APP_VERSION);
+    return String.format("delete app <%s> [version <%s>]", ArgumentName.APP,
+        ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deletes %s with an optional version. If version is not provided, default version '%s' " +
-                           "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
-                         ApplicationId.DEFAULT_VERSION);
+    return String.format(
+        "Deletes %s with an optional version. If version is not provided, default version '%s' " +
+            "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
+        ApplicationId.DEFAULT_VERSION);
   }
 }

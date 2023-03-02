@@ -30,11 +30,12 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 
 /**
- * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
- * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
+ * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the {@link
+ * HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
  */
-public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, MessagingContext,
-  PluginContext, SecureStore, Transactional, ArtifactManager, MetadataReader, MetadataWriter {
+public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer,
+    MessagingContext,
+    PluginContext, SecureStore, Transactional, ArtifactManager, MetadataReader, MetadataWriter {
 
   /**
    * @return the specification bound to this HttpServiceContext
@@ -52,15 +53,16 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
   int getInstanceId();
 
   /**
-   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were not registered
-   * at configure time. Plugins registered by the dynamic configurer live in their own scope and will not
-   * conflict with any plugins that were registered by the service when it was configured. Plugins registered by
-   * the returned configurer will also not be available through {@link #newPluginInstance(String)} or
-   * {@link #newPluginInstance(String, MacroEvaluator)}. Plugins with system scope and plugins in the same namespace
-   * as the running service will be visible.
+   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were
+   * not registered at configure time. Plugins registered by the dynamic configurer live in their
+   * own scope and will not conflict with any plugins that were registered by the service when it
+   * was configured. Plugins registered by the returned configurer will also not be available
+   * through {@link #newPluginInstance(String)} or {@link #newPluginInstance(String,
+   * MacroEvaluator)}. Plugins with system scope and plugins in the same namespace as the running
+   * service will be visible.
    *
-   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
-   * then to be forgotten.
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single
+   * service call and then to be forgotten.
    *
    * @return an dynamic plugin configurer that must be closed
    * @deprecated use {@link #createServicePluginConfigurer()} instead
@@ -69,15 +71,16 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
   PluginConfigurer createPluginConfigurer();
 
   /**
-   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were not registered
-   * at configure time. Plugins registered by the dynamic configurer live in their own scope and will not
-   * conflict with any plugins that were registered by the service when it was configured. Plugins registered by
-   * the returned configurer will also not be available through {@link #newPluginInstance(String)} or
-   * {@link #newPluginInstance(String, MacroEvaluator)}. Plugins with system scope and plugins in the specified
-   * namespace will be visible.
+   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were
+   * not registered at configure time. Plugins registered by the dynamic configurer live in their
+   * own scope and will not conflict with any plugins that were registered by the service when it
+   * was configured. Plugins registered by the returned configurer will also not be available
+   * through {@link #newPluginInstance(String)} or {@link #newPluginInstance(String,
+   * MacroEvaluator)}. Plugins with system scope and plugins in the specified namespace will be
+   * visible.
    *
-   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
-   * then to be forgotten.
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single
+   * service call and then to be forgotten.
    *
    * @param namespace the namespace for user scoped plugins
    * @return an dynamic plugin configurer that must be closed
@@ -87,30 +90,32 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
   PluginConfigurer createPluginConfigurer(String namespace);
 
   /**
-   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins at runtime that
-   * were not registered at configure time. Plugins registered by the dynamic configurer live in their own scope
-   * and will not conflict with any plugins that were registered by the service when it was configured.
-   * Plugins registered by the returned configurer will also not be available through
-   * {@link #newPluginInstance(String)} or {@link #newPluginInstance(String, MacroEvaluator)}.
-   * Plugins with system scope and plugins in the same namespace as the running service will be visible.
+   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins at runtime
+   * that were not registered at configure time. Plugins registered by the dynamic configurer live
+   * in their own scope and will not conflict with any plugins that were registered by the service
+   * when it was configured. Plugins registered by the returned configurer will also not be
+   * available through {@link #newPluginInstance(String)} or {@link #newPluginInstance(String,
+   * MacroEvaluator)}. Plugins with system scope and plugins in the same namespace as the running
+   * service will be visible.
    *
-   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
-   * then to be forgotten.
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single
+   * service call and then to be forgotten.
    *
    * @return an dynamic plugin configurer that must be closed
    */
   ServicePluginConfigurer createServicePluginConfigurer();
 
   /**
-   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins at runtime that
-   * were not registered at configure time. Plugins registered by the dynamic configurer live in their own scope
-   * and will not conflict with any plugins that were registered by the service when it was configured.
-   * Plugins registered by the returned configurer will also not be available through
-   * {@link #newPluginInstance(String)} or {@link #newPluginInstance(String, MacroEvaluator)}.
-   * Plugins with system scope and plugins in the same namespace as the running service will be visible.
+   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins at runtime
+   * that were not registered at configure time. Plugins registered by the dynamic configurer live
+   * in their own scope and will not conflict with any plugins that were registered by the service
+   * when it was configured. Plugins registered by the returned configurer will also not be
+   * available through {@link #newPluginInstance(String)} or {@link #newPluginInstance(String,
+   * MacroEvaluator)}. Plugins with system scope and plugins in the same namespace as the running
+   * service will be visible.
    *
-   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
-   * then to be forgotten.
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single
+   * service call and then to be forgotten.
    *
    * @param namespace the namespace for user scoped plugins
    * @return an dynamic plugin configurer that must be closed

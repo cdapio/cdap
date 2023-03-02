@@ -48,10 +48,12 @@ import org.slf4j.LoggerFactory;
  * Wrapper around the EMR client that adheres to our configuration settings.
  */
 public class EMRClient implements AutoCloseable {
+
   private static final Logger LOG = LoggerFactory.getLogger(EMRClient.class);
 
-  private static final Set UNTERMINATED_STATES = ImmutableSet.of(ClusterState.BOOTSTRAPPING, ClusterState.STARTING,
-                                                                 ClusterState.RUNNING, ClusterState.WAITING);
+  private static final Set UNTERMINATED_STATES = ImmutableSet.of(ClusterState.BOOTSTRAPPING,
+      ClusterState.STARTING,
+      ClusterState.RUNNING, ClusterState.WAITING);
 
   private final EMRConf emrConf;
   private final AmazonElasticMapReduce client;
@@ -70,39 +72,40 @@ public class EMRClient implements AutoCloseable {
   }
 
   /**
-   * Create a cluster. This will return after the initial request to create the cluster is completed.
-   * At this point, the cluster is likely not yet running, but in a provisioning state.
+   * Create a cluster. This will return after the initial request to create the cluster is
+   * completed. At this point, the cluster is likely not yet running, but in a provisioning state.
    *
    * @param name the name of the cluster to create
    * @return the id of the created EMR cluster
    */
   public String createCluster(String name) {
     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-      .withCredentials(emrConf.getCredentialsProvider())
-      .withRegion(emrConf.getRegion())
-      .build();
+        .withCredentials(emrConf.getCredentialsProvider())
+        .withRegion(emrConf.getRegion())
+        .build();
 
     // name the keypair the same thing as the cluster name
     ec2.importKeyPair(new ImportKeyPairRequest(name, emrConf.getPublicKey().getKey()));
 
     RunJobFlowRequest request = new RunJobFlowRequest()
-      .withName(name)
-      .withApplications(new Application().withName("Spark"))
-      .withConfigurations(new Configuration()
-        .withClassification("yarn-site")
-        .withProperties(Collections.singletonMap("yarn.nodemanager.aux-services", "mapreduce_shuffle,spark_shuffle")))
-      // all 4.9.x is java 7... which we don't support, so EMR 5.0.0 is our minimum
-      .withReleaseLabel("emr-5.0.0")
-      .withServiceRole(emrConf.getServiceRole())
-      .withJobFlowRole(emrConf.getJobFlowRole())
-      .withInstances(new JobFlowInstancesConfig()
-        .withEc2KeyName(name)
-        .withAdditionalMasterSecurityGroups(emrConf.getAdditionalMasterSecurityGroup())
-        .withInstanceCount(emrConf.getInstanceCount())
-        .withEc2SubnetId(emrConf.getEc2SubnetId())
-        .withKeepJobFlowAliveWhenNoSteps(true)
-        .withMasterInstanceType(emrConf.getMasterInstanceType())
-        .withSlaveInstanceType(emrConf.getWorkerInstanceType()));
+        .withName(name)
+        .withApplications(new Application().withName("Spark"))
+        .withConfigurations(new Configuration()
+            .withClassification("yarn-site")
+            .withProperties(Collections.singletonMap("yarn.nodemanager.aux-services",
+                "mapreduce_shuffle,spark_shuffle")))
+        // all 4.9.x is java 7... which we don't support, so EMR 5.0.0 is our minimum
+        .withReleaseLabel("emr-5.0.0")
+        .withServiceRole(emrConf.getServiceRole())
+        .withJobFlowRole(emrConf.getJobFlowRole())
+        .withInstances(new JobFlowInstancesConfig()
+            .withEc2KeyName(name)
+            .withAdditionalMasterSecurityGroups(emrConf.getAdditionalMasterSecurityGroup())
+            .withInstanceCount(emrConf.getInstanceCount())
+            .withEc2SubnetId(emrConf.getEc2SubnetId())
+            .withKeepJobFlowAliveWhenNoSteps(true)
+            .withMasterInstanceType(emrConf.getMasterInstanceType())
+            .withSlaveInstanceType(emrConf.getWorkerInstanceType()));
 
     if (emrConf.getLogURI() != null) {
       request.withLogUri(emrConf.getLogURI());
@@ -112,8 +115,9 @@ public class EMRClient implements AutoCloseable {
   }
 
   /**
-   * Delete the specified cluster if it exists. This will return after the initial request to delete the cluster
-   * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
+   * Delete the specified cluster if it exists. This will return after the initial request to delete
+   * the cluster is completed. At this point, the cluster is likely not yet deleted, but in a
+   * deleting state.
    *
    * @param id the id of the cluster to delete
    */
@@ -122,16 +126,17 @@ public class EMRClient implements AutoCloseable {
     client.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(id));
 
     AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-      .withCredentials(emrConf.getCredentialsProvider())
-      .withRegion(emrConf.getRegion())
-      .build();
+        .withCredentials(emrConf.getCredentialsProvider())
+        .withRegion(emrConf.getRegion())
+        .build();
 
     // named the keypair the same thing as the cluster id
     ec2.deleteKeyPair(new DeleteKeyPairRequest().withKeyName(id));
   }
 
   /**
-   * Get information about the specified cluster. The cluster will not be present if it could not be found.
+   * Get information about the specified cluster. The cluster will not be present if it could not be
+   * found.
    *
    * @param id the cluster id
    * @return the cluster information if it exists
@@ -141,10 +146,10 @@ public class EMRClient implements AutoCloseable {
 
     List<Node> nodes = new ArrayList<>();
     nodes.add(new Node("id", Node.Type.MASTER, cluster.getMasterPublicDnsName(),
-                       System.currentTimeMillis(), Collections.emptyMap()));
+        System.currentTimeMillis(), Collections.emptyMap()));
 
     return Optional.of(new io.cdap.cdap.runtime.spi.provisioner.Cluster(
-      cluster.getId(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
+        cluster.getId(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap()));
   }
 
   /**
@@ -165,17 +170,18 @@ public class EMRClient implements AutoCloseable {
     List<ClusterSummary> clusters = client.listClusters().getClusters();
 
     List<ClusterSummary> clustersWithSameName = clusters.stream()
-      .filter(clusterSummary -> name.equals(clusterSummary.getName()))
-      .filter(clusterSummary -> UNTERMINATED_STATES.contains(
-              ClusterState.fromValue(clusterSummary.getStatus().getState())))
-      .collect(Collectors.toList());
+        .filter(clusterSummary -> name.equals(clusterSummary.getName()))
+        .filter(clusterSummary -> UNTERMINATED_STATES.contains(
+            ClusterState.fromValue(clusterSummary.getStatus().getState())))
+        .collect(Collectors.toList());
 
     if (clustersWithSameName.size() == 0) {
       return Optional.empty();
     } else if (clustersWithSameName.size() == 1) {
       return Optional.of(Iterables.getOnlyElement(clustersWithSameName));
     }
-    throw new IllegalStateException("Multiple clusters with the name '" + name + "': " + clustersWithSameName);
+    throw new IllegalStateException(
+        "Multiple clusters with the name '" + name + "': " + clustersWithSameName);
   }
 
   private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {

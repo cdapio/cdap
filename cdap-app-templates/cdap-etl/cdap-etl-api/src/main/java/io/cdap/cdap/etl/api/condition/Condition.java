@@ -23,11 +23,13 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
  * Represents condition to be executed in the pipeline.
  */
 public abstract class Condition implements PipelineConfigurable {
+
   public static final String PLUGIN_TYPE = "condition";
 
   /**
    * Returns the result of execution of the condition. If {@code true} is returned, stages on the
    * true branch will get executed, otherwise staged on the false branch will get executed.
+   *
    * @param context the context which is used for evaluating the conditions
    * @return boolean value based on which either the true branch or false branch will get executed
    * @throws Exception if any error occurred while evaluating the condition

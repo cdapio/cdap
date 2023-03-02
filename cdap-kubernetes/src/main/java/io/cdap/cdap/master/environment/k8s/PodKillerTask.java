@@ -37,7 +37,8 @@ final class PodKillerTask implements MasterEnvironmentTask {
   private final ApiClientFactory apiClientFactory;
   private volatile CoreV1Api coreApi;
 
-  PodKillerTask(String namespace, String podSelector, long delayMillis, ApiClientFactory apiClientFactory) {
+  PodKillerTask(String namespace, String podSelector, long delayMillis,
+      ApiClientFactory apiClientFactory) {
     this.namespace = namespace;
     this.podSelector = podSelector;
     this.delayMillis = delayMillis;
@@ -50,13 +51,13 @@ final class PodKillerTask implements MasterEnvironmentTask {
       CoreV1Api api = getCoreApi();
       LOG.debug("Terminating pods using selector {}", podSelector);
       api.deleteCollectionNamespacedPod(namespace, null, null, null, null, null, podSelector,
-                                        null, null, null, null, null, null, null);
+          null, null, null, null, null, null, null);
       LOG.debug("Pods termination completed");
     } catch (IOException e) {
       LOG.warn("IO Exception raised when connecting to Kubernetes API server", e);
     } catch (ApiException e) {
       LOG.warn("API exception raised when trying to delete pods, code=" + e.getCode()
-                 + ", body=" + e.getResponseBody(), e);
+          + ", body=" + e.getResponseBody(), e);
     }
 
     return delayMillis;

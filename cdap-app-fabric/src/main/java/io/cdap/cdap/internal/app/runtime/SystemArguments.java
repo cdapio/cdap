@@ -64,9 +64,11 @@ public final class SystemArguments {
 
   // Keys for retry policy
   private static final String RETRY_POLICY_TYPE = "system." + Constants.Retry.TYPE;
-  private static final String RETRY_POLICY_MAX_TIME_SECS = "system." + Constants.Retry.MAX_TIME_SECS;
+  private static final String RETRY_POLICY_MAX_TIME_SECS =
+      "system." + Constants.Retry.MAX_TIME_SECS;
   private static final String RETRY_POLICY_MAX_RETRIES = "system." + Constants.Retry.MAX_RETRIES;
-  private static final String RETRY_POLICY_DELAY_BASE_MS = "system." + Constants.Retry.DELAY_BASE_MS;
+  private static final String RETRY_POLICY_DELAY_BASE_MS =
+      "system." + Constants.Retry.DELAY_BASE_MS;
   private static final String RETRY_POLICY_DELAY_MAX_MS = "system." + Constants.Retry.DELAY_MAX_MS;
 
   // Keys for transaction
@@ -77,7 +79,7 @@ public final class SystemArguments {
   public static final String METRICS_CONTEXT_TASK_INCLUDED = "system.metrics.context.task.included";
   private static final String YARN_MAX_APP_ATTEMPTS = "system.yarn.max.app.attempts";
   private static final String YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL
-    = "system.yarn.attempt.failures.validity.interval";
+      = "system.yarn.attempt.failures.validity.interval";
 
   // Keys for http service
   public static final String SERVICE_THREADS = "system.service.threads";
@@ -105,15 +107,17 @@ public final class SystemArguments {
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
-   * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
-   * as the log level. Also, the key {@link #LOG_LEVEL} will be used to setup the log level of the root logger.
+   * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the
+   * argument value as the log level. Also, the key {@link #LOG_LEVEL} will be used to setup the log
+   * level of the root logger.
    */
   public static Map<String, Level> getLogLevels(Map<String, String> args) {
     Map<String, Level> logLevels = new HashMap<>();
     for (Map.Entry<String, String> entry : args.entrySet()) {
       String key = entry.getKey();
       if (key.startsWith(LOGGER_LOG_LEVEL_PREFIX)) {
-        logLevels.put(key.substring(LOGGER_LOG_LEVEL_PREFIX.length()), Level.toLevel(entry.getValue()));
+        logLevels.put(key.substring(LOGGER_LOG_LEVEL_PREFIX.length()),
+            Level.toLevel(entry.getValue()));
       }
     }
     String logLevel = args.get(LOG_LEVEL);
@@ -124,8 +128,9 @@ public final class SystemArguments {
   }
 
   /**
-   * If args contains {@link SystemArguments#METRICS_ENABLED}
-   * we evaluate and return the boolean value, if the key is not preset we return the defaultValue
+   * If args contains {@link SystemArguments#METRICS_ENABLED} we evaluate and return the boolean
+   * value, if the key is not preset we return the defaultValue
+   *
    * @param args runtime arguments
    * @param defaultValue value to return when key is not preset in the args
    * @return true if metrics is enabled
@@ -153,13 +158,14 @@ public final class SystemArguments {
   }
 
   /**
-   * Set arguments from the namespace config. These will be prefixed to prevent clashes, and can be extracted out
-   * using {@link #getNamespaceConfigs(Map)} (Map)}.
+   * Set arguments from the namespace config. These will be prefixed to prevent clashes, and can be
+   * extracted out using {@link #getNamespaceConfigs(Map)} (Map)}.
    *
    * @param args arguments to add the namespace configs to
    * @param namespaceConfig the namespace config
    */
-  public static void addNamespaceConfigs(Map<String, String> args, NamespaceConfig namespaceConfig) {
+  public static void addNamespaceConfigs(Map<String, String> args,
+      NamespaceConfig namespaceConfig) {
     for (Map.Entry<String, String> entry : namespaceConfig.getConfigs().entrySet()) {
       args.put(NAMESPACE_CONFIG_PREFIX + entry.getKey(), entry.getValue());
     }
@@ -185,12 +191,14 @@ public final class SystemArguments {
   }
 
   /**
-   * Returns the transaction timeout based on the given arguments or, as fallback, the CConfiguration.
+   * Returns the transaction timeout based on the given arguments or, as fallback, the
+   * CConfiguration.
    *
-   * @return the integer value of the argument system.data.tx.timeout, or if that is not given in the arguments,
-   *         the value for data.tx.timeout from the CConfiguration.
-   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given by
-   *         the {@link TxConstants.Manager#CFG_TX_MAX_TIMEOUT} setting in the {@link CConfiguration}
+   * @return the integer value of the argument system.data.tx.timeout, or if that is not given in
+   *     the arguments, the value for data.tx.timeout from the CConfiguration.
+   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout
+   *     limit given by the {@link TxConstants.Manager#CFG_TX_MAX_TIMEOUT} setting in the {@link
+   *     CConfiguration}
    */
   public static int getTransactionTimeout(Map<String, String> args, CConfiguration cConf) {
     Integer timeout = getPositiveInt(args, TRANSACTION_TIMEOUT, "transaction timeout");
@@ -200,8 +208,8 @@ public final class SystemArguments {
     int maxTimeout = cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT);
     if (timeout > maxTimeout) {
       throw new IllegalArgumentException(String.format(
-        "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
-        TRANSACTION_TIMEOUT, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
+          "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
+          TRANSACTION_TIMEOUT, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
     }
     return timeout;
   }
@@ -209,22 +217,22 @@ public final class SystemArguments {
   /**
    * Validates the custom transaction timeout, if specified in the given arguments.
    *
-   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given in the
-   *         CConfiguration.
+   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout
+   *     limit given in the CConfiguration.
    */
   public static void validateTransactionTimeout(Map<String, String> args, CConfiguration cConf) {
     validateTransactionTimeout(args, cConf, null, null);
   }
 
   /**
-   * Validates the custom transaction timeout, if specified in the given arguments. If scope and name are not null,
-   * validates only for that given scope (for example, flowlet.myFlowlet).
+   * Validates the custom transaction timeout, if specified in the given arguments. If scope and
+   * name are not null, validates only for that given scope (for example, flowlet.myFlowlet).
    *
-   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given in the
-   *         CConfiguration.
+   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout
+   *     limit given in the CConfiguration.
    */
   public static void validateTransactionTimeout(Map<String, String> args, CConfiguration cConf,
-                                                @Nullable String scope, @Nullable String name) {
+      @Nullable String scope, @Nullable String name) {
     String argName = TRANSACTION_TIMEOUT;
     if (scope != null && name != null) {
       argName = RuntimeArguments.addScope(scope, name, TRANSACTION_TIMEOUT);
@@ -234,20 +242,21 @@ public final class SystemArguments {
       int maxTimeout = cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT);
       if (timeout > maxTimeout) {
         throw new IllegalArgumentException(String.format(
-          "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
-          argName, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
+            "Transaction timeout (%s) of %d seconds must not exceed the transaction timeout limit (%s) of %d",
+            argName, timeout, TxConstants.Manager.CFG_TX_MAX_TIMEOUT, maxTimeout));
       }
     }
   }
 
   /**
-   * Get the retry strategy for a program given its arguments and the CDAP defaults for the program type.
+   * Get the retry strategy for a program given its arguments and the CDAP defaults for the program
+   * type.
    *
    * @return the retry strategy to use for internal calls
    * @throws IllegalArgumentException if there is an invalid value for an argument
    */
   public static RetryStrategy getRetryStrategy(Map<String, String> args, ProgramType programType,
-                                               CConfiguration cConf) {
+      CConfiguration cConf) {
     String keyPrefix;
     switch (programType) {
       case MAPREDUCE:
@@ -278,19 +287,23 @@ public final class SystemArguments {
     if (typeStr != null) {
       policyConf.set(keyPrefix + Constants.Retry.TYPE, typeStr);
     }
-    int maxRetries = getNonNegativeInt(args, RETRY_POLICY_MAX_RETRIES, RETRY_POLICY_MAX_RETRIES, -1);
+    int maxRetries = getNonNegativeInt(args, RETRY_POLICY_MAX_RETRIES, RETRY_POLICY_MAX_RETRIES,
+        -1);
     if (maxRetries >= 0) {
       policyConf.setInt(keyPrefix + Constants.Retry.MAX_RETRIES, maxRetries);
     }
-    long maxTimeSecs = getNonNegativeLong(args, RETRY_POLICY_MAX_TIME_SECS, RETRY_POLICY_MAX_TIME_SECS, -1L);
+    long maxTimeSecs = getNonNegativeLong(args, RETRY_POLICY_MAX_TIME_SECS,
+        RETRY_POLICY_MAX_TIME_SECS, -1L);
     if (maxTimeSecs >= 0) {
       policyConf.setLong(keyPrefix + Constants.Retry.MAX_TIME_SECS, maxTimeSecs);
     }
-    long baseDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_BASE_MS, RETRY_POLICY_DELAY_BASE_MS, -1L);
+    long baseDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_BASE_MS,
+        RETRY_POLICY_DELAY_BASE_MS, -1L);
     if (baseDelay >= 0) {
       policyConf.setLong(keyPrefix + Constants.Retry.DELAY_BASE_MS, baseDelay);
     }
-    long maxDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_MAX_MS, RETRY_POLICY_DELAY_MAX_MS, -1L);
+    long maxDelay = getNonNegativeLong(args, RETRY_POLICY_DELAY_MAX_MS, RETRY_POLICY_DELAY_MAX_MS,
+        -1L);
     if (maxDelay >= 0) {
       policyConf.setLong(keyPrefix + Constants.Retry.DELAY_MAX_MS, maxDelay);
     }
@@ -301,7 +314,8 @@ public final class SystemArguments {
   /**
    * Returns the {@link Resources} based on configurations in the given arguments.
    *
-   * Same as calling {@link #getResources(Map, Resources)} with first argument from {@link Arguments#asMap()}.
+   * Same as calling {@link #getResources(Map, Resources)} with first argument from {@link
+   * Arguments#asMap()}.
    */
   public static Resources getResources(Arguments args, @Nullable Resources defaultResources) {
     return getResources(args.asMap(), defaultResources);
@@ -311,10 +325,12 @@ public final class SystemArguments {
    * Returns the {@link Resources} based on configurations in the given arguments.
    *
    * @param args the arguments to use for looking up resources configurations
-   * @param defaultResources default resources to use if resources configurations are missing from the arguments.
-   *                         If it is {@code null}, the default values in {@link Resources} will be used.
+   * @param defaultResources default resources to use if resources configurations are missing
+   *     from the arguments. If it is {@code null}, the default values in {@link Resources} will be
+   *     used.
    */
-  public static Resources getResources(Map<String, String> args, @Nullable Resources defaultResources) {
+  public static Resources getResources(Map<String, String> args,
+      @Nullable Resources defaultResources) {
     Integer memory = getPositiveInt(args, MEMORY_KEY, "memory size");
     Integer cores = getPositiveInt(args, CORES_KEY, "number of cores");
     defaultResources = defaultResources == null ? new Resources() : defaultResources;
@@ -323,12 +339,12 @@ public final class SystemArguments {
       return defaultResources;
     }
     return new Resources(memory != null ? memory : defaultResources.getMemoryMB(),
-                         cores != null ? cores : defaultResources.getVirtualCores());
+        cores != null ? cores : defaultResources.getVirtualCores());
   }
 
   /**
-   * Returns the twill configurations to be used in {@link TwillPreparer#withConfiguration(Map)} based on the
-   * runtime arguments.
+   * Returns the twill configurations to be used in {@link TwillPreparer#withConfiguration(Map)}
+   * based on the runtime arguments.
    */
   public static Map<String, String> getTwillApplicationConfigs(Map<String, String> args) {
     Map<String, String> result = new HashMap<>();
@@ -339,9 +355,10 @@ public final class SystemArguments {
     }
 
     Long failureValidityInterval = getLong(args, YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
-                                           YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL);
+        YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL);
     if (failureValidityInterval != null) {
-      result.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL, failureValidityInterval.toString());
+      result.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+          failureValidityInterval.toString());
     }
 
     String cleanupDisabled = args.get(RUNTIME_CLEANUP_DISABLED);
@@ -359,15 +376,17 @@ public final class SystemArguments {
    * @param containerMemory the container memory size in MB
    * @return a map of configurations
    */
-  public static Map<String, String> getTwillContainerConfigs(Map<String, String> args, int containerMemory) {
-    Integer reservedMemory = getPositiveInt(args, RESERVED_MEMORY_KEY_OVERRIDE, "reserved memory size");
+  public static Map<String, String> getTwillContainerConfigs(Map<String, String> args,
+      int containerMemory) {
+    Integer reservedMemory = getPositiveInt(args, RESERVED_MEMORY_KEY_OVERRIDE,
+        "reserved memory size");
     if (reservedMemory == null) {
       return Collections.emptyMap();
     }
     int heapMemory = containerMemory - reservedMemory;
     if (heapMemory <= 0) {
       LOG.warn("Ignoring invalid reserved memory size '{}' from runtime arguments. " +
-                 "It must be smaller than container memory size '{}'", reservedMemory, containerMemory);
+          "It must be smaller than container memory size '{}'", reservedMemory, containerMemory);
       return Collections.emptyMap();
     }
     double ratio = ((double) heapMemory) / containerMemory;
@@ -386,12 +405,14 @@ public final class SystemArguments {
    * @param <T> type of the {@link NettyHttpService.Builder}
    * @return the builder instance as provided through the {@code builder} argument
    */
-  public static <T extends NettyHttpService.Builder> T configureNettyHttpService(Map<String, String> args, T builder) {
+  public static <T extends NettyHttpService.Builder> T configureNettyHttpService(
+      Map<String, String> args, T builder) {
     Integer threads = getInt(args, SERVICE_THREADS, "http service executor thread pool size");
     if (threads != null) {
       builder.setExecThreadPoolSize(threads);
     }
-    Long keepAliveSecs = getLong(args, SERVICE_THREAD_KEEPALIVE_SECS, "http service executor keep alive seconds");
+    Long keepAliveSecs = getLong(args, SERVICE_THREAD_KEEPALIVE_SECS,
+        "http service executor keep alive seconds");
     if (keepAliveSecs != null) {
       builder.setExecThreadKeepAliveSeconds(keepAliveSecs);
     }
@@ -399,9 +420,9 @@ public final class SystemArguments {
   }
 
   /**
-   * Get the profile id for the given program, given arguments for a run. All non-workflow program types will use the
-   * native profile. Workflow program types will use whatever profile is specified in its arguments, or the native
-   * profile if none is specified.
+   * Get the profile id for the given program, given arguments for a run. All non-workflow program
+   * types will use the native profile. Workflow program types will use whatever profile is
+   * specified in its arguments, or the native profile if none is specified.
    *
    * @param programId program to get the profile for
    * @param args arguments for a program run
@@ -422,21 +443,22 @@ public final class SystemArguments {
    */
   public static boolean isProfileAllowed(ProgramType programType) {
     return programType == ProgramType.WORKFLOW
-      || programType == ProgramType.MAPREDUCE
-      || programType == ProgramType.SPARK
-      || programType == ProgramType.WORKER;
+        || programType == ProgramType.MAPREDUCE
+        || programType == ProgramType.SPARK
+        || programType == ProgramType.WORKER;
   }
 
   /**
-   * Get the profile id from namespace and the argument. Note that the profile name in the args is initially a scoped
-   * name. If it is in system scope, this method will return a profile id which is in SYSTEM namespace, otherwise, it
-   * will be in the given namespace.
+   * Get the profile id from namespace and the argument. Note that the profile name in the args is
+   * initially a scoped name. If it is in system scope, this method will return a profile id which
+   * is in SYSTEM namespace, otherwise, it will be in the given namespace.
    *
    * @param namespaceId namespace this profile is in
    * @param args arguments to look up
    * @return the profile id if it is present
    */
-  public static Optional<ProfileId> getProfileIdFromArgs(NamespaceId namespaceId, Map<String, String> args) {
+  public static Optional<ProfileId> getProfileIdFromArgs(NamespaceId namespaceId,
+      Map<String, String> args) {
     if (args.containsKey(PROFILE_NAME)) {
       String scopedProfile = args.get(SystemArguments.PROFILE_NAME);
       ProfileId profileId = ProfileId.fromScopedName(namespaceId, scopedProfile);
@@ -477,7 +499,8 @@ public final class SystemArguments {
   /**
    * Gets the {@link RuntimeMonitorType} from the given arguments.
    */
-  public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf, ProgramOptions programOptions) {
+  public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf,
+      ProgramOptions programOptions) {
     if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
       return RuntimeMonitorType.SSH;
     }
@@ -486,7 +509,8 @@ public final class SystemArguments {
     if (type == null) {
       // If not in the arguments, read it from cConf based on the provisioner name
       String provisioner = getProfileProvisioner(programOptions.getArguments().asMap());
-      type = cConf.get(String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
+      type = cConf.get(
+          String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
     }
     if (type == null) {
       return RuntimeMonitorType.SSH;
@@ -518,46 +542,49 @@ public final class SystemArguments {
   }
 
   /**
-   * Gets a positive integer value from the given map using the given key.
-   * If there is no such key or if the value is not positive, returns {@code null}.
+   * Gets a positive integer value from the given map using the given key. If there is no such key
+   * or if the value is not positive, returns {@code null}.
    */
   private static Integer getPositiveInt(Map<String, String> map, String key, String description) {
     Integer val = getInt(map, key, description);
     if (val != null && val <= 0) {
       LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a positive integer.",
-               description, val);
+          description, val);
       return null;
     }
     return val;
   }
 
   /**
-   * Gets a non-negative (can be 0) integer value from the given map using the given key.
-   * If there is no such key or if the value is negative, returns the default.
+   * Gets a non-negative (can be 0) integer value from the given map using the given key. If there
+   * is no such key or if the value is negative, returns the default.
    */
-  private static int getNonNegativeInt(Map<String, String> map, String key, String description, int defaultVal) {
+  private static int getNonNegativeInt(Map<String, String> map, String key, String description,
+      int defaultVal) {
     Integer val = getInt(map, key, description);
     if (val == null) {
       return defaultVal;
     } else if (val < 0) {
-      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a non-negative integer.",
-               description, val);
+      LOG.warn(
+          "Ignoring invalid {} '{}' from runtime arguments. It must be a non-negative integer.",
+          description, val);
       return defaultVal;
     }
     return val;
   }
 
   /**
-   * Gets a non-negative (can be 0) long value from the given map using the given key.
-   * If there is no such key or if the value is negative, returns the default.
+   * Gets a non-negative (can be 0) long value from the given map using the given key. If there is
+   * no such key or if the value is negative, returns the default.
    */
-  private static long getNonNegativeLong(Map<String, String> map, String key, String description, long defaultVal) {
+  private static long getNonNegativeLong(Map<String, String> map, String key, String description,
+      long defaultVal) {
     Long val = getLong(map, key, description);
     if (val == null) {
       return defaultVal;
     } else if (val < 0) {
       LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It must be a non-negative long.",
-               description, val);
+          description, val);
       return defaultVal;
     }
     return val;
@@ -574,8 +601,9 @@ public final class SystemArguments {
       return Integer.parseInt(value);
     } catch (NumberFormatException e) {
       // Only the log the stack trace as debug, as usually it's not needed.
-      LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It could not be parsed as an integer.",
-               description, value);
+      LOG.warn(
+          "Ignoring invalid {} '{}' from runtime arguments. It could not be parsed as an integer.",
+          description, value);
       LOG.debug("Invalid {}", description, e);
     }
 
@@ -594,7 +622,7 @@ public final class SystemArguments {
     } catch (NumberFormatException e) {
       // Only the log the stack trace as debug, as usually it's not needed.
       LOG.warn("Ignoring invalid {} '{}' from runtime arguments. It could not be parsed as a long.",
-               description, value);
+          description, value);
       LOG.debug("Invalid {}", description, e);
     }
 

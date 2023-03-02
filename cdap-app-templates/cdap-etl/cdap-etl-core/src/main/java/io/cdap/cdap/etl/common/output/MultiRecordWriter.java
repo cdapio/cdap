@@ -29,25 +29,28 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * Delegates to other record writers.
  */
 public class MultiRecordWriter extends RecordWriter<String, KeyValue<Object, Object>> {
+
   private final Map<String, List<RecordWriter<Object, Object>>> delegates;
 
   /**
-   * The delegates is a map from sink name to all the record writers for the sink.
-   * A sink can contain more than one record writer if it called addOutput() more than once in prepareRun().
+   * The delegates is a map from sink name to all the record writers for the sink. A sink can
+   * contain more than one record writer if it called addOutput() more than once in prepareRun().
    */
   public MultiRecordWriter(Map<String, List<RecordWriter<Object, Object>>> delegates) {
     this.delegates = delegates;
   }
 
   @Override
-  public void write(String key, KeyValue<Object, Object> kv) throws IOException, InterruptedException {
+  public void write(String key, KeyValue<Object, Object> kv)
+      throws IOException, InterruptedException {
     Collection<RecordWriter<Object, Object>> sinkDelegates = delegates.get(key);
     if (sinkDelegates == null) {
       // this means there was a bug, every sink output should be represented in the delegates map.
       throw new IOException(String.format(
-        "Unable to find a writer for output '%s'. This means there is a planner error. " +
-          "Please report this bug and turn off stage consolidation by setting '%s' to 'false' in the" +
-          "runtime arguments for the pipeline.", key, Constants.CONSOLIDATE_STAGES));
+          "Unable to find a writer for output '%s'. This means there is a planner error. " +
+              "Please report this bug and turn off stage consolidation by setting '%s' to 'false' in the"
+              +
+              "runtime arguments for the pipeline.", key, Constants.CONSOLIDATE_STAGES));
     }
     for (RecordWriter<Object, Object> delegate : sinkDelegates) {
       delegate.write(kv.getKey(), kv.getValue());

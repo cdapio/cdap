@@ -44,7 +44,8 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -61,7 +62,7 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
     String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
     String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
     ProgramId program = cliConfig.getCurrentNamespace().app(appId, appVersion)
-      .program(elementType.getProgramType(), programName);
+        .program(elementType.getProgramType(), programName);
     DistributedProgramLiveInfo liveInfo = programClient.getLiveInfo(program);
 
     if (liveInfo == null) {
@@ -70,34 +71,37 @@ public class GetProgramLiveInfoCommand extends AbstractAuthCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("app", "type", "id", "runtime", "yarn app id")
-      .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
-        @Override
-        public List<?> makeRow(DistributedProgramLiveInfo object) {
-          return Lists.newArrayList(object.getApp(), object.getType(), object.getName(),
-                                    object.getRuntime(), object.getYarnAppId());
-        }
-      }).build();
+        .setHeader("app", "type", "id", "runtime", "yarn app id")
+        .setRows(ImmutableList.of(liveInfo), new RowMaker<DistributedProgramLiveInfo>() {
+          @Override
+          public List<?> makeRow(DistributedProgramLiveInfo object) {
+            return Lists.newArrayList(object.getApp(), object.getType(), object.getName(),
+                object.getRuntime(), object.getYarnAppId());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
 
     if (liveInfo.getContainers() != null) {
       Table containersTable = Table.builder()
-        .setHeader("containers", "instance", "host", "container", "memory", "virtual cores", "debug port")
-        .setRows(liveInfo.getContainers(), new RowMaker<Containers.ContainerInfo>() {
-          @Override
-          public List<?> makeRow(Containers.ContainerInfo object) {
-            return Lists.newArrayList("", object.getInstance(), object.getHost(), object.getContainer(),
-              object.getMemory(), object.getVirtualCores(), object.getDebugPort());
-          }
-        }).build();
+          .setHeader("containers", "instance", "host", "container", "memory", "virtual cores",
+              "debug port")
+          .setRows(liveInfo.getContainers(), new RowMaker<Containers.ContainerInfo>() {
+            @Override
+            public List<?> makeRow(Containers.ContainerInfo object) {
+              return Lists.newArrayList("", object.getInstance(), object.getHost(),
+                  object.getContainer(),
+                  object.getMemory(), object.getVirtualCores(), object.getDebugPort());
+            }
+          }).build();
       cliConfig.getTableRenderer().render(cliConfig, output, containersTable);
     }
   }
 
   @Override
   public String getPattern() {
-    return String.format("get %s live <%s> [version <%s>]", elementType.getName(), elementType.getArgumentName(),
-                         ArgumentName.APP_VERSION);
+    return String.format("get %s live <%s> [version <%s>]", elementType.getName(),
+        elementType.getArgumentName(),
+        ArgumentName.APP_VERSION);
   }
 
   @Override

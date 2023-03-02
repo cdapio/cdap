@@ -62,15 +62,19 @@ import org.slf4j.LoggerFactory;
  */
 @Beta
 public final class ClassPath {
+
   private static final Logger LOG = LoggerFactory.getLogger(ClassPath.class);
 
   private static final Predicate<ClassInfo> IS_TOP_LEVEL = new Predicate<ClassInfo>() {
-    @Override public boolean apply(ClassInfo info) {
+    @Override
+    public boolean apply(ClassInfo info) {
       return info.className.indexOf('$') == -1;
     }
   };
 
-  /** Separator for the Class-Path manifest attribute value in jar files. */
+  /**
+   * Separator for the Class-Path manifest attribute value in jar files.
+   */
   private static final Splitter CLASS_PATH_ATTRIBUTE_SEPARATOR =
       Splitter.on(" ").omitEmptyStrings();
 
@@ -89,7 +93,7 @@ public final class ClassPath {
    * <p>Currently only {@link URLClassLoader} and only {@code file://} urls are supported.
    *
    * @throws IOException if the attempt to read class path resources (jar files or directories)
-   *         failed.
+   *     failed.
    */
   public static ClassPath from(ClassLoader classloader) throws IOException {
     return from(classloader, Predicates.<URI>alwaysTrue());
@@ -102,11 +106,13 @@ public final class ClassPath {
    * <p>Currently only {@link URLClassLoader} and only {@code file://} urls are supported.
    *
    * @throws IOException if the attempt to read class path resources (jar files or directories)
-   *         failed.
+   *     failed.
    */
-  public static ClassPath from(ClassLoader classloader, Predicate<URI> predicate) throws IOException {
+  public static ClassPath from(ClassLoader classloader, Predicate<URI> predicate)
+      throws IOException {
     Scanner scanner = new Scanner();
-    for (Map.Entry<URI, ClassLoader> entry : getClassPathEntries(classloader, predicate).entrySet()) {
+    for (Map.Entry<URI, ClassLoader> entry : getClassPathEntries(classloader,
+        predicate).entrySet()) {
       scanner.scan(entry.getKey(), entry.getValue());
     }
     return new ClassPath(scanner.getResources());
@@ -114,7 +120,8 @@ public final class ClassPath {
 
   /**
    * Returns a {@code ClassPath} representing all classes and resources loadable from the given URI.
-   * The ClassLoader of all the {@link ClassPath.ResourceInfo} in the result will be the given classLoader.
+   * The ClassLoader of all the {@link ClassPath.ResourceInfo} in the result will be the given
+   * classLoader.
    */
   public static ClassPath from(URI uri, ClassLoader classLoader) throws IOException {
     Scanner scanner = new Scanner();
@@ -137,14 +144,15 @@ public final class ClassPath {
    */
   public ImmutableSet<ClassInfo> getAllClasses() {
     return resources.stream()
-      .filter(ClassInfo.class::isInstance)
-      .map(ClassInfo.class::cast)
-      .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), ImmutableSet::copyOf));
+        .filter(ClassInfo.class::isInstance)
+        .map(ClassInfo.class::cast)
+        .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new),
+            ImmutableSet::copyOf));
   }
 
   /**
-   * Returns all top level classes whose package name is {@code packageName} or starts with
-   * {@code packageName} followed by a '.'.
+   * Returns all top level classes whose package name is {@code packageName} or starts with {@code
+   * packageName} followed by a '.'.
    */
   public ImmutableSet<ClassInfo> getAllClassesRecursive(String packageName) {
     checkNotNull(packageName);
@@ -161,16 +169,21 @@ public final class ClassPath {
     return builder.build();
   }
 
-  /** Returns all top level classes loadable from the current class path. */
+  /**
+   * Returns all top level classes loadable from the current class path.
+   */
   public ImmutableSet<ClassInfo> getTopLevelClasses() {
     return resources.stream()
-      .filter(ClassInfo.class::isInstance)
-      .map(ClassInfo.class::cast)
-      .filter(IS_TOP_LEVEL::apply)
-      .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new), ImmutableSet::copyOf));
+        .filter(ClassInfo.class::isInstance)
+        .map(ClassInfo.class::cast)
+        .filter(IS_TOP_LEVEL::apply)
+        .collect(Collectors.collectingAndThen(Collectors.toCollection(LinkedHashSet::new),
+            ImmutableSet::copyOf));
   }
 
-  /** Returns all top level classes whose package name is {@code packageName}. */
+  /**
+   * Returns all top level classes whose package name is {@code packageName}.
+   */
   public ImmutableSet<ClassInfo> getTopLevelClasses(String packageName) {
     checkNotNull(packageName);
     ImmutableSet.Builder<ClassInfo> builder = ImmutableSet.builder();
@@ -183,8 +196,8 @@ public final class ClassPath {
   }
 
   /**
-   * Returns all top level classes whose package name is {@code packageName} or starts with
-   * {@code packageName} followed by a '.'.
+   * Returns all top level classes whose package name is {@code packageName} or starts with {@code
+   * packageName} followed by a '.'.
    */
   public ImmutableSet<ClassInfo> getTopLevelClassesRecursive(String packageName) {
     checkNotNull(packageName);
@@ -209,6 +222,7 @@ public final class ClassPath {
    */
   @Beta
   public static class ResourceInfo {
+
     private final URL baseURL;
     private final String resourceName;
     final ClassLoader loader;
@@ -220,7 +234,7 @@ public final class ClassPath {
         return new ResourceInfo(baseURL, resourceName, loader);
       }
     }
-  
+
     ResourceInfo(URL baseURL, String resourceName, ClassLoader loader) {
       this.baseURL = baseURL;
       this.resourceName = checkNotNull(resourceName);
@@ -240,22 +254,28 @@ public final class ClassPath {
       return baseURL;
     }
 
-    /** Returns the url identifying the resource. */
+    /**
+     * Returns the url identifying the resource.
+     */
     @Nullable
     public final URL url() {
       return loader.getResource(resourceName);
     }
 
-    /** Returns the fully qualified name of the resource. Such as "com/mycomp/foo/bar.txt". */
+    /**
+     * Returns the fully qualified name of the resource. Such as "com/mycomp/foo/bar.txt".
+     */
     public final String getResourceName() {
       return resourceName;
     }
 
-    @Override public int hashCode() {
+    @Override
+    public int hashCode() {
       return resourceName.hashCode();
     }
 
-    @Override public boolean equals(Object obj) {
+    @Override
+    public boolean equals(Object obj) {
       if (obj instanceof ResourceInfo) {
         ResourceInfo that = (ResourceInfo) obj;
         return resourceName.equals(that.resourceName)
@@ -265,7 +285,8 @@ public final class ClassPath {
     }
 
     // Do not change this arbitrarily. We rely on it for sorting ResourceInfo.
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return resourceName;
     }
   }
@@ -277,6 +298,7 @@ public final class ClassPath {
    */
   @Beta
   public static final class ClassInfo extends ResourceInfo {
+
     private final String className;
 
     ClassInfo(URL baseURL, String resourceName, ClassLoader loader) {
@@ -284,19 +306,19 @@ public final class ClassPath {
       this.className = getClassName(resourceName);
     }
 
-    /** 
+    /**
      * Returns the package name of the class, without attempting to load the class.
-     * 
-     * <p>Behaves identically to {@link Package#getName()} but does not require the class (or 
+     *
+     * <p>Behaves identically to {@link Package#getName()} but does not require the class (or
      * package) to be loaded.
      */
     public String getPackageName() {
       return Reflection.getPackageName(className);
     }
 
-    /** 
+    /**
      * Returns the simple name of the underlying class as given in the source code.
-     * 
+     *
      * <p>Behaves identically to {@link Class#getSimpleName()} but does not require the class to be
      * loaded.
      */
@@ -317,9 +339,9 @@ public final class ClassPath {
       return className.substring(packageName.length() + 1);
     }
 
-    /** 
-     * Returns the fully qualified name of the class. 
-     * 
+    /**
+     * Returns the fully qualified name of the class.
+     *
      * <p>Behaves identically to {@link Class#getName()} but does not require the class to be
      * loaded.
      */
@@ -330,8 +352,8 @@ public final class ClassPath {
     /**
      * Loads (but doesn't link or initialize) the class.
      *
-     * @throws LinkageError when there were errors in loading classes that this class depends on.
-     *         For example, {@link NoClassDefFoundError}.
+     * @throws LinkageError when there were errors in loading classes that this class depends
+     *     on. For example, {@link NoClassDefFoundError}.
      */
     public Class<?> load() {
       try {
@@ -342,13 +364,15 @@ public final class ClassPath {
       }
     }
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
       return className;
     }
   }
 
   @VisibleForTesting
-  static ImmutableMap<URI, ClassLoader> getClassPathEntries(ClassLoader classloader, Predicate<URI> predicate) {
+  static ImmutableMap<URI, ClassLoader> getClassPathEntries(ClassLoader classloader,
+      Predicate<URI> predicate) {
     LinkedHashMap<URI, ClassLoader> entries = Maps.newLinkedHashMap();
     // Search parent first, since it's the order ClassLoader#loadPluginClass() uses.
     ClassLoader parent = classloader.getParent();
@@ -375,7 +399,8 @@ public final class ClassPath {
     return ImmutableMap.copyOf(entries);
   }
 
-  @VisibleForTesting static final class Scanner {
+  @VisibleForTesting
+  static final class Scanner {
 
     private final ImmutableSortedSet.Builder<ResourceInfo> resources =
         new ImmutableSortedSet.Builder<>(Ordering.usingToString());
@@ -390,8 +415,9 @@ public final class ClassPath {
         scanFrom(new File(uri), classloader);
       }
     }
-  
-    @VisibleForTesting void scanFrom(File file, ClassLoader classloader)
+
+    @VisibleForTesting
+    void scanFrom(File file, ClassLoader classloader)
         throws IOException {
       if (!file.exists()) {
         return;
@@ -402,11 +428,11 @@ public final class ClassPath {
         scanJar(file, classloader);
       }
     }
-  
+
     private void scanDirectory(File directory, ClassLoader classloader) throws IOException {
       scanDirectory(directory, classloader, "", ImmutableSet.<File>of());
     }
-  
+
     private void scanDirectory(
         File directory, ClassLoader classloader, String packagePrefix,
         ImmutableSet<File> ancestors) throws IOException {
@@ -432,12 +458,13 @@ public final class ClassPath {
         } else {
           String resourceName = packagePrefix + name;
           if (!resourceName.equals(JarFile.MANIFEST_NAME)) {
-            resources.add(ResourceInfo.of(getFileBaseURL(directory, packagePrefix), resourceName, classloader));
+            resources.add(ResourceInfo.of(getFileBaseURL(directory, packagePrefix), resourceName,
+                classloader));
           }
         }
       }
     }
-  
+
     private void scanJar(File file, ClassLoader classloader) throws IOException {
       JarFile jarFile;
       try {
@@ -474,7 +501,7 @@ public final class ClassPath {
       int endIdx = path.length() - packagePrefix.length();
       return new URL("file", "", -1, path.substring(0, endIdx));
     }
-  
+
     /**
      * Returns the class path URIs specified by the {@code Class-Path} manifest attribute, according
      * to <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Main%20Attributes">
@@ -505,14 +532,15 @@ public final class ClassPath {
       }
       return builder.build();
     }
-  
+
     /**
      * Returns the absolute uri of the Class-Path entry value as specified in
      * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/jar/jar.html#Main%20Attributes">
      * JAR File Specification</a>. Even though the specification only talks about relative urls,
      * absolute urls are actually supported too (for example, in Maven surefire plugin).
      */
-    @VisibleForTesting static URI getClassPathEntry(File jarFile, String path)
+    @VisibleForTesting
+    static URI getClassPathEntry(File jarFile, String path)
         throws URISyntaxException {
       URI uri = new URI(path);
       if (uri.isAbsolute()) {
@@ -523,7 +551,8 @@ public final class ClassPath {
     }
   }
 
-  @VisibleForTesting static String getClassName(String filename) {
+  @VisibleForTesting
+  static String getClassName(String filename) {
     int classNameEnd = filename.length() - CLASS_FILE_NAME_EXTENSION.length();
     return filename.substring(0, classNameEnd).replace('/', '.');
   }

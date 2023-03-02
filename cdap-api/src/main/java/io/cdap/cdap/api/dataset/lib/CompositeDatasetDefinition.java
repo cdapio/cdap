@@ -34,45 +34,51 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Handy implementation of {@link DatasetDefinition} that implements basic methods by delegating logic execution to
- * underlying dataset definitions.
+ * Handy implementation of {@link DatasetDefinition} that implements basic methods by delegating
+ * logic execution to underlying dataset definitions.
  *
  * @param <D> defines data operations that can be performed on this dataset instance
  */
 @Beta
 public abstract class CompositeDatasetDefinition<D extends Dataset>
-  extends AbstractDatasetDefinition<D, DatasetAdmin> implements Reconfigurable {
+    extends AbstractDatasetDefinition<D, DatasetAdmin> implements Reconfigurable {
 
   private final Map<String, DatasetDefinition> delegates;
 
   /**
    * Constructor that takes an info about underlying datasets
+   *
    * @param name this dataset type name
-   * @param delegates map of [dataset instance name] -> [dataset definition] to use for this instance name
+   * @param delegates map of [dataset instance name] -> [dataset definition] to use for this
+   *     instance name
    */
-  protected CompositeDatasetDefinition(String name, Map<String, ? extends DatasetDefinition> delegates) {
+  protected CompositeDatasetDefinition(String name,
+      Map<String, ? extends DatasetDefinition> delegates) {
     super(name);
     this.delegates = new HashMap<>(delegates);
     for (Map.Entry<String, ? extends DatasetDefinition> entry : delegates.entrySet()) {
       if (null == entry.getValue()) {
-        throw new IllegalArgumentException(String.format("Dataset definition for '%s' is required", entry.getKey()));
+        throw new IllegalArgumentException(
+            String.format("Dataset definition for '%s' is required", entry.getKey()));
       }
     }
   }
 
   /**
    * Constructor that takes one underlying dataset.
+   *
    * @param name this dataset type name
    * @param delegateName name of the first delegate
    * @param delegate dataset definition for the second delegate
    */
   protected CompositeDatasetDefinition(String name,
-                                       String delegateName, DatasetDefinition delegate) {
+      String delegateName, DatasetDefinition delegate) {
     this(name, Collections.singletonMap(delegateName, delegate));
   }
 
   /**
    * Constructor that takes two underlying datasets.
+   *
    * @param name this dataset type name
    * @param delegateNameA name of the first delegate
    * @param delegateA dataset definition for the first delegate
@@ -80,13 +86,14 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @param delegateB dataset definition for the second delegate
    */
   protected CompositeDatasetDefinition(String name,
-                                       String delegateNameA, DatasetDefinition delegateA,
-                                       String delegateNameB, DatasetDefinition delegateB) {
+      String delegateNameA, DatasetDefinition delegateA,
+      String delegateNameB, DatasetDefinition delegateB) {
     this(name, makeMap(delegateNameA, delegateA, delegateNameB, delegateB));
   }
 
-  private static Map<String, ? extends DatasetDefinition> makeMap(String delegateNameA, DatasetDefinition delegateA,
-                                                                  String delegateNameB, DatasetDefinition delegateB) {
+  private static Map<String, ? extends DatasetDefinition> makeMap(String delegateNameA,
+      DatasetDefinition delegateA,
+      String delegateNameB, DatasetDefinition delegateB) {
     Map<String, DatasetDefinition> map = new HashMap<>();
     map.put(delegateNameA, delegateA);
     map.put(delegateNameB, delegateB);
@@ -107,42 +114,43 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    */
   @SuppressWarnings("unchecked")
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
-                                                   DatasetSpecification spec, Map<String, String> arguments,
-                                                   ClassLoader classLoader) throws IOException {
+      DatasetSpecification spec, Map<String, String> arguments,
+      ClassLoader classLoader) throws IOException {
 
     // NOTE: by default we propagate properties to the embedded datasets
-    return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
+    return (T) delegates.get(name)
+        .getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     List<DatasetSpecification> specs = this.delegates.entrySet().stream()
-      .map(impl -> impl.getValue().configure(impl.getKey(), properties))
-      .collect(Collectors.toList());
+        .map(impl -> impl.getValue().configure(impl.getKey(), properties))
+        .collect(Collectors.toList());
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(specs)
-      .build();
+        .properties(properties.getProperties())
+        .datasets(specs)
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     List<DatasetSpecification> specs = new ArrayList<>();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
       specs.add(reconfigure(impl.getValue(), impl.getKey(),
-                            newProperties, currentSpec.getSpecification(impl.getKey())));
+          newProperties, currentSpec.getSpecification(impl.getKey())));
     }
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(newProperties.getProperties())
-      .datasets(specs)
-      .build();
+        .properties(newProperties.getProperties())
+        .datasets(specs)
+        .build();
   }
 
   @Override
   public final DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                     ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     if (1 == delegates.size()) {
       // for a single delegate, we don't need a composite admin
       return getAdmin(datasetContext, delegates.keySet().iterator().next(), spec, classLoader);
@@ -155,11 +163,12 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   }
 
   private DatasetAdmin getAdmin(DatasetContext datasetContext, String name,
-                                DatasetSpecification spec, ClassLoader classLoader) throws IOException {
+      DatasetSpecification spec, ClassLoader classLoader) throws IOException {
     return delegates.get(name).getAdmin(datasetContext, spec.getSpecification(name), classLoader);
   }
 
-  protected <DS extends Dataset, DA extends DatasetAdmin> DatasetDefinition<DS, DA> getDelegate(String name) {
+  protected <DS extends Dataset, DA extends DatasetAdmin> DatasetDefinition<DS, DA> getDelegate(
+      String name) {
     @SuppressWarnings("unchecked")
     DatasetDefinition<DS, DA> def = delegates.get(name);
     return def;

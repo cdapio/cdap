@@ -23,13 +23,15 @@ import java.util.Map;
  * Spark submit context for master environment.
  */
 public class SparkSubmitContext {
+
   private final Map<String, SparkLocalizeResource> localizeResources;
   private final Map<String, String> config;
   private final int driverVirtualCores;
   private final int executorVirtualCores;
 
-  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources, Map<String, String> config,
-                            int driverVirtualCores, int executorVirtualCores) {
+  public SparkSubmitContext(Map<String, SparkLocalizeResource> localizeResources,
+      Map<String, String> config,
+      int driverVirtualCores, int executorVirtualCores) {
     this.localizeResources = Collections.unmodifiableMap(new HashMap<>(localizeResources));
     this.config = Collections.unmodifiableMap(new HashMap<>(config));
     this.driverVirtualCores = driverVirtualCores;
@@ -41,8 +43,8 @@ public class SparkSubmitContext {
   }
 
   /**
-   * Return the set of configuration properties for the Spark job. These are the settings that come from the execution
-   * namespace's configuration.
+   * Return the set of configuration properties for the Spark job. These are the settings that come
+   * from the execution namespace's configuration.
    *
    * @return configuration properties for the Spark job
    */

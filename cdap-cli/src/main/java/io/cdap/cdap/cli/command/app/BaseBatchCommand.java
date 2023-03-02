@@ -47,6 +47,7 @@ import java.util.Set;
  * @param <T> the type of input object for the batch request
  */
 public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractAuthCommand {
+
   private final ApplicationClient appClient;
 
   protected BaseBatchCommand(ApplicationClient appClient, CLIConfig cliConfig) {
@@ -59,7 +60,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
     Args<T> args = readArgs(arguments);
     if (args.programs.isEmpty()) {
       output.printf(String.format("application '%s' contains no programs of type '%s'",
-        args.appId.getEntityName(), Joiner.on(',').join(args.programTypes)));
+          args.appId.getEntityName(), Joiner.on(',').join(args.programTypes)));
       return;
     }
 
@@ -70,7 +71,7 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
    * Reads arguments to get app id, program types, and list of input programs.
    */
   protected Args<T> readArgs(Arguments arguments)
-    throws ApplicationNotFoundException, UnauthenticatedException, IOException, UnauthorizedException {
+      throws ApplicationNotFoundException, UnauthenticatedException, IOException, UnauthorizedException {
 
     String appName = arguments.get(ArgumentName.APP.getName());
     ApplicationId appId = cliConfig.getCurrentNamespace().app(appName);
@@ -107,11 +108,12 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
 
   protected String getDescription(String action, String actionPlural) {
     return String.format("Command to %s one or more programs of %s. " +
-        "By default, %s all services and workers. A comma-separated list of program types can be " +
-        "specified, which will %s all programs of those types. For example, specifying 'service,workflow' will %s " +
-        "all services and workflows in the %s.",
-      action, Fragment.of(Article.A, ElementType.APP.getName()), actionPlural, action, action, 
-      ElementType.APP.getName());
+            "By default, %s all services and workers. A comma-separated list of program types can be " +
+            "specified, which will %s all programs of those types. For example, specifying 'service,workflow' will %s "
+            +
+            "all services and workflows in the %s.",
+        action, Fragment.of(Article.A, ElementType.APP.getName()), actionPlural, action, action,
+        ElementType.APP.getName());
   }
 
   /**
@@ -126,9 +128,11 @@ public abstract class BaseBatchCommand<T extends BatchProgram> extends AbstractA
 
   /**
    * Container for command arguments.
+   *
    * @param <T> type of input object
    */
   protected static class Args<T> {
+
     protected final ApplicationId appId;
     protected final Set<ProgramType> programTypes;
     protected final List<T> programs;

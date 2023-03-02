@@ -28,15 +28,19 @@ import java.util.Set;
 public class FileUtils {
 
   /**
-   * FileAttribute representing owner-only read/write (600). Note that this should not be used to create directories.
+   * FileAttribute representing owner-only read/write (600). Note that this should not be used to
+   * create directories.
    */
   public static final FileAttribute<Set<PosixFilePermission>> OWNER_ONLY_RW =
-    PosixFilePermissions.asFileAttribute(EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
+      PosixFilePermissions.asFileAttribute(
+          EnumSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_READ));
 
-  private FileUtils() { }
+  private FileUtils() {
+  }
 
   /**
-   * Converts a permission, interpreted as a 3-digit octal, into a umask that yields this permission.
+   * Converts a permission, interpreted as a 3-digit octal, into a umask that yields this
+   * permission.
    *
    * @param permissions the permissions
    * @return the corrsponding umask
@@ -47,33 +51,33 @@ public class FileUtils {
   }
 
   /**
-   * Converts a permission string, given either as a 9-character String such as "rwxr-x---" or as
-   * an octal-base number such as 750 (interpreted as a 3-digit octal) into a umask that yields
-   * this permission as a 3-digit octal string.
+   * Converts a permission string, given either as a 9-character String such as "rwxr-x---" or as an
+   * octal-base number such as 750 (interpreted as a 3-digit octal) into a umask that yields this
+   * permission as a 3-digit octal string.
    *
    * @param permissions the permissions
    * @return the corrsponding umask
-   *
-   * @throws NumberFormatException if the length of the permissions is 3 but it is not a valid octal number
-   * @throws IllegalArgumentException if the permissions do not have a length of 3 or 9, or if it is a 9-character
-   *         string that contains illegal characters (it must be of the form "rwxrwxrwx", where any character
-   *         may be replaced with a "-")
+   * @throws NumberFormatException if the length of the permissions is 3 but it is not a valid
+   *     octal number
+   * @throws IllegalArgumentException if the permissions do not have a length of 3 or 9, or if
+   *     it is a 9-character string that contains illegal characters (it must be of the form
+   *     "rwxrwxrwx", where any character may be replaced with a "-")
    */
   public static String permissionsToUmask(String permissions) {
     return String.format("%03o", permissionsToUmask(parsePermissions(permissions)));
   }
 
   /**
-   * Parses a permission string, given either as a 9-character String such as "rwxr-x---" or as
-   * an octal-base number such as 750 (interpreted as a 3-digit octal).
+   * Parses a permission string, given either as a 9-character String such as "rwxr-x---" or as an
+   * octal-base number such as 750 (interpreted as a 3-digit octal).
    *
    * @param permissions the permissions
    * @return the integer representation of the permissions
-   *
-   * @throws NumberFormatException if the length of the permissions is 3 but it is not a valid octal number
-   * @throws IllegalArgumentException if the permissions do not have a length of 3 or 9, or if it is a 9-character
-   *         string that contains illegal characters (it must be of the form "rwxrwxrwx", where any character
-   *         may be replaced with a "-")
+   * @throws NumberFormatException if the length of the permissions is 3 but it is not a valid
+   *     octal number
+   * @throws IllegalArgumentException if the permissions do not have a length of 3 or 9, or if
+   *     it is a 9-character string that contains illegal characters (it must be of the form
+   *     "rwxrwxrwx", where any character may be replaced with a "-")
    */
   public static int parsePermissions(String permissions) {
     if (permissions.length() == 3) {
@@ -88,7 +92,9 @@ public class FileUtils {
   }
 
   /**
-   * Returns the file name extension. File extension is defined as suffix after the last `.` character.
+   * Returns the file name extension. File extension is defined as suffix after the last `.`
+   * character.
+   *
    * @param name name of the file
    * @return the extension
    */
@@ -99,6 +105,7 @@ public class FileUtils {
 
   /**
    * Returns the name of a given file without the extension, if one is present.
+   *
    * @param name name of the file
    * @return the name of the file without the extension
    */
@@ -109,8 +116,8 @@ public class FileUtils {
 
   private static int parsePermissionGroup(String permissions, int start) {
     return parseBit(permissions, start, 'r', 4)
-      + parseBit(permissions, start + 1, 'w', 2)
-      + parseBit(permissions, start + 2, 'x', 1);
+        + parseBit(permissions, start + 1, 'w', 2)
+        + parseBit(permissions, start + 2, 'x', 1);
   }
 
   private static int parseBit(String permissions, int index, char expected, int value) {

@@ -34,8 +34,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Loads all MetadataConsumers from the extensions directory, if available.
  */
-public class MetadataConsumerExtensionLoader extends AbstractExtensionLoader<String, MetadataConsumer>
-  implements MetadataConsumerProvider {
+public class MetadataConsumerExtensionLoader extends
+    AbstractExtensionLoader<String, MetadataConsumer>
+    implements MetadataConsumerProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataConsumerExtensionLoader.class);
   private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
@@ -45,9 +46,9 @@ public class MetadataConsumerExtensionLoader extends AbstractExtensionLoader<Str
   @Inject
   public MetadataConsumerExtensionLoader(CConfiguration cConf) {
     super(cConf.get(Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_DIR) != null
-            ? cConf.get(Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_DIR) : "");
+        ? cConf.get(Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_DIR) : "");
     this.enabledMetadataConsumers = cConf.getStringCollection(
-      Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST);
+        Constants.MetadataConsumer.METADATA_CONSUMER_EXTENSIONS_ENABLED_LIST);
     if (this.enabledMetadataConsumers == null || this.enabledMetadataConsumers.isEmpty()) {
       LOG.debug("No metadata consumers enabled.");
       return;
@@ -57,18 +58,21 @@ public class MetadataConsumerExtensionLoader extends AbstractExtensionLoader<Str
 
   private static Set<String> createAllowedResources() {
     try {
-      return ClassPathResources.getResourcesWithDependencies(MetadataConsumer.class.getClassLoader(),
-                                                             MetadataConsumer.class);
+      return ClassPathResources.getResourcesWithDependencies(
+          MetadataConsumer.class.getClassLoader(),
+          MetadataConsumer.class);
     } catch (IOException e) {
       throw new RuntimeException("Failed to trace dependencies for metadata consumer extension. " +
-                                   "Usage of metadata consumer might fail.", e);
+          "Usage of metadata consumer might fail.", e);
     }
   }
 
   @Override
   protected Set<String> getSupportedTypesForProvider(MetadataConsumer metadataConsumer) {
-    if (enabledMetadataConsumers == null || !enabledMetadataConsumers.contains(metadataConsumer.getName())) {
-      LOG.debug("{} is not present in the enabled list of metadata consumers.", metadataConsumer.getName());
+    if (enabledMetadataConsumers == null || !enabledMetadataConsumers.contains(
+        metadataConsumer.getName())) {
+      LOG.debug("{} is not present in the enabled list of metadata consumers.",
+          metadataConsumer.getName());
       return Collections.emptySet();
     }
     return Collections.singleton(metadataConsumer.getName());

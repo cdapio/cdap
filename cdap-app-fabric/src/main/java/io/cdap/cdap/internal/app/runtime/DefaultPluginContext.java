@@ -42,8 +42,8 @@ public class DefaultPluginContext implements PluginContext {
   private final FeatureFlagsProvider featureFlagsProvider;
 
   public DefaultPluginContext(@Nullable PluginInstantiator pluginInstantiator,
-                              ProgramId programId, Map<String, Plugin> plugins,
-                              FeatureFlagsProvider featureFlagsProvider) {
+      ProgramId programId, Map<String, Plugin> plugins,
+      FeatureFlagsProvider featureFlagsProvider) {
     this.pluginInstantiator = pluginInstantiator;
     this.programId = programId;
     this.plugins = plugins;
@@ -87,7 +87,8 @@ public class DefaultPluginContext implements PluginContext {
   }
 
   @Override
-  public <T> T newPluginInstance(String pluginId, @Nullable MacroEvaluator evaluator) throws InstantiationException {
+  public <T> T newPluginInstance(String pluginId, @Nullable MacroEvaluator evaluator)
+      throws InstantiationException {
     try {
       Plugin plugin = getPlugin(pluginId);
       if (pluginInstantiator == null) {
@@ -112,8 +113,9 @@ public class DefaultPluginContext implements PluginContext {
 
   private Plugin getPlugin(String pluginId) {
     Plugin plugin = plugins.get(pluginId);
-    Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
-                                pluginId, programId.getProgram(), programId.getApplication());
+    Preconditions.checkArgument(plugin != null,
+        "Plugin with id %s does not exist in program %s of application %s.",
+        pluginId, programId.getProgram(), programId.getApplication());
     return plugin;
   }
 }

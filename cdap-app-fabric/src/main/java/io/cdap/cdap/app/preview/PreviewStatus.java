@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Class representing status and failure reason (if any) associated with the Preview.
  */
 public class PreviewStatus {
+
   /**
    * Status for the preview
    */
@@ -56,13 +57,15 @@ public class PreviewStatus {
   private final Long endTime;
   private final Integer positionInWaitingQueue;
 
-  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable, @Nullable Long startTime,
-                       @Nullable Long endTime) {
+  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable,
+      @Nullable Long startTime,
+      @Nullable Long endTime) {
     this(status, submitTime, throwable, startTime, endTime, null);
   }
 
-  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable, @Nullable Long startTime,
-                       @Nullable Long endTime, @Nullable Integer positionInWaitingQueue) {
+  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable,
+      @Nullable Long startTime,
+      @Nullable Long endTime, @Nullable Integer positionInWaitingQueue) {
     this.status = status;
     this.submitTime = submitTime;
     this.throwable = throwable;
@@ -122,11 +125,11 @@ public class PreviewStatus {
 
     PreviewStatus status1 = (PreviewStatus) o;
     return status == status1.status &&
-      submitTime == status1.submitTime &&
-      Objects.equals(throwable, status1.throwable) &&
-      Objects.equals(startTime, status1.startTime) &&
-      Objects.equals(endTime, status1.endTime) &&
-      Objects.equals(positionInWaitingQueue, status1.positionInWaitingQueue);
+        submitTime == status1.submitTime &&
+        Objects.equals(throwable, status1.throwable) &&
+        Objects.equals(startTime, status1.startTime) &&
+        Objects.equals(endTime, status1.endTime) &&
+        Objects.equals(positionInWaitingQueue, status1.positionInWaitingQueue);
   }
 
   @Override

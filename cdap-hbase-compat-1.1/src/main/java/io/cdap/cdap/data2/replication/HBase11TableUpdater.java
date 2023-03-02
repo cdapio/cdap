@@ -54,8 +54,8 @@ public class HBase11TableUpdater extends TableUpdater {
     for (Map.Entry<String, Long> entry : cachedUpdates.entrySet()) {
       Put put = new Put(getRowKey(entry.getKey()));
       put.addColumn(columnFamily,
-                    Bytes.toBytes(rowType),
-                    Bytes.toBytes(entry.getValue()));
+          Bytes.toBytes(rowType),
+          Bytes.toBytes(entry.getValue()));
       puts.add(put);
     }
 

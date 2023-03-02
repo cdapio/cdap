@@ -24,10 +24,11 @@ import java.util.Objects;
  * Represent preferences
  */
 public class PreferencesDetail {
+
   private final Map<String, String> properties;
   /**
-   * Sequence id of operations on the preferences
-   * Normally this should be > 0. But can be 0 indicating that no preferences have been set on the entity.
+   * Sequence id of operations on the preferences Normally this should be > 0. But can be 0
+   * indicating that no preferences have been set on the entity.
    */
   private final long seqId;
   /**
@@ -79,8 +80,8 @@ public class PreferencesDetail {
     }
     PreferencesDetail that = (PreferencesDetail) o;
     return Objects.equals(properties, that.properties) &&
-      Objects.equals(seqId, that.seqId) &&
-      Objects.equals(resolved, that.resolved);
+        Objects.equals(seqId, that.seqId) &&
+        Objects.equals(resolved, that.resolved);
   }
 
   @Override
@@ -91,10 +92,10 @@ public class PreferencesDetail {
   @Override
   public String toString() {
     return "PreferencesDetail{" +
-      "properties='" + properties.toString() +
-      "seqId='" + seqId +
-      "resolved='" + resolved +
-      '}';
+        "properties='" + properties.toString() +
+        "seqId='" + seqId +
+        "resolved='" + resolved +
+        '}';
   }
 }
 

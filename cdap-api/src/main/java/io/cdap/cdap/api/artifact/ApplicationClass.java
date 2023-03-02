@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public final class ApplicationClass {
+
   private final String className;
   private final String description;
   private final Schema configSchema;
@@ -37,7 +38,7 @@ public final class ApplicationClass {
   }
 
   public ApplicationClass(String className, String description, @Nullable Schema configSchema,
-                          Requirements requirements) {
+      Requirements requirements) {
     if (description == null) {
       throw new IllegalArgumentException("Application class description cannot be null");
     }
@@ -73,7 +74,6 @@ public final class ApplicationClass {
   }
 
   /**
-   *
    * @return {@link Requirements} for the Application
    */
   public Requirements getRequirements() {
@@ -92,9 +92,9 @@ public final class ApplicationClass {
     ApplicationClass that = (ApplicationClass) o;
 
     return Objects.equals(description, that.description) &&
-      Objects.equals(className, that.className) &&
-      Objects.equals(configSchema, that.configSchema) &&
-      Objects.equals(requirements, that.requirements);
+        Objects.equals(className, that.className) &&
+        Objects.equals(configSchema, that.configSchema) &&
+        Objects.equals(requirements, that.requirements);
   }
 
   @Override
@@ -105,10 +105,10 @@ public final class ApplicationClass {
   @Override
   public String toString() {
     return "ApplicationClass{" +
-      "className='" + className + '\'' +
-      ", description='" + description + '\'' +
-      ", configSchema=" + configSchema +
-      ", requirements=" + requirements +
-      '}';
+        "className='" + className + '\'' +
+        ", description='" + description + '\'' +
+        ", configSchema=" + configSchema +
+        ", requirements=" + requirements +
+        '}';
   }
 }

@@ -45,38 +45,40 @@ import org.slf4j.LoggerFactory;
  * Metadata service client that allows CDAP Master to make Metadata updates via HTTP.
  */
 public class DefaultMetadataServiceClient implements MetadataServiceClient {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataServiceClient.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .registerTypeAdapter(Metadata.class, new MetadataCodec())
-    .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
-    .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
-    .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
-    .create();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .registerTypeAdapter(Metadata.class, new MetadataCodec())
+      .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+      .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+      .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
+      .create();
   private final RemoteClient remoteClient;
 
   @Inject
   public DefaultMetadataServiceClient(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.METADATA_SERVICE,
-                                                               new DefaultHttpRequestConfig(false),
-                                                               Constants.Gateway.API_VERSION_3);
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.API_VERSION_3);
   }
 
   @Override
   public void create(MetadataMutation.Create createMutation) {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "metadata-internals/create")
-      .withBody(GSON.toJson(createMutation)).build();
+        .withBody(GSON.toJson(createMutation)).build();
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to create metadata for entity %s: %s", createMutation.getEntity(), response);
+      LOG.trace("Failed to create metadata for entity %s: %s", createMutation.getEntity(),
+          response);
     }
   }
 
   @Override
   public void drop(MetadataMutation.Drop dropMutation) {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, "metadata-internals/drop")
-      .withBody(GSON.toJson(dropMutation)).build();
+        .withBody(GSON.toJson(dropMutation)).build();
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
@@ -87,29 +89,32 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
   @Override
   public void update(MetadataMutation.Update updateMutation) {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "metadata-internals/update")
-      .withBody(GSON.toJson(updateMutation)).build();
+        .withBody(GSON.toJson(updateMutation)).build();
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to update metadata for entity %s: %s", updateMutation.getEntity(), response);
+      LOG.trace("Failed to update metadata for entity %s: %s", updateMutation.getEntity(),
+          response);
     }
   }
 
   @Override
   public void remove(MetadataMutation.Remove removeMutation) {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, "metadata-internals/remove")
-      .withBody(GSON.toJson(removeMutation)).build();
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE,
+            "metadata-internals/remove")
+        .withBody(GSON.toJson(removeMutation)).build();
     HttpResponse response = execute(request);
 
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
-      LOG.trace("Failed to remove metadata for entity %s: %s", removeMutation.getEntity(), response);
+      LOG.trace("Failed to remove metadata for entity %s: %s", removeMutation.getEntity(),
+          response);
     }
   }
 
   @Override
   public void batch(List<MetadataMutation> mutations) {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "metadata-internals/batch")
-      .withBody(GSON.toJson(mutations)).build();
+        .withBody(GSON.toJson(mutations)).build();
     HttpResponse response = execute(request);
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       LOG.trace("Failed to apply metadata mutations for mutations %s: %s", mutations, response);
@@ -123,7 +128,8 @@ public class DefaultMetadataServiceClient implements MetadataServiceClient {
       LOG.trace("Received response {} for request {}", response, request);
       return response;
     } catch (Exception e) {
-      throw new RuntimeException("Failed to execute metadata mutation, with request: " + request, e);
+      throw new RuntimeException("Failed to execute metadata mutation, with request: " + request,
+          e);
     }
   }
 }

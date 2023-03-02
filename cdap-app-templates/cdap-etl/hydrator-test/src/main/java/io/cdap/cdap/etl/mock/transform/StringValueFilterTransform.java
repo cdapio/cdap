@@ -36,12 +36,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Transform that filters out records whose configured field is a configured value.
- * For example, can filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
+ * Transform that filters out records whose configured field is a configured value. For example, can
+ * filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name(StringValueFilterTransform.NAME)
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "StringValueFilter";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -60,17 +61,20 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     if (inputSchema != null && !config.containsMacro("field")) {
       Schema.Field field = inputSchema.getField(config.field);
       if (field == null) {
-        collector.addFailure(String.format("'%s' is not a field in the input schema.", config.field),
-                             "Make sure field is present in the input schema.")
-          .withConfigProperty("field");
+        collector.addFailure(
+                String.format("'%s' is not a field in the input schema.", config.field),
+                "Make sure field is present in the input schema.")
+            .withConfigProperty("field");
         collector.getOrThrowException();
       }
       Schema fieldSchema = field.getSchema();
-      Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+      Schema.Type fieldType =
+          fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (fieldType != Schema.Type.STRING) {
-        collector.addFailure(String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
-                             "Make sure provided field is of type string.")
-          .withConfigProperty("field").withInputSchemaField(config.field);
+        collector.addFailure(
+                String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType),
+                "Make sure provided field is of type string.")
+            .withConfigProperty("field").withInputSchemaField(config.field);
       }
     }
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
@@ -81,7 +85,7 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     // override whatever is in the conf if they are specified in the pipeline arguments.
     super.initialize(context);
     filterField = context.getArguments().get("field");
-    if (filterField == null)  {
+    if (filterField == null) {
       filterField = config.field;
     }
     filterValue = context.getArguments().get("value");
@@ -91,7 +95,8 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     String value = input.get(filterField);
     if (!filterValue.equals(value)) {
       emitter.emit(input);
@@ -104,6 +109,7 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
    * Config for the transform.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private String field;
 
@@ -123,7 +129,8 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
     return PluginClass.builder().setName("StringValueFilter").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(StringValueFilterTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(StringValueFilterTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

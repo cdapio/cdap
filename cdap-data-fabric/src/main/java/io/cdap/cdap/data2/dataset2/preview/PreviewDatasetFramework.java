@@ -71,17 +71,17 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   };
   private static final AccessEnforcer NOOP_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder NOOP_DATASET_ACCESS_RECORDER =
-    new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
-      @Override
-      public void recordLineage(AccessType accessType) {
-        // no-op
-      }
+      new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
+        @Override
+        public void recordLineage(AccessType accessType) {
+          // no-op
+        }
 
-      @Override
-      public void emitAudit(AccessType accessType) {
-        // no-op
-      }
-    };
+        @Override
+        public void emitAudit(AccessType accessType) {
+          // no-op
+        }
+      };
 
   private final DatasetFramework actualDatasetFramework;
   private final AuthenticationContext authenticationContext;
@@ -94,8 +94,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
    * @param actual the dataset framework instance in the real space
    */
   public PreviewDatasetFramework(DatasetFramework local, DatasetFramework actual,
-                                 AuthenticationContext authenticationContext,
-                                 AccessEnforcer accessEnforcer) {
+      AuthenticationContext authenticationContext,
+      AccessEnforcer accessEnforcer) {
     super(local);
     this.actualDatasetFramework = actual;
     this.authenticationContext = authenticationContext;
@@ -104,18 +104,19 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
 
   @Override
   public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
-                          DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
+      DatasetProperties props,
+      @Nullable KerberosPrincipalId ownerPrincipal) throws DatasetManagementException, IOException {
     if (ownerPrincipal != null) {
-      throw new UnsupportedOperationException("Creating dataset instance with owner is not supported in preview, " +
-                                                "please try to start the preview without the ownership");
+      throw new UnsupportedOperationException(
+          "Creating dataset instance with owner is not supported in preview, " +
+              "please try to start the preview without the ownership");
     }
     super.addInstance(datasetTypeName, datasetInstanceId, props, null);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId,
-                             DatasetProperties props) throws DatasetManagementException, IOException {
+      DatasetProperties props) throws DatasetManagementException, IOException {
     // allow updates to the datasets in preview space only
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.updateInstance(datasetInstanceId, props);
@@ -125,7 +126,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
+      throws DatasetManagementException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       DatasetSpecification datasetSpec = actualDatasetFramework.getDatasetSpec(datasetInstanceId);
       return datasetSpec != null ? datasetSpec : delegate.getDatasetSpec(datasetInstanceId);
@@ -136,13 +138,15 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Override
   public boolean hasInstance(DatasetId datasetInstanceId) throws DatasetManagementException {
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
-      return actualDatasetFramework.hasInstance(datasetInstanceId) || delegate.hasInstance(datasetInstanceId);
+      return actualDatasetFramework.hasInstance(datasetInstanceId) || delegate.hasInstance(
+          datasetInstanceId);
     }
     return delegate.hasInstance(datasetInstanceId);
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void truncateInstance(DatasetId datasetInstanceId)
+      throws DatasetManagementException, IOException {
     // If dataset exists in the preview space then only truncate it otherwise its a no-op
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.truncateInstance(datasetInstanceId);
@@ -150,7 +154,8 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void deleteInstance(DatasetId datasetInstanceId)
+      throws DatasetManagementException, IOException {
     // If dataset exists in the preview space then only delete it otherwise its a no-op
     if (delegate.hasInstance(datasetInstanceId)) {
       delegate.deleteInstance(datasetInstanceId);
@@ -160,8 +165,9 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader)
+      throws DatasetManagementException, IOException {
     // Return the no-op admin for the dataset from the real space
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
@@ -172,9 +178,10 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
-                                             DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader,
+      DatasetClassLoaderProvider classLoaderProvider)
+      throws DatasetManagementException, IOException {
     // Return the no-op admin for the dataset from the real space
     if (actualDatasetFramework.hasInstance(datasetInstanceId)) {
       return (T) NOOP_DATASET_ADMIN;
@@ -185,11 +192,11 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
   @Nullable
   @Override
   public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          final Map<String, String> arguments,
-                                          @Nullable final ClassLoader classLoader,
-                                          final DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable final Iterable<? extends EntityId> owners,
-                                          final AccessType accessType) throws DatasetManagementException, IOException {
+      final Map<String, String> arguments,
+      @Nullable final ClassLoader classLoader,
+      final DatasetClassLoaderProvider classLoaderProvider,
+      @Nullable final Iterable<? extends EntityId> owners,
+      final AccessType accessType) throws DatasetManagementException, IOException {
     Principal principal = authenticationContext.getPrincipal();
 
     try {
@@ -204,18 +211,21 @@ public class PreviewDatasetFramework extends ForwardingDatasetFramework {
       }
 
       return DefaultDatasetRuntimeContext.execute(
-        enforcer, NOOP_DATASET_ACCESS_RECORDER, principal, datasetInstanceId, null, () -> {
-          if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
-            return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
-                                                     owners, accessType);
-          }
-          return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
-                                     owners, accessType);
-        });
+          enforcer, NOOP_DATASET_ACCESS_RECORDER, principal, datasetInstanceId, null, () -> {
+            if (isUserDataset && actualDatasetFramework.hasInstance(datasetInstanceId)) {
+              return actualDatasetFramework.getDataset(datasetInstanceId, arguments, classLoader,
+                  classLoaderProvider,
+                  owners, accessType);
+            }
+            return delegate.getDataset(datasetInstanceId, arguments, classLoader,
+                classLoaderProvider,
+                owners, accessType);
+          });
     } catch (IOException | DatasetManagementException e) {
       throw e;
     } catch (Exception e) {
-      throw new DatasetManagementException("Failed to create dataset instance: " + datasetInstanceId, e);
+      throw new DatasetManagementException(
+          "Failed to create dataset instance: " + datasetInstanceId, e);
     }
   }
 

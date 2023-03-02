@@ -28,20 +28,22 @@ import java.util.Set;
  * Inspects a jar file to determine metadata about the artifact.
  */
 interface ArtifactInspector {
+
   /**
    * Inspect the given artifact to determine the classes contained in the artifact.
    *
    * @param artifactId the id of the artifact to inspect
    * @param artifactFile the artifact file
-   * @param parentDescriptors {@link ArtifactDescriptor} of parent and grandparent (if any) artifacts.
+   * @param parentDescriptors {@link ArtifactDescriptor} of parent and grandparent (if any)
+   *     artifacts.
    * @param additionalPlugins Additional plugin classes
    * @return metadata about the classes contained in the artifact
-   * @throws IOException              if there was an exception opening the jar file
-   * @throws InvalidArtifactException if the artifact is invalid. For example, if the application main class is not
-   *                                  actually an Application.
+   * @throws IOException if there was an exception opening the jar file
+   * @throws InvalidArtifactException if the artifact is invalid. For example, if the
+   *     application main class is not actually an Application.
    */
   ArtifactClassesWithMetadata inspectArtifact(Id.Artifact artifactId, File artifactFile,
-                                              List<ArtifactDescriptor> parentDescriptors,
-                                              Set<PluginClass> additionalPlugins)
-    throws IOException, InvalidArtifactException;
+      List<ArtifactDescriptor> parentDescriptors,
+      Set<PluginClass> additionalPlugins)
+      throws IOException, InvalidArtifactException;
 }

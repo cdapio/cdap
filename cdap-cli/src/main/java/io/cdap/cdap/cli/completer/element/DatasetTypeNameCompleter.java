@@ -39,19 +39,19 @@ public class DatasetTypeNameCompleter extends StringsCompleter {
 
   @Inject
   public DatasetTypeNameCompleter(final DatasetTypeClient datasetTypeClient,
-                                  final CLIConfig cliConfig) {
+      final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
           List<DatasetTypeMeta> list = datasetTypeClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
-              @Override
-              public String apply(DatasetTypeMeta input) {
-                return input.getName();
-              }
-            })
+              Iterables.transform(list, new Function<DatasetTypeMeta, String>() {
+                @Override
+                public String apply(DatasetTypeMeta input) {
+                  return input.getName();
+                }
+              })
           );
         } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
           return new ArrayList<>();

@@ -44,53 +44,54 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class AppStateHandler extends AbstractHttpHandler {
+
   private final ApplicationLifecycleService applicationLifecycleService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public AppStateHandler(ApplicationLifecycleService applicationLifecycleService,
-                         NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.applicationLifecycleService = applicationLifecycleService;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
-   * Get state for a given app-name and state-key.
-   * Returns null as response if the app is valid, but there is no entry for the key
-   * Returns {@link HttpResponseStatus.NOT_FOUND} if namespace or app is not valid
+   * Get state for a given app-name and state-key. Returns null as response if the app is valid, but
+   * there is no entry for the key Returns {@link HttpResponseStatus.NOT_FOUND} if namespace or app
+   * is not valid
    */
   @GET
   @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void getState(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace") String namespace,
-                       @PathParam("app-name") String appName,
-                       @PathParam("state-key") String stateKey) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app-name") String appName,
+      @PathParam("state-key") String stateKey) throws Exception {
     NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
     AppStateKey appStateKeyRequest = new AppStateKey(namespaceId, appName, stateKey);
     Optional<byte[]> appStateResponse = applicationLifecycleService.getState(appStateKeyRequest);
     if (appStateResponse.isPresent()) {
       responder.sendByteArray(HttpResponseStatus.OK, appStateResponse.get(),
-                              EmptyHttpHeaders.INSTANCE);
+          EmptyHttpHeaders.INSTANCE);
     } else {
       responder.sendStatus(HttpResponseStatus.OK, EmptyHttpHeaders.INSTANCE);
     }
   }
 
   /**
-   * Save state for a given app-name and state-key.
-   * All params and state value should be present
+   * Save state for a given app-name and state-key. All params and state value should be present
    */
   @PUT
   @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void saveState(FullHttpRequest request, HttpResponder responder,
-                        @PathParam("namespace") String namespace,
-                        @PathParam("app-name") String appName,
-                        @PathParam("state-key") String stateKey) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app-name") String appName,
+      @PathParam("state-key") String stateKey) throws Exception {
     byte[] stateValue = new byte[request.content().readableBytes()];
     request.content().readBytes(stateValue);
 
     NamespaceId namespaceId = validateInput(namespace, appName, stateKey, stateValue);
-    AppStateKeyValue appStateKeyRequest = new AppStateKeyValue(namespaceId, appName, stateKey, stateValue);
+    AppStateKeyValue appStateKeyRequest = new AppStateKeyValue(namespaceId, appName, stateKey,
+        stateValue);
     applicationLifecycleService.saveState(appStateKeyRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -101,10 +102,10 @@ public class AppStateHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/namespaces/{namespace}/apps/{app-name}/states/{state-key}")
   public void deleteState(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace") String namespace,
-                          @PathParam("app-name") String appName,
-                          @PathParam("state-key") String stateKey)
-    throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app-name") String appName,
+      @PathParam("state-key") String stateKey)
+      throws Exception {
     NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
     AppStateKey appStateKeyRequest = new AppStateKey(namespaceId, appName, stateKey);
     applicationLifecycleService.deleteState(appStateKeyRequest);
@@ -117,16 +118,16 @@ public class AppStateHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/namespaces/{namespace}/apps/{app-name}/states")
   public void deleteAllStates(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace") String namespace,
-                              @PathParam("app-name") String appName)
-    throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("app-name") String appName)
+      throws Exception {
     NamespaceId namespaceId = validateInput(namespace, appName);
     applicationLifecycleService.deleteAllStates(namespaceId, appName);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   private NamespaceId validateInput(String namespace, String appName)
-    throws Exception {
+      throws Exception {
     NamespaceId namespaceId = validateNamespace(namespace);
 
     validateApplication(namespaceId, appName);
@@ -135,7 +136,7 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   private NamespaceId validateInput(String namespace, String appName, String stateKey)
-    throws Exception {
+      throws Exception {
     NamespaceId namespaceId = validateInput(namespace, appName);
 
     validateStateKey(stateKey);
@@ -143,8 +144,9 @@ public class AppStateHandler extends AbstractHttpHandler {
     return namespaceId;
   }
 
-  private NamespaceId validateInput(String namespace, String appName, String stateKey, byte[] stateValue)
-    throws Exception {
+  private NamespaceId validateInput(String namespace, String appName, String stateKey,
+      byte[] stateValue)
+      throws Exception {
     NamespaceId namespaceId = validateInput(namespace, appName, stateKey);
 
     validateStateValue(stateValue);
@@ -153,7 +155,7 @@ public class AppStateHandler extends AbstractHttpHandler {
   }
 
   private void validateApplication(NamespaceId namespaceId, String appName)
-    throws NullPointerException, IllegalArgumentException {
+      throws NullPointerException, IllegalArgumentException {
     // Verify app name is not null and has a valid app name
     namespaceId.app(appName);
   }

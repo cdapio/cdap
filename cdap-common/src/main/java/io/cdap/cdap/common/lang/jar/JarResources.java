@@ -34,11 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * JarResources: JarResources maps all resources included in a
- * Zip or Jar file. Additionaly, it provides a method to extract one
- * as a blob.
+ * JarResources: JarResources maps all resources included in a Zip or Jar file. Additionaly, it
+ * provides a method to extract one as a blob.
  */
 public final class JarResources {
+
   private static final Logger LOG = LoggerFactory.getLogger(JarResources.class);
 
   // archive resource mapping tables
@@ -50,11 +50,10 @@ public final class JarResources {
   private final Location jarLocation;
 
   /**
-   * Creates a JarResources using a {@link Location}. It extracts all resources from
-   * a Jar into a internal map, keyed by resource names.
+   * Creates a JarResources using a {@link Location}. It extracts all resources from a Jar into a
+   * internal map, keyed by resource names.
    *
    * @param jar location of JAR file.
-   * @throws IOException
    */
   public JarResources(Location jar) throws IOException {
     this.jarLocation = jar;
@@ -62,7 +61,8 @@ public final class JarResources {
   }
 
   /**
-   * Returns the {@link java.util.jar.Manifest} object if it presents in the archive file, or {@code null} otherwise.
+   * Returns the {@link java.util.jar.Manifest} object if it presents in the archive file, or {@code
+   * null} otherwise.
    *
    * @see JarFile#getManifest()
    */
@@ -73,6 +73,7 @@ public final class JarResources {
 
   /**
    * Checks if an entry exists with the given name.
+   *
    * @param name Name of the entry to check
    * @return {@code true} if the entry exists, {@code false} otherwise.
    */
@@ -84,7 +85,8 @@ public final class JarResources {
    * Extracts a archive resource as a blob.
    *
    * @param name a resource name.
-   * @return A byte array containing content of the given name or {@code null} if not such entry exists.
+   * @return A byte array containing content of the given name or {@code null} if not such entry
+   *     exists.
    */
   public byte[] getResource(String name) {
     if (classContents.containsKey(name)) {
@@ -110,10 +112,10 @@ public final class JarResources {
 
   /**
    * Returns an {@link InputStream} for resource with the given name.
+   *
    * @param name Name of the resource.
-   * @return An opened {@link InputStream} or {@code null} if no such resource exists. Caller is responsible for
-   *         closing the stream.
-   * @throws IOException
+   * @return An opened {@link InputStream} or {@code null} if no such resource exists. Caller is
+   *     responsible for closing the stream.
    */
   public InputStream getResourceAsStream(String name) throws IOException {
     if (classContents.containsKey(name)) {
@@ -125,7 +127,8 @@ public final class JarResources {
     }
 
     // Find the entry that match the given name
-    JarInputStream jarInput = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()));
+    JarInputStream jarInput = new JarInputStream(
+        new BufferedInputStream(jarLocation.getInputStream()));
     JarEntry entry = jarInput.getNextJarEntry();
     while (entry != null && (entry.isDirectory() || !entry.getName().equals(name))) {
       entry = jarInput.getNextJarEntry();
@@ -139,7 +142,8 @@ public final class JarResources {
    * initializes internal hash tables with Jar file resources.
    */
   private Manifest init(Location jarLocation) throws IOException {
-    try (JarInputStream jarInput = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
+    try (JarInputStream jarInput = new JarInputStream(
+        new BufferedInputStream(jarLocation.getInputStream()))) {
       Manifest manifest = jarInput.getManifest();
       JarEntry ze;
       // For each ".class" entry in the jar file, read the bytes and stores it in the classContents map.

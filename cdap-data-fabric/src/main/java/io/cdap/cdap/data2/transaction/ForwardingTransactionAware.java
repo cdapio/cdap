@@ -24,7 +24,8 @@ import org.apache.tephra.TransactionAware;
 /**
  * A {@link TransactionAware} that forwards every methods to another {@link TransactionAware}.
  */
-public abstract class ForwardingTransactionAware extends ForwardingObject implements TransactionAware {
+public abstract class ForwardingTransactionAware extends ForwardingObject implements
+    TransactionAware {
 
   @Override
   protected abstract TransactionAware delegate();

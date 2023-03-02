@@ -29,8 +29,9 @@ public class PluginInfo extends PluginMeta {
 
   private final String category;
 
-  public PluginInfo(String name, String type, @Nullable String category, Map<String, String> properties,
-                    ArtifactSelectorConfig artifact) {
+  public PluginInfo(String name, String type, @Nullable String category,
+      Map<String, String> properties,
+      ArtifactSelectorConfig artifact) {
     super(name, type, properties, artifact);
     this.category = category;
   }

@@ -35,27 +35,30 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Layer between the ETL programs and CDAP PluginContext to instantiate plugins for a stage in a pipeline.
- * This is required because {@link ConnectorSource} and {@link ConnectorSink} are not plugins because we want to
- * them to be internal only.
+ * Layer between the ETL programs and CDAP PluginContext to instantiate plugins for a stage in a
+ * pipeline. This is required because {@link ConnectorSource} and {@link ConnectorSink} are not
+ * plugins because we want to them to be internal only.
  */
 public class PipelinePluginInstantiator implements PluginContext {
+
   private final PluginContext pluginContext;
   private final PhaseSpec phaseSpec;
   private final Set<String> connectorSources;
   private final Set<String> connectorSinks;
   private final ConnectorFactory connectorFactory;
 
-  public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics, PhaseSpec phaseSpec,
-                                    ConnectorFactory connectorFactory) {
+  public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics,
+      PhaseSpec phaseSpec,
+      ConnectorFactory connectorFactory) {
     this.pluginContext = new PipelinePluginContext(pluginContext, metrics,
-                                                   phaseSpec.isStageLoggingEnabled(),
-                                                   phaseSpec.isProcessTimingEnabled());
+        phaseSpec.isStageLoggingEnabled(),
+        phaseSpec.isProcessTimingEnabled());
     this.phaseSpec = phaseSpec;
     this.connectorSources = new HashSet<>();
     this.connectorSinks = new HashSet<>();
     this.connectorFactory = connectorFactory;
-    for (StageSpec connectorStage : phaseSpec.getPhase().getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
+    for (StageSpec connectorStage : phaseSpec.getPhase()
+        .getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
       String connectorName = connectorStage.getName();
       if (phaseSpec.getPhase().getSources().contains(connectorName)) {
         connectorSources.add(connectorName);
@@ -72,7 +75,8 @@ public class PipelinePluginInstantiator implements PluginContext {
   }
 
   @Override
-  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) throws InvalidMacroException {
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator)
+      throws InvalidMacroException {
     return pluginContext.getPluginProperties(pluginId, evaluator);
   }
 
@@ -92,7 +96,8 @@ public class PipelinePluginInstantiator implements PluginContext {
   }
 
   @Override
-  public <T> T newPluginInstance(String stageName, MacroEvaluator macroEvaluator) throws InstantiationException {
+  public <T> T newPluginInstance(String stageName, MacroEvaluator macroEvaluator)
+      throws InstantiationException {
     T plugin = getBuiltIn(stageName);
     if (plugin != null) {
       return plugin;

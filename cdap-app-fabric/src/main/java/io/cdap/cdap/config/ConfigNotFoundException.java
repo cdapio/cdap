@@ -24,6 +24,7 @@ import io.cdap.cdap.common.NotFoundException;
 public final class ConfigNotFoundException extends NotFoundException {
 
   public ConfigNotFoundException(String namespace, String type, String id) {
-    super(String.format("Configuration: %s of Type: %s in Namepsace: %s was not found", id, type, namespace));
+    super(String.format("Configuration: %s of Type: %s in Namepsace: %s was not found", id, type,
+        namespace));
   }
 }

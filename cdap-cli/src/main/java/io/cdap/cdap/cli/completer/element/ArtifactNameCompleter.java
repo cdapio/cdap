@@ -37,7 +37,8 @@ public class ArtifactNameCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ArtifactSummary> artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace());
+          List<ArtifactSummary> artifactSummaries = artifactClient.list(
+              cliConfig.getCurrentNamespace());
           List<String> names = Lists.newArrayList();
           for (ArtifactSummary summary : artifactSummaries) {
             names.add(summary.getName());

@@ -38,10 +38,11 @@ public class MapReduceContainerLauncher {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceContainerLauncher.class);
 
   /**
-   * Launches the given main class. The main class will be loaded through the {@link MapReduceClassLoader}.
+   * Launches the given main class. The main class will be loaded through the {@link
+   * MapReduceClassLoader}.
    *
    * @param mainClassName the main class to launch
-   * @param args          arguments for the main class
+   * @param args arguments for the main class
    */
   @SuppressWarnings("unused")
   public static void launch(String mainClassName, String[] args) throws Exception {
@@ -63,13 +64,14 @@ public class MapReduceContainerLauncher {
 
     // Create a MainClassLoader for dataset rewrite
     URL[] classLoaderUrls = urls.toArray(new URL[urls.size()]);
-    ClassLoader mainClassLoader = new MainClassLoader(classLoaderUrls, systemClassLoader.getParent());
+    ClassLoader mainClassLoader = new MainClassLoader(classLoaderUrls,
+        systemClassLoader.getParent());
 
     // Install the JUL to SLF4J Bridge
     try {
       mainClassLoader.loadClass(SLF4JBridgeHandler.class.getName())
-        .getDeclaredMethod("install")
-        .invoke(null);
+          .getDeclaredMethod("install")
+          .invoke(null);
     } catch (Exception e) {
       // Log the error and continue
       LOG.warn("Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
@@ -79,8 +81,9 @@ public class MapReduceContainerLauncher {
 
     // Creates the MapReduceClassLoader. It has to be loaded from the MainClassLoader.
     try {
-      final ClassLoader classLoader = (ClassLoader) mainClassLoader.loadClass(MapReduceClassLoader.class.getName())
-        .newInstance();
+      final ClassLoader classLoader = (ClassLoader) mainClassLoader.loadClass(
+              MapReduceClassLoader.class.getName())
+          .newInstance();
       Runtime.getRuntime().addShutdownHook(new Thread() {
         @Override
         public void run() {
@@ -102,8 +105,8 @@ public class MapReduceContainerLauncher {
       classLoader.getClass().getDeclaredMethod("getTaskContextProvider").invoke(classLoader);
       // Invoke StandardOutErrorRedirector.redirectToLogger()
       classLoader.loadClass("io.cdap.cdap.common.logging.StandardOutErrorRedirector")
-        .getDeclaredMethod("redirectToLogger", String.class)
-        .invoke(null, mainClassName);
+          .getDeclaredMethod("redirectToLogger", String.class)
+          .invoke(null, mainClassName);
 
       Class<?> mainClass = classLoader.loadClass(mainClassName);
       Method mainMethod = mainClass.getMethod("main", String[].class);
@@ -114,7 +117,8 @@ public class MapReduceContainerLauncher {
       LOG.info("Main method returned {}", mainClassName);
     } catch (Throwable t) {
       // print to System.err since the logger may not have been redirected yet
-      System.err.println(String.format("Exception raised when calling %s.main(String[]) method", mainClassName));
+      System.err.println(
+          String.format("Exception raised when calling %s.main(String[]) method", mainClassName));
       t.printStackTrace();
       throw t;
     }

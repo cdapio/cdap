@@ -61,15 +61,15 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
   private final String description;
 
   public DatasetSystemMetadataProvider(DatasetId dsInstance, DatasetProperties dsProperties,
-                                       @Nullable Dataset dataset, @Nullable String dsType,
-                                       @Nullable String description) {
+      @Nullable Dataset dataset, @Nullable String dsType,
+      @Nullable String description) {
     this(dsInstance, dsProperties, -1, dataset, dsType, description);
   }
 
   public DatasetSystemMetadataProvider(DatasetId dsInstance, DatasetProperties dsProperties,
-                                       long createTime,
-                                       @Nullable Dataset dataset, @Nullable String dsType,
-                                       @Nullable String description) {
+      long createTime,
+      @Nullable Dataset dataset, @Nullable String dsType,
+      @Nullable String description) {
     this.dsInstance = dsInstance;
     this.dsType = dsType;
     this.dsProperties = dsProperties;
@@ -77,7 +77,8 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     this.dataset = dataset;
     this.description = description;
     if (dataset == null) {
-      LOG.warn("Dataset {} is null, some metadata will not be recorded for the dataset", dsInstance);
+      LOG.warn("Dataset {} is null, some metadata will not be recorded for the dataset",
+          dsInstance);
     }
   }
 
@@ -107,12 +108,13 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
   public Set<String> getSystemTagsToAdd() {
     Set<String> tags = new HashSet<>();
     if (dataset instanceof BatchReadable || dataset instanceof BatchWritable ||
-      dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
+        dataset instanceof InputFormatProvider || dataset instanceof OutputFormatProvider) {
       tags.add(BATCH_TAG);
     }
 
     boolean isLocalDataset
-      = Boolean.parseBoolean(dsProperties.getProperties().get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+        = Boolean.parseBoolean(
+        dsProperties.getProperties().get(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
 
     if (isLocalDataset) {
       tags.add(LOCAL_DATASET_TAG);
@@ -137,7 +139,8 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     } else if (datasetProperties.containsKey(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY))) {
       // Fileset with avro schema defined in output property (CDAP-5322)
       schemaStr = datasetProperties.get(getOutputPropName(FILESET_AVRO_SCHEMA_OUTPUT_KEY));
-    } else if (datasetProperties.containsKey(getOutputPropName(FILESET_PARQUET_SCHEMA_OUTPUT_KEY))) {
+    } else if (datasetProperties.containsKey(
+        getOutputPropName(FILESET_PARQUET_SCHEMA_OUTPUT_KEY))) {
       // Fileset with parquet schema defined in output property (CDAP-5322)
       schemaStr = datasetProperties.get(getOutputPropName(FILESET_PARQUET_SCHEMA_OUTPUT_KEY));
     }

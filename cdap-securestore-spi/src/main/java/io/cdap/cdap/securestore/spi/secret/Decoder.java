@@ -24,6 +24,7 @@ import java.io.IOException;
  * @param <T> type of the object to be decoded to
  */
 public interface Decoder<T> {
+
   /**
    * Decodes provided data to Type T object.
    *

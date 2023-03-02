@@ -20,9 +20,11 @@ import io.cdap.cdap.proto.security.Principal;
 import javax.annotation.Nullable;
 
 /**
- * RequestContext that maintains a ThreadLocal {@link #userId} and {@link #userIP} of the authenticated user.
+ * RequestContext that maintains a ThreadLocal {@link #userId} and {@link #userIP} of the
+ * authenticated user.
  */
 public final class SecurityRequestContext {
+
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
   private static final ThreadLocal<Credential> userCredential = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();

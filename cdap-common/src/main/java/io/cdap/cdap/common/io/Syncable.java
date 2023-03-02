@@ -24,8 +24,8 @@ import java.io.IOException;
 public interface Syncable {
 
   /**
-   * Flushes data and sync to the underlying storage system.
-   * Data should be persisted permanently after this call returns.
+   * Flushes data and sync to the underlying storage system. Data should be persisted permanently
+   * after this call returns.
    *
    * @throws IOException if failed to perform the sync operation
    */

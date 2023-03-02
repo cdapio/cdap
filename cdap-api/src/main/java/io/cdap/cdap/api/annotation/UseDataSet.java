@@ -42,16 +42,17 @@ import java.lang.annotation.Target;
  *     ...
  *   }
  * </code></pre>
- * 
+ *
  * <p>
- * See the 
- * <i><a href="http://docs.cask.co/cdap/current/en/developers-manual/index.html">CDAP Developers' Manual</a></i>
- * for more information.
+ * See the
+ * <i><a href="http://docs.cask.co/cdap/current/en/developers-manual/index.html">CDAP Developers'
+ * Manual</a></i> for more information.
  * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface UseDataSet {
+
   /**
    * Returns name of the {@link io.cdap.cdap.api.dataset.Dataset}.
    */

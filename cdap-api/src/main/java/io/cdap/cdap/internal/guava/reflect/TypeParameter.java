@@ -23,8 +23,7 @@ import java.lang.reflect.TypeVariable;
 import javax.annotation.Nullable;
 
 /**
- * Captures a free type variable that can be used in {@link TypeToken#where}.
- * For example:
+ * Captures a free type variable that can be used in {@link TypeToken#where}. For example:
  *
  * <pre>   {@code
  *   static <T> TypeToken<List<T>> listOf(Class<T> elementType) {
@@ -33,7 +32,6 @@ import javax.annotation.Nullable;
  *   }}</pre>
  *
  * @param <T> Type being captured
- *
  */
 public abstract class TypeParameter<T> extends TypeCapture<T> {
 
@@ -41,15 +39,18 @@ public abstract class TypeParameter<T> extends TypeCapture<T> {
 
   protected TypeParameter() {
     Type type = capture();
-    Preconditions.checkArgument(type instanceof TypeVariable, "%s should be a type variable.", type);
+    Preconditions.checkArgument(type instanceof TypeVariable, "%s should be a type variable.",
+        type);
     this.typeVariable = (TypeVariable<?>) type;
   }
 
-  @Override public final int hashCode() {
+  @Override
+  public final int hashCode() {
     return typeVariable.hashCode();
   }
 
-  @Override public final boolean equals(@Nullable Object o) {
+  @Override
+  public final boolean equals(@Nullable Object o) {
     if (o instanceof TypeParameter) {
       TypeParameter<?> that = (TypeParameter<?>) o;
       return typeVariable.equals(that.typeVariable);
@@ -57,7 +58,8 @@ public abstract class TypeParameter<T> extends TypeCapture<T> {
     return false;
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return typeVariable.toString();
   }
 }

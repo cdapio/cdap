@@ -29,7 +29,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class MetricsServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  MetricsServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+  MetricsServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+      DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient, Constants.Service.METRICS, twillRunner);
   }
 

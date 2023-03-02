@@ -28,16 +28,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ProgramController} implementation that control a guava Service.
- * The Service must execute Listeners in the order they were added to the Service, otherwise
- * there may be race conditions if the thread that stops the controller is different than the thread
- * that runs the service. Any Service that extends AbstractService meets this criteria.
+ * A {@link ProgramController} implementation that control a guava Service. The Service must execute
+ * Listeners in the order they were added to the Service, otherwise there may be race conditions if
+ * the thread that stops the controller is different than the thread that runs the service. Any
+ * Service that extends AbstractService meets this criteria.
  */
 public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramControllerServiceAdapter.class);
   private static final Logger USER_LOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
-                                                            Constants.Logging.USER_LOG_TAG_VALUE);
+      Constants.Logging.USER_LOG_TAG_VALUE);
 
   private final Service service;
   private volatile boolean stopRequested;
@@ -68,12 +68,13 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
     } else {
       gracefulStop(gracefulTimeoutMillis);
     }
-    LOG.debug("Controller service for program {} finished running listener hooks.", getProgramRunId());
+    LOG.debug("Controller service for program {} finished running listener hooks.",
+        getProgramRunId());
   }
 
   /**
-   * Requests a graceful shutdown of the service with a timeout. Subclass can override this if it supports
-   * graceful termination with timeout.
+   * Requests a graceful shutdown of the service with a timeout. Subclass can override this if it
+   * supports graceful termination with timeout.
    */
   protected void gracefulStop(long gracefulTimeoutMillis) {
     service.stopAndWait();
@@ -94,9 +95,12 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
       @Override
       public void failed(Service.State from, Throwable failure) {
         Throwable rootCause = Throwables.getRootCause(failure);
-        LOG.error("{} Program '{}' failed.", getProgramRunId().getType(), getProgramRunId().getProgram(), failure);
-        USER_LOG.error("{} program '{}' failed with error: {}. Please check the system logs for more details.",
-                       getProgramRunId().getType(), getProgramRunId().getProgram(), rootCause.getMessage(), rootCause);
+        LOG.error("{} Program '{}' failed.", getProgramRunId().getType(),
+            getProgramRunId().getProgram(), failure);
+        USER_LOG.error(
+            "{} program '{}' failed with error: {}. Please check the system logs for more details.",
+            getProgramRunId().getType(), getProgramRunId().getProgram(), rootCause.getMessage(),
+            rootCause);
         error(failure);
       }
 

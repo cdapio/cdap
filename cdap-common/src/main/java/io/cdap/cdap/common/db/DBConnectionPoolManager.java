@@ -29,20 +29,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of very light-weight simple JDBC connection pool
- * manager.
+ * Implementation of very light-weight simple JDBC connection pool manager.
  */
 public class DBConnectionPoolManager {
 
   private static final Logger Log = LoggerFactory.getLogger(
-    DBConnectionPoolManager.class
+      DBConnectionPoolManager.class
   );
 
-  private ConnectionPoolDataSource       dataSource;
-  private int                            maxConnections;
-  private long                           timeoutMs;
-  private Semaphore                      semaphore;
-  private PoolConnectionEventListener    poolConnectionEventListener;
+  private ConnectionPoolDataSource dataSource;
+  private int maxConnections;
+  private long timeoutMs;
+  private Semaphore semaphore;
+  private PoolConnectionEventListener poolConnectionEventListener;
 
   // The following variables must only be accessed within synchronized blocks.
   // @GuardedBy("this") could by used in the future.
@@ -50,42 +49,42 @@ public class DBConnectionPoolManager {
   /**
    * List of {@link PooledConnection} that are not active.
    */
-  private LinkedList<PooledConnection>   recycledConnections;
+  private LinkedList<PooledConnection> recycledConnections;
 
   /**
    * Count of open connections in this pool.
    */
-  private int                            activeConnections;
+  private int activeConnections;
 
   /**
    * Set to true if this connection pool has been disposed.
    */
-  private boolean                        isDisposed;
+  private boolean isDisposed;
 
   /**
-   * Purges the connections currently being closed instead of recycling.
-   * true indicates to purge, false to recycle.
+   * Purges the connections currently being closed instead of recycling. true indicates to purge,
+   * false to recycle.
    */
-  private boolean                        doPurgeConnection;
+  private boolean doPurgeConnection;
 
   /**
-   * A PooledConnection which is currently within a
-   * PooledConnection.getConnection() call, or null.
+   * A PooledConnection which is currently within a PooledConnection.getConnection() call, or null.
    */
-  private PooledConnection               connectionInTransition;
+  private PooledConnection connectionInTransition;
 
   /**
-   * Thrown in {@link #getConnection()} or {@link #getValidConnection()} when
-   * no free connection becomes available within <code>timeout</code> seconds.
+   * Thrown in {@link #getConnection()} or {@link #getValidConnection()} when no free connection
+   * becomes available within <code>timeout</code> seconds.
    */
   public static class TimeoutException extends RuntimeException {
+
     private static final long serialVersionUID = 1;
 
-    public TimeoutException () {
+    public TimeoutException() {
       super("Timeout while waiting for a free database connection.");
     }
 
-    public TimeoutException (String msg) {
+    public TimeoutException(String msg) {
       super(msg);
     }
   }
@@ -93,27 +92,23 @@ public class DBConnectionPoolManager {
   /**
    * Constructs a DBConnectionPoolManager object with a timeout of 60 seconds.
    *
-   * @param dataSource
-   *    the data source for the connections.
-   * @param maxConnections
-   *    the maximum number of connections.
+   * @param dataSource the data source for the connections.
+   * @param maxConnections the maximum number of connections.
    */
   public DBConnectionPoolManager(ConnectionPoolDataSource dataSource,
-                                 int maxConnections) {
-    this(dataSource, maxConnections, 60); }
+      int maxConnections) {
+    this(dataSource, maxConnections, 60);
+  }
 
   /**
    * Constructs a DBConnectionPoolManager object.
    *
-   * @param dataSource
-   *    the data source for the connections.
-   * @param maxConnections
-   *    the maximum number of connections.
-   * @param timeout
-   *    the maximum time in seconds to wait for a free connection.
+   * @param dataSource the data source for the connections.
+   * @param maxConnections the maximum number of connections.
+   * @param timeout the maximum time in seconds to wait for a free connection.
    */
   public DBConnectionPoolManager(ConnectionPoolDataSource dataSource,
-                                 int maxConnections, int timeout) {
+      int maxConnections, int timeout) {
     this.dataSource = dataSource;
     this.maxConnections = maxConnections;
     this.timeoutMs = timeout * 1000L;
@@ -164,14 +159,13 @@ public class DBConnectionPoolManager {
    * Retrieves a connection from the connection pool.
    *
    * <p>If <code>maxConnections</code> connections are already in use, the method
-   * waits until a connection becomes available or <code>timeout</code> seconds elapsed.
-   * When the application is finished using the connection, it must close it
-   * in order to return it to the pool.
+   * waits until a connection becomes available or <code>timeout</code> seconds elapsed. When the
+   * application is finished using the connection, it must close it in order to return it to the
+   * pool.
    *
-   * @return
-   *    a new <code>Connection</code> object.
-   * @throws TimeoutException
-   *    when no connection becomes available within <code>timeout</code> seconds.
+   * @return a new <code>Connection</code> object.
+   * @throws TimeoutException when no connection becomes available within <code>timeout</code>
+   *     seconds.
    */
   public Connection getConnection() throws SQLException {
     return getConnection2(timeoutMs);
@@ -179,7 +173,7 @@ public class DBConnectionPoolManager {
 
   // CHECKSTYLE ON
 
-  private Connection getConnection2 (long timeoutMs) throws SQLException {
+  private Connection getConnection2(long timeoutMs) throws SQLException {
 
     // This routine is unsynchronized, because semaphore.tryAcquire() may block.
     synchronized (this) {
@@ -194,7 +188,7 @@ public class DBConnectionPoolManager {
       }
     } catch (InterruptedException e) {
       throw new RuntimeException("Interrupted while waiting for a " +
-                                   "database connection.", e);
+          "database connection.", e);
     }
 
     boolean ok = false;
@@ -246,8 +240,8 @@ public class DBConnectionPoolManager {
   // CHECKSTYLE OFF: @throws
 
   /**
-   * Retrieves a connection from the connection pool and ensures that it is valid
-   * by calling {@link Connection#isValid(int)}.
+   * Retrieves a connection from the connection pool and ensures that it is valid by calling {@link
+   * Connection#isValid(int)}.
    *
    * <p>If a connection is not valid, the method tries to get another connection
    * until one is valid (or a timeout occurs).
@@ -256,14 +250,12 @@ public class DBConnectionPoolManager {
    * restarted.
    *
    * <p>This method is slower than {@link #getConnection()} because the JDBC
-   * driver has to send an extra command to the database server to test the
-   * connection.
+   * driver has to send an extra command to the database server to test the connection.
    *
    * <p>This method requires Java 1.6 or newer.
    *
-   * @throws TimeoutException
-   *    when no valid connection becomes available within <code>timeout</code>
-   *    seconds.
+   * @throws TimeoutException when no valid connection becomes available within
+   *     <code>timeout</code> seconds.
    */
   public Connection getValidConnection() throws TimeoutException {
     long time = System.currentTimeMillis();
@@ -282,20 +274,20 @@ public class DBConnectionPoolManager {
           Thread.sleep(250);
         } catch (InterruptedException e) {
           throw new RuntimeException("Interrupted while waiting " +
-                                       "for a valid database connection.", e);
+              "for a valid database connection.", e);
         }
       }
       time = System.currentTimeMillis();
       if (time >= timeoutTime) {
         throw new TimeoutException("Timeout while waiting for a " +
-                                     "valid database connection.");
+            "valid database connection.");
       }
     }
   }
 
   // CHECKSTYLE ON
 
-  private Connection getValidConnection2 (long time, long timeoutTime) {
+  private Connection getValidConnection2(long time, long timeoutTime) {
     long rtime = Math.max(1, timeoutTime - time);
     Connection conn;
 
@@ -328,7 +320,7 @@ public class DBConnectionPoolManager {
 
   // Purges the PooledConnection associated with the passed Connection from
   // the connection pool.
-  private synchronized void purgeConnection (Connection conn) {
+  private synchronized void purgeConnection(Connection conn) {
     try {
       doPurgeConnection = true;
       // (A potential problem of this program logic is that setting the
@@ -342,7 +334,7 @@ public class DBConnectionPoolManager {
     }
   }
 
-  private synchronized void recycleConnection (PooledConnection pconn) {
+  private synchronized void recycleConnection(PooledConnection pconn) {
     if (isDisposed || doPurgeConnection) {
       disposeConnection(pconn);
       return;
@@ -358,7 +350,7 @@ public class DBConnectionPoolManager {
     assertInnerState();
   }
 
-  private synchronized void disposeConnection (PooledConnection pconn) {
+  private synchronized void disposeConnection(PooledConnection pconn) {
     pconn.removeConnectionEventListener(poolConnectionEventListener);
     if (!recycledConnections.remove(pconn) && pconn != connectionInTransition) {
       // If the PooledConnection is not in the recycledConnections list
@@ -374,7 +366,7 @@ public class DBConnectionPoolManager {
     assertInnerState();
   }
 
-  private void closeConnectionAndIgnoreException (PooledConnection pconn) {
+  private void closeConnectionAndIgnoreException(PooledConnection pconn) {
     try {
       pconn.close();
     } catch (SQLException e) {
@@ -382,7 +374,7 @@ public class DBConnectionPoolManager {
     }
   }
 
-  private void log (String msg) {
+  private void log(String msg) {
     Log.error(msg);
   }
 
@@ -403,13 +395,13 @@ public class DBConnectionPoolManager {
   private class PoolConnectionEventListener implements ConnectionEventListener {
 
     @Override
-    public void connectionClosed (ConnectionEvent event) {
+    public void connectionClosed(ConnectionEvent event) {
       PooledConnection pconn = (PooledConnection) event.getSource();
       recycleConnection(pconn);
     }
 
     @Override
-    public void connectionErrorOccurred (ConnectionEvent event) {
+    public void connectionErrorOccurred(ConnectionEvent event) {
       PooledConnection pconn = (PooledConnection) event.getSource();
       disposeConnection(pconn);
     }
@@ -419,11 +411,10 @@ public class DBConnectionPoolManager {
    * Returns the number of active (open) connections of this pool.
    *
    * <p>This is the number of <code>Connection</code> objects that have been
-   * issued by {@link #getConnection()}, for which <code>Connection.close()</code>
-   * has not yet been called.
+   * issued by {@link #getConnection()}, for which <code>Connection.close()</code> has not yet been
+   * called.
    *
-   * @return
-   *    the number of active connections.
+   * @return the number of active connections.
    **/
   public synchronized int getActiveConnections() {
     return activeConnections;
@@ -433,11 +424,9 @@ public class DBConnectionPoolManager {
    * Returns the number of inactive (unused) connections in this pool.
    *
    * <p>This is the number of internally kept recycled connections,
-   * for which <code>Connection.close()</code> has been called and which
-   * have not yet been reused.
+   * for which <code>Connection.close()</code> has been called and which have not yet been reused.
    *
-   * @return
-   *    the number of inactive connections.
+   * @return the number of inactive connections.
    **/
   public synchronized int getInactiveConnections() {
     return recycledConnections.size();

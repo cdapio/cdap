@@ -38,7 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ProgramRuntimeService} for in memory mode. It is used for unit-test as well as in Standalone.
+ * A {@link ProgramRuntimeService} for in memory mode. It is used for unit-test as well as in
+ * Standalone.
  */
 public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeService {
 
@@ -46,8 +47,8 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Inject
   InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                ProgramStateWriter programStateWriter,
-                                ProgramRunDispatcherFactory programRunDispatcherFactory) {
+      ProgramStateWriter programStateWriter,
+      ProgramRunDispatcherFactory programRunDispatcherFactory) {
     super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory);
   }
 

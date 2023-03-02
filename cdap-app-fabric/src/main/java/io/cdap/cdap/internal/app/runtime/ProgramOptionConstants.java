@@ -164,8 +164,8 @@ public final class ProgramOptionConstants {
   public static final String IS_PREVIEW = "isPreview";
 
   /**
-   * Option for the application class name for the program, this is needed for isolated mode to regenerate the app
-   * spec
+   * Option for the application class name for the program, this is needed for isolated mode to
+   * regenerate the app spec
    */
   public static final String APPLICATION_CLASS = "applicationClass";
 
@@ -185,8 +185,8 @@ public final class ProgramOptionConstants {
   public static final String RUNTIME_NAMESPACE = MasterOptionConstants.RUNTIME_NAMESPACE;
 
   /**
-   * Option for a URI to a directory containing additional resources needed for the program run. This is needed for
-   * running tethered programs
+   * Option for a URI to a directory containing additional resources needed for the program run.
+   * This is needed for running tethered programs
    */
   public static final String PROGRAM_RESOURCE_URI = "programResourceUri";
 }

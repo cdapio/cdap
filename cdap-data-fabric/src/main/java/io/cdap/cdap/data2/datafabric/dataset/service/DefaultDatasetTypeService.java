@@ -67,10 +67,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of the {@link DatasetTypeService}, all the operation does not have authorization enforce
- * involved
+ * Default implementation of the {@link DatasetTypeService}, all the operation does not have
+ * authorization enforce involved
  */
 public class DefaultDatasetTypeService extends AbstractIdleService implements DatasetTypeService {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultDatasetTypeService.class);
 
   private final DatasetTypeManager typeManager;
@@ -86,13 +87,14 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   @Inject
   @VisibleForTesting
-  public DefaultDatasetTypeService(DatasetTypeManager typeManager, NamespaceQueryAdmin namespaceQueryAdmin,
-                                   NamespacePathLocator namespacePathLocator,
-                                   CConfiguration cConf, Impersonator impersonator,
-                                   TransactionSystemClientService txClientService,
-                                   TransactionRunner transactionRunner,
-                                   @Constants.Dataset.Manager.DefaultDatasetModules
-                                       Map<String, DatasetModule> modules) {
+  public DefaultDatasetTypeService(DatasetTypeManager typeManager,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      NamespacePathLocator namespacePathLocator,
+      CConfiguration cConf, Impersonator impersonator,
+      TransactionSystemClientService txClientService,
+      TransactionRunner transactionRunner,
+      @Constants.Dataset.Manager.DefaultDatasetModules
+          Map<String, DatasetModule> modules) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.namespacePathLocator = namespacePathLocator;
@@ -120,7 +122,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   }
 
   /**
-   * Returns all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
+   * Returns all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId
+   * namespace}.
    */
   @Override
   public List<DatasetModuleMeta> listModules(final NamespaceId namespaceId) throws Exception {
@@ -155,17 +158,18 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
    *
    * @param datasetModuleId the {@link DatasetModuleId} for the module to be added
    * @param className the module class name specified in the HTTP header
-   * @param forceUpdate if true, an update will be allowed even if there are conflicts with other modules, or if
-   *                     removal of a type would break other modules' dependencies
+   * @param forceUpdate if true, an update will be allowed even if there are conflicts with
+   *     other modules, or if removal of a type would break other modules' dependencies
    * @return a {@link BodyConsumer} to upload the module jar in chunks
    * @throws NotFoundException if the namespace in which the module is being added is not found
-   * @throws IOException if there are issues while performing I/O like creating temporary directories, moving/unpacking
-   *                      module jar files
-   * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are conflicts with other modules
+   * @throws IOException if there are issues while performing I/O like creating temporary
+   *     directories, moving/unpacking module jar files
+   * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are
+   *     conflicts with other modules
    */
   @Override
   public BodyConsumer addModule(final DatasetModuleId datasetModuleId, final String className,
-                                final boolean forceUpdate) throws Exception {
+      final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
     ensureNamespaceExists(namespaceId);
 
@@ -185,8 +189,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     NamespaceId namespaceId = datasetModuleId.getParent();
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
       throw new UnsupportedOperationException(
-        String.format("Cannot delete module '%s' from '%s' namespace.",
-                      datasetModuleId.getModule(), datasetModuleId.getNamespace()));
+          String.format("Cannot delete module '%s' from '%s' namespace.",
+              datasetModuleId.getModule(), datasetModuleId.getNamespace()));
     }
     ensureNamespaceExists(namespaceId);
 
@@ -203,12 +207,14 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   }
 
   /**
-   * Deletes all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
+   * Deletes all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId
+   * namespace}.
    */
   @Override
   public void deleteAll(NamespaceId namespaceId) throws Exception {
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new UnsupportedOperationException(String.format("Cannot delete modules from '%s' namespace.", namespaceId));
+      throw new UnsupportedOperationException(
+          String.format("Cannot delete modules from '%s' namespace.", namespaceId));
     }
     ensureNamespaceExists(namespaceId);
 
@@ -234,7 +240,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
       }
     });
 
-   return allTypes;
+    return allTypes;
   }
 
   /**
@@ -252,8 +258,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   }
 
   private AbstractBodyConsumer createModuleConsumer(final DatasetModuleId datasetModuleId,
-                                                    final String className,
-                                                    final boolean forceUpdate) throws IOException, NotFoundException {
+      final String className,
+      final boolean forceUpdate) throws IOException, NotFoundException {
     final NamespaceId namespaceId = datasetModuleId.getParent();
     final Location namespaceHomeLocation;
     try {
@@ -271,7 +277,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
     // verify namespace directory exists
     if (!namespaceHomeLocation.exists()) {
-      String msg = String.format("Home directory %s for namespace %s not found", namespaceHomeLocation, namespaceId);
+      String msg = String.format("Home directory %s for namespace %s not found",
+          namespaceHomeLocation, namespaceId);
       LOG.debug(msg);
       throw new NotFoundException(msg);
     }
@@ -281,7 +288,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     File namespaceBase = new File(localDataDir, namespacesDir);
     File tempDir = new File(new File(namespaceBase, datasetModuleId.getNamespace()),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
@@ -295,7 +302,8 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           // connection close, and yet be able to read response reliably.
           // In longer term we should fix the client, as well as the netty-http server. However, since
           // this handler will be gone in near future, it's ok to have this workaround.
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Required header 'class-name' is absent.");
+          responder.sendString(HttpResponseStatus.BAD_REQUEST,
+              "Required header 'class-name' is absent.");
           return;
         }
 
@@ -304,7 +312,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
         String dataFabricDir = cConf.get(Constants.Dataset.Manager.OUTPUT_DIR);
         String moduleName = datasetModuleId.getModule();
         Location archiveDir = namespaceHomeLocation.append(dataFabricDir).append(moduleName)
-          .append(Constants.ARCHIVE_DIR);
+            .append(Constants.ARCHIVE_DIR);
         String archiveName = moduleName + ".jar";
         Location archive = archiveDir.append(archiveName);
 
@@ -319,8 +327,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
           if (tmpLocation.renameTo(archive) == null) {
-            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                tmpLocation, archive));
+            throw new IOException(
+                String.format("Could not move archive from location: %s, to location: %s",
+                    tmpLocation, archive));
           }
 
           typeManager.addModule(datasetModuleId, className, archive, forceUpdate);
@@ -350,7 +359,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   private void deleteSystemModules() {
     TransactionRunners.run(transactionRunner, context -> {
       DatasetTypeTable datasetTypeTable = DatasetTypeTable.create(context);
-        Collection<DatasetModuleMeta> allDatasets = datasetTypeTable.getModules(NamespaceId.SYSTEM);
+      Collection<DatasetModuleMeta> allDatasets = datasetTypeTable.getModules(NamespaceId.SYSTEM);
       for (DatasetModuleMeta ds : allDatasets) {
         if (ds.getJarLocationPath() == null) {
           LOG.debug("Deleting system dataset module: {}", ds.toString());

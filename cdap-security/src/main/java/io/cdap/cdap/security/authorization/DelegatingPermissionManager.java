@@ -27,8 +27,8 @@ import io.cdap.cdap.security.spi.authorization.PermissionManager;
 import java.util.Set;
 
 /**
- * A {@link PermissionManager} implements that delegates to the authorizer.
- * Having this makes Guice injection for Privilege manager simple. That reason will go away once
+ * A {@link PermissionManager} implements that delegates to the authorizer. Having this makes Guice
+ * injection for Privilege manager simple. That reason will go away once
  * https://issues.cask.co/browse/CDAP-11561 is fixed.
  */
 public class DelegatingPermissionManager implements PermissionManager {
@@ -41,14 +41,16 @@ public class DelegatingPermissionManager implements PermissionManager {
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void grant(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     delegateAccessController.grant(authorizable, principal, permissions);
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void revoke(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     delegateAccessController.revoke(authorizable, principal, permissions);
   }
 

@@ -72,7 +72,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Service for managing {@link PreviewRunnerService}.
  */
-public class DefaultPreviewRunnerManager extends AbstractIdleService implements PreviewRunnerManager {
+public class DefaultPreviewRunnerManager extends AbstractIdleService implements
+    PreviewRunnerManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunnerManager.class);
 
   private final CConfiguration previewCConf;
@@ -91,15 +93,15 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
 
   @Inject
   DefaultPreviewRunnerManager(@Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
-                              @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
-                              @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                              SecureStore secureStore,
-                              DiscoveryServiceClient discoveryServiceClient,
-                              @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                              TransactionSystemClient transactionSystemClient,
-                              PreviewRunnerModule previewRunnerModule,
-                              @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBService,
-                              PreviewRunnerServiceFactory previewRunnerServiceFactory) {
+      @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
+      @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
+      SecureStore secureStore,
+      DiscoveryServiceClient discoveryServiceClient,
+      @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+      TransactionSystemClient transactionSystemClient,
+      PreviewRunnerModule previewRunnerModule,
+      @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBService,
+      PreviewRunnerServiceFactory previewRunnerServiceFactory) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -149,12 +151,13 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   @Override
   public void stop(ApplicationId preview) throws Exception {
     PreviewRunnerService runnerService = previewRunnerServices.stream()
-      .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
-      .findFirst()
-      .orElse(null);
+        .filter(r -> r.getPreviewApplication().filter(preview::equals).isPresent())
+        .findFirst()
+        .orElse(null);
 
     if (runnerService == null) {
-      throw new NotFoundException("Preview run cannot be stopped. Please try stopping again or start new preview run.");
+      throw new NotFoundException(
+          "Preview run cannot be stopped. Please try stopping again or start new preview run.");
     }
 
     PreviewRunnerService newRunnerService = createPreviewRunnerService();
@@ -168,50 +171,52 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   @VisibleForTesting
   public Injector createPreviewInjector() {
     return Guice.createInjector(
-      new ConfigModule(previewCConf, previewHConf, previewSConf),
-      new IOModule(),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new CoreSecurityRuntimeModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterWorkerModule(),
-      new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
-      new ConfigStoreModule(),
-      previewRunnerModule,
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
-      new PreviewDataModules().getDataSetsModule(datasetFramework),
-      new DataSetServiceModules().getStandaloneModules(),
-      // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
-      // save threads for reading metrics from TMS, as there won't be metrics in TMS.
-      new MetricsClientRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
-        }
-      },
-      new MessagingServerRuntimeModule().getInMemoryModules(),
-      Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // we don't start a metadata service in preview, so don't attempt to create any metadata
-          bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
-        }
-      }),
-      new ProvisionerModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-        }
+        new ConfigModule(previewCConf, previewHConf, previewSConf),
+        new IOModule(),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new CoreSecurityRuntimeModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterWorkerModule(),
+        new PreviewSecureStoreModule(secureStore),
+        new PreviewDiscoveryRuntimeModule(discoveryServiceClient),
+        new ConfigStoreModule(),
+        previewRunnerModule,
+        new ProgramRunnerRuntimeModule().getStandaloneModules(),
+        new PreviewDataModules().getDataFabricModule(transactionSystemClient,
+            previewLevelDBTableService),
+        new PreviewDataModules().getDataSetsModule(datasetFramework),
+        new DataSetServiceModules().getStandaloneModules(),
+        // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
+        // save threads for reading metrics from TMS, as there won't be metrics in TMS.
+        new MetricsClientRuntimeModule().getInMemoryModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
+          }
+        },
+        new MessagingServerRuntimeModule().getInMemoryModules(),
+        Modules.override(new MetadataReaderWriterModules().getInMemoryModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                // we don't start a metadata service in preview, so don't attempt to create any metadata
+                bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
+              }
+            }),
+        new ProvisionerModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+          }
 
-        @Provides
-        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
-        @SuppressWarnings("unused")
-        public InetAddress providesHostname(CConfiguration cConf) {
-          String address = cConf.get(Constants.Preview.ADDRESS);
-          return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
+          @Provides
+          @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
+          @SuppressWarnings("unused")
+          public InetAddress providesHostname(CConfiguration cConf) {
+            String address = cConf.get(Constants.Preview.ADDRESS);
+            return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
+          }
         }
-      }
     );
   }
 

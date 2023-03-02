@@ -45,19 +45,22 @@ public abstract class RevokePermissionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Authorizable authorizable = Authorizable.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    Authorizable authorizable = Authorizable.fromString(
+        arguments.get(ArgumentName.ENTITY.toString()));
     String principalName = arguments.getOptional("principal-name", null);
     String type = arguments.getOptional("principal-type", null);
     Principal.PrincipalType principalType =
-      type != null ? Principal.PrincipalType.valueOf(type.toUpperCase()) : null;
+        type != null ? Principal.PrincipalType.valueOf(type.toUpperCase()) : null;
     Principal principal = type != null ? new Principal(principalName, principalType) : null;
     String permissionsString = arguments.getOptional("permissions", null);
-    Set<Permission> permissions = permissionsString == null ? null : PERMISSION_STRING_TO_SET.apply(permissionsString);
+    Set<Permission> permissions =
+        permissionsString == null ? null : PERMISSION_STRING_TO_SET.apply(permissionsString);
 
     client.revoke(authorizable, principal, permissions);
     if (principal == null && permissions == null) {
       // Revoked all permissions for all principals on the entity
-      output.printf("Successfully revoked all permissions on entity '%s' for all principals", authorizable.toString());
+      output.printf("Successfully revoked all permissions on entity '%s' for all principals",
+          authorizable.toString());
     } else {
       // currently, the CLI only supports 2 scenarios:
       // 1. both permissions and principal are null - supported in the if block.
@@ -65,12 +68,12 @@ public abstract class RevokePermissionCommand extends AbstractAuthCommand {
       // to enforce that both are non-null. In fact, if only one of them is null, the CLI will fail to parse the
       // command.
       Preconditions.checkNotNull(permissions,
-                                 "Permissions cannot be null when principal is not null in the revoke command");
+          "Permissions cannot be null when principal is not null in the revoke command");
       Preconditions.checkNotNull(principal,
-                                 "Principal cannot be null when permissions is not null in the revoke command");
+          "Principal cannot be null when permissions is not null in the revoke command");
       output.printf("Successfully revoked permission(s) '%s' on entity '%s' for %s '%s'\n",
-                    Joiner.on(",").join(permissions), authorizable.toString(),
-                    principal.getType(), principal.getName());
+          Joiner.on(",").join(permissions), authorizable.toString(),
+          principal.getType(), principal.getName());
     }
   }
 }

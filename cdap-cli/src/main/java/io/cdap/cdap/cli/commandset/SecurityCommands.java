@@ -41,18 +41,18 @@ public class SecurityCommands extends CommandSet<Command> implements Categorized
   @Inject
   public SecurityCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(GrantPermissionCommand.class))
-        .add(injector.getInstance(RevokePermissionForPrincipalCommand.class))
-        .add(injector.getInstance(RevokeEntityCommand.class))
-        .add(injector.getInstance(ListPrivilegesCommand.class))
-        //role management commands
-        .add(injector.getInstance(CreateRoleCommand.class))
-        .add(injector.getInstance(DropRoleCommand.class))
-        .add(injector.getInstance(ListRolesCommand.class))
-        .add(injector.getInstance(AddRoleToPrincipalCommand.class))
-        .add(injector.getInstance(RemoveRoleFromPrincipalCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(GrantPermissionCommand.class))
+            .add(injector.getInstance(RevokePermissionForPrincipalCommand.class))
+            .add(injector.getInstance(RevokeEntityCommand.class))
+            .add(injector.getInstance(ListPrivilegesCommand.class))
+            //role management commands
+            .add(injector.getInstance(CreateRoleCommand.class))
+            .add(injector.getInstance(DropRoleCommand.class))
+            .add(injector.getInstance(ListRolesCommand.class))
+            .add(injector.getInstance(AddRoleToPrincipalCommand.class))
+            .add(injector.getInstance(RemoveRoleFromPrincipalCommand.class))
+            .build());
   }
 
   @Override

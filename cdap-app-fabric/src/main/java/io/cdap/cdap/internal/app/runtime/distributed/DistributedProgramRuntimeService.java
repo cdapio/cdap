@@ -71,8 +71,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Inject
   DistributedProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                   TwillRunner twillRunner, Store store, ProgramStateWriter programStateWriter,
-                                   ProgramRunDispatcherFactory programRunDispatcherFactory) {
+      TwillRunner twillRunner, Store store, ProgramStateWriter programStateWriter,
+      ProgramRunDispatcherFactory programRunDispatcherFactory) {
     super(cConf, programRunnerFactory, programStateWriter, programRunDispatcherFactory);
     this.twillRunner = twillRunner;
     this.store = store;
@@ -85,8 +85,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   }
 
   @Override
-  protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
-                                          final Runnable cleanUpTask) {
+  protected RuntimeInfo createRuntimeInfo(final ProgramController controller,
+      final ProgramId programId,
+      final Runnable cleanUpTask) {
     SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, cleanUpTask);
 
     // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
@@ -104,7 +105,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           actualController = ((Delegator<ProgramController>) actualController).getDelegate();
         }
         if (actualController instanceof AbstractTwillProgramController) {
-          runtimeInfo.setTwillRunId(((AbstractTwillProgramController) actualController).getTwillRunId());
+          runtimeInfo.setTwillRunId(
+              ((AbstractTwillProgramController) actualController).getTwillRunId());
         }
         if (currentState == ProgramController.State.ALIVE) {
           alive();
@@ -147,7 +149,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       return null;
     }
 
-    RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(record.getTwillRunId());
+    RunId twillRunIdFromRecord = org.apache.twill.internal.RunIds.fromString(
+        record.getTwillRunId());
     return lookupFromTwillRunner(twillRunner, programRunId, twillRunIdFromRecord);
   }
 
@@ -191,8 +194,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     Collection<RunRecordDetail> activeRunRecords;
     synchronized (this) {
       activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
-        record.getTwillRunId() != null
-          && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
+          record.getTwillRunId() != null
+              && twillRunIds.contains(
+              org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
     }
 
     for (RunRecordDetail record : activeRunRecords) {
@@ -207,12 +211,15 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       // Get the CDAP RunId from RunRecord
       RunId runId = RunIds.fromString(record.getPid());
       // Get the Program and TwillController for the current twillRunId
-      Map<ProgramId, TwillController> mapForTwillId = twillProgramInfo.columnMap().get(twillRunIdFromRecord);
+      Map<ProgramId, TwillController> mapForTwillId = twillProgramInfo.columnMap()
+          .get(twillRunIdFromRecord);
       Map.Entry<ProgramId, TwillController> entry = mapForTwillId.entrySet().iterator().next();
 
       // Create RuntimeInfo for the current Twill RunId
-      if (result.computeIfAbsent(runId, rid -> createRuntimeInfo(entry.getKey(), rid, entry.getValue())) == null) {
-        LOG.warn("Unable to create runtime info for program {} with run id {}", entry.getKey(), runId);
+      if (result.computeIfAbsent(runId,
+          rid -> createRuntimeInfo(entry.getKey(), rid, entry.getValue())) == null) {
+        LOG.warn("Unable to create runtime info for program {} with run id {}", entry.getKey(),
+            runId);
       }
     }
 
@@ -227,24 +234,28 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     if (controllers.hasNext()) {
       TwillController controller = controllers.next();
       if (controllers.hasNext()) {
-        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.", twillAppName);
+        LOG.warn("Expected at most one live instance of Twill app {} but found at least two.",
+            twillAppName);
       }
       ResourceReport report = controller.getResourceReport();
       if (report != null) {
-        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, report.getApplicationId());
+        DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program,
+            report.getApplicationId());
 
-        Containers.ContainerType containerType = Containers.ContainerType.valueOf(program.getType().name());
+        Containers.ContainerType containerType = Containers.ContainerType.valueOf(
+            program.getType().name());
 
-        for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
+        for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources()
+            .entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {
             liveInfo.addContainer(new ContainerInfo(containerType,
-                                                    entry.getKey(),
-                                                    resources.getInstanceId(),
-                                                    resources.getContainerId(),
-                                                    resources.getHost(),
-                                                    resources.getMemoryMB(),
-                                                    resources.getVirtualCores(),
-                                                    resources.getDebugPort()));
+                entry.getKey(),
+                resources.getInstanceId(),
+                resources.getContainerId(),
+                resources.getHost(),
+                resources.getMemoryMB(),
+                resources.getVirtualCores(),
+                resources.getDebugPort()));
           }
         }
 

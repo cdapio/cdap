@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
  * TODO rethink this
  */
 public class PartitionedFileSetDefinition
-  extends AbstractDatasetDefinition<PartitionedFileSet, DatasetAdmin>
-  implements Reconfigurable {
+    extends AbstractDatasetDefinition<PartitionedFileSet, DatasetAdmin>
+    implements Reconfigurable {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDefinition.class);
 
@@ -63,8 +63,9 @@ public class PartitionedFileSetDefinition
   @VisibleForTesting
   public static final String NAME_AS_BASE_PATH_DEFAULT = "name.as.base.path.default";
 
-  private static final String INDEXED_COLS = Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
-    + Bytes.toString(PartitionedFileSetDataset.CREATION_TIME_COL);
+  private static final String INDEXED_COLS =
+      Bytes.toString(PartitionedFileSetDataset.WRITE_PTR_COL) + ','
+          + Bytes.toString(PartitionedFileSetDataset.CREATION_TIME_COL);
 
   protected final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
   protected final DatasetDefinition<? extends FileSet, ?> filesetDef;
@@ -73,8 +74,8 @@ public class PartitionedFileSetDefinition
   private Injector injector;
 
   public PartitionedFileSetDefinition(String name,
-                                      DatasetDefinition<? extends FileSet, ?> filesetDef,
-                                      DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
+      DatasetDefinition<? extends FileSet, ?> filesetDef,
+      DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
     Preconditions.checkArgument(indexedTableDef != null, "IndexedTable definition is required");
     Preconditions.checkArgument(filesetDef != null, "FileSet definition is required");
@@ -84,13 +85,14 @@ public class PartitionedFileSetDefinition
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(properties.getProperties());
+    Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(
+        properties.getProperties());
     Preconditions.checkArgument(partitioning != null, "Properties do not contain partitioning");
     // define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties())
-      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
-      .build();
+        .addAll(properties.getProperties())
+        .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+        .build();
 
     Map<String, String> pfsProperties = new HashMap<>(properties.getProperties());
 
@@ -99,83 +101,91 @@ public class PartitionedFileSetDefinition
     // this is important to know when a pfs is updated, as we want to keep the old base path behavior for
     // previously created datasets
     String defaultBasePathStr = properties.getProperties().get(NAME_AS_BASE_PATH_DEFAULT);
-    boolean useNameAsBasePathDefault = defaultBasePathStr == null || Boolean.parseBoolean(defaultBasePathStr);
+    boolean useNameAsBasePathDefault =
+        defaultBasePathStr == null || Boolean.parseBoolean(defaultBasePathStr);
     DatasetProperties.Builder fileProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties());
+        .addAll(properties.getProperties());
     // CDAP-13120 - if base path is not set, default it to the dataset name.
     // otherwise, the embedded dataset name 'files' will get appended to the dataset name as the base path,
     // and when the dataset is deleted, only the 'files' dir will be deleted and not the dataset name dir.
-    if (useNameAsBasePathDefault && !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+    if (useNameAsBasePathDefault && !properties.getProperties()
+        .containsKey(FileSetProperties.BASE_PATH)) {
       fileProperties.add(FileSetProperties.BASE_PATH, instanceName);
       pfsProperties.put(NAME_AS_BASE_PATH_DEFAULT, Boolean.TRUE.toString());
     }
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(pfsProperties)
-      .datasets(filesetDef.configure(FILESET_NAME, fileProperties.build()),
-                indexedTableDef.configure(PARTITION_TABLE_NAME, indexedTableProperties))
-      .build();
+        .properties(pfsProperties)
+        .datasets(filesetDef.configure(FILESET_NAME, fileProperties.build()),
+            indexedTableDef.configure(PARTITION_TABLE_NAME, indexedTableProperties))
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties properties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties properties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
 
     // validate that the partitioning is not changing
-    Partitioning oldPartitioning = PartitionedFileSetProperties.getPartitioning(currentSpec.getProperties());
-    Partitioning newPartitioning = PartitionedFileSetProperties.getPartitioning(properties.getProperties());
+    Partitioning oldPartitioning = PartitionedFileSetProperties.getPartitioning(
+        currentSpec.getProperties());
+    Partitioning newPartitioning = PartitionedFileSetProperties.getPartitioning(
+        properties.getProperties());
     Preconditions.checkNotNull(oldPartitioning, "Existing dataset has no partitioning");
     Preconditions.checkNotNull(newPartitioning, "New properties do not contain partitioning");
     if (!Iterators.elementsEqual(oldPartitioning.getFields().entrySet().iterator(),
-                                 newPartitioning.getFields().entrySet().iterator())) {
+        newPartitioning.getFields().entrySet().iterator())) {
       throw new IncompatibleUpdateException(String.format(
-        "Partitioning cannot be changed. Existing: %s, new: %s", oldPartitioning, newPartitioning));
+          "Partitioning cannot be changed. Existing: %s, new: %s", oldPartitioning,
+          newPartitioning));
     }
 
     Map<String, String> pfsProperties = new HashMap<>(properties.getProperties());
 
     // define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties())
-      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
-      .build();
+        .addAll(properties.getProperties())
+        .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+        .build();
 
     // only set the default base path property if the default was set the last time it was configured,
     // and no base path is in the current properties.
     DatasetSpecification currentFileSpec = currentSpec.getSpecification(FILESET_NAME);
     DatasetProperties.Builder newFileProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties());
+        .addAll(properties.getProperties());
     String useNameAsBasePathDefault = currentSpec.getProperty(NAME_AS_BASE_PATH_DEFAULT);
     if (Boolean.parseBoolean(useNameAsBasePathDefault) &&
-      !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
+        !properties.getProperties().containsKey(FileSetProperties.BASE_PATH)) {
       newFileProperties.add(FileSetProperties.BASE_PATH, instanceName);
       pfsProperties.put(NAME_AS_BASE_PATH_DEFAULT, Boolean.TRUE.toString());
     }
 
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(pfsProperties)
-      .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME, newFileProperties.build(),
-                                                      currentFileSpec),
-                AbstractDatasetDefinition.reconfigure(indexedTableDef, PARTITION_TABLE_NAME, indexedTableProperties,
-                                                      currentSpec.getSpecification(PARTITION_TABLE_NAME)))
-      .build();
+        .properties(pfsProperties)
+        .datasets(AbstractDatasetDefinition.reconfigure(filesetDef, FILESET_NAME,
+                newFileProperties.build(),
+                currentFileSpec),
+            AbstractDatasetDefinition.reconfigure(indexedTableDef, PARTITION_TABLE_NAME,
+                indexedTableProperties,
+                currentSpec.getSpecification(PARTITION_TABLE_NAME)))
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new PartitionedFileSetAdmin(
-      datasetContext, spec,
-      ImmutableMap.<String, DatasetAdmin>of(
-        FILESET_NAME,
-        filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
-        PARTITION_TABLE_NAME,
-        indexedTableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME), classLoader)));
+        datasetContext, spec,
+        ImmutableMap.<String, DatasetAdmin>of(
+            FILESET_NAME,
+            filesetDef.getAdmin(datasetContext, spec.getSpecification(FILESET_NAME), classLoader),
+            PARTITION_TABLE_NAME,
+            indexedTableDef.getAdmin(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
+                classLoader)));
   }
 
   @Override
   public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     // properties must contain the partitioning
     Partitioning partitioning = PartitionedFileSetProperties.getPartitioning(spec.getProperties());
 
@@ -183,22 +193,25 @@ public class PartitionedFileSetDefinition
     arguments = updateArgumentsIfNeeded(arguments, partitioning);
 
     FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME),
-                                            arguments, classLoader);
-    IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
-                                                    arguments, classLoader);
+        arguments, classLoader);
+    IndexedTable table = indexedTableDef.getDataset(datasetContext,
+        spec.getSpecification(PARTITION_TABLE_NAME),
+        arguments, classLoader);
 
-    return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset, table, spec, arguments);
+    return new PartitionedFileSetDataset(datasetContext, spec.getName(), partitioning, fileset,
+        table, spec, arguments);
   }
 
   // if the arguments do not contain an output location, generate one from the partition key (if present)
   protected static Map<String, String> updateArgumentsIfNeeded(Map<String, String> arguments,
-                                                               Partitioning partitioning) {
+      Partitioning partitioning) {
     if (FileSetArguments.getOutputPath(arguments) == null) {
       PartitionKey key = PartitionedFileSetArguments.getOutputPartitionKey(arguments, partitioning);
       // we need to copy the map, to avoid modifying the passed-in map
       arguments = Maps.newHashMap(arguments);
       if (key != null) {
-        FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(key, partitioning));
+        FileSetArguments.setOutputPath(arguments,
+            PartitionedFileSetDataset.getOutputPath(key, partitioning));
       } else if (PartitionedFileSetArguments.getDynamicPartitioner(arguments) != null) {
         // when using DynamicPartitioner, use the baseLocation of the fileSet as the output location
         FileSetArguments.setBaseOutputPath(arguments);

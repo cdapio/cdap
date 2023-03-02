@@ -26,7 +26,9 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for ClassPackagingData.
  */
 final class ClassPackagingDataSerializer {
-  private ClassPackagingDataSerializer() {}
+
+  private ClassPackagingDataSerializer() {
+  }
 
   static GenericRecord encode(Schema schema, ClassPackagingData classPackagingData) {
     if (classPackagingData != null) {
@@ -41,7 +43,7 @@ final class ClassPackagingDataSerializer {
 
   static ClassPackagingData decode(GenericRecord datum) {
     if (datum != null) {
-      String codeLocation =  LoggingUtil.stringOrNull(datum.get("codeLocation"));
+      String codeLocation = LoggingUtil.stringOrNull(datum.get("codeLocation"));
       String version = LoggingUtil.stringOrNull(datum.get("version"));
       boolean exact = (Boolean) datum.get("exact");
       return new ClassPackagingData(codeLocation, version, exact);

@@ -23,8 +23,8 @@ import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.security.store.client.RemoteSecureStore;
 
 /**
- * The Guice module to provide binding for secure store client.
- * This module should only be used in containers in distributed mode.
+ * The Guice module to provide binding for secure store client. This module should only be used in
+ * containers in distributed mode.
  */
 public class SecureStoreClientModule extends AbstractModule {
 

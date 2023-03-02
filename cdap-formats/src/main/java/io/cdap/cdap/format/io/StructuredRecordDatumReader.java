@@ -84,9 +84,8 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
   }
 
   /**
-   * Decodes a enum value based on the given {@link Schema}. This method reads an integer as the index in the
-   * enum schema.
-   * Sub-class can override this to have different behavior.
+   * Decodes a enum value based on the given {@link Schema}. This method reads an integer as the
+   * index in the enum schema. Sub-class can override this to have different behavior.
    *
    * @param decoder The decode to decode value from
    * @param schema The {@link Schema} of the enum
@@ -98,10 +97,10 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
   }
 
   /**
-   * Decodes an array with array element of a given {@link Schema}. This method reads an integer as the size of
-   * a chunk, followed by reading that many array element using the element schema, following by reading the size
-   * of the next chunk, until it reads {@code 0}.
-   * Sub-class can override this to have different behavior.
+   * Decodes an array with array element of a given {@link Schema}. This method reads an integer as
+   * the size of a chunk, followed by reading that many array element using the element schema,
+   * following by reading the size of the next chunk, until it reads {@code 0}. Sub-class can
+   * override this to have different behavior.
    *
    * @param decoder The decode to decode value from
    * @param elementSchema The {@link Schema} of the array elements
@@ -123,10 +122,9 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
   }
 
   /**
-   * Decodes a map. This method reads an integer as the size of a chunk, followed by reading that many
-   * key and value pairs using the key and value schema, following by reading the size
-   * of the next chunk, until it reads {@code 0}.
-   * Sub-class can override this to have different behavior.
+   * Decodes a map. This method reads an integer as the size of a chunk, followed by reading that
+   * many key and value pairs using the key and value schema, following by reading the size of the
+   * next chunk, until it reads {@code 0}. Sub-class can override this to have different behavior.
    *
    * @param decoder The decode to decode value from
    * @param keySchema The {@link Schema} of the map key
@@ -134,7 +132,8 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
    * @return A {@link Map} containing all map entries
    * @throws IOException If failed to decode
    */
-  protected Map<?, ?> decodeMap(Decoder decoder, Schema keySchema, Schema valueSchema) throws IOException {
+  protected Map<?, ?> decodeMap(Decoder decoder, Schema keySchema, Schema valueSchema)
+      throws IOException {
     int size = decoder.readInt();
     Map<Object, Object> map = new LinkedHashMap<>(size);
 
@@ -166,8 +165,8 @@ public class StructuredRecordDatumReader implements DatumReader<StructuredRecord
   }
 
   /**
-   * Decodes a value from a union. This method first decode an integer as the index in the union schema for the
-   * value schema, followed decoding the value using that schema.
+   * Decodes a value from a union. This method first decode an integer as the index in the union
+   * schema for the value schema, followed decoding the value using that schema.
    *
    * @param decoder The decode to decode value from
    * @param schema The {@link Schema} of the union

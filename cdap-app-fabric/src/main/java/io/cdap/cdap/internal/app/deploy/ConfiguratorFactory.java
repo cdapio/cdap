@@ -18,9 +18,10 @@ import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 
 /**
- * ConfiguratorFactory interface which is used by Guice to pass in the appDeploymentInfo to the configurator during
- * runtime
+ * ConfiguratorFactory interface which is used by Guice to pass in the appDeploymentInfo to the
+ * configurator during runtime
  */
 public interface ConfiguratorFactory {
+
   Configurator create(AppDeploymentInfo appDeploymentInfo);
 }

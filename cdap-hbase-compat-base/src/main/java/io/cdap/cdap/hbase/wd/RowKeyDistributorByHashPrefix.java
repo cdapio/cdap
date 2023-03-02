@@ -22,10 +22,13 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Provides handy methods to distribute
  */
 public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
+
   private static final String DELIM = "--";
   private Hasher hasher;
 
-  /** Constructor reflection. DO NOT USE */
+  /**
+   * Constructor reflection. DO NOT USE
+   */
   public RowKeyDistributorByHashPrefix() {
   }
 
@@ -37,8 +40,11 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
    * todo
    */
   public interface Hasher extends Parametrizable {
+
     byte[] getHashPrefix(byte[] originalKey);
+
     byte[][] getAllPossiblePrefixes();
+
     int getPrefixLength(byte[] adjustedKey);
   }
 
@@ -46,15 +52,18 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
    * todo
    */
   public static class OneByteSimpleHash implements Hasher {
+
     private int mod;
 
     /**
      * For reflection, do NOT use it.
      */
-    public OneByteSimpleHash() {}
+    public OneByteSimpleHash() {
+    }
 
     /**
      * Creates a new instance of this class.
+     *
      * @param maxBuckets max buckets number, should be in 1...255 range
      */
     public OneByteSimpleHash(int maxBuckets) {
@@ -72,14 +81,14 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
     static {
       PREFIXES = new byte[256][];
       for (int i = 0; i < 256; i++) {
-        PREFIXES[i] = new byte[] {(byte) i};
+        PREFIXES[i] = new byte[]{(byte) i};
       }
     }
 
     @Override
     public byte[] getHashPrefix(byte[] originalKey) {
       long hash = Math.abs(Arrays.hashCode(originalKey));
-      return new byte[] {(byte) (hash % mod)};
+      return new byte[]{(byte) (hash % mod)};
     }
 
     @Override
@@ -132,7 +141,8 @@ public class RowKeyDistributorByHashPrefix extends AbstractRowKeyDistributor {
   @Override
   public String getParamsToStore() {
     String hasherParamsToStore = hasher.getParamsToStore();
-    return hasher.getClass().getName() + DELIM + (hasherParamsToStore == null ? "" : hasherParamsToStore);
+    return hasher.getClass().getName() + DELIM + (hasherParamsToStore == null ? ""
+        : hasherParamsToStore);
   }
 
   @Override

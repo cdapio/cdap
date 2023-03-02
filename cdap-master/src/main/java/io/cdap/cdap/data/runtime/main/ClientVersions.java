@@ -57,11 +57,13 @@ public class ClientVersions {
   }
 
   public static String getKafkaVersion() {
-    URL kafkaJar = KafkaClient.class.getResource("/" + KafkaClient.class.getName().replace(".", "/") + ".class");
+    URL kafkaJar = KafkaClient.class.getResource(
+        "/" + KafkaClient.class.getName().replace(".", "/") + ".class");
     // kafkaJar.getPath() looks like jar:file:/a/b/c/d/kafka-clients-0.8.2.2.jar
     String[] tokens = kafkaJar.getPath().split("!")[0].split("/");
     String jarFilename = tokens[tokens.length - 1];
-    Matcher matcher = Pattern.compile("kafka-clients-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.jar").matcher(jarFilename);
+    Matcher matcher = Pattern.compile("kafka-clients-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.jar")
+        .matcher(jarFilename);
     if (matcher.find()) {
       return matcher.group(1);
     }
@@ -77,7 +79,8 @@ public class ClientVersions {
 
     System.out.println("CDAP version: " + ClientVersions.getCdapVersion());
     System.out.println("CDAP HBase compat version: " + ClientVersions.getCdapHBaseCompatVersion());
-    System.out.println("Tephra HBase compat version: " + ClientVersions.getTephraHBaseCompatVersion());
+    System.out.println(
+        "Tephra HBase compat version: " + ClientVersions.getTephraHBaseCompatVersion());
   }
 
 }

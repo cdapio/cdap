@@ -18,10 +18,12 @@ package io.cdap.cdap.api.dataset.lib;
 
 /**
  * Represents key value pair
+ *
  * @param <KEY_TYPE> type of the key
  * @param <VALUE_TYPE> type of the value
  */
 public class KeyValue<KEY_TYPE, VALUE_TYPE> {
+
   private final KEY_TYPE key;
   private final VALUE_TYPE value;
 

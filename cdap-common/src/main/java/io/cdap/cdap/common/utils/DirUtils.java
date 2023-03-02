@@ -41,28 +41,31 @@ public final class DirUtils {
   private static final int TEMP_DIR_ATTEMPTS = 10000;
 
   /**
-   * Utility classes should have a public constructor or a default constructor
-   * hence made it private.
+   * Utility classes should have a public constructor or a default constructor hence made it
+   * private.
    */
-  private DirUtils() { }
+  private DirUtils() {
+  }
 
   /**
-   * Same as calling {@link #deleteDirectoryContents(File, boolean) deleteDirectoryContents(directory, false)}.
+   * Same as calling {@link #deleteDirectoryContents(File, boolean) deleteDirectoryContents(directory,
+   * false)}.
    */
   public static void deleteDirectoryContents(File directory) throws IOException {
     deleteDirectoryContents(directory, false);
   }
 
   /**
-   * Same as calling {@link #deleteDirectoryContents(Path, boolean)} with the given directory as the {@link Path}.
+   * Same as calling {@link #deleteDirectoryContents(Path, boolean)} with the given directory as the
+   * {@link Path}.
    */
   public static void deleteDirectoryContents(File directory, boolean retain) throws IOException {
     deleteDirectoryContents(directory.toPath(), retain);
   }
 
   /**
-   * Wipes out content of a directory starting from a given directory. For symlinks, only the link will get deleted,
-   * but not the link target.
+   * Wipes out content of a directory starting from a given directory. For symlinks, only the link
+   * will get deleted, but not the link target.
    *
    * @param directory to be cleaned
    * @param retain if true, the given directory will be retained.
@@ -110,8 +113,8 @@ public final class DirUtils {
       }
     }
     throw new IllegalStateException("Failed to create directory within "
-                                      + TEMP_DIR_ATTEMPTS + " attempts (tried "
-                                      + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
+        + TEMP_DIR_ATTEMPTS + " attempts (tried "
+        + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
   }
 
   /**
@@ -127,88 +130,93 @@ public final class DirUtils {
   }
 
   /**
-   * Returns list of file names under the given directory. An empty list will be returned if the given file is
-   * not a directory.
+   * Returns list of file names under the given directory. An empty list will be returned if the
+   * given file is not a directory.
    */
   public static List<String> list(File directory) {
     return listOf(directory.list());
   }
 
   /**
-   * Returns list of file names under the given directory that are accepted by the given filter.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of file names under the given directory that are accepted by the given filter. An
+   * empty list will be returned if the given file is not a directory.
    */
   public static List<String> list(File directory, FilenameFilter filenameFilter) {
     return listOf(directory.list(filenameFilter));
   }
 
   /**
-   * Returns list of file names under the given directory that matches the give set of file name extension.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of file names under the given directory that matches the give set of file name
+   * extension. An empty list will be returned if the given file is not a directory.
    */
-  public static List<String> list(File directory, String...extensions) {
+  public static List<String> list(File directory, String... extensions) {
     return list(directory, Arrays.asList(extensions));
   }
 
   /**
-   * Returns list of file names under the given directory that matches the give set of file name extension.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of file names under the given directory that matches the give set of file name
+   * extension. An empty list will be returned if the given file is not a directory.
    */
   public static List<String> list(File directory, Iterable<String> extensions) {
-    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false).collect(Collectors.toSet());
+    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false)
+        .collect(Collectors.toSet());
     return list(directory, (dir, name) -> allowedExtensions.contains(FileUtils.getExtension(name)));
   }
 
   /**
-   * Returns list of files under the given directory. An empty list will be returned if the
-   * given file is not a directory.
+   * Returns list of files under the given directory. An empty list will be returned if the given
+   * file is not a directory.
    */
   public static List<File> listFiles(File directory) {
     return listOf(directory.listFiles());
   }
 
   /**
-   * Returns list of files under the given directory that are accepted by the given filter.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of files under the given directory that are accepted by the given filter. An empty
+   * list will be returned if the given file is not a directory.
    */
   public static List<File> listFiles(File directory, FileFilter fileFilter) {
     return listOf(directory.listFiles(fileFilter));
   }
 
   /**
-   * Returns list of files under the given directory that are accepted by the given filter.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of files under the given directory that are accepted by the given filter. An empty
+   * list will be returned if the given file is not a directory.
    */
   public static List<File> listFiles(File directory, FilenameFilter filenameFilter) {
     return listOf(directory.listFiles(filenameFilter));
   }
 
   /**
-   * Returns list of files under the given directory that matches the give set of file name extension.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of files under the given directory that matches the give set of file name
+   * extension. An empty list will be returned if the given file is not a directory.
    */
-  public static List<File> listFiles(File directory, String...extensions) {
+  public static List<File> listFiles(File directory, String... extensions) {
     return listFiles(directory, Arrays.asList(extensions));
   }
 
   /**
-   * Returns list of files under the given directory that matches the give set of file name extension.
-   * An empty list will be returned if the given file is not a directory.
+   * Returns list of files under the given directory that matches the give set of file name
+   * extension. An empty list will be returned if the given file is not a directory.
    */
   public static List<File> listFiles(File directory, Iterable<String> extensions) {
-    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false).collect(Collectors.toSet());
-    return listFiles(directory, (dir, name) -> allowedExtensions.contains(FileUtils.getExtension(name)));
+    Set<String> allowedExtensions = StreamSupport.stream(extensions.spliterator(), false)
+        .collect(Collectors.toSet());
+    return listFiles(directory,
+        (dir, name) -> allowedExtensions.contains(FileUtils.getExtension(name)));
   }
 
   /**
-   * Converts the given array into a list. An empty list will be returned if the given array is {@code null}.
-   * (Note: This method might worth to be in some other common class, which we don't have now).
+   * Converts the given array into a list. An empty list will be returned if the given array is
+   * {@code null}. (Note: This method might worth to be in some other common class, which we don't
+   * have now).
    *
    * @param elements array to convert
    * @param <T> type of elements in the array
    * @return a new immutable list.
    */
   private static <T> List<T> listOf(@Nullable T[] elements) {
-    return elements == null ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(elements));
+    return elements == null ? Collections.emptyList()
+        : Collections.unmodifiableList(Arrays.asList(elements));
   }
 }

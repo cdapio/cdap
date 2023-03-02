@@ -58,20 +58,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service to compute Lineage based on Dataset accesses of a Program stored in {@link DefaultLineageStoreReader}.
+ * Service to compute Lineage based on Dataset accesses of a Program stored in {@link
+ * DefaultLineageStoreReader}.
  */
 public class LineageAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageAdmin.class);
 
   private static final Function<Collection<Relation>, Collection<Relation>> COLLAPSE_UNKNOWN_TYPE_FUNCTION =
-    relations -> {
-      if (relations.size() <= 1) {
-        return relations;
-      }
-      // If the size is > 1, then we can safely filter out the UNKNOWN
-      return Collections2.filter(relations, relation -> relation.getAccess() != AccessType.UNKNOWN);
-    };
+      relations -> {
+        if (relations.size() <= 1) {
+          return relations;
+        }
+        // If the size is > 1, then we can safely filter out the UNKNOWN
+        return Collections2.filter(relations,
+            relation -> relation.getAccess() != AccessType.UNKNOWN);
+      };
 
   private final LineageStoreReader lineageStoreReader;
   private final Store store;
@@ -89,11 +91,12 @@ public class LineageAdmin {
    * @param startMillis start time period
    * @param endMillis end time period
    * @param levels number of levels to compute lineage for
-   * @param rollup indicates whether to aggregate programs, currently supports rolling up programs into workflows
+   * @param rollup indicates whether to aggregate programs, currently supports rolling up
+   *     programs into workflows
    * @return lineage for sourceDataset
    */
   public Lineage computeLineage(DatasetId sourceDataset, long startMillis, long endMillis,
-                                int levels, String rollup) {
+      int levels, String rollup) {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels, rollup);
   }
 
@@ -106,21 +109,24 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceDataset
    */
-  public Lineage computeLineage(DatasetId sourceDataset, long startMillis, long endMillis, int levels) {
+  public Lineage computeLineage(DatasetId sourceDataset, long startMillis, long endMillis,
+      int levels) {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels, null);
   }
 
   private Lineage doComputeLineage(DatasetId sourceData,
-                                   long startMillis, long endMillis,
-                                   int levels, @Nullable String rollup) {
+      long startMillis, long endMillis,
+      int levels, @Nullable String rollup) {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
-              sourceData, startMillis, endMillis, levels);
+        sourceData, startMillis, endMillis, levels);
     boolean rollUpWorkflow = rollup != null && rollup.contains("workflow");
 
     // Convert start time and end time period into scan keys in terms of program start times.
-    Set<RunId> runningInRange = store.getRunningInRange(TimeUnit.MILLISECONDS.toSeconds(startMillis),
-                                                        TimeUnit.MILLISECONDS.toSeconds(endMillis));
-    LOG.trace("Got {} rundIds in time range ({}, {})", runningInRange.size(), startMillis, endMillis);
+    Set<RunId> runningInRange = store.getRunningInRange(
+        TimeUnit.MILLISECONDS.toSeconds(startMillis),
+        TimeUnit.MILLISECONDS.toSeconds(endMillis));
+    LOG.trace("Got {} rundIds in time range ({}, {})", runningInRange.size(), startMillis,
+        endMillis);
 
     ScanRangeWithFilter scanRange = getScanRange(runningInRange);
     LOG.trace("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
@@ -143,8 +149,9 @@ public class LineageAdmin {
           LOG.trace("Visiting dataset {}", d);
           // Fetch related programs, the programs will be the inner programs which access the datasets. For example,
           // mapreduce or spark program in a workflow
-          Set<Relation> programRelations = lineageStoreReader.getRelations(d, scanRange.getStart(), scanRange.getEnd(),
-                                                                           scanRange.getFilter());
+          Set<Relation> programRelations = lineageStoreReader.getRelations(d, scanRange.getStart(),
+              scanRange.getEnd(),
+              scanRange.getFilter());
           LOG.trace("Got program relations {}", programRelations);
 
           // if we want to roll up lineage for workflow, we need to figure out what workflow these programs are related
@@ -157,7 +164,8 @@ public class LineageAdmin {
           // add to the relations, replace the inner program with the workflow using the map, ignore the
           // local datasets relations, the local dataset always ends with the run id of the workflow
           filterAndAddRelations(rollUpWorkflow, relations, programWorkflowMap, programRelations);
-          toVisitPrograms.addAll(programRelations.stream().map(Relation::getProgram).collect(Collectors.toSet()));
+          toVisitPrograms.addAll(
+              programRelations.stream().map(Relation::getProgram).collect(Collectors.toSet()));
         }
       }
 
@@ -167,31 +175,36 @@ public class LineageAdmin {
           LOG.trace("Visiting program {}", p);
           // Fetch related datasets
           Set<Relation> datasetRelations = lineageStoreReader.getRelations(p, scanRange.getStart(),
-                                                                           scanRange.getEnd(), scanRange.getFilter());
+              scanRange.getEnd(), scanRange.getFilter());
           LOG.trace("Got data relations {}", datasetRelations);
           Set<DatasetId> localDatasets = filterAndAddRelations(rollUpWorkflow, relations,
-                                                               programWorkflowMap, datasetRelations);
+              programWorkflowMap, datasetRelations);
           toVisitDatasets.addAll(
-            datasetRelations.stream().map(relation -> (DatasetId) relation.getData())
-              .filter(datasetId -> !localDatasets.contains(datasetId)).collect(Collectors.toSet()));
+              datasetRelations.stream().map(relation -> (DatasetId) relation.getData())
+                  .filter(datasetId -> !localDatasets.contains(datasetId))
+                  .collect(Collectors.toSet()));
         }
       }
     }
 
     Lineage lineage = new Lineage(
-      Iterables.concat(Maps.transformValues(relations.asMap(), COLLAPSE_UNKNOWN_TYPE_FUNCTION::apply).values()));
+        Iterables.concat(
+            Maps.transformValues(relations.asMap(), COLLAPSE_UNKNOWN_TYPE_FUNCTION::apply)
+                .values()));
     LOG.trace("Got lineage {}", lineage);
     return lineage;
   }
 
   /**
-   * Filter the relations based on the rollUp flag, if set to true, the method will replace the inner program with
-   * the workflow using the map and ignore the local datasets relations. The local dataset always ends with the run
-   * id of the workflow. The set of filtered local datasets is returned
+   * Filter the relations based on the rollUp flag, if set to true, the method will replace the
+   * inner program with the workflow using the map and ignore the local datasets relations. The
+   * local dataset always ends with the run id of the workflow. The set of filtered local datasets
+   * is returned
    */
-  private Set<DatasetId> filterAndAddRelations(boolean rollUpWorkflow, Multimap<RelationKey, Relation> relations,
-                                               Map<ProgramRunId, ProgramRunId> programWorkflowMap,
-                                               Set<Relation> relationss) {
+  private Set<DatasetId> filterAndAddRelations(boolean rollUpWorkflow,
+      Multimap<RelationKey, Relation> relations,
+      Map<ProgramRunId, ProgramRunId> programWorkflowMap,
+      Set<Relation> relationss) {
     Set<DatasetId> localDatasets = new HashSet<>();
     for (Relation relation : relationss) {
       if (rollUpWorkflow && programWorkflowMap.containsKey(relation.getProgramRunId())) {
@@ -203,7 +216,7 @@ public class LineageAdmin {
           continue;
         }
         relation = new Relation(data, workflowId.getParent(), relation.getAccess(),
-                                RunIds.fromString(workflowId.getRun()));
+            RunIds.fromString(workflowId.getRun()));
       }
       relations.put(new RelationKey(relation), relation);
     }
@@ -211,15 +224,16 @@ public class LineageAdmin {
   }
 
   /**
-   * Compute the inner programs and program runs based on the program relations and add them to the collections.
+   * Compute the inner programs and program runs based on the program relations and add them to the
+   * collections.
    *
    * @param toVisitPrograms the collection of next to visit programs
    * @param programWorkflowMap the program workflow run id map
    * @param programRelations the program relations of the dataset
    */
   private void computeWorkflowInnerPrograms(Set<ProgramId> toVisitPrograms,
-                                            Map<ProgramRunId, ProgramRunId> programWorkflowMap,
-                                            Set<Relation> programRelations) {
+      Map<ProgramRunId, ProgramRunId> programWorkflowMap,
+      Set<Relation> programRelations) {
     // Step 1 walk through the program relations, filter out the possible mapreduce and spark programs that
     // could be in the workflow, and get the appSpec for the program, to determine what other programs
     // are in the workflow
@@ -238,29 +252,30 @@ public class LineageAdmin {
     Map<ProgramRunId, RunRecordDetail> runRecords = store.getRuns(possibleInnerPrograms);
     Set<ProgramRunId> workflowRunIds = new HashSet<>();
     runRecords.entrySet().stream()
-      .filter(e -> e.getValue() != null)
-      .forEach(entry -> {
-        ProgramRunId programRunId = entry.getKey();
-        RunRecordDetail runRecord = entry.getValue();
+        .filter(e -> e.getValue() != null)
+        .forEach(entry -> {
+              ProgramRunId programRunId = entry.getKey();
+              RunRecordDetail runRecord = entry.getValue();
 
-        if (runRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_RUN_ID)) {
-          ProgramRunId wfRunId = extractWorkflowRunId(programRunId, runRecord);
-          programWorkflowMap.put(programRunId, wfRunId);
-          workflowRunIds.add(wfRunId);
-        }
-      }
-    );
+              if (runRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_RUN_ID)) {
+                ProgramRunId wfRunId = extractWorkflowRunId(programRunId, runRecord);
+                programWorkflowMap.put(programRunId, wfRunId);
+                workflowRunIds.add(wfRunId);
+              }
+            }
+        );
 
     // Step 3, fetch run records of the workflow, the properties of the workflow run record has all
     // the inner program run ids, compare them with the app spec to get the type of the program
     runRecords = store.getRuns(workflowRunIds);
     runRecords.entrySet().stream()
-      .filter(e -> e.getValue() != null)
-      .forEach(entry -> {
-        ProgramRunId programRunId = entry.getKey();
-        RunRecordDetail runRecord = entry.getValue();
-        extractAndAddInnerPrograms(toVisitPrograms, programWorkflowMap, appSpecs, programRunId, runRecord);
-      });
+        .filter(e -> e.getValue() != null)
+        .forEach(entry -> {
+          ProgramRunId programRunId = entry.getKey();
+          RunRecordDetail runRecord = entry.getValue();
+          extractAndAddInnerPrograms(toVisitPrograms, programWorkflowMap, appSpecs, programRunId,
+              runRecord);
+        });
   }
 
   private ProgramRunId extractWorkflowRunId(ProgramRunId programRunId, RunRecordDetail runRecord) {
@@ -272,17 +287,17 @@ public class LineageAdmin {
   }
 
   /**
-   * Extract inner programs and runs from the workflow run record, the run record's properties have all the
-   * inner program run ids. The workflow spec can then be used to determine what the inner programs are and
-   * create the program run ids for them
+   * Extract inner programs and runs from the workflow run record, the run record's properties have
+   * all the inner program run ids. The workflow spec can then be used to determine what the inner
+   * programs are and create the program run ids for them
    */
   private void extractAndAddInnerPrograms(Set<ProgramId> toVisitPrograms,
-                                          Map<ProgramRunId, ProgramRunId> programWorkflowMap,
-                                          Map<ApplicationId, ApplicationSpecification> appSpecs,
-                                          ProgramRunId programRunId, RunRecordDetail wfRunRecord) {
+      Map<ProgramRunId, ProgramRunId> programWorkflowMap,
+      Map<ApplicationId, ApplicationSpecification> appSpecs,
+      ProgramRunId programRunId, RunRecordDetail wfRunRecord) {
     ApplicationId appId = programRunId.getParent().getParent();
     WorkflowSpecification workflowSpec =
-      appSpecs.get(appId).getWorkflows().get(programRunId.getProgram());
+        appSpecs.get(appId).getWorkflows().get(programRunId.getProgram());
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
     wfRunRecord.getProperties().forEach((key, value) -> {
       if (nodeIdMap.containsKey(key)) {
@@ -296,8 +311,9 @@ public class LineageAdmin {
   }
 
   /**
-   * Convert a set of runIds into a scan range based on earliest runtime and latest runtime of runIds.
-   * Also, add a scan filter to include only runIds in the given set.
+   * Convert a set of runIds into a scan range based on earliest runtime and latest runtime of
+   * runIds. Also, add a scan filter to include only runIds in the given set.
+   *
    * @param runIds input runIds set
    * @return scan range
    */
@@ -326,6 +342,7 @@ public class LineageAdmin {
 
   @VisibleForTesting
   static class ScanRangeWithFilter {
+
     private final long start;
     private final long end;
     private final Predicate<Relation> filter;
@@ -350,17 +367,19 @@ public class LineageAdmin {
   }
 
   /**
-   * This class helps collapsing access type of {@link Relation} by ignoring the access type in equals and hashCode
-   * so that it can be used as the map key for Relations of different access types.
+   * This class helps collapsing access type of {@link Relation} by ignoring the access type in
+   * equals and hashCode so that it can be used as the map key for Relations of different access
+   * types.
    */
   private static final class RelationKey {
+
     private final Relation relation;
     private final int hashCode;
 
     private RelationKey(Relation relation) {
       this.relation = relation;
       this.hashCode = Objects.hash(relation.getData(), relation.getProgram(),
-                                   relation.getRun(), relation.getComponents());
+          relation.getRun(), relation.getComponents());
     }
 
     @Override
@@ -375,9 +394,9 @@ public class LineageAdmin {
       // Don't use AccessType for equals (same for hashCode)
       RelationKey other = (RelationKey) o;
       return Objects.equals(relation.getData(), other.relation.getData()) &&
-        Objects.equals(relation.getProgram(), other.relation.getProgram()) &&
-        Objects.equals(relation.getRun(), other.relation.getRun()) &&
-        Objects.equals(relation.getComponents(), other.relation.getComponents());
+          Objects.equals(relation.getProgram(), other.relation.getProgram()) &&
+          Objects.equals(relation.getRun(), other.relation.getRun()) &&
+          Objects.equals(relation.getComponents(), other.relation.getComponents());
     }
 
     @Override

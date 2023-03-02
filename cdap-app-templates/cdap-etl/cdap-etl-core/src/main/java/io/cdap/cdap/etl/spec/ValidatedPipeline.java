@@ -30,6 +30,7 @@ import java.util.Set;
  * Class to hold a stage with its input and outputs.
  */
 public class ValidatedPipeline {
+
   // list of stages in the order they can be configured
   private final List<ETLStage> traversalOrder;
   // stage name -> output stage -> port
@@ -59,12 +60,12 @@ public class ValidatedPipeline {
 
   public Set<String> getOutputs(String stageName) {
     return connectionTable.containsKey(stageName) ?
-      connectionTable.get(stageName).keySet() : Collections.<String>emptySet();
+        connectionTable.get(stageName).keySet() : Collections.<String>emptySet();
   }
 
   public Map<String, String> getOutputPorts(String stageName) {
     return connectionTable.containsKey(stageName) ?
-      connectionTable.get(stageName) : Collections.<String, String>emptyMap();
+        connectionTable.get(stageName) : Collections.<String, String>emptyMap();
   }
 
   public boolean isStageLoggingEnabled() {

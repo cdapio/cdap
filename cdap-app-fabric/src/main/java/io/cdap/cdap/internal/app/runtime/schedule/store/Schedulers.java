@@ -43,28 +43,33 @@ import org.quartz.CronExpression;
  * Common utility methods for scheduling.
  */
 public class Schedulers {
+
   public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getSimpleName();
   public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
 
-  public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
+  public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() {
+  }.getType();
 
   public static final long JOB_QUEUE_TIMEOUT_MILLIS = TimeUnit.DAYS.toMillis(1);
 
   public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
-  public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS = 1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
+  public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS =
+      1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
 
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 
-  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
+  public static String triggerKeyForProgramStatus(ProgramId programId,
+      ProgramStatus programStatus) {
     return String.format("programStatus:program:%s.%s.%s.%s.%s.%s", programId.getNamespace(),
-                         programId.getApplication(), ApplicationId.DEFAULT_VERSION,
-                         programId.getType().getPrettyName().toLowerCase(),
-                         programId.getProgram(), programStatus.toString().toLowerCase());
+        programId.getApplication(), ApplicationId.DEFAULT_VERSION,
+        programId.getType().getPrettyName().toLowerCase(),
+        programId.getProgram(), programStatus.toString().toLowerCase());
   }
 
-  public static Set<String> triggerKeysForProgramStatuses(ProgramId programId, Set<ProgramStatus> programStatuses) {
+  public static Set<String> triggerKeysForProgramStatuses(ProgramId programId,
+      Set<ProgramStatus> programStatuses) {
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
     for (ProgramStatus status : programStatuses) {
       triggerKeysBuilder.add(triggerKeyForProgramStatus(programId, status));
@@ -75,8 +80,8 @@ public class Schedulers {
   public static ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
     try {
       return new ProgramScheduleStoreDataset(
-        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_SCHEDULE_TABLE),
-        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_TABLE)
+          context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_SCHEDULE_TABLE),
+          context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_TABLE)
       );
     } catch (TableNotFoundException e) {
       throw Throwables.propagate(e);
@@ -88,8 +93,9 @@ public class Schedulers {
     try {
       CronExpression.validateExpression(quartzCron);
     } catch (ParseException e) {
-      throw new IllegalArgumentException(String.format("Invalid cron expression '%s': %s", cronExpression,
-                                                       e.getMessage()), e);
+      throw new IllegalArgumentException(
+          String.format("Invalid cron expression '%s': %s", cronExpression,
+              e.getMessage()), e);
     }
   }
 
@@ -100,9 +106,10 @@ public class Schedulers {
   public static String getQuartzCronExpression(String cronEntry) {
     // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
     // CronExpression will directly be used for tests.
-    String parts [] = cronEntry.split(" ");
-    Preconditions.checkArgument(parts.length == 5 || parts.length == 6, "Invalid cron entry format in '%s'. " +
-      "Cron entry must contain 5 or 6 fields.", cronEntry);
+    String parts[] = cronEntry.split(" ");
+    Preconditions.checkArgument(parts.length == 5 || parts.length == 6,
+        "Invalid cron entry format in '%s'. " +
+            "Cron entry must contain 5 or 6 fields.", cronEntry);
     if (parts.length == 5) {
       // Convert cron entry format to Quartz format by replacing wild-card character "*"
       // if day-of-the-month is not "?" and day-of-the-week is wild-card, replace day-of-the-week with "?"

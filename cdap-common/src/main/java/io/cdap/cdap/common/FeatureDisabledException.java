@@ -24,6 +24,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * Exception thrown when a feature is disabled.
  */
 public class FeatureDisabledException extends AccessException implements HttpErrorStatusProvider {
+
   /**
    * Represents disabled features
    */
@@ -40,9 +41,10 @@ public class FeatureDisabledException extends AccessException implements HttpErr
   private final String enableConfigValue;
 
   public FeatureDisabledException(Feature feature, String configName, String enableConfigKey,
-                                  String enableConfigValue) {
-    super(String.format("Feature '%s' is not enabled. Please set '%s' to '%s' in the '%s' to enable this feature.",
-                        feature.name().toLowerCase(), enableConfigKey, enableConfigValue, configName));
+      String enableConfigValue) {
+    super(String.format(
+        "Feature '%s' is not enabled. Please set '%s' to '%s' in the '%s' to enable this feature.",
+        feature.name().toLowerCase(), enableConfigKey, enableConfigValue, configName));
     this.feature = feature;
     this.configName = configName;
     this.enableConfigKey = enableConfigKey;

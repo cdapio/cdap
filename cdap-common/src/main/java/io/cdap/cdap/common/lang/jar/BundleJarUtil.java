@@ -74,7 +74,8 @@ public class BundleJarUtil {
     }
 
     // Otherwise search for the Manifest file
-    try (JarInputStream is = new JarInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
+    try (JarInputStream is = new JarInputStream(
+        new BufferedInputStream(jarLocation.getInputStream()))) {
       return getManifest(is);
     }
   }
@@ -114,8 +115,8 @@ public class BundleJarUtil {
   }
 
   /**
-   * Creates an JAR including all the files present in the given input. Same as calling
-   * {@link #addToArchive(File, ZipOutputStream)} with a {@link JarOutputStream}.
+   * Creates an JAR including all the files present in the given input. Same as calling {@link
+   * #addToArchive(File, ZipOutputStream)} with a {@link JarOutputStream}.
    */
   public static void createJar(File input, File output) throws IOException {
     try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(output))) {
@@ -124,8 +125,8 @@ public class BundleJarUtil {
   }
 
   /**
-   * Adds file(s) to a zip archive. If the given input file is a directory,
-   * all files under it will be added recursively.
+   * Adds file(s) to a zip archive. If the given input file is a directory, all files under it will
+   * be added recursively.
    *
    * @param input input directory (or file) whose contents needs to be archived
    * @param output an opened {@link ZipOutputStream} for the archive content to add to
@@ -136,94 +137,103 @@ public class BundleJarUtil {
   }
 
   /**
-   * Adds file(s) to a zip archive. If the given input file is a directory,
-   * all files under it will be added recursively.
+   * Adds file(s) to a zip archive. If the given input file is a directory, all files under it will
+   * be added recursively.
    *
    * @param input input directory (or file) whose contents needs to be archived
-   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries with the directory name
+   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries
+   *     with the directory name
    * @param output an opened {@link ZipOutputStream} for the archive content to add to
    * @throws IOException if there is failure in the archive creation
    */
   public static void addToArchive(final File input, final boolean includeDirName,
-                                  final ZipOutputStream output) throws IOException {
+      final ZipOutputStream output) throws IOException {
     addToArchive(input, includeDirName, output, NO_FILTER);
   }
 
   /**
-   * Adds file(s) to a zip archive. If the given input file is a directory,
-   * all files under it will be added recursively.
+   * Adds file(s) to a zip archive. If the given input file is a directory, all files under it will
+   * be added recursively.
    *
    * @param input input directory (or file) whose contents needs to be archived
-   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries with the directory name
+   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries
+   *     with the directory name
    * @param output an opened {@link ZipOutputStream} for the archive content to add to
-   * @param fileNameFilter a filter to ignore adding certain files to the JAR. If the predicate returns true, the file
-   *                       is excluded from the created JAR.
+   * @param fileNameFilter a filter to ignore adding certain files to the JAR. If the predicate
+   *     returns true, the file is excluded from the created JAR.
    * @throws IOException if there is failure in the archive creation
    */
   public static void addToArchive(final File input, final boolean includeDirName,
-                                  final ZipOutputStream output,
-                                  final Predicate<String> fileNameFilter) throws IOException {
+      final ZipOutputStream output,
+      final Predicate<String> fileNameFilter) throws IOException {
     final URI baseURI = input.toURI();
     Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
-                       Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-      @Override
-      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-        URI uri = baseURI.relativize(dir.toUri());
-        String entryName = includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
+        Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+              throws IOException {
+            URI uri = baseURI.relativize(dir.toUri());
+            String entryName =
+                includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
 
-        if (!entryName.isEmpty()) {
-          output.putNextEntry(new ZipEntry(entryName));
-          output.closeEntry();
-        }
-        return FileVisitResult.CONTINUE;
-      }
+            if (!entryName.isEmpty()) {
+              output.putNextEntry(new ZipEntry(entryName));
+              output.closeEntry();
+            }
+            return FileVisitResult.CONTINUE;
+          }
 
-      @Override
-      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (fileNameFilter.test(file.getFileName().toString())) {
-          return FileVisitResult.CONTINUE;
-        }
-        URI uri = baseURI.relativize(file.toUri());
-        if (uri.getPath().isEmpty()) {
-          // Only happen if the given "input" is a file.
-          output.putNextEntry(new ZipEntry(file.toFile().getName()));
-        } else {
-          output.putNextEntry(new ZipEntry(includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath()));
-        }
-        Files.copy(file, output);
-        output.closeEntry();
-        return FileVisitResult.CONTINUE;
-      }
-    });
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+              throws IOException {
+            if (fileNameFilter.test(file.getFileName().toString())) {
+              return FileVisitResult.CONTINUE;
+            }
+            URI uri = baseURI.relativize(file.toUri());
+            if (uri.getPath().isEmpty()) {
+              // Only happen if the given "input" is a file.
+              output.putNextEntry(new ZipEntry(file.toFile().getName()));
+            } else {
+              output.putNextEntry(new ZipEntry(
+                  includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath()));
+            }
+            Files.copy(file, output);
+            output.closeEntry();
+            return FileVisitResult.CONTINUE;
+          }
+        });
   }
 
   /**
-   * Takes a jar or a local directory and prepares a folder to be loaded by classloader.
-   * If a jar is provided it unpacks a manifest and any nested jars
-   * and links original jar into the destination folder, so that it would be picked up by classloader to
-   * load any classes or resources.
+   * Takes a jar or a local directory and prepares a folder to be loaded by classloader. If a jar is
+   * provided it unpacks a manifest and any nested jars and links original jar into the destination
+   * folder, so that it would be picked up by classloader to load any classes or resources.
    *
-   * If a directory is provided, it assumes that this directory already contains the unpacked jar contents (ie. this
-   * directory was used as the destinationFolder in a previous call to this method). In this case,
-   * no unpacking is needed. The {@link ClassLoaderFolder} returned will be pointing at the provided directory.
+   * If a directory is provided, it assumes that this directory already contains the unpacked jar
+   * contents (ie. this directory was used as the destinationFolder in a previous call to this
+   * method). In this case, no unpacking is needed. The {@link ClassLoaderFolder} returned will be
+   * pointing at the provided directory.
    *
-   * @param jarLocation Location containing the jar file or local directory with already unpacked jar files
+   * @param jarLocation Location containing the jar file or local directory with already
+   *     unpacked jar files
    * @param destinationSupplier Supply the directory to expand into when needed
-   * @return a {@link ClassLoaderFolder} containing the directory with the content ready for classloader creation.
+   * @return a {@link ClassLoaderFolder} containing the directory with the content ready for
+   *     classloader creation.
    * @throws IOException If failed to expand the jar
    */
   public static ClassLoaderFolder prepareClassLoaderFolder(Location jarLocation,
-                                                           ThrowingSupplier<File, IOException> destinationSupplier)
-    throws IOException {
+      ThrowingSupplier<File, IOException> destinationSupplier)
+      throws IOException {
     return new ClassLoaderFolder(jarLocation, destinationSupplier);
   }
 
   /**
-   * Performs the same operation as the {@link #prepareClassLoaderFolder(Location, ThrowingSupplier)} method.
+   * Performs the same operation as the {@link #prepareClassLoaderFolder(Location,
+   * ThrowingSupplier)} method.
    */
   public static ClassLoaderFolder prepareClassLoaderFolder(File jarFile,
-                                                           ThrowingSupplier<File, IOException> destinationSupplier)
-    throws IOException {
+      ThrowingSupplier<File, IOException> destinationSupplier)
+      throws IOException {
     return prepareClassLoaderFolder(Locations.toLocation(jarFile), destinationSupplier);
   }
 
@@ -248,9 +258,11 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unJar(Location jarLocation, File destinationFolder, Predicate<String> nameFilter)
-    throws IOException {
-    try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
+  public static File unJar(Location jarLocation, File destinationFolder,
+      Predicate<String> nameFilter)
+      throws IOException {
+    try (ZipInputStream zipIn = new ZipInputStream(
+        new BufferedInputStream(jarLocation.getInputStream()))) {
       unJar(zipIn, destinationFolder, nameFilter);
     }
     return destinationFolder;
@@ -291,9 +303,10 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   private static File unJar(File jarFile, File destinationFolder, Predicate<String> nameFilter,
-                            CopyOption ...copyOptions)
-    throws IOException {
-    try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
+      CopyOption... copyOptions)
+      throws IOException {
+    try (ZipInputStream zipIn = new ZipInputStream(
+        new BufferedInputStream(new FileInputStream(jarFile)))) {
       unJar(zipIn, destinationFolder, nameFilter, copyOptions);
     }
     return destinationFolder;
@@ -326,9 +339,10 @@ public class BundleJarUtil {
     return null;
   }
 
-  private static void unJar(ZipInputStream input, File targetDirectory, Predicate<String> nameFilter,
-                            CopyOption ...copyOptions)
-    throws IOException {
+  private static void unJar(ZipInputStream input, File targetDirectory,
+      Predicate<String> nameFilter,
+      CopyOption... copyOptions)
+      throws IOException {
     Path targetPath = targetDirectory.toPath();
     Files.createDirectories(targetPath);
 

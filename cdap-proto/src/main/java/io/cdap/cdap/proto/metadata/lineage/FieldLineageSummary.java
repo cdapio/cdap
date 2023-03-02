@@ -25,19 +25,20 @@ import javax.annotation.Nullable;
 /**
  * Represents the lineage summary associated with the field of a dataset.
  *
- * In incoming direction, it consists of the datasets and their fields
- * ({@link DatasetField}) that this field originates from.
+ * In incoming direction, it consists of the datasets and their fields ({@link DatasetField}) that
+ * this field originates from.
  *
- * In outgoing direction, it consists of the datasets and their fields
- * ({@link DatasetField}) that were computed from this field.
+ * In outgoing direction, it consists of the datasets and their fields ({@link DatasetField}) that
+ * were computed from this field.
  */
 @Beta
 public class FieldLineageSummary {
+
   private final Set<DatasetField> incoming;
   private final Set<DatasetField> outgoing;
 
   public FieldLineageSummary(@Nullable Set<DatasetField> incoming,
-                             @Nullable Set<DatasetField> outgoing) {
+      @Nullable Set<DatasetField> outgoing) {
     this.incoming = incoming == null ? null : Collections.unmodifiableSet(new HashSet<>(incoming));
     this.outgoing = outgoing == null ? null : Collections.unmodifiableSet(new HashSet<>(outgoing));
   }

@@ -45,7 +45,7 @@ public class RuntimeServerModule extends PrivateModule {
   @Override
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named(Constants.Service.RUNTIME));
+        Names.named(Constants.Service.RUNTIME));
     handlerBinder.addBinding().to(RuntimeHandler.class);
     handlerBinder.addBinding().to(RuntimeServiceRoutingHandler.class);
     CommonHandlers.add(handlerBinder);
@@ -60,7 +60,8 @@ public class RuntimeServerModule extends PrivateModule {
 
   @VisibleForTesting
   protected void bindRequestValidator() {
-    bind(RuntimeRequestValidator.class).to(DirectRuntimeRequestValidator.class).in(Scopes.SINGLETON);
+    bind(RuntimeRequestValidator.class).to(DirectRuntimeRequestValidator.class)
+        .in(Scopes.SINGLETON);
   }
 
   @VisibleForTesting
@@ -69,9 +70,11 @@ public class RuntimeServerModule extends PrivateModule {
   }
 
   /**
-   * Provider for {@link ProgramRunRecordFetcher}. Implementation returned is based on CDAP configuration.
+   * Provider for {@link ProgramRunRecordFetcher}. Implementation returned is based on CDAP
+   * configuration.
    */
-  private static final class ProgramRunRecordFetcherProvider implements Provider<ProgramRunRecordFetcher> {
+  private static final class ProgramRunRecordFetcherProvider implements
+      Provider<ProgramRunRecordFetcher> {
 
     private final Injector injector;
     private final Class<? extends ProgramRunRecordFetcher> fetcherClass;
@@ -80,9 +83,10 @@ public class RuntimeServerModule extends PrivateModule {
     ProgramRunRecordFetcherProvider(Injector injector, CConfiguration cConf) {
       this.injector = injector;
       this.fetcherClass = cConf.getClass(Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS, null,
-                                         ProgramRunRecordFetcher.class);
+          ProgramRunRecordFetcher.class);
       if (fetcherClass == null) {
-        throw new IllegalStateException("Missing configuration " + Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS);
+        throw new IllegalStateException(
+            "Missing configuration " + Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS);
       }
     }
 

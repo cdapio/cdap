@@ -22,10 +22,12 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * {@link Indexer} that applies on a long value and returns its inverted long value, obtained by subtracting it from
- * {@code Long.MAX_VALUE}. This can be used to return results in descending order of creation time.
+ * {@link Indexer} that applies on a long value and returns its inverted long value, obtained by
+ * subtracting it from {@code Long.MAX_VALUE}. This can be used to return results in descending
+ * order of creation time.
  */
 public class InvertedTimeIndexer implements Indexer {
+
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     String value = entry.getValue();
@@ -33,7 +35,8 @@ public class InvertedTimeIndexer implements Indexer {
     try {
       creationTime = Long.parseLong(value);
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("Expected value in InvertedTimeIndexer to be a long but found " + value);
+      throw new IllegalArgumentException(
+          "Expected value in InvertedTimeIndexer to be a long but found " + value);
     }
     return Collections.singleton(String.valueOf(Long.MAX_VALUE - creationTime));
   }

@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.common;
  * Interface for collecting statistics associated with the stages in the pipeline.
  */
 public interface StageStatisticsCollector {
+
   /**
    * Increment the input record count.
    */

@@ -23,11 +23,13 @@ import javax.annotation.Nullable;
  * Namespace and resource quota associated with a tether.
  */
 public class NamespaceAllocation {
+
   private final String namespace;
   private final String cpuLimit;
   private final String memoryLimit;
 
-  public NamespaceAllocation(String namespace, @Nullable String cpuLimit, @Nullable String memoryLimit) {
+  public NamespaceAllocation(String namespace, @Nullable String cpuLimit,
+      @Nullable String memoryLimit) {
     this.namespace = namespace;
     this.cpuLimit = cpuLimit;
     this.memoryLimit = memoryLimit;
@@ -57,8 +59,8 @@ public class NamespaceAllocation {
     }
     NamespaceAllocation that = (NamespaceAllocation) other;
     return Objects.equals(this.namespace, that.namespace) &&
-      Objects.equals(this.cpuLimit, that.cpuLimit) &&
-      Objects.equals(this.memoryLimit, that.memoryLimit);
+        Objects.equals(this.cpuLimit, that.cpuLimit) &&
+        Objects.equals(this.memoryLimit, that.memoryLimit);
   }
 
   @Override

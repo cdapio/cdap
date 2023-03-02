@@ -47,7 +47,8 @@ import org.apache.twill.api.TwillRunnable;
  * The {@link TwillRunnable} for running a workflow driver.
  */
 @Completable
-public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
+public final class WorkflowTwillRunnable extends
+    AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
   public WorkflowTwillRunnable(String name) {
     super(name);
@@ -55,7 +56,7 @@ public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<Wo
 
   @Override
   protected Module createModule(CConfiguration cConf, Configuration hConf,
-                                ProgramOptions programOptions, ProgramRunId programRunId) {
+      ProgramOptions programOptions, ProgramRunId programRunId) {
     List<Module> modules = new ArrayList<>();
 
     modules.add(super.createModule(cConf, hConf, programOptions, programRunId));
@@ -76,7 +77,7 @@ public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<Wo
         // Bind ProgramRunner for MR, which is used by Workflow.
         // The ProgramRunner for Spark is provided by the DefaultProgramRunnerFactory through the extension mechanism
         MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
-          MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+            MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
         runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
 
         // It uses local mode factory because for Workflow we launch the job from the Workflow container directly.

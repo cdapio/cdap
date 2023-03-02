@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
  * @see InputSplit
  */
 public class DataSetInputSplit extends InputSplit implements Writable {
+
   private Split split;
 
   public DataSetInputSplit() {

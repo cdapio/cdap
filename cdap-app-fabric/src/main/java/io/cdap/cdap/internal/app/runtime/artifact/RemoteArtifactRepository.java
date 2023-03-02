@@ -49,19 +49,22 @@ import org.apache.twill.filesystem.Location;
  * RemoteArtifactRepository provides a remote implementation of ArtifactRepository
  */
 public class RemoteArtifactRepository implements ArtifactRepository {
+
   private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
 
   @VisibleForTesting
   @Inject
-  public RemoteArtifactRepository(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader) {
+  public RemoteArtifactRepository(CConfiguration cConf,
+      ArtifactRepositoryReader artifactRepositoryReader) {
     this.artifactRepositoryReader = artifactRepositoryReader;
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, new ProgramRuntimeProviderLoader(cConf));
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf,
+        new ProgramRuntimeProviderLoader(cConf));
   }
 
   @Override
   public CloseableClassLoader createArtifactClassLoader(ArtifactDescriptor artifactDescriptor,
-                                                        EntityImpersonator entityImpersonator) throws IOException {
+      EntityImpersonator entityImpersonator) throws IOException {
     Location location = getArtifactLocation(artifactDescriptor);
     return artifactClassLoaderFactory.createClassLoader(location, entityImpersonator);
   }
@@ -72,61 +75,65 @@ public class RemoteArtifactRepository implements ArtifactRepository {
   }
 
   @Override
-  public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, boolean includeSystem) throws Exception {
+  public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, boolean includeSystem)
+      throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(NamespaceId namespace, String name, int limit,
-                                                    ArtifactSortOrder order) throws Exception {
+      ArtifactSortOrder order) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public List<ArtifactSummary> getArtifactSummaries(ArtifactRange range, int limit,
-                                                    ArtifactSortOrder order) throws Exception {
+      ArtifactSortOrder order) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public List<ApplicationClassSummary> getApplicationClasses(NamespaceId namespace,
-                                                             boolean includeSystem) throws IOException {
+      boolean includeSystem) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace, String className) throws IOException {
+  public List<ApplicationClassInfo> getApplicationClasses(NamespaceId namespace, String className)
+      throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>>
   getPlugins(NamespaceId namespace,
-             Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
+      Id.Artifact artifactId) throws IOException, ArtifactNotFoundException {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, Set<PluginClass>>
   getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-             String pluginType) throws IOException, ArtifactNotFoundException {
+      String pluginType) throws IOException, ArtifactNotFoundException {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public SortedMap<ArtifactDescriptor, PluginClass>
   getPlugins(NamespaceId namespace, Id.Artifact artifactId,
-             String pluginType, String pluginName,
-             Predicate<ArtifactId> pluginPredicate, int limit,
-             ArtifactSortOrder order) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+      String pluginType, String pluginName,
+      Predicate<ArtifactId> pluginPredicate, int limit,
+      ArtifactSortOrder order)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public Map.Entry<ArtifactDescriptor, PluginClass>
   findPlugin(NamespaceId namespace, ArtifactRange artifactRange,
-             String pluginType, String pluginName,
-             PluginSelector selector) throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+      String pluginType, String pluginName,
+      PluginSelector selector)
+      throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     throw new UnsupportedOperationException();
   }
 
@@ -137,26 +144,28 @@ public class RemoteArtifactRepository implements ArtifactRepository {
 
   @Override
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
-                                    @Nullable Set<ArtifactRange> parentArtifacts,
-                                    @Nullable Set<PluginClass> additionalPlugins) throws Exception {
+      @Nullable Set<ArtifactRange> parentArtifacts,
+      @Nullable Set<PluginClass> additionalPlugins) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
-                                    @Nullable Set<ArtifactRange> parentArtifacts,
-                                    @Nullable Set<PluginClass> additionalPlugins,
-                                    Map<String, String> properties) throws Exception {
+      @Nullable Set<ArtifactRange> parentArtifacts,
+      @Nullable Set<PluginClass> additionalPlugins,
+      Map<String, String> properties) throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void writeArtifactProperties(Id.Artifact artifactId, Map<String, String> properties) throws Exception {
+  public void writeArtifactProperties(Id.Artifact artifactId, Map<String, String> properties)
+      throws Exception {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void writeArtifactProperty(Id.Artifact artifactId, String key, String value) throws Exception {
+  public void writeArtifactProperty(Id.Artifact artifactId, String key, String value)
+      throws Exception {
     throw new UnsupportedOperationException();
   }
 
@@ -197,7 +206,7 @@ public class RemoteArtifactRepository implements ArtifactRepository {
 
   @Override
   public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit,
-                                                 ArtifactSortOrder order) throws Exception {
+      ArtifactSortOrder order) throws Exception {
     return artifactRepositoryReader.getArtifactDetails(range, limit, order);
   }
 

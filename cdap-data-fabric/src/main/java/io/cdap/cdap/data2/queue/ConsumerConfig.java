@@ -27,17 +27,19 @@ public final class ConsumerConfig extends ConsumerGroupConfig {
    * Instance ID, derived from {@link #groupSize}.
    *
    * <p>
-   * e.g. if {@link #groupSize} is 4, then within that group, there would be instance IDs of 0, 1, 2, and 3.
+   * e.g. if {@link #groupSize} is 4, then within that group, there would be instance IDs of 0, 1,
+   * 2, and 3.
    * </p>
    */
   private final int instanceId;
 
   public ConsumerConfig(ConsumerGroupConfig groupConfig, int instanceId) {
     this(groupConfig.getGroupId(), instanceId, groupConfig.getGroupSize(),
-         groupConfig.getDequeueStrategy(), groupConfig.getHashKey());
+        groupConfig.getDequeueStrategy(), groupConfig.getHashKey());
   }
 
-  public ConsumerConfig(long groupId, int instanceId, int groupSize, DequeueStrategy dequeueStrategy, String hashKey) {
+  public ConsumerConfig(long groupId, int instanceId, int groupSize,
+      DequeueStrategy dequeueStrategy, String hashKey) {
     super(groupId, groupSize, dequeueStrategy, hashKey);
     Preconditions.checkArgument(instanceId >= 0, "Instance ID must be >= 0.");
     Preconditions.checkArgument(instanceId < groupSize, "Instance ID must be < groupSize");
@@ -51,12 +53,12 @@ public final class ConsumerConfig extends ConsumerGroupConfig {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("groupId", getGroupId())
-      .add("instanceId", instanceId)
-      .add("groupSize", getGroupSize())
-      .add("dequeueStrategy", getDequeueStrategy())
-      .add("hashKey", getHashKey())
-      .toString();
+        .add("groupId", getGroupId())
+        .add("instanceId", instanceId)
+        .add("groupSize", getGroupSize())
+        .add("dequeueStrategy", getDequeueStrategy())
+        .add("hashKey", getHashKey())
+        .toString();
   }
 
   @Override

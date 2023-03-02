@@ -60,25 +60,30 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
     Metadata systemAppMetadata = input.getMetadata().get(MetadataScope.SYSTEM);
 
     mutations.add(
-      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, input.getApplicationClass(), creationTime,
-                                  systemAppMetadata)
-        .getMetadataMutation());
+        new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec,
+            input.getApplicationClass(), creationTime,
+            systemAppMetadata)
+            .getMetadataMutation());
 
     // collect system metadata for programs
-    collectProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values(), mutations);
-    collectProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values(),
+        mutations);
+    collectProgramSystemMetadata(appId, ProgramType.SERVICE, appSpec.getServices().values(),
+        mutations);
     collectProgramSystemMetadata(appId, ProgramType.SPARK, appSpec.getSpark().values(), mutations);
-    collectProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values(), mutations);
-    collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(), mutations);
+    collectProgramSystemMetadata(appId, ProgramType.WORKER, appSpec.getWorkers().values(),
+        mutations);
+    collectProgramSystemMetadata(appId, ProgramType.WORKFLOW, appSpec.getWorkflows().values(),
+        mutations);
 
     // add the rest user defined metadata
     Metadata userAppMetadata = input.getMetadata().get(MetadataScope.USER);
     if (userAppMetadata != null &&
-          (!userAppMetadata.getProperties().isEmpty() || !userAppMetadata.getTags().isEmpty())) {
+        (!userAppMetadata.getProperties().isEmpty() || !userAppMetadata.getTags().isEmpty())) {
       mutations.add(new MetadataMutation.Create(
-        appId.toMetadataEntity(),
-        new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, userAppMetadata.getTags(),
-                                               userAppMetadata.getProperties()), Collections.emptyMap()));
+          appId.toMetadataEntity(),
+          new io.cdap.cdap.spi.metadata.Metadata(MetadataScope.USER, userAppMetadata.getTags(),
+              userAppMetadata.getProperties()), Collections.emptyMap()));
     }
 
     // write all metadata
@@ -89,12 +94,13 @@ public class MetadataWriterStage extends AbstractStage<ApplicationWithPrograms> 
   }
 
   private void collectProgramSystemMetadata(ApplicationId appId, ProgramType programType,
-                                            Iterable<? extends ProgramSpecification> specs,
-                                            List<MetadataMutation> mutations) {
+      Iterable<? extends ProgramSpecification> specs,
+      List<MetadataMutation> mutations) {
     for (ProgramSpecification spec : specs) {
       ProgramId programId = appId.program(programType, spec.getName());
       mutations.add(
-        new ProgramSystemMetadataWriter(metadataServiceClient, programId, spec, creationTime).getMetadataMutation());
+          new ProgramSystemMetadataWriter(metadataServiceClient, programId, spec,
+              creationTime).getMetadataMutation());
     }
   }
 }

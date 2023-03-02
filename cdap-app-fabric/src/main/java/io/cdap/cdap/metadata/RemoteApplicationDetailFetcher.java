@@ -46,9 +46,13 @@ import java.util.function.Consumer;
  * Fetch application detail via internal REST API calls
  */
 public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
-  private static final Type APPLICATION_DETAIL_LIST_TYPE = new TypeToken<List<ApplicationDetail>>() { }.getType();
-  private static final Type JSON_OBJECT_TYPE = new TypeToken<JsonObject>() { }.getType();
+
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+      new GsonBuilder()).create();
+  private static final Type APPLICATION_DETAIL_LIST_TYPE = new TypeToken<List<ApplicationDetail>>() {
+  }.getType();
+  private static final Type JSON_OBJECT_TYPE = new TypeToken<JsonObject>() {
+  }.getType();
 
   private static final String APPLICATIONS_KEY = "applications";
   private static final String NEXT_PAGE_TOKEN_KEY = "nextPageToken";
@@ -58,18 +62,18 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
   @Inject
   public RemoteApplicationDetailFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false),
-      Constants.Gateway.INTERNAL_API_VERSION_3);
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
    * Get the application detail for the given application reference
    */
   public ApplicationDetail get(ApplicationReference appRef)
-    throws IOException, NotFoundException, UnauthorizedException {
+      throws IOException, NotFoundException, UnauthorizedException {
     String url = String.format("namespaces/%s/app/%s",
-                               appRef.getNamespace(), appRef.getApplication());
+        appRef.getNamespace(), appRef.getApplication());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());
@@ -81,7 +85,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
    */
   @Override
   public void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)
-    throws IOException, NamespaceNotFoundException {
+      throws IOException, NamespaceNotFoundException {
     String url = String.format("namespaces/%s/apps?pageSize=%s", namespace, batchSize);
     String token;
 
@@ -103,17 +107,20 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
       appDetails.forEach(d -> consumer.accept(d));
 
       if (objectResponse.getResponseObject().has(NEXT_PAGE_TOKEN_KEY)) {
-        token = objectResponse.getResponseObject().getAsJsonPrimitive(NEXT_PAGE_TOKEN_KEY).getAsString();
+        token = objectResponse.getResponseObject().getAsJsonPrimitive(NEXT_PAGE_TOKEN_KEY)
+            .getAsString();
       } else {
         token = null;
       }
 
-      url = String.format("namespaces/%s/apps?pageSize=%s&pageToken=%s", namespace, batchSize, token);
+      url = String.format("namespaces/%s/apps?pageSize=%s&pageToken=%s", namespace, batchSize,
+          token);
 
     } while (token != null);
-}
+  }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
+  private HttpResponse execute(HttpRequest request)
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

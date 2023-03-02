@@ -68,17 +68,18 @@ public final class ConfigModule extends AbstractModule {
     String readTimeout = cConf.get(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
 
     if (connectionTimeout != null) {
-      System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME, connectionTimeout);
+      System.setProperty(DefaultHttpRequestConfig.CONNECTION_TIMEOUT_PROPERTY_NAME,
+          connectionTimeout);
     } else {
       LOG.warn("Configuration for {} not found. Falling back to default value of {}",
-               Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
+          Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
     }
 
     if (readTimeout != null) {
       System.setProperty(DefaultHttpRequestConfig.READ_TIMEOUT_PROPERTY_NAME, readTimeout);
     } else {
       LOG.warn("Configuration for {} not found. Falling back to default value of {}",
-               Constants.HTTP_CLIENT_READ_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
+          Constants.HTTP_CLIENT_READ_TIMEOUT_MS, DefaultHttpRequestConfig.DEFAULT_TIMEOUT);
     }
   }
 

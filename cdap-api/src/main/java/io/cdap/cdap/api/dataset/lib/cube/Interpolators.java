@@ -22,6 +22,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public final class Interpolators {
+
   public static final long DEFAULT_MAX_ALLOWED_GAP = 60;
 
   /**
@@ -29,6 +30,7 @@ public final class Interpolators {
    * is too far before the first point, or too far after the last point.
    */
   public abstract static class BaseInterpolator implements Interpolator {
+
     private long maxAllowedGap;
 
     BaseInterpolator(long maxAllowedGap) {
@@ -62,9 +64,8 @@ public final class Interpolators {
   }
 
   /**
-   * Timestamps between 2 data points will take on the value of the previous point.
-   * If the timestamp is before the start, return a 0.  If the timestamp is after the end,
-   * return the end value.
+   * Timestamps between 2 data points will take on the value of the previous point. If the timestamp
+   * is before the start, return a 0.  If the timestamp is after the end, return the end value.
    */
   public static final class Step extends BaseInterpolator {
 
@@ -83,8 +84,8 @@ public final class Interpolators {
   }
 
   /**
-   * timestamps between 2 data points will increase or decrease "linearly".  If the timestamp
-   * is before the start or after the end, return a 0.
+   * timestamps between 2 data points will increase or decrease "linearly".  If the timestamp is
+   * before the start or after the end, return a 0.
    */
   public static final class Linear extends BaseInterpolator {
 

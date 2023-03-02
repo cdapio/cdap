@@ -36,12 +36,15 @@ import java.util.Map;
  * @param <K> multimap key type
  * @param <V> multimap val type
  */
-public class SetMultimapCodec<K, V> implements JsonSerializer<SetMultimap<K, V>>, JsonDeserializer<SetMultimap<K, V>> {
-  private final Type mapType = new TypeToken<Map<K, Collection<V>>>() { }.getType();
+public class SetMultimapCodec<K, V> implements JsonSerializer<SetMultimap<K, V>>,
+    JsonDeserializer<SetMultimap<K, V>> {
+
+  private final Type mapType = new TypeToken<Map<K, Collection<V>>>() {
+  }.getType();
 
   @Override
   public SetMultimap<K, V> deserialize(JsonElement json, Type typeOfT,
-                                       JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject obj = json.getAsJsonObject();
     Map<K, Collection<V>> map = context.deserialize(obj.get("map"), mapType);
     SetMultimap<K, V> multimap = HashMultimap.create();
@@ -52,7 +55,8 @@ public class SetMultimapCodec<K, V> implements JsonSerializer<SetMultimap<K, V>>
   }
 
   @Override
-  public JsonElement serialize(SetMultimap<K, V> src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(SetMultimap<K, V> src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject obj = new JsonObject();
     obj.add("map", context.serialize(src.asMap()));
     return obj;

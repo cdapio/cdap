@@ -37,8 +37,8 @@ import org.slf4j.LoggerFactory;
  * This class should only be used from the client side, and never within a coprocessor (coprocessors
  * should only read, bit never write the configuration table).
  *
- * This class does not depend on any HBase Server classes and is safe to be used with only HBase Client
- * libraries in the class path.
+ * This class does not depend on any HBase Server classes and is safe to be used with only HBase
+ * Client libraries in the class path.
  */
 public class ConfigurationWriter extends ConfigurationReader {
 
@@ -57,9 +57,10 @@ public class ConfigurationWriter extends ConfigurationReader {
   }
 
   /**
-   * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type} given is used as
-   * the row key (allowing multiple configurations to be stored).  After the new configuration is written, this will
-   * delete any configurations written with an earlier timestamp (to prevent removed values from being visible).
+   * Writes the {@link CConfiguration} instance as a new row to the HBase table.  The {@link Type}
+   * given is used as the row key (allowing multiple configurations to be stored).  After the new
+   * configuration is written, this will delete any configurations written with an earlier timestamp
+   * (to prevent removed values from being visible).
    *
    * @param configurationToWrite the CConfiguration to be persisted
    * @throws IOException If an error occurs while writing the configuration
@@ -83,11 +84,12 @@ public class ConfigurationWriter extends ConfigurationReader {
     Table table = tableProvider.get();
     try {
       LOG.info("Writing new configuration to row '{}' in configuration table {} and time stamp {}.",
-               type, table.getName(), now);
+          type, table.getName(), now);
       // populate the configuration data
       table.put(p);
-      LOG.info("Deleting any configuration from row '{}' in configuration table {} with time stamp {} or older.",
-               type, table.getName(), now - 1);
+      LOG.info(
+          "Deleting any configuration from row '{}' in configuration table {} with time stamp {} or older.",
+          type, table.getName(), now - 1);
       table.delete(d);
     } finally {
       try {
@@ -107,9 +109,10 @@ public class ConfigurationWriter extends ConfigurationReader {
       HBaseTableUtil tableUtil = new HBaseTableUtilFactory(cConf).get();
       TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, TABLE_NAME);
       ColumnFamilyDescriptorBuilder cfdBuilder =
-        HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(FAMILY), hConf);
+          HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(FAMILY), hConf);
       TableDescriptorBuilder tdBuilder =
-        HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf).addColumnFamily(cfdBuilder.build());
+          HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf)
+              .addColumnFamily(cfdBuilder.build());
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
     }
   }

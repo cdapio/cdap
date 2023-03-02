@@ -23,6 +23,7 @@ import java.util.Map;
  * Configurations for setting up a plugin
  */
 public class PluginConfig {
+
   private List<String> parents;
   private List<Map<String, String>> plugins;
 

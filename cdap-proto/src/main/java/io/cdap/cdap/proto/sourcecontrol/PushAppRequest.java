@@ -20,6 +20,7 @@ package io.cdap.cdap.proto.sourcecontrol;
  * The request class to push an application to linked git repository.
  */
 public class PushAppRequest {
+
   private final String commitMessage;
 
   public PushAppRequest(String commitMessage) {

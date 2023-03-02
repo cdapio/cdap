@@ -20,6 +20,7 @@ package io.cdap.cdap.api.data.format;
  * Names of {@link RecordFormat RecordFormats} built into the platform.
  */
 public final class Formats {
+
   public static final String AVRO = "avro";
   public static final String CSV = "csv";
   public static final String TSV = "tsv";
@@ -29,6 +30,6 @@ public final class Formats {
   public static final String SYSLOG = "syslog";
 
   public static final String[] ALL = {
-    AVRO, CSV, TSV, TEXT, COMBINED_LOG_FORMAT, GROK, SYSLOG
+      AVRO, CSV, TSV, TEXT, COMBINED_LOG_FORMAT, GROK, SYSLOG
   };
 }

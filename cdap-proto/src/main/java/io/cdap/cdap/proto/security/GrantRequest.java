@@ -26,7 +26,8 @@ import java.util.Set;
 @Beta
 public class GrantRequest extends AuthorizationRequest {
 
-  public GrantRequest(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions) {
+  public GrantRequest(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions) {
     super(authorizable, principal, permissions);
     if (principal == null) {
       throw new IllegalArgumentException("principal is required");
@@ -36,7 +37,8 @@ public class GrantRequest extends AuthorizationRequest {
     }
   }
 
-  public GrantRequest(EntityId entityId, Principal principal, Set<? extends Permission> permissions) {
+  public GrantRequest(EntityId entityId, Principal principal,
+      Set<? extends Permission> permissions) {
     this(Authorizable.fromEntityId(entityId), principal, permissions);
   }
 }

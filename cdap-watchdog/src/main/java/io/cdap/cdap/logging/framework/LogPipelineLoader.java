@@ -77,11 +77,13 @@ public class LogPipelineLoader {
   /**
    * Loads the log pipeline configurations.
    *
-   * @param contextProvider a guice {@link Provider} for creating new instance of {@link LoggerContext}.
+   * @param contextProvider a guice {@link Provider} for creating new instance of {@link
+   *     LoggerContext}.
    * @param <T> Type of the {@link LoggerContext}
    * @return a map from pipeline name to the {@link LogPipelineSpecification}
    */
-  public <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> load(Provider<T> contextProvider) {
+  public <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> load(
+      Provider<T> contextProvider) {
     try {
       return doLoad(contextProvider, true);
     } catch (InvalidPipelineException e) {
@@ -94,14 +96,15 @@ public class LogPipelineLoader {
   /**
    * Loads the log pipeline configurations
    *
-   * @param contextProvider a guice {@link Provider} for creating new instance of {@link LoggerContext}.
+   * @param contextProvider a guice {@link Provider} for creating new instance of {@link
+   *     LoggerContext}.
    * @param ignoreOnError {@code true} to ignore pipeline configuration that has error.
    * @param <T> Type of the {@link LoggerContext}
    * @return a map from pipeline name to the {@link LogPipelineSpecification}
    * @throws InvalidPipelineException if any of the pipeline configuration is invalid.
    */
   private <T extends LoggerContext> Map<String, LogPipelineSpecification<T>> doLoad(
-    Provider<T> contextProvider, boolean ignoreOnError) throws InvalidPipelineException {
+      Provider<T> contextProvider, boolean ignoreOnError) throws InvalidPipelineException {
 
     Map<String, LogPipelineSpecification<T>> result = new HashMap<>();
     Set<String> checkpointPrefixes = new TreeSet<>();
@@ -109,16 +112,18 @@ public class LogPipelineLoader {
     for (URL configURL : getPipelineConfigURLs()) {
       try {
         LogPipelineSpecification<T> spec = load(contextProvider, configURL);
-        LOG.info("Loaded logging pipeline specification for {} from {}", spec.getName(), spec.getSource());
+        LOG.info("Loaded logging pipeline specification for {} from {}", spec.getName(),
+            spec.getSource());
 
         LogPipelineSpecification<T> existingSpec = result.get(spec.getName());
         if (existingSpec != null) {
           if (!ignoreOnError) {
-            throw new InvalidPipelineException("Duplicate pipeline with name " + spec.getName() + " at " + configURL +
-                                                 ". It was already defined at " + existingSpec.getSource());
+            throw new InvalidPipelineException(
+                "Duplicate pipeline with name " + spec.getName() + " at " + configURL +
+                    ". It was already defined at " + existingSpec.getSource());
           }
           LOG.warn("Pipeline {} already defined in {}. Ignoring the duplicated one from {}.",
-                   spec.getName(), existingSpec.getSource(), configURL);
+              spec.getName(), existingSpec.getSource(), configURL);
           continue;
         }
 
@@ -126,27 +131,30 @@ public class LogPipelineLoader {
           if (!ignoreOnError) {
             // Checkpoint prefix can't be the same, otherwise pipeline checkpoints will be overwriting each other.
             throw new InvalidPipelineException(
-              "Checkpoint prefix " + spec.getCheckpointPrefix() + " already exists. Please use a different value."
+                "Checkpoint prefix " + spec.getCheckpointPrefix()
+                    + " already exists. Please use a different value."
             );
           }
-          LOG.warn("Pipeline {} has checkpoint prefix {} already defined by other pipeline. Ignoring one from {}.",
-                   spec.getName(), spec.getCheckpointPrefix(), spec.getSource());
+          LOG.warn(
+              "Pipeline {} has checkpoint prefix {} already defined by other pipeline. Ignoring one from {}.",
+              spec.getName(), spec.getCheckpointPrefix(), spec.getSource());
           continue;
         }
 
         result.put(spec.getName(), spec);
       } catch (JoranException e) {
         if (!ignoreOnError) {
-          throw new InvalidPipelineException("Failed to process log processing pipeline config at " + configURL, e);
+          throw new InvalidPipelineException(
+              "Failed to process log processing pipeline config at " + configURL, e);
         }
         LOG.warn("Ignoring invalid log processing pipeline configuration in {} due to\n  {}",
-                 configURL, e.getMessage());
+            configURL, e.getMessage());
       }
     }
 
     Preconditions.checkState(result.containsKey(SYSTEM_LOG_PIPELINE_NAME),
-                             "The CDAP system log processing pipeline is missing. " +
-                               "Please check and fix any configuration error shown earlier in the log.");
+        "The CDAP system log processing pipeline is missing. " +
+            "Please check and fix any configuration error shown earlier in the log.");
     return result;
   }
 
@@ -162,12 +170,15 @@ public class LogPipelineLoader {
       return Collections.singleton(systemPipeline);
     }
 
-    List<File> files = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
-    return Stream.concat(Stream.of(systemPipeline), files.stream().map(this::toURL).filter(Objects::nonNull))::iterator;
+    List<File> files = DirUtils.listFiles(
+        new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
+    return Stream.concat(Stream.of(systemPipeline),
+        files.stream().map(this::toURL).filter(Objects::nonNull))::iterator;
   }
 
   /**
-   * Returns an {@link URL} representing the given file or {@code null} if failed to represent it as URL.
+   * Returns an {@link URL} representing the given file or {@code null} if failed to represent it as
+   * URL.
    */
   @Nullable
   private URL toURL(File file) {
@@ -181,10 +192,11 @@ public class LogPipelineLoader {
   }
 
   /**
-   * Creates the {@link LogPipelineSpecification} representing the given log pipeline configuration URL.
+   * Creates the {@link LogPipelineSpecification} representing the given log pipeline configuration
+   * URL.
    */
   private <T extends LoggerContext> LogPipelineSpecification<T> load(Provider<T> contextProvider,
-                                                                     URL configURL) throws JoranException {
+      URL configURL) throws JoranException {
     // Create one AppenderContext per config file
     T context = contextProvider.get();
 
@@ -224,23 +236,24 @@ public class LogPipelineLoader {
 
     String checkpointPrefix = context.getName();
     return new LogPipelineSpecification<>(configURL, context,
-                                          setupPipelineCConf(configurator, pipelineCConf), checkpointPrefix);
+        setupPipelineCConf(configurator, pipelineCConf), checkpointPrefix);
   }
 
   /**
-   * Copies overridable configurations from the pipeline configuration into the given {@link CConfiguration}.
+   * Copies overridable configurations from the pipeline configuration into the given {@link
+   * CConfiguration}.
    */
   private CConfiguration setupPipelineCConf(JoranConfigurator configurator, CConfiguration cConf) {
     Context context = configurator.getContext();
 
     // The list of properties that can be overridden per pipeline configuration
     Set<String> keys = ImmutableSet.of(
-      Constants.Logging.PIPELINE_BUFFER_SIZE,
-      Constants.Logging.PIPELINE_EVENT_DELAY_MS,
-      Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE,
-      Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS,
-      Constants.Logging.PIPELINE_LOGGER_CACHE_SIZE,
-      Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS
+        Constants.Logging.PIPELINE_BUFFER_SIZE,
+        Constants.Logging.PIPELINE_EVENT_DELAY_MS,
+        Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE,
+        Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS,
+        Constants.Logging.PIPELINE_LOGGER_CACHE_SIZE,
+        Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS
     );
 
     // For each of the allowed key, try to resolves through the configurator execution context.

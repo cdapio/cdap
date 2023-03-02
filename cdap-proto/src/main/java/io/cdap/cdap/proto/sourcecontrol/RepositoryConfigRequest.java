@@ -20,6 +20,7 @@ package io.cdap.cdap.proto.sourcecontrol;
  * The request class to set or test repository configuration.
  */
 public class RepositoryConfigRequest {
+
   private final boolean test;
   private final RepositoryConfig config;
 

@@ -22,8 +22,8 @@ import io.cdap.cdap.security.auth.DistributedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
- * Configures dependency injection with all security class implementations required to run in a distributed
- * environment.
+ * Configures dependency injection with all security class implementations required to run in a
+ * distributed environment.
  */
 final class DistributedCoreSecurityModule extends CoreSecurityModule {
 

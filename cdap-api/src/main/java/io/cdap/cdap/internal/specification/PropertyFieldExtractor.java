@@ -24,8 +24,8 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
- * A {@link FieldVisitor} that extracts {@link Property} fields and save them into a map.
- * For keys that are already exists in the property map, it keep them as is and not overwriting them.
+ * A {@link FieldVisitor} that extracts {@link Property} fields and save them into a map. For keys
+ * that are already exists in the property map, it keep them as is and not overwriting them.
  */
 public final class PropertyFieldExtractor extends FieldVisitor {
 
@@ -39,7 +39,8 @@ public final class PropertyFieldExtractor extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field)
+      throws Exception {
     if (field.isAnnotationPresent(Property.class)) {
 
       // Key name is "className.fieldName".
@@ -56,18 +57,18 @@ public final class PropertyFieldExtractor extends FieldVisitor {
   }
 
   /**
-   * Gets the value of the field in the given instance as String.
-   * Currently only allows primitive types, boxed types, String and Enum.
+   * Gets the value of the field in the given instance as String. Currently only allows primitive
+   * types, boxed types, String and Enum.
    */
   private String getStringValue(Object instance, Field field) throws IllegalAccessException {
     Class<?> fieldType = field.getType();
 
     // Only support primitive type, boxed type, String and Enum
     if (!fieldType.isPrimitive() && !Primitives.isWrapperType(fieldType)
-      && !String.class.equals(fieldType) && !fieldType.isEnum()) {
+        && !String.class.equals(fieldType) && !fieldType.isEnum()) {
       throw new IllegalArgumentException(
-        String.format("Unsupported property type %s of field %s in class %s.",
-                      fieldType.getName(), field.getName(), field.getDeclaringClass().getName()));
+          String.format("Unsupported property type %s of field %s in class %s.",
+              fieldType.getName(), field.getName(), field.getDeclaringClass().getName()));
     }
 
     if (!field.isAccessible()) {

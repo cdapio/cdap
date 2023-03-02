@@ -18,35 +18,31 @@ package io.cdap.cdap.common.runtime;
 import com.google.inject.Module;
 
 /**
- * Runtime Module defines all of the methods that all of our Guice modules must
- * implement. We expect all modules that are found in each component's "runtime"
- * package to extend this class.
+ * Runtime Module defines all of the methods that all of our Guice modules must implement. We expect
+ * all modules that are found in each component's "runtime" package to extend this class.
  */
 // TODO: remove this interface as it doesn't make sense anymore, and hurt by suggesting not always suitable API
 public abstract class RuntimeModule {
 
   /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an
-   * in-memory CDAP instance.
+   * Implementers of this method should return a combined Module that includes all of the modules
+   * and classes required to instantiate and run an in-memory CDAP instance.
    *
    * @return A combined set of Modules required for InMemory execution.
    */
   public abstract Module getInMemoryModules();
 
   /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an a
-   * standalone CDAP instance.
+   * Implementers of this method should return a combined Module that includes all of the modules
+   * and classes required to instantiate and run an a standalone CDAP instance.
    *
    * @return A combined set of Modules required for standalone execution.
    */
   public abstract Module getStandaloneModules();
 
   /**
-   * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run the fully
-   * distributed CDAP instance.
+   * Implementers of this method should return a combined Module that includes all of the modules
+   * and classes required to instantiate and run the fully distributed CDAP instance.
    *
    * @return A combined set of Modules required for distributed execution.
    */

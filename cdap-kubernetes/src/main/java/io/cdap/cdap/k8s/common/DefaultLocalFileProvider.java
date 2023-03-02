@@ -22,8 +22,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Provides a File object using local files. Creates the folders up to the file if they do not exist.
- * Does NOT create the file prior to returning a writable {@link File} object.
+ * Provides a File object using local files. Creates the folders up to the file if they do not
+ * exist. Does NOT create the file prior to returning a writable {@link File} object.
  */
 public class DefaultLocalFileProvider implements LocalFileProvider {
 
@@ -34,7 +34,8 @@ public class DefaultLocalFileProvider implements LocalFileProvider {
       File parentDir = new File(parentDirPath.toString());
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         if (!parentDir.mkdirs()) {
-          throw new IOException(String.format("Failed to create parent directories for file '%s'", path));
+          throw new IOException(
+              String.format("Failed to create parent directories for file '%s'", path));
         }
       }
     }

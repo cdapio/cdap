@@ -20,18 +20,18 @@ import java.nio.ByteBuffer;
 import org.apache.hadoop.hbase.client.Put;
 
 /**
- * Builder for creating {@link Put}. This builder should be used for cross HBase versions compatibility.
- * All methods on this class are just delegating to calls to {@link Put} object.
+ * Builder for creating {@link Put}. This builder should be used for cross HBase versions
+ * compatibility. All methods on this class are just delegating to calls to {@link Put} object.
  */
 public interface PutBuilder {
 
-  PutBuilder add(byte [] family, byte [] qualifier, byte [] value);
+  PutBuilder add(byte[] family, byte[] qualifier, byte[] value);
 
-  PutBuilder addImmutable(byte [] family, byte [] qualifier, byte [] value);
+  PutBuilder addImmutable(byte[] family, byte[] qualifier, byte[] value);
 
-  PutBuilder add(byte [] family, byte [] qualifier, long ts, byte [] value);
+  PutBuilder add(byte[] family, byte[] qualifier, long ts, byte[] value);
 
-  PutBuilder addImmutable(byte [] family, byte [] qualifier, long ts, byte [] value);
+  PutBuilder addImmutable(byte[] family, byte[] qualifier, long ts, byte[] value);
 
   PutBuilder add(byte[] family, ByteBuffer qualifier, long ts, ByteBuffer value);
 

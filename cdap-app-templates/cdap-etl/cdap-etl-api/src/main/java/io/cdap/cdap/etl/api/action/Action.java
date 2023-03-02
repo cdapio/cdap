@@ -23,10 +23,12 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
  * Represents custom logic to be executed in the pipeline.
  */
 public abstract class Action implements PipelineConfigurable {
+
   public static final String PLUGIN_TYPE = "action";
 
   /**
    * Implement this method to execute the code as a part of action run.
+   *
    * @param context the action context, containing information about the pipeline run
    * @throws Exception when there is failure in method execution
    */

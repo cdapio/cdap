@@ -55,7 +55,8 @@ import org.apache.twill.api.RunId;
 public class WorkflowTable {
 
   private static final Gson GSON = new Gson();
-  private static final Type PROGRAM_RUNS_TYPE = new TypeToken<List<ProgramRun>>() { }.getType();
+  private static final Type PROGRAM_RUNS_TYPE = new TypeToken<List<ProgramRun>>() {
+  }.getType();
 
   private final StructuredTable table;
 
@@ -63,33 +64,40 @@ public class WorkflowTable {
     this.table = table;
   }
 
-  void write(WorkflowId id, RunRecordDetail runRecordMeta, List<ProgramRun> programRunList) throws IOException {
+  void write(WorkflowId id, RunRecordDetail runRecordMeta, List<ProgramRun> programRunList)
+      throws IOException {
     long startTs = runRecordMeta.getStartTs();
 
     List<Field<?>> fields = getPrimaryKeyFields(id, startTs);
     Long stopTs = runRecordMeta.getStopTs();
-    Preconditions.checkState(stopTs != null, "Workflow Stats are written when the workflow has completed. Hence, " +
-      "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s", id, runRecordMeta, stopTs);
+    Preconditions.checkState(stopTs != null,
+        "Workflow Stats are written when the workflow has completed. Hence, " +
+            "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s",
+        id, runRecordMeta, stopTs);
     long timeTaken = stopTs - startTs;
-    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.RUN_ID_FIELD, runRecordMeta.getPid()));
+    fields.add(
+        Fields.stringField(StoreDefinition.WorkflowStore.RUN_ID_FIELD, runRecordMeta.getPid()));
     fields.add(Fields.longField(StoreDefinition.WorkflowStore.TIME_TAKEN_FIELD, timeTaken));
     fields.add(Fields.stringField(StoreDefinition.WorkflowStore.PROGRAM_RUN_DATA,
-                                  GSON.toJson(programRunList, PROGRAM_RUNS_TYPE)));
+        GSON.toJson(programRunList, PROGRAM_RUNS_TYPE)));
     table.upsert(fields);
   }
 
   public void delete(ApplicationId id) throws IOException {
     table.deleteAll(
-      Range.singleton(
-        ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()),
-                         Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()))));
+        Range.singleton(
+            ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD,
+                    id.getNamespace()),
+                Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD,
+                    id.getApplication()))));
   }
 
   @VisibleForTesting
   void deleteAll() throws IOException {
     table.deleteAll(
-      Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, "")),
-                 Range.Bound.INCLUSIVE));
+        Range.from(
+            ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, "")),
+            Range.Bound.INCLUSIVE));
   }
 
   /**
@@ -100,11 +108,12 @@ public class WorkflowTable {
    * @param timeRangeEnd End of the time range that the scan should end at
    * @return List of WorkflowRunRecords
    */
-  private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) throws IOException {
+  private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd)
+      throws IOException {
     List<WorkflowRunRecord> workflowRunRecordList;
     try (CloseableIterator<StructuredRow> iterator =
-           table.scan(Range.create(getPrimaryKeyFields(id, timeRangeStart), Range.Bound.INCLUSIVE,
-                                   getPrimaryKeyFields(id, timeRangeEnd), Range.Bound.EXCLUSIVE), Integer.MAX_VALUE)) {
+        table.scan(Range.create(getPrimaryKeyFields(id, timeRangeStart), Range.Bound.INCLUSIVE,
+            getPrimaryKeyFields(id, timeRangeEnd), Range.Bound.EXCLUSIVE), Integer.MAX_VALUE)) {
       workflowRunRecordList = new ArrayList<>();
       while (iterator.hasNext()) {
         workflowRunRecordList.add(getRunRecordFromRow(iterator.next()));
@@ -114,20 +123,19 @@ public class WorkflowTable {
   }
 
   /**
-   * This method returns the statistics for a corresponding workflow. The user has to
-   * provide a time interval and a list of percentiles that are required.
+   * This method returns the statistics for a corresponding workflow. The user has to provide a time
+   * interval and a list of percentiles that are required.
    *
    * @param id The workflow id
    * @param startTime The start of the time range from where the user wants the statistics
    * @param endTime The end of the time range until where the user wants the statistics
    * @param percentiles The list of percentiles that the user wants information on
-   * @return A statistics object that provides information about the workflow or null if there are no runs associated
-   * with the workflow
-   * @throws Exception
+   * @return A statistics object that provides information about the workflow or null if there are
+   *     no runs associated with the workflow
    */
   @Nullable
   public WorkflowStatistics getStatistics(WorkflowId id, long startTime,
-                                          long endTime, List<Double> percentiles) throws Exception {
+      long endTime, List<Double> percentiles) throws Exception {
     List<WorkflowRunRecord> workflowRunRecords = scan(id, startTime, endTime);
     int runs = workflowRunRecords.size();
 
@@ -143,7 +151,8 @@ public class WorkflowTable {
 
     workflowRunRecords = sort(workflowRunRecords);
 
-    List<PercentileInformation> percentileInformationList = getPercentiles(workflowRunRecords, percentiles);
+    List<PercentileInformation> percentileInformationList = getPercentiles(workflowRunRecords,
+        percentiles);
 
     Collection<ProgramRunDetails> programToRunRecord = getProgramRuns(workflowRunRecords);
 
@@ -163,16 +172,17 @@ public class WorkflowTable {
       Collections.sort(runList);
       for (double percentile : percentiles) {
         long percentileValue = runList.get((int) ((percentile * runList.size()) / 100));
-        programToStatistic.get(entry.getName()).put(Double.toString(percentile), Long.toString(percentileValue));
+        programToStatistic.get(entry.getName())
+            .put(Double.toString(percentile), Long.toString(percentileValue));
       }
     }
 
     return new WorkflowStatistics(startTime, endTime, runs, avgRunTime, percentileInformationList,
-                                  programToStatistic);
+        programToStatistic);
   }
 
   private List<PercentileInformation> getPercentiles(List<WorkflowRunRecord> workflowRunRecords,
-                                                     List<Double> percentiles) {
+      List<Double> percentiles) {
     int runs = workflowRunRecords.size();
     List<PercentileInformation> percentileInformationList = new ArrayList<>();
     for (double i : percentiles) {
@@ -182,12 +192,14 @@ public class WorkflowTable {
         percentileRun.add(workflowRunRecords.get(j).getWorkflowRunId());
       }
       percentileInformationList.add(
-        new PercentileInformation(i, workflowRunRecords.get(percentileStart).getTimeTaken(), percentileRun));
+          new PercentileInformation(i, workflowRunRecords.get(percentileStart).getTimeTaken(),
+              percentileRun));
     }
     return percentileInformationList;
   }
 
-  private List<WorkflowTable.WorkflowRunRecord> sort(List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
+  private List<WorkflowTable.WorkflowRunRecord> sort(
+      List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
     Collections.sort(workflowRunRecords, new Comparator<WorkflowRunRecord>() {
       @Override
       public int compare(WorkflowTable.WorkflowRunRecord o1, WorkflowTable.WorkflowRunRecord o2) {
@@ -197,13 +209,15 @@ public class WorkflowTable {
     return workflowRunRecords;
   }
 
-  private Collection<ProgramRunDetails> getProgramRuns(List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
+  private Collection<ProgramRunDetails> getProgramRuns(
+      List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
     Map<String, ProgramRunDetails> programToRunRecord = new HashMap<>();
     for (WorkflowTable.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
       for (WorkflowTable.ProgramRun run : workflowRunRecord.getProgramRuns()) {
         ProgramRunDetails programRunDetails = programToRunRecord.get(run.getName());
         if (programRunDetails == null) {
-          programRunDetails = new ProgramRunDetails(run.getName(), run.getProgramType(), new ArrayList<Long>());
+          programRunDetails = new ProgramRunDetails(run.getName(), run.getProgramType(),
+              new ArrayList<Long>());
           programToRunRecord.put(run.getName(), programRunDetails);
         }
         programRunDetails.addToProgramRunList(run.getTimeTaken());
@@ -224,10 +238,11 @@ public class WorkflowTable {
     return getRunRecordFromRow(indexRow.get());
   }
 
-  Collection<WorkflowRunRecord> getDetailsOfRange(WorkflowId workflow, String runId, int limit, long timeInterval)
-    throws IOException {
+  Collection<WorkflowRunRecord> getDetailsOfRange(WorkflowId workflow, String runId, int limit,
+      long timeInterval)
+      throws IOException {
     Map<String, WorkflowRunRecord> mainRunRecords = getNeighbors(workflow, RunIds.fromString(runId),
-                                                                 limit, timeInterval);
+        limit, timeInterval);
     WorkflowRunRecord workflowRunRecord = getRecord(workflow, runId);
     if (workflowRunRecord != null) {
       mainRunRecords.put(workflowRunRecord.getWorkflowRunId(), workflowRunRecord);
@@ -236,17 +251,19 @@ public class WorkflowTable {
   }
 
   /**
-   * Returns a map of WorkflowRunId to WorkflowRunRecord that are close to the WorkflowRunId provided by the user.
+   * Returns a map of WorkflowRunId to WorkflowRunRecord that are close to the WorkflowRunId
+   * provided by the user.
    *
    * @param id The workflow
    * @param runId The runid of the workflow
    * @param limit The limit on each side of the run that we want to see into
    * @param timeInterval The time interval that we want the results to be spaced apart
-   * @return A Map of WorkflowRunId to the corresponding Workflow Run Record. A map is used so that duplicates of
-   * the WorkflowRunRecord are not obtained
+   * @return A Map of WorkflowRunId to the corresponding Workflow Run Record. A map is used so that
+   *     duplicates of the WorkflowRunRecord are not obtained
    */
-  private Map<String, WorkflowRunRecord> getNeighbors(WorkflowId id, RunId runId, int limit, long timeInterval)
-    throws IOException {
+  private Map<String, WorkflowRunRecord> getNeighbors(WorkflowId id, RunId runId, int limit,
+      long timeInterval)
+      throws IOException {
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
     Map<String, WorkflowRunRecord> workflowRunRecords = new HashMap<>();
     int i = -limit;
@@ -262,18 +279,19 @@ public class WorkflowTable {
       // This only works since the all keys but the last primary key are the same, so we can scan for a range in the
       // last primary key which is numeric.
       try (CloseableIterator<StructuredRow> iterator =
-        table.scan(Range.create(lowerBoundFields, Range.Bound.INCLUSIVE, upperBoundFields, Range.Bound.INCLUSIVE),
-                   1)) {
+          table.scan(Range.create(lowerBoundFields, Range.Bound.INCLUSIVE, upperBoundFields,
+                  Range.Bound.INCLUSIVE),
+              1)) {
         if (!iterator.hasNext()) {
           return workflowRunRecords;
         }
         StructuredRow indexRow = iterator.next();
         long timeOfNextRecord =
-          indexRow.getLong(StoreDefinition.WorkflowStore.START_TIME_FIELD);
+            indexRow.getLong(StoreDefinition.WorkflowStore.START_TIME_FIELD);
         workflowRunRecords.put(indexRow.getString(StoreDefinition.WorkflowStore.RUN_ID_FIELD),
-                               getRunRecordFromRow(indexRow));
+            getRunRecordFromRow(indexRow));
         prevStartTime = startTime + (i * timeInterval) < timeOfNextRecord ?
-          timeOfNextRecord + 1 : startTime + (i * timeInterval);
+            timeOfNextRecord + 1 : startTime + (i * timeInterval);
         i++;
       }
     }
@@ -284,6 +302,7 @@ public class WorkflowTable {
    * Class to store the name, type and list of runs of the programs across all workflow runs
    */
   private static final class ProgramRunDetails {
+
     private final String name;
     private final ProgramType programType;
     private final List<Long> programRunList;
@@ -315,6 +334,7 @@ public class WorkflowTable {
    * Class to keep track of Workflow Run Records
    */
   public static final class WorkflowRunRecord {
+
     private final String workflowRunId;
     private final long timeTaken;
     private final List<ProgramRun> programRuns;
@@ -342,6 +362,7 @@ public class WorkflowTable {
    * Class for keeping track of programs in a workflow
    */
   public static final class ProgramRun {
+
     private final String runId;
     private final long timeTaken;
     private final ProgramType programType;
@@ -373,8 +394,10 @@ public class WorkflowTable {
 
   private static List<Field<?>> getPrimaryKeyFields(WorkflowId id, long time) {
     List<Field<?>> fields = new ArrayList<>();
-    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()));
+    fields.add(
+        Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()));
+    fields.add(
+        Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()));
     fields.add(Fields.stringField(StoreDefinition.WorkflowStore.VERSION_FIELD, id.getVersion()));
     fields.add(Fields.stringField(StoreDefinition.WorkflowStore.PROGRAM_FIELD, id.getProgram()));
     fields.add(Fields.longField(StoreDefinition.WorkflowStore.START_TIME_FIELD, time));
@@ -383,8 +406,8 @@ public class WorkflowTable {
 
   private static WorkflowRunRecord getRunRecordFromRow(StructuredRow row) {
     return new WorkflowRunRecord(row.getString(StoreDefinition.WorkflowStore.RUN_ID_FIELD),
-                                 row.getLong(StoreDefinition.WorkflowStore.TIME_TAKEN_FIELD),
-                                 GSON.fromJson(row.getString(StoreDefinition.WorkflowStore.PROGRAM_RUN_DATA),
-                                               PROGRAM_RUNS_TYPE));
+        row.getLong(StoreDefinition.WorkflowStore.TIME_TAKEN_FIELD),
+        GSON.fromJson(row.getString(StoreDefinition.WorkflowStore.PROGRAM_RUN_DATA),
+            PROGRAM_RUNS_TYPE));
   }
 }

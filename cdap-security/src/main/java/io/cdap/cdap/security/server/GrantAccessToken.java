@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path("/")
 public class GrantAccessToken {
+
   private static final Logger LOG = LoggerFactory.getLogger(GrantAccessToken.class);
   private final TokenManager tokenManager;
   private final Codec<AccessToken> tokenCodec;
@@ -58,8 +59,8 @@ public class GrantAccessToken {
    */
   @Inject
   public GrantAccessToken(TokenManager tokenManager,
-                          Codec<AccessToken> tokenCodec,
-                          CConfiguration cConf) {
+      Codec<AccessToken> tokenCodec,
+      CConfiguration cConf) {
     this.tokenManager = tokenManager;
     this.tokenCodec = tokenCodec;
     this.tokenExpiration = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
@@ -87,6 +88,7 @@ public class GrantAccessToken {
    * Paths to get Access Tokens.
    */
   public static final class Paths {
+
     public static final String GET_TOKEN = "token";
     public static final String GET_EXTENDED_TOKEN = "extendedtoken";
   }
@@ -109,14 +111,16 @@ public class GrantAccessToken {
   @Path(Paths.GET_EXTENDED_TOKEN)
   @GET
   @Produces("application/json")
-  public Response extendedToken(@Context HttpServletRequest request, @Context HttpServletResponse response)
-    throws IOException, ServletException {
+  public Response extendedToken(@Context HttpServletRequest request,
+      @Context HttpServletResponse response)
+      throws IOException, ServletException {
     grantToken(request, response, extendedTokenExpiration);
     return Response.status(200).build();
   }
 
-  private void grantToken(HttpServletRequest request, HttpServletResponse response, long tokenValidity)
-    throws IOException, ServletException {
+  private void grantToken(HttpServletRequest request, HttpServletResponse response,
+      long tokenValidity)
+      throws IOException, ServletException {
 
     String username = request.getUserPrincipal().getName();
     List<String> userGroups = Collections.emptyList();
@@ -124,8 +128,9 @@ public class GrantAccessToken {
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
-    UserIdentity tokenIdentifier = new UserIdentity(username, UserIdentity.IdentifierType.EXTERNAL, userGroups,
-                                                    issueTime, expireTime);
+    UserIdentity tokenIdentifier = new UserIdentity(username, UserIdentity.IdentifierType.EXTERNAL,
+        userGroups,
+        issueTime, expireTime);
     AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
     LOG.debug("Issued token for user {}", username);
 
@@ -138,11 +143,11 @@ public class GrantAccessToken {
     JsonObject json = new JsonObject();
     byte[] encodedIdentifier = Base64.getEncoder().encode(tokenCodec.encode(token));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
-                     new String(encodedIdentifier, Charsets.UTF_8));
+        new String(encodedIdentifier, Charsets.UTF_8));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
-                     ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
+        ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
     json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN,
-                     TimeUnit.SECONDS.convert(tokenValidity, TimeUnit.MILLISECONDS));
+        TimeUnit.SECONDS.convert(tokenValidity, TimeUnit.MILLISECONDS));
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);

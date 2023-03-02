@@ -50,8 +50,8 @@ public interface ApplicationSpecification {
   String getAppVersion();
 
   /**
-   * @return CDAP version that was used to create or update pipeline for the Application or null if it happened
-   * before version tracking was introduced in CDAP 6.5.0.
+   * @return CDAP version that was used to create or update pipeline for the Application or null if
+   *     it happened before version tracking was introduced in CDAP 6.5.0.
    */
   @Nullable
   String getAppCDAPVersion();
@@ -73,44 +73,44 @@ public interface ApplicationSpecification {
   ArtifactId getArtifactId();
 
   /**
-   * @return An immutable {@link Map} from {@link DatasetModule} name to {@link DatasetModule} class name for
-   *         dataset modules configured for the Application.
+   * @return An immutable {@link Map} from {@link DatasetModule} name to {@link DatasetModule} class
+   *     name for dataset modules configured for the Application.
    */
   Map<String, String> getDatasetModules();
 
   /**
-   * @return An immutable {@link Map} from {@link Dataset} name to {@link DatasetCreationSpec} for {@link Dataset}s
-   *         configured for the Application.
+   * @return An immutable {@link Map} from {@link Dataset} name to {@link DatasetCreationSpec} for
+   *     {@link Dataset}s configured for the Application.
    */
   Map<String, DatasetCreationSpec> getDatasets();
 
   /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}
-   *         for {@link MapReduce} jobs configured for the Application.
+   *     for {@link MapReduce} jobs configured for the Application.
    */
   Map<String, MapReduceSpecification> getMapReduce();
 
   /**
-   * @return An immutable {@link Map} from {@link Spark} name to
-   * {@link SparkSpecification} for {@link Spark} jobs configured for the Application.
+   * @return An immutable {@link Map} from {@link Spark} name to {@link SparkSpecification} for
+   *     {@link Spark} jobs configured for the Application.
    */
   Map<String, SparkSpecification> getSpark();
 
   /**
    * @return An immutable {@link Map} from {@link Workflow} name to {@link WorkflowSpecification}
-   *         for {@link Workflow}s configured for the Application.
+   *     for {@link Workflow}s configured for the Application.
    */
   Map<String, WorkflowSpecification> getWorkflows();
 
   /**
-   * @return An immutable {@link Map} from service name to {@link ServiceSpecification}
-   *         for services configured for the Application.
+   * @return An immutable {@link Map} from service name to {@link ServiceSpecification} for services
+   *     configured for the Application.
    */
   Map<String, ServiceSpecification> getServices();
 
   /**
-   * @return An immutable {@link Map} from worker name to {@link WorkerSpecification}
-   *         for workers configured for the Application.
+   * @return An immutable {@link Map} from worker name to {@link WorkerSpecification} for workers
+   *     configured for the Application.
    */
   Map<String, WorkerSpecification> getWorkers();
 

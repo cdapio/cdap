@@ -35,19 +35,20 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * A {@link TwillRunnerService} implementations that only launches (i.e., fire and forget) {@link TwillApplication}
- * without monitoring.
+ * A {@link TwillRunnerService} implementations that only launches (i.e., fire and forget) {@link
+ * TwillApplication} without monitoring.
  */
 public class FireAndForgetTwillRunnerService extends RemoteExecutionTwillRunnerService {
 
   @Inject
   FireAndForgetTwillRunnerService(CConfiguration cConf, Configuration hConf,
-                                  DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory,
-                                  ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
-                                  TransactionRunner transactionRunner, AccessTokenCodec accessTokenCodec,
-                                  TokenManager tokenManager) {
-    super(cConf, hConf, discoveryServiceClient, locationFactory, provisioningService, programStateWriter,
-          transactionRunner, accessTokenCodec, tokenManager);
+      DiscoveryServiceClient discoveryServiceClient, LocationFactory locationFactory,
+      ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
+      TransactionRunner transactionRunner, AccessTokenCodec accessTokenCodec,
+      TokenManager tokenManager) {
+    super(cConf, hConf, discoveryServiceClient, locationFactory, provisioningService,
+        programStateWriter,
+        transactionRunner, accessTokenCodec, tokenManager);
   }
 
   @Override
@@ -59,18 +60,20 @@ public class FireAndForgetTwillRunnerService extends RemoteExecutionTwillRunnerS
   @Nullable
   @Override
   public TwillController lookup(String applicationName, RunId runId) {
-    throw new UnsupportedOperationException("The lookup method is not supported in FireAndForgetTwillRunnerService.");
+    throw new UnsupportedOperationException(
+        "The lookup method is not supported in FireAndForgetTwillRunnerService.");
   }
 
   @Override
   public Iterable<TwillController> lookup(String applicationName) {
-    throw new UnsupportedOperationException("The lookup method is not supported in FireAndForgetTwillRunnerService.");
+    throw new UnsupportedOperationException(
+        "The lookup method is not supported in FireAndForgetTwillRunnerService.");
   }
 
   @Override
   public Iterable<LiveInfo> lookupLive() {
     throw new UnsupportedOperationException("The lookupLive method is not supported in " +
-                                              "FireAndForgetTwillRunnerService.");
+        "FireAndForgetTwillRunnerService.");
   }
 
   @Override
@@ -80,14 +83,16 @@ public class FireAndForgetTwillRunnerService extends RemoteExecutionTwillRunnerS
   }
 
   @Override
-  protected void addController(ProgramRunId programRunId, RemoteExecutionTwillController controller) {
+  protected void addController(ProgramRunId programRunId,
+      RemoteExecutionTwillController controller) {
     //no op as this is a fire and forget twill runner service
   }
 
   @Override
-  protected void monitorController(ProgramRunId programRunId, CompletableFuture<Void> startupTaskCompletion,
-                                   RemoteExecutionTwillController controller,
-                                   RemoteExecutionService remoteExecutionService) {
+  protected void monitorController(ProgramRunId programRunId,
+      CompletableFuture<Void> startupTaskCompletion,
+      RemoteExecutionTwillController controller,
+      RemoteExecutionService remoteExecutionService) {
 
     //no need to monitor the controller as this is a fire and forget twill runner service.
     controller.release();

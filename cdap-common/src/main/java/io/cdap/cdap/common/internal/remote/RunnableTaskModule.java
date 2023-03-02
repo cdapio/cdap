@@ -29,7 +29,7 @@ public class RunnableTaskModule extends AbstractModule {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public RunnableTaskModule(DiscoveryService discoveryService,
-                            DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient) {
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
   }

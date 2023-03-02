@@ -32,9 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
-* Checks whether upgrade is complete, and marks the flag when it is done.
-*/
+ * Checks whether upgrade is complete, and marks the flag when it is done.
+ */
 public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
+
   public static final byte[] COLUMN = Bytes.toBytes('c');
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeValueLoader.class);
   private static final Logger LIMITED_LOGGER = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
@@ -60,22 +61,22 @@ public class UpgradeValueLoader extends CacheLoader<byte[], Boolean> {
 
     try {
       factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(new TransactionExecutor.Subroutine() {
-          @Override
-          public void apply() throws Exception {
-            Row row = table.get(key);
-            if (!row.isEmpty()) {
-              byte[] value = row.get(COLUMN);
-              ProjectInfo.Version actual = new ProjectInfo.Version(Bytes.toString(value));
-              if (actual.compareTo(ProjectInfo.getVersion()) >= 0) {
-                resultFlag.set(true);
+          .execute(new TransactionExecutor.Subroutine() {
+            @Override
+            public void apply() throws Exception {
+              Row row = table.get(key);
+              if (!row.isEmpty()) {
+                byte[] value = row.get(COLUMN);
+                ProjectInfo.Version actual = new ProjectInfo.Version(Bytes.toString(value));
+                if (actual.compareTo(ProjectInfo.getVersion()) >= 0) {
+                  resultFlag.set(true);
+                }
               }
             }
-          }
-        });
+          });
     } catch (Exception ex) {
       LIMITED_LOGGER.debug("Upgrade Check got an exception while trying to read the " +
-                             "upgrade version of {} table.", name, ex);
+          "upgrade version of {} table.", name, ex);
     }
     return resultFlag.get();
   }

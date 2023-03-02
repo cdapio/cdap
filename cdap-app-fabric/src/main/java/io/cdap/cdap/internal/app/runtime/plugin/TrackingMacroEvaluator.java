@@ -21,10 +21,11 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 /**
  * A macro evaluator used strictly for checking if strings contains valid macros.
  *
- * The evaluator is passed as an argument to a {@link MacroParser} and internally keeps
- * track of whether or not a macro was found when the parser
+ * The evaluator is passed as an argument to a {@link MacroParser} and internally keeps track of
+ * whether or not a macro was found when the parser
  */
 public class TrackingMacroEvaluator implements MacroEvaluator {
+
   private boolean foundMacro;
 
   public TrackingMacroEvaluator() {
@@ -44,8 +45,9 @@ public class TrackingMacroEvaluator implements MacroEvaluator {
   }
 
   /**
-   * Returns whether or not the last String parsed by the evaluator's associated
-   * {@link MacroParser} contained a macro.
+   * Returns whether or not the last String parsed by the evaluator's associated {@link MacroParser}
+   * contained a macro.
+   *
    * @return if the evaluator found a macro in the last String parsed.
    */
   public boolean hasMacro() {

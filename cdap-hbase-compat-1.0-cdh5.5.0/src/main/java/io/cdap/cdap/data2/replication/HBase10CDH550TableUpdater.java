@@ -43,7 +43,8 @@ public class HBase10CDH550TableUpdater extends TableUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(HBase10CDH550TableUpdater.class);
   private final HTableInterface hTableInterface;
 
-  public HBase10CDH550TableUpdater(String rowType, Configuration conf, HTableInterface hTableInterface) {
+  public HBase10CDH550TableUpdater(String rowType, Configuration conf,
+      HTableInterface hTableInterface) {
     super(rowType, conf);
     this.hTableInterface = hTableInterface;
   }
@@ -54,8 +55,8 @@ public class HBase10CDH550TableUpdater extends TableUpdater {
     for (Map.Entry<String, Long> entry : cachedUpdates.entrySet()) {
       Put put = new Put(getRowKey(entry.getKey()));
       put.addColumn(columnFamily,
-                    Bytes.toBytes(rowType),
-                    Bytes.toBytes(entry.getValue()));
+          Bytes.toBytes(rowType),
+          Bytes.toBytes(entry.getValue()));
       puts.add(put);
     }
 

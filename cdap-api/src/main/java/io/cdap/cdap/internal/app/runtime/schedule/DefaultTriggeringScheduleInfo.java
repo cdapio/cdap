@@ -35,8 +35,9 @@ public class DefaultTriggeringScheduleInfo implements Serializable, TriggeringSc
   private final List<TriggerInfo> triggerInfos;
   private final Map<String, String> properties;
 
-  public DefaultTriggeringScheduleInfo(String name, String description, List<TriggerInfo> triggerInfos,
-                                       Map<String, String> properties) {
+  public DefaultTriggeringScheduleInfo(String name, String description,
+      List<TriggerInfo> triggerInfos,
+      Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));

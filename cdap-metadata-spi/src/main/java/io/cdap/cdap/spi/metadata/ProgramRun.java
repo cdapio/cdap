@@ -38,8 +38,8 @@ public class ProgramRun {
   private final Map<String, String> properties;
 
   private ProgramRun(String runId, String programId, String namespace, String application,
-                     @Nullable Long startTimeMs, @Nullable Long endTimeMs, @Nullable String status,
-                     Map<String, String> properties) {
+      @Nullable Long startTimeMs, @Nullable Long endTimeMs, @Nullable String status,
+      Map<String, String> properties) {
     if (startTimeMs != null && endTimeMs != null && startTimeMs >= endTimeMs) {
       throw new IllegalArgumentException("ProgramRun endTime has to be greater than startTime.");
     }
@@ -115,15 +115,15 @@ public class ProgramRun {
   @Override
   public String toString() {
     return "ProgramRun{" +
-      "id='" + runId + '\'' +
-      ", programId='" + programId + '\'' +
-      ", namespace='" + namespace + '\'' +
-      ", application='" + application + '\'' +
-      ", startTimeMs=" + startTimeMs +
-      ", endTimeMs=" + endTimeMs +
-      ", status='" + status + '\'' +
-      ", properties=" + properties +
-      '}';
+        "id='" + runId + '\'' +
+        ", programId='" + programId + '\'' +
+        ", namespace='" + namespace + '\'' +
+        ", application='" + application + '\'' +
+        ", startTimeMs=" + startTimeMs +
+        ", endTimeMs=" + endTimeMs +
+        ", status='" + status + '\'' +
+        ", properties=" + properties +
+        '}';
   }
 
   @Override
@@ -136,18 +136,19 @@ public class ProgramRun {
     }
     ProgramRun that = (ProgramRun) o;
     return runId.equals(that.runId) &&
-      Objects.equals(programId, that.programId) &&
-      Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application) &&
-      Objects.equals(startTimeMs, that.startTimeMs) &&
-      Objects.equals(endTimeMs, that.endTimeMs) &&
-      Objects.equals(status, that.status) &&
-      properties.equals(that.properties);
+        Objects.equals(programId, that.programId) &&
+        Objects.equals(namespace, that.namespace) &&
+        Objects.equals(application, that.application) &&
+        Objects.equals(startTimeMs, that.startTimeMs) &&
+        Objects.equals(endTimeMs, that.endTimeMs) &&
+        Objects.equals(status, that.status) &&
+        properties.equals(that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(runId, programId, namespace, application, startTimeMs, endTimeMs, status, properties);
+    return Objects.hash(runId, programId, namespace, application, startTimeMs, endTimeMs, status,
+        properties);
   }
 
   public static ProgramRun.Builder builder(String id) {
@@ -158,6 +159,7 @@ public class ProgramRun {
    * A builder to create {@link ProgramRun} instance.
    */
   public static final class Builder {
+
     private final String id;
     private final Map<String, String> properties;
     private String programId;
@@ -258,7 +260,7 @@ public class ProgramRun {
      */
     public ProgramRun build() {
       return new ProgramRun(id, programId, namespace, application, startTimeMs, endTimeMs, status,
-                            properties);
+          properties);
     }
   }
 }

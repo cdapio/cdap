@@ -15,13 +15,13 @@
  */
 
 /**
- * This package contains beta classes for schema in CDAP.
- * APIs are experimental and are subject to change in future releases.
+ * This package contains beta classes for schema in CDAP. APIs are experimental and are subject to
+ * change in future releases.
  *
  * <h3>Schema definition</h3>
  *
- * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>,
- * with the following modifications:
+ * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro
+ * Schema</a>, with the following modifications:
  *
  * <ol>
  *   <li>Supports any type as map key, not just string.</li>
@@ -203,6 +203,5 @@
  *     <td>Writer schema must be compatible with at least one schema in the reader union.</td>
  *   </tr>
  * </table>
- *
  */
 package io.cdap.cdap.api.data.schema;

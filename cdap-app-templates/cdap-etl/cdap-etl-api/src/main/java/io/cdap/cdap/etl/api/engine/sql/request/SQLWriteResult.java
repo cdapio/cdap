@@ -24,6 +24,7 @@ import java.io.Serializable;
  */
 @Beta
 public class SQLWriteResult implements Serializable {
+
   private final String datasetName;
   private final SQLWriteOperationResult result;
   private final long numRecords;
@@ -32,6 +33,7 @@ public class SQLWriteResult implements Serializable {
 
   /**
    * Creates a new SQLWriteResult instance
+   *
    * @param datasetName The name of the dataset (stage) that is being written
    * @param result result of this write operation
    * @param numRecords number of written records (if any)
@@ -44,6 +46,7 @@ public class SQLWriteResult implements Serializable {
 
   /**
    * Utility method to create an instance with a successful result
+   *
    * @param datasetName dataset name
    * @param numRecords number of written records
    * @return new instance with a Success result and the number of specified records.
@@ -54,6 +57,7 @@ public class SQLWriteResult implements Serializable {
 
   /**
    * Utility method to create an instance with an unsupported result
+   *
    * @param datasetName dataset name
    * @return new instance with an unsupported result status and no output records.
    */
@@ -63,6 +67,7 @@ public class SQLWriteResult implements Serializable {
 
   /**
    * Utility method to create an instance with a failed result
+   *
    * @param datasetName dataset name
    * @return new instance with an unsupported failed status and no output records.
    */
@@ -93,6 +98,7 @@ public class SQLWriteResult implements Serializable {
 
   /**
    * Used to check if the write operation was successful
+   *
    * @return true if successful, false otherwise.
    */
   public boolean isSuccessful() {

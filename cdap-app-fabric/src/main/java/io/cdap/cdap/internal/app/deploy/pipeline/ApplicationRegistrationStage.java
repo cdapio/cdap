@@ -48,8 +48,9 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   private final OwnerAdmin ownerAdmin;
   private final MetricsCollectionService metricsCollectionService;
 
-  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry, OwnerAdmin ownerAdmin,
-                                      MetricsCollectionService metricsCollectionService) {
+  public ApplicationRegistrationStage(Store store, UsageRegistry usageRegistry,
+      OwnerAdmin ownerAdmin,
+      MetricsCollectionService metricsCollectionService) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.store = store;
     this.usageRegistry = usageRegistry;
@@ -62,24 +63,25 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     ApplicationSpecification applicationSpecification = input.getSpecification();
     ApplicationId applicationId = input.getApplicationId();
     Collection<ApplicationId> allAppVersionsAppIds =
-      store.getAllAppVersionsAppIds(applicationId.getAppReference());
+        store.getAllAppVersionsAppIds(applicationId.getAppReference());
     boolean ownerAdded = addOwnerIfRequired(input, allAppVersionsAppIds);
-    ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(), input.getSpecification(),
-                                                  input.getChangeDetail(), input.getSourceControlMeta());
+    ApplicationMeta appMeta = new ApplicationMeta(applicationSpecification.getName(),
+        input.getSpecification(),
+        input.getChangeDetail(), input.getSourceControlMeta());
     try {
       int editCount = store.addApplication(input.getApplicationId(), appMeta);
       // increment metric : event.deploy.upgrade.count
       if (input.isUpgrade()) {
         emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
-                    Constants.Metrics.AppMetadataStore.DEPLOY_UPGRADE_COUNT);
+            Constants.Metrics.AppMetadataStore.DEPLOY_UPGRADE_COUNT);
       } else if (editCount == 0) {
-          // increment metric : event.deploy.new.count
-          emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
-                      Constants.Metrics.AppMetadataStore.DEPLOY_NEW_COUNT);
+        // increment metric : event.deploy.new.count
+        emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
+            Constants.Metrics.AppMetadataStore.DEPLOY_NEW_COUNT);
       } else {
-          // When the app already exists, it is an edit - increment metric : event.deploy.edit.count
-          emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
-                      Constants.Metrics.AppMetadataStore.DEPLOY_EDIT_COUNT);
+        // When the app already exists, it is an edit - increment metric : event.deploy.edit.count
+        emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
+            Constants.Metrics.AppMetadataStore.DEPLOY_EDIT_COUNT);
       }
     } catch (Exception e) {
       // if we failed to store the app spec cleanup the owner if it was added in this call
@@ -95,13 +97,14 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
   private void emitMetrics(String namespace, String appName, String metricName) {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
-                                               Constants.Metrics.Tag.APP, appName);
+        Constants.Metrics.Tag.APP, appName);
     metricsCollectionService.getContext(tags).increment(metricName, 1);
   }
 
   // adds owner information for the application if this is the first version of the application
-  private boolean addOwnerIfRequired(ApplicationWithPrograms input, Collection<ApplicationId> allAppVersionsAppIds)
-    throws IOException, AlreadyExistsException {
+  private boolean addOwnerIfRequired(ApplicationWithPrograms input,
+      Collection<ApplicationId> allAppVersionsAppIds)
+      throws IOException, AlreadyExistsException {
     // if allAppVersionsAppIds.isEmpty() is true that means this app is an entirely new app and no other version
     // exists so we should add the owner information in owner store if one was provided
     if (allAppVersionsAppIds.isEmpty() && input.getOwnerPrincipal() != null) {
@@ -137,7 +140,8 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
 
     for (ServiceSpecification serviceSpecification : appSpec.getServices().values()) {
       ProgramId programId = appId.service(serviceSpecification.getName());
-      for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers().values()) {
+      for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers()
+          .values()) {
         for (String dataset : handlerSpecification.getDatasets()) {
           usageRegistry.register(programId, namespaceId.dataset(dataset));
         }

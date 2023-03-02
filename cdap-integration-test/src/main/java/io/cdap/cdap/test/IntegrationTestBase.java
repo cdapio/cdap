@@ -76,10 +76,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Abstract class for writing Integration tests for CDAP. Provides utility methods to use in Integration tests.
- * Users should extend this class in their test classes.
+ * Abstract class for writing Integration tests for CDAP. Provides utility methods to use in
+ * Integration tests. Users should extend this class in their test classes.
  */
 public abstract class IntegrationTestBase {
+
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
   private static final long SERVICE_CHECK_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(10);
 
@@ -132,7 +133,8 @@ public abstract class IntegrationTestBase {
    * Call this method to register namespaces for deletion at the end of the test case.
    */
   @SuppressWarnings("unused")
-  protected void registerForDeletion(NamespaceId firstNamespace, NamespaceId... additionalNamespaces) {
+  protected void registerForDeletion(NamespaceId firstNamespace,
+      NamespaceId... additionalNamespaces) {
     registeredNamespaces.put(firstNamespace, true);
     for (NamespaceId additionalNamespace : additionalNamespaces) {
       registeredNamespaces.put(additionalNamespace, true);
@@ -186,7 +188,7 @@ public abstract class IntegrationTestBase {
     };
 
     String errorMessage = String.format("CDAP Services are not available. Retried for %s seconds.",
-                                        SERVICE_CHECK_TIMEOUT_SECONDS);
+        SERVICE_CHECK_TIMEOUT_SECONDS);
     try {
       checkServicesWithRetry(cdapAvailable, errorMessage);
     } catch (Throwable e) {
@@ -207,42 +209,43 @@ public abstract class IntegrationTestBase {
   }
 
   /**
-   * Uses BasicAuthenticationClient to fetch {@link AccessToken} - this implementation can be overridden if desired.
+   * Uses BasicAuthenticationClient to fetch {@link AccessToken} - this implementation can be
+   * overridden if desired.
    *
    * @return {@link AccessToken}
-   * @throws IOException
    * @throws TimeoutException if a timeout occurs while getting an access token
    */
-  protected AccessToken fetchAccessToken() throws IOException, TimeoutException, InterruptedException {
+  protected AccessToken fetchAccessToken()
+      throws IOException, TimeoutException, InterruptedException {
     String name = System.getProperty("cdap.username");
     String password = System.getProperty("cdap.password");
     return fetchAccessToken(name, password);
   }
 
   protected AccessToken fetchAccessToken(String username, String password) throws IOException,
-    TimeoutException, InterruptedException {
+      TimeoutException, InterruptedException {
     Properties properties = new Properties();
     properties.setProperty("security.auth.client.username", username);
     properties.setProperty("security.auth.client.password", password);
     properties.setProperty("security.auth.client.verify.ssl.cert",
-                           Boolean.toString(getClientConfig().isVerifySSLCert()));
+        Boolean.toString(getClientConfig().isVerifySSLCert()));
     final AuthenticationClient authClient = new BasicAuthenticationClient();
     authClient.configure(properties);
     ConnectionConfig connectionConfig = getClientConfig().getConnectionConfig();
     authClient.setConnectionInfo(connectionConfig.getHostname(), connectionConfig.getPort(),
-                                 connectionConfig.isSSLEnabled());
+        connectionConfig.isSSLEnabled());
     checkServicesWithRetry(new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         return authClient.getAccessToken() != null;
       }
     }, "Unable to connect to Authentication service to obtain access token, Connection info : "
-      + connectionConfig);
+        + connectionConfig);
     return authClient.getAccessToken();
   }
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
-                                      String exceptionMessage) throws TimeoutException, InterruptedException {
+      String exceptionMessage) throws TimeoutException, InterruptedException {
     long startTime = System.currentTimeMillis();
     do {
       try {
@@ -260,17 +263,21 @@ public abstract class IntegrationTestBase {
         }
       }
       TimeUnit.SECONDS.sleep(1);
-    } while (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) <= SERVICE_CHECK_TIMEOUT_SECONDS);
+    } while (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime)
+        <= SERVICE_CHECK_TIMEOUT_SECONDS);
 
     // when we have passed the timeout and the check for services is not successful
     throw new TimeoutException(exceptionMessage);
   }
 
-  private void assertUnrecoverableResetEnabled() throws IOException, UnauthenticatedException, UnauthorizedException {
-    ConfigEntry configEntry = getMetaClient().getCDAPConfig().get(Constants.Dangerous.UNRECOVERABLE_RESET);
+  private void assertUnrecoverableResetEnabled()
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    ConfigEntry configEntry = getMetaClient().getCDAPConfig()
+        .get(Constants.Dangerous.UNRECOVERABLE_RESET);
     Preconditions.checkNotNull(configEntry,
-                               "Missing key from CDAP Configuration: %s", Constants.Dangerous.UNRECOVERABLE_RESET);
-    Preconditions.checkState(Boolean.parseBoolean(configEntry.getValue()), "UnrecoverableReset not enabled.");
+        "Missing key from CDAP Configuration: %s", Constants.Dangerous.UNRECOVERABLE_RESET);
+    Preconditions.checkState(Boolean.parseBoolean(configEntry.getValue()),
+        "UnrecoverableReset not enabled.");
   }
 
   protected TestManager getTestManager() {
@@ -286,9 +293,8 @@ public abstract class IntegrationTestBase {
   }
 
   /**
-   * Reads the CDAP instance URI from the system property "instanceUri".
-   * "instanceUri" should be specified in the format [host]:[port].
-   * Defaults to "localhost:11015".
+   * Reads the CDAP instance URI from the system property "instanceUri". "instanceUri" should be
+   * specified in the format [host]:[port]. Defaults to "localhost:11015".
    */
   protected String getInstanceURI() {
     return System.getProperty("instanceUri", "localhost:11015");
@@ -310,7 +316,7 @@ public abstract class IntegrationTestBase {
   protected ClientConfig getClientConfig(@Nullable AccessToken accessToken) {
     ClientConfig.Builder builder = new ClientConfig.Builder();
     builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
-      URI.create(getInstanceURI()).toString()));
+        URI.create(getInstanceURI()).toString()));
 
     if (accessToken != null) {
       builder.setAccessToken(accessToken);
@@ -364,24 +370,26 @@ public abstract class IntegrationTestBase {
   }
 
   protected ApplicationManager deployApplication(NamespaceId namespace,
-                                                 Class<? extends Application> applicationClz,
-                                                 File...bundleEmbeddedJars) throws Exception {
+      Class<? extends Application> applicationClz,
+      File... bundleEmbeddedJars) throws Exception {
     checkSystemServices();
     return getTestManager().deployApplication(namespace, applicationClz, bundleEmbeddedJars);
   }
 
   protected ApplicationManager deployApplication(Class<? extends Application> applicationClz)
-    throws Exception {
+      throws Exception {
     return deployApplication(getConfiguredNamespace(), applicationClz);
   }
 
 
-  protected ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+  protected ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest)
+      throws Exception {
     checkSystemServices();
     return getTestManager().deployApplication(appId, appRequest);
   }
 
-  protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass)
+      throws Exception {
     checkSystemServices();
     return getTestManager().addAppArtifact(artifactId, appClass);
   }
@@ -402,7 +410,8 @@ public abstract class IntegrationTestBase {
     // delete all apps in the namespace
     for (ApplicationRecord app : getApplicationClient().list(namespace)) {
       try {
-        getApplicationClient().deleteApp(namespace.app(app.getName(), ApplicationId.DEFAULT_VERSION));
+        getApplicationClient().deleteApp(
+            namespace.app(app.getName(), ApplicationId.DEFAULT_VERSION));
       } catch (ApplicationNotFoundException e) {
         // it's ok application is not found in clean up, do nothing
       }
@@ -417,7 +426,8 @@ public abstract class IntegrationTestBase {
     }
     ArtifactClient artifactClient = new ArtifactClient(getClientConfig(), getRestClient());
     for (ArtifactSummary artifactSummary : artifactClient.list(namespace, ArtifactScope.USER)) {
-      artifactClient.delete(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+      artifactClient.delete(
+          namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
     }
 
     assertIsClear(namespace);
@@ -429,7 +439,8 @@ public abstract class IntegrationTestBase {
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
-    final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(CConfiguration.create());
+    final DefaultDatasetNamespace dsNamespace = new DefaultDatasetNamespace(
+        CConfiguration.create());
     return !dsNamespace.contains(specification.getName(), NamespaceId.SYSTEM.getNamespace());
   }
 
@@ -438,23 +449,23 @@ public abstract class IntegrationTestBase {
     List<DatasetSpecificationSummary> datasets = datasetClient.list(namespace);
 
     Iterable<DatasetSpecificationSummary> userDatasets = Iterables.filter(
-      datasets, new Predicate<DatasetSpecificationSummary>() {
-        @Override
-        public boolean apply(DatasetSpecificationSummary input) {
-          return isUserDataset(input);
-        }
-    });
+        datasets, new Predicate<DatasetSpecificationSummary>() {
+          @Override
+          public boolean apply(DatasetSpecificationSummary input) {
+            return isUserDataset(input);
+          }
+        });
 
     Iterable<String> userDatasetNames = Iterables.transform(
-      userDatasets, new Function<DatasetSpecificationSummary, String>() {
-        @Override
-        public String apply(DatasetSpecificationSummary input) {
-          return input.getName();
-        }
-    });
+        userDatasets, new Function<DatasetSpecificationSummary, String>() {
+          @Override
+          public String apply(DatasetSpecificationSummary input) {
+            return input.getName();
+          }
+        });
 
     Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
-                         + Joiner.on(", ").join(userDatasetNames), userDatasets.iterator().hasNext());
+        + Joiner.on(", ").join(userDatasetNames), userDatasets.iterator().hasNext());
   }
 
   private void assertNoApps(NamespaceId namespace) throws Exception {
@@ -466,6 +477,6 @@ public abstract class IntegrationTestBase {
     }
 
     Assert.assertTrue("Must have no deployed apps, but found the following apps: "
-                        + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
+        + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
   }
 }

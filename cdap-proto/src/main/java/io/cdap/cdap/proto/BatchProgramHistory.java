@@ -25,9 +25,11 @@ import javax.annotation.Nullable;
  * Result for the batch program runs endpoint
  */
 public class BatchProgramHistory extends BatchProgramResult {
+
   private final List<RunRecord> runs;
 
-  public BatchProgramHistory(BatchProgram program, int statusCode, @Nullable String error, List<RunRecord> runs) {
+  public BatchProgramHistory(BatchProgram program, int statusCode, @Nullable String error,
+      List<RunRecord> runs) {
     super(program, statusCode, error);
     this.runs = runs;
   }

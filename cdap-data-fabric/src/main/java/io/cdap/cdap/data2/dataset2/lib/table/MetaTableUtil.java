@@ -39,10 +39,11 @@ public abstract class MetaTableUtil {
     this.dsFramework = framework;
   }
 
-  public Table getMetaTable() throws IOException, DatasetManagementException, UnauthorizedException {
+  public Table getMetaTable()
+      throws IOException, DatasetManagementException, UnauthorizedException {
     DatasetId metaTableInstanceId = NamespaceId.SYSTEM.dataset(getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
-                                           DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
+        DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS);
   }
 
   /**

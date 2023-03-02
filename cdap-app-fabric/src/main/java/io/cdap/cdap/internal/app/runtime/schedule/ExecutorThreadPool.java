@@ -79,11 +79,12 @@ public final class ExecutorThreadPool implements ThreadPool {
 
   private ThreadPoolExecutor createThreadPoolExecutor() {
     ThreadFactory threadFactory = new ThreadFactoryBuilder()
-      .setNameFormat("scheduler-executor-%d")
-      .setDaemon(true)
-      .build();
+        .setNameFormat("scheduler-executor-%d")
+        .setDaemon(true)
+        .build();
 
-    return new ThreadPoolExecutor(0, maxThreadPoolSize, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
-                                  threadFactory, new ThreadPoolExecutor.AbortPolicy());
+    return new ThreadPoolExecutor(0, maxThreadPoolSize, 60L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(),
+        threadFactory, new ThreadPoolExecutor.AbortPolicy());
   }
 }

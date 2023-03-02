@@ -20,17 +20,17 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Tethering request sent from the {@link TetheringAgentService} to
- * the tethering server.
+ * Tethering request sent from the {@link TetheringAgentService} to the tethering server.
  */
 public class TetheringConnectionRequest {
+
   private final List<NamespaceAllocation> namespaceAllocations;
   private final long requestTime;
   private final String description;
 
   public TetheringConnectionRequest(List<NamespaceAllocation> namespaceAllocations,
-                                    long requestTime,
-                                    @Nullable String description) {
+      long requestTime,
+      @Nullable String description) {
     this.namespaceAllocations = namespaceAllocations;
     this.requestTime = requestTime;
     this.description = description;

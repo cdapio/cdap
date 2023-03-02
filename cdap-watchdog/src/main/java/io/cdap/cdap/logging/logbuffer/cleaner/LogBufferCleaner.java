@@ -32,19 +32,22 @@ import org.slf4j.LoggerFactory;
  * Runnable to clean up log buffer files for which logs are already persisted.
  */
 public class LogBufferCleaner implements Runnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferCleaner.class);
   private final List<CheckpointManager<LogBufferFileOffset>> checkpointManagers;
   private final File baseLogDir;
   private final AtomicBoolean shouldCleanup;
 
-  public LogBufferCleaner(CConfiguration cConf, List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
-                          AtomicBoolean shouldCleanup) {
+  public LogBufferCleaner(CConfiguration cConf,
+      List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
+      AtomicBoolean shouldCleanup) {
     this(checkpointManagers, cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR), shouldCleanup);
   }
 
   @VisibleForTesting
-  LogBufferCleaner(List<CheckpointManager<LogBufferFileOffset>> checkpointManagers, String baseLogDir,
-                   AtomicBoolean shouldCleanup) {
+  LogBufferCleaner(List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
+      String baseLogDir,
+      AtomicBoolean shouldCleanup) {
     this.checkpointManagers = checkpointManagers;
     this.baseLogDir = new File(baseLogDir);
     this.shouldCleanup = shouldCleanup;
@@ -54,7 +57,7 @@ public class LogBufferCleaner implements Runnable {
   public void run() {
     if (!shouldCleanup.get() || !baseLogDir.exists()) {
       LOG.debug("Log buffer base directory {} does not exist or recovery is still running. " +
-                  "So cleanup task will not run.", baseLogDir);
+          "So cleanup task will not run.", baseLogDir);
       return;
     }
 
@@ -71,7 +74,8 @@ public class LogBufferCleaner implements Runnable {
   }
 
   /**
-   * Scans base log directory and deletes file which has fileId smaller than or equal to largestFileId.
+   * Scans base log directory and deletes file which has fileId smaller than or equal to
+   * largestFileId.
    */
   private void scanAndDelete(File baseLogDir, long largestFileId) {
     // if the offsets are not persisted yet, then nothing needs to be done.
@@ -95,8 +99,9 @@ public class LogBufferCleaner implements Runnable {
   /**
    * Get largest fileId for which logs have been persisted.
    */
-  private long getLargestFileIdToDelete(List<CheckpointManager<LogBufferFileOffset>> checkpointManagers)
-    throws IOException {
+  private long getLargestFileIdToDelete(
+      List<CheckpointManager<LogBufferFileOffset>> checkpointManagers)
+      throws IOException {
     // there will be atleast one log pipeline
     LogBufferFileOffset minOffset = checkpointManagers.get(0).getCheckpoint(0).getOffset();
 

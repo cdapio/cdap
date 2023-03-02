@@ -20,7 +20,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import java.io.IOException;
 
 /**
- * This interface abstracts out the details of reading the CConfiguration from HBase using {@link ConfigurationReader}.
+ * This interface abstracts out the details of reading the CConfiguration from HBase using {@link
+ * ConfigurationReader}.
  *
  * Implementations differ based on whether it is used inside a coprocessor or client-side, etc.
  */

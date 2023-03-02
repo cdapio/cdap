@@ -22,6 +22,7 @@ import com.google.inject.Injector;
  * A base class to provide default implementations for {@link OperationalStats} extensions
  */
 public abstract class AbstractOperationalStats implements OperationalStats {
+
   @Override
   public void initialize(Injector injector) {
     // no-op

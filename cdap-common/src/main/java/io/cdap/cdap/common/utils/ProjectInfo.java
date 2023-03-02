@@ -46,7 +46,8 @@ public final class ProjectInfo {
         String buildTimeStr = buildProp.getProperty("project.info.build.time");
 
         if (versionStr != null && buildTimeStr != null) {
-          long buildTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(buildTimeStr).getTime();
+          long buildTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").parse(buildTimeStr)
+              .getTime();
           version = new Version(String.format("%s-%d", versionStr, buildTime));
         }
       }
@@ -68,6 +69,7 @@ public final class ProjectInfo {
    * This class encapsulates information about project version.
    */
   public static final class Version implements VersionInfo {
+
     private final int major;
     private final int minor;
     private final int fix;
@@ -83,8 +85,11 @@ public final class ProjectInfo {
     }
 
     /**
-     * Construct a Version instance by parsing the version string, in the format returned by {@link #toString()}.
-     * @param version The version string. If the version is {@code null}, all versions would be {@code 0}.
+     * Construct a Version instance by parsing the version string, in the format returned by {@link
+     * #toString()}.
+     *
+     * @param version The version string. If the version is {@code null}, all versions would be
+     *     {@code 0}.
      */
     public Version(@Nullable String version) {
       int major = 0;

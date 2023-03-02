@@ -23,7 +23,8 @@ import java.util.Set;
 import org.apache.twill.api.logging.LogEntry;
 
 /**
- * A {@link MasterServiceManager} that delegates all methods to another {@link MasterServiceManager}.
+ * A {@link MasterServiceManager} that delegates all methods to another {@link
+ * MasterServiceManager}.
  */
 class DelegatingMasterServiceManager implements MasterServiceManager {
 

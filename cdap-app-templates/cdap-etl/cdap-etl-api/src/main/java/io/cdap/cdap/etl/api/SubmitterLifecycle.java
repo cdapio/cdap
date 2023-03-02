@@ -37,7 +37,8 @@ public interface SubmitterLifecycle<T> {
   /**
    * Invoked after the run finishes. Used to perform any end of the run logic.
    *
-   * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
+   * @param succeeded defines the result of batch execution: true if run succeeded, false
+   *     otherwise
    * @param context submitter context
    */
   void onRunFinish(boolean succeeded, T context);

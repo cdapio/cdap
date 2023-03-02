@@ -25,6 +25,7 @@ import java.util.Properties;
  * A dummy {@link AuthenticationContext} to be used in tests.
  */
 public class AuthenticationTestContext implements AuthenticationContext {
+
   private static final String PRINCIPAL_NAME = "user.name";
   private static final String PRINCIPAL_CREDENTIAL_TYPE = "user.credential.type";
   private static final String PRINCIPAL_CREDENTIAL_VALUE = "user.credential.value";
@@ -37,14 +38,16 @@ public class AuthenticationTestContext implements AuthenticationContext {
     Credential credential = null;
     if (credentialValue != null && credentialTypeStr != null) {
       Credential.CredentialType credentialType = Credential.CredentialType
-        .valueOf(credentialTypeStr);
+          .valueOf(credentialTypeStr);
       credential = new Credential(credentialValue, credentialType);
     }
-    return new Principal(System.getProperty(PRINCIPAL_NAME), Principal.PrincipalType.USER, credential);
+    return new Principal(System.getProperty(PRINCIPAL_NAME), Principal.PrincipalType.USER,
+        credential);
   }
 
   /**
    * Sets the principal for this test authentication context.
+   *
    * @param principal The principal to act as
    */
   public static void actAsPrincipal(Principal principal) {

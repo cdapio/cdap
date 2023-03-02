@@ -21,8 +21,9 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
 
 /**
- * Default implementation of {@link DatasetDefinitionRegistryFactory} that creates instance
- * of {@link DatasetDefinitionRegistry} using {@link DefaultDatasetDefinitionRegistry} as implementation.
+ * Default implementation of {@link DatasetDefinitionRegistryFactory} that creates instance of
+ * {@link DatasetDefinitionRegistry} using {@link DefaultDatasetDefinitionRegistry} as
+ * implementation.
  */
 public class DefaultDatasetDefinitionRegistryFactory implements DatasetDefinitionRegistryFactory {
 

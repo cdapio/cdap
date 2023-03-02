@@ -30,7 +30,8 @@ import org.apache.tephra.TransactionSystemClient;
  */
 public class RetryingLongTransactionSystemClient extends RetryingTransactionSystemClient {
 
-  public RetryingLongTransactionSystemClient(TransactionSystemClient delegate, RetryStrategy retryStrategy) {
+  public RetryingLongTransactionSystemClient(TransactionSystemClient delegate,
+      RetryStrategy retryStrategy) {
     super(delegate, retryStrategy);
   }
 
@@ -41,7 +42,7 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
 
   @Override
   public boolean canCommit(final Transaction tx,
-                           final Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+      final Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     return callWithRetries(() -> {
       //noinspection deprecation
       return delegate.canCommit(tx, changeIds);
@@ -50,7 +51,7 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
 
   @Override
   public void canCommitOrThrow(final Transaction tx,
-                               final Collection<byte[]> changeIds) throws TransactionFailureException {
+      final Collection<byte[]> changeIds) throws TransactionFailureException {
     callWithRetries(new Retries.Callable<Void, TransactionFailureException>() {
       @Override
       public Void call() throws TransactionFailureException {

@@ -30,44 +30,49 @@ public interface MessagingContext {
   /**
    * Returns an instance of {@link MessagePublisher} for publishing messages.
    * <p>
-   * Messages will be published transactionally if any of the {@code publish} methods in the
-   * {@link MessagePublisher} are called from a transactional context (either through {@link
-   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link Transactional#execute(TxRunnable)}
-   * when {@link TransactionControl#EXPLICIT Explicit Transaction Control} is used).
+   * Messages will be published transactionally if any of the {@code publish} methods in the {@link
+   * MessagePublisher} are called from a transactional context (either through {@link
+   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link
+   * Transactional#execute(TxRunnable)} when {@link TransactionControl#EXPLICIT Explicit Transaction
+   * Control} is used).
    * </p>
    * <p>
-   * When those {@code publish} methods are called without a transactional context, the message will be published
-   * without a transaction.
+   * When those {@code publish} methods are called without a transactional context, the message will
+   * be published without a transaction.
    * </p>
    *
-   * @return a new instance of {@link MessagePublisher}. The returned instance cannot be shared across multiple threads.
+   * @return a new instance of {@link MessagePublisher}. The returned instance cannot be shared
+   *     across multiple threads.
    */
   MessagePublisher getMessagePublisher();
 
   /**
    * Returns an instance of {@link MessagePublisher} for publishing messages without a transaction.
    * <p>
-   * Messages published through the resulting {@link MessagePublisher} are always published without using
-   * a transaction and are immediately available for consumption.
+   * Messages published through the resulting {@link MessagePublisher} are always published without
+   * using a transaction and are immediately available for consumption.
    *
-   * @return a new instance of {@link MessagePublisher}. The returned instance is safe to be used from multiple threads.
+   * @return a new instance of {@link MessagePublisher}. The returned instance is safe to be used
+   *     from multiple threads.
    */
   MessagePublisher getDirectMessagePublisher();
 
   /**
    * Returns an instance of {@link MessageFetcher} for fetching messages.
    * <p>
-   * Messages will be fetched transactionally if any of the {@code fetch} methods in the
-   * {@link MessageFetcher} are called from a transactional context (either through {@link
-   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link Transactional#execute(TxRunnable)}
-   * when {@link TransactionControl#EXPLICIT Explicit Transaction Control} is used).
+   * Messages will be fetched transactionally if any of the {@code fetch} methods in the {@link
+   * MessageFetcher} are called from a transactional context (either through {@link
+   * TransactionControl#IMPLICIT Implicit Transaction Control}, or {@link
+   * Transactional#execute(TxRunnable)} when {@link TransactionControl#EXPLICIT Explicit Transaction
+   * Control} is used).
    * </p>
    * <p>
-   * When those {@code fetch} methods are called without a transactional context, the message will be fetched
-   * without a transaction.
+   * When those {@code fetch} methods are called without a transactional context, the message will
+   * be fetched without a transaction.
    * </p>
    *
-   * @return a new instance of {@link MessageFetcher}. The returned instance cannot be shared across multiple threads.
+   * @return a new instance of {@link MessageFetcher}. The returned instance cannot be shared across
+   *     multiple threads.
    */
   MessageFetcher getMessageFetcher();
 }

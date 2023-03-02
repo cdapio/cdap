@@ -17,8 +17,8 @@
 package io.cdap.cdap.security.auth;
 
 /**
- * This exception indicates a failure to validate an issued {@link AccessToken}, for example due to token expiration
- * or an invalid token digest.
+ * This exception indicates a failure to validate an issued {@link AccessToken}, for example due to
+ * token expiration or an invalid token digest.
  */
 public class InvalidTokenException extends Exception {
 

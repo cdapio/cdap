@@ -20,8 +20,8 @@ import io.cdap.cdap.messaging.store.MessageTable;
 import java.util.Comparator;
 
 /**
- * A {@link Comparator} for {@link MessageTable.Entry}.
- * The order is first by generation, followed by publish timestamp and sequence id.
+ * A {@link Comparator} for {@link MessageTable.Entry}. The order is first by generation, followed
+ * by publish timestamp and sequence id.
  */
 final class MessageTableEntryComparator implements Comparator<MessageTable.Entry> {
 

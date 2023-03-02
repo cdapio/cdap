@@ -22,9 +22,11 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents the repository configuration of a namespace. This class needs to be GSON serializable.
+ * Represents the repository configuration of a namespace. This class needs to be GSON
+ * serializable.
  */
 public class RepositoryConfig {
+
   private final Provider provider;
   private final String link;
   private final String defaultBranch;
@@ -32,10 +34,10 @@ public class RepositoryConfig {
   private final AuthConfig auth;
 
   private RepositoryConfig(Provider provider,
-                           String link,
-                           @Nullable String defaultBranch,
-                           AuthConfig authConfig,
-                           @Nullable String pathPrefix) {
+      String link,
+      @Nullable String defaultBranch,
+      AuthConfig authConfig,
+      @Nullable String pathPrefix) {
     this.provider = provider;
     this.link = link;
     this.defaultBranch = defaultBranch;
@@ -79,7 +81,8 @@ public class RepositoryConfig {
     if (auth == null) {
       failures.add(new RepositoryValidationFailure("'auth' field must be specified."));
     } else if (!auth.isValid()) {
-      failures.add(new RepositoryValidationFailure("'type' and 'tokenName' fields must be specified."));
+      failures.add(
+          new RepositoryValidationFailure("'type' and 'tokenName' fields must be specified."));
     }
 
     if (!failures.isEmpty()) {
@@ -91,6 +94,7 @@ public class RepositoryConfig {
    * Builder used to build {@link RepositoryConfig}
    */
   public static final class Builder {
+
     private Provider provider;
     private String link;
     private String defaultBranch;
@@ -152,7 +156,7 @@ public class RepositoryConfig {
 
     public RepositoryConfig build() {
       RepositoryConfig repoConfig = new RepositoryConfig(provider, link, defaultBranch,
-                                                         new AuthConfig(authType, tokenName, username), pathPrefix);
+          new AuthConfig(authType, tokenName, username), pathPrefix);
       repoConfig.validate();
       return repoConfig;
     }
@@ -168,10 +172,10 @@ public class RepositoryConfig {
     }
     RepositoryConfig that = (RepositoryConfig) o;
     return Objects.equals(provider, that.provider) &&
-      Objects.equals(link, that.link) &&
-      Objects.equals(defaultBranch, that.defaultBranch) &&
-      Objects.equals(auth, that.auth) &&
-      Objects.equals(pathPrefix, that.pathPrefix);
+        Objects.equals(link, that.link) &&
+        Objects.equals(defaultBranch, that.defaultBranch) &&
+        Objects.equals(auth, that.auth) &&
+        Objects.equals(pathPrefix, that.pathPrefix);
   }
 
   @Override
@@ -182,11 +186,11 @@ public class RepositoryConfig {
   @Override
   public String toString() {
     return "RepositoryConfig{" +
-      "provider=" + provider +
-      ", link=" + link +
-      ", defaultBranch=" + defaultBranch +
-      ", auth=" + auth +
-      ", pathPrefix=" + pathPrefix +
-      '}';
+        "provider=" + provider +
+        ", link=" + link +
+        ", defaultBranch=" + defaultBranch +
+        ", auth=" + auth +
+        ", pathPrefix=" + pathPrefix +
+        '}';
   }
 }

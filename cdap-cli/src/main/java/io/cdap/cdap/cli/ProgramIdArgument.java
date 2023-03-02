@@ -50,7 +50,7 @@ public class ProgramIdArgument {
 
     ProgramIdArgument other = (ProgramIdArgument) o;
     return Objects.equal(appId, other.getAppId()) &&
-      Objects.equal(programId, other.getProgramId());
+        Objects.equal(programId, other.getProgramId());
   }
 
   @Override
@@ -61,8 +61,8 @@ public class ProgramIdArgument {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("appId", appId)
-      .add("programId", programId)
-      .toString();
+        .add("appId", appId)
+        .add("programId", programId)
+        .toString();
   }
 }

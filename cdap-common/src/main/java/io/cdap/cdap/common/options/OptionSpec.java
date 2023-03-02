@@ -21,6 +21,7 @@ import java.lang.reflect.Field;
  * Specifies an implementation for the specification of an Option.
  */
 public class OptionSpec {
+
   /**
    * Instance of the field.
    */
@@ -38,11 +39,13 @@ public class OptionSpec {
 
   /**
    * Creates an instance of OptionSpec.
+   *
    * @param field annotated with @Option
-   * @param option specifying information about the field that needs to be filled in by command line argument.
+   * @param option specifying information about the field that needs to be filled in by command
+   *     line argument.
    * @param object specifies the object the option is specified in.
    */
-  public OptionSpec(Field field, Option option, Object object)  {
+  public OptionSpec(Field field, Option option, Object object) {
     this.field = field;
     this.option = option;
     this.object = object;
@@ -50,6 +53,7 @@ public class OptionSpec {
 
   /**
    * Returns the name of the field.
+   *
    * @return name of the field.
    */
   public String getName() {
@@ -58,6 +62,7 @@ public class OptionSpec {
 
   /**
    * Returns the type of the field.
+   *
    * @return type of the field.
    */
   public Class<?> getType() {
@@ -66,6 +71,7 @@ public class OptionSpec {
 
   /**
    * Returns the type name of the field annotated by <code>@Option</code>.
+   *
    * @return name of the type of field.
    */
   public String getTypeName() {
@@ -79,6 +85,7 @@ public class OptionSpec {
 
   /**
    * Returns whether the field needs to be hidden or no.
+   *
    * @return true if hidden; false otherwise.
    */
   public boolean isHidden() {
@@ -87,6 +94,7 @@ public class OptionSpec {
 
   /**
    * Returns the usage of the field.
+   *
    * @return String representation of usage.
    */
   public String getUsage() {
@@ -95,6 +103,7 @@ public class OptionSpec {
 
   /**
    * Returns environment variable to be associated with the field annotated with @Option.
+   *
    * @return value of environment field.
    */
   public String getEnvVar() {
@@ -103,6 +112,7 @@ public class OptionSpec {
 
   /**
    * Returns string representation of default value.
+   *
    * @return default value of the field.
    */
   public String getDefaultValue() {
@@ -143,8 +153,8 @@ public class OptionSpec {
 
   /**
    * Sets the field with the value.
+   *
    * @param value to be set
-   * @throws IllegalAccessException
    */
   public void setValue(String value) throws IllegalAccessException {
     if (!field.isAccessible()) {
@@ -194,5 +204,5 @@ public class OptionSpec {
       throw new UnsupportedOptionTypeException(field.getName());
     }
   }
-  
+
 }

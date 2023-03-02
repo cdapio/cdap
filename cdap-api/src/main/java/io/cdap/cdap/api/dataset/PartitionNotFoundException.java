@@ -19,14 +19,18 @@ package io.cdap.cdap.api.dataset;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 
 /**
- * Thrown when a {@link io.cdap.cdap.api.dataset.lib.Partition} is not found on a PartitionedFileSet.
+ * Thrown when a {@link io.cdap.cdap.api.dataset.lib.Partition} is not found on a
+ * PartitionedFileSet.
  */
 public class PartitionNotFoundException extends DataSetException {
+
   private final PartitionKey partitionKey;
   private final String partitionedFileSetName;
 
   public PartitionNotFoundException(PartitionKey partitionKey, String partitionedFileSetName) {
-    super(String.format("Dataset '%s' does not have a partition for key: %s", partitionedFileSetName, partitionKey));
+    super(
+        String.format("Dataset '%s' does not have a partition for key: %s", partitionedFileSetName,
+            partitionKey));
     this.partitionKey = partitionKey;
     this.partitionedFileSetName = partitionedFileSetName;
   }

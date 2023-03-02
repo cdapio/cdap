@@ -41,8 +41,8 @@ public class PrefixCompleter implements Completer {
     if (this.prefix != null && !this.prefix.isEmpty()) {
       // TODO: fix bug where prefix has a space in it (e.g. "describe dataset type <type-name>"
       prefix = this.prefix
-        .replaceAll("\\{\\}", "\\\\S+?")
-        .replaceAll(" ", "\\\\s+?") + " ";
+          .replaceAll("\\{\\}", "\\\\S+?")
+          .replaceAll(" ", "\\\\s+?") + " ";
     }
 
     String regex = "^(" + prefix + ")\\s?";

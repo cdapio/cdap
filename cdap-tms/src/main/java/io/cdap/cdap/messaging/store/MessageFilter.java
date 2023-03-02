@@ -22,8 +22,6 @@ import javax.annotation.Nullable;
 
 /**
  * Filter messages read from {@link MessageTable}.
- *
- * @param <T>
  */
 public abstract class MessageFilter<T> implements Function<T, MessageFilter.Result> {
 

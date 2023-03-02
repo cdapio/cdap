@@ -27,7 +27,8 @@ import io.cdap.cdap.etl.api.SubmitterLifecycle;
  * @param <T> batch execution context
  */
 @Beta
-public abstract class BatchConfigurable<T extends BatchContext> implements PipelineConfigurable, SubmitterLifecycle<T> {
+public abstract class BatchConfigurable<T extends BatchContext> implements PipelineConfigurable,
+    SubmitterLifecycle<T> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -46,7 +47,8 @@ public abstract class BatchConfigurable<T extends BatchContext> implements Pipel
   /**
    * Invoked after the Batch run finishes. Used to perform any end of the run logic.
    *
-   * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
+   * @param succeeded defines the result of batch execution: true if run succeeded, false
+   *     otherwise
    * @param context batch execution context
    */
   @Override

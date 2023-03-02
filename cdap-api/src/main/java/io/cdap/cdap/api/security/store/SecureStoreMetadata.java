@@ -32,7 +32,8 @@ public final class SecureStoreMetadata {
   private final long createdEpochMs;
   private final Map<String, String> properties;
 
-  public SecureStoreMetadata(String name, @Nullable String description, long created, Map<String, String> properties) {
+  public SecureStoreMetadata(String name, @Nullable String description, long created,
+      Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.createdEpochMs = created;
@@ -68,10 +69,10 @@ public final class SecureStoreMetadata {
   @Override
   public String toString() {
     return "SecureStoreMetadata{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", createdEpochMs=" + createdEpochMs +
-      '}';
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", createdEpochMs=" + createdEpochMs +
+        '}';
   }
 
   @Override
@@ -83,8 +84,9 @@ public final class SecureStoreMetadata {
       return false;
     }
     SecureStoreMetadata that = (SecureStoreMetadata) o;
-    return name.equals(that.name) && description.equals(that.description) && createdEpochMs == that.createdEpochMs
-      && (properties != null ? properties.equals(that.properties) : that.properties == null);
+    return name.equals(that.name) && description.equals(that.description)
+        && createdEpochMs == that.createdEpochMs
+        && (properties != null ? properties.equals(that.properties) : that.properties == null);
   }
 
   @Override

@@ -35,7 +35,8 @@ import javax.annotation.Nullable;
 class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
-  private static final Type METHOD_ARGUMENT_LIST_TYPE = new TypeToken<List<MethodArgument>>() { }.getType();
+  private static final Type METHOD_ARGUMENT_LIST_TYPE = new TypeToken<List<MethodArgument>>() {
+  }.getType();
 
   // we don't share the same version as other handlers in app fabric, so we can upgrade/iterate faster
   protected static final String VERSION = "/v1";
@@ -47,13 +48,14 @@ class AbstractRemoteSystemOpsHandler extends AbstractHttpHandler {
   }
 
   @Nullable
-  <T> T deserializeNext(Iterator<MethodArgument> arguments) throws ClassNotFoundException, BadRequestException {
+  <T> T deserializeNext(Iterator<MethodArgument> arguments)
+      throws ClassNotFoundException, BadRequestException {
     return deserializeNext(arguments, null);
   }
 
-    @Nullable
+  @Nullable
   <T> T deserializeNext(Iterator<MethodArgument> arguments,
-                        @Nullable Type typeOfT) throws ClassNotFoundException, BadRequestException {
+      @Nullable Type typeOfT) throws ClassNotFoundException, BadRequestException {
     if (!arguments.hasNext()) {
       throw new BadRequestException("Expected additional elements.");
     }

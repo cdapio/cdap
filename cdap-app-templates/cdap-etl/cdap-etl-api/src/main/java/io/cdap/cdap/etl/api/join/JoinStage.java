@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * Represents an input stage to the auto join.
  */
 public class JoinStage {
+
   private final String stageName;
   private final Schema schema;
   private final boolean required;
@@ -58,14 +59,15 @@ public class JoinStage {
 
   public static Builder builder(JoinStage existing) {
     return new Builder(existing.stageName, existing.schema)
-      .setBroadcast(existing.broadcast)
-      .setRequired(existing.required);
+        .setBroadcast(existing.broadcast)
+        .setRequired(existing.required);
   }
 
   /**
    * Builds a JoinStage.
    */
   public static class Builder {
+
     private final String stageName;
     private final Schema schema;
     private boolean required;
@@ -87,8 +89,9 @@ public class JoinStage {
     }
 
     /**
-     * Set whether the stage is required. Joining two required stages is an inner join. Joining a required stage
-     * with an optional stage is a left outer join. Joining two optional stages is an outer join.
+     * Set whether the stage is required. Joining two required stages is an inner join. Joining a
+     * required stage with an optional stage is a left outer join. Joining two optional stages is an
+     * outer join.
      */
     public Builder setRequired(boolean required) {
       this.required = required;
@@ -96,11 +99,11 @@ public class JoinStage {
     }
 
     /**
-     * Hint that the stage data should be broadcast during the join. In order to be broadcast, the stage data must
-     * be below 8gb and fit entirely in memory. You cannot broadcast both sides of a join.
-     * This is just a hint and will not always be honored.
-     * MapReduce pipelines will currently ignore this flag. Spark pipelines will hint to Spark to broadcast, but Spark
-     * may still decide to do a normal join depending on the type of join being performed and the datasets involved.
+     * Hint that the stage data should be broadcast during the join. In order to be broadcast, the
+     * stage data must be below 8gb and fit entirely in memory. You cannot broadcast both sides of a
+     * join. This is just a hint and will not always be honored. MapReduce pipelines will currently
+     * ignore this flag. Spark pipelines will hint to Spark to broadcast, but Spark may still decide
+     * to do a normal join depending on the type of join being performed and the datasets involved.
      */
     public Builder setBroadcast(boolean broadcast) {
       this.broadcast = broadcast;

@@ -27,22 +27,23 @@ import javax.annotation.Nullable;
  */
 public final class SchemaWalker {
 
-  private SchemaWalker() { }
+  private SchemaWalker() {
+  }
 
   /**
-   * Walk a schema recursively in depth-first order.
-   * The consumer is called on every sub-schema in the schema.
+   * Walk a schema recursively in depth-first order. The consumer is called on every sub-schema in
+   * the schema.
    *
    * @param schema the schema to walk
-   * @param consumer a consumer for all sub-schemas, called with the field name (if any)
-   *                 and the schema at each node in the schema
+   * @param consumer a consumer for all sub-schemas, called with the field name (if any) and the
+   *     schema at each node in the schema
    */
   public static void walk(Schema schema, BiConsumer<String, Schema> consumer) {
     walk(schema.getRecordName(), schema, new HashSet<>(), consumer);
   }
 
   private static void walk(@Nullable String fieldName, Schema schema,
-                           Set<String> knownRecords, BiConsumer<String, Schema> consumer) {
+      Set<String> knownRecords, BiConsumer<String, Schema> consumer) {
     consumer.accept(fieldName, schema);
     switch (schema.getType()) {
       case NULL:
@@ -56,7 +57,8 @@ public final class SchemaWalker {
       case ENUM:
         break; // done with recursion
       case ARRAY:
-        walk(schema.getComponentSchema().getRecordName(), schema.getComponentSchema(), knownRecords, consumer);
+        walk(schema.getComponentSchema().getRecordName(), schema.getComponentSchema(), knownRecords,
+            consumer);
         break;
       case MAP:
         Map.Entry<Schema, Schema> mapSchema = schema.getMapSchema();
@@ -78,7 +80,8 @@ public final class SchemaWalker {
         }
         break;
       default:
-        throw new IllegalStateException("Unknown schema type " + schema.getType() + " for schema " + schema);
+        throw new IllegalStateException(
+            "Unknown schema type " + schema.getType() + " for schema " + schema);
     }
   }
 }

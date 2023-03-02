@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents a context for a {@link RunnableTask}.
- * This context is used for writing back the result of {@link RunnableTask} execution.
+ * Represents a context for a {@link RunnableTask}. This context is used for writing back the result
+ * of {@link RunnableTask} execution.
  */
 public class RunnableTaskContext {
 
@@ -57,7 +57,8 @@ public class RunnableTaskContext {
     this(taskRequest, null);
   }
 
-  public RunnableTaskContext(RunnableTaskRequest taskRequest, @Nullable SystemAppTaskContext systemAppTaskContext) {
+  public RunnableTaskContext(RunnableTaskRequest taskRequest,
+      @Nullable SystemAppTaskContext systemAppTaskContext) {
     Optional<RunnableTaskParam> taskParam = Optional.ofNullable(taskRequest.getParam());
 
     this.className = taskRequest.getClassName();
@@ -95,7 +96,8 @@ public class RunnableTaskContext {
   /**
    * Sets to terminate the task runner on the task completion
    *
-   * @param terminate {@code true} to terminate the task runner, {@code false} to keep it running.
+   * @param terminate {@code true} to terminate the task runner, {@code false} to keep it
+   *     running.
    */
   public void setTerminateOnComplete(boolean terminate) {
     this.terminateOnComplete = terminate;

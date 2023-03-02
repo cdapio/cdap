@@ -49,18 +49,20 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   /**
    * Creates an instance without messaging admin support.
    */
-  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace, SecureStoreManager secureStoreManager,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
-    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry(), null, namespaceQueryAdmin);
+  public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace,
+      SecureStoreManager secureStoreManager,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
+    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry(), null,
+        namespaceQueryAdmin);
   }
 
   /**
    * Creates an instance with all Admin functions supported.
    */
   public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace,
-                      SecureStoreManager secureStoreManager, @Nullable MessagingAdmin messagingAdmin,
-                      RetryStrategy retryStrategy, @Nullable KerberosPrincipalId principalId,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
+      SecureStoreManager secureStoreManager, @Nullable MessagingAdmin messagingAdmin,
+      RetryStrategy retryStrategy, @Nullable KerberosPrincipalId principalId,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     super(dsFramework, namespace, retryStrategy, principalId);
     this.secureStoreManager = secureStoreManager;
     this.messagingAdmin = messagingAdmin;
@@ -70,8 +72,10 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
 
   @Override
   public void put(String namespace, String name, String data,
-                  @Nullable String description, Map<String, String> properties) throws Exception {
-    Retries.runWithRetries(() -> secureStoreManager.put(namespace, name, data, description, properties), retryStrategy);
+      @Nullable String description, Map<String, String> properties) throws Exception {
+    Retries.runWithRetries(
+        () -> secureStoreManager.put(namespace, name, data, description, properties),
+        retryStrategy);
   }
 
   @Override
@@ -97,7 +101,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
 
   @Override
   public void createTopic(final String topic,
-                          final Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+      final Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
     if (messagingAdmin == null) {
       throw new UnsupportedOperationException("Messaging not supported");
     }
@@ -113,7 +117,8 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   }
 
   @Override
-  public Map<String, String> getTopicProperties(final String topic) throws TopicNotFoundException, IOException {
+  public Map<String, String> getTopicProperties(final String topic)
+      throws TopicNotFoundException, IOException {
     if (messagingAdmin == null) {
       throw new UnsupportedOperationException("Messaging not supported");
     }
@@ -130,7 +135,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
 
   @Override
   public void updateTopic(final String topic,
-                          final Map<String, String> properties) throws TopicNotFoundException, IOException {
+      final Map<String, String> properties) throws TopicNotFoundException, IOException {
     if (messagingAdmin == null) {
       throw new UnsupportedOperationException("Messaging not supported");
     }

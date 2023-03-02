@@ -43,7 +43,7 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
   // Skip the first error log, and at most log once per 30 seconds.
   // This helps debugging errors that persist more than 30 seconds.
   private static final Logger OUTAGE_LOGGER = Loggers.sampling(LOG,
-                                                               LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+      LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
 
   private final ProgramRunId programRunId;
@@ -54,8 +54,9 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
   private long nextCheckRunningMillis;
   private int notRunningCount;
 
-  RemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId, ScheduledExecutorService scheduler,
-                         RemoteProcessController processController, ProgramStateWriter programStateWriter) {
+  RemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId,
+      ScheduledExecutorService scheduler,
+      RemoteProcessController processController, ProgramStateWriter programStateWriter) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
     this.programRunId = programRunId;
     this.scheduler = scheduler;
@@ -85,7 +86,8 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
       // of TMS messages relay from the remote runtime back to CDAP.
       if (!processController.isRunning() && ++notRunningCount > 1) {
         LOG.debug("Program {} is not running", programRunId);
-        programStateWriter.error(programRunId, new IllegalStateException("Program terminated " + programRunId));
+        programStateWriter.error(programRunId,
+            new IllegalStateException("Program terminated " + programRunId));
         stop();
         return 0;
       }
@@ -101,7 +103,8 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
 
   @Override
   protected boolean shouldRetry(Exception ex) {
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+        null);
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
       OUTAGE_LOGGER.warn("Exception raised when monitoring program run {}", programRunId, ex);
@@ -113,11 +116,12 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
           // Always emit an error state. If this is indeed a normal stop, there should be a completion state
           // in the TMS before this one, in which this one will get ignored by the
           programStateWriter.error(programRunId,
-                                   new IllegalStateException("Program terminated " + programRunId, ex));
+              new IllegalStateException("Program terminated " + programRunId, ex));
           return false;
         }
       } catch (Exception e) {
-        OUTAGE_LOGGER.warn("Failed to check if the remote process is still running for program {}", programRunId, e);
+        OUTAGE_LOGGER.warn("Failed to check if the remote process is still running for program {}",
+            programRunId, e);
       }
       return true;
     } finally {
@@ -129,23 +133,25 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
   protected long handleRetriesExhausted(Exception e) throws Exception {
     // kill the remote process and record a program run error
     // log this in the program context so it shows up in program logs
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+        null);
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
-      LOG.error("Failed to monitor the remote process and exhausted retries. Terminating the program {}",
-                programRunId, e);
+      LOG.error(
+          "Failed to monitor the remote process and exhausted retries. Terminating the program {}",
+          programRunId, e);
       try {
         processController.kill(RuntimeJobStatus.RUNNING);
       } catch (Exception e1) {
         LOG.warn("Failed to kill the remote process for program {}. "
-                   + "The remote process may need to be killed manually.", programRunId, e1);
+            + "The remote process may need to be killed manually.", programRunId, e1);
       }
 
       // If failed to fetch messages and the remote process is not running, emit a failure program state and
       // terminates the monitor
       programStateWriter.error(programRunId,
-                               new IllegalStateException("Program runtime terminated due to too many failures. " +
-                                                           "Please inspect logs for root cause.", e));
+          new IllegalStateException("Program runtime terminated due to too many failures. " +
+              "Please inspect logs for root cause.", e));
       throw e;
     } finally {
       cancellable.cancel();

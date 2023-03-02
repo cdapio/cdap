@@ -52,16 +52,16 @@ public class LevelDBTableCore {
   private static final Scanner EMPTY_SCANNER = createEmptyScanner();
 
   // this represents deleted values
-  private static final byte[] DELETE_MARKER = { };
+  private static final byte[] DELETE_MARKER = {};
 
   // we use the empty column family for all data
-  private static final byte[] DATA_COLFAM = { };
+  private static final byte[] DATA_COLFAM = {};
 
   // we will never write this, but use it as an upper bound for scans
-  private static final byte[] NEXT_COLFAM = { 0x00 };
+  private static final byte[] NEXT_COLFAM = {0x00};
 
   // used for obtaining the next row/column for upper bound
-  private static final byte[] ONE_ZERO = { 0x00 };
+  private static final byte[] ONE_ZERO = {0x00};
 
   private static byte[] upperBound(byte[] column) {
     return Bytes.add(column, ONE_ZERO);
@@ -84,8 +84,9 @@ public class LevelDBTableCore {
   }
 
 
-  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue) throws IOException {
-    byte[] existing = getRow(row, new byte[][] { column }, null, null, -1, null).get(column);
+  public synchronized boolean swap(byte[] row, byte[] column, byte[] oldValue, byte[] newValue)
+      throws IOException {
+    byte[] existing = getRow(row, new byte[][]{column}, null, null, -1, null).get(column);
     // verify
     if (oldValue == null && existing != null) {
       return false;
@@ -98,12 +99,14 @@ public class LevelDBTableCore {
       // to-do
       deleteColumn(row, column);
     } else {
-      persist(Collections.singletonMap(row, Collections.singletonMap(column, newValue)), Long.MAX_VALUE);
+      persist(Collections.singletonMap(row, Collections.singletonMap(column, newValue)),
+          Long.MAX_VALUE);
     }
     return true;
   }
 
-  public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments) throws IOException {
+  public synchronized Map<byte[], Long> increment(byte[] row, Map<byte[], Long> increments)
+      throws IOException {
     Map<byte[], Long> result = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
     DB db = getDB();
@@ -125,7 +128,8 @@ public class LevelDBTableCore {
   }
 
 
-  public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
+  public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates)
+      throws IOException {
     if (updates.isEmpty()) {
       return;
     }
@@ -139,7 +143,8 @@ public class LevelDBTableCore {
         for (Map.Entry<byte[], Long> entry : updateEntry.getValue().entrySet()) {
           byte[] rowKey = createPutKey(updateEntry.getKey(), entry.getKey(), Long.MAX_VALUE);
           byte[] existingValue = db.get(rowKey, readOptions);
-          long newValue = incrementValue(entry.getValue(), existingValue, updateEntry.getKey(), entry.getKey());
+          long newValue = incrementValue(entry.getValue(), existingValue, updateEntry.getKey(),
+              entry.getKey());
           writeBatch.put(rowKey, Bytes.toBytes(newValue));
         }
       }
@@ -152,14 +157,16 @@ public class LevelDBTableCore {
       return value;
     }
     if (existingValue.length != Bytes.SIZEOF_LONG) {
-      throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                        " row: " + Bytes.toStringBinary(row) +
-                                        " column: " + Bytes.toStringBinary(col));
+      throw new NumberFormatException(
+          "Attempted to increment a value that is not convertible to long," +
+              " row: " + Bytes.toStringBinary(row) +
+              " column: " + Bytes.toStringBinary(col));
     }
     return value + Bytes.toLong(existingValue);
   }
 
-  public void persist(Map<byte[], ? extends Map<byte[], byte[]>> changes, long version) throws IOException {
+  public void persist(Map<byte[], ? extends Map<byte[], byte[]>> changes, long version)
+      throws IOException {
     DB db = getDB();
     // todo support writing null when no transaction
     WriteBatch batch = db.createWriteBatch();
@@ -173,8 +180,9 @@ public class LevelDBTableCore {
   }
 
   /**
-   * Write the value at the target row and column with the max version {@link KeyValue.LATEST_TIMESTAMP}.
-   * as a result it hides any value written with equal or smaller version.
+   * Write the value at the target row and column with the max version {@link
+   * KeyValue.LATEST_TIMESTAMP}. as a result it hides any value written with equal or smaller
+   * version.
    */
   public void putDefaultVersion(byte[] row, byte[] column, byte[] value) throws IOException {
     getDB().put(createPutKey(row, column, KeyValue.LATEST_TIMESTAMP), value);
@@ -188,7 +196,8 @@ public class LevelDBTableCore {
   }
 
   /**
-   * Read the value at the target row and column with the max version {@link KeyValue.LATEST_TIMESTAMP}.
+   * Read the value at the target row and column with the max version {@link
+   * KeyValue.LATEST_TIMESTAMP}.
    */
   @Nullable
   public byte[] getDefaultVersion(byte[] row, byte[] column) throws IOException {
@@ -204,8 +213,8 @@ public class LevelDBTableCore {
   }
 
   /**
-   * Read the latest (i.e. highest version) value at the target row and column.
-   * When transaction is provided, the version returned is the latest committed value.
+   * Read the latest (i.e. highest version) value at the target row and column. When transaction is
+   * provided, the version returned is the latest committed value.
    */
   @Nullable
   public byte[] getLatest(byte[] row, byte[] col, @Nullable Transaction tx) throws IOException {
@@ -236,7 +245,8 @@ public class LevelDBTableCore {
     return val;
   }
 
-  public void undo(Map<byte[], ? extends Map<byte[], ?>> persisted, long version) throws IOException {
+  public void undo(Map<byte[], ? extends Map<byte[], ?>> persisted, long version)
+      throws IOException {
     if (persisted.isEmpty()) {
       return;
     }
@@ -252,8 +262,8 @@ public class LevelDBTableCore {
   }
 
   public Scanner scan(byte[] startRow, byte[] stopRow,
-                      @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
-    throws IOException {
+      @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
+      throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
         return EMPTY_SCANNER;
@@ -272,8 +282,8 @@ public class LevelDBTableCore {
    * if columns are not null, then limit param is ignored and limit is columns.length
    */
   public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
-                                             @Nullable byte[] startCol, @Nullable byte[] stopCol,
-                                             int limit, @Nullable Transaction tx) throws IOException {
+      @Nullable byte[] startCol, @Nullable byte[] stopCol,
+      int limit, @Nullable Transaction tx) throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
         return Collections.emptyNavigableMap();
@@ -284,7 +294,8 @@ public class LevelDBTableCore {
     }
 
     byte[] startKey = createStartKey(row, columns == null ? startCol : columns[0]);
-    byte[] endKey = createEndKey(row, columns == null ? stopCol : upperBound(columns[columns.length - 1]));
+    byte[] endKey = createEndKey(row,
+        columns == null ? stopCol : upperBound(columns[columns.length - 1]));
     try (DBIterator iterator = getDB().iterator()) {
       iterator.seek(startKey);
       return getRow(iterator, endKey, tx, false, columns, limit).getSecond();
@@ -307,24 +318,31 @@ public class LevelDBTableCore {
 
 
   /**
-   * Read one row of the table at the latest or highest version. This is used both by getRow() and by Scanner.next().
-   * @param iterator An iterator over the database. This is passed in such that the caller can reuse the same
-   *                 iterator if scanning multiple rows.
-   * @param endKey An upper bound for the (leveldb) keys to read. This method never reads past that key.
+   * Read one row of the table at the latest or highest version. This is used both by getRow() and
+   * by Scanner.next().
+   *
+   * @param iterator An iterator over the database. This is passed in such that the caller can
+   *     reuse the same iterator if scanning multiple rows.
+   * @param endKey An upper bound for the (leveldb) keys to read. This method never reads past
+   *     that key.
    * @param tx The transaction to use for visibility.
    * @param multiRow If true indicates that the row may end before the endKey. In that case,
-   *                 this method will stop reading as soon as it sees more than one row key. The iterator will not be
-   *                 advanced past the beginning of the next row (so that next time, we still see the entire next row).
-   * @param columns If non-null, only columns contained in this will be returned. The given columns should be sorted.
-   * @param limit If non-negative, at most this many columns will be returned. If multiRow is true, this is ignored.
-   * @return a pair consisting of the row key of the next non-empty row and the column map for that row. If multiRow
-   *         is false, null is returned for row key because the caller already knows it.
+   *     this method will stop reading as soon as it sees more than one row key. The iterator will
+   *     not be advanced past the beginning of the next row (so that next time, we still see the
+   *     entire next row).
+   * @param columns If non-null, only columns contained in this will be returned. The given
+   *     columns should be sorted.
+   * @param limit If non-negative, at most this many columns will be returned. If multiRow is
+   *     true, this is ignored.
+   * @return a pair consisting of the row key of the next non-empty row and the column map for that
+   *     row. If multiRow is false, null is returned for row key because the caller already knows
+   *     it.
    */
   private static ImmutablePair<byte[], NavigableMap<byte[], byte[]>> getRow(DBIterator iterator,
-                                                                            @Nullable byte[] endKey,
-                                                                            @Nullable Transaction tx,
-                                                                            boolean multiRow,
-                                                                            @Nullable byte[][] columns, int limit) {
+      @Nullable byte[] endKey,
+      @Nullable Transaction tx,
+      boolean multiRow,
+      @Nullable byte[][] columns, int limit) {
     byte[] rowBeingRead = null;
     byte[] previousRow = null;
     byte[] previousCol = null;
@@ -361,7 +379,7 @@ public class LevelDBTableCore {
       byte[] row = kv.getRow();
       byte[] column = kv.getQualifier();
       boolean seenThisColumn = previousRow != null && Bytes.equals(previousRow, row) &&
-                               previousCol != null && Bytes.equals(previousCol, column);
+          previousCol != null && Bytes.equals(previousCol, column);
       if (seenThisColumn) {
         continue;
       }
@@ -390,7 +408,8 @@ public class LevelDBTableCore {
   }
 
   /**
-   * Delete the cell at specified row and column with max version {@link KeyValue.LATEST_TIMESTAMP}.
+   * Delete the cell at specified row and column with max version {@link
+   * KeyValue.LATEST_TIMESTAMP}.
    */
   public void deleteDefaultVersion(byte[] row, byte[] column) throws IOException {
     getDB().delete(createPutKey(row, column, KeyValue.LATEST_TIMESTAMP));
@@ -404,18 +423,17 @@ public class LevelDBTableCore {
   }
 
   /**
-   * Delete a list of rows from the table entirely, disregarding transactions.
-   * This includes all columns and all versions of cells for each specified row.
+   * Delete a list of rows from the table entirely, disregarding transactions. This includes all
+   * columns and all versions of cells for each specified row.
    *
-   * Note that this operation could be quite slow when there are large number of columns
-   * or versions for cells in these roles. Moreover, such deletions are converted to
-   * tombstones or deletion-markers that can slow subsequent scan operations over
-   * overlapping ranges, thus leading to performance issues, unless these deletions
-   * are compacted away, so be cautious when calling this function over a larger number of
-   * rows or rows with wide columns and large number of versions.
+   * Note that this operation could be quite slow when there are large number of columns or versions
+   * for cells in these roles. Moreover, such deletions are converted to tombstones or
+   * deletion-markers that can slow subsequent scan operations over overlapping ranges, thus leading
+   * to performance issues, unless these deletions are compacted away, so be cautious when calling
+   * this function over a larger number of rows or rows with wide columns and large number of
+   * versions.
    *
    * @param toDelete the row keys to delete
-   *
    */
   public void deleteRows(Collection<byte[]> toDelete) throws IOException {
     if (toDelete.isEmpty()) {
@@ -456,8 +474,9 @@ public class LevelDBTableCore {
     db.write(batch, getWriteOptions());
   }
 
-  public void deleteRange(byte[] startRow, byte[] stopRow, @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns)
-    throws IOException {
+  public void deleteRange(byte[] startRow, byte[] stopRow, @Nullable FuzzyRowFilter filter,
+      @Nullable byte[][] columns)
+      throws IOException {
     if (columns != null) {
       if (columns.length == 0) {
         return;
@@ -519,7 +538,7 @@ public class LevelDBTableCore {
    * through leveldb keys in sorted order, collecting key values to delete in batch.
    */
   private void addToDeleteBatch(WriteBatch batch, DBIterator iterator, byte[] row, byte[] column) {
-    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[] { 0 }));
+    byte[] endKey = createStartKey(row, Bytes.add(column, new byte[]{0}));
     iterator.seek(createStartKey(row, column));
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.next();
@@ -561,7 +580,7 @@ public class LevelDBTableCore {
     private final FuzzyRowFilter filter;
 
     LevelDBScanner(DBIterator iterator, byte[] endKey,
-                   @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
+        @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx) {
       this.tx = tx;
       this.endKey = endKey;
       this.iterator = iterator;
@@ -573,7 +592,8 @@ public class LevelDBTableCore {
     public Row next() {
       try {
         while (true) {
-          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx, true, columns, -1);
+          ImmutablePair<byte[], NavigableMap<byte[], byte[]>> result = getRow(iterator, endKey, tx,
+              true, columns, -1);
           if (result.getFirst() == null) {
             return null;
           }
@@ -620,20 +640,24 @@ public class LevelDBTableCore {
   }
 
   private static byte[] createStartKey(byte[] row) { // the first possible key of a row
-    return KeyValue.getKey(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
+    return KeyValue.getKey(row, DATA_COLFAM, null, KeyValue.LATEST_TIMESTAMP,
+        KeyValue.Type.Maximum);
   }
 
   private static byte[] createStartKey(byte[] row, byte[] column) {
-    return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
+    return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP,
+        KeyValue.Type.Maximum);
   }
 
   private static byte[] createEndKey(byte[] row, byte[] column) {
     if (column != null) {
       // we have a stop column and can use that as an upper bound
-      return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
+      return KeyValue.getKey(row, DATA_COLFAM, column, KeyValue.LATEST_TIMESTAMP,
+          KeyValue.Type.Maximum);
     } else {
       // no stop column - use next column family as upper bound
-      return KeyValue.getKey(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP, KeyValue.Type.Maximum);
+      return KeyValue.getKey(row, NEXT_COLFAM, null, KeyValue.LATEST_TIMESTAMP,
+          KeyValue.Type.Maximum);
     }
   }
 }

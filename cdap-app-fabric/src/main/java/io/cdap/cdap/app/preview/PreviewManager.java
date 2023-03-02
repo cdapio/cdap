@@ -36,6 +36,7 @@ public interface PreviewManager {
 
   /**
    * Start the preview of an application config provided as an input in a given namespace.
+   *
    * @param namespace the id of the namespace in which preview to be run
    * @param request the {@link AppRequest} with which preview need to be started
    * @return the {@link ApplicationId} assigned to the preview run
@@ -45,7 +46,9 @@ public interface PreviewManager {
 
   /**
    * Get the status of the preview.
-   * @param applicationId id of the preview application for which preview status is to be returned
+   *
+   * @param applicationId id of the preview application for which preview status is to be
+   *     returned
    * @return the status of the preview
    * @throws NotFoundException if preview application is not found
    */
@@ -53,6 +56,7 @@ public interface PreviewManager {
 
   /**
    * Stop the preview run represented by this {@link ApplicationId}.
+   *
    * @param applicationId id of the preview
    * @throws Exception thrown when any error in stopping the preview run
    */
@@ -60,34 +64,41 @@ public interface PreviewManager {
 
   /**
    * Get the data associated with the preview run represented by this {@link PreviewRunner}.
+   *
    * @param applicationId the id of the preview application
    * @param tracerName the name of the tracer used for preview
    * @return the {@link Map} of properties associated with the tracer for a given preview
    */
-  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) throws AccessException;
+  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName)
+      throws AccessException;
 
   /**
    * Get the run id of the program executed as a part of preview.
+   *
    * @param applicationId the id of the preview application
-   * @return the {@link ProgramRunId} associated with the preview or {@code null} if there is no run record
+   * @return the {@link ProgramRunId} associated with the preview or {@code null} if there is no run
+   *     record
    */
   @Nullable
   ProgramRunId getRunId(ApplicationId applicationId) throws Exception;
 
   /**
    * Get the helper object to query for metrics for the preview run.
+   *
    * @return the {@link MetricsQueryHelper} associated with the preview
    */
   MetricsQueryHelper getMetricsQueryHelper();
 
   /**
    * Returns a {@link LogReader} for reading logs for the given preview.
+   *
    * @return the {@link LogReader} for reading logs for the given preview
    */
   LogReader getLogReader();
 
   /**
    * Poll the next available request in the queue.
+   *
    * @param pollerInfo information about the poller
    * @return {@code PreviewRequest} if such request is available in the queue
    */

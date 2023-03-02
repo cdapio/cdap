@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * Parses time expressions and does simple time math.
  */
 public class TimeParser {
+
   private final long runtime;
 
   public TimeParser(long runtime) {
@@ -31,14 +32,12 @@ public class TimeParser {
   }
 
   /**
-   * Parses time strings into timestamps, with support for some basic math.
-   * Math syntax includes addition and subtraction in seconds, minutes, hours, and days.
-   * Periods of time are specified as some number followed by the time unit,
-   * where 's' is seconds', 'm' is minutes, 'h' is hours, and 'd' is days.
-   * The "runtime" keyword translates to some given runtime, and can be strung together with
-   * various additions and subtractions.
-   * For example, "runtime-5s" is 5 seconds before runtime, "runtime-1d" is one day before runtime,
-   * and "runtime-1d+4h" is 20 hours before runtime.
+   * Parses time strings into timestamps, with support for some basic math. Math syntax includes
+   * addition and subtraction in seconds, minutes, hours, and days. Periods of time are specified as
+   * some number followed by the time unit, where 's' is seconds', 'm' is minutes, 'h' is hours, and
+   * 'd' is days. The "runtime" keyword translates to some given runtime, and can be strung together
+   * with various additions and subtractions. For example, "runtime-5s" is 5 seconds before runtime,
+   * "runtime-1d" is one day before runtime, and "runtime-1d+4h" is 20 hours before runtime.
    *
    * @param str the time string to parse
    * @return milliseconds equivalent of the time string
@@ -49,9 +48,9 @@ public class TimeParser {
   }
 
   /**
-   * Parses a duration String to its long value.
-   * Frequency string consists of a number followed by an unit, with 's' for seconds, 'm' for minutes, 'h' for hours
-   * and 'd' for days. For example, an input of '5m' means 5 minutes which will be parsed to 300000 milliseconds.
+   * Parses a duration String to its long value. Frequency string consists of a number followed by
+   * an unit, with 's' for seconds, 'm' for minutes, 'h' for hours and 'd' for days. For example, an
+   * input of '5m' means 5 minutes which will be parsed to 300000 milliseconds.
    *
    * @param durationStr the duration string (ex: 5m, 5h etc).
    * @return milliseconds equivalent of the duration string
@@ -85,13 +84,14 @@ public class TimeParser {
 
     // if no operator, this should be a duration string
     if (idx < 0) {
-      return "runtime".equals(expression) ? new ValueNode(runtime) : new ValueNode(parseDuration(expression));
+      return "runtime".equals(expression) ? new ValueNode(runtime)
+          : new ValueNode(parseDuration(expression));
     }
 
     char operator = expression.charAt(idx);
     if (idx == expression.length()) {
       throw new IllegalArgumentException(
-        String.format("Invalid expression '%s'. Cannot end with %s.", expression, operator));
+          String.format("Invalid expression '%s'. Cannot end with %s.", expression, operator));
     }
 
     // if this in an expression like '-5d'
@@ -108,10 +108,12 @@ public class TimeParser {
   }
 
   private interface MathNode {
+
     long evaluate();
   }
 
   private static class ValueNode implements MathNode {
+
     private long value;
 
     ValueNode(long value) {
@@ -125,6 +127,7 @@ public class TimeParser {
   }
 
   private static class AddNode implements MathNode {
+
     private final MathNode left;
     private final MathNode right;
 
@@ -140,6 +143,7 @@ public class TimeParser {
   }
 
   private static class SubtractNode implements MathNode {
+
     private final MathNode left;
     private final MathNode right;
 

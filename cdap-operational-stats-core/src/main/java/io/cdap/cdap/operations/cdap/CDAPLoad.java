@@ -36,12 +36,12 @@ import java.util.concurrent.TimeUnit;
 public class CDAPLoad extends AbstractCDAPStats implements CDAPConnectionsMXBean {
 
   private static final List<String> METRICS = Arrays.asList(
-    "system.request.received",
-    "system.response.successful",
-    "system.response.client-error",
-    "system.response.server-error",
-    "system.services.log.error",
-    "system.services.log.warn"
+      "system.request.received",
+      "system.response.successful",
+      "system.response.client-error",
+      "system.response.server-error",
+      "system.services.log.error",
+      "system.services.log.warn"
   );
 
   private MetricsSystemClient metricsSystemClient;
@@ -106,9 +106,10 @@ public class CDAPLoad extends AbstractCDAPStats implements CDAPConnectionsMXBean
     // just aggregated metrics for the current hour (if called 15 mins past the hour, it will only give an aggregated
     // value for the past 15 mins).
     Map<String, String> tags = Collections.singletonMap(Constants.Metrics.Tag.NAMESPACE,
-                                                        NamespaceId.SYSTEM.getEntityName());
-    Collection<MetricTimeSeries> metricTimeSeries = metricsSystemClient.query(startTimeSecs, currentTimeSecs, 60,
-                                                                              tags, METRICS, Collections.emptySet());
+        NamespaceId.SYSTEM.getEntityName());
+    Collection<MetricTimeSeries> metricTimeSeries = metricsSystemClient.query(startTimeSecs,
+        currentTimeSecs, 60,
+        tags, METRICS, Collections.emptySet());
 
     for (MetricTimeSeries metricTimeSery : metricTimeSeries) {
       switch (metricTimeSery.getMetricName()) {

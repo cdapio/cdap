@@ -33,7 +33,7 @@ public class SystemProgram {
   private final Map<String, String> args;
 
   public SystemProgram(String namespace, String application, String type, String name,
-                       @Nullable Map<String, String> args) {
+      @Nullable Map<String, String> args) {
     this.namespace = namespace;
     this.application = application;
     this.type = type;
@@ -90,10 +90,10 @@ public class SystemProgram {
     }
     SystemProgram program = (SystemProgram) other;
     return Objects.equals(namespace, program.namespace) &&
-      Objects.equals(application, program.application) &&
-      Objects.equals(type, program.type) &&
-      Objects.equals(name, program.name) &&
-      Objects.equals(args, program.args);
+        Objects.equals(application, program.application) &&
+        Objects.equals(type, program.type) &&
+        Objects.equals(name, program.name) &&
+        Objects.equals(args, program.args);
   }
 
   @Override

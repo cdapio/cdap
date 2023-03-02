@@ -23,12 +23,11 @@ import java.util.regex.Pattern;
 
 /**
  * Utility class for parsing time strings into timestamps, with support for some basic time math.
- * Math syntax includes addition and subtraction in minutes, hours, and days.
- * The "NOW" keyword translates to the current epoch time in seconds, and can be strung together with
- * various additions and subtractions.  For example, "NOW" will translate into the current epoch time in seconds.
- * "NOW-5SECONDS" is 5 seconds before now, "NOW-1DAY" is one day before now, and "NOW-1DAY+4HOURS" is 20 hours
- * before now.
- *
+ * Math syntax includes addition and subtraction in minutes, hours, and days. The "NOW" keyword
+ * translates to the current epoch time in seconds, and can be strung together with various
+ * additions and subtractions.  For example, "NOW" will translate into the current epoch time in
+ * seconds. "NOW-5SECONDS" is 5 seconds before now, "NOW-1DAY" is one day before now, and
+ * "NOW-1DAY+4HOURS" is 20 hours before now.
  */
 public class TimeMathParser {
 
@@ -52,7 +51,7 @@ public class TimeMathParser {
       milliseconds = TimeUnit.DAYS.toMillis(num);
     } else {
       throw new IllegalArgumentException("invalid time unit " + unitStr +
-                                           ", should be one of 'ms', 's', 'm', 'h', 'd'");
+          ", should be one of 'ms', 's', 'm', 'h', 'd'");
     }
 
     if ("+".equals(op)) {
@@ -60,7 +59,8 @@ public class TimeMathParser {
     } else if ("-".equals(op)) {
       return 0 - milliseconds;
     } else {
-      throw new IllegalArgumentException("invalid operation " + op + ", should be either '+' or '-'");
+      throw new IllegalArgumentException(
+          "invalid operation " + op + ", should be either '+' or '-'");
     }
   }
 
@@ -79,14 +79,16 @@ public class TimeMathParser {
     Matcher matcher = RESOLUTION_PATTERN.matcher(resolutionStr);
     int output = 0;
     while (matcher.find()) {
-      output += TimeUnit.MILLISECONDS.toSeconds(convertToMilliseconds(Long.parseLong(matcher.group(1)),
-                                                                      matcher.group(2)));
+      output += TimeUnit.MILLISECONDS.toSeconds(
+          convertToMilliseconds(Long.parseLong(matcher.group(1)),
+              matcher.group(2)));
     }
     return output;
   }
 
   /**
-   * Parses a time in String format into a long value. If the input is numeric we assume the input is in seconds.
+   * Parses a time in String format into a long value. If the input is numeric we assume the input
+   * is in seconds.
    *
    * @param timeStr the string to parse
    * @return the parsed time in seconds
@@ -99,7 +101,8 @@ public class TimeMathParser {
    * Parses a time in String format into a long value
    *
    * @param timeStr the string to parse
-   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be in the unit timeUnit
+   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be
+   *     in the unit timeUnit
    * @return the parsed time
    */
   public static long parseTime(String timeStr, TimeUnit timeUnit) {
@@ -107,14 +110,16 @@ public class TimeMathParser {
   }
 
   /**
-   * Parses a time in String format into a long value. If the input is numeric we assume the input is in seconds.
+   * Parses a time in String format into a long value. If the input is numeric we assume the input
+   * is in seconds.
    *
    * @param now the present time in seconds
    * @param timeStr the string to parse
    * @return the parsed time in seconds
    */
   public static long parseTimeInSeconds(long now, String timeStr) {
-    return parseTime(TimeUnit.MILLISECONDS.convert(now, TimeUnit.SECONDS), timeStr, TimeUnit.SECONDS);
+    return parseTime(TimeUnit.MILLISECONDS.convert(now, TimeUnit.SECONDS), timeStr,
+        TimeUnit.SECONDS);
   }
 
   /**
@@ -122,7 +127,8 @@ public class TimeMathParser {
    *
    * @param now the present time in milliseconds
    * @param timeStr the string to parse
-   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be in the unit timeUnit
+   * @param timeUnit the unit of time to return, if timeStr is numeric then it is assumed to be
+   *     in the unit timeUnit
    * @return the parsed time
    * @throws IllegalArgumentException if the format of timeStr is bad
    */
@@ -150,7 +156,8 @@ public class TimeMathParser {
           throw new IllegalArgumentException("invalid time format " + timeStr);
         }
         // group 1 should be '+' or '-', group 2 is the number of units, and group 3 is the unit.  ex: 6h
-        output += convertToMilliseconds(matcher.group(1), Long.parseLong(matcher.group(2)), matcher.group(3));
+        output += convertToMilliseconds(matcher.group(1), Long.parseLong(matcher.group(2)),
+            matcher.group(3));
         prevEndPos = matcher.end();
       }
       // happens if the end of the string is invalid, like "now-6h 30m"

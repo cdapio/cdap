@@ -20,4 +20,5 @@ package io.cdap.cdap.internal.schedule.constraint;
  * A constraint that is checked before executing a schedule.
  */
 public interface Constraint {
+
 }

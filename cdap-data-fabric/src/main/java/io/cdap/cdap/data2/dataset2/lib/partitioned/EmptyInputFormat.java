@@ -27,6 +27,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * An InputFormat that returns no data.
+ *
  * @param <K> the key class
  * @param <V> the value class
  */

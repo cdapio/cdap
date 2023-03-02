@@ -33,6 +33,7 @@ import java.net.HttpURLConnection;
  * Fetch health check via internal REST API calls
  */
 public class VMInformationFetcher {
+
   private static final Gson GSON = new Gson();
 
   private final RemoteClientFactory remoteClientFactory;
@@ -47,15 +48,16 @@ public class VMInformationFetcher {
    */
   public VMInformation getVMInformation(String serviceName) throws NotFoundException, IOException {
     RemoteClient remoteClient = remoteClientFactory.createRemoteClient(serviceName,
-                                                                       new DefaultHttpRequestConfig(false),
-                                                                       Constants.Gateway.API_VERSION_3);
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.API_VERSION_3);
 
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, "vminfo");
     HttpResponse httpResponse = execute(remoteClient, requestBuilder.build());
     return GSON.fromJson(httpResponse.getResponseBodyAsString(), VMInformation.class);
   }
 
-  private HttpResponse execute(RemoteClient remoteClient, HttpRequest request) throws IOException, NotFoundException {
+  private HttpResponse execute(RemoteClient remoteClient, HttpRequest request)
+      throws IOException, NotFoundException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

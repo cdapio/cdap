@@ -23,24 +23,26 @@ import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 
 /**
- * Defines a custom user Service. Services are custom applications that run in program containers and provide
- * endpoints to serve requests.
+ * Defines a custom user Service. Services are custom applications that run in program containers
+ * and provide endpoints to serve requests.
  *
  * @param <T> type of service configurer
  * @param <V> type of service context
  */
-public interface Service<T extends ServiceConfigurer, V extends ServiceContext> extends ProgramLifecycle<V> {
+public interface Service<T extends ServiceConfigurer, V extends ServiceContext> extends
+    ProgramLifecycle<V> {
 
   /**
    * Configure the Service by adding {@link HttpServiceHandler}s to handle requests.
+   *
    * @param configurer to use to add handlers to the Service.
    */
   void configure(T configurer);
 
   /**
-   * Initialize the {@code Service}. This method will be called before the service starts up.
-   * This method will be called before each service instance starts up. If there is more than one instance of
-   * the service, it will be called more than once.
+   * Initialize the {@code Service}. This method will be called before the service starts up. This
+   * method will be called before each service instance starts up. If there is more than one
+   * instance of the service, it will be called more than once.
    *
    * Note that unlike most program types, this method is not called within an implicit transaction,
    * but instead it can start its own transactions using {@link ServiceContext#execute(TxRunnable)}.
@@ -53,9 +55,8 @@ public interface Service<T extends ServiceConfigurer, V extends ServiceContext> 
   }
 
   /**
-   * Destroy the {@code Service}.
-   * This method will be called before each service instance shuts down. If there is more than one instance of
-   * the service, it will be called more than once.
+   * Destroy the {@code Service}. This method will be called before each service instance shuts
+   * down. If there is more than one instance of the service, it will be called more than once.
    *
    * Note that unlike most program types, this method is not called within an implicit transaction,
    * but instead it can start its own transactions using {@link ServiceContext#execute(TxRunnable)}.

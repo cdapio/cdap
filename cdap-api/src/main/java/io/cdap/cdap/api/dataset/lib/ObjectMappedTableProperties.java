@@ -34,6 +34,7 @@ import java.util.Map;
  */
 @Beta
 public class ObjectMappedTableProperties {
+
   private static final SchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
 
   /**
@@ -47,14 +48,14 @@ public class ObjectMappedTableProperties {
   public static final String OBJECT_SCHEMA = "object.schema";
 
   /**
-   * The name of the Hive table column for the key of objects stored in the table.
-   * See {@link Builder#setRowKeyExploreName(String)} for details.
+   * The name of the Hive table column for the key of objects stored in the table. See {@link
+   * Builder#setRowKeyExploreName(String)} for details.
    */
   public static final String ROW_KEY_EXPLORE_NAME = "row.key.explore.name";
 
   /**
-   * The type of the Hive table column for the row key of objects stored in the table.
-   * See {@link Builder#setRowKeyExploreType(Schema.Type)} for details.
+   * The type of the Hive table column for the row key of objects stored in the table. See {@link
+   * Builder#setRowKeyExploreType(Schema.Type)} for details.
    */
   public static final String ROW_KEY_EXPLORE_TYPE = "row.key.explore.type";
 
@@ -98,7 +99,8 @@ public class ObjectMappedTableProperties {
     private final Gson gson = new Gson();
 
     /**
-     * Package visible default constructor, to allow sub-classing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this
+     * package.
      */
     Builder() {
       add(ROW_KEY_EXPLORE_NAME, "rowkey");
@@ -106,12 +108,13 @@ public class ObjectMappedTableProperties {
     }
 
     /**
-     * Sets the type of object stored in the table. The schema of the Hive table for an ObjectMappedTable
-     * is derived from the object type set here and the row key explore name set by
-     * {@link #setRowKeyExploreName(String)}.
+     * Sets the type of object stored in the table. The schema of the Hive table for an
+     * ObjectMappedTable is derived from the object type set here and the row key explore name set
+     * by {@link #setRowKeyExploreName(String)}.
      *
-     * For example, if the type set here has three fields - "id", "name", and "price", the corresponding Hive table
-     * for this Dataset will contain four columns - "rowkey", "id", "name", and "price".
+     * For example, if the type set here has three fields - "id", "name", and "price", the
+     * corresponding Hive table for this Dataset will contain four columns - "rowkey", "id", "name",
+     * and "price".
      */
     public Builder setType(Type type) throws UnsupportedTypeException {
       add(OBJECT_TYPE, gson.toJson(new TypeRepresentation(type)));
@@ -120,14 +123,15 @@ public class ObjectMappedTableProperties {
     }
 
     /**
-     * Sets the row key column name in the corresponding Hive table for an ObjectMappedTable.
-     * The schema of the Hive table for an ObjectMappedTable is derived from the object type set by
-     * {@link #setType(Type)} and the row key explore name set here. The name set here cannot be the same
-     * as any of the fields in the object type.
+     * Sets the row key column name in the corresponding Hive table for an ObjectMappedTable. The
+     * schema of the Hive table for an ObjectMappedTable is derived from the object type set by
+     * {@link #setType(Type)} and the row key explore name set here. The name set here cannot be the
+     * same as any of the fields in the object type.
      *
-     * For example, if you are storing an Object with a single string field named "id", the corresponding
-     * Hive table will have a schema of (rowkey binary, id string). If you set the name of the row key to "name",
-     * the corresponding Hive table will instead have the schema (name binary, id string).
+     * For example, if you are storing an Object with a single string field named "id", the
+     * corresponding Hive table will have a schema of (rowkey binary, id string). If you set the
+     * name of the row key to "name", the corresponding Hive table will instead have the schema
+     * (name binary, id string).
      */
     public Builder setRowKeyExploreName(String name) {
       add(ROW_KEY_EXPLORE_NAME, name);
@@ -135,14 +139,16 @@ public class ObjectMappedTableProperties {
     }
 
     /**
-     * Sets the column type for the row key column in the corresponding Hive table for an ObjectMappedTable.
-     * By default, the type of the row key in your Hive table will be binary. You can set the type using this
-     * method. Only {@link io.cdap.cdap.api.data.schema.Schema.Type#BYTES Schema.Type.BYTES} and
-     * {@link io.cdap.cdap.api.data.schema.Schema.Type#STRING Schema.Type.STRING} are allowed.
+     * Sets the column type for the row key column in the corresponding Hive table for an
+     * ObjectMappedTable. By default, the type of the row key in your Hive table will be binary. You
+     * can set the type using this method. Only {@link io.cdap.cdap.api.data.schema.Schema.Type#BYTES
+     * Schema.Type.BYTES} and {@link io.cdap.cdap.api.data.schema.Schema.Type#STRING
+     * Schema.Type.STRING} are allowed.
      *
-     * For example, if you are storing an Object with a single string field named "id", the corresponding
-     * Hive table will have a schema of (rowkey binary, id string). If you set the type to a string using this method,
-     * the corresponding Hive table will instead have the schema (rowkey string, id string).
+     * For example, if you are storing an Object with a single string field named "id", the
+     * corresponding Hive table will have a schema of (rowkey binary, id string). If you set the
+     * type to a string using this method, the corresponding Hive table will instead have the schema
+     * (rowkey string, id string).
      */
     public Builder setRowKeyExploreType(Schema.Type type) {
       if (type != Schema.Type.BYTES && type != Schema.Type.STRING) {

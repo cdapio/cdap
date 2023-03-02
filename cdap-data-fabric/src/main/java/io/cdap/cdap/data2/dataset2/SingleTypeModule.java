@@ -41,55 +41,56 @@ import java.util.Map;
 /**
  * Wraps implementation of {@link Dataset} into a {@link DatasetModule}.
  *
- * This allows for easier implementation of simple datasets without requiring to implement {@link DatasetDefinition},
- * {@link io.cdap.cdap.api.dataset.DatasetAdmin}, etc. when the implementation uses existing dataset types.
+ * This allows for easier implementation of simple datasets without requiring to implement {@link
+ * DatasetDefinition}, {@link io.cdap.cdap.api.dataset.DatasetAdmin}, etc. when the implementation
+ * uses existing dataset types.
  *
- * NOTE: all admin ops of the dataset will be delegated to embedded datasets;
- *       {@link io.cdap.cdap.api.dataset.DatasetProperties} will be propagated to embedded datasets as well
+ * NOTE: all admin ops of the dataset will be delegated to embedded datasets; {@link
+ * io.cdap.cdap.api.dataset.DatasetProperties} will be propagated to embedded datasets as well
  *
- * NOTE: must have exactly one constructor with parameter types of
- *       (DatasetSpecification, [0..n] @EmbeddedDataset Dataset)
+ * NOTE: must have exactly one constructor with parameter types of (DatasetSpecification, [0..n]
  *
- * <p>
- * Example of usage:
+ * @EmbeddedDataset Dataset)
  *
- * <pre>
- * {@code
-
-// ...
-
-datasetFramework.addModule("myModule", new SingleTypeModule(SimpleKVTable.class));
-
-// ...
-
-
-&#64;DatasetType("KVTable")
-public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
-  private static final byte[] COL = new byte[0];
-
-  private final Table table;
-
-  public SimpleKVTable(DatasetSpecification spec,
-                       &#64;EmbeddedDataset("data") Table table) {
-    super(spec.getTransactionAwareName(), table);
-    this.table = table;
-  }
-
-  public void put(String key, String value) throws Exception {
-    table.put(Bytes.toBytes(key), COL, Bytes.toBytes(value));
-  }
-
-  public String get(String key) throws Exception {
-    byte[] value = table.get(Bytes.toBytes(key), COL);
-    return value == null ? null : Bytes.toString(value);
-  }
-}
-
- * }
- * </pre>
+ *     <p>
+ *     Example of usage:
  *
- * See {@link DatasetType} and {@link EmbeddedDataset} for more details on their usage.
+ *     <pre>
+ *     {@code
  *
+ *     // ...
+ *
+ *     datasetFramework.addModule("myModule", new SingleTypeModule(SimpleKVTable.class));
+ *
+ *     // ...
+ *
+ *
+ *     &#64;DatasetType("KVTable")
+ *     public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
+ *     private static final byte[] COL = new byte[0];
+ *
+ *     private final Table table;
+ *
+ *     public SimpleKVTable(DatasetSpecification spec,
+ *     &#64;EmbeddedDataset("data") Table table) {
+ *     super(spec.getTransactionAwareName(), table);
+ *     this.table = table;
+ *     }
+ *
+ *     public void put(String key, String value) throws Exception {
+ *     table.put(Bytes.toBytes(key), COL, Bytes.toBytes(value));
+ *     }
+ *
+ *     public String get(String key) throws Exception {
+ *     byte[] value = table.get(Bytes.toBytes(key), COL);
+ *     return value == null ? null : Bytes.toString(value);
+ *     }
+ *     }
+ *
+ *     }
+ *     </pre>
+ *
+ *     See {@link DatasetType} and {@link EmbeddedDataset} for more details on their usage.
  */
 public class SingleTypeModule implements DatasetModule {
 
@@ -120,7 +121,8 @@ public class SingleTypeModule implements DatasetModule {
     // Gather all dataset name and type information for the @EmbeddedDataset parameters
     for (int i = 1; i < paramTypes.length; i++) {
       // Must have the EmbeddedDataset as it's the contract of the findSuitableCtorOrFail method
-      EmbeddedDataset anno = Iterables.filter(Arrays.asList(paramAnns[i]), EmbeddedDataset.class).iterator().next();
+      EmbeddedDataset anno = Iterables.filter(Arrays.asList(paramAnns[i]), EmbeddedDataset.class)
+          .iterator().next();
       String type = anno.type();
       // default to dataset class name if dataset type name is not specified through the annotation
       if (EmbeddedDataset.DEFAULT_TYPE_NAME.equals(type)) {
@@ -129,8 +131,9 @@ public class SingleTypeModule implements DatasetModule {
       DatasetDefinition embeddedDefinition = registry.get(type);
       if (embeddedDefinition == null) {
         throw new IllegalStateException(
-          String.format("Unknown Dataset type '%s', specified by parameter number %d of the %s Dataset",
-                        type, i, dataSetClass.getName()));
+            String.format(
+                "Unknown Dataset type '%s', specified by parameter number %d of the %s Dataset",
+                type, i, dataSetClass.getName()));
       }
       embeddedDefinitions.put(anno.value(), embeddedDefinition);
     }
@@ -138,12 +141,13 @@ public class SingleTypeModule implements DatasetModule {
     registry.add(new CompositeDatasetDefinition<Dataset>(typeName, embeddedDefinitions) {
       @Override
       public Dataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+          Map<String, String> arguments, ClassLoader classLoader) throws IOException {
         List<Object> params = new ArrayList<>();
         params.add(spec);
         for (Map.Entry<String, DatasetDefinition> entry : embeddedDefinitions.entrySet()) {
-          params.add(entry.getValue().getDataset(datasetContext, spec.getSpecification(entry.getKey()),
-                                                 arguments, classLoader));
+          params.add(
+              entry.getValue().getDataset(datasetContext, spec.getSpecification(entry.getKey()),
+                  arguments, classLoader));
         }
         try {
           return (Dataset) ctor.newInstance(params.toArray());
@@ -155,13 +159,14 @@ public class SingleTypeModule implements DatasetModule {
   }
 
   /**
-   * Find a {@link Constructor} of the given {@link Dataset} class that the first parameter is of type
-   * {@link DatasetSpecification} and the rest parameters are of type {@link Dataset} and are annotated with
-   * {@link EmbeddedDataset}.
+   * Find a {@link Constructor} of the given {@link Dataset} class that the first parameter is of
+   * type {@link DatasetSpecification} and the rest parameters are of type {@link Dataset} and are
+   * annotated with {@link EmbeddedDataset}.
    *
    * @param dataSetClass The class to search for the constructor
    * @return the {@link Constructor} found
-   * @throws IllegalArgumentException if the given class doesn't contain the constructor this method is looking for
+   * @throws IllegalArgumentException if the given class doesn't contain the constructor this
+   *     method is looking for
    */
   @VisibleForTesting
   static Constructor findSuitableCtorOrFail(Class<? extends Dataset> dataSetClass) {
@@ -179,7 +184,8 @@ public class SingleTypeModule implements DatasetModule {
       // All parameters must be of Dataset type and annotated with EmbeddedDataset
       for (int i = 1; i < paramTypes.length; i++) {
         if (!Dataset.class.isAssignableFrom(paramTypes[i])
-            || !Iterables.any(Arrays.asList(paramAnns[i]), Predicates.instanceOf(EmbeddedDataset.class))) {
+            || !Iterables.any(Arrays.asList(paramAnns[i]),
+            Predicates.instanceOf(EmbeddedDataset.class))) {
           otherParamsAreDatasets = false;
           break;
         }
@@ -189,16 +195,16 @@ public class SingleTypeModule implements DatasetModule {
       }
       if (suitableCtor != null) {
         throw new IllegalArgumentException(
-          String.format("Dataset class %s must have single constructor with parameter types of" +
-                          " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+            String.format("Dataset class %s must have single constructor with parameter types of" +
+                " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
       }
       suitableCtor = ctor;
     }
 
     if (suitableCtor == null) {
       throw new IllegalArgumentException(
-        String.format("Dataset class %s must have single constructor with parameter types of" +
-                        " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
+          String.format("Dataset class %s must have single constructor with parameter types of" +
+              " (DatasetSpecification, [0..n] @EmbeddedDataset Dataset) ", dataSetClass));
     }
 
     return suitableCtor;

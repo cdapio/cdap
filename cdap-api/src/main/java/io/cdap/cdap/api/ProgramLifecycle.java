@@ -21,23 +21,26 @@ import io.cdap.cdap.api.annotation.TransactionPolicy;
 
 /**
  * Defines program lifecycle.
+ *
  * @param <T> type of the program runtime context
  */
 public interface ProgramLifecycle<T extends RuntimeContext> {
+
   /**
-   *  Initializes a Program.
-   *  <p>
-   *    This method will be called only once per {@link io.cdap.cdap.api.ProgramLifecycle} instance.
-   *  </p>
-   *  @param context An instance of {@link RuntimeContext}
-   *  @throws Exception If there is any error during initialization.
+   * Initializes a Program.
+   * <p>
+   * This method will be called only once per {@link io.cdap.cdap.api.ProgramLifecycle} instance.
+   * </p>
+   *
+   * @param context An instance of {@link RuntimeContext}
+   * @throws Exception If there is any error during initialization.
    */
   @TransactionPolicy(TransactionControl.IMPLICIT)
   void initialize(T context) throws Exception;
 
   /**
-   * Destroy is the last thing that gets called before the program is
-   * shutdown. So, if there are any cleanups then they can be specified here.
+   * Destroy is the last thing that gets called before the program is shutdown. So, if there are any
+   * cleanups then they can be specified here.
    */
   @TransactionPolicy(TransactionControl.IMPLICIT)
   void destroy();

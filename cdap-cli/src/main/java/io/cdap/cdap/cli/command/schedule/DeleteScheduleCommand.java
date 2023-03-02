@@ -53,7 +53,8 @@ public final class DeleteScheduleCommand extends AbstractCommand {
     String scheduleName = programIdParts[1];
     String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
     String appVersion = version == null ? ApplicationId.DEFAULT_VERSION : version;
-    ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId, appVersion).schedule(scheduleName);
+    ScheduleId schedule = cliConfig.getCurrentNamespace().app(appId, appVersion)
+        .schedule(scheduleName);
 
     scheduleClient.delete(schedule);
     printStream.printf("Successfully deleted schedule '%s' in app '%s'\n", scheduleName, appId);
@@ -61,7 +62,8 @@ public final class DeleteScheduleCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("delete schedule <%s> [version <%s>]", ArgumentName.SCHEDULE, ArgumentName.APP_VERSION);
+    return String.format("delete schedule <%s> [version <%s>]", ArgumentName.SCHEDULE,
+        ArgumentName.APP_VERSION);
   }
 
   @Override

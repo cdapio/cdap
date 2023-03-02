@@ -20,6 +20,7 @@ package io.cdap.cdap.sourcecontrol;
  * Exception thrown when there's no changes for the pulled application
  */
 public class NoChangesToPullException extends Exception {
+
   public NoChangesToPullException(String message) {
     super(message);
   }

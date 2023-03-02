@@ -26,20 +26,23 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
 import io.cdap.cdap.data2.dataset2.lib.file.FileSetAdmin;
 
 /**
- * {@link io.cdap.cdap.api.dataset.module.DatasetModule}
- * for {@link io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet}.
+ * {@link io.cdap.cdap.api.dataset.module.DatasetModule} for
+ * {@link io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet}.
  */
 public class TimePartitionedFileSetModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
 
     DatasetDefinition<FileSet, FileSetAdmin> fileSetDef = registry.get(FileSet.class.getName());
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
-      registry.get(IndexedTable.class.getName());
+        registry.get(IndexedTable.class.getName());
 
     // file dataset
-    registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.class.getName(), fileSetDef,
-                                                      indexedTableDef));
-    registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.TYPE, fileSetDef, indexedTableDef));
+    registry.add(
+        new TimePartitionedFileSetDefinition(TimePartitionedFileSet.class.getName(), fileSetDef,
+            indexedTableDef));
+    registry.add(new TimePartitionedFileSetDefinition(TimePartitionedFileSet.TYPE, fileSetDef,
+        indexedTableDef));
   }
 }

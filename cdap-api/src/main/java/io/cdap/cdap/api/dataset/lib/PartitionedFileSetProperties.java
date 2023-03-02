@@ -41,7 +41,8 @@ public class PartitionedFileSetProperties extends FileSetProperties {
    * Read the partitioning for a PartitionedFileSet from its properties.
    *
    * @param properties the dataset properties
-   * @return the partitioning found in the properties, or null if the properties contain no partitioning.
+   * @return the partitioning found in the properties, or null if the properties contain no
+   *     partitioning.
    */
   @Nullable
   public static Partitioning getPartitioning(Map<String, String> properties) {
@@ -57,14 +58,15 @@ public class PartitionedFileSetProperties extends FileSetProperties {
     for (String fieldName : fieldNames) {
       String typeString = properties.get(PARTITIONING_FIELD_PREFIX + fieldName);
       if (null == typeString) {
-        throw new IllegalArgumentException(String.format("Type of field '%s' is missing", fieldName));
+        throw new IllegalArgumentException(
+            String.format("Type of field '%s' is missing", fieldName));
       }
       try {
         Partitioning.FieldType fieldType = Partitioning.FieldType.valueOf(typeString);
         builder.addField(fieldName, fieldType);
       } catch (Exception e) {
         throw new IllegalArgumentException(
-          String.format("Type of field '%s' is invalid: '%s'", fieldName, typeString), e);
+            String.format("Type of field '%s' is invalid: '%s'", fieldName, typeString), e);
       }
     }
     return builder.build();
@@ -83,9 +85,11 @@ public class PartitionedFileSetProperties extends FileSetProperties {
   public static class Builder extends FileSetProperties.Builder {
 
     /**
-     * Package visible default constructor, to allow sub-classing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this
+     * package.
      */
-    Builder() { }
+    Builder() {
+    }
 
     /**
      * Sets the base path for the file dataset.

@@ -52,13 +52,15 @@ public class LogPipelineConfigurator extends JoranConfigurator {
   protected void buildInterpreter() {
     super.buildInterpreter();
     RuleStore ruleStore = interpreter.getRuleStore();
-    ruleStore.addRule(new ElementSelector("configuration/contextName"), new ContextConfigAction(cConf));
-    ruleStore.addRule(new ElementSelector("configuration/appender"), new WrapAppenderAction<ILoggingEvent>());
+    ruleStore.addRule(new ElementSelector("configuration/contextName"),
+        new ContextConfigAction(cConf));
+    ruleStore.addRule(new ElementSelector("configuration/appender"),
+        new WrapAppenderAction<ILoggingEvent>());
   }
 
   /**
-   * An action that copies properties from {@link CConfiguration} to the {@link LoggerContext}
-   * based on the context name.
+   * An action that copies properties from {@link CConfiguration} to the {@link LoggerContext} based
+   * on the context name.
    */
   private static final class ContextConfigAction extends ContextNameAction {
 
@@ -86,19 +88,22 @@ public class LogPipelineConfigurator extends JoranConfigurator {
   }
 
   /**
-   * An {@link Action} that wraps {@link Appender} with {@link WrappedAppender} for flushing and syncing.
+   * An {@link Action} that wraps {@link Appender} with {@link WrappedAppender} for flushing and
+   * syncing.
    *
    * @param <E> type of the event used by the appender
    */
   private static final class WrapAppenderAction<E> extends Action {
 
     @Override
-    public void begin(InterpretationContext ec, String name, Attributes attributes) throws ActionException {
+    public void begin(InterpretationContext ec, String name, Attributes attributes)
+        throws ActionException {
       String appenderName = ec.subst(attributes.getValue(NAME_ATTRIBUTE));
 
       // The execution context contains a bag which contains the appenders created thus far.
       @SuppressWarnings("unchecked")
-      Map<String, Appender<E>> appenderBag = (Map<String, Appender<E>>) ec.getObjectMap().get(ActionConst.APPENDER_BAG);
+      Map<String, Appender<E>> appenderBag = (Map<String, Appender<E>>) ec.getObjectMap()
+          .get(ActionConst.APPENDER_BAG);
 
       Appender<E> appender = appenderBag.get(appenderName);
       appenderBag.put(appenderName, new WrappedAppender<>(appender));
@@ -112,12 +117,13 @@ public class LogPipelineConfigurator extends JoranConfigurator {
 
   /**
    * An {@link Appender} that implements both {@link Flushable} and {@link Syncable}. If either
-   * {@link #flush()} or {@link #sync()} failed, it will be retried on the next {@link #doAppend(Object)}
-   * call.
+   * {@link #flush()} or {@link #sync()} failed, it will be retried on the next {@link
+   * #doAppend(Object)} call.
    *
    * @param <E> type of event that can be appended.
    */
-  private static final class WrappedAppender<E> extends ForwardingAppender<E> implements Flushable, Syncable {
+  private static final class WrappedAppender<E> extends ForwardingAppender<E> implements Flushable,
+      Syncable {
 
     private boolean needFlush;
     private boolean needSync;

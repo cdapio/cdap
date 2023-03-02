@@ -37,20 +37,21 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
- * Internal batch sink used as a connector between a mapreduce job and the workflow client that actually publishes
- * the alerts. Though this extends BatchSink, this will not be instantiated through the plugin framework, but will
- * be created explicitly through the application.
+ * Internal batch sink used as a connector between a mapreduce job and the workflow client that
+ * actually publishes the alerts. Though this extends BatchSink, this will not be instantiated
+ * through the plugin framework, but will be created explicitly through the application.
  *
- * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that wrote to it.
- * This way, multiple phases can have the same local PartitionedFileSet as a sink, and the workflow client will read
- * data from all partitions.
+ * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that
+ * wrote to it. This way, multiple phases can have the same local PartitionedFileSet as a sink, and
+ * the workflow client will read data from all partitions.
  *
- * This is because we don't want this to show up as a plugin that users can select and use, and also because
- * it uses features not exposed in the etl api (local workflow datasets).
+ * This is because we don't want this to show up as a plugin that users can select and use, and also
+ * because it uses features not exposed in the etl api (local workflow datasets).
  *
  * TODO: improve storage format. It is currently a json of the record but that is not ideal
  */
 public class AlertPublisherSink extends BatchSink<Alert, NullWritable, Text> {
+
   private static final Gson GSON = new Gson();
   private final String datasetName;
   private final String phaseName;
@@ -64,11 +65,11 @@ public class AlertPublisherSink extends BatchSink<Alert, NullWritable, Text> {
   // we may want to expose local datasets in cdap-etl-api, but that is a separate track.
   public void configure(WorkflowConfigurer workflowConfigurer) {
     workflowConfigurer.createLocalDataset(datasetName, FileSet.class,
-                                          FileSetProperties.builder()
-                                            .setInputFormat(CombineTextInputFormat.class)
-                                            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
-                                            .setOutputFormat(TextOutputFormat.class)
-                                            .build());
+        FileSetProperties.builder()
+            .setInputFormat(CombineTextInputFormat.class)
+            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
+            .setOutputFormat(TextOutputFormat.class)
+            .build());
   }
 
   @Override
@@ -80,7 +81,7 @@ public class AlertPublisherSink extends BatchSink<Alert, NullWritable, Text> {
 
   @Override
   public void transform(Alert input,
-                        Emitter<KeyValue<NullWritable, Text>> emitter) throws Exception {
+      Emitter<KeyValue<NullWritable, Text>> emitter) throws Exception {
     emitter.emit(new KeyValue<>(NullWritable.get(), new Text(GSON.toJson(input))));
   }
 }

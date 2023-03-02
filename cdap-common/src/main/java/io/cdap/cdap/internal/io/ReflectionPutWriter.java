@@ -30,13 +30,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Encodes an object as a {@link Put} for storing it into a {@link Table}. Assumes that objects to write are
- * records. Fields of simple types are encoded as columns in the table. Complex types (arrays, maps, records, enums),
- * are not supported.
+ * Encodes an object as a {@link Put} for storing it into a {@link Table}. Assumes that objects to
+ * write are records. Fields of simple types are encoded as columns in the table. Complex types
+ * (arrays, maps, records, enums), are not supported.
  *
  * @param <T> the type of object to encode as a {@link Put}
  */
 public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
+
   private final List<String> fieldNames;
   private int index;
 
@@ -127,7 +128,8 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
   }
 
   @Override
-  protected void writeMap(Put put, Map<?, ?> val, Map.Entry<Schema, Schema> mapSchema) throws IOException {
+  protected void writeMap(Put put, Map<?, ?> val, Map.Entry<Schema, Schema> mapSchema)
+      throws IOException {
     throw new UnsupportedOperationException("Maps are not supported.");
   }
 
@@ -140,7 +142,8 @@ public class ReflectionPutWriter<T> extends ReflectionWriter<Put, T> {
   protected void writeUnion(Put put, Object val, Schema schema) throws IOException {
     // only support unions if its for a nullable.
     if (!schema.isNullable()) {
-      throw new UnsupportedOperationException("Unions that do not represent nullables are not supported.");
+      throw new UnsupportedOperationException(
+          "Unions that do not represent nullables are not supported.");
     }
 
     if (val != null) {

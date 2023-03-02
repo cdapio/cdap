@@ -49,19 +49,21 @@ public class DirectMetricsSystemClient implements MetricsSystemClient {
   }
 
   @Override
-  public Collection<MetricTimeSeries> query(int start, int end, int resolution, Map<String, String> tags,
-                                            Collection<String> metrics, Collection<String> groupByTags) {
+  public Collection<MetricTimeSeries> query(int start, int end, int resolution,
+      Map<String, String> tags,
+      Collection<String> metrics, Collection<String> groupByTags) {
     Map<String, AggregationFunction> metricsMap = metrics.stream()
-      .collect(Collectors.toMap(m -> m, m -> AggregationFunction.SUM));
+        .collect(Collectors.toMap(m -> m, m -> AggregationFunction.SUM));
     return metricStore.query(new MetricDataQuery(start, end, resolution, Integer.MAX_VALUE,
-                                                 metricsMap, tags, new ArrayList<>(groupByTags), null));
+        metricsMap, tags, new ArrayList<>(groupByTags), null));
   }
 
   @Override
   public Collection<String> search(Map<String, String> tags) {
     List<TagValue> tagValues = tags.entrySet().stream()
-      .map(e -> new TagValue(e.getKey(), e.getValue()))
-      .collect(Collectors.toList());
-    return metricStore.findMetricNames(new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tagValues));
+        .map(e -> new TagValue(e.getKey(), e.getValue()))
+        .collect(Collectors.toList());
+    return metricStore.findMetricNames(
+        new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tagValues));
   }
 }

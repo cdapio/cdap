@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
  * A {@link Service} for executing {@link Worker}s.
  */
 public class WorkerDriver extends AbstractExecutionThreadService {
+
   private static final Logger LOG = LoggerFactory.getLogger(WorkerDriver.class);
 
   private final Program program;
@@ -64,15 +65,16 @@ public class WorkerDriver extends AbstractExecutionThreadService {
 
     // Fields injection
     Reflections.visit(worker, workerType.getType(),
-                      new MetricsFieldSetter(context.getMetrics()),
-                      new PropertyFieldSetter(spec.getProperties()));
+        new MetricsFieldSetter(context.getMetrics()),
+        new PropertyFieldSetter(spec.getProperties()));
 
     LOG.debug("Starting Worker Program {}", program.getId());
 
     // Initialize worker
     // Worker is always using Explicit transaction
-    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Worker.class,
-                                                                      worker, "initialize", WorkerContext.class);
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
+        Worker.class,
+        worker, "initialize", WorkerContext.class);
     context.initializeProgram(worker, txControl, false);
   }
 
@@ -88,7 +90,7 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     }
     // Worker is always using Explicit transaction
     TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
-                                                                      Worker.class, worker, "destroy");
+        Worker.class, worker, "destroy");
     context.destroyProgram(worker, txControl, false);
     context.close();
   }
@@ -111,7 +113,8 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     return new Executor() {
       @Override
       public void execute(Runnable command) {
-        Thread t = new Thread(command, String.format("worker-%s-%d", program.getName(), context.getInstanceId()));
+        Thread t = new Thread(command,
+            String.format("worker-%s-%d", program.getName(), context.getInstanceId()));
         t.setDaemon(true);
         t.start();
       }

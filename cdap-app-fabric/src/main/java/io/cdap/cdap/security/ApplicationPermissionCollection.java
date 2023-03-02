@@ -41,6 +41,7 @@ import java.util.List;
  * </p>
  */
 class ApplicationPermissionCollection extends PermissionCollection {
+
   private final List<Permission> perms = Lists.newArrayList();
 
   /**

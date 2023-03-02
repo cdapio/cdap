@@ -27,6 +27,7 @@ import java.util.Objects;
  */
 @Beta
 public class JoinKey {
+
   private final String stageName;
   private final List<String> fields;
 
@@ -53,7 +54,7 @@ public class JoinKey {
     }
     JoinKey that = (JoinKey) o;
     return Objects.equals(stageName, that.stageName) &&
-      Objects.equals(fields, that.fields);
+        Objects.equals(fields, that.fields);
   }
 
   @Override
@@ -64,8 +65,8 @@ public class JoinKey {
   @Override
   public String toString() {
     return "JoinKey{" +
-      "stageName='" + stageName + '\'' +
-      ", fields=" + fields +
-      '}';
+        "stageName='" + stageName + '\'' +
+        ", fields=" + fields +
+        '}';
   }
 }

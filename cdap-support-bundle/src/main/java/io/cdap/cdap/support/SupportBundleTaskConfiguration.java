@@ -29,6 +29,7 @@ import java.util.List;
  * Support bundle state for handling all assisted parameters inside the task factories.
  */
 public class SupportBundleTaskConfiguration {
+
   /**
    * unique support bundle id
    */
@@ -66,9 +67,10 @@ public class SupportBundleTaskConfiguration {
    */
   private final Integer maxRunsPerProgram;
 
-  public SupportBundleTaskConfiguration(SupportBundleConfiguration supportBundleConfiguration, String uuid,
-                                        File basePath, List<NamespaceId> namespaces,
-                                        SupportBundleJob supportBundleJob) {
+  public SupportBundleTaskConfiguration(SupportBundleConfiguration supportBundleConfiguration,
+      String uuid,
+      File basePath, List<NamespaceId> namespaces,
+      SupportBundleJob supportBundleJob) {
     this.app = supportBundleConfiguration.getApp();
     this.run = supportBundleConfiguration.getRun();
     this.programType = supportBundleConfiguration.getProgramType();

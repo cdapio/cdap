@@ -22,10 +22,11 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Metrics processor processing information about messageId, metrics processed count, oldest and latest processed
- * timestamp
+ * Metrics processor processing information about messageId, metrics processed count, oldest and
+ * latest processed timestamp
  */
 public final class TopicProcessMeta {
+
   private byte[] messageId;
   private long oldestMetricsTimestamp;
   private long latestMetricsTimestamp;
@@ -36,25 +37,27 @@ public final class TopicProcessMeta {
   private final transient String latestMetricsTimestampMetricName;
 
   public TopicProcessMeta(@Nullable byte[] messageId, long oldestMetricsTimestamp,
-                          long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp) {
-    this(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed, lastProcessedTimestamp,
-         null, null);
+      long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp) {
+    this(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed,
+        lastProcessedTimestamp,
+        null, null);
   }
 
   /**
-   *
    * @param messageId - metrics message id
    * @param oldestMetricsTimestamp - oldest timestamp among the processed metrics
    * @param latestMetricsTimestamp - latest timestamp among the processed metrics
    * @param messagesProcessed - messages processed in an iteration
    * @param lastProcessedTimestamp - timestamp when the most recent update happened
-   * @param oldestMetricsTimestampMetricName - metric name used for oldest metrics timestamp - not serialized
-   * @param latestMetricsTimestampMetricName - metric name used for latest metrics timestamp - not serialized
+   * @param oldestMetricsTimestampMetricName - metric name used for oldest metrics timestamp -
+   *     not serialized
+   * @param latestMetricsTimestampMetricName - metric name used for latest metrics timestamp -
+   *     not serialized
    */
   public TopicProcessMeta(@Nullable byte[] messageId, long oldestMetricsTimestamp,
-                          long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp,
-                          @Nullable String oldestMetricsTimestampMetricName,
-                          @Nullable String latestMetricsTimestampMetricName) {
+      long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp,
+      @Nullable String oldestMetricsTimestampMetricName,
+      @Nullable String latestMetricsTimestampMetricName) {
     this.messageId = messageId;
     this.oldestMetricsTimestamp = oldestMetricsTimestamp;
     this.latestMetricsTimestamp = latestMetricsTimestamp;
@@ -65,9 +68,8 @@ public final class TopicProcessMeta {
   }
 
   /**
-   * updates message id to the passed id, updates latest/oldest timestamp based on the passed timestamp
-   * @param messageId
-   * @param timestamp
+   * updates message id to the passed id, updates latest/oldest timestamp based on the passed
+   * timestamp
    */
   void updateTopicProcessingStats(byte[] messageId, long timestamp) {
     this.messageId = messageId;
@@ -120,7 +122,8 @@ public final class TopicProcessMeta {
 
   @Override
   public int hashCode() {
-    return Objects.hash(Arrays.hashCode(messageId), oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed);
+    return Objects.hash(Arrays.hashCode(messageId), oldestMetricsTimestamp, latestMetricsTimestamp,
+        messagesProcessed);
   }
 
   @Override
@@ -133,8 +136,8 @@ public final class TopicProcessMeta {
     }
     TopicProcessMeta that = (TopicProcessMeta) o;
     return oldestMetricsTimestamp == that.oldestMetricsTimestamp
-      && latestMetricsTimestamp == that.latestMetricsTimestamp
-      && messagesProcessed == that.messagesProcessed
-      && Arrays.equals(messageId, that.messageId);
+        && latestMetricsTimestamp == that.latestMetricsTimestamp
+        && messagesProcessed == that.messagesProcessed
+        && Arrays.equals(messageId, that.messageId);
   }
 }

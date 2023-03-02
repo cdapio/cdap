@@ -38,9 +38,9 @@ import io.cdap.cdap.internal.bootstrap.executor.SystemProfileCreator;
 
 /**
  * Guice bindings for bootstrap classes. Binds {@link BootstrapService} as a singleton and binds
- * {@link BootstrapStep.Type} to a {@link BootstrapStepExecutor} responsible for executing that type of step.
- * For unit tests, the in memory module should be used, which will create the default namespace and native profile.
- * For actual CDAP instances, the file based module should be used.
+ * {@link BootstrapStep.Type} to a {@link BootstrapStepExecutor} responsible for executing that type
+ * of step. For unit tests, the in memory module should be used, which will create the default
+ * namespace and native profile. For actual CDAP instances, the file based module should be used.
  */
 public class BootstrapModules {
 
@@ -52,7 +52,8 @@ public class BootstrapModules {
       @Override
       protected void configure() {
         super.configure();
-        BootstrapConfigProvider inMemoryProvider = new InMemoryBootstrapConfigProvider(BootstrapConfig.DEFAULT);
+        BootstrapConfigProvider inMemoryProvider = new InMemoryBootstrapConfigProvider(
+            BootstrapConfig.DEFAULT);
         bind(BootstrapConfigProvider.class).toInstance(inMemoryProvider);
       }
     };
@@ -80,13 +81,15 @@ public class BootstrapModules {
     protected void configure() {
       bind(BootstrapService.class).in(Scopes.SINGLETON);
       MapBinder<BootstrapStep.Type, BootstrapStepExecutor> mapBinder = MapBinder.newMapBinder(
-        binder(), BootstrapStep.Type.class, BootstrapStepExecutor.class);
+          binder(), BootstrapStep.Type.class, BootstrapStepExecutor.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_APPLICATION).to(AppCreator.class);
-      mapBinder.addBinding(BootstrapStep.Type.CREATE_DEFAULT_NAMESPACE).to(DefaultNamespaceCreator.class);
+      mapBinder.addBinding(BootstrapStep.Type.CREATE_DEFAULT_NAMESPACE)
+          .to(DefaultNamespaceCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_NATIVE_PROFILE).to(NativeProfileCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.CREATE_SYSTEM_PROFILE).to(SystemProfileCreator.class);
       mapBinder.addBinding(BootstrapStep.Type.LOAD_SYSTEM_ARTIFACTS).to(SystemArtifactLoader.class);
-      mapBinder.addBinding(BootstrapStep.Type.SET_SYSTEM_PROPERTIES).to(SystemPreferenceSetter.class);
+      mapBinder.addBinding(BootstrapStep.Type.SET_SYSTEM_PROPERTIES)
+          .to(SystemPreferenceSetter.class);
       mapBinder.addBinding(BootstrapStep.Type.START_PROGRAM).to(ProgramStarter.class);
     }
   }

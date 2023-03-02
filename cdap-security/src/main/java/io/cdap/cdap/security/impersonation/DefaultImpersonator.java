@@ -39,7 +39,8 @@ public class DefaultImpersonator implements Impersonator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultImpersonator.class);
   // Log once every 100 calls
-  private static final Logger IMPERSONATION_FAILTURE_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
+  private static final Logger IMPERSONATION_FAILTURE_LOG = Loggers.sampling(LOG,
+      LogSamplers.onceEvery(100));
   private final UGIProvider ugiProvider;
   private final boolean kerberosEnabled;
   private final String masterShortUsername;
@@ -52,8 +53,8 @@ public class DefaultImpersonator implements Impersonator {
     try {
       // on kerberos disabled cluster the master principal will be null
       this.masterShortUsername = kerberosEnabled
-        ? new KerberosName(SecurityUtil.getMasterPrincipal(cConf)).getShortName()
-        : null;
+          ? new KerberosName(SecurityUtil.getMasterPrincipal(cConf)).getShortName()
+          : null;
     } catch (IOException e) {
       throw new RuntimeException("Failed to get short name from the kerberos principal", e);
     }
@@ -66,11 +67,12 @@ public class DefaultImpersonator implements Impersonator {
 
   @Override
   public <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
-                    ImpersonatedOpType impersonatedOpType) throws Exception {
+      ImpersonatedOpType impersonatedOpType) throws Exception {
     UserGroupInformation ugi = getUGI(entityId, impersonatedOpType);
     if (!UserGroupInformation.getCurrentUser().equals(ugi)) {
-      LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type {}", ugi, entityId,
-                impersonatedOpType);
+      LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type {}",
+          ugi, entityId,
+          impersonatedOpType);
     }
     return ImpersonationUtils.doAs(ugi, callable);
   }
@@ -81,7 +83,7 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   private UserGroupInformation getUGI(NamespacedEntityId entityId,
-                                      ImpersonatedOpType impersonatedOpType) throws AccessException {
+      ImpersonatedOpType impersonatedOpType) throws AccessException {
     try {
       UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
       // don't impersonate if kerberos isn't enabled OR if the operation is in the system namespace
@@ -89,15 +91,17 @@ public class DefaultImpersonator implements Impersonator {
         return currentUser;
       }
 
-      ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
+      ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId,
+          impersonatedOpType);
       // if the current user is not same as cdap master user then it means we are already impersonating some user
       // and hence we should not allow another impersonation. See CDAP-8641 and CDAP-13123
       // Note that this is just a temporary fix and we will need to revisit the impersonation model in the future.
       if (!currentUser.getShortUserName().equals(masterShortUsername)) {
         LOG.debug("Not impersonating for {} as the call is already impersonated as {}",
-                  impersonationRequest, currentUser);
-        IMPERSONATION_FAILTURE_LOG.warn("Not impersonating for {} as the call is already impersonated as {}",
-                                        impersonationRequest, currentUser);
+            impersonationRequest, currentUser);
+        IMPERSONATION_FAILTURE_LOG.warn(
+            "Not impersonating for {} as the call is already impersonated as {}",
+            impersonationRequest, currentUser);
         return currentUser;
       }
       return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();

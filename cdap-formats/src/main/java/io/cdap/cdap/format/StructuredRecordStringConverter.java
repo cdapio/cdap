@@ -39,7 +39,8 @@ import java.util.stream.Collectors;
 public class StructuredRecordStringConverter {
 
   private static final JsonStructuredRecordDatumWriter JSON_DATUM_WRITER = new JsonStructuredRecordDatumWriter();
-  private static final JsonStructuredRecordDatumReader JSON_DATUM_READER = new JsonStructuredRecordDatumReader(true);
+  private static final JsonStructuredRecordDatumReader JSON_DATUM_READER = new JsonStructuredRecordDatumReader(
+      true);
 
   /**
    * Converts a {@link StructuredRecord} to a json string.
@@ -66,14 +67,15 @@ public class StructuredRecordStringConverter {
    */
   public static String toDelimitedString(final StructuredRecord record, String delimiter) {
     return record.getSchema().getFields().stream()
-      .map(f -> fieldToString(record, f))
-      .collect(Collectors.joining(delimiter));
+        .map(f -> fieldToString(record, f))
+        .collect(Collectors.joining(delimiter));
   }
 
   /**
    * Converts a delimited string to a {@link StructuredRecord} based on the schema.
    */
-  public static StructuredRecord fromDelimitedString(String delimitedString, String delimiter, Schema schema) {
+  public static StructuredRecord fromDelimitedString(String delimitedString, String delimiter,
+      Schema schema) {
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     Iterator<Schema.Field> fields = schema.getFields().iterator();
 
@@ -87,13 +89,14 @@ public class StructuredRecordStringConverter {
 
   /**
    * Set field value in the supplied Structured Record Builder.
+   *
    * @param builder Structured Record Builder instance
    * @param field field to set
    * @param part String portion of the delimited input
    */
   protected static void parseAndSetFieldValue(StructuredRecord.Builder builder,
-                                              Schema.Field field,
-                                              String part) {
+      Schema.Field field,
+      String part) {
     if (part.isEmpty()) {
       builder.set(field.getName(), null);
     } else {
@@ -102,10 +105,11 @@ public class StructuredRecordStringConverter {
   }
 
   /**
-   * Get the string representation for a given record field. BigDecimals are printed as plain strings.
+   * Get the string representation for a given record field. BigDecimals are printed as plain
+   * strings.
    *
    * @param record record to process
-   * @param field  field to extract
+   * @param field field to extract
    * @return String representing the value for this field.
    */
   protected static String fieldToString(StructuredRecord record, Schema.Field field) {
@@ -129,7 +133,8 @@ public class StructuredRecordStringConverter {
 
       // Throw exception if the field is expected tu be decimal, but it could not be processed as such.
       if (decimalValue == null) {
-        throw new IllegalArgumentException("Invalid schema for field " + fieldName + ". Decimal was expected.");
+        throw new IllegalArgumentException(
+            "Invalid schema for field " + fieldName + ". Decimal was expected.");
       }
       return decimalValue.toPlainString();
     }
@@ -140,7 +145,7 @@ public class StructuredRecordStringConverter {
         return FormatUtils.base64Encode(value);
       } catch (IOException ioe) {
         throw new IllegalArgumentException("Invalid schema for field " + fieldName + ". " +
-                                             "ByteBuffer or Byte Array was expected.", ioe);
+            "ByteBuffer or Byte Array was expected.", ioe);
       }
     }
 
@@ -151,11 +156,11 @@ public class StructuredRecordStringConverter {
    * Handle field mapping and conversion into Structured Record
    *
    * @param field field schema to parse
-   * @param part  portion of the string to parse
+   * @param part portion of the string to parse
    */
   protected static void handleFieldConversion(StructuredRecord.Builder builder,
-                                              Schema.Field field,
-                                              String part) {
+      Schema.Field field,
+      String part) {
     String fieldName = field.getName();
 
     // Get the underlying field schema
@@ -176,7 +181,8 @@ public class StructuredRecordStringConverter {
         builder.set(fieldName, FormatUtils.base64Decode(part));
         return;
       } catch (IOException ioe) {
-        throw new IllegalArgumentException("Unable to extract Base64 payload from field " + fieldName, ioe);
+        throw new IllegalArgumentException(
+            "Unable to extract Base64 payload from field " + fieldName, ioe);
       }
     }
 

@@ -24,9 +24,10 @@ import java.util.Map;
  * Provides {@link MetricsMetaKey} for {@link TopicId}
  */
 public interface MetricsMetaKeyProvider {
+
   /**
-   * Provide a {@link Map} with {@link TopicId} and
-   * {@link MetricsMetaKey} implementation for the given list of {@link TopicId}.
+   * Provide a {@link Map} with {@link TopicId} and {@link MetricsMetaKey} implementation for the
+   * given list of {@link TopicId}.
    *
    * @param topics {@link List<TopicId>}
    * @return {@link Map<TopicId, MetricsMetaKey>}

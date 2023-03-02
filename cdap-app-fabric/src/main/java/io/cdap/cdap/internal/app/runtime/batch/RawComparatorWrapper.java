@@ -23,8 +23,9 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 
 /**
- * Wraps user-defined implementation of {@link RawComparator} class which allows to perform extra configuration,
- * such as initialization with MapReduceTaskContext, if the delegate class implements ProgramLifeCycle.
+ * Wraps user-defined implementation of {@link RawComparator} class which allows to perform extra
+ * configuration, such as initialization with MapReduceTaskContext, if the delegate class implements
+ * ProgramLifeCycle.
  */
 abstract class RawComparatorWrapper implements RawComparator, Configurable {
 
@@ -55,11 +56,13 @@ abstract class RawComparatorWrapper implements RawComparator, Configurable {
   }
 
   static final class CombinerGroupComparatorWrapper extends RawComparatorWrapper {
+
     private static final String ATTR_CLASS = "c.combiner.group.comparator.class";
 
     /**
-     * Wraps the combiner group comparator defined in the job with this {@link CombinerGroupComparatorWrapper} if it is
-     * defined.
+     * Wraps the combiner group comparator defined in the job with this {@link
+     * CombinerGroupComparatorWrapper} if it is defined.
+     *
      * @param job The MapReduce job
      */
     static void wrap(Job job) {
@@ -75,10 +78,13 @@ abstract class RawComparatorWrapper implements RawComparator, Configurable {
   }
 
   static final class GroupComparatorWrapper extends RawComparatorWrapper {
+
     private static final String ATTR_CLASS = "c.group.comparator.class";
 
     /**
-     * Wraps the group comparator defined in the job with this {@link GroupComparatorWrapper} if it is defined.
+     * Wraps the group comparator defined in the job with this {@link GroupComparatorWrapper} if it
+     * is defined.
+     *
      * @param job The MapReduce job
      */
     static void wrap(Job job) {
@@ -94,10 +100,13 @@ abstract class RawComparatorWrapper implements RawComparator, Configurable {
   }
 
   static final class KeyComparatorWrapper extends RawComparatorWrapper {
+
     private static final String ATTR_CLASS = "c.key.comparator.class";
 
     /**
-     * Wraps the key comparator defined in the job with this {@link KeyComparatorWrapper} if it is defined.
+     * Wraps the key comparator defined in the job with this {@link KeyComparatorWrapper} if it is
+     * defined.
+     *
      * @param job The MapReduce job
      */
     static void wrap(Job job) {

@@ -36,19 +36,22 @@ import java.util.Set;
 /**
  * Represents metadata about an artifact that can be specified by users.
  */
-public class ArtifactConfig  {
+public class ArtifactConfig {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeSerializer())
-    .create();
+      .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeSerializer())
+      .create();
   private final Set<ArtifactRange> parents;
   private final Set<PluginClass> plugins;
   private final Map<String, String> properties;
 
   public ArtifactConfig() {
-    this(ImmutableSet.<ArtifactRange>of(), ImmutableSet.<PluginClass>of(), ImmutableMap.<String, String>of());
+    this(ImmutableSet.<ArtifactRange>of(), ImmutableSet.<PluginClass>of(),
+        ImmutableMap.<String, String>of());
   }
 
-  public ArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins, Map<String, String> properties) {
+  public ArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins,
+      Map<String, String> properties) {
     this.parents = ImmutableSet.copyOf(parents);
     this.plugins = ImmutableSet.copyOf(plugins);
     this.properties = ImmutableMap.copyOf(properties);
@@ -68,7 +71,8 @@ public class ArtifactConfig  {
 
   public boolean hasParent(Id.Artifact artifactId) {
     for (ArtifactRange range : parents) {
-      if (range.getName().equals(artifactId.getName()) && range.versionIsInRange(artifactId.getVersion())) {
+      if (range.getName().equals(artifactId.getName()) && range.versionIsInRange(
+          artifactId.getVersion())) {
         return true;
       }
     }
@@ -101,13 +105,14 @@ public class ArtifactConfig  {
 
   /**
    * Serializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link ArtifactRanges#parseArtifactRange(String)}.
-   * Currently, system artifacts can only extend other system artifacts.
+   * parsed via {@link ArtifactRanges#parseArtifactRange(String)}. Currently, system artifacts can
+   * only extend other system artifacts.
    */
   private static final class ArtifactRangeSerializer implements JsonSerializer<ArtifactRange> {
 
     @Override
-    public JsonElement serialize(ArtifactRange src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(ArtifactRange src, Type typeOfSrc,
+        JsonSerializationContext context) {
       return new JsonPrimitive(src.toString());
     }
   }

@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
 /**
  * A default implementation of {@link ServiceDiscovered}.
  *
- * This implementation is copied from Twill with small modification as cleanup, and the one in twill is package
- * protected, hence can't be used directly.
+ * This implementation is copied from Twill with small modification as cleanup, and the one in twill
+ * is package protected, hence can't be used directly.
  */
 public final class DefaultServiceDiscovered implements ServiceDiscovered {
 
@@ -64,7 +64,8 @@ public final class DefaultServiceDiscovered implements ServiceDiscovered {
       return;
     }
 
-    LOG.trace("Discoverables for service {} changed from {} to {}", name, oldDiscoverables, newDiscoverables);
+    LOG.trace("Discoverables for service {} changed from {} to {}", name, oldDiscoverables,
+        newDiscoverables);
 
     // Collect all listeners with a read lock to the listener list.
     List<ListenerCaller> callers = new ArrayList<>();
@@ -120,8 +121,8 @@ public final class DefaultServiceDiscovered implements ServiceDiscovered {
   }
 
   /**
-   * Private helper class for invoking the change listener from an executor.
-   * It also responsible to remove itself from the listener list.
+   * Private helper class for invoking the change listener from an executor. It also responsible to
+   * remove itself from the listener list.
    */
   private final class ListenerCaller implements Runnable, Cancellable {
 

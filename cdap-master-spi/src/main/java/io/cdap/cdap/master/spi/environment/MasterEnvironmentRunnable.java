@@ -17,8 +17,8 @@
 package io.cdap.cdap.master.spi.environment;
 
 /**
- * A executable that can be launched by {@link MasterEnvironmentContext#getRunnableArguments(Class, String...)}
- * as a separate process.
+ * A executable that can be launched by {@link MasterEnvironmentContext#getRunnableArguments(Class,
+ * String...)} as a separate process.
  *
  * Implementation class should have a constructor that takes two arguments in the following order
  *
@@ -27,8 +27,8 @@ package io.cdap.cdap.master.spi.environment;
 public interface MasterEnvironmentRunnable {
 
   /**
-   * This act like a Java main method, which will be called after the {@link MasterEnvironment} was initialize.
-   * This method should block until it finishes its task.
+   * This act like a Java main method, which will be called after the {@link MasterEnvironment} was
+   * initialize. This method should block until it finishes its task.
    */
   void run(String[] args) throws Exception;
 

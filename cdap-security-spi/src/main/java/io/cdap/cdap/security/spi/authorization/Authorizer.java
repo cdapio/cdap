@@ -27,8 +27,9 @@ import java.util.jar.Attributes;
 
 /**
  * Interface for managing {@link Principal principals'} authorization for {@link Action actions} on
- * {@link EntityId CDAP entities}. Authorization extensions must implement this interface to delegate authorization
- * to appropriate authorization back-ends. The contract with Authorization extensions is as below:
+ * {@link EntityId CDAP entities}. Authorization extensions must implement this interface to
+ * delegate authorization to appropriate authorization back-ends. The contract with Authorization
+ * extensions is as below:
  *
  * <ul>
  *   <li>Authorization is enabled setting the parameter {@code security.authorization.enabled} to true in
@@ -48,14 +49,17 @@ import java.util.jar.Attributes;
  *   keys with the prefix {@code security.authorization.extension.config}.</li>
  *   <li>The {@link #destroy()} method can be used to perform cleanup tasks.</li>
  * </ul>
+ *
  * @deprecated Use {@link AccessController}
  */
-@Beta @Deprecated
+@Beta
+@Deprecated
 public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, AuthorizationEnforcer {
+
   /**
    * Initialize the {@link Authorizer}. Authorization extensions can use this method to access an
-   * {@link AuthorizationContext} that allows them to interact with CDAP for operations such as creating and accessing
-   * datasets, executing dataset operations in transactions, etc.
+   * {@link AuthorizationContext} that allows them to interact with CDAP for operations such as
+   * creating and accessing datasets, executing dataset operations in transactions, etc.
    *
    * @param context the {@link AuthorizationContext} that can be used to interact with CDAP
    */
@@ -111,7 +115,8 @@ public interface Authorizer extends PrivilegesFetcher, PrivilegesManager, Author
   Set<Role> listAllRoles() throws Exception;
 
   /**
-   * Destroys an {@link Authorizer}. Authorization extensions can use this method to write any cleanup code.
+   * Destroys an {@link Authorizer}. Authorization extensions can use this method to write any
+   * cleanup code.
    */
   void destroy() throws Exception;
 }

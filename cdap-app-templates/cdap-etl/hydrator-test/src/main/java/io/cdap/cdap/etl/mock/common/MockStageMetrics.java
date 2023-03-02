@@ -24,6 +24,7 @@ import java.util.Map;
  * Mock StageMetrics for unit tests
  */
 public class MockStageMetrics implements StageMetrics {
+
   private final String stageName;
   private final MockMetrics mockMetrics;
 

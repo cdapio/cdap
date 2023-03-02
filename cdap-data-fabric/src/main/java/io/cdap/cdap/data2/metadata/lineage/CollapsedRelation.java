@@ -29,14 +29,16 @@ import org.apache.twill.api.RunId;
  * A {@link Relation} collapsed based on {@link CollapseType}.
  */
 public class CollapsedRelation {
+
   private final NamespacedEntityId data;
   private final ProgramId program;
   private final Set<AccessType> access;
   private final Set<RunId> runs;
   private final Set<NamespacedEntityId> components;
 
-  public CollapsedRelation(DatasetId dataset, ProgramId program, Set<AccessType> access, Set<RunId> runs,
-                           Set<NamespacedEntityId> components) {
+  public CollapsedRelation(DatasetId dataset, ProgramId program, Set<AccessType> access,
+      Set<RunId> runs,
+      Set<NamespacedEntityId> components) {
     this.data = dataset;
     this.program = program;
     this.access = ImmutableSet.copyOf(access);
@@ -74,10 +76,10 @@ public class CollapsedRelation {
     }
     CollapsedRelation that = (CollapsedRelation) o;
     return Objects.equals(data, that.data) &&
-      Objects.equals(program, that.program) &&
-      Objects.equals(access, that.access) &&
-      Objects.equals(runs, that.runs) &&
-      Objects.equals(components, that.components);
+        Objects.equals(program, that.program) &&
+        Objects.equals(access, that.access) &&
+        Objects.equals(runs, that.runs) &&
+        Objects.equals(components, that.components);
   }
 
   @Override
@@ -88,11 +90,11 @@ public class CollapsedRelation {
   @Override
   public String toString() {
     return "CollapsedRelation{" +
-      "data=" + data +
-      ", program=" + program +
-      ", access=" + access +
-      ", runs=" + runs +
-      ", components=" + components +
-      '}';
+        "data=" + data +
+        ", program=" + program +
+        ", access=" + access +
+        ", runs=" + runs +
+        ", components=" + components +
+        '}';
   }
 }

@@ -17,8 +17,8 @@
 package io.cdap.cdap.api.retry;
 
 /**
- * An exception that indicates an operation failed in a retryable way. For example, reading from an external system
- * may fail if that system is temporarily unavailable.
+ * An exception that indicates an operation failed in a retryable way. For example, reading from an
+ * external system may fail if that system is temporarily unavailable.
  */
 public class RetryableException extends RuntimeException {
 

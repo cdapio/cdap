@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
  * Exception thrown when a {@link Role} or an entity already exists
  */
 public class AlreadyExistsException extends AccessException implements HttpErrorStatusProvider {
+
   public AlreadyExistsException(Role role) {
     super(String.format("%s already exists.", role));
   }

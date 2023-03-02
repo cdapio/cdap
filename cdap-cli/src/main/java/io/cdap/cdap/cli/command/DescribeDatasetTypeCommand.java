@@ -51,17 +51,17 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     DatasetTypeId type = cliConfig.getCurrentNamespace().datasetType(
-      arguments.get(ArgumentName.DATASET_TYPE.toString()));
+        arguments.get(ArgumentName.DATASET_TYPE.toString()));
     DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(type);
 
     Table table = Table.builder()
-      .setHeader("name", "modules")
-      .setRows(ImmutableList.of(datasetTypeMeta), new RowMaker<DatasetTypeMeta>() {
-        @Override
-        public List<?> makeRow(DatasetTypeMeta object) {
-          return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
-        }
-      }).build();
+        .setHeader("name", "modules")
+        .setRows(ImmutableList.of(datasetTypeMeta), new RowMaker<DatasetTypeMeta>() {
+          @Override
+          public List<?> makeRow(DatasetTypeMeta object) {
+            return Lists.newArrayList(object.getName(), Joiner.on(", ").join(object.getModules()));
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
@@ -73,6 +73,6 @@ public class DescribeDatasetTypeCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Describes %s",
-                         Fragment.of(Article.A, ElementType.DATASET_TYPE.getName()));
+        Fragment.of(Article.A, ElementType.DATASET_TYPE.getName()));
   }
 }

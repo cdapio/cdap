@@ -23,12 +23,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * An EndPoint in an operation represents the source or destination of the data,
- * along with the namespace in which they exists. When namespace is not provided,
- * the namespace for an EndPoint is considered to be same as the namespace in which
- * program runs.
+ * An EndPoint in an operation represents the source or destination of the data, along with the
+ * namespace in which they exists. When namespace is not provided, the namespace for an EndPoint is
+ * considered to be same as the namespace in which program runs.
  */
 public class EndPoint {
+
   @Nullable
   private final String namespace;
   @Nullable
@@ -50,10 +50,9 @@ public class EndPoint {
   }
 
   /**
-   * @return the namespace name if it is explicitly provided while creating this EndPoint,
-   * otherwise {@code null} is returned. Also, in the case where in a pipeline
-   * a field is dropped, the dropped EndPointField is mapped to a blank EndPointField with
-   * namespace set to null.
+   * @return the namespace name if it is explicitly provided while creating this EndPoint, otherwise
+   *     {@code null} is returned. Also, in the case where in a pipeline a field is dropped, the
+   *     dropped EndPointField is mapped to a blank EndPointField with namespace set to null.
    */
   @Nullable
   public String getNamespace() {
@@ -61,9 +60,9 @@ public class EndPoint {
   }
 
   /**
-   * @return the name of the {@link EndPoint}
-   * Name can be null in the case where in a pipeline a field is dropped,
-   * and the dropped EndPointField is mapped to a blank EndPointField with name set to null.
+   * @return the name of the {@link EndPoint} Name can be null in the case where in a pipeline a
+   *     field is dropped, and the dropped EndPointField is mapped to a blank EndPointField with
+   *     name set to null.
    */
   @Nullable
   public String getName() {
@@ -122,8 +121,8 @@ public class EndPoint {
     EndPoint that = (EndPoint) o;
 
     return Objects.equals(namespace, that.namespace)
-      && Objects.equals(name, that.name)
-      && Objects.equals(properties, that.properties);
+        && Objects.equals(name, that.name)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -134,9 +133,9 @@ public class EndPoint {
   @Override
   public String toString() {
     return "EndPoint{" +
-      "namespace='" + namespace + '\'' +
-      ", name='" + name + '\'' +
-      ", properties='" + properties + '\'' +
-      '}';
+        "namespace='" + namespace + '\'' +
+        ", name='" + name + '\'' +
+        ", properties='" + properties + '\'' +
+        '}';
   }
 }

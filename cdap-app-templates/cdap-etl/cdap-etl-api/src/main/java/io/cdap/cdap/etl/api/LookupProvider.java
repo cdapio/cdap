@@ -22,6 +22,7 @@ import java.util.Map;
  * Provides {@link Lookup} instances given a dataset name.
  */
 public interface LookupProvider {
+
   /**
    * @param table the name of the {@link Lookup} table
    * @param arguments arguments for initializing the {@link Lookup} table

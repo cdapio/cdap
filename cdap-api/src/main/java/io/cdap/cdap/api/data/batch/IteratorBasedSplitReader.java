@@ -20,15 +20,18 @@ import java.util.Iterator;
 
 /**
  * Handy implementation of {@link SplitReader} backed by {@link Iterator}.
+ *
  * @param <KEY> The key type.
  * @param <VALUE> The value type.
  */
 public abstract class IteratorBasedSplitReader<KEY, VALUE>
-  extends SplitReaderBase<KEY, VALUE> {
+    extends SplitReaderBase<KEY, VALUE> {
+
   private Iterator<VALUE> iterator;
 
   /**
    * Creates an iterator to iterate through all records of a given split.
+   *
    * @param split Split to iterate through.
    * @return An instance of {@link Iterator}.
    */
@@ -36,6 +39,7 @@ public abstract class IteratorBasedSplitReader<KEY, VALUE>
 
   /**
    * Gets the key belonging to the key/value record provided by the iterator.
+   *
    * @param value The value of the key/value record.
    * @return The key of the key/value record.
    */

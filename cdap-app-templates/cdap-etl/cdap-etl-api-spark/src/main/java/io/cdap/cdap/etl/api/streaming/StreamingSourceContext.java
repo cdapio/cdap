@@ -26,17 +26,19 @@ import org.apache.tephra.TransactionFailureException;
  * Context passed to streaming source during prepare run phase.
  */
 public interface StreamingSourceContext extends BatchContext {
+
   /**
    * Register dataset lineage for this Spark program using the given reference name
    *
    * @param referenceName reference name used for source
    * @param schema schema for this dataset
-   *
-   * @throws DatasetManagementException thrown if there was an error in creating reference dataset
-   * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
+   * @throws DatasetManagementException thrown if there was an error in creating reference
+   *     dataset
+   * @throws TransactionFailureException thrown if there was an error while fetching the dataset
+   *     to register usage
    */
   void registerLineage(String referenceName,
-                       @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException;
+      @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException;
 
   /**
    * Indicates whether the pipeline is running in preview.

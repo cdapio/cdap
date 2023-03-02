@@ -24,12 +24,14 @@ import java.util.Objects;
  */
 @Beta
 public class ArtifactSummary {
+
   protected final String name;
   protected final String version;
   protected final ArtifactScope scope;
 
   public static ArtifactSummary from(ArtifactId artifactId) {
-    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope());
+    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(),
+        artifactId.getScope());
   }
 
   public ArtifactSummary(String name, String version) {
@@ -44,6 +46,7 @@ public class ArtifactSummary {
 
   /**
    * get the name of the artifact
+   *
    * @return name of the artifact
    */
   public String getName() {
@@ -52,6 +55,7 @@ public class ArtifactSummary {
 
   /**
    * get the version of artifact
+   *
    * @return artifact version
    */
   public String getVersion() {
@@ -60,6 +64,7 @@ public class ArtifactSummary {
 
   /**
    * get the scope of the artifact
+   *
    * @return artifact scope
    */
   public ArtifactScope getScope() {
@@ -67,8 +72,8 @@ public class ArtifactSummary {
   }
 
   /**
-   * Validate that the artifact fields are valid. Should be called when this object is created through deserializing
-   * user input.
+   * Validate that the artifact fields are valid. Should be called when this object is created
+   * through deserializing user input.
    *
    * @throws IllegalArgumentException if the artifact summary is invalid
    */
@@ -77,10 +82,12 @@ public class ArtifactSummary {
       throw new IllegalArgumentException("Artifact name must be specified.");
     }
     if (version == null) {
-      throw new IllegalArgumentException(String.format("Artifact version for %s must be specified.", name));
+      throw new IllegalArgumentException(
+          String.format("Artifact version for %s must be specified.", name));
     }
     if (scope == null) {
-      throw new IllegalArgumentException(String.format("Artifact scope for %s must be specified.", name));
+      throw new IllegalArgumentException(
+          String.format("Artifact scope for %s must be specified.", name));
     }
   }
 
@@ -96,8 +103,8 @@ public class ArtifactSummary {
     ArtifactSummary that = (ArtifactSummary) o;
 
     return Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version) &&
-      Objects.equals(scope, that.scope);
+        Objects.equals(version, that.version) &&
+        Objects.equals(scope, that.scope);
   }
 
   @Override

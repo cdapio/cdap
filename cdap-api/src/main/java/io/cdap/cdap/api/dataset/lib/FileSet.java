@@ -24,9 +24,9 @@ import java.util.Map;
 import org.apache.twill.filesystem.Location;
 
 /**
- * This dataset represents a collection of files on the file system. The dataset has a base location, under which
- * all of its files are located. When instantiated, runtime arguments are required to specify the individual file
- * or files being used.
+ * This dataset represents a collection of files on the file system. The dataset has a base
+ * location, under which all of its files are located. When instantiated, runtime arguments are
+ * required to specify the individual file or files being used.
  */
 public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 

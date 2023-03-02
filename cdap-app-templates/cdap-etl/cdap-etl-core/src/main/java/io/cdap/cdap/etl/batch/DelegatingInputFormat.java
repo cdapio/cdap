@@ -35,7 +35,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
 
   /**
-   * Returns the name of the config key to the delegating {@link InputFormat} class name configuration.
+   * Returns the name of the config key to the delegating {@link InputFormat} class name
+   * configuration.
    */
   protected abstract String getDelegateClassNameKey();
 
@@ -46,7 +47,7 @@ public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
 
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
-                                               TaskAttemptContext context) throws IOException, InterruptedException {
+      TaskAttemptContext context) throws IOException, InterruptedException {
     return getDelegate(context.getConfiguration()).createRecordReader(split, context);
   }
 
@@ -60,15 +61,17 @@ public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
     String delegateClassName = conf.get(getDelegateClassNameKey());
     if (delegateClassName == null) {
       throw new IllegalArgumentException("Missing configuration " + getDelegateClassNameKey()
-                                           + " for the InputFormat to use");
+          + " for the InputFormat to use");
     }
     if (delegateClassName.equals(getClass().getName())) {
-      throw new IllegalArgumentException("Cannot delegate InputFormat to the same class " + delegateClassName);
+      throw new IllegalArgumentException(
+          "Cannot delegate InputFormat to the same class " + delegateClassName);
     }
     try {
       //noinspection unchecked
-      InputFormat<K, V> inputFormat = (InputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName)
-        .newInstance();
+      InputFormat<K, V> inputFormat = (InputFormat<K, V>) conf.getClassLoader()
+          .loadClass(delegateClassName)
+          .newInstance();
       if (inputFormat instanceof Configurable) {
         ((Configurable) inputFormat).setConf(conf);
       }

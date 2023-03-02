@@ -21,14 +21,14 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Provides read access to the secure store.
- * For write access use {@link SecureStoreManager}.
+ * Provides read access to the secure store. For write access use {@link SecureStoreManager}.
  */
 @Beta
 public interface SecureStore {
 
   /**
    * List of metadata stored in the secure store.
+   *
    * @param namespace The namespace that this key belongs to
    * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store
    * @throws IOException If there was a problem reading from the keystore
@@ -38,6 +38,7 @@ public interface SecureStore {
 
   /**
    * Returns the data stored in the secure store.
+   *
    * @param namespace The namespace that this key belongs to
    * @param name Name of the data element
    * @return An object representing the securely stored data associated with the name

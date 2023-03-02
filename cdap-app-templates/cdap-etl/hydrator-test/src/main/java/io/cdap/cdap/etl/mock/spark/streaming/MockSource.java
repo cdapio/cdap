@@ -55,9 +55,11 @@ import org.apache.spark.streaming.receiver.Receiver;
 @Plugin(type = StreamingSource.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSource extends StreamingSource<StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Gson GSON = new Gson();
-  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type STRING_LIST_TYPE = new TypeToken<List<String>>() {
+  }.getType();
 
   private final Conf conf;
 
@@ -83,9 +85,9 @@ public class MockSource extends StreamingSource<StructuredRecord> {
       Schema outputSchema = Schema.parseJson(conf.schema);
       if (outputSchema.getFields() != null) {
         outputSchema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList())
-          .forEach(field -> context.record(Collections.singletonList(
-            new FieldReadOperation("Read " + field, "Read from mock source",
-                                   EndPoint.of(context.getNamespace(), conf.referenceName), field))));
+            .forEach(field -> context.record(Collections.singletonList(
+                new FieldReadOperation("Read " + field, "Read from mock source",
+                    EndPoint.of(context.getNamespace(), conf.referenceName), field))));
       }
     }
   }
@@ -142,6 +144,7 @@ public class MockSource extends StreamingSource<StructuredRecord> {
    * Config for mock source.
    */
   public static class Conf extends PluginConfig {
+
     private String schema;
     private String records;
     @Nullable
@@ -154,43 +157,46 @@ public class MockSource extends StreamingSource<StructuredRecord> {
     }
   }
 
-  public static ETLPlugin getPlugin(Schema schema, List<StructuredRecord> records) throws IOException {
+  public static ETLPlugin getPlugin(Schema schema, List<StructuredRecord> records)
+      throws IOException {
     return getPlugin(schema, records, 0L);
   }
 
   public static ETLPlugin getPlugin(Schema schema, List<StructuredRecord> records,
-                                    Long intervalMillis) throws IOException {
+      Long intervalMillis) throws IOException {
     return getPlugin(schema, records, intervalMillis, null);
   }
 
   public static ETLPlugin getPlugin(Schema schema, List<StructuredRecord> records,
-                                    Long intervalMillis, @Nullable String referenceName) throws IOException {
+      Long intervalMillis, @Nullable String referenceName) throws IOException {
     List<String> recordsStrs = new ArrayList<>(records.size());
     for (StructuredRecord record : records) {
       recordsStrs.add(StructuredRecordStringConverter.toJsonString(record));
     }
 
     ImmutableMap.Builder<String, String> builder =
-      ImmutableMap.<String, String>builder()
-        .put("schema", schema.toString())
-        .put("records", GSON.toJson(recordsStrs))
-        .put("intervalMillis", intervalMillis.toString());
+        ImmutableMap.<String, String>builder()
+            .put("schema", schema.toString())
+            .put("records", GSON.toJson(recordsStrs))
+            .put("intervalMillis", intervalMillis.toString());
 
     if (referenceName != null) {
       builder.put("referenceName", referenceName);
     }
     return new ETLPlugin("Mock", StreamingSource.PLUGIN_TYPE,
-                         builder.build(), null);
+        builder.build(), null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("schema", new PluginPropertyField("schema", "", "string", true, false));
     properties.put("records", new PluginPropertyField("records", "", "string", true, false));
-    properties.put("intervalMillis", new PluginPropertyField("intervalMillis", "", "long", false, false));
-    properties.put("referenceName", new PluginPropertyField("referenceName", "", "string", false, false));
+    properties.put("intervalMillis",
+        new PluginPropertyField("intervalMillis", "", "long", false, false));
+    properties.put("referenceName",
+        new PluginPropertyField("referenceName", "", "string", false, false));
     return PluginClass.builder().setName("Mock").setType(StreamingSource.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
-             .setConfigFieldName("conf").build();
+        .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
+        .setConfigFieldName("conf").build();
   }
 }

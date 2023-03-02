@@ -27,12 +27,18 @@ import java.util.Set;
  * This class is copied from guava Primitives class.
  */
 final class Primitives {
-  private Primitives() {}
 
-  /** A map from primitive types to their corresponding wrapper types. */
+  private Primitives() {
+  }
+
+  /**
+   * A map from primitive types to their corresponding wrapper types.
+   */
   private static final Map<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER_TYPE;
 
-  /** A map from wrapper types to their corresponding primitive types. */
+  /**
+   * A map from wrapper types to their corresponding primitive types.
+   */
   private static final Map<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE_TYPE;
 
   // Sad that we can't use a BiMap. :(
@@ -56,18 +62,18 @@ final class Primitives {
   }
 
   private static void add(
-    Map<Class<?>, Class<?>> forward,
-    Map<Class<?>, Class<?>> backward,
-    Class<?> key,
-    Class<?> value) {
+      Map<Class<?>, Class<?>> forward,
+      Map<Class<?>, Class<?>> backward,
+      Class<?> key,
+      Class<?> value) {
     forward.put(key, value);
     backward.put(value, key);
   }
 
   /**
-   * Returns an immutable set of all nine primitive types (including {@code
-   * void}). Note that a simpler way to test whether a {@code Class} instance is a member of this
-   * set is to call {@link Class#isPrimitive}.
+   * Returns an immutable set of all nine primitive types (including {@code void}). Note that a
+   * simpler way to test whether a {@code Class} instance is a member of this set is to call {@link
+   * Class#isPrimitive}.
    *
    * @since 3.0
    */
@@ -85,8 +91,8 @@ final class Primitives {
   }
 
   /**
-   * Returns {@code true} if {@code type} is one of the nine primitive-wrapper types, such as
-   * {@link Integer}.
+   * Returns {@code true} if {@code type} is one of the nine primitive-wrapper types, such as {@link
+   * Integer}.
    *
    * @see Class#isPrimitive
    */

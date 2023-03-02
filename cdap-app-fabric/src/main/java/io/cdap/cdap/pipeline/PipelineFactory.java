@@ -17,10 +17,11 @@
 package io.cdap.cdap.pipeline;
 
 /**
- * A factory interface for creating pipelines. This class allows to
- * implement different {@link io.cdap.cdap.pipeline.Pipeline} based on external constraints.
+ * A factory interface for creating pipelines. This class allows to implement different {@link
+ * io.cdap.cdap.pipeline.Pipeline} based on external constraints.
  */
 public interface PipelineFactory {
+
   /**
    * @return A {@link io.cdap.cdap.pipeline.Pipeline} created by the factory.
    */

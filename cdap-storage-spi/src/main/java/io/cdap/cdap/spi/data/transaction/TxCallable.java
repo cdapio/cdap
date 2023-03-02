@@ -25,18 +25,18 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
  * access to and use tables.
  *
  * @param <V> type of the return value from the {@link #call(StructuredTableContext)}.
- *
  */
 @Beta
 public interface TxCallable<V> {
+
   /**
    * Provides a {@link StructuredTableContext} to get instances of {@link StructuredTable}s.
    *
    * <p>
-   *   Operations executed on a table within the execution of this method are committed as a single transaction.
-   *   The transaction is started before this method is invoked and is committed upon successful execution.
-   *   Exceptions thrown while committing the transaction or thrown by user-code result in a rollback of the
-   *   transaction.
+   * Operations executed on a table within the execution of this method are committed as a single
+   * transaction. The transaction is started before this method is invoked and is committed upon
+   * successful execution. Exceptions thrown while committing the transaction or thrown by user-code
+   * result in a rollback of the transaction.
    * </p>
    *
    * @param context to get tables from

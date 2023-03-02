@@ -47,6 +47,7 @@ public class SConfiguration extends Configuration {
 
   /**
    * Creates an instance of configuration.
+   *
    * @param file the file to be added to the configuration
    * @return an instance of SConfiguration
    * @throws java.net.MalformedURLException if the error occurred while constructing the URL

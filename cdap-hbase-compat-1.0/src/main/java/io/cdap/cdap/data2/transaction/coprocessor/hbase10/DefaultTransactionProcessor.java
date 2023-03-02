@@ -56,6 +56,7 @@ import org.apache.tephra.util.TxUtils;
  * to automatically refresh transaction state.
  */
 public class DefaultTransactionProcessor extends TransactionProcessor {
+
   private static final Log LOG = LogFactory.getLog(DefaultTransactionProcessor.class);
 
   private CConfigurationCacheSupplier cConfCacheSupplier;
@@ -69,8 +70,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
       this.tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       this.cConfCacheSupplier = new CConfigurationCacheSupplier(env, tablePrefix,
-                                                                TxConstants.Manager.CFG_TX_MAX_LIFETIME,
-                                                                TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME);
+          TxConstants.Manager.CFG_TX_MAX_LIFETIME,
+          TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME);
       this.cConfCache = cConfCacheSupplier.get();
     }
     // Need to create the cConf cache before calling start on the parent, since it is required for
@@ -91,17 +92,18 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                               List<? extends KeyValueScanner> scanners, ScanType scanType,
-                                               long earliestPutTs, InternalScanner s,
-                                               CompactionRequest request) throws IOException {
+  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
+      Store store,
+      List<? extends KeyValueScanner> scanners, ScanType scanType,
+      long earliestPutTs, InternalScanner s,
+      CompactionRequest request) throws IOException {
     reloadPruneState(c.getEnvironment());
     return super.preCompactScannerOpen(c, store, scanners, scanType, earliestPutTs, s, request);
   }
 
   @Override
   protected void ensureValidTxLifetime(RegionCoprocessorEnvironment env, OperationWithAttributes op,
-                                       @Nullable Transaction tx) throws IOException {
+      @Nullable Transaction tx) throws IOException {
     // Enforce the valid lifetime check on the transaction id as write pointer can change on checkpointing.
     long txId = HBaseTable.getTransactionId(op, tx);
     if (txId == -1) {
@@ -115,13 +117,14 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
     // relying on the parent
     boolean validLifetime = (opTimestamp + currMaxLifetimeinMillis) > System.currentTimeMillis();
     if (!validLifetime) {
-      throw new DoNotRetryIOException(String.format("Transaction %s has exceeded max lifetime %s ms",
-                                                    txId, currMaxLifetimeinMillis));
+      throw new DoNotRetryIOException(
+          String.format("Transaction %s has exceeded max lifetime %s ms",
+              txId, currMaxLifetimeinMillis));
     }
   }
 
   private long getCurrMaxLifetime(RegionCoprocessorEnvironment env, OperationWithAttributes op,
-                                  @Nullable Long maxLifetimeFromConf) {
+      @Nullable Long maxLifetimeFromConf) {
     // If conf has the value, update the txMaxLifetimeMillis and return it
     if (maxLifetimeFromConf != null) {
       txMaxLifetimeMillis = maxLifetimeFromConf;
@@ -137,9 +140,10 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
     // If maxLifetimeMillis could not be found in the client request as well, just use the default value
     long defaultMaxLifeTimeInSecs = TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME;
     if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format("txMaxLifetimeMillis is not available in client's operation attributes. " +
-                                "Defaulting to the default value of %d seconds for region %s.",
-                              defaultMaxLifeTimeInSecs, env.getRegionInfo().getRegionNameAsString()));
+      LOG.debug(
+          String.format("txMaxLifetimeMillis is not available in client's operation attributes. " +
+                  "Defaulting to the default value of %d seconds for region %s.",
+              defaultMaxLifeTimeInSecs, env.getRegionInfo().getRegionNameAsString()));
     }
     return TimeUnit.SECONDS.toMillis(defaultMaxLifeTimeInSecs);
   }
@@ -152,12 +156,13 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
       Configuration conf = getConfiguration(env);
       if (conf != null) {
         boolean newPruneEnable = conf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
-                                                 TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
+            TxConstants.TransactionPruning.DEFAULT_PRUNE_ENABLE);
         if (newPruneEnable != pruneEnable) {
           // pruning enable has been changed, resetting prune state
           if (LOG.isDebugEnabled()) {
-            LOG.debug(String.format("Transaction Invalid List pruning feature is set to %s now for region %s.",
-                                    newPruneEnable, env.getRegionInfo().getRegionNameAsString()));
+            LOG.debug(String.format(
+                "Transaction Invalid List pruning feature is set to %s now for region %s.",
+                newPruneEnable, env.getRegionInfo().getRegionNameAsString()));
           }
           resetPruneState();
           initializePruneState(env);
@@ -173,13 +178,15 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(RegionCoprocessorEnvironment env) {
+  protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(
+      RegionCoprocessorEnvironment env) {
     return new DefaultTransactionStateCacheSupplier(tablePrefix, env);
   }
 
   @Override
   protected Filter getTransactionFilter(Transaction tx, ScanType scanType, Filter filter) {
-    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, scanType, filter);
+    IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues,
+        scanType, filter);
     return new CellSkipFilter(incrementTxFilter);
   }
 }

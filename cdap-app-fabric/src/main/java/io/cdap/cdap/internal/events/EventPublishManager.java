@@ -40,8 +40,8 @@ public class EventPublishManager extends AbstractIdleService {
 
   @Inject
   EventPublishManager(CConfiguration cConf, Set<EventPublisher> eventPublishers,
-                      EventWriterProvider eventWriterProvider) {
-    this.publishEnabled =  Feature.EVENT_PUBLISH.isEnabled(new DefaultFeatureFlagsProvider(cConf));
+      EventWriterProvider eventWriterProvider) {
+    this.publishEnabled = Feature.EVENT_PUBLISH.isEnabled(new DefaultFeatureFlagsProvider(cConf));
     this.eventPublishers = eventPublishers;
     this.eventWriterProvider = eventWriterProvider;
   }
@@ -56,7 +56,8 @@ public class EventPublishManager extends AbstractIdleService {
       Map<String, EventWriter> eventWriterMap = this.eventWriterProvider.loadEventWriters();
       // Initialize the event publisher with all the event writers provided by provider
       if (eventWriterMap.values().isEmpty()) {
-        LOG.info("Event publisher {} not initialized due to no event writer found.", eventPublisher.getID());
+        LOG.info("Event publisher {} not initialized due to no event writer found.",
+            eventPublisher.getID());
         return;
       }
       eventPublisher.initialize(eventWriterMap.values());

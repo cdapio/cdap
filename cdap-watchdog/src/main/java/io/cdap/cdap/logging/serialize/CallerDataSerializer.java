@@ -25,15 +25,18 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for CallerData.
  */
 final class CallerDataSerializer {
-  private CallerDataSerializer() {}
+
+  private CallerDataSerializer() {
+  }
 
   static GenericArray<GenericRecord> encode(Schema schema, StackTraceElement[] stackTraceElements) {
     if (stackTraceElements != null) {
       Schema steArraySchema = schema.getTypes().get(1);
       GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElements.length,
-                                                                                  steArraySchema);
+          steArraySchema);
       for (StackTraceElement stackTraceElement : stackTraceElements) {
-        steArray.add(StackTraceElementSerializer.encode(steArraySchema.getElementType(), stackTraceElement));
+        steArray.add(
+            StackTraceElementSerializer.encode(steArraySchema.getElementType(), stackTraceElement));
       }
       return steArray;
     }

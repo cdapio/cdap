@@ -28,13 +28,14 @@ import io.cdap.cdap.test.WorkerManager;
 /**
  * Remote implementation of {@link WorkerManager}
  */
-public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
+public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements
+    WorkerManager {
 
   private final ProgramClient programClient;
   private final ProgramId workerId;
 
   public RemoteWorkerManager(ProgramId programId, ClientConfig clientConfig, RESTClient restClient,
-                             RemoteApplicationManager applicationManager) {
+      RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.workerId = programId;
     this.programClient = new ProgramClient(clientConfig, restClient);

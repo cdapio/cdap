@@ -39,17 +39,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class responsible for deleting the local datasets associated with the completed, failed, or killed workflow runs.
+ * Class responsible for deleting the local datasets associated with the completed, failed, or
+ * killed workflow runs.
  */
 public class LocalDatasetDeleterRunnable implements Runnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetDeleterRunnable.class);
   private static final Map<String, String> PROPERTIES =
-    Collections.singletonMap(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, Boolean.toString(true));
+      Collections.singletonMap(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
+          Boolean.toString(true));
   private final NamespaceAdmin namespaceAdmin;
   private final Store store;
   private final DatasetFramework datasetFramework;
 
-  public LocalDatasetDeleterRunnable(NamespaceAdmin namespaceAdmin, Store store, DatasetFramework datasetFramework) {
+  public LocalDatasetDeleterRunnable(NamespaceAdmin namespaceAdmin, Store store,
+      DatasetFramework datasetFramework) {
     this.namespaceAdmin = namespaceAdmin;
     this.store = store;
     this.datasetFramework = datasetFramework;
@@ -61,7 +65,7 @@ public class LocalDatasetDeleterRunnable implements Runnable {
       List<NamespaceMeta> list = namespaceAdmin.list();
       for (NamespaceMeta namespaceMeta : list) {
         Collection<DatasetSpecificationSummary> specs
-          = datasetFramework.getInstances(namespaceMeta.getNamespaceId(), PROPERTIES);
+            = datasetFramework.getInstances(namespaceMeta.getNamespaceId(), PROPERTIES);
 
         if (specs.isEmpty()) {
           // avoid fetching run records
@@ -69,7 +73,8 @@ public class LocalDatasetDeleterRunnable implements Runnable {
         }
         Set<String> activeRuns = getActiveRuns(namespaceMeta.getNamespaceId());
         for (DatasetSpecificationSummary spec : specs) {
-          deleteLocalDataset(namespaceMeta.getName(), spec.getName(), activeRuns, spec.getProperties());
+          deleteLocalDataset(namespaceMeta.getName(), spec.getName(), activeRuns,
+              spec.getProperties());
         }
       }
     } catch (Throwable t) {
@@ -86,14 +91,15 @@ public class LocalDatasetDeleterRunnable implements Runnable {
     return runs;
   }
 
-  private void deleteLocalDataset(final String namespaceName, final String datasetName, Set<String> activeRuns,
-                                  Map<String, String> properties)
-    throws Exception {
+  private void deleteLocalDataset(final String namespaceName, final String datasetName,
+      Set<String> activeRuns,
+      Map<String, String> properties)
+      throws Exception {
     String[] split = datasetName.split("\\.");
     String runId = split[split.length - 1];
 
     if (activeRuns.contains(runId)
-      || Boolean.parseBoolean(properties.get(Constants.AppFabric.WORKFLOW_KEEP_LOCAL))) {
+        || Boolean.parseBoolean(properties.get(Constants.AppFabric.WORKFLOW_KEEP_LOCAL))) {
       return;
     }
 
@@ -106,7 +112,8 @@ public class LocalDatasetDeleterRunnable implements Runnable {
           LOG.info("Deleted local dataset instance {}", datasetId);
           return null;
         }
-      }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
+      }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS,
+          TimeUnit.SECONDS));
     } catch (Exception e) {
       LOG.warn("Failed to delete the Workflow local dataset instance {}", datasetId, e);
     }

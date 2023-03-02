@@ -22,6 +22,7 @@ import java.util.Objects;
  * Program run information.
  */
 public class ProgramRunInfo {
+
   private final String namespace;
   private final String application;
   private final String version;
@@ -30,7 +31,7 @@ public class ProgramRunInfo {
   private final String run;
 
   private ProgramRunInfo(String namespace, String application,
-                         String version, String programType, String program, String run) {
+      String version, String programType, String program, String run) {
     this.namespace = namespace;
     this.application = application;
     this.version = version;
@@ -43,6 +44,7 @@ public class ProgramRunInfo {
    * Builder to build program info.
    */
   public static class Builder {
+
     private String namespace;
     private String application;
     private String version;
@@ -177,11 +179,11 @@ public class ProgramRunInfo {
     }
     ProgramRunInfo that = (ProgramRunInfo) o;
     return namespace.equals(that.namespace) &&
-      application.equals(that.application) &&
-      version.equals(that.version) &&
-      programType.equals(that.programType) &&
-      program.equals(that.program) &&
-      run.equals(that.run);
+        application.equals(that.application) &&
+        version.equals(that.version) &&
+        programType.equals(that.programType) &&
+        program.equals(that.program) &&
+        run.equals(that.run);
   }
 
   @Override
@@ -192,12 +194,12 @@ public class ProgramRunInfo {
   @Override
   public String toString() {
     return "ProgramRunInfo{" +
-      "namespace='" + namespace + '\'' +
-      ", application='" + application + '\'' +
-      ", version='" + version + '\'' +
-      ", programType='" + programType + '\'' +
-      ", program='" + program + '\'' +
-      ", run='" + run + '\'' +
-      '}';
+        "namespace='" + namespace + '\'' +
+        ", application='" + application + '\'' +
+        ", version='" + version + '\'' +
+        ", programType='" + programType + '\'' +
+        ", program='" + program + '\'' +
+        ", run='" + run + '\'' +
+        '}';
   }
 }

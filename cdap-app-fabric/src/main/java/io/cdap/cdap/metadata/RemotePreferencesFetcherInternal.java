@@ -41,23 +41,25 @@ import java.net.HttpURLConnection;
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})
  */
 public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
+
   private static final Gson GSON = new Gson();
-  private static final Type PREFERENCES_TYPE = new TypeToken<PreferencesDetail>() { }.getType();
+  private static final Type PREFERENCES_TYPE = new TypeToken<PreferencesDetail>() {
+  }.getType();
 
   private final RemoteClient remoteClient;
 
   @Inject
   public RemotePreferencesFetcherInternal(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
    * Get preferences for the given identify
    */
   public PreferencesDetail get(EntityId entityId, boolean resolved)
-    throws IOException, NotFoundException, UnauthorizedException {
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse;
     String url = getPreferencesURI(entityId, resolved);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -81,17 +83,19 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         uri = String.format("namespaces/%s/apps/%s/preferences",
-                            appId.getNamespace(), appId.getApplication());
+            appId.getNamespace(), appId.getApplication());
         break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         uri = String.format("namespaces/%s/apps/%s/%s/%s/preferences",
-                            programId.getNamespace(), programId.getApplication(), programId.getType().getCategoryName(),
-                            programId.getProgram());
+            programId.getNamespace(), programId.getApplication(),
+            programId.getType().getCategoryName(),
+            programId.getProgram());
         break;
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
     if (resolved) {
       uri += "?resolved=true";
@@ -99,7 +103,8 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
     return uri;
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
+  private HttpResponse execute(HttpRequest request)
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());

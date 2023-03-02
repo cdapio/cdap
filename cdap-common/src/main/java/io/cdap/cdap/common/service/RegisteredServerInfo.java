@@ -22,6 +22,7 @@ import io.cdap.cdap.common.discovery.ServicePayload;
  * Class representing the server info for a registered server.
  */
 public class RegisteredServerInfo {
+
   private ServicePayload payload = new ServicePayload();
   private int port;
   private String address;

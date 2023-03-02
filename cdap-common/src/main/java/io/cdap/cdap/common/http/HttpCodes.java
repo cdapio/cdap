@@ -31,17 +31,18 @@ public final class HttpCodes {
   }
 
   /**
-   * List of HTTP error codes that are retryable if the request is idempotent.
-   * NOTE: HTTP_UNAVAILABLE also retryable for non-idempotent requests.
+   * List of HTTP error codes that are retryable if the request is idempotent. NOTE:
+   * HTTP_UNAVAILABLE also retryable for non-idempotent requests.
    */
   private static final List<Integer> HTTP_SERVER_ERROR_CODES = Collections.unmodifiableList(
-    Arrays.asList(HttpURLConnection.HTTP_BAD_GATEWAY,
-                  HttpURLConnection.HTTP_GATEWAY_TIMEOUT,
-                  HttpURLConnection.HTTP_INTERNAL_ERROR,
-                  HttpURLConnection.HTTP_UNAVAILABLE));
+      Arrays.asList(HttpURLConnection.HTTP_BAD_GATEWAY,
+          HttpURLConnection.HTTP_GATEWAY_TIMEOUT,
+          HttpURLConnection.HTTP_INTERNAL_ERROR,
+          HttpURLConnection.HTTP_UNAVAILABLE));
 
   /**
    * Returns {@code true} if the idempotent request is retryable
+   *
    * @param responseCode response code returned from executing the request.
    */
   public static boolean isRetryable(int responseCode) {

@@ -36,9 +36,9 @@ public class CapabilityConfig {
   private final List<URL> hubs;
 
   public CapabilityConfig(String label, CapabilityStatus status, String capability,
-                          Collection<? extends SystemApplication> applications,
-                          Collection<? extends SystemProgram> programs,
-                          Collection<URL> hubs) {
+      Collection<? extends SystemApplication> applications,
+      Collection<? extends SystemProgram> programs,
+      Collection<URL> hubs) {
     this.label = label;
     this.status = status;
     this.capability = capability;
@@ -76,7 +76,8 @@ public class CapabilityConfig {
   }
 
   /**
-   * @return {@link List} of hubs from which resources will be auto installed when this capability is enabled.
+   * @return {@link List} of hubs from which resources will be auto installed when this capability
+   *     is enabled.
    */
   public List<URL> getHubs() {
     return hubs != null ? hubs : Collections.emptyList();
@@ -99,11 +100,11 @@ public class CapabilityConfig {
     }
     CapabilityConfig otherConfig = (CapabilityConfig) other;
     return Objects.equals(label, otherConfig.label) &&
-      status == otherConfig.status &&
-      Objects.equals(capability, otherConfig.capability) &&
-      Objects.equals(applications, otherConfig.applications) &&
-      Objects.equals(programs, otherConfig.programs) &&
-      Objects.equals(hubs, otherConfig.hubs);
+        status == otherConfig.status &&
+        Objects.equals(capability, otherConfig.capability) &&
+        Objects.equals(applications, otherConfig.applications) &&
+        Objects.equals(programs, otherConfig.programs) &&
+        Objects.equals(hubs, otherConfig.hubs);
   }
 
   @Override

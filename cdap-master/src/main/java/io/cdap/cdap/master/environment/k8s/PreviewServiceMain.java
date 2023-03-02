@@ -78,9 +78,9 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected CConfiguration updateCConf(CConfiguration cConf) {
     Map<String, String> keyMap = ImmutableMap.of(
-      Constants.Preview.CONTAINER_CPU_MULTIPLIER, KUBE_CPU_MULTIPLIER,
-      Constants.Preview.CONTAINER_MEMORY_MULTIPLIER, KUBE_MEMORY_MULTIPLIER,
-      Constants.Preview.CONTAINER_HEAP_RESERVED_RATIO, Configs.Keys.HEAP_RESERVED_MIN_RATIO
+        Constants.Preview.CONTAINER_CPU_MULTIPLIER, KUBE_CPU_MULTIPLIER,
+        Constants.Preview.CONTAINER_MEMORY_MULTIPLIER, KUBE_MEMORY_MULTIPLIER,
+        Constants.Preview.CONTAINER_HEAP_RESERVED_RATIO, Configs.Keys.HEAP_RESERVED_MIN_RATIO
     );
 
     for (Map.Entry<String, String> entry : keyMap.entrySet()) {
@@ -94,30 +94,31 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>(Arrays.asList(
-      new DataSetServiceModules().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new MetricsStoreModule(),
-      new MessagingClientModule(),
-      new AuditModule(),
-      new SecureStoreClientModule(),
-      new MetadataReaderWriterModules().getStandaloneModules(),
-      getDataFabricModule(),
-      new DFSLocationModule(),
-      new MetadataServiceModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TwillRunnerService.class).toProvider(
-            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
-          bind(TwillRunner.class).to(TwillRunnerService.class);
+        new DataSetServiceModules().getStandaloneModules(),
+        new DataSetsModules().getStandaloneModules(),
+        new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
+        new ProgramRunnerRuntimeModule().getStandaloneModules(),
+        new MetricsStoreModule(),
+        new MessagingClientModule(),
+        new AuditModule(),
+        new SecureStoreClientModule(),
+        new MetadataReaderWriterModules().getStandaloneModules(),
+        getDataFabricModule(),
+        new DFSLocationModule(),
+        new MetadataServiceModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(TwillRunnerService.class).toProvider(
+                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+                .in(Scopes.SINGLETON);
+            bind(TwillRunner.class).to(TwillRunnerService.class);
+          }
         }
-      }
     ));
 
     if (cConf.getInt(Constants.Preview.CONTAINER_COUNT) > 0) {
@@ -132,13 +133,14 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(injector.getInstance(PreviewHttpServer.class));
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -152,7 +154,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.PREVIEW_HTTP);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.PREVIEW_HTTP);
   }
 }

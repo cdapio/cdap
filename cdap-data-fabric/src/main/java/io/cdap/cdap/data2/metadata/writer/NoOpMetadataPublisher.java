@@ -24,6 +24,7 @@ import io.cdap.cdap.proto.id.EntityId;
  * Note: this class is cannot be in test scope, because it is used in places likes JobQueueDebugge.
  */
 public class NoOpMetadataPublisher implements MetadataPublisher {
+
   @Override
   public void publish(EntityId publisher, MetadataOperation metadataOperation) {
     // nop-op

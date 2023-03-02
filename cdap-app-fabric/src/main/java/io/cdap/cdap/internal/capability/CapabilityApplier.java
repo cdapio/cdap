@@ -111,10 +111,10 @@ class CapabilityApplier {
 
   @Inject
   CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
-                    ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
-                    ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
-                    ArtifactRepository artifactRepository,
-                    CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
+      ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
+      ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
+      ArtifactRepository artifactRepository,
+      CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     this.systemProgramManagementService = systemProgramManagementService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
@@ -123,7 +123,7 @@ class CapabilityApplier {
     this.metadataSearchClient = new MetadataSearchClient(remoteClientFactory);
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.autoInstallThreads = cConf.getInt(Constants.Capability.AUTO_INSTALL_THREADS);
   }
 
@@ -142,8 +142,10 @@ class CapabilityApplier {
       String capability = newConfig.getCapability();
       CapabilityRecord capabilityRecord = currentCapabilityRecords.get(capability);
       if (capabilityRecord != null && capabilityRecord.getCapabilityOperationRecord() != null) {
-        LOG.debug("Capability {} config for status {} skipped because there is already an operation {} in progress.",
-                  capability, newConfig.getStatus(), capabilityRecord.getCapabilityOperationRecord().getActionType());
+        LOG.debug(
+            "Capability {} config for status {} skipped because there is already an operation {} in progress.",
+            capability, newConfig.getStatus(),
+            capabilityRecord.getCapabilityOperationRecord().getActionType());
         continue;
       }
       switch (newConfig.getStatus()) {
@@ -160,9 +162,9 @@ class CapabilityApplier {
     }
     //add all unfinished operations to retry
     List<CapabilityOperationRecord> currentOperations = currentCapabilityRecords.values().stream()
-      .map(CapabilityRecord::getCapabilityOperationRecord)
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+        .map(CapabilityRecord::getCapabilityOperationRecord)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     for (CapabilityOperationRecord operationRecord : currentOperations) {
       switch (operationRecord.getActionType()) {
         case ENABLE:
@@ -181,9 +183,9 @@ class CapabilityApplier {
     }
     // find the ones that are not being applied or retried - these should be removed
     deleteSet.addAll(currentCapabilityRecords.values().stream()
-                       .filter(capabilityRecord -> capabilityRecord.getCapabilityStatusRecord() != null)
-                       .map(capabilityRecord -> capabilityRecord.getCapabilityStatusRecord().getCapabilityConfig())
-                       .collect(Collectors.toSet()));
+        .filter(capabilityRecord -> capabilityRecord.getCapabilityStatusRecord() != null)
+        .map(capabilityRecord -> capabilityRecord.getCapabilityStatusRecord().getCapabilityConfig())
+        .collect(Collectors.toSet()));
     enableCapabilities(enableSet);
     disableCapabilities(disableSet);
     deleteCapabilities(deleteSet);
@@ -192,18 +194,20 @@ class CapabilityApplier {
   private void enableCapabilities(Set<CapabilityConfig> enableSet) throws Exception {
     Map<ProgramId, Arguments> enabledPrograms = new HashMap<>();
     Map<String, CapabilityConfig> configs = capabilityStatusStore
-      .getConfigs(enableSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
+        .getConfigs(
+            enableSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
     for (CapabilityConfig capabilityConfig : enableSet) {
       //collect the enabled programs
       capabilityConfig.getPrograms().forEach(systemProgram -> enabledPrograms
-        .put(getProgramId(systemProgram), new BasicArguments(systemProgram.getArgs())));
+          .put(getProgramId(systemProgram), new BasicArguments(systemProgram.getArgs())));
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
       //Check and log so logs are not flooded
       if (!capabilityConfig.equals(existingConfig)) {
         LOG.debug("Enabling capability {}", capability);
       }
-      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.ENABLE, capabilityConfig);
+      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.ENABLE,
+          capabilityConfig);
       //If already deployed, will be ignored
       deployAllSystemApps(capability, capabilityConfig.getApplications());
       autoInstallResources(capability, capabilityConfig.getHubs());
@@ -214,14 +218,15 @@ class CapabilityApplier {
     for (CapabilityConfig capabilityConfig : enableSet) {
       String capability = capabilityConfig.getCapability();
       capabilityStatusStore
-        .addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
+          .addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
       capabilityStatusStore.deleteCapabilityOperation(capability);
     }
   }
 
   private void disableCapabilities(Set<CapabilityConfig> disableSet) throws Exception {
     Map<String, CapabilityConfig> configs = capabilityStatusStore
-      .getConfigs(disableSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
+        .getConfigs(
+            disableSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
     for (CapabilityConfig capabilityConfig : disableSet) {
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
@@ -229,31 +234,35 @@ class CapabilityApplier {
       if (!capabilityConfig.equals(existingConfig)) {
         LOG.debug("Disabling capability {}", capability);
       }
-      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DISABLE, capabilityConfig);
+      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DISABLE,
+          capabilityConfig);
       capabilityStatusStore
-        .addOrUpdateCapability(capabilityConfig.getCapability(), CapabilityStatus.DISABLED, capabilityConfig);
+          .addOrUpdateCapability(capabilityConfig.getCapability(), CapabilityStatus.DISABLED,
+              capabilityConfig);
       //stop all the programs having capability metadata. Services will be stopped by SystemProgramManagementService
       doForAllAppsWithCapability(capability,
-                                 appReference -> doWithRetry(appReference, programLifecycleService::stopAll));
+          appReference -> doWithRetry(appReference, programLifecycleService::stopAll));
       capabilityStatusStore.deleteCapabilityOperation(capability);
     }
   }
 
   private void deleteCapabilities(Set<CapabilityConfig> deleteSet) throws Exception {
     Map<String, CapabilityConfig> configs = capabilityStatusStore
-      .getConfigs(deleteSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
+        .getConfigs(
+            deleteSet.stream().map(CapabilityConfig::getCapability).collect(Collectors.toSet()));
     for (CapabilityConfig capabilityConfig : deleteSet) {
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
       if (existingConfig != null) {
         LOG.debug("Deleting capability {}", capability);
       }
-      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DELETE, capabilityConfig);
+      capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DELETE,
+          capabilityConfig);
       //disable first
       disableCapabilities(deleteSet);
       //remove all applications having capability metadata.
       doForAllAppsWithCapability(capability,
-                                 appReference -> doWithRetry(appReference, this::removeApplication));
+          appReference -> doWithRetry(appReference, this::removeApplication));
       //remove deployments of system applications
       for (SystemApplication application : capabilityConfig.getApplications()) {
         ApplicationReference applicationReference = getAppReference(application);
@@ -278,12 +287,14 @@ class CapabilityApplier {
   }
 
   private ProgramId getProgramId(SystemProgram program) {
-    ApplicationId applicationId = new ApplicationId(program.getNamespace(), program.getApplication(),
-                                                    ApplicationId.DEFAULT_VERSION);
-    return new ProgramId(applicationId, ProgramType.valueOf(program.getType().toUpperCase()), program.getName());
+    ApplicationId applicationId = new ApplicationId(program.getNamespace(),
+        program.getApplication(),
+        ApplicationId.DEFAULT_VERSION);
+    return new ProgramId(applicationId, ProgramType.valueOf(program.getType().toUpperCase()),
+        program.getName());
   }
 
-  private void deployAllSystemApps(String capability, List<SystemApplication> applications)  {
+  private void deployAllSystemApps(String capability, List<SystemApplication> applications) {
     if (applications.isEmpty()) {
       //skip logging here to prevent flooding the logs
       return;
@@ -304,52 +315,58 @@ class CapabilityApplier {
       return;
     }
     LOG.debug("Application {} is being deployed", applicationReference);
-    String configString = application.getConfig() == null ? null : GSON.toJson(application.getConfig());
+    String configString =
+        application.getConfig() == null ? null : GSON.toJson(application.getConfig());
     applicationLifecycleService
-      .deployApp(applicationReference.getParent(), applicationReference.getApplication(), ApplicationId.DEFAULT_VERSION,
-                 application.getArtifact(), configString, null, null, NOOP_PROGRAM_TERMINATOR,
-                 null, null, false, Collections.emptyMap());
+        .deployApp(applicationReference.getParent(), applicationReference.getApplication(),
+            ApplicationId.DEFAULT_VERSION,
+            application.getArtifact(), configString, null, null, NOOP_PROGRAM_TERMINATOR,
+            null, null, false, Collections.emptyMap());
   }
 
   @VisibleForTesting
   void autoInstallResources(String capability, @Nullable List<URL> hubs) {
     ExecutorService executor = Executors.newFixedThreadPool(
-      autoInstallThreads, Threads.createDaemonThreadFactory("installer-" + capability + "-%d"));
+        autoInstallThreads, Threads.createDaemonThreadFactory("installer-" + capability + "-%d"));
 
     try {
       for (URL hub : Optional.ofNullable(hubs).orElse(Collections.emptyList())) {
         HubPackage[] hubPackages;
         try {
-          URL url = new URL(hub.getProtocol(), hub.getHost(), hub.getPort(), hub.getPath() + "/packages.json");
+          URL url = new URL(hub.getProtocol(), hub.getHost(), hub.getPort(),
+              hub.getPath() + "/packages.json");
           String packagesJson = HttpClients.doGetAsString(url);
           // Deserialize packages.json from hub
           // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
           hubPackages = GSON.fromJson(packagesJson, HubPackage[].class);
         } catch (Exception e) {
-          LOG.warn("Failed to get packages.json from {} for capability {}. Ignoring error.", hub, capability, e);
+          LOG.warn("Failed to get packages.json from {} for capability {}. Ignoring error.", hub,
+              capability, e);
           continue;
         }
 
         String currentVersion = getCurrentVersion();
         // Get the latest compatible version of each plugin from hub and install it
         List<Future<?>> futures = Arrays.stream(hubPackages)
-          .filter(p -> p.versionIsInRange(currentVersion))
-          .collect(Collectors.groupingBy(HubPackage::getName,
-                                         Collectors.maxBy(Comparator.comparing(HubPackage::getArtifactVersion))))
-          .values()
-          .stream()
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .map(p -> executor.submit(() -> {
-            try {
-              LOG.debug("Installing plugins {} for capability {} from hub {}", p.getName(), capability, hub);
-              p.installPlugin(hub, artifactRepository, tmpDir);
-            } catch (Exception e) {
-              LOG.warn("Failed to install plugin {} for capability {} from hub {}. Ignoring error",
-                       p.getName(), capability, hub, e);
-            }
-          }))
-          .collect(Collectors.toList());
+            .filter(p -> p.versionIsInRange(currentVersion))
+            .collect(Collectors.groupingBy(HubPackage::getName,
+                Collectors.maxBy(Comparator.comparing(HubPackage::getArtifactVersion))))
+            .values()
+            .stream()
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(p -> executor.submit(() -> {
+              try {
+                LOG.debug("Installing plugins {} for capability {} from hub {}", p.getName(),
+                    capability, hub);
+                p.installPlugin(hub, artifactRepository, tmpDir);
+              } catch (Exception e) {
+                LOG.warn(
+                    "Failed to install plugin {} for capability {} from hub {}. Ignoring error",
+                    p.getName(), capability, hub, e);
+              }
+            }))
+            .collect(Collectors.toList());
         for (Future<?> future : futures) {
           try {
             future.get();
@@ -372,7 +389,8 @@ class CapabilityApplier {
   // 1. Either the application is not deployed before.
   // 2. If application is deployed before then the app artifact of the deployed application is not the latest one
   //    available.
-  private boolean shouldDeployApp(ApplicationReference appRef, SystemApplication application) throws Exception {
+  private boolean shouldDeployApp(ApplicationReference appRef, SystemApplication application)
+      throws Exception {
     ApplicationDetail currAppDetail;
     try {
       currAppDetail = applicationLifecycleService.getLatestAppDetail(appRef);
@@ -383,12 +401,14 @@ class CapabilityApplier {
     // available. If it's not same, capability applier should redeploy application.
     ArtifactSummary summary = application.getArtifact();
     NamespaceId artifactNamespace =
-      ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : appRef.getNamespaceId();
+        ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM
+            : appRef.getNamespaceId();
     ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
-      ArtifactVersionRange.parse(summary.getVersion()));
+        ArtifactVersionRange.parse(summary.getVersion()));
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
     // collection returned.
-    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
+    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1,
+        ArtifactSortOrder.DESC);
     if (artifactDetail.isEmpty()) {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
@@ -396,18 +416,19 @@ class CapabilityApplier {
     ArtifactId latestArtifactId = artifactDetail.get(0).getDescriptor().getArtifactId();
     // Compare the version of app artifact for deployed application and the latest available version of that
     // same artifact. If same means no need to deploy the application again.
-    return !currAppDetail.getArtifact().getVersion().equals(latestArtifactId.getVersion().getVersion());
+    return !currAppDetail.getArtifact().getVersion()
+        .equals(latestArtifactId.getVersion().getVersion());
   }
 
   //Find all applications for capability and call consumer for each
   private void doForAllAppsWithCapability(String capability,
-                                          CheckedConsumer<ApplicationReference> consumer) throws Exception {
+      CheckedConsumer<ApplicationReference> consumer) throws Exception {
     for (NamespaceMeta namespaceMeta : namespaceAdmin.list()) {
       int offset = 0;
       int limit = 100;
       NamespaceId namespaceId = namespaceMeta.getNamespaceId();
       EntityResult<ApplicationReference> results = getApplications(namespaceId, capability, null,
-                                                            offset, limit);
+          offset, limit);
       while (!results.getEntities().isEmpty()) {
         //call consumer for each entity
         for (ApplicationReference entity : results.getEntities()) {
@@ -421,48 +442,48 @@ class CapabilityApplier {
 
   private <T> void doWithRetry(T argument, CheckedConsumer<T> consumer) throws Exception {
     Retries.callWithRetries(() -> {
-      consumer.accept(argument);
-      return null;
-    }, RetryStrategies.limit(RETRY_LIMIT, RetryStrategies.fixDelay(RETRY_DELAY, TimeUnit.SECONDS)), this::shouldRetry);
+          consumer.accept(argument);
+          return null;
+        }, RetryStrategies.limit(RETRY_LIMIT, RetryStrategies.fixDelay(RETRY_DELAY, TimeUnit.SECONDS)),
+        this::shouldRetry);
   }
 
   private boolean shouldRetry(Throwable throwable) {
     return !(throwable instanceof UnauthorizedException ||
-      throwable instanceof InvalidArtifactException);
+        throwable instanceof InvalidArtifactException);
   }
 
   /**
    * Consumer functional interface that can throw exception
-   *
-   * @param <T>
    */
   @FunctionalInterface
   private interface CheckedConsumer<T> {
+
     void accept(T t) throws Exception;
   }
 
   @VisibleForTesting
   EntityResult<ApplicationReference> getApplications(NamespaceId namespace, String capability,
-                                                     @Nullable String cursor, int offset, int limit)
-    throws IOException, UnauthorizedException {
-    
+      @Nullable String cursor, int offset, int limit)
+      throws IOException, UnauthorizedException {
+
     String capabilityTag = String.format(CAPABILITY, capability);
     SearchRequest searchRequest = SearchRequest.of(capabilityTag)
-      .addNamespace(namespace.getNamespace())
-      .addType(APPLICATION)
-      .setScope(MetadataScope.SYSTEM)
-      .setCursor(cursor)
-      .setOffset(offset)
-      .setLimit(limit)
-      .build();
+        .addNamespace(namespace.getNamespace())
+        .addType(APPLICATION)
+        .setScope(MetadataScope.SYSTEM)
+        .setCursor(cursor)
+        .setOffset(offset)
+        .setLimit(limit)
+        .build();
     MetadataSearchResponse searchResponse = metadataSearchClient.search(searchRequest);
     Set<ApplicationReference> applicationIds = searchResponse.getResults().stream()
-      .map(MetadataSearchResultRecord::getMetadataEntity)
-      .map(this::getAppReference)
-      .collect(Collectors.toSet());
+        .map(MetadataSearchResultRecord::getMetadataEntity)
+        .map(this::getAppReference)
+        .collect(Collectors.toSet());
     return new EntityResult<>(applicationIds, getCursorResponse(searchResponse),
-                              searchResponse.getOffset(), searchResponse.getLimit(),
-                              searchResponse.getTotal());
+        searchResponse.getOffset(), searchResponse.getLimit(),
+        searchResponse.getTotal());
   }
 
   @Nullable
@@ -476,6 +497,6 @@ class CapabilityApplier {
 
   private ApplicationReference getAppReference(MetadataEntity metadataEntity) {
     return new ApplicationReference(metadataEntity.getValue(MetadataEntity.NAMESPACE),
-                             metadataEntity.getValue(MetadataEntity.APPLICATION));
+        metadataEntity.getValue(MetadataEntity.APPLICATION));
   }
 }

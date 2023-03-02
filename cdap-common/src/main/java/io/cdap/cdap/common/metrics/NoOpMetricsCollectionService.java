@@ -25,7 +25,8 @@ import java.util.Map;
 /**
  * No-op, to be used in unit-tests
  */
-public class NoOpMetricsCollectionService extends AbstractIdleService implements MetricsCollectionService {
+public class NoOpMetricsCollectionService extends AbstractIdleService implements
+    MetricsCollectionService {
 
   @Override
   protected void startUp() throws Exception {

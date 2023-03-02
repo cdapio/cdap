@@ -64,7 +64,8 @@ public abstract class Output {
 
   /**
    * @return an alias of the output, to be used as the output name instead of the actual name of the
-   * output (i.e. dataset name). Defaults to the actual name, in the case that no alias was set.
+   *     output (i.e. dataset name). Defaults to the actual name, in the case that no alias was
+   *     set.
    */
   public String getAlias() {
     return alias == null ? name : alias;
@@ -92,7 +93,8 @@ public abstract class Output {
 
   /**
    * Returns an Output defined by a dataset.
-   *  @param datasetName the name of the output dataset
+   *
+   * @param datasetName the name of the output dataset
    * @param arguments the arguments to use when instantiating the dataset
    */
   public static Output ofDataset(String datasetName, Map<String, String> arguments) {
@@ -103,15 +105,16 @@ public abstract class Output {
    * Returns an Output defined by an OutputFormatProvider.
    *
    * @param outputName the name of the output
-   * @param outputFormatProvider an instance of an OutputFormatProvider. It can not be an instance of
-   *                             a {@link DatasetOutputCommitter}.
+   * @param outputFormatProvider an instance of an OutputFormatProvider. It can not be an
+   *     instance of a {@link DatasetOutputCommitter}.
    */
   public static Output of(String outputName, OutputFormatProvider outputFormatProvider) {
     return new OutputFormatProviderOutput(outputName, outputFormatProvider);
   }
 
   /**
-   * An implementation of {@link Output}, which defines a {@link io.cdap.cdap.api.dataset.Dataset} as an output.
+   * An implementation of {@link Output}, which defines a {@link io.cdap.cdap.api.dataset.Dataset}
+   * as an output.
    */
   public static class DatasetOutput extends Output {
 
@@ -138,7 +141,8 @@ public abstract class Output {
   }
 
   /**
-   * An implementation of {@link Output}, which defines an {@link OutputFormatProvider} as an output.
+   * An implementation of {@link Output}, which defines an {@link OutputFormatProvider} as an
+   * output.
    */
   public static class OutputFormatProviderOutput extends Output {
 
@@ -155,7 +159,8 @@ public abstract class Output {
 
     @Override
     public Output fromNamespace(String namespace) {
-      throw new UnsupportedOperationException("OutputFormatProviderOutput does not support setting namespace.");
+      throw new UnsupportedOperationException(
+          "OutputFormatProviderOutput does not support setting namespace.");
     }
   }
 }

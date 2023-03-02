@@ -36,9 +36,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Mock test configurer used to test configure pipeline's validation of input schema and setting of output shcema.
+ * Mock test configurer used to test configure pipeline's validation of input schema and setting of
+ * output shcema.
  */
 public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfigurer {
+
   private final Schema inputSchema;
   Schema outputSchema;
   private Map<String, Object> plugins;
@@ -46,6 +48,7 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
 
   /**
    * Creates a mock pipeline configurer with a map of plugins to use for validation.
+   *
    * @param inputSchema The input schema to use for validation
    * @param plugins A map from plugin ID strings to plugin objects to use
    */
@@ -102,20 +105,21 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
-                         PluginProperties pluginProperties, PluginSelector pluginSelector) {
+      PluginProperties pluginProperties, PluginSelector pluginSelector) {
     return (T) plugins.get(pluginId);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                     PluginProperties pluginProperties, PluginSelector pluginSelector) {
+      PluginProperties pluginProperties, PluginSelector pluginSelector) {
     return (Class<T>) plugins.get(pluginId).getClass();
   }
 
   @Override
-  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
+  public Map<String, String> evaluateMacros(Map<String, String> properties,
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException {
     return properties;
   }
 
@@ -140,7 +144,8 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   }
 
   @Override
-  public void createDataset(String s, Class<? extends Dataset> aClass, DatasetProperties datasetProperties) {
+  public void createDataset(String s, Class<? extends Dataset> aClass,
+      DatasetProperties datasetProperties) {
 
   }
 

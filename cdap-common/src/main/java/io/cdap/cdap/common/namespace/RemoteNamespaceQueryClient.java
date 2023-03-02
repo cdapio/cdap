@@ -29,17 +29,18 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * Implementation of {@link NamespaceQueryAdmin} that pings the internal endpoints in a {@link HttpHandler} in remote
- * system service.
+ * Implementation of {@link NamespaceQueryAdmin} that pings the internal endpoints in a {@link
+ * HttpHandler} in remote system service.
  */
 public class RemoteNamespaceQueryClient extends AbstractNamespaceQueryClient {
+
   private final RemoteClient remoteClient;
 
   @Inject
   RemoteNamespaceQueryClient(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override

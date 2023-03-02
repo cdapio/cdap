@@ -31,11 +31,11 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Store for app state data.
- * It does not wrap its operations in a transaction.
- * It is up to the caller to decide what operations belong in a transaction.
+ * Store for app state data. It does not wrap its operations in a transaction. It is up to the
+ * caller to decide what operations belong in a transaction.
  */
 public class AppStateTable {
+
   private final StructuredTable table;
 
   public AppStateTable(StructuredTableContext context) {
@@ -82,11 +82,12 @@ public class AppStateTable {
    * @throws IOException if there is an error reading or deleting from the table.
    */
   public void deleteAll(NamespaceId namespaceId, String appName) throws IOException {
-    table.deleteAll(Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
-                                                                   namespaceId.getNamespace()),
-                                                Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD,
-                                                                   appName)),
-                               Range.Bound.INCLUSIVE));
+    table.deleteAll(Range.from(
+        ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
+                namespaceId.getNamespace()),
+            Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD,
+                appName)),
+        Range.Bound.INCLUSIVE));
   }
 
   /**
@@ -96,9 +97,10 @@ public class AppStateTable {
    * @throws IOException if there is an error reading or deleting from the table.
    */
   public void deleteAll(NamespaceId namespaceId) throws IOException {
-    table.deleteAll(Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
-                                                                   namespaceId.getNamespace())),
-                               Range.Bound.INCLUSIVE));
+    table.deleteAll(Range.from(
+        ImmutableList.of(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
+            namespaceId.getNamespace())),
+        Range.Bound.INCLUSIVE));
   }
 
   private byte[] getStateValue(StructuredRow structuredRow) {
@@ -108,16 +110,19 @@ public class AppStateTable {
   private List<Field<?>> getKeyFields(AppStateKey request) {
     List<Field<?>> keyFields = new ArrayList<>(3);
     keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.NAMESPACE_FIELD,
-                                     request.getNamespaceId().getNamespace()));
-    keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD, request.getAppName()));
-    keyFields.add(Fields.stringField(StoreDefinition.AppStateStore.STATE_KEY_FIELD, request.getStateKey()));
+        request.getNamespaceId().getNamespace()));
+    keyFields.add(
+        Fields.stringField(StoreDefinition.AppStateStore.APP_NAME_FIELD, request.getAppName()));
+    keyFields.add(
+        Fields.stringField(StoreDefinition.AppStateStore.STATE_KEY_FIELD, request.getStateKey()));
     return keyFields;
   }
 
   private List<Field<?>> getRow(AppStateKeyValue request) {
     List<Field<?>> fields = new ArrayList<>(4);
     fields.addAll(getKeyFields(request));
-    fields.add(Fields.bytesField(StoreDefinition.AppStateStore.STATE_VALUE_FIELD, request.getState()));
+    fields.add(
+        Fields.bytesField(StoreDefinition.AppStateStore.STATE_VALUE_FIELD, request.getState()));
     return fields;
   }
 }

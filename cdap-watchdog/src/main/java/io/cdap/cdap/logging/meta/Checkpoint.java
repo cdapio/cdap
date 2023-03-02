@@ -20,9 +20,11 @@ import com.google.common.base.Objects;
 
 /**
  * Represents a checkpoint that can be saved when reading logs.
+ *
  * @param <Offset> type of the offset
  */
 public class Checkpoint<Offset> {
+
   private final Offset offset;
   private final long maxEventTime;
 
@@ -51,8 +53,8 @@ public class Checkpoint<Offset> {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("Offset", offset)
-      .add("maxEventTime", maxEventTime)
-      .toString();
+        .add("Offset", offset)
+        .add("maxEventTime", maxEventTime)
+        .toString();
   }
 }

@@ -33,7 +33,8 @@ public class RunnableTaskParam {
    */
   private final RunnableTaskRequest embeddedTaskRequest;
 
-  public RunnableTaskParam(@Nullable String simpleParam, @Nullable RunnableTaskRequest embeddedTaskRequest) {
+  public RunnableTaskParam(@Nullable String simpleParam,
+      @Nullable RunnableTaskRequest embeddedTaskRequest) {
     this.simpleParam = simpleParam;
     this.embeddedTaskRequest = embeddedTaskRequest;
   }
@@ -64,7 +65,7 @@ public class RunnableTaskParam {
     }
     RunnableTaskParam that = (RunnableTaskParam) o;
     return Objects.equals(simpleParam, that.simpleParam) && Objects
-      .equals(embeddedTaskRequest, that.embeddedTaskRequest);
+        .equals(embeddedTaskRequest, that.embeddedTaskRequest);
   }
 
   @Override

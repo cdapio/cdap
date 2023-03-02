@@ -33,17 +33,18 @@ import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.process.RemoteMetricsSystemClient;
 
 /**
- * Guice module for binding classes for metrics client that publish metrics to TMS.
- * It requires bindings for {@link MessagingService} and bindings defined in
- * {@link IOModule}.
+ * Guice module for binding classes for metrics client that publish metrics to TMS. It requires
+ * bindings for {@link MessagingService} and bindings defined in {@link IOModule}.
  */
 final class DistributedMetricsClientModule extends PrivateModule {
 
-  private static final TypeToken<MetricValues> METRIC_RECORD_TYPE = TypeToken.of(MetricValues.class);
+  private static final TypeToken<MetricValues> METRIC_RECORD_TYPE = TypeToken.of(
+      MetricValues.class);
 
   @Override
   protected void configure() {
-    bind(MetricsCollectionService.class).to(MessagingMetricsCollectionService.class).in(Scopes.SINGLETON);
+    bind(MetricsCollectionService.class).to(MessagingMetricsCollectionService.class)
+        .in(Scopes.SINGLETON);
     expose(MetricsCollectionService.class);
 
     bind(MetricsSystemClient.class).to(RemoteMetricsSystemClient.class).in(Scopes.SINGLETON);
@@ -52,9 +53,10 @@ final class DistributedMetricsClientModule extends PrivateModule {
 
   @Provides
   public DatumWriter<MetricValues> providesDatumWriter(SchemaGenerator schemaGenerator,
-                                                       DatumWriterFactory datumWriterFactory) {
+      DatumWriterFactory datumWriterFactory) {
     try {
-      return datumWriterFactory.create(METRIC_RECORD_TYPE, schemaGenerator.generate(METRIC_RECORD_TYPE.getType()));
+      return datumWriterFactory.create(METRIC_RECORD_TYPE,
+          schemaGenerator.generate(METRIC_RECORD_TYPE.getType()));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

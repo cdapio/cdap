@@ -48,10 +48,13 @@ public interface MetadataStorage extends Closeable {
   /**
    * Apply a batch of mutations to the metadata state.
    *
-   * @param mutations the mutations to perform. They are applied in the order given by the list.
-   * @return the changes effected by each of the mutations, in the same order as the batch of mutations.
+   * @param mutations the mutations to perform. They are applied in the order given by the
+   *     list.
+   * @return the changes effected by each of the mutations, in the same order as the batch of
+   *     mutations.
    */
-  List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException;
+  List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options)
+      throws IOException;
 
   /**
    * Retrieve the metadata for an entity.
@@ -70,8 +73,8 @@ public interface MetadataStorage extends Closeable {
   SearchResponse search(SearchRequest request) throws IOException;
 
   /**
-   * Close the storage provider. Do not throw exceptions - this will be called
-   * when the Metadata service shuts down.
+   * Close the storage provider. Do not throw exceptions - this will be called when the Metadata
+   * service shuts down.
    */
   @Override
   void close();

@@ -28,8 +28,8 @@ import org.apache.twill.zookeeper.ZKClientServices;
 import org.apache.twill.zookeeper.ZKClients;
 
 /**
- * Guice module for binding {@link ZKClient} and {@link ZKClientService}. Requires {@link ConfigModule}
- * bindings.
+ * Guice module for binding {@link ZKClient} and {@link ZKClientService}. Requires {@link
+ * ConfigModule} bindings.
  */
 public class ZKClientModule extends AbstractModule {
 
@@ -46,15 +46,15 @@ public class ZKClientModule extends AbstractModule {
   @Singleton
   private ZKClientService provideZKClientService(CConfiguration cConf) {
     return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(Constants.Zookeeper.getZKQuorum(cConf))
-            .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                            Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-            .build(),
-          RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+        ZKClients.reWatchOnExpire(
+            ZKClients.retryOnFailure(
+                ZKClientService.Builder.of(Constants.Zookeeper.getZKQuorum(cConf))
+                    .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                        Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                    .build(),
+                RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+            )
         )
-      )
     );
   }
 }

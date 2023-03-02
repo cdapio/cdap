@@ -29,7 +29,8 @@ public interface SparkDriverWatcher extends AutoCloseable {
   void initialize();
 
   /**
-   * Returns future providing status of spark driver. It returns true, if spark driver succeeds, otherwise failure.
+   * Returns future providing status of spark driver. It returns true, if spark driver succeeds,
+   * otherwise failure.
    */
   Future<Boolean> waitForFinish();
 }

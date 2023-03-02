@@ -25,6 +25,7 @@ import java.util.List;
  * Throw an exception when the RepositoryConfig validation fails.
  */
 public class RepositoryConfigValidationException extends RuntimeException {
+
   private final List<RepositoryValidationFailure> failures;
 
   public RepositoryConfigValidationException(Collection<RepositoryValidationFailure> failures) {

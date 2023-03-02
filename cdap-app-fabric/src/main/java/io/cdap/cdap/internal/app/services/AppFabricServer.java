@@ -97,26 +97,26 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
-                         DiscoveryService discoveryService,
-                         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
-                         @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
-                         @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService,
-                         RunRecordCorrectorService runRecordCorrectorService,
-                         ProgramRunStatusMonitorService programRunStatusMonitorService,
-                         ApplicationLifecycleService applicationLifecycleService,
-                         ProgramNotificationSubscriberService programNotificationSubscriberService,
-                         ProgramStopSubscriberService programStopSubscriberService,
-                         @Named("appfabric.services.names") Set<String> servicesNames,
-                         @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         CoreSchedulerService coreSchedulerService,
-                         ProvisioningService provisioningService,
-                         BootstrapService bootstrapService,
-                         SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner,
-                         EventPublishManager eventPublishManager,
-                         RunRecordMonitorService runRecordCounterService,
-                         CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      DiscoveryService discoveryService,
+      @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+      @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
+      @Nullable MetricsCollectionService metricsCollectionService,
+      ProgramRuntimeService programRuntimeService,
+      RunRecordCorrectorService runRecordCorrectorService,
+      ProgramRunStatusMonitorService programRunStatusMonitorService,
+      ApplicationLifecycleService applicationLifecycleService,
+      ProgramNotificationSubscriberService programNotificationSubscriberService,
+      ProgramStopSubscriberService programStopSubscriberService,
+      @Named("appfabric.services.names") Set<String> servicesNames,
+      @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
+      CoreSchedulerService coreSchedulerService,
+      ProvisioningService provisioningService,
+      BootstrapService bootstrapService,
+      SystemAppManagementService systemAppManagementService,
+      TransactionRunner transactionRunner,
+      EventPublishManager eventPublishManager,
+      RunRecordMonitorService runRecordCounterService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -147,59 +147,62 @@ public class AppFabricServer extends AbstractIdleService {
    */
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.APP_FABRIC_HTTP));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.APP_FABRIC_HTTP));
     Futures.allAsList(
-      ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        programStopSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        programRunStatusMonitorService.start(),
-        coreSchedulerService.start(),
-        eventPublishManager.start(),
-        runRecordCounterService.start()
-      )
+        ImmutableList.of(
+            provisioningService.start(),
+            applicationLifecycleService.start(),
+            bootstrapService.start(),
+            programRuntimeService.start(),
+            programNotificationSubscriberService.start(),
+            programStopSubscriberService.start(),
+            runRecordCorrectorService.start(),
+            programRunStatusMonitorService.start(),
+            coreSchedulerService.start(),
+            eventPublishManager.start(),
+            runRecordCounterService.start()
+        )
     ).get();
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
-      .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
-      .collect(Collectors.toList());
+        .map(name -> new MetricsReporterHook(cConf, metricsCollectionService, name))
+        .collect(Collectors.toList());
 
     // Run http service on random port
     NettyHttpService.Builder httpServiceBuilder = commonNettyHttpServiceFactory
-      .builder(Constants.Service.APP_FABRIC_HTTP)
-      .setHost(hostname.getCanonicalHostName())
-      .setHandlerHooks(handlerHooks)
-      .setHttpHandlers(handlers)
-      .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
-                                         Constants.AppFabric.DEFAULT_BACKLOG))
-      .setExecThreadPoolSize(cConf.getInt(Constants.AppFabric.EXEC_THREADS,
-                                          Constants.AppFabric.DEFAULT_EXEC_THREADS))
-      .setBossThreadPoolSize(cConf.getInt(Constants.AppFabric.BOSS_THREADS,
-                                          Constants.AppFabric.DEFAULT_BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
-                                            Constants.AppFabric.DEFAULT_WORKER_THREADS))
-      .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
+        .builder(Constants.Service.APP_FABRIC_HTTP)
+        .setHost(hostname.getCanonicalHostName())
+        .setHandlerHooks(handlerHooks)
+        .setHttpHandlers(handlers)
+        .setConnectionBacklog(cConf.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
+            Constants.AppFabric.DEFAULT_BACKLOG))
+        .setExecThreadPoolSize(cConf.getInt(Constants.AppFabric.EXEC_THREADS,
+            Constants.AppFabric.DEFAULT_EXEC_THREADS))
+        .setBossThreadPoolSize(cConf.getInt(Constants.AppFabric.BOSS_THREADS,
+            Constants.AppFabric.DEFAULT_BOSS_THREADS))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.AppFabric.WORKER_THREADS,
+            Constants.AppFabric.DEFAULT_WORKER_THREADS))
+        .setPort(cConf.getInt(Constants.AppFabric.SERVER_PORT));
     if (sslEnabled) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(httpServiceBuilder);
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
     long applicationCount = TransactionRunners.run(transactionRunner,
-                                                   (TxCallable<Long>) context ->
-                                                     AppMetadataStore.create(context).getApplicationCount());
+        (TxCallable<Long>) context ->
+            AppMetadataStore.create(context).getApplicationCount());
     long namespaceCount = new DefaultNamespaceStore(transactionRunner).getNamespaceCount();
 
-    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.APPLICATION_COUNT,
-                                                                      applicationCount);
-    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
-                                                                      namespaceCount);
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(Constants.Metrics.Program.APPLICATION_COUNT,
+            applicationCount);
+    metricsCollectionService.getContext(Collections.emptyMap())
+        .gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
+            namespaceCount);
   }
 
   @Override
@@ -223,9 +226,9 @@ public class AppFabricServer extends AbstractIdleService {
     httpService.start();
 
     String announceAddress = cConf.get(Constants.Service.MASTER_SERVICES_ANNOUNCE_ADDRESS,
-                                       httpService.getBindAddress().getHostName());
+        httpService.getBindAddress().getHostName());
     int announcePort = cConf.getInt(Constants.AppFabric.SERVER_ANNOUNCE_PORT,
-                                    httpService.getBindAddress().getPort());
+        httpService.getBindAddress().getPort());
 
     final InetSocketAddress socketAddress = new InetSocketAddress(announceAddress, announcePort);
     LOG.info("AppFabric HTTP Service announced at {}", socketAddress);
@@ -238,7 +241,7 @@ public class AppFabricServer extends AbstractIdleService {
     final List<Cancellable> cancellables = new ArrayList<>();
     for (final String serviceName : servicesNames) {
       cancellables.add(discoveryService.register(
-        ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
+          ResolvingDiscoverable.of(uriScheme.createDiscoverable(serviceName, socketAddress))));
     }
 
     return () -> {

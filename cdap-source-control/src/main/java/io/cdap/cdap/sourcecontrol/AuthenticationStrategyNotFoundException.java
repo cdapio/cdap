@@ -19,10 +19,11 @@ package io.cdap.cdap.sourcecontrol;
 import io.cdap.cdap.common.NotFoundException;
 
 /**
- * Exception thrown when no auth strategy was found for the given {@link io.cdap.cdap.proto.sourcecontrol.Provider}
- * and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}.
+ * Exception thrown when no auth strategy was found for the given {@link
+ * io.cdap.cdap.proto.sourcecontrol.Provider} and {@link io.cdap.cdap.proto.sourcecontrol.AuthType}.
  */
 public class AuthenticationStrategyNotFoundException extends NotFoundException {
+
   public AuthenticationStrategyNotFoundException(String message) {
     super(message);
   }

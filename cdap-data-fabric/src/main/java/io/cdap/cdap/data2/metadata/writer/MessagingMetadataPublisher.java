@@ -34,7 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An implementation of {@link MetadataPublisher} that publish metadata information to {@link MessagingService}.
+ * An implementation of {@link MetadataPublisher} that publish metadata information to {@link
+ * MessagingService}.
  */
 public class MessagingMetadataPublisher implements MetadataPublisher {
 
@@ -54,11 +55,13 @@ public class MessagingMetadataPublisher implements MetadataPublisher {
 
   @Override
   public void publish(EntityId publisher, MetadataOperation operation) {
-    MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, publisher, GSON.toJsonTree(operation));
+    MetadataMessage message = new MetadataMessage(Type.METADATA_OPERATION, publisher,
+        GSON.toJsonTree(operation));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
     LOG.trace("Publishing message {} to topic {}", message, topic);
     try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+          Retries.ALWAYS_TRUE);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish metadata operation: " + operation, e);
     }

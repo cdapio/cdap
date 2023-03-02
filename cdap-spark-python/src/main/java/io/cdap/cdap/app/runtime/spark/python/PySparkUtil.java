@@ -29,8 +29,8 @@ import java.util.zip.ZipOutputStream;
 /**
  * Helper class for PySpark execution.
  *
- * This class is intentionally written in this module and used by SparkRuntimeService, so that this module
- * jar is always getting included in distributed cache via dependency tracing.
+ * This class is intentionally written in this module and used by SparkRuntimeService, so that this
+ * module jar is always getting included in distributed cache via dependency tracing.
  */
 public final class PySparkUtil {
 
@@ -49,12 +49,14 @@ public final class PySparkUtil {
     // This is the case in normal CDAP distribution.
     if ("jar".equals(initPyURL.getProtocol())) {
       // A JAR URL is in the format of `jar:file:///jarpath!/pathtoentry`
-      return new File(URI.create(initPyURL.getPath().substring(0, initPyURL.getPath().indexOf("!/"))));
+      return new File(
+          URI.create(initPyURL.getPath().substring(0, initPyURL.getPath().indexOf("!/"))));
     }
 
     // If the python script comes from file, create a zip file that has everything under it
     File libFile = new File(tempDir, "cdap-pyspark-lib.zip");
-    try (ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(libFile)))) {
+    try (ZipOutputStream output = new ZipOutputStream(
+        new BufferedOutputStream(new FileOutputStream(libFile)))) {
       // Directory pointing to "cdap/".
       File basePathDir = new File(initPyURL.toURI()).getParentFile().getParentFile();
       BundleJarUtil.addToArchive(basePathDir, true, output);

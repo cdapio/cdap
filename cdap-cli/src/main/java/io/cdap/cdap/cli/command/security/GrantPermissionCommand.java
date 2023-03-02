@@ -45,10 +45,11 @@ public class GrantPermissionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    Authorizable authorizable = Authorizable.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    Authorizable authorizable = Authorizable.fromString(
+        arguments.get(ArgumentName.ENTITY.toString()));
     String principalName = arguments.get("principal-name");
     Principal.PrincipalType principalType =
-      Principal.PrincipalType.valueOf(arguments.get("principal-type").toUpperCase());
+        Principal.PrincipalType.valueOf(arguments.get("principal-type").toUpperCase());
     Principal principal = new Principal(principalName, principalType);
     Set<Permission> permissions = PERMISSION_STRING_TO_SET.apply(arguments.get("permissions"));
     // permissions is not an optional argument so should never be null
@@ -56,18 +57,21 @@ public class GrantPermissionCommand extends AbstractAuthCommand {
 
     client.grant(authorizable, principal, permissions);
     output.printf("Successfully granted permission(s) '%s' on entity '%s' to %s '%s'\n",
-                  Joiner.on(",").join(permissions), authorizable.toString(), principal.getType(), principal.getName());
+        Joiner.on(",").join(permissions), authorizable.toString(), principal.getType(),
+        principal.getName());
   }
 
   @Override
   public String getPattern() {
-    return String.format("grant permissions <permissions> on entity <%s> to <%s> <%s>", ArgumentName.ENTITY,
-                         ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
+    return String.format("grant permissions <permissions> on entity <%s> to <%s> <%s>",
+        ArgumentName.ENTITY,
+        ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Grants a principal permissions to perform certain actions on an authorizable. %s %s",
-                         ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
+    return String.format(
+        "Grants a principal permissions to perform certain actions on an authorizable. %s %s",
+        ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }

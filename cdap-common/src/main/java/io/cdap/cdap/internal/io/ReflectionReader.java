@@ -65,8 +65,9 @@ public abstract class ReflectionReader<FROM, TO> {
 
   @SuppressWarnings("unchecked")
   protected TO read(FROM source, Schema sourceSchema, Schema targetSchema,
-                    TypeToken<?> targetTypeToken) throws IOException {
-    if (sourceSchema.getType() != Schema.Type.UNION && targetSchema.getType() == Schema.Type.UNION) {
+      TypeToken<?> targetTypeToken) throws IOException {
+    if (sourceSchema.getType() != Schema.Type.UNION
+        && targetSchema.getType() == Schema.Type.UNION) {
       // Try every target schemas
       for (Schema schema : targetSchema.getUnionSchemas()) {
         try {
@@ -75,7 +76,8 @@ public abstract class ReflectionReader<FROM, TO> {
           // Continue;
         }
       }
-      throw new IOException(String.format("No matching schema to resolve %s to %s", sourceSchema, targetSchema));
+      throw new IOException(
+          String.format("No matching schema to resolve %s to %s", sourceSchema, targetSchema));
     }
     return (TO) doRead(source, sourceSchema, targetSchema, targetTypeToken);
   }
@@ -97,28 +99,28 @@ public abstract class ReflectionReader<FROM, TO> {
   protected abstract ByteBuffer readBytes(FROM source) throws IOException;
 
   protected abstract Object readEnum(FROM source, Schema sourceSchema, Schema targetSchema,
-                                     TypeToken<?> targetTypeToken) throws IOException;
+      TypeToken<?> targetTypeToken) throws IOException;
 
   protected abstract Object readArray(FROM source, Schema sourceSchema, Schema targetSchema,
-                                      TypeToken<?> targetTypeToken) throws IOException;
+      TypeToken<?> targetTypeToken) throws IOException;
 
   protected abstract Object readMap(FROM source, Schema sourceSchema, Schema targetSchema,
-                                    TypeToken<?> targetTypeToken) throws IOException;
+      TypeToken<?> targetTypeToken) throws IOException;
 
   protected abstract Object readUnion(FROM source, Schema sourceSchema, Schema targetSchema,
-                                      TypeToken<?> targetTypeToken) throws IOException;
+      TypeToken<?> targetTypeToken) throws IOException;
 
   protected abstract Object readRecord(FROM source, Schema sourceSchema, Schema targetSchema,
-                                       TypeToken<?> targetTypeToken) throws IOException;
+      TypeToken<?> targetTypeToken) throws IOException;
 
 
   protected Object doRead(FROM source, Schema sourceSchema, Schema targetSchema,
-                          TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
 
     Schema.Type sourceType = sourceSchema.getType();
     Schema.Type targetType = targetSchema.getType();
 
-    switch(sourceType) {
+    switch (sourceType) {
       case NULL:
         check(sourceType == targetType, "Fails to resolve %s to %s", sourceType, targetType);
         return readNull(source);
@@ -133,14 +135,16 @@ public abstract class ReflectionReader<FROM, TO> {
               return array;
             }
             byte[] bytes = new byte[buffer.remaining()];
-            System.arraycopy(array, buffer.arrayOffset() + buffer.position(), bytes, 0, buffer.remaining());
+            System.arraycopy(array, buffer.arrayOffset() + buffer.position(), bytes, 0,
+                buffer.remaining());
             return bytes;
           } else {
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
             return bytes;
           }
-        } else if (targetTypeToken.getRawType().equals(UUID.class) && buffer.remaining() == Longs.BYTES * 2) {
+        } else if (targetTypeToken.getRawType().equals(UUID.class)
+            && buffer.remaining() == Longs.BYTES * 2) {
           return new UUID(buffer.getLong(), buffer.getLong());
         }
         return buffer;
@@ -167,10 +171,10 @@ public abstract class ReflectionReader<FROM, TO> {
   }
 
   private Object resolveType(FROM source, Schema.Type sourceType, Schema.Type targetType,
-                             TypeToken<?> targetTypeToken) throws IOException {
-    switch(sourceType) {
+      TypeToken<?> targetTypeToken) throws IOException {
+    switch (sourceType) {
       case BOOLEAN:
-        switch(targetType) {
+        switch (targetType) {
           case BOOLEAN:
             return readBool(source);
           case STRING:
@@ -178,7 +182,7 @@ public abstract class ReflectionReader<FROM, TO> {
         }
         break;
       case INT:
-        switch(targetType) {
+        switch (targetType) {
           case INT:
             Class<?> targetClass = targetTypeToken.getRawType();
             int value = readInt(source);
@@ -203,7 +207,7 @@ public abstract class ReflectionReader<FROM, TO> {
         }
         break;
       case LONG:
-        switch(targetType) {
+        switch (targetType) {
           case LONG:
             return readLong(source);
           case FLOAT:
@@ -215,7 +219,7 @@ public abstract class ReflectionReader<FROM, TO> {
         }
         break;
       case FLOAT:
-        switch(targetType) {
+        switch (targetType) {
           case FLOAT:
             return readFloat(source);
           case DOUBLE:
@@ -225,7 +229,7 @@ public abstract class ReflectionReader<FROM, TO> {
         }
         break;
       case DOUBLE:
-        switch(targetType) {
+        switch (targetType) {
           case DOUBLE:
             return readDouble(source);
           case STRING:
@@ -233,7 +237,7 @@ public abstract class ReflectionReader<FROM, TO> {
         }
         break;
       case STRING:
-        switch(targetType) {
+        switch (targetType) {
           case STRING:
             String str = readString(source);
             Class<?> targetClass = targetTypeToken.getRawType();

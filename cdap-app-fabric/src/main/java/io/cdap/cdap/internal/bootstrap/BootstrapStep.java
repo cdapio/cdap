@@ -20,10 +20,12 @@ package io.cdap.cdap.internal.bootstrap;
 import com.google.gson.JsonObject;
 
 /**
- * Definition for a single step in a bootstrap process. Defines what operation to perform, whether it should be executed
- * every time CDAP starts up or just once, and any arguments required to perform the operation.
+ * Definition for a single step in a bootstrap process. Defines what operation to perform, whether
+ * it should be executed every time CDAP starts up or just once, and any arguments required to
+ * perform the operation.
  */
 public class BootstrapStep {
+
   private final String label;
   private final Type type;
   private final RunCondition runCondition;

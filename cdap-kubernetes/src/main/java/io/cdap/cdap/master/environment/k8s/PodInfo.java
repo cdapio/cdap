@@ -53,11 +53,13 @@ public final class PodInfo {
   private final String imagePullPolicy;
 
   public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid,
-                 String uidFile, String namespaceFile,
-                 String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
-                 String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
-                 String containerImage, List<V1VolumeMount> containerVolumeMounts,
-                 List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext, String imagePullPolicy) {
+      String uidFile, String namespaceFile,
+      String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
+      String serviceAccountName, String runtimeClassName, List<V1Volume> volumes,
+      String containerLabelName,
+      String containerImage, List<V1VolumeMount> containerVolumeMounts,
+      List<V1EnvVar> containerEnvironments, V1PodSecurityContext securityContext,
+      String imagePullPolicy) {
     this.name = name;
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
@@ -73,8 +75,10 @@ public final class PodInfo {
     this.volumes = Collections.unmodifiableList(new ArrayList<>(volumes));
     this.containerLabelName = containerLabelName;
     this.containerImage = containerImage;
-    this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
-    this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
+    this.containerVolumeMounts = Collections.unmodifiableList(
+        new ArrayList<>(containerVolumeMounts));
+    this.containerEnvironments = Collections.unmodifiableList(
+        new ArrayList<>(containerEnvironments));
     this.securityContext = securityContext;
     this.imagePullPolicy = imagePullPolicy;
   }

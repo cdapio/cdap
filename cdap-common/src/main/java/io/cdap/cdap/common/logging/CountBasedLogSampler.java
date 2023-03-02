@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.spi.LocationAwareLogger;
 
 /**
- * An abstract {@link LogSampler} implementation that sample based on number of log events.
- * It maintains a different call count for each log level.
+ * An abstract {@link LogSampler} implementation that sample based on number of log events. It
+ * maintains a different call count for each log level.
  */
 public abstract class CountBasedLogSampler implements LogSampler {
 

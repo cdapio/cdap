@@ -26,21 +26,22 @@ import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
 
 /**
- * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
+ * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from
+ * json.
  */
 public class TriggeringScheduleInfoAdapter {
 
   public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
     return builder
-      .registerTypeAdapter(TriggerInfo.class, new TriggerInfoDeserializer())
-      .registerTypeAdapterFactory(new TypeAdapterFactory() {
-        @Override
-        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-          if (TriggeringScheduleInfo.class.equals(type.getRawType())) {
-            return (TypeAdapter<T>) gson.getAdapter(DefaultTriggeringScheduleInfo.class);
+        .registerTypeAdapter(TriggerInfo.class, new TriggerInfoDeserializer())
+        .registerTypeAdapterFactory(new TypeAdapterFactory() {
+          @Override
+          public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+            if (TriggeringScheduleInfo.class.equals(type.getRawType())) {
+              return (TypeAdapter<T>) gson.getAdapter(DefaultTriggeringScheduleInfo.class);
+            }
+            return null;
           }
-          return null;
-        }
-      });
+        });
   }
 }

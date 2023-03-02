@@ -42,20 +42,22 @@ import org.apache.twill.filesystem.LocationFactory;
  * Distributed ProgramRunner for Service.
  */
 public class DistributedServiceProgramRunner extends DistributedProgramRunner
-                                             implements LongRunningDistributedProgramRunner {
+    implements LongRunningDistributedProgramRunner {
 
   @Inject
   DistributedServiceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
-                                  Impersonator impersonator, ClusterMode clusterMode,
-                                  @Constants.AppFabric.ProgramRunner TwillRunner twillRunner, Injector injector) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner, injector.getInstance(LocationFactory.class));
+      Impersonator impersonator, ClusterMode clusterMode,
+      @Constants.AppFabric.ProgramRunner TwillRunner twillRunner, Injector injector) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner,
+        injector.getInstance(LocationFactory.class));
     if (!cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       this.namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     }
   }
 
   @Override
-  public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
+  public ProgramController createProgramController(ProgramRunId programRunId,
+      TwillController twillController) {
     return new ServiceTwillProgramController(programRunId, twillController).startListen();
   }
 
@@ -69,22 +71,25 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only SERVICE process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.SERVICE,
+        "Only SERVICE process type is supported.");
 
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
-    Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
+    Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s",
+        program.getName());
   }
 
   @Override
-  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
-                                   CConfiguration cConf, Configuration hConf, File tempDir) {
+  protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program,
+      ProgramOptions options,
+      CConfiguration cConf, Configuration hConf, File tempDir) {
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
 
     // Add a runnable for the service handler
     launchConfig.addRunnable(serviceSpec.getName(), new ServiceTwillRunnable(serviceSpec.getName()),
-                             serviceSpec.getInstances(), options.getUserArguments().asMap(),
-                             serviceSpec.getResources());
+        serviceSpec.getInstances(), options.getUserArguments().asMap(),
+        serviceSpec.getResources());
   }
 }

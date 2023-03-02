@@ -33,7 +33,8 @@ import javax.annotation.Nullable;
  */
 public final class StoreRequestBuilder {
 
-  private static final Function<String, byte[]> STRING_TO_BYTES = input -> input.getBytes(StandardCharsets.UTF_8);
+  private static final Function<String, byte[]> STRING_TO_BYTES = input -> input.getBytes(
+      StandardCharsets.UTF_8);
 
   private final TopicId topicId;
   private List<byte[]> payloads;
@@ -56,7 +57,8 @@ public final class StoreRequestBuilder {
   }
 
   /**
-   * Adds a single payload string to the request. The string will be converted to byte arrays using UTF-8 encoding.
+   * Adds a single payload string to the request. The string will be converted to byte arrays using
+   * UTF-8 encoding.
    */
   public StoreRequestBuilder addPayload(String payload) {
     return addPayload(STRING_TO_BYTES.apply(payload));
@@ -77,7 +79,7 @@ public final class StoreRequestBuilder {
     Iterators.addAll(getPayloads(), payloads);
     return this;
   }
-  
+
   /**
    * Adds a list of byte arrays as the payloads of the request.
    */
@@ -89,8 +91,8 @@ public final class StoreRequestBuilder {
   /**
    * Sets the transaction write pointer to be used for the request.
    *
-   * @param txWritePointer the transaction write pointer if want to publish transactionally, or {@code null}
-   *                       for non-transactional publish.
+   * @param txWritePointer the transaction write pointer if want to publish transactionally, or
+   *     {@code null} for non-transactional publish.
    */
   public StoreRequestBuilder setTransaction(@Nullable Long txWritePointer) {
     this.txWritePointer = txWritePointer;
@@ -111,8 +113,9 @@ public final class StoreRequestBuilder {
     if (txWritePointer == null && (payloads == null || payloads.isEmpty())) {
       throw new IllegalArgumentException("Payload cannot be empty for non-transactional publish");
     }
-    return new SimpleStoreRequest(topicId, txWritePointer != null, txWritePointer == null ? -1L : txWritePointer,
-                                  payloads);
+    return new SimpleStoreRequest(topicId, txWritePointer != null,
+        txWritePointer == null ? -1L : txWritePointer,
+        payloads);
   }
 
   /**
@@ -134,7 +137,7 @@ public final class StoreRequestBuilder {
     private final List<byte[]> payloads;
 
     SimpleStoreRequest(TopicId topicId, boolean transactional, long transactionWritePointer,
-                       @Nullable List<byte[]> payloads) {
+        @Nullable List<byte[]> payloads) {
       super(topicId, transactional, transactionWritePointer);
       this.payloads = payloads == null ? Collections.emptyList() : payloads;
     }

@@ -23,6 +23,7 @@ import io.cdap.cdap.common.id.Id;
  * Used write {@link MetadataScope#SYSTEM} metadata for an {@link Id.NamespacedId entity}.
  */
 public interface SystemMetadataWriter {
+
   /**
    * Write the {@link MetadataScope#SYSTEM} metadata for this {@link Id.NamespacedId entity}.
    */

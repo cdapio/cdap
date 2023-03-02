@@ -21,11 +21,12 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import java.util.Objects;
 
 /**
- * Identifies a named piece of metadata of a specific kind in a given scope,
- * for example, property "schema" in scope SYSTEM, or tag "finance" in scope USER.
+ * Identifies a named piece of metadata of a specific kind in a given scope, for example, property
+ * "schema" in scope SYSTEM, or tag "finance" in scope USER.
  */
 @Beta
 public class ScopedNameOfKind extends ScopedName {
+
   private final MetadataKind kind;
 
   public ScopedNameOfKind(MetadataKind kind, MetadataScope scope, String name) {
@@ -69,9 +70,11 @@ public class ScopedNameOfKind extends ScopedName {
   public static ScopedNameOfKind fromString(String s) {
     // Based on ScopedNameOfKind string format, the kind must be in parenthesis, followed by the ScopedName
     if (s.indexOf("(") != 0 || s.indexOf(")") <= 1) {
-      throw new IllegalArgumentException(String.format("Cannot parse '%s' as a ScopedNameOfKind", s));
+      throw new IllegalArgumentException(
+          String.format("Cannot parse '%s' as a ScopedNameOfKind", s));
     }
-    MetadataKind kind = MetadataKind.valueOf(s.substring(s.indexOf("(") + 1, s.indexOf(")")).toUpperCase());
+    MetadataKind kind = MetadataKind.valueOf(
+        s.substring(s.indexOf("(") + 1, s.indexOf(")")).toUpperCase());
     ScopedName scopedName = ScopedName.fromString(s.substring(s.indexOf(")") + 1));
     return new ScopedNameOfKind(kind, scopedName);
   }

@@ -25,12 +25,14 @@ import java.lang.reflect.Type;
 public interface Visitor {
 
   /**
-   * Visits a field in the given type. The field might be declared in one of the parent class of the type.
+   * Visits a field in the given type. The field might be declared in one of the parent class of the
+   * type.
    */
   void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception;
 
   /**
-   * Visits a method in the given type. The method might be declared in one of the parent class of the type.
+   * Visits a method in the given type. The method might be declared in one of the parent class of
+   * the type.
    */
   void visit(Object instance, Type inspectType, Type declareType, Method method) throws Exception;
 }

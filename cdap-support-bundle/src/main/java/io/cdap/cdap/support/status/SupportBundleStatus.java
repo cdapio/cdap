@@ -24,6 +24,7 @@ import org.jboss.netty.util.internal.ConcurrentHashMap;
  * Status when generating Support bundle.
  */
 public class SupportBundleStatus {
+
   /**
    * UUID of the bundle status object describes
    */
@@ -49,9 +50,10 @@ public class SupportBundleStatus {
   // Array of top-level tasks for the bundle, see task structure below
   private final Set<SupportBundleTaskStatus> tasks;
 
-  private SupportBundleStatus(String bundleId, Long startTimestamp, SupportBundleConfiguration parameters,
-                              String statusDetails, CollectionState status, Long finishTimestamp,
-                              Set<SupportBundleTaskStatus> tasks) {
+  private SupportBundleStatus(String bundleId, Long startTimestamp,
+      SupportBundleConfiguration parameters,
+      String statusDetails, CollectionState status, Long finishTimestamp,
+      Set<SupportBundleTaskStatus> tasks) {
     this.bundleId = bundleId;
     this.startTimestamp = startTimestamp;
     this.parameters = parameters;
@@ -70,7 +72,8 @@ public class SupportBundleStatus {
 
   /**
    * @param previousStatus outdated status
-   * @return Builder to create a SupportBundleStatus, initialized with values from the specified existing status
+   * @return Builder to create a SupportBundleStatus, initialized with values from the specified
+   *     existing status
    */
   public static Builder builder(SupportBundleStatus previousStatus) {
     return new Builder(previousStatus);
@@ -80,6 +83,7 @@ public class SupportBundleStatus {
    * Builder to build bundle task status.
    */
   public static class Builder {
+
     private String bundleId;
     private CollectionState status;
     private String statusDetails;
@@ -165,8 +169,9 @@ public class SupportBundleStatus {
       if (status == null) {
         throw new IllegalArgumentException("Bundle status must be specified.");
       }
-      return new SupportBundleStatus(bundleId, startTimestamp, parameters, statusDetails, status, finishTimestamp,
-                                     tasks);
+      return new SupportBundleStatus(bundleId, startTimestamp, parameters, statusDetails, status,
+          finishTimestamp,
+          tasks);
     }
   }
 

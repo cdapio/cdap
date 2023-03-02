@@ -21,16 +21,17 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 
 /**
- * A factory for transaction executors. In addition to the factory from Tephra, we also need to
- * be able to create an executor that obtains each new transaction context from a supplier. This
- * allows for use of the factory with a {@link DynamicDatasetCache}.
+ * A factory for transaction executors. In addition to the factory from Tephra, we also need to be
+ * able to create an executor that obtains each new transaction context from a supplier. This allows
+ * for use of the factory with a {@link DynamicDatasetCache}.
  */
 public interface TransactionExecutorFactory extends org.apache.tephra.TransactionExecutorFactory {
 
   /**
    * Creates a new {@link TransactionExecutor}.
    *
-   * @param txContextFactory the {@link TransactionContextFactory} for creating new {@link TransactionContext}.
+   * @param txContextFactory the {@link TransactionContextFactory} for creating new {@link
+   *     TransactionContext}.
    * @return a new instance of {@link TransactionExecutor}.
    */
   TransactionExecutor createExecutor(TransactionContextFactory txContextFactory);

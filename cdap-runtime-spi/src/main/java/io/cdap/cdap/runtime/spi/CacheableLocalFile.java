@@ -24,6 +24,7 @@ import org.apache.twill.api.LocalFile;
  * LocalFile implementation that can be cached.
  */
 public class CacheableLocalFile implements LocalFile {
+
   private final LocalFile localFile;
 
   public CacheableLocalFile(LocalFile localFile) {

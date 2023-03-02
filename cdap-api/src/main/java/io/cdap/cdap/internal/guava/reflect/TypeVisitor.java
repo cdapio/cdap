@@ -49,7 +49,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  *       throw new IllegalArgumentException("Cannot contain wildcard type.");
  *     }
  *   }.visit(type);}</pre>
- * 
+ *
  * <p>One {@code Type} is visited at most once. The second time the same type is visited, it's
  * ignored by {@link #visit}. This avoids infinite recursion caused by recursive type bounds.
  *
@@ -61,8 +61,8 @@ abstract class TypeVisitor {
   private final Set<Type> visited = new HashSet<>();
 
   /**
-   * Visits the given types. Null types are ignored. This allows subclasses to call
-   * {@code visit(parameterizedType.getOwnerType())} safely without having to check nulls.
+   * Visits the given types. Null types are ignored. This allows subclasses to call {@code
+   * visit(parameterizedType.getOwnerType())} safely without having to check nulls.
    */
   public final void visit(Type... types) {
     for (Type type : types) {
@@ -94,9 +94,18 @@ abstract class TypeVisitor {
     }
   }
 
-  void visitClass(Class<?> t) {}
-  void visitGenericArrayType(GenericArrayType t) {}
-  void visitParameterizedType(ParameterizedType t) {}
-  void visitTypeVariable(TypeVariable<?> t) {}
-  void visitWildcardType(WildcardType t) {}
+  void visitClass(Class<?> t) {
+  }
+
+  void visitGenericArrayType(GenericArrayType t) {
+  }
+
+  void visitParameterizedType(ParameterizedType t) {
+  }
+
+  void visitTypeVariable(TypeVariable<?> t) {
+  }
+
+  void visitWildcardType(WildcardType t) {
+  }
 }

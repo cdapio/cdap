@@ -18,8 +18,9 @@ package io.cdap.cdap.etl.api;
 
 /**
  * Cache configuration.
-  */
+ */
 public final class CacheConfig {
+
   private final long expirySeconds;
   private final int maxSize;
 

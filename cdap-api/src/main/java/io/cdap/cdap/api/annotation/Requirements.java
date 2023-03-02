@@ -25,8 +25,9 @@ import java.lang.annotation.Target;
  *
  * <p>Requirements are case insensitive.</p>
  *
- * <p>If a plugin is not annotated with {@link Requirements} or the annotation {@link #datasetTypes()} is empty,
- * then it is assumed that the plugin does not have any specific requirements and can run everywhere.</p>
+ * <p>If a plugin is not annotated with {@link Requirements} or the annotation {@link
+ * #datasetTypes()} is empty, then it is assumed that the plugin does not have any specific
+ * requirements and can run everywhere.</p>
  *
  * <p>Usage Examples:</p>
  * <ul>
@@ -72,7 +73,8 @@ public @interface Requirements {
 
   /**
    * Names of associated add-ons or capabilities
+   *
    * @return String array of capability names
    */
-  String[] capabilities() default{};
+  String[] capabilities() default {};
 }

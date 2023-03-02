@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.Service;
  * Interface TokenValidator to validate the access token.
  */
 public interface TokenValidator extends Service {
+
   /**
    * Validates the access token and returns the {@link io.cdap.cdap.security.auth.TokenState}
    * describing the cause to be in this state

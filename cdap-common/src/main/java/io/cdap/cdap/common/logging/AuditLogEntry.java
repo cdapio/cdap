@@ -33,9 +33,13 @@ import javax.annotation.Nullable;
  * Represents an entry in an audit log.
  */
 public final class AuditLogEntry {
-  private static final DateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
 
-  /** Each audit log field will default to "-" if the field is missing or not supported. */
+  private static final DateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat(
+      "dd/MMM/yyyy:HH:mm:ss Z");
+
+  /**
+   * Each audit log field will default to "-" if the field is missing or not supported.
+   */
   private static final String DEFAULT_VALUE = "-";
 
   private final String requestLine;
@@ -55,15 +59,15 @@ public final class AuditLogEntry {
 
   public AuditLogEntry(HttpRequest request, @Nullable String clientIP, Set<String> includeHeaders) {
     this(request.method() + " " + request.uri() + " " + request.protocolVersion(),
-         request.headers().contains(Constants.Security.Headers.USER_ID)
-           ? request.headers().get(Constants.Security.Headers.USER_ID)
-           : null,
-         clientIP,
-         extractHeaders(request, includeHeaders));
+        request.headers().contains(Constants.Security.Headers.USER_ID)
+            ? request.headers().get(Constants.Security.Headers.USER_ID)
+            : null,
+        clientIP,
+        extractHeaders(request, includeHeaders));
   }
 
   public AuditLogEntry(String requestLine, @Nullable String userName,
-                       @Nullable String clientIP, Map<String, String> headers) {
+      @Nullable String clientIP, Map<String, String> headers) {
     this.date = new Date();
     this.requestLine = requestLine;
     this.userName = userName;
@@ -74,15 +78,15 @@ public final class AuditLogEntry {
   @Override
   public String toString() {
     return String.format("%s - %s [%s] \"%s\" %s %s %s %s %s",
-                         toString(clientIP),
-                         toString(userName),
-                         DEFAULT_DATE_FORMAT.format(date),
-                         toString(requestLine),
-                         toString(headers),
-                         toString(requestBody),
-                         toString(responseCode),
-                         toString(responseContentLength),
-                         toString(responseBody));
+        toString(clientIP),
+        toString(userName),
+        DEFAULT_DATE_FORMAT.format(date),
+        toString(requestLine),
+        toString(headers),
+        toString(requestBody),
+        toString(responseCode),
+        toString(responseContentLength),
+        toString(responseBody));
   }
 
   public void setUserName(@Nullable String userName) {

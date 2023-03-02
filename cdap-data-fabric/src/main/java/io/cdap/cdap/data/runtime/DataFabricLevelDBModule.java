@@ -50,20 +50,23 @@ public class DataFabricLevelDBModule extends AbstractModule {
 
     bind(SnapshotCodecProvider.class).in(Scopes.SINGLETON);
     bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
-      .to(LocalFileTransactionStateStorage.class).in(Scopes.SINGLETON);
-    bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Scopes.SINGLETON);
+        .to(LocalFileTransactionStateStorage.class).in(Scopes.SINGLETON);
+    bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class)
+        .in(Scopes.SINGLETON);
     bind(TransactionManager.class).in(Scopes.SINGLETON);
 
-    bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID)).to(ManagementFactory.getRuntimeMXBean().getName());
+    bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID))
+        .to(ManagementFactory.getRuntimeMXBean().getName());
 
     install(new FactoryModuleBuilder()
-              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
-              .build(TransactionExecutorFactory.class));
+        .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+        .build(TransactionExecutorFactory.class));
 
     // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
     bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     bind(TransactionSystemClient.class).toProvider(
-      DataFabricInMemoryModule.InMemoryTransactionSystemClientProvider.class).in(Scopes.SINGLETON);
+            DataFabricInMemoryModule.InMemoryTransactionSystemClientProvider.class)
+        .in(Scopes.SINGLETON);
 
     install(new TransactionExecutorModule());
     install(new StorageModule());

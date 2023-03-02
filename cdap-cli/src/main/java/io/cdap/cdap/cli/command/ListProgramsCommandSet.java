@@ -35,11 +35,13 @@ public class ListProgramsCommandSet extends CommandSet<Command> {
     super(generateCommands(applicationClient, cliConfig));
   }
 
-  private static List<Command> generateCommands(ApplicationClient applicationClient, CLIConfig cliConfig) {
+  private static List<Command> generateCommands(ApplicationClient applicationClient,
+      CLIConfig cliConfig) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.getProgramType() != null && elementType.getProgramType().isListable()) {
-        commands.add(new ListProgramsCommand(elementType.getProgramType(), applicationClient, cliConfig));
+        commands.add(
+            new ListProgramsCommand(elementType.getProgramType(), applicationClient, cliConfig));
       }
     }
     return commands;

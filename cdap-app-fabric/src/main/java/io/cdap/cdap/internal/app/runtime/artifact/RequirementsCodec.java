@@ -31,19 +31,22 @@ import java.util.Set;
 /**
  * JSON Codec for @link{Requirements}
  */
-public class RequirementsCodec implements JsonDeserializer<Requirements>, JsonSerializer<Requirements> {
+public class RequirementsCodec implements JsonDeserializer<Requirements>,
+    JsonSerializer<Requirements> {
 
   public static final String DATASET_TYPES = "datasetTypes";
   public static final String CAPABILITIES = "capabilities";
 
   @Override
   public Requirements deserialize(JsonElement json, Type typeOfT,
-                                  JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObject = json.getAsJsonObject();
-    return new Requirements(getSet(jsonObject, context, DATASET_TYPES), getSet(jsonObject, context, CAPABILITIES));
+    return new Requirements(getSet(jsonObject, context, DATASET_TYPES),
+        getSet(jsonObject, context, CAPABILITIES));
   }
 
-  private Set<String> getSet(JsonObject jsonObject, JsonDeserializationContext context, String fieldName) {
+  private Set<String> getSet(JsonObject jsonObject, JsonDeserializationContext context,
+      String fieldName) {
     JsonElement jsonElement = jsonObject.get(fieldName);
     if (jsonElement == null) {
       return Collections.emptySet();

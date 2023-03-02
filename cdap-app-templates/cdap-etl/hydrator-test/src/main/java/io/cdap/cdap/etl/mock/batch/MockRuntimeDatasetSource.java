@@ -49,6 +49,7 @@ import java.util.UUID;
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name("MockRuntime")
 public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
@@ -62,6 +63,7 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
    * Config for the source.
    */
   public static class Config extends PluginConfig {
+
     private String tableName;
 
     @Macro
@@ -74,7 +76,7 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
     pipelineConfigurer.createDataset(config.tableName, Table.class);
     if (!config.containsMacro("runtimeDatasetName")) {
       pipelineConfigurer.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(),
-                                       DatasetProperties.EMPTY);
+          DatasetProperties.EMPTY);
     }
   }
 
@@ -87,12 +89,14 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
   public void prepareRun(BatchSourceContext context) throws Exception {
     context.setInput(Input.ofDataset(config.tableName));
     if (!context.datasetExists(config.runtimeDatasetName)) {
-      context.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(), DatasetProperties.EMPTY);
+      context.createDataset(config.runtimeDatasetName, KeyValueTable.class.getName(),
+          DatasetProperties.EMPTY);
     }
   }
 
   @Override
-  public void transform(KeyValue<byte[], Row> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(KeyValue<byte[], Row> input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     Schema schema = Schema.parseJson(input.getValue().getString(SCHEMA_COL));
     String recordStr = input.getValue().getString(RECORD_COL);
     emitter.emit(StructuredRecordStringConverter.fromJsonString(recordStr, schema));
@@ -106,13 +110,14 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
   }
 
   /**
-   * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
+   * Used to write the input records for the pipeline run. Should be called after the pipeline has
+   * been created.
    *
    * @param tableManager dataset manager used to write to the source dataset
    * @param records records that should be the input for the pipeline
    */
   public static void writeInput(DataSetManager<Table> tableManager,
-                                Iterable<StructuredRecord> records) throws Exception {
+      Iterable<StructuredRecord> records) throws Exception {
     tableManager.flush();
     Table table = tableManager.get();
     // write each record as a separate row, with the serialized record as one column and schema as another
@@ -120,7 +125,8 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
     for (StructuredRecord record : records) {
       byte[] row = Bytes.toBytes(UUID.randomUUID());
       table.put(row, SCHEMA_COL, Bytes.toBytes(record.getSchema().toString()));
-      table.put(row, RECORD_COL, Bytes.toBytes(StructuredRecordStringConverter.toJsonString(record)));
+      table.put(row, RECORD_COL,
+          Bytes.toBytes(StructuredRecordStringConverter.toJsonString(record)));
     }
     tableManager.flush();
   }
@@ -128,9 +134,11 @@ public class MockRuntimeDatasetSource extends BatchSource<byte[], Row, Structure
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
-    properties.put("runtimeDatasetName", new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
+    properties.put("runtimeDatasetName",
+        new PluginPropertyField("runtimeDatasetName", "", "string", true, true));
     return PluginClass.builder().setName("MockRuntime").setType(BatchSource.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockRuntimeDatasetSource.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockRuntimeDatasetSource.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

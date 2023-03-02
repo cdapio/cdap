@@ -88,15 +88,14 @@ public interface PreviewStore {
    *
    * @param applicationId the preview id
    * @return the preview status of the preview run, null if no run has started with the preview id
-   *
    */
   @Nullable
   PreviewStatus getPreviewStatus(ApplicationId applicationId);
 
   /**
-   * Adds the preview request for given application id in the store.
-   * {@code getPreviewStatus} call returns status as WAITING once the request
-   * is added to the store.
+   * Adds the preview request for given application id in the store. {@code getPreviewStatus} call
+   * returns status as WAITING once the request is added to the store.
+   *
    * @param applicationId the application id corresponding to the request
    * @param appRequest preview request configuration
    * @param principal the principle who made preview request
@@ -110,21 +109,25 @@ public interface PreviewStore {
 
   /**
    * Sets the information about the poller that has acquired the waiting application for running.
+   *
    * @param applicationId applicationId the application id of preview
    * @param pollerInfo information about the poller that is going to run the preview
-   * @throws ConflictException exception thrown when preview application for which poller info is to be set is not
-   *                           in WAITING state
+   * @throws ConflictException exception thrown when preview application for which poller info
+   *     is to be set is not in WAITING state
    */
-  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo) throws ConflictException;
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo)
+      throws ConflictException;
 
   /**
-   * @return the poller info associated with the application if it exists, otherwise {@code null} is returned
+   * @return the poller info associated with the application if it exists, otherwise {@code null} is
+   *     returned
    */
   @Nullable
   byte[] getPreviewRequestPollerInfo(ApplicationId applicationId);
 
   /**
    * Deletes the preview data older than ttl.
+   *
    * @param ttlInSeconds ttl in seconds
    */
   void deleteExpiredData(long ttlInSeconds);

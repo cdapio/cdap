@@ -34,12 +34,14 @@ import org.apache.tephra.TransactionFailureException;
 /**
  * Test Application that will register different programs based on the config.
  */
-public class ConfigurableProgramsApp2 extends AbstractApplication<ConfigurableProgramsApp2.Programs> {
+public class ConfigurableProgramsApp2 extends
+    AbstractApplication<ConfigurableProgramsApp2.Programs> {
 
   /**
    * Application Config Class.
    */
   public static class Programs extends Config {
+
     @Nullable
     private String worker;
     @Nullable

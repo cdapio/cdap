@@ -22,6 +22,7 @@ package io.cdap.cdap.app.deploy;
  * @param <T> Type of specification this result will hold.
  */
 public class ConfigResult<T> {
+
   private final T specification;
   private final boolean status;
   private final String message;

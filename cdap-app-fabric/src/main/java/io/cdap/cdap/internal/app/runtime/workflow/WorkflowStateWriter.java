@@ -35,8 +35,8 @@ public interface WorkflowStateWriter {
   void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token);
 
   /**
-   * Add node state for the given {@link Workflow} run. This method is used to update the
-   * state of the custom actions started by Workflow.
+   * Add node state for the given {@link Workflow} run. This method is used to update the state of
+   * the custom actions started by Workflow.
    *
    * @param workflowRunId the Workflow run
    * @param nodeStateDetail the node state to be added for the Workflow run

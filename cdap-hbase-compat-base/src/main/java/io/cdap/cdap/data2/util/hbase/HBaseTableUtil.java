@@ -118,13 +118,15 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Returns a map of HBase to CDAP namespace. This is required when we want to report metrics for HBase tables where
-   * it is run a separate service and reads the table metrics and reports it. There we need to translate the hbase
-   * namespace to cdap namespace for metrics to make sense from CDAP perspective. This is also used during upgrade
-   * step where we want to construct the correct {@link DatasetAdmin} for each dataset.
+   * Returns a map of HBase to CDAP namespace. This is required when we want to report metrics for
+   * HBase tables where it is run a separate service and reads the table metrics and reports it.
+   * There we need to translate the hbase namespace to cdap namespace for metrics to make sense from
+   * CDAP perspective. This is also used during upgrade step where we want to construct the correct
+   * {@link DatasetAdmin} for each dataset.
    *
    * @return map of hbase namespace to cdap namespace
-   * @throws IOException if there was an error getting the {@link NamespaceMeta} of all the namespaces
+   * @throws IOException if there was an error getting the {@link NamespaceMeta} of all the
+   *     namespaces
    */
   public Map<String, String> getHBaseToCDAPNamespaceMap() throws IOException {
     Map<String, String> reverseMap = new HashMap<>();
@@ -148,20 +150,22 @@ public abstract class HBaseTableUtil {
   public String getHBaseNamespace(NamespaceId namespaceId) throws IOException {
     // Convert CDAP Namespace to HBase namespace
     if (NamespaceId.SYSTEM.equals(namespaceId) || NamespaceId.CDAP.equals(namespaceId) ||
-      NamespaceId.DEFAULT.equals(namespaceId)) {
+        NamespaceId.DEFAULT.equals(namespaceId)) {
       return toCDAPManagedHBaseNamespace(namespaceId);
     }
 
     if (namespaceQueryAdmin == null) {
-      throw new IOException(String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
-                                            "lookup is requested. Namespace %s", namespaceId.getNamespace()));
+      throw new IOException(
+          String.format("NamespaceQueryAdmin is not set and a non-reserved namespace " +
+              "lookup is requested. Namespace %s", namespaceId.getNamespace()));
     }
 
     try {
       return getHBaseNamespace(namespaceQueryAdmin.get(namespaceId));
     } catch (Exception ex) {
-      throw new IOException(String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
-                                            "Can't find mapping for %s", namespaceId.getNamespace()), ex);
+      throw new IOException(
+          String.format("NamespaceQueryAdmin lookup to get NamespaceMeta failed. " +
+              "Can't find mapping for %s", namespaceId.getNamespace()), ex);
     }
   }
 
@@ -180,7 +184,7 @@ public abstract class HBaseTableUtil {
     // Handle backward compatibility to not add the prefix for default namespace
     // TODO: CDAP-1601 - Conditional should be removed when we have a way to upgrade user datasets
     return NamespaceId.DEFAULT.getEntityName().equals(namespace.getNamespace()) ?
-      namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
+        namespace.getNamespace() : tablePrefix + "_" + namespace.getNamespace();
   }
 
   protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
@@ -207,44 +211,49 @@ public abstract class HBaseTableUtil {
 
   /**
    * Get {@link ColumnFamilyDescriptorBuilder} with default properties set.
+   *
    * @param columnFamilyName name of the column family
    * @param hConf hadoop configurations
    * @return the builder with default properties set
    */
-  public static ColumnFamilyDescriptorBuilder getColumnFamilyDescriptorBuilder(String columnFamilyName,
-                                                                               Configuration hConf) {
+  public static ColumnFamilyDescriptorBuilder getColumnFamilyDescriptorBuilder(
+      String columnFamilyName,
+      Configuration hConf) {
     ColumnFamilyDescriptorBuilder cfdBuilder = new ColumnFamilyDescriptorBuilder(columnFamilyName);
     String compression = hConf.get(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
-                                   HBaseTableUtil.DEFAULT_COMPRESSION_TYPE.name());
+        HBaseTableUtil.DEFAULT_COMPRESSION_TYPE.name());
     cfdBuilder
-      .setMaxVersions(1)
-      .setBloomType(ColumnFamilyDescriptor.BloomType.ROW)
-      .setCompressionType(ColumnFamilyDescriptor.CompressionType.valueOf(compression.toUpperCase()));
+        .setMaxVersions(1)
+        .setBloomType(ColumnFamilyDescriptor.BloomType.ROW)
+        .setCompressionType(
+            ColumnFamilyDescriptor.CompressionType.valueOf(compression.toUpperCase()));
 
     return cfdBuilder;
   }
 
   /**
    * Get {@link TableDescriptorBuilder} with default properties set.
+   *
    * @param tableId id of the table for which the descriptor is to be returned
    * @param cConf the instance of the {@link CConfiguration}
    * @return the builder with default properties set
    */
-  public static TableDescriptorBuilder getTableDescriptorBuilder(TableId tableId, CConfiguration cConf) {
+  public static TableDescriptorBuilder getTableDescriptorBuilder(TableId tableId,
+      CConfiguration cConf) {
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
     TableName tableName = HTableNameConverter.toTableName(tablePrefix, tableId);
     TableDescriptorBuilder tdBuilder = new TableDescriptorBuilder(tableName.getNamespaceAsString(),
-                                                                  tableName.getQualifierAsString());
+        tableName.getQualifierAsString());
     tdBuilder
-      .addProperty(Constants.Dataset.TABLE_PREFIX, tablePrefix)
-      .addProperty(HBaseTableUtil.CDAP_VERSION, ProjectInfo.getVersion().toString())
-      .addProperty(HBaseTableUtil.CDAP_HBASE_VERSION, HBaseVersion.get().getMajorVersion());
-
+        .addProperty(Constants.Dataset.TABLE_PREFIX, tablePrefix)
+        .addProperty(HBaseTableUtil.CDAP_VERSION, ProjectInfo.getVersion().toString())
+        .addProperty(HBaseTableUtil.CDAP_HBASE_VERSION, HBaseVersion.get().getMajorVersion());
 
     return tdBuilder;
   }
 
-  public static void setTablePrefix(HTableDescriptorBuilder tableDescriptorBuilder, CConfiguration cConf) {
+  public static void setTablePrefix(HTableDescriptorBuilder tableDescriptorBuilder,
+      CConfiguration cConf) {
     tableDescriptorBuilder.setValue(Constants.Dataset.TABLE_PREFIX, getTablePrefix(cConf));
   }
 
@@ -269,7 +278,8 @@ public abstract class HBaseTableUtil {
     return tableDescriptor.getValue(CDAP_HBASE_VERSION);
   }
 
-  public static byte[][] getSplitKeys(int splits, int buckets, AbstractRowKeyDistributor keyDistributor) {
+  public static byte[][] getSplitKeys(int splits, int buckets,
+      AbstractRowKeyDistributor keyDistributor) {
     return keyDistributor.getSplitKeys(splits, buckets);
   }
 
@@ -283,7 +293,8 @@ public abstract class HBaseTableUtil {
 
     // Extract information about existing data janitor coprocessor
     // The following logic is copied from RegionCoprocessorHost in HBase
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry: tableDescriptor.getValues().entrySet()) {
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> entry : tableDescriptor.getValues()
+        .entrySet()) {
       String key = Bytes.toString(entry.getKey().get()).trim();
       String spec = Bytes.toString(entry.getValue().get()).trim();
 
@@ -300,7 +311,7 @@ public abstract class HBaseTableUtil {
         String className = matcher.group(2).trim();
         Path path = matcher.group(1).trim().isEmpty() ? null : new Path(matcher.group(1).trim());
         int priority = matcher.group(3).trim().isEmpty() ? Coprocessor.PRIORITY_USER
-          : Integer.valueOf(matcher.group(3));
+            : Integer.valueOf(matcher.group(3));
         String cfgSpec = null;
         try {
           cfgSpec = matcher.group(4);
@@ -319,7 +330,8 @@ public abstract class HBaseTableUtil {
         }
         info.put(className, new CoprocessorInfo(className, path, priority, properties));
       } catch (Exception ex) {
-        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec, ex);
+        LOG.warn("Coprocessor attribute '{}' has invalid coprocessor specification '{}'", key, spec,
+            ex);
       }
     }
 
@@ -327,7 +339,8 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Creates a new {@link Table} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link Table} which may contain an HBase namespace depending on the HBase
+   * version
    *
    * @param conf the hadoop configuration
    * @param tableId the {@link TableId} to create a {@link Table} for
@@ -348,11 +361,12 @@ public abstract class HBaseTableUtil {
    * @return a {@link BufferedMutator}
    * @throws IOException if failed to create connection to HBase
    */
-  public BufferedMutator createBufferedMutator(Table table, long writeBufferSize) throws IOException {
+  public BufferedMutator createBufferedMutator(Table table, long writeBufferSize)
+      throws IOException {
     TableName tableName = table.getTableDescriptor().getTableName();
 
     BufferedMutatorParams params = new BufferedMutatorParams(tableName)
-      .writeBufferSize(writeBufferSize);
+        .writeBufferSize(writeBufferSize);
 
     // Try to reuse the connection from the Table
     if (table instanceof TableWithConnection) {
@@ -386,7 +400,8 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on
+   * the HBase version
    *
    * @param tableId the {@link TableId} to create an {@link HTableDescriptor} for
    * @return an {@link HTableDescriptorBuilder} for the table
@@ -394,7 +409,8 @@ public abstract class HBaseTableUtil {
   public abstract HTableDescriptorBuilder buildHTableDescriptor(TableId tableId);
 
   /**
-   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on the HBase version
+   * Creates a new {@link HTableDescriptorBuilder} which may contain an HBase namespace depending on
+   * the HBase version
    *
    * @param tableDescriptor the {@link HTableDescriptor} whose values should be copied
    * @return an {@link HTableDescriptorBuilder} for the table
@@ -402,13 +418,16 @@ public abstract class HBaseTableUtil {
   public abstract HTableDescriptorBuilder buildHTableDescriptor(HTableDescriptor tableDescriptor);
 
   /**
-   * Constructs a {@link HTableDescriptor} which may contain an HBase namespace for an existing table
+   * Constructs a {@link HTableDescriptor} which may contain an HBase namespace for an existing
+   * table
+   *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param tableId the {@link TableId} to construct an {@link HTableDescriptor} for
    * @return an {@link HTableDescriptor} for the table
    * @throws IOException if failed to get the table descriptor
    */
-  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract HTableDescriptor getHTableDescriptor(HBaseAdmin admin, TableId tableId)
+      throws IOException;
 
   /**
    * Checks if an HBase namespace already exists
@@ -435,7 +454,8 @@ public abstract class HBaseTableUtil {
    * @param tableId {@link TableId} for the specified table
    * @throws IOException if failed to connect to HBase
    */
-  public abstract void deleteTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException;
+  public abstract void deleteTable(HBaseDDLExecutor ddlExecutor, TableId tableId)
+      throws IOException;
 
   /**
    * Modify an HBase table
@@ -444,7 +464,8 @@ public abstract class HBaseTableUtil {
    * @param tableDescriptor the modified {@link HTableDescriptor}
    * @throws IOException if failed to connect to HBase
    */
-  public abstract void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor) throws IOException;
+  public abstract void modifyTable(HBaseDDLExecutor ddlExecutor, HTableDescriptor tableDescriptor)
+      throws IOException;
 
   /**
    * Returns a list of {@link HRegionInfo} for the specified {@link TableId}
@@ -454,7 +475,8 @@ public abstract class HBaseTableUtil {
    * @return a list of {@link HRegionInfo} for the specified {@link TableId}
    * @throws IOException if failed to connect to HBase
    */
-  public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId) throws IOException;
+  public abstract List<HRegionInfo> getTableRegions(HBaseAdmin admin, TableId tableId)
+      throws IOException;
 
   /**
    * Deletes all tables in the specified namespace that satisfy the given {@link Predicate}.
@@ -466,7 +488,7 @@ public abstract class HBaseTableUtil {
    * @throws IOException if failed to connect to HBase
    */
   public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
-                                   Configuration hConf, Predicate<TableId> predicate) throws IOException {
+      Configuration hConf, Predicate<TableId> predicate) throws IOException {
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       for (TableId tableId : listTablesInNamespace(admin, namespaceId)) {
         if (predicate.apply(tableId)) {
@@ -484,8 +506,9 @@ public abstract class HBaseTableUtil {
    * @param hConf The {@link Configuration} instance
    * @throws IOException if failed to connect to HBase
    */
-  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId, Configuration hConf)
-    throws IOException {
+  public void deleteAllInNamespace(HBaseDDLExecutor ddlExecutor, String namespaceId,
+      Configuration hConf)
+      throws IOException {
     deleteAllInNamespace(ddlExecutor, namespaceId, hConf, Predicates.alwaysTrue());
   }
 
@@ -495,30 +518,35 @@ public abstract class HBaseTableUtil {
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    * @param namespaceId HBase namespace for which the tables are being requested
    */
-  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId) throws IOException;
+  public abstract List<TableId> listTablesInNamespace(HBaseAdmin admin, String namespaceId)
+      throws IOException;
 
   /**
    * Lists all tables
+   *
    * @param admin the {@link HBaseAdmin} to use to communicate with HBase
    */
   public abstract List<TableId> listTables(HBaseAdmin admin) throws IOException;
 
   /**
    * Disables and deletes a table.
+   *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
-   * @param tableId  {@link TableId} for the specified table
+   * @param tableId {@link TableId} for the specified table
    * @throws IOException if failed to connect to HBase
    */
   public void dropTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
-    ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(), tableName.getQualifierAsString());
+    ddlExecutor.disableTableIfEnabled(tableName.getNamespaceAsString(),
+        tableName.getQualifierAsString());
     deleteTable(ddlExecutor, tableId);
   }
 
   /**
    * Truncates a table.
+   *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
-   * @param tableId  {@link TableId} for the specified table
+   * @param tableId {@link TableId} for the specified table
    * @throws IOException if failed to connect to HBase
    */
   public void truncateTable(HBaseDDLExecutor ddlExecutor, TableId tableId) throws IOException {
@@ -528,17 +556,19 @@ public abstract class HBaseTableUtil {
 
   /**
    * Grants permissions on a table.
+   *
    * @param ddlExecutor the {@link HBaseDDLExecutor} to use to communicate with HBase
-   * @param tableId  {@link TableId} for the specified table
-   * @param permissions A map from user or group name to the permissions for that user or group, given as a string
-   *                    containing only characters 'a'(Admin), 'c'(Create), 'r'(Read), 'w'(Write), and 'x'(Execute).
-   *                    Group names must be prefixed with the character '@'.
+   * @param tableId {@link TableId} for the specified table
+   * @param permissions A map from user or group name to the permissions for that user or group,
+   *     given as a string containing only characters 'a'(Admin), 'c'(Create), 'r'(Read),
+   *     'w'(Write), and 'x'(Execute). Group names must be prefixed with the character '@'.
    * @throws IOException if failed to connect to HBase
    */
   public void grantPermissions(HBaseDDLExecutor ddlExecutor, TableId tableId,
-                               Map<String, String> permissions) throws IOException {
+      Map<String, String> permissions) throws IOException {
     TableName tableName = HTableNameConverter.toTableName(getTablePrefix(cConf), tableId);
-    ddlExecutor.grantPermissions(tableName.getNamespaceAsString(), tableName.getQualifierAsString(), permissions);
+    ddlExecutor.grantPermissions(tableName.getNamespaceAsString(), tableName.getQualifierAsString(),
+        permissions);
   }
 
   /**
@@ -615,13 +645,17 @@ public abstract class HBaseTableUtil {
   public abstract boolean isGlobalAdmin(Configuration hConf) throws IOException;
 
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
+
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
+
   public abstract Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion();
+
   public abstract Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion();
 
   /**
-   * Collects HBase table stats
-   * //TODO: Explore the possiblitity of returning a {@code Map<TableId, TableStats>}
+   * Collects HBase table stats //TODO: Explore the possiblitity of returning a {@code Map<TableId,
+   * TableStats>}
+   *
    * @param admin instance of {@link HBaseAdmin} to communicate with HBase
    * @return map of table name -> table stats
    * @throws IOException if failed to connect to HBase
@@ -642,8 +676,9 @@ public abstract class HBaseTableUtil {
           tableDescriptor = admin.getTableDescriptor(tableName);
         } catch (TableNotFoundException exception) {
           // this can happen if the table has been deleted; the region stats get removed afterwards
-          LOG.warn("Table not found for table name {}. Skipping collecting stats for it. Reason: {}",
-                   tableName, exception.getMessage());
+          LOG.warn(
+              "Table not found for table name {}. Skipping collecting stats for it. Reason: {}",
+              tableName, exception.getMessage());
           continue;
         }
         if (!isCDAPTable(tableDescriptor)) {
@@ -664,14 +699,16 @@ public abstract class HBaseTableUtil {
   }
 
   protected void warnGlobalAdminCheckFailure() {
-    LOG.warn("Unable to determine if cdap is a global admin or not. Failing back to {} configuration.",
-             Constants.Startup.TX_PRUNE_ACL_CHECK);
+    LOG.warn(
+        "Unable to determine if cdap is a global admin or not. Failing back to {} configuration.",
+        Constants.Startup.TX_PRUNE_ACL_CHECK);
   }
 
   /**
    * Carries information about table stats
    */
   public static final class TableStats {
+
     private int storeFileSizeMB;
     private int memStoreSizeMB;
 
@@ -707,12 +744,14 @@ public abstract class HBaseTableUtil {
    * Carries information about coprocessor information.
    */
   public static final class CoprocessorInfo {
+
     private final String className;
     private final Path path;
     private final int priority;
     private final Map<String, String> properties;
 
-    private CoprocessorInfo(String className, Path path, int priority, Map<String, String> properties) {
+    private CoprocessorInfo(String className, Path path, int priority,
+        Map<String, String> properties) {
       this.className = className;
       this.path = path;
       this.priority = priority;
@@ -737,7 +776,8 @@ public abstract class HBaseTableUtil {
   }
 
   /**
-   * A HBase {@link Table} wrapper that provides access to the {@link Connection} for creating the table.
+   * A HBase {@link Table} wrapper that provides access to the {@link Connection} for creating the
+   * table.
    */
   private static class TableWithConnection extends DelegatingTable {
 

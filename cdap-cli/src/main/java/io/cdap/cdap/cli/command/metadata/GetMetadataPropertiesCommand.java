@@ -49,22 +49,23 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     MetadataEntity metadataEntity =
-      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
+        MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
     Map<String, String> properties = scope == null ? client.getProperties(metadataEntity) :
-      client.getProperties(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
+        client.getProperties(metadataEntity, MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
-      .setHeader("key", "value")
-      .setRows(
-        Iterables.transform(properties.entrySet(), new Function<Map.Entry<String, String>, List<String>>() {
-          @Nullable
-          @Override
-          public List<String> apply(@Nullable Map.Entry<String, String> entry) {
-            return Lists.newArrayList(entry.getKey(), entry.getValue());
-          }
-        })
-      ).build();
+        .setHeader("key", "value")
+        .setRows(
+            Iterables.transform(properties.entrySet(),
+                new Function<Map.Entry<String, String>, List<String>>() {
+                  @Nullable
+                  @Override
+                  public List<String> apply(@Nullable Map.Entry<String, String> entry) {
+                    return Lists.newArrayList(entry.getKey(), entry.getValue());
+                  }
+                })
+        ).build();
 
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
@@ -72,7 +73,7 @@ public class GetMetadataPropertiesCommand extends AbstractCommand {
   @Override
   public String getPattern() {
     return String.format("get metadata-properties <%s> [scope <%s>]",
-                         ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
+        ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
   }
 
   @Override

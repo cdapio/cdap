@@ -21,6 +21,7 @@ package io.cdap.cdap.common.options;
  * Thrown when there is duplicate option specified in definition.
  */
 public class DuplicateOptionException extends RuntimeException {
+
   public DuplicateOptionException(String name) {
     super("Duplicate @Option declaration " + name);
   }

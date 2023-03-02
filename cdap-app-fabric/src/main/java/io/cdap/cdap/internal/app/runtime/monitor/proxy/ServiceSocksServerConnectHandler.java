@@ -35,8 +35,8 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * The Netty handler for handling socks connect request and relaying data to CDAP services.
- * The connection is established based on service discovery.
+ * The Netty handler for handling socks connect request and relaying data to CDAP services. The
+ * connection is established based on service discovery.
  */
 final class ServiceSocksServerConnectHandler extends AbstractSocksServerConnectHandler {
 
@@ -48,54 +48,57 @@ final class ServiceSocksServerConnectHandler extends AbstractSocksServerConnectH
 
   @Override
   protected Future<RelayChannelHandler> createForwardingChannelHandler(Channel inboundChannel,
-                                                                       String destAddress, int destPort) {
+      String destAddress, int destPort) {
     Promise<RelayChannelHandler> promise = new DefaultPromise<>(inboundChannel.eventLoop());
 
     // Creates a bootstrap for connecting to the target service
     ChannelGroup channels = new DefaultChannelGroup(inboundChannel.eventLoop());
     Bootstrap bootstrap = new Bootstrap()
-      .group(inboundChannel.eventLoop())
-      .channel(NioSocketChannel.class)
-      .option(ChannelOption.SO_KEEPALIVE, true)
-      .handler(new ChannelInboundHandlerAdapter() {
-        @Override
-        public void channelActive(ChannelHandlerContext ctx) {
-          channels.add(ctx.channel());
-          // When the outbound connection is active, adds the relay channel handler for the current pipeline,
-          // which is for relaying traffic coming back from outbound connection.
-          // Also complete the relay channel handler future, which is for relaying traffic from inbound to outbound.
-          ctx.pipeline().addLast(new SimpleRelayChannelHandler(inboundChannel));
-          promise.setSuccess(new SimpleRelayChannelHandler(ctx.channel()));
-        }
-      });
+        .group(inboundChannel.eventLoop())
+        .channel(NioSocketChannel.class)
+        .option(ChannelOption.SO_KEEPALIVE, true)
+        .handler(new ChannelInboundHandlerAdapter() {
+          @Override
+          public void channelActive(ChannelHandlerContext ctx) {
+            channels.add(ctx.channel());
+            // When the outbound connection is active, adds the relay channel handler for the current pipeline,
+            // which is for relaying traffic coming back from outbound connection.
+            // Also complete the relay channel handler future, which is for relaying traffic from inbound to outbound.
+            ctx.pipeline().addLast(new SimpleRelayChannelHandler(inboundChannel));
+            promise.setSuccess(new SimpleRelayChannelHandler(ctx.channel()));
+          }
+        });
 
     // Discover the target address
     Promise<Discoverable> discoverablePromise = new DefaultPromise<>(inboundChannel.eventLoop());
-    Cancellable cancellable = discoveryServiceClient.discover(destAddress).watchChanges(serviceDiscovered -> {
-      // If it is discovered, make a connection and complete the channel handler future
-      Discoverable discoverable = new RandomEndpointStrategy(() -> serviceDiscovered).pick();
-      if (discoverable != null) {
-        discoverablePromise.setSuccess(discoverable);
-      }
-    }, inboundChannel.eventLoop());
+    Cancellable cancellable = discoveryServiceClient.discover(destAddress)
+        .watchChanges(serviceDiscovered -> {
+          // If it is discovered, make a connection and complete the channel handler future
+          Discoverable discoverable = new RandomEndpointStrategy(() -> serviceDiscovered).pick();
+          if (discoverable != null) {
+            discoverablePromise.setSuccess(discoverable);
+          }
+        }, inboundChannel.eventLoop());
 
     // When discovery completed successfully, connect to the destination
-    discoverablePromise.addListener((GenericFutureListener<Future<Discoverable>>) discoverableFuture -> {
-      // Cancel the watch as it is no longer needed
-      cancellable.cancel();
+    discoverablePromise.addListener(
+        (GenericFutureListener<Future<Discoverable>>) discoverableFuture -> {
+          // Cancel the watch as it is no longer needed
+          cancellable.cancel();
 
-      if (discoverableFuture.isSuccess()) {
-        Discoverable discoverable = discoverableFuture.get();
-        bootstrap.connect(discoverable.getSocketAddress()).addListener((ChannelFutureListener) channelFuture -> {
-          // If failed to establish the outbound connection, fail the relay channel handler future
-          if (!channelFuture.isSuccess()) {
-            promise.setFailure(channelFuture.cause());
+          if (discoverableFuture.isSuccess()) {
+            Discoverable discoverable = discoverableFuture.get();
+            bootstrap.connect(discoverable.getSocketAddress())
+                .addListener((ChannelFutureListener) channelFuture -> {
+                  // If failed to establish the outbound connection, fail the relay channel handler future
+                  if (!channelFuture.isSuccess()) {
+                    promise.setFailure(channelFuture.cause());
+                  }
+                });
+          } else {
+            promise.setFailure(discoverableFuture.cause());
           }
         });
-      } else {
-        promise.setFailure(discoverableFuture.cause());
-      }
-    });
 
     // On inbound channel close, close all outbound channels.
     // Also cancel the watch since it is no longer needed.

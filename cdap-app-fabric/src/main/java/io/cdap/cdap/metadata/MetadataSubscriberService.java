@@ -93,18 +93,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service responsible for consuming metadata messages from TMS and persist it to metadata store. This is a wrapping
- * service to host multiple {@link AbstractMessagingSubscriberService}s for lineage, usage and metadata subscriptions.
- * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
+ * Service responsible for consuming metadata messages from TMS and persist it to metadata store.
+ * This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s for
+ * lineage, usage and metadata subscriptions. No transactions should be started in any of the
+ * overrided methods since they are already wrapped in a transaction.
  */
 public class MetadataSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataSubscriberService.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-    .create();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+      .create();
 
   private static final String BACKFILL_SUBSCRIBER_NAME = "metadata.backfill";
 
@@ -123,22 +124,22 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                            MetricsCollectionService metricsCollectionService,
-                            MetadataStorage metadataStorage,
-                            TransactionRunner transactionRunner) {
+      MetricsCollectionService metricsCollectionService,
+      MetadataStorage metadataStorage,
+      TransactionRunner transactionRunner) {
     super(
-      NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
-      cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
-      cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
-      cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
-      RetryStrategies.fromConfiguration(cConf, "system.metadata."),
-      metricsCollectionService.getContext(ImmutableMap.of(
-        Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
-        Constants.Metrics.Tag.INSTANCE_ID, "0",
-        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
-        Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
-        Constants.Metrics.Tag.CONSUMER, "metadata.writer"
-      )));
+        NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
+        cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+        cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+        cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
+        RetryStrategies.fromConfiguration(cConf, "system.metadata."),
+        metricsCollectionService.getContext(ImmutableMap.of(
+            Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
+            Constants.Metrics.Tag.INSTANCE_ID, "0",
+            Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+            Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
+            Constants.Metrics.Tag.CONSUMER, "metadata.writer"
+        )));
 
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
@@ -165,14 +166,15 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Nullable
   @Override
-  protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
+  protected String loadMessageId(StructuredTableContext context)
+      throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId)
-    throws IOException, TableNotFoundException {
+      throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
@@ -205,7 +207,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     boolean updateFailed = false;
     NamespaceStore namespaceStore = new DefaultNamespaceStore(this.transactionRunner);
-    List<String> namespaces = namespaceStore.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList());
+    List<String> namespaces = namespaceStore.list().stream().map(NamespaceMeta::getName)
+        .collect(Collectors.toList());
 
     LOG.debug("Back-filling plugin metadata for {} namespaces", namespaces.size());
     for (String namespace : namespaces) {
@@ -213,17 +216,18 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       List<MetadataMutation> updates = TransactionRunners.run(this.transactionRunner, context -> {
         List<MetadataMutation> mutateUpdates = new ArrayList<>();
         AppMetadataStore.create(context).scanApplications(
-          ScanApplicationsRequest.builder().setNamespaceId(new NamespaceId(namespace)).build(),
-          entry -> {
-            collectPluginMetadata(namespace, entry.getValue().getSpec(), mutateUpdates);
-            appCount.getAndIncrement();
-            return true;
-          }
+            ScanApplicationsRequest.builder().setNamespaceId(new NamespaceId(namespace)).build(),
+            entry -> {
+              collectPluginMetadata(namespace, entry.getValue().getSpec(), mutateUpdates);
+              appCount.getAndIncrement();
+              return true;
+            }
         );
         return mutateUpdates;
       });
 
-      LOG.debug("Back-filling plugin metadata for namespace '{}' with {} applications", namespace, appCount.get());
+      LOG.debug("Back-filling plugin metadata for namespace '{}' with {} applications", namespace,
+          appCount.get());
       try {
         metadataStorage.batch(updates, MutationOptions.DEFAULT);
       } catch (IOException e) {
@@ -236,8 +240,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       LOG.info("Successfully back-filled plugin metadata for {} namespaces.", namespaces.size());
       didBackfill = true;
       TransactionRunners.run(transactionRunner,
-                             (TxRunnable) context -> AppMetadataStore.create(context)
-                               .persistSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME, "true"));
+          (TxRunnable) context -> AppMetadataStore.create(context)
+              .persistSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME, "true"));
     }
   }
 
@@ -246,12 +250,15 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     super.doStartUp();
 
     // Checking if plugin metadata backfill had been done during a previous startup
-    String backfillComplete = TransactionRunners.run(transactionRunner, (TxCallable<String>) context ->
-      AppMetadataStore.create(context).retrieveSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME)
+    String backfillComplete = TransactionRunners.run(transactionRunner,
+        (TxCallable<String>) context ->
+            AppMetadataStore.create(context)
+                .retrieveSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME)
     );
 
     if (backfillComplete != null) {
-      LOG.debug("Plugin metadata back-fill was completed during a previous startup, skipping back-fill this time.");
+      LOG.debug(
+          "Plugin metadata back-fill was completed during a previous startup, skipping back-fill this time.");
       didBackfill = true;
     }
   }
@@ -264,27 +271,27 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    * @param updates List to keep track of Metadata Mutations that need to be executed
    */
   private void collectPluginMetadata(String namespace, ApplicationSpecification appSpec,
-                                     List<MetadataMutation> updates) {
+      List<MetadataMutation> updates) {
 
     Map<PluginId, Long> pluginCounts = appSpec.getPlugins().values().stream()
-      .map(p -> new PluginId(namespace, p))
-      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        .map(p -> new PluginId(namespace, p))
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
     String appKey = String.format("%s:%s", namespace, appSpec.getName());
     for (Map.Entry<PluginId, Long> entry : pluginCounts.entrySet()) {
       LOG.trace("Adding application {} to plugin metadata for {}", appKey,
-                entry.getKey().getPlugin());
+          entry.getKey().getPlugin());
       updates.add(new MetadataMutation.Update(entry.getKey().toMetadataEntity(),
-                                              new Metadata(MetadataScope.SYSTEM,
-                                                           ImmutableMap.of(appKey, entry.getValue().toString()))
+          new Metadata(MetadataScope.SYSTEM,
+              ImmutableMap.of(appKey, entry.getValue().toString()))
       ));
     }
   }
 
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages)
-    throws IOException, ConflictException {
+      Iterator<ImmutablePair<String, MetadataMessage>> messages)
+      throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
@@ -311,7 +318,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case ENTITY_CREATION:
           case ENTITY_DELETION:
             return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext,
-                                                       metricsCollectionService);
+                metricsCollectionService);
           default:
             return null;
         }
@@ -331,8 +338,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         if (messageId.equals(conflictMessageId)) {
           conflictCount++;
           if (conflictCount >= maxRetriesOnConflict) {
-            LOG.warn("Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
-                     message, conflictCount, e.getMessage());
+            LOG.warn(
+                "Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
+                message, conflictCount, e.getMessage());
             continue;
           }
         } else {
@@ -349,19 +357,24 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private static final class DataAccessLineageProcessor implements MetadataMessageProcessor {
 
-    DataAccessLineageProcessor() {}
+    DataAccessLineageProcessor() {
+    }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context)
+        throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
-        LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", message);
+        LOG.warn(
+            "Missing program run id from the lineage access information. Ignoring the message {}",
+            message);
         return;
       }
 
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
       LineageTable lineageTable = LineageTable.create(context);
-      lineageTable.addAccess(programRunId, lineage.getDatasetId(), lineage.getAccessType(), lineage.getAccessTime());
+      lineageTable.addAccess(programRunId, lineage.getDatasetId(), lineage.getAccessType(),
+          lineage.getAccessTime());
     }
   }
 
@@ -370,12 +383,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private static final class FieldLineageProcessor implements MetadataMessageProcessor {
 
-    FieldLineageProcessor() {}
+    FieldLineageProcessor() {
+    }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context)
+        throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
-        LOG.warn("Missing program run id from the field lineage information. Ignoring the message {}", message);
+        LOG.warn(
+            "Missing program run id from the field lineage information. Ignoring the message {}",
+            message);
         return;
       }
 
@@ -383,16 +400,17 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       FieldLineageInfo info;
       try {
         Gson gson = new GsonBuilder()
-          .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-          .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
-          .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-          .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
-          .create();
+            .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+            .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+            .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+            .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
+            .create();
 
         info = message.getPayload(gson, FieldLineageInfo.class);
       } catch (Throwable t) {
-        LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
-                 message, t);
+        LOG.warn(
+            "Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
+            message, t);
         return;
       }
       FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
@@ -405,10 +423,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private static final class UsageProcessor implements MetadataMessageProcessor {
 
-    UsageProcessor() {}
+    UsageProcessor() {
+    }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context)
+        throws IOException {
       if (!(message.getEntityId() instanceof ProgramId)) {
         LOG.warn("Missing program id from the usage information. Ignoring the message {}", message);
         return;
@@ -425,12 +445,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private static final class WorkflowProcessor implements MetadataMessageProcessor {
 
-    WorkflowProcessor() {}
+    WorkflowProcessor() {
+    }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context)
+        throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
-        LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
+        LOG.warn(
+            "Missing program run id from the workflow state information. Ignoring the message {}",
+            message);
         return;
       }
 
@@ -439,31 +463,35 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
           AppMetadataStore.create(context)
-            .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+              .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
           break;
         case WORKFLOW_STATE:
           AppMetadataStore.create(context)
-            .addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+              .addWorkflowNodeState(programRunId,
+                  message.getPayload(GSON, WorkflowNodeStateDetail.class));
           break;
         default:
           // This shouldn't happen
-          LOG.warn("Unknown message type for workflow state information. Ignoring the message {}", message);
+          LOG.warn("Unknown message type for workflow state information. Ignoring the message {}",
+              message);
       }
     }
   }
 
   /**
-   * The {@link MetadataMessageProcessor} for metadata operations. It receives operations and applies them to the
-   * metadata store.
+   * The {@link MetadataMessageProcessor} for metadata operations. It receives operations and
+   * applies them to the metadata store.
    */
-  private class MetadataOperationProcessor extends MetadataValidator implements MetadataMessageProcessor {
+  private class MetadataOperationProcessor extends MetadataValidator implements
+      MetadataMessageProcessor {
 
     MetadataOperationProcessor(CConfiguration cConf) {
       super(cConf);
     }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context)
+        throws IOException {
       MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
       MetadataEntity entity = operation.getEntity();
       LOG.trace("Received {}", operation);
@@ -473,29 +501,32 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           // all the new metadata is in System scope - no validation
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
           MetadataMutation mutation = new MetadataMutation.Create(
-            entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()),
-            MetadataMutation.Create.CREATE_DIRECTIVES);
+              entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()),
+              MetadataMutation.Create.CREATE_DIRECTIVES);
           metadataStorage.apply(mutation, MutationOptions.DEFAULT);
           break;
         }
         case DROP: {
-          metadataStorage.apply(new MetadataMutation.Drop(operation.getEntity()), MutationOptions.DEFAULT);
+          metadataStorage.apply(new MetadataMutation.Drop(operation.getEntity()),
+              MutationOptions.DEFAULT);
           break;
         }
         case PUT: {
           MetadataOperation.Put put = (MetadataOperation.Put) operation;
           try {
             Set<String> tags = put.getTags() != null ? put.getTags() : Collections.emptySet();
-            Map<String, String> props = put.getProperties() != null ? put.getProperties() : Collections.emptyMap();
+            Map<String, String> props =
+                put.getProperties() != null ? put.getProperties() : Collections.emptyMap();
             if (MetadataScope.USER.equals(put.getScope())) {
               validateProperties(entity, props);
               validateTags(entity, tags);
             }
             metadataStorage.apply(
-              new MetadataMutation.Update(entity, new Metadata(put.getScope(), tags, props)), MutationOptions.DEFAULT);
+                new MetadataMutation.Update(entity, new Metadata(put.getScope(), tags, props)),
+                MutationOptions.DEFAULT);
           } catch (InvalidMetadataException e) {
             LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
-                     GSON.toJson(message.getRawPayload()), e);
+                GSON.toJson(message.getRawPayload()), e);
           }
           break;
         }
@@ -504,33 +535,39 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           Set<ScopedNameOfKind> toDelete = new HashSet<>();
           if (delete.getProperties() != null) {
             delete.getProperties().forEach(
-              name -> toDelete.add(new ScopedNameOfKind(MetadataKind.PROPERTY, delete.getScope(), name)));
+                name -> toDelete.add(
+                    new ScopedNameOfKind(MetadataKind.PROPERTY, delete.getScope(), name)));
           }
           if (delete.getTags() != null) {
             delete.getTags().forEach(
-              name -> toDelete.add(new ScopedNameOfKind(MetadataKind.TAG, delete.getScope(), name)));
+                name -> toDelete.add(
+                    new ScopedNameOfKind(MetadataKind.TAG, delete.getScope(), name)));
           }
-          metadataStorage.apply(new MetadataMutation.Remove(entity, toDelete), MutationOptions.DEFAULT);
+          metadataStorage.apply(new MetadataMutation.Remove(entity, toDelete),
+              MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL: {
           MetadataScope scope = ((MetadataOperation.DeleteAll) operation).getScope();
-          metadataStorage.apply(new MetadataMutation.Remove(entity, scope), MutationOptions.DEFAULT);
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope),
+              MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL_PROPERTIES: {
           MetadataScope scope = ((MetadataOperation.DeleteAllProperties) operation).getScope();
           metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.PROPERTY),
-                                MutationOptions.DEFAULT);
+              MutationOptions.DEFAULT);
           break;
         }
         case DELETE_ALL_TAGS: {
           MetadataScope scope = ((MetadataOperation.DeleteAllTags) operation).getScope();
-          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.TAG), MutationOptions.DEFAULT);
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.TAG),
+              MutationOptions.DEFAULT);
           break;
         }
         default:
-          LOG.warn("Ignoring MetadataOperation of unknown type {} for entity {}", operation.getType(), entity);
+          LOG.warn("Ignoring MetadataOperation of unknown type {} for entity {}",
+              operation.getType(), entity);
       }
     }
   }

@@ -22,8 +22,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 
 /**
- * The Guice module for providing bindings for {@link DiscoveryService} and {@link DiscoveryServiceClient}
- * for service discovery within the same process.
+ * The Guice module for providing bindings for {@link DiscoveryService} and {@link
+ * DiscoveryServiceClient} for service discovery within the same process.
  */
 public final class InMemoryDiscoveryModule extends AbstractModule {
 

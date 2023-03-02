@@ -33,10 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Metadata client which should be used in program container to make request to metadata service which is discovered
- * through {@link DiscoveryServiceClient}.
+ * Metadata client which should be used in program container to make request to metadata service
+ * which is discovered through {@link DiscoveryServiceClient}.
  */
 public class RemoteMetadataClient extends AbstractMetadataClient {
+
   private static final Logger LOG = LoggerFactory.getLogger(RemoteMetadataClient.class);
 
   private final RemoteClient remoteClient;
@@ -44,13 +45,13 @@ public class RemoteMetadataClient extends AbstractMetadataClient {
   @Inject
   RemoteMetadataClient(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.METADATA_SERVICE,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+        Constants.Service.METADATA_SERVICE,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   @Override
   protected HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthorizedException {
+      throws IOException, UnauthorizedException {
     LOG.trace("Making metadata request {}", request);
     HttpResponse response = remoteClient.execute(request);
     LOG.trace("Received response {} for request {}", response, request);

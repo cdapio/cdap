@@ -27,7 +27,8 @@ import org.apache.twill.filesystem.Location;
 /**
  * Location rolling policy base which provides
  */
-public abstract class LocationRollingPolicyBase extends ContextAwareBase implements LocationRollingPolicy {
+public abstract class LocationRollingPolicyBase extends ContextAwareBase implements
+    LocationRollingPolicy {
 
   private CompressionMode compressionMode = CompressionMode.NONE;
   protected FileNamePattern fileNamePattern;
@@ -51,7 +52,6 @@ public abstract class LocationRollingPolicyBase extends ContextAwareBase impleme
 
   /**
    * This interface is part of {@link ch.qos.logback.core.rolling.RollingPolicy}
-   * @return
    */
   @Override
   public CompressionMode getCompressionMode() {

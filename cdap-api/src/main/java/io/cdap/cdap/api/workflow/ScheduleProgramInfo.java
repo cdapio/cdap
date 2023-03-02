@@ -22,6 +22,7 @@ import io.cdap.cdap.api.schedule.SchedulableProgramType;
  * Represents name and type information of the program.
  */
 public final class ScheduleProgramInfo {
+
   private final String programName;
   private final SchedulableProgramType programType;
 
@@ -31,7 +32,6 @@ public final class ScheduleProgramInfo {
   }
 
   /**
-   *
    * @return name of the {@link SchedulableProgramType}
    */
   public String getProgramName() {
@@ -39,7 +39,6 @@ public final class ScheduleProgramInfo {
   }
 
   /**
-   *
    * @return type of the {@link SchedulableProgramType}
    */
   public SchedulableProgramType getProgramType() {

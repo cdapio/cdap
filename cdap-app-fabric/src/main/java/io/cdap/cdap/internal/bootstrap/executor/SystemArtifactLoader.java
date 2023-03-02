@@ -25,6 +25,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
  * Loads system artifacts.
  */
 public class SystemArtifactLoader extends BaseStepExecutor<EmptyArguments> {
+
   private final ArtifactRepository artifactRepository;
 
   @Inject

@@ -26,11 +26,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 // TODO: Most of this class is copied from {@link io.cdap.cdap.common.app.RunIds}. Need to reduce code duplication.
+
 /**
- * Generates an unique ID for a report using type 1 and variant 2 time-based {@link UUID}.
- * This implements time-based UUID generation algorithm described in
- * <a href="http://www.ietf.org/rfc/rfc4122.txt">A Universally Unique IDentifier (UUID) URN Namespace</a>
- * with the following modifications:
+ * Generates an unique ID for a report using type 1 and variant 2 time-based {@link UUID}. This
+ * implements time-based UUID generation algorithm described in
+ * <a href="http://www.ietf.org/rfc/rfc4122.txt">A Universally Unique IDentifier (UUID) URN
+ * Namespace</a> with the following modifications:
  * <ul>
  *   <li>It does not share state with other instances of time-based UUID generators on a given machine. So it is
  *   recommended not to run more than one instance of this on a machine to guarantee uniqueness of UUIDs generated.</li>
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ul>
  */
 public final class ReportIds {
+
   private static final Random RANDOM = new Random();
 
   // Number of 100ns intervals since 15 October 1582 00:00:000000000 until UNIX epoch
@@ -52,7 +54,7 @@ public final class ReportIds {
 
   /**
    * @return UUID based on current time. If called repeatedly within the same millisecond, this is
-   * guaranteed to generate at least 10000 unique UUIDs for the millisecond.
+   *     guaranteed to generate at least 10000 unique UUIDs for the millisecond.
    */
   public static UUID generate() {
     return (generateUUIDForTime(System.currentTimeMillis()));
@@ -71,7 +73,8 @@ public final class ReportIds {
   public static long getTime(String reportId, TimeUnit timeUnit) {
     UUID uuid = UUID.fromString(reportId);
     if (uuid.version() == 1 && uuid.variant() == 2) {
-      long timeInMilliseconds = (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
+      long timeInMilliseconds =
+          (uuid.timestamp() - NUM_100NS_INTERVALS_SINCE_UUID_EPOCH) / HUNDRED_NANO_MULTIPLIER;
       return timeUnit.convert(timeInMilliseconds, TimeUnit.MILLISECONDS);
     }
     return -1;
@@ -81,11 +84,12 @@ public final class ReportIds {
     // Use system time in milliseconds to generate time in 100ns.
     // Use COUNTER to ensure unique time gets generated for the same millisecond (up to HUNDRED_NANO_MULTIPLIER)
     // Hence the time is valid only for millisecond precision, event though it represents 100ns precision.
-    long ts = timeInMillis * HUNDRED_NANO_MULTIPLIER + COUNTER.incrementAndGet() % HUNDRED_NANO_MULTIPLIER;
+    long ts = timeInMillis * HUNDRED_NANO_MULTIPLIER
+        + COUNTER.incrementAndGet() % HUNDRED_NANO_MULTIPLIER;
     long time = ts + NUM_100NS_INTERVALS_SINCE_UUID_EPOCH;
 
-    long timeLow = time &       0xffffffffL;
-    long timeMid = time &   0xffff00000000L;
+    long timeLow = time & 0xffffffffL;
+    long timeMid = time & 0xffff00000000L;
     long timeHi = time & 0xfff000000000000L;
     long upperLong = (timeLow << 32) | (timeMid >> 16) | (1 << 12) | (timeHi >> 48);
 
@@ -106,7 +110,8 @@ public final class ReportIds {
       if (mac == null) {
         nodeId = (RANDOM.nextLong() & 0xFFFFFFL) | 0x100000L;
       } else {
-        nodeId = Longs.fromBytes((byte) 0, (byte) 0, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        nodeId = Longs.fromBytes((byte) 0, (byte) 0, mac[0], mac[1], mac[2], mac[3], mac[4],
+            mac[5]);
       }
 
     } catch (SocketException e) {

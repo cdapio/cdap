@@ -42,15 +42,17 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
   public abstract byte[][] getAllDistributedKeys(byte[] originalKey);
 
   /**
-   * Gets all distributed intervals based on the original start & stop keys.
-   * Used when scanning all buckets based on start/stop row keys. Should return keys so that all buckets in which
-   * records between originalStartKey and originalStopKey were distributed are "covered".
+   * Gets all distributed intervals based on the original start & stop keys. Used when scanning all
+   * buckets based on start/stop row keys. Should return keys so that all buckets in which records
+   * between originalStartKey and originalStopKey were distributed are "covered".
+   *
    * @param originalStartKey start key
    * @param originalStopKey stop key
    * @return array[Pair(startKey, stopKey)]
    */
   @SuppressWarnings("unchecked")
-  public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey, byte[] originalStopKey) {
+  public Pair<byte[], byte[]>[] getDistributedIntervals(byte[] originalStartKey,
+      byte[] originalStopKey) {
     byte[][] startKeys = getAllDistributedKeys(originalStartKey);
     byte[][] stopKeys;
     if (Arrays.equals(originalStopKey, HConstants.EMPTY_END_ROW)) {
@@ -76,7 +78,8 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
   }
 
   public final Scan[] getDistributedScans(Scan original) throws IOException {
-    Pair<byte[], byte[]>[] intervals = getDistributedIntervals(original.getStartRow(), original.getStopRow());
+    Pair<byte[], byte[]>[] intervals = getDistributedIntervals(original.getStartRow(),
+        original.getStopRow());
 
     Scan[] scans = new Scan[intervals.length];
     for (int i = 0; i < intervals.length; i++) {
@@ -96,8 +99,8 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
   }
 
   /**
-   * Method to salt the row key of filter pair. It also adds a new byte with value 1 which means that this byte
-   * in provided row key is NOT fixed.
+   * Method to salt the row key of filter pair. It also adds a new byte with value 1 which means
+   * that this byte in provided row key is NOT fixed.
    *
    * @param pair pair with key and value
    * @return list of pairs which has salted row keys
@@ -108,7 +111,8 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     for (byte[] firstAllDistKey : firstAllDistKeys) {
       // Only salt the row keys, we do not need to salt mask because we have provided first byte as 1
       // which means that this byte in provided row key is NOT fixed
-      fuzzyPairs.add(Pair.newPair(firstAllDistKey, io.cdap.cdap.api.common.Bytes.add(new byte[]{1}, pair.getSecond())));
+      fuzzyPairs.add(Pair.newPair(firstAllDistKey,
+          io.cdap.cdap.api.common.Bytes.add(new byte[]{1}, pair.getSecond())));
     }
     return fuzzyPairs;
   }
@@ -127,10 +131,10 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     }
 
     byte[][] bucketSplits = getAllDistributedKeys(io.cdap.cdap.api.common.Bytes.EMPTY_BYTE_ARRAY);
-    Preconditions.checkArgument(splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
-                                "Number of pre-splits should be in [1.." +
-                                  MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
-
+    Preconditions.checkArgument(
+        splits >= 1 && splits <= MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length,
+        "Number of pre-splits should be in [1.." +
+            MAX_SPLIT_COUNT_PER_BUCKET * bucketSplits.length + "] range");
 
     // Splits have format: <salt bucket byte><extra byte>. We use extra byte to allow more splits than buckets:
     // salt bucket bytes are usually sequential in which case we cannot insert any value in between them.
@@ -151,9 +155,9 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
         int splitStartPrefix = k * prefixesPerSplitInBucket;
         int thisSplit = i * splitsPerBucket + k - 1;
         if (splitsPerBucket > 1) {
-          splitKeys[thisSplit] = new byte[] {(byte) i, (byte) splitStartPrefix};
+          splitKeys[thisSplit] = new byte[]{(byte) i, (byte) splitStartPrefix};
         } else {
-          splitKeys[thisSplit] = new byte[] {(byte) i};
+          splitKeys[thisSplit] = new byte[]{(byte) i};
         }
       }
     }

@@ -27,7 +27,8 @@ import javax.ws.rs.Path;
 /**
  *
  */
-public class ConfigurableServiceApp extends AbstractApplication<ConfigurableServiceApp.ServiceConfig> {
+public class ConfigurableServiceApp extends
+    AbstractApplication<ConfigurableServiceApp.ServiceConfig> {
 
   public static final String NAME = "TestServiceApp";
   public static final String SERVICE_NAME_BASE = "service";
@@ -58,6 +59,7 @@ public class ConfigurableServiceApp extends AbstractApplication<ConfigurableServ
    * App configuration to determine how many services to add
    */
   public static final class ServiceConfig extends Config {
+
     private int services;
 
     public ServiceConfig(int services) {

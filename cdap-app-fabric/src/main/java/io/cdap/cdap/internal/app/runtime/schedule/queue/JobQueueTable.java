@@ -55,23 +55,25 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Dataset that stores {@link Job}s, which correspond to schedules that have been triggered, but not yet executed.
- * The queue can have only one {@link Job.State#PENDING_TRIGGER} job per schedule. It can have other jobs for the
- * same schedule in various other states - marked for deletion, {@link Job.State#PENDING_LAUNCH}, etc. <p/>
+ * Dataset that stores {@link Job}s, which correspond to schedules that have been triggered, but not
+ * yet executed. The queue can have only one {@link Job.State#PENDING_TRIGGER} job per schedule. It
+ * can have other jobs for the same schedule in various other states - marked for deletion, {@link
+ * Job.State#PENDING_LAUNCH}, etc. <p/>
  *
- * The queue is designed to avoid conflicts when different services use it concurrently.
- * For instance, when notification processors are adding notifications to a job, the job can be concurrently
- * marked for deletion using the REST API. These two operations should not conflict. The queue handles this by
- * storing the job details and the job deletion information in separate rows. <p/>
+ * The queue is designed to avoid conflicts when different services use it concurrently. For
+ * instance, when notification processors are adding notifications to a job, the job can be
+ * concurrently marked for deletion using the REST API. These two operations should not conflict.
+ * The queue handles this by storing the job details and the job deletion information in separate
+ * rows. <p/>
  *
- * However when multiple notification processors try to add a notification to a single job, they need to conflict
- * so that there is no lost update. The queue handles this by having a generation id for the jobs. All the notifications
- * are added to the job with the highest generation id, thus creating conflict on concurrent updates.
- * If the job with the highest generation id is marked for deletion, then the generation id is incremented by one
- * and a new job is created, again creating conflicts on concurrent creation of jobs. <p/>
+ * However when multiple notification processors try to add a notification to a single job, they
+ * need to conflict so that there is no lost update. The queue handles this by having a generation
+ * id for the jobs. All the notifications are added to the job with the highest generation id, thus
+ * creating conflict on concurrent updates. If the job with the highest generation id is marked for
+ * deletion, then the generation id is incremented by one and a new job is created, again creating
+ * conflicts on concurrent creation of jobs. <p/>
  *
- * Row Key is in the following format for a job: <p/>
- *     &lt;partition_id>&lt;scheduleId>&lt;generationI>&lt;rowType
+ * Row Key is in the following format for a job: <p/> &lt;partition_id>&lt;scheduleId>&lt;generationI>&lt;rowType
  * <ul>
  *   <li>The &lt;partition_id> is a hash based upon the scheduleId</li>
  *   <li>The &lt;generationId> is used to distinguish jobs for the same schedule in the queue</li>
@@ -82,17 +84,18 @@ public class JobQueueTable implements JobQueue {
 
   private static final String TMS_SUBSCRIBER_ID = "job.queue.subscriber";
   private static final Gson GSON =
-    new GsonBuilder()
-      .registerTypeAdapter(Trigger.class, new TriggerCodec())
-      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
-      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
-      .create();
+      new GsonBuilder()
+          .registerTypeAdapter(Trigger.class, new TriggerCodec())
+          .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+          .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+          .create();
 
   private final StructuredTable jobQueueTable;
   private final AppMetadataStore appMetadataStore;
   private final int numPartitions;
 
-  JobQueueTable(StructuredTable jobQueueTable, AppMetadataStore appMetadataStore, int numPartitions) {
+  JobQueueTable(StructuredTable jobQueueTable, AppMetadataStore appMetadataStore,
+      int numPartitions) {
     this.jobQueueTable = jobQueueTable;
     this.appMetadataStore = appMetadataStore;
     this.numPartitions = numPartitions;
@@ -101,13 +104,13 @@ public class JobQueueTable implements JobQueue {
   public static JobQueueTable getJobQueue(StructuredTableContext context, CConfiguration cConf) {
     StructuredTable jobQueueTable = context.getTable(StoreDefinition.JobQueueStore.JOB_QUEUE_TABLE);
     return new JobQueueTable(jobQueueTable, AppMetadataStore.create(context),
-                             cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS));
+        cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS));
   }
 
   @Override
   public CloseableIterator<Job> getJobsForSchedule(ScheduleId scheduleId) throws IOException {
     CloseableIterator<StructuredRow> iterator =
-      jobQueueTable.scan(Range.singleton(getScheduleScanKeys(scheduleId)), Integer.MAX_VALUE);
+        jobQueueTable.scan(Range.singleton(getScheduleScanKeys(scheduleId)), Integer.MAX_VALUE);
     return createJobIterator(iterator);
   }
 
@@ -115,7 +118,7 @@ public class JobQueueTable implements JobQueue {
   public Job getJob(JobKey jobKey) throws IOException {
     Range range = Range.singleton(getJobScanKeys(jobKey.getScheduleId(), jobKey.getGenerationId()));
     try (CloseableIterator<Job> iterator =
-           createJobIterator(jobQueueTable.scan(range, Integer.MAX_VALUE))) {
+        createJobIterator(jobQueueTable.scan(range, Integer.MAX_VALUE))) {
       if (iterator.hasNext()) {
         return iterator.next();
       }
@@ -131,14 +134,16 @@ public class JobQueueTable implements JobQueue {
   public Job transitState(Job job, Job.State state) throws IOException {
     // assert that the job state transition is valid
     job.getState().checkTransition(state);
-    Job newJob = new SimpleJob(job.getSchedule(), job.getGenerationId(), job.getCreationTime(), job.getNotifications(),
-                               state, job.getScheduleLastUpdatedTime());
+    Job newJob = new SimpleJob(job.getSchedule(), job.getGenerationId(), job.getCreationTime(),
+        job.getNotifications(),
+        state, job.getScheduleLastUpdatedTime());
     writeJob(newJob);
     return newJob;
   }
 
   @Override
-  public void addNotification(ProgramScheduleRecord record, Notification notification) throws IOException {
+  public void addNotification(ProgramScheduleRecord record, Notification notification)
+      throws IOException {
     boolean jobExists = false;
     ProgramSchedule schedule = record.getSchedule();
 
@@ -165,7 +170,8 @@ public class JobQueueTable implements JobQueue {
           if (job.getScheduleLastUpdatedTime() != scheduleLastUpdated) {
             // schedule has changed: this job is obsolete
             writeJobObsolete(job, System.currentTimeMillis());
-          } else if (System.currentTimeMillis() - job.getCreationTime() > job.getSchedule().getTimeoutMillis()) {
+          } else if (System.currentTimeMillis() - job.getCreationTime() > job.getSchedule()
+              .getTimeoutMillis()) {
             // job has timed out; mark it obsolete
             writeJobObsolete(job, System.currentTimeMillis());
           } else {
@@ -180,9 +186,10 @@ public class JobQueueTable implements JobQueue {
     if (!jobExists) {
       List<Notification> notifications = Collections.singletonList(notification);
       Job.State jobState = isTriggerSatisfied(schedule, notifications)
-        ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
-      writeJob(new SimpleJob(schedule, nextGenerationId, System.currentTimeMillis(), notifications, jobState,
-                        record.getMeta().getLastUpdated()));
+          ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
+      writeJob(new SimpleJob(schedule, nextGenerationId, System.currentTimeMillis(), notifications,
+          jobState,
+          record.getMeta().getLastUpdated()));
     }
   }
 
@@ -195,8 +202,9 @@ public class JobQueueTable implements JobQueue {
       newState = Job.State.PENDING_CONSTRAINT;
       job.getState().checkTransition(newState);
     }
-    Job newJob = new SimpleJob(job.getSchedule(), job.getGenerationId(), job.getCreationTime(), notifications, newState,
-                               job.getScheduleLastUpdatedTime());
+    Job newJob = new SimpleJob(job.getSchedule(), job.getGenerationId(), job.getCreationTime(),
+        notifications, newState,
+        job.getScheduleLastUpdatedTime());
     writeJob(newJob);
   }
 
@@ -207,7 +215,8 @@ public class JobQueueTable implements JobQueue {
   @Override
   public void markJobsForDeletion(ScheduleId scheduleId, long markedTime) throws IOException {
     try (CloseableIterator<Job> iterator =
-           createJobIterator(jobQueueTable.scan(Range.singleton(getScheduleScanKeys(scheduleId)), Integer.MAX_VALUE))) {
+        createJobIterator(jobQueueTable.scan(Range.singleton(getScheduleScanKeys(scheduleId)),
+            Integer.MAX_VALUE))) {
       while (iterator.hasNext()) {
         Job job = iterator.next();
         // only mark jobs that are not marked yet to avoid chance of conflict with concurrent delete
@@ -221,7 +230,8 @@ public class JobQueueTable implements JobQueue {
 
   @Override
   public void deleteJob(Job job) throws IOException {
-    jobQueueTable.deleteAll(Range.singleton(getJobScanKeys(job.getSchedule().getScheduleId(), job.getGenerationId())));
+    jobQueueTable.deleteAll(
+        Range.singleton(getJobScanKeys(job.getSchedule().getScheduleId(), job.getGenerationId())));
   }
 
   @Override
@@ -230,20 +240,24 @@ public class JobQueueTable implements JobQueue {
   }
 
   @Override
-  public CloseableIterator<Job> getJobs(int partition, @Nullable Job lastJobProcessed) throws IOException {
+  public CloseableIterator<Job> getJobs(int partition, @Nullable Job lastJobProcessed)
+      throws IOException {
     Collection<Field<?>> begin;
     Range.Bound beginBound;
 
     Set<Field<?>> partitionField =
-      Collections.singleton(Fields.intField(StoreDefinition.JobQueueStore.PARTITION_ID, partition));
+        Collections.singleton(
+            Fields.intField(StoreDefinition.JobQueueStore.PARTITION_ID, partition));
     if (lastJobProcessed == null) {
       begin = partitionField;
       beginBound = Range.Bound.INCLUSIVE;
     } else {
       // sanity check that the specified job is from the same partition
-      Preconditions.checkArgument(partition == getPartition(lastJobProcessed.getSchedule().getScheduleId()),
-                                  "Job is not from partition '%s': %s", partition, lastJobProcessed);
-      begin = getJobScanKeys(lastJobProcessed.getSchedule().getScheduleId(), lastJobProcessed.getGenerationId());
+      Preconditions.checkArgument(
+          partition == getPartition(lastJobProcessed.getSchedule().getScheduleId()),
+          "Job is not from partition '%s': %s", partition, lastJobProcessed);
+      begin = getJobScanKeys(lastJobProcessed.getSchedule().getScheduleId(),
+          lastJobProcessed.getGenerationId());
       // we want to exclude the given Job from the scan
       beginBound = Range.Bound.EXCLUSIVE;
     }
@@ -259,6 +273,7 @@ public class JobQueueTable implements JobQueue {
   private CloseableIterator<Job> createJobIterator(CloseableIterator<StructuredRow> rowIterator) {
     return new AbstractCloseableIterator<Job>() {
       PeekingIterator<StructuredRow> peekingIterator = Iterators.peekingIterator(rowIterator);
+
       @Override
       protected Job computeNext() {
         if (!peekingIterator.hasNext()) {
@@ -275,8 +290,8 @@ public class JobQueueTable implements JobQueue {
   }
 
   /**
-   * Construct a Job object from the rows in iterator.
-   * A job may need up to three rows from the iterator for its construction -
+   * Construct a Job object from the rows in iterator. A job may need up to three rows from the
+   * iterator for its construction -
    * <ul>
    *   <li>Row JOB - the row containing the job data, required</li>
    *   <li>Row DELETE - the row containing the time when the job was marked for deletion, optional</li>
@@ -298,7 +313,7 @@ public class JobQueueTable implements JobQueue {
     int generationId = getGenerationId(peekingIterator.peek());
     // Get all the rows for the current job from the iterator
     while (peekingIterator.hasNext() && generationId == getGenerationId(peekingIterator.peek()) &&
-      scheduleId.equals(getScheduleId(peekingIterator.peek()))) {
+        scheduleId.equals(getScheduleId(peekingIterator.peek()))) {
       StructuredRow row = peekingIterator.next();
       StoreDefinition.JobQueueStore.RowType rowType = getRowType(row);
       switch (rowType) {
@@ -313,17 +328,20 @@ public class JobQueueTable implements JobQueue {
           break;
         default:
           // Should not happen unless a new value is added to the RowType enum
-          throw new IllegalStateException(String.format("Unknown row type encountered in job queue: %s", rowType));
+          throw new IllegalStateException(
+              String.format("Unknown row type encountered in job queue: %s", rowType));
       }
     }
 
     if (job == null) {
       // Should not happen since we always write delete time or obsolete time only after reading the job from store
-      throw new IllegalStateException(String.format("Cannot find job for schedule id: %s", scheduleId));
+      throw new IllegalStateException(
+          String.format("Cannot find job for schedule id: %s", scheduleId));
     }
 
     Long timeToSet = toBeDeletedTime == null ? isObsoleteTime :
-      isObsoleteTime == null ? toBeDeletedTime : new Long(Math.min(isObsoleteTime, toBeDeletedTime));
+        isObsoleteTime == null ? toBeDeletedTime
+            : new Long(Math.min(isObsoleteTime, toBeDeletedTime));
     if (timeToSet != null) {
       job.setToBeDeleted(timeToSet);
     }
@@ -350,8 +368,9 @@ public class JobQueueTable implements JobQueue {
   }
 
   private void writeJob(Job job) throws IOException {
-    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(), job.getGenerationId(),
-                                             StoreDefinition.JobQueueStore.RowType.JOB);
+    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(),
+        job.getGenerationId(),
+        StoreDefinition.JobQueueStore.RowType.JOB);
     fields.add(Fields.stringField(StoreDefinition.JobQueueStore.JOB, GSON.toJson(job)));
     jobQueueTable.upsert(fields);
     if (job.isToBeDeleted()) {
@@ -360,21 +379,23 @@ public class JobQueueTable implements JobQueue {
   }
 
   private void writeJobDelete(Job job, Long deleteTime) throws IOException {
-    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(), job.getGenerationId(),
-                                             StoreDefinition.JobQueueStore.RowType.DELETE);
+    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(),
+        job.getGenerationId(),
+        StoreDefinition.JobQueueStore.RowType.DELETE);
     fields.add(Fields.longField(StoreDefinition.JobQueueStore.DELETE_TIME, deleteTime));
     jobQueueTable.upsert(fields);
   }
 
   private void writeJobObsolete(Job job, long obsoleteTime) throws IOException {
-    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(), job.getGenerationId(),
-                                             StoreDefinition.JobQueueStore.RowType.OBSOLETE);
+    Collection<Field<?>> fields = getJobKeys(job.getSchedule().getScheduleId(),
+        job.getGenerationId(),
+        StoreDefinition.JobQueueStore.RowType.OBSOLETE);
     fields.add(Fields.longField(StoreDefinition.JobQueueStore.OBSOLETE_TIME, obsoleteTime));
     jobQueueTable.upsert(fields);
   }
 
   private Collection<Field<?>> getJobKeys(ScheduleId scheduleId, int generationId,
-                                          StoreDefinition.JobQueueStore.RowType rowType) {
+      StoreDefinition.JobQueueStore.RowType rowType) {
     Collection<Field<?>> keys = getJobScanKeys(scheduleId, generationId);
     keys.add(Fields.stringField(StoreDefinition.JobQueueStore.ROW_TYPE, rowType.toString()));
     return keys;
@@ -389,7 +410,7 @@ public class JobQueueTable implements JobQueue {
   private Collection<Field<?>> getScheduleScanKeys(ScheduleId scheduleId) {
     Collection<Field<?>> keys = getPartitionScanKeys(scheduleId);
     keys.add(Fields.stringField(StoreDefinition.JobQueueStore.SCHEDULE_ID,
-                                Joiner.on(".").join(scheduleId.toIdParts())));
+        Joiner.on(".").join(scheduleId.toIdParts())));
     return keys;
   }
 
@@ -404,10 +425,10 @@ public class JobQueueTable implements JobQueue {
     // Similar to ScheduleId#hashCode, but that is not consistent across runtimes due to how Enum#hashCode works.
     // Ensure that the hash won't change across runtimes:
     int hash = Hashing.murmur3_32().newHasher()
-      .putString(scheduleId.getNamespace())
-      .putString(scheduleId.getApplication())
-      .putString(scheduleId.getSchedule())
-      .hash().asInt();
+        .putString(scheduleId.getNamespace())
+        .putString(scheduleId.getApplication())
+        .putString(scheduleId.getSchedule())
+        .hash().asInt();
     return Math.abs(hash) % numPartitions;
   }
 
@@ -415,8 +436,8 @@ public class JobQueueTable implements JobQueue {
    * Gets the id of the last fetched message that was set the given TMS topic
    *
    * @param topic the topic to lookup the last message id
-   * @return the id of the last fetched message for this subscriber on this topic,
-   *         or {@code null} if no message id was stored before
+   * @return the id of the last fetched message for this subscriber on this topic, or {@code null}
+   *     if no message id was stored before
    */
   // TODO: CDAP-14876 Move this into the new table for subscriber state during re-factoring
   public String retrieveSubscriberState(String topic) throws IOException {

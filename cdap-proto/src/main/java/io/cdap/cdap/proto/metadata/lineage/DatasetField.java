@@ -24,13 +24,13 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents a record in a {@link FieldLineageSummary}. Each record consists
- * of dataset and subset of its fields. The combination of both dataset and field
- * can represent either the origin or destination in the field lineage summary for a
- * given field.
+ * Represents a record in a {@link FieldLineageSummary}. Each record consists of dataset and subset
+ * of its fields. The combination of both dataset and field can represent either the origin or
+ * destination in the field lineage summary for a given field.
  */
 @Beta
 public class DatasetField {
+
   private final DatasetId dataset;
   private final Set<String> fields;
 
@@ -57,7 +57,7 @@ public class DatasetField {
     }
     DatasetField that = (DatasetField) o;
     return Objects.equals(dataset, that.dataset) &&
-            Objects.equals(fields, that.fields);
+        Objects.equals(fields, that.fields);
   }
 
   @Override

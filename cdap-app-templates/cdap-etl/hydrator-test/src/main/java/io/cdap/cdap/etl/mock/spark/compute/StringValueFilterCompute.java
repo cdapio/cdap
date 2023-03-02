@@ -37,12 +37,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.rdd.RDD;
 
 /**
- * Transform that filters out records whose configured field is a configured value.
- * For example, can filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
+ * Transform that filters out records whose configured field is a configured value. For example, can
+ * filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
  */
 @Plugin(type = SparkCompute.PLUGIN_TYPE)
 @Name("StringValueFilterCompute")
 public class StringValueFilterCompute extends SparkCompute<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf conf;
   private SparkInterpreter interpreter;
@@ -63,31 +64,33 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
     // should never happen, here to test app correctness in unit tests
     Schema inputSchema = context.getInputSchema();
     if (inputSchema != null && !inputSchema.equals(context.getOutputSchema())) {
-      throw new IllegalStateException("runtime schema does not match what was set at configure time.");
+      throw new IllegalStateException(
+          "runtime schema does not match what was set at configure time.");
     }
 
     interpreter = context.createSparkInterpreter();
     interpreter.compile(
-      "package test\n" +
-      "import io.cdap.cdap.api.data.format._\n" +
-      "import org.apache.spark._\n" +
-      "import org.apache.spark.api.java._\n" +
-      "import org.apache.spark.rdd._\n" +
-      "object Compute {\n" +
-      "  def compute(rdd: RDD[StructuredRecord]): JavaRDD[StructuredRecord] = {\n" +
-      "    val value = \"" + conf.value + "\"\n" +
-      "    val field = \"" + conf.field + "\"\n" +
-      "    JavaRDD.fromRDD(rdd.filter(r => !value.equals(r.get(field))))\n" +
-      "  }\n" +
-      "}"
+        "package test\n" +
+            "import io.cdap.cdap.api.data.format._\n" +
+            "import org.apache.spark._\n" +
+            "import org.apache.spark.api.java._\n" +
+            "import org.apache.spark.rdd._\n" +
+            "object Compute {\n" +
+            "  def compute(rdd: RDD[StructuredRecord]): JavaRDD[StructuredRecord] = {\n" +
+            "    val value = \"" + conf.value + "\"\n" +
+            "    val field = \"" + conf.field + "\"\n" +
+            "    JavaRDD.fromRDD(rdd.filter(r => !value.equals(r.get(field))))\n" +
+            "  }\n" +
+            "}"
     );
 
-    computeMethod = interpreter.getClassLoader().loadClass("test.Compute").getDeclaredMethod("compute", RDD.class);
+    computeMethod = interpreter.getClassLoader().loadClass("test.Compute")
+        .getDeclaredMethod("compute", RDD.class);
   }
 
   @Override
   public JavaRDD<StructuredRecord> transform(SparkExecutionPluginContext context,
-                                             JavaRDD<StructuredRecord> input) throws Exception {
+      JavaRDD<StructuredRecord> input) throws Exception {
     //noinspection unchecked
     return (JavaRDD<StructuredRecord>) computeMethod.invoke(null, input.rdd());
   }
@@ -96,6 +99,7 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
    * Config for the plugin
    */
   public static class Conf extends PluginConfig {
+
     @Macro
     private String field;
 
@@ -114,8 +118,10 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
-    return PluginClass.builder().setName("StringValueFilterCompute").setType(SparkCompute.PLUGIN_TYPE)
-             .setDescription("").setClassName(StringValueFilterCompute.class.getName()).setProperties(properties)
-             .setConfigFieldName("conf").build();
+    return PluginClass.builder().setName("StringValueFilterCompute")
+        .setType(SparkCompute.PLUGIN_TYPE)
+        .setDescription("").setClassName(StringValueFilterCompute.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("conf").build();
   }
 }

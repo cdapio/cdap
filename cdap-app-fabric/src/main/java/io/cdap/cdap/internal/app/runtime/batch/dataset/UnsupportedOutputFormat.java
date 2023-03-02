@@ -24,8 +24,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
 /**
- * OutputFormat that allows instantiation of the RecordWriter, but throws {@link UnsupportedOperationException}
- * upon any attempts to write to it.
+ * OutputFormat that allows instantiation of the RecordWriter, but throws {@link
+ * UnsupportedOperationException} upon any attempts to write to it.
  *
  * All other operations, such as its OutputCommitter's operations, are no-ops.
  *
@@ -41,13 +41,16 @@ public class UnsupportedOutputFormat<K, V> extends OutputFormat<K, V> {
       public void write(K key, V value) {
         throw new UnsupportedOperationException("Writing to output is not supported.");
       }
+
       @Override
-      public void close(TaskAttemptContext context) { }
+      public void close(TaskAttemptContext context) {
+      }
     };
   }
 
   @Override
-  public void checkOutputSpecs(JobContext context) { }
+  public void checkOutputSpecs(JobContext context) {
+  }
 
   @Override
   public OutputCommitter getOutputCommitter(TaskAttemptContext context) {

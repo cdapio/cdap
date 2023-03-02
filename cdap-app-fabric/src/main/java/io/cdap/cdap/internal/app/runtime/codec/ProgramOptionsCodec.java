@@ -32,11 +32,12 @@ import java.lang.reflect.Type;
 /**
  * A Gson codec for {@link ProgramOptions}.
  */
-public class ProgramOptionsCodec implements JsonSerializer<ProgramOptions>, JsonDeserializer<ProgramOptions> {
+public class ProgramOptionsCodec implements JsonSerializer<ProgramOptions>,
+    JsonDeserializer<ProgramOptions> {
 
   @Override
   public ProgramOptions deserialize(JsonElement json, Type typeOfT,
-                                    JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     ProgramId programId = context.deserialize(jsonObj.get("programId"), ProgramId.class);
     Arguments arguments = context.deserialize(jsonObj.get("arguments"), Arguments.class);
@@ -47,7 +48,8 @@ public class ProgramOptionsCodec implements JsonSerializer<ProgramOptions>, Json
   }
 
   @Override
-  public JsonElement serialize(ProgramOptions src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ProgramOptions src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.add("programId", context.serialize(src.getProgramId(), ProgramId.class));
     json.add("arguments", context.serialize(src.getArguments(), Arguments.class));

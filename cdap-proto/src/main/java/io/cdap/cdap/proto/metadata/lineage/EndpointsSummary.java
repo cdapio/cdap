@@ -26,6 +26,7 @@ import java.util.Objects;
  * The summary about all the Endpoints in a program run.
  */
 public class EndpointsSummary {
+
   private final List<EndPoint> endpoints;
 
   public EndpointsSummary(List<EndPoint> endpoints) {
@@ -39,8 +40,8 @@ public class EndpointsSummary {
   @Override
   public String toString() {
     return "EndpointsSummary{" +
-      "endpoints=" + endpoints +
-      '}';
+        "endpoints=" + endpoints +
+        '}';
   }
 
   @Override

@@ -47,8 +47,8 @@ public class VisibilityRequest {
   @Override
   public String toString() {
     return "VisibilityRequest {" +
-      "entityIds=" + entityIds +
-      ", principal=" + principal +
-      '}';
+        "entityIds=" + entityIds +
+        ", principal=" + principal +
+        '}';
   }
 }

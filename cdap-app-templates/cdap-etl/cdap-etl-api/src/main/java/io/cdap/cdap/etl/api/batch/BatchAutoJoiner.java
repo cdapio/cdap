@@ -26,15 +26,17 @@ import io.cdap.cdap.etl.api.join.AutoJoiner;
  */
 @Beta
 public abstract class BatchAutoJoiner extends MultiInputBatchConfigurable<BatchJoinerContext>
-  implements AutoJoiner, MultiInputPipelineConfigurable {
+    implements AutoJoiner, MultiInputPipelineConfigurable {
+
   public static final String PLUGIN_TYPE = BatchJoiner.PLUGIN_TYPE;
 
   /**
-   * Configure the pipeline. This is run once when the pipeline is being published.
-   * This is where you perform any static logic, like creating required datasets, performing schema validation,
+   * Configure the pipeline. This is run once when the pipeline is being published. This is where
+   * you perform any static logic, like creating required datasets, performing schema validation,
    * setting output schema, and things of that nature.
    *
-   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and
+   *     streams
    */
   @Override
   public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
@@ -42,12 +44,11 @@ public abstract class BatchAutoJoiner extends MultiInputBatchConfigurable<BatchJ
   }
 
   /**
-   * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up the run.
-   * This is where you would set things like the number of partitions to use when joining, and setting the
-   * join key class if they are not known at compile time.
+   * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up
+   * the run. This is where you would set things like the number of partitions to use when joining,
+   * and setting the join key class if they are not known at compile time.
    *
    * @param context batch execution context
-   * @throws Exception
    */
   @Override
   public void prepareRun(BatchJoinerContext context) throws Exception {

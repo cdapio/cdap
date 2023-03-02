@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
  * Mock ActionContext for CustomAction tests.
  */
 public class MockActionContext implements ActionContext {
+
   private static final String MOCK_STAGE_NAME = "mockstage";
   private final FailureCollector collector;
   private SettableArguments settableArguments;
@@ -151,7 +152,7 @@ public class MockActionContext implements ActionContext {
   @Nullable
   @Override
   public HttpURLConnection openConnection(String namespaceId, String applicationId,
-                                          String serviceId, String methodPath) {
+      String serviceId, String methodPath) {
     return null;
   }
 
@@ -177,7 +178,7 @@ public class MockActionContext implements ActionContext {
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) {
+      Map<String, String> properties) {
     // no-op; unused
   }
 

@@ -20,9 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.io.Serializable;
 
 /**
- * Multiple nodes in the Workflow can add the same key to the {@link WorkflowToken}.
- * This class provides a mapping from node name to the {@link Value} which was set for the
- * specific key.
+ * Multiple nodes in the Workflow can add the same key to the {@link WorkflowToken}. This class
+ * provides a mapping from node name to the {@link Value} which was set for the specific key.
  */
 @Beta
 public final class NodeValue implements Serializable {

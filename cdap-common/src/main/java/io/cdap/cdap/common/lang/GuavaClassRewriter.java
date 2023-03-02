@@ -43,13 +43,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ClassRewriter} for rewriting Guava library classes to add missing functions that are available in
- * later Guava library. Those new methods are being used by Hadoop 3 until 3.4 (HADOOP-17288).
+ * A {@link ClassRewriter} for rewriting Guava library classes to add missing functions that are
+ * available in later Guava library. Those new methods are being used by Hadoop 3 until 3.4
+ * (HADOOP-17288).
  *
- * In particular, in the Preconditions class, there are new checkState and checkArgument methods that take different
- * number of arguments for error message formatting purpose, instead of just the generic vararg method.
- * Also, in the MoreExecutors class, there is a new directExecutor() method that replace the functionality of
- * the the sameThreadExecutor().
+ * In particular, in the Preconditions class, there are new checkState and checkArgument methods
+ * that take different number of arguments for error message formatting purpose, instead of just the
+ * generic vararg method. Also, in the MoreExecutors class, there is a new directExecutor() method
+ * that replace the functionality of the the sameThreadExecutor().
  */
 public class GuavaClassRewriter implements ClassRewriter {
 
@@ -80,19 +81,19 @@ public class GuavaClassRewriter implements ClassRewriter {
   }
 
   /**
-   * Rewrites the {@link Preconditions} class to add various {@code checkArgument}, {@code checkState},
-   * and {@code checkNotNull} methods that are missing in earlier Guava library.
+   * Rewrites the {@link Preconditions} class to add various {@code checkArgument}, {@code
+   * checkState}, and {@code checkNotNull} methods that are missing in earlier Guava library.
    *
    * @param input the bytecode stream of the Preconditions class
    * @return the rewritten bytecode
    * @throws IOException if failed to rewrite
    */
   private byte[] rewritePreconditions(InputStream input) throws IOException {
-    Type[] types = new Type[] {
-      OBJECT_TYPE,
-      Type.CHAR_TYPE,
-      Type.INT_TYPE,
-      Type.LONG_TYPE
+    Type[] types = new Type[]{
+        OBJECT_TYPE,
+        Type.CHAR_TYPE,
+        Type.INT_TYPE,
+        Type.LONG_TYPE
     };
 
     // Generates all the methods that we need to add to the Preconditions class
@@ -102,9 +103,10 @@ public class GuavaClassRewriter implements ClassRewriter {
     // Carry the list of method templates for generating new methods.
     // Each template contains the method name, the first argument type, and the return type.
     List<Method> methodTemplates = Arrays.asList(
-      new Method("checkArgument", Type.VOID_TYPE, new Type[] { Type.BOOLEAN_TYPE }),
-      new Method("checkState", Type.VOID_TYPE, new Type[] { Type.BOOLEAN_TYPE }),
-      new Method("checkNotNull", Type.getType(Object.class), new Type[] { Type.getType(Object.class) })
+        new Method("checkArgument", Type.VOID_TYPE, new Type[]{Type.BOOLEAN_TYPE}),
+        new Method("checkState", Type.VOID_TYPE, new Type[]{Type.BOOLEAN_TYPE}),
+        new Method("checkNotNull", Type.getType(Object.class),
+            new Type[]{Type.getType(Object.class)})
     );
 
     for (Method method : methodTemplates) {
@@ -114,19 +116,19 @@ public class GuavaClassRewriter implements ClassRewriter {
 
       for (Type type : types) {
         methods.add(new Method(methodName, returnType,
-                               new Type[] { firstArgType, STRING_TYPE, type }));
+            new Type[]{firstArgType, STRING_TYPE, type}));
         for (Type type2 : types) {
           methods.add(new Method(methodName, returnType,
-                                 new Type[] { firstArgType, STRING_TYPE, type, type2 }));
+              new Type[]{firstArgType, STRING_TYPE, type, type2}));
         }
       }
 
       // Later version of Preconditions class also added methods that take three and four Objects
       methods.add(new Method(methodName, returnType,
-                             new Type[] { firstArgType, STRING_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
+          new Type[]{firstArgType, STRING_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
       methods.add(new Method(methodName, returnType,
-                             new Type[] { firstArgType, STRING_TYPE,
-                               OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
+          new Type[]{firstArgType, STRING_TYPE,
+              OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
     }
 
     ClassReader cr = new ClassReader(input);
@@ -152,17 +154,18 @@ public class GuavaClassRewriter implements ClassRewriter {
       private boolean hasMethod;
 
       @Override
-      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      public void visit(int version, int access, String name, String signature, String superName,
+          String[] interfaces) {
         // Rewrite the class to 1.7 format so that we can use lambda to implement the directExecutor() method
         super.visit(Opcodes.V1_7, access, name, signature, superName, interfaces);
       }
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String descriptor,
-                                       String signature, String[] exceptions) {
+          String signature, String[] exceptions) {
         if (method.equals(new Method(name, descriptor))
-          && (access & Opcodes.ACC_PUBLIC) == Opcodes.ACC_PUBLIC
-          && (access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC) {
+            && (access & Opcodes.ACC_PUBLIC) == Opcodes.ACC_PUBLIC
+            && (access & Opcodes.ACC_STATIC) == Opcodes.ACC_STATIC) {
           hasMethod = true;
         }
         return super.visitMethod(access, name, descriptor, signature, exceptions);
@@ -180,20 +183,21 @@ public class GuavaClassRewriter implements ClassRewriter {
         //   return Runnable::run;
         // }
         MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                             method.getName(), method.getDescriptor(), null, null);
+            method.getName(), method.getDescriptor(), null, null);
         GeneratorAdapter adapter = new GeneratorAdapter(mv, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                                        method.getName(), method.getDescriptor());
+            method.getName(), method.getDescriptor());
         // Perform the lambda invocation.
         Handle metaFactoryHandle = new Handle(Opcodes.H_INVOKESTATIC,
-                                              Type.getType(LambdaMetafactory.class).getInternalName(),
-                                              "metafactory", Methods.LAMBDA_META_FACTORY_METHOD_DESC, false);
-        Handle lambdaMethodHandle = new Handle(Opcodes.H_INVOKEINTERFACE, RUNNABLE_TYPE.getInternalName(),
-                                               "run", Type.getMethodDescriptor(Type.VOID_TYPE), true);
+            Type.getType(LambdaMetafactory.class).getInternalName(),
+            "metafactory", Methods.LAMBDA_META_FACTORY_METHOD_DESC, false);
+        Handle lambdaMethodHandle = new Handle(Opcodes.H_INVOKEINTERFACE,
+            RUNNABLE_TYPE.getInternalName(),
+            "run", Type.getMethodDescriptor(Type.VOID_TYPE), true);
 
         // Signature of the Executor.execute(Runnable)
         Type samMethodType = Type.getType(Type.getMethodDescriptor(Type.VOID_TYPE, RUNNABLE_TYPE));
         adapter.invokeDynamic("execute", Type.getMethodDescriptor(Type.getType(Executor.class)),
-                              metaFactoryHandle, samMethodType, lambdaMethodHandle, samMethodType);
+            metaFactoryHandle, samMethodType, lambdaMethodHandle, samMethodType);
         adapter.returnValue();
         adapter.endMethod();
         super.visitEnd();
@@ -217,7 +221,7 @@ public class GuavaClassRewriter implements ClassRewriter {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor,
-                                     String signature, String[] exceptions) {
+        String signature, String[] exceptions) {
       Method method = new Method(name, descriptor);
       if (methods.contains(method)
           && (access & Opcodes.ACC_PUBLIC) == Opcodes.ACC_PUBLIC
@@ -231,7 +235,7 @@ public class GuavaClassRewriter implements ClassRewriter {
     public void visitEnd() {
       for (Method method : methods) {
         LOG.trace("{}.{} not found. Rewriting class to inject the missing method",
-                  PRECONDTIONS_CLASS_NAME, method);
+            PRECONDTIONS_CLASS_NAME, method);
 
         // Generate the missing method that calls the version with varargs
         // For example,
@@ -240,9 +244,9 @@ public class GuavaClassRewriter implements ClassRewriter {
         //   checkArgument(expression, template, new Object[] { arg });
         // }
         MethodVisitor mv = super.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                             method.getName(), method.getDescriptor(), null, null);
+            method.getName(), method.getDescriptor(), null, null);
         GeneratorAdapter adapter = new GeneratorAdapter(mv, Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                                        method.getName(), method.getDescriptor());
+            method.getName(), method.getDescriptor());
         adapter.loadArg(0);
         adapter.loadArg(1);
 
@@ -262,7 +266,8 @@ public class GuavaClassRewriter implements ClassRewriter {
           adapter.loadArg(i + 2);
           // If the given argument is not an Object, turn it into a String
           if (argType.getSort() != Type.OBJECT) {
-            adapter.invokeStatic(STRING_TYPE, new Method("valueOf", STRING_TYPE, new Type[] { argType }));
+            adapter.invokeStatic(STRING_TYPE,
+                new Method("valueOf", STRING_TYPE, new Type[]{argType}));
           }
           adapter.arrayStore(OBJECT_TYPE);
         }
@@ -270,12 +275,12 @@ public class GuavaClassRewriter implements ClassRewriter {
 
         // Call the varargs method
         adapter.invokeStatic(Type.getObjectType(PRECONDTIONS_CLASS_NAME.replace('.', '/')),
-                             new Method(method.getName(), method.getReturnType(),
-                                        new Type[] {
-                                          method.getArgumentTypes()[0],
-                                          method.getArgumentTypes()[1],
-                                          Type.getType(Object[].class)
-                                        }));
+            new Method(method.getName(), method.getReturnType(),
+                new Type[]{
+                    method.getArgumentTypes()[0],
+                    method.getArgumentTypes()[1],
+                    Type.getType(Object[].class)
+                }));
         adapter.returnValue();
         adapter.endMethod();
       }

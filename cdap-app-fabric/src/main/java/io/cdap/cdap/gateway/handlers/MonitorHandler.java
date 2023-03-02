@@ -75,7 +75,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public MonitorHandler(Map<String, MasterServiceManager> serviceMap, ServiceStore serviceStore,
-                        ContextAccessEnforcer contextAccessEnforcer) {
+      ContextAccessEnforcer contextAccessEnforcer) {
     this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
     this.contextAccessEnforcer = contextAccessEnforcer;
@@ -87,7 +87,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/live-info")
   @GET
   public void getServiceLiveInfo(HttpRequest request, HttpResponder responder,
-                                 @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
     }
@@ -109,7 +109,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/instances")
   @GET
   public void getServiceInstance(HttpRequest request, HttpResponder responder,
-                                 @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
 
     JsonObject reply = new JsonObject();
     if (!serviceManagementMap.containsKey(serviceName)) {
@@ -135,7 +135,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void setServiceInstance(FullHttpRequest request, HttpResponder responder,
-                                 @PathParam("service-name") final String serviceName) throws Exception {
+      @PathParam("service-name") final String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
     }
@@ -150,9 +150,11 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }
 
     int currentInstances = getSystemServiceInstanceCount(serviceName);
-    if (instances < serviceManager.getMinInstances() || instances > serviceManager.getMaxInstances()) {
-      String response = String.format("Instance count should be between [%s,%s]", serviceManager.getMinInstances(),
-                                      serviceManager.getMaxInstances());
+    if (instances < serviceManager.getMinInstances()
+        || instances > serviceManager.getMaxInstances()) {
+      String response = String.format("Instance count should be between [%s,%s]",
+          serviceManager.getMinInstances(),
+          serviceManager.getMaxInstances());
       throw new BadRequestException(response);
     } else if (instances == currentInstances) {
       responder.sendStatus(HttpResponseStatus.OK);
@@ -171,7 +173,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/status")
   @GET
   public void getBootStatus(HttpRequest request, HttpResponder responder) {
-    contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF, StandardPermission.LIST);
+    contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF,
+        StandardPermission.LIST);
     Map<String, String> result = new HashMap<>();
     for (String service : serviceManagementMap.keySet()) {
       MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
@@ -186,19 +189,21 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services")
   @GET
   public void getServiceSpec(HttpRequest request, HttpResponder responder) {
-    contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF, StandardPermission.LIST);
+    contextAccessEnforcer.enforceOnParent(EntityType.SYSTEM_SERVICE, InstanceId.SELF,
+        StandardPermission.LIST);
     List<SystemServiceMeta> response = new ArrayList<>();
     SortedSet<String> services = new TreeSet<>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<>(services);
     for (String service : serviceList) {
       MasterServiceManager serviceManager = serviceManagementMap.get(service);
       if (serviceManager.isServiceEnabled()) {
-        String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
+        String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK
+            : Constants.Monitor.STATUS_NOTOK;
         String canCheck = serviceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
         //TODO: Add metric name for Event Rate monitoring
         response.add(new SystemServiceMeta(service, serviceManager.getDescription(), canCheck, logs,
-                                           serviceManager.getMinInstances(), serviceManager.getMaxInstances(),
-                                           getSystemServiceInstanceCount(service), serviceManager.getInstances()));
+            serviceManager.getMinInstances(), serviceManager.getMaxInstances(),
+            getSystemServiceInstanceCount(service), serviceManager.getInstances()));
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
@@ -210,7 +215,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/restart")
   @POST
   public void restartAllServiceInstances(HttpRequest request, HttpResponder responder,
-                                         @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
     restartInstances(responder, serviceName, -1, true);
   }
 
@@ -220,8 +225,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/instances/{instance-id}/restart")
   @POST
   public void restartServiceInstance(HttpRequest request, HttpResponder responder,
-                                     @PathParam("service-name") String serviceName,
-                                     @PathParam("instance-id") int instanceId) throws Exception {
+      @PathParam("service-name") String serviceName,
+      @PathParam("instance-id") int instanceId) throws Exception {
     restartInstances(responder, serviceName, instanceId, false);
   }
 
@@ -231,7 +236,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("/system/services/{service-name}/latest-restart")
   @GET
   public void getLatestRestartServiceInstanceStatus(HttpRequest request, HttpResponder responder,
-                                                    @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
     }
@@ -241,9 +246,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     try {
       responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(serviceStore.getLatestRestartInstancesRequest(serviceName)));
+          GSON.toJson(serviceStore.getLatestRestartInstancesRequest(serviceName)));
     } catch (IllegalStateException ex) {
-      throw new NotFoundException(String.format("No restart instances request found or %s", serviceName));
+      throw new NotFoundException(
+          String.format("No restart instances request found or %s", serviceName));
     }
   }
 
@@ -253,7 +259,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @Path("system/services/{service-name}/loglevels")
   @PUT
   public void updateServiceLogLevels(FullHttpRequest request, HttpResponder responder,
-                                     @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
     }
@@ -264,7 +270,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
     if (!masterServiceManager.isServiceEnabled()) {
       throw new ForbiddenException(String.format("Failed to update log levels for service %s " +
-                                                   "because the service is not enabled", serviceName));
+          "because the service is not enabled", serviceName));
     }
 
     try {
@@ -273,8 +279,9 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       masterServiceManager.updateServiceLogLevels(transformLogLevelsMap(decodeArguments(request)));
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      throw new ServiceUnavailableException(String.format("Failed to update log levels for service %s " +
-                                                            "because the service may not be ready yet", serviceName));
+      throw new ServiceUnavailableException(
+          String.format("Failed to update log levels for service %s " +
+              "because the service may not be ready yet", serviceName));
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());
     } catch (JsonSyntaxException e) {
@@ -283,13 +290,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Reset the log levels of the service.
-   * All loggers will be reset to the level when the service started.
+   * Reset the log levels of the service. All loggers will be reset to the level when the service
+   * started.
    */
   @Path("system/services/{service-name}/resetloglevels")
   @POST
   public void resetServiceLogLevels(FullHttpRequest request, HttpResponder responder,
-                                     @PathParam("service-name") String serviceName) throws Exception {
+      @PathParam("service-name") String serviceName) throws Exception {
     if (!serviceManagementMap.containsKey(serviceName)) {
       throw new NotFoundException(String.format("Invalid service name %s", serviceName));
     }
@@ -300,17 +307,19 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
     if (!masterServiceManager.isServiceEnabled()) {
       throw new ForbiddenException(String.format("Failed to reset log levels for service %s " +
-                                                   "because the service is not enabled", serviceName));
+          "because the service is not enabled", serviceName));
     }
 
     try {
       Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
-      masterServiceManager.resetServiceLogLevels(loggerNames == null ? Collections.emptySet() : loggerNames);
+      masterServiceManager.resetServiceLogLevels(
+          loggerNames == null ? Collections.emptySet() : loggerNames);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      throw new ServiceUnavailableException(String.format("Failed to reset log levels for service %s " +
-                                                            "because the service may not be ready yet", serviceName));
-    }  catch (JsonSyntaxException e) {
+      throw new ServiceUnavailableException(
+          String.format("Failed to reset log levels for service %s " +
+              "because the service may not be ready yet", serviceName));
+    } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid Json in the body");
     }
   }
@@ -327,7 +336,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void restartInstances(HttpResponder responder, String serviceName, int instanceId,
-                                boolean restartAll) throws Exception {
+      boolean restartAll) throws Exception {
     long startTimeMs = System.currentTimeMillis();
     boolean isSuccess = true;
     if (!serviceManagementMap.containsKey(serviceName)) {
@@ -339,8 +348,9 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     try {
       if (!masterServiceManager.isServiceEnabled()) {
-        String message = String.format("Failed to restart instance for %s because the service is not enabled.",
-                                       serviceName);
+        String message = String.format(
+            "Failed to restart instance for %s because the service is not enabled.",
+            serviceName);
         LOG.debug(message);
         isSuccess = false;
         throw new ForbiddenException(message);
@@ -356,29 +366,35 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
       }
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalStateException ise) {
-      String message = String.format("Failed to restart instance for %s because the service may not be ready yet",
-                                     serviceName);
+      String message = String.format(
+          "Failed to restart instance for %s because the service may not be ready yet",
+          serviceName);
       LOG.debug(message, ise);
       isSuccess = false;
       throw new ServiceUnavailableException(message);
     } catch (IllegalArgumentException iex) {
-      String message = String.format("Failed to restart instance %d for service: %s because invalid instance id",
-                                     instanceId, serviceName);
+      String message = String.format(
+          "Failed to restart instance %d for service: %s because invalid instance id",
+          instanceId, serviceName);
       LOG.debug(message, iex);
 
       isSuccess = false;
       throw new BadRequestException(message);
     } catch (Exception ex) {
-      LOG.warn(String.format("Exception when trying to restart instances for service %s", serviceName), ex);
+      LOG.warn(
+          String.format("Exception when trying to restart instances for service %s", serviceName),
+          ex);
 
       isSuccess = false;
-      throw new Exception(String.format("Error restarting instance %d for service: %s", instanceId, serviceName));
+      throw new Exception(
+          String.format("Error restarting instance %d for service: %s", instanceId, serviceName));
     } finally {
       long endTimeMs = System.currentTimeMillis();
       if (restartAll) {
         serviceStore.setRestartAllInstancesRequest(serviceName, startTimeMs, endTimeMs, isSuccess);
       } else {
-        serviceStore.setRestartInstanceRequest(serviceName, startTimeMs, endTimeMs, isSuccess, instanceId);
+        serviceStore.setRestartInstanceRequest(serviceName, startTimeMs, endTimeMs, isSuccess,
+            instanceId);
       }
     }
   }

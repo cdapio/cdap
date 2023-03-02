@@ -41,12 +41,13 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 
 /**
- * Guice module for {@link ProgramRunnerFactory} used for program execution in {@link ClusterMode#ISOLATED} mode.
+ * Guice module for {@link ProgramRunnerFactory} used for program execution in {@link
+ * ClusterMode#ISOLATED} mode.
  */
 final class RemoteExecutionProgramRunnerModule extends AbstractModule {
 
   private static final Key<TwillRunnerService> TWILL_RUNNER_SERVICE_KEY =
-    Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
+      Key.get(TwillRunnerService.class, Constants.AppFabric.RemoteExecution.class);
 
   @Override
   protected void configure() {
@@ -55,7 +56,7 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
     // Creates a multibinding to the twill runner services for capturing program state changes.
     // It has to be public binding because this set is injected to program notification subscriber.
     Multibinder<ProgramCompletionNotifier> multiBinder = Multibinder.newSetBinder(binder(),
-                                                                                  ProgramCompletionNotifier.class);
+        ProgramCompletionNotifier.class);
     multiBinder.addBinding().toProvider(ProgramCompletionNotifierProvider.class);
   }
 
@@ -69,12 +70,13 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
         // Bind the TwillRunner for remote execution used in isolated cluster.
         // The binding is added in here instead of in TwillModule is because this module can be used
         // in standalone env as well and it doesn't require YARN.
-        bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+        bind(TWILL_RUNNER_SERVICE_KEY).to(RemoteExecutionTwillRunnerService.class)
+            .in(Scopes.SINGLETON);
         expose(TWILL_RUNNER_SERVICE_KEY);
 
         // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
         Key<ProgramRunnerFactory> programRunnerFactoryKey = Key.get(ProgramRunnerFactory.class,
-                                                                    Constants.AppFabric.RemoteExecution.class);
+            Constants.AppFabric.RemoteExecution.class);
         // ProgramRunnerFactory should be in distributed mode
         bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
         bind(programRunnerFactoryKey).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
@@ -87,29 +89,36 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
         // No need to publish program state for remote execution runs since they will publish states and get
         // collected back via the runtime monitoring
-        bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE)).to(false);
+        bindConstant().annotatedWith(Names.named(DefaultProgramRunnerFactory.PUBLISH_PROGRAM_STATE))
+            .to(false);
         // TwillRunner used by the ProgramRunner is the remote execution one
-        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class).to(TWILL_RUNNER_SERVICE_KEY);
+        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+            .to(TWILL_RUNNER_SERVICE_KEY);
         // ProgramRunnerFactory used by ProgramRunner is the remote execution one.
         bind(ProgramRunnerFactory.class)
-          .annotatedWith(Constants.AppFabric.ProgramRunner.class)
-          .to(programRunnerFactoryKey);
+            .annotatedWith(Constants.AppFabric.ProgramRunner.class)
+            .to(programRunnerFactoryKey);
 
         // A private Map binding of ProgramRunner for ProgramRunnerFactory to use
         MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
-          binder(), ProgramType.class, ProgramRunner.class);
+            binder(), ProgramType.class, ProgramRunner.class);
 
-        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
-        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE)
+            .to(DistributedMapReduceProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW)
+            .to(DistributedWorkflowProgramRunner.class);
+        defaultProgramRunnerBinder.addBinding(ProgramType.WORKER)
+            .to(DistributedWorkerProgramRunner.class);
       }
     };
   }
 
   /**
-   * Provider for {@link ProgramCompletionNotifier}, which is optionally implemented by {@link TwillRunnerService}.
+   * Provider for {@link ProgramCompletionNotifier}, which is optionally implemented by {@link
+   * TwillRunnerService}.
    */
-  private static final class ProgramCompletionNotifierProvider implements Provider<ProgramCompletionNotifier> {
+  private static final class ProgramCompletionNotifierProvider implements
+      Provider<ProgramCompletionNotifier> {
 
     private final Injector injector;
 
@@ -125,7 +134,8 @@ final class RemoteExecutionProgramRunnerModule extends AbstractModule {
         return (ProgramCompletionNotifier) twillRunner;
       }
       // This shouldn't be hit, but to safeguard.
-      return (programRunId, completionStatus) -> { };
+      return (programRunId, completionStatus) -> {
+      };
     }
   }
 }

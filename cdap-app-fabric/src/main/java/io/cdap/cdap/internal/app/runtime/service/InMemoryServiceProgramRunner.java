@@ -38,7 +38,8 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
   private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
 
   @Inject
-  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider) {
+  InMemoryServiceProgramRunner(CConfiguration cConf,
+      Provider<ServiceProgramRunner> serviceProgramRunnerProvider) {
     super(cConf);
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
@@ -51,10 +52,12 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.SERVICE, "Only SERVICE process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.SERVICE,
+        "Only SERVICE process type is supported.");
 
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
-    Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
+    Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s",
+        program.getName());
 
     return startAll(program, options, serviceSpec.getInstances());
   }

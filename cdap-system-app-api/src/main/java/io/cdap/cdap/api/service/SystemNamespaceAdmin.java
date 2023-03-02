@@ -24,6 +24,7 @@ import java.util.List;
  * Interface for list all namespaces for system service
  */
 public interface SystemNamespaceAdmin {
+
   /**
    * List all the namespaces
    */

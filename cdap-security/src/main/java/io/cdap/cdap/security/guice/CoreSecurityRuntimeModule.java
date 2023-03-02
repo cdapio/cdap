@@ -42,6 +42,7 @@ public class CoreSecurityRuntimeModule extends RuntimeModule {
 
   /**
    * Deprecated, use the {@link #getDistributedModule(CConfiguration)} instead.
+   *
    * @deprecated
    */
   @Override
@@ -55,7 +56,8 @@ public class CoreSecurityRuntimeModule extends RuntimeModule {
   public static CoreSecurityModule getDistributedModule(CConfiguration cConf) {
     // If security is not needed, we don't need a distributed security module.
     // It is merely for satisfying the binding dependencies only.
-    if (!cConf.getBoolean(Constants.Security.ENABLED) && !SecurityUtil.isInternalAuthEnabled(cConf)) {
+    if (!cConf.getBoolean(Constants.Security.ENABLED) && !SecurityUtil.isInternalAuthEnabled(
+        cConf)) {
       return new InMemoryCoreSecurityModule();
     }
 

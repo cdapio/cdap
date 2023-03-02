@@ -38,7 +38,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * GrokRecordFormat. Grok parses a string and outputs a map of field name (string) to value (string).
+ * GrokRecordFormat. Grok parses a string and outputs a map of field name (string) to value
+ * (string).
  */
 public class GrokRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord> {
 
@@ -76,7 +77,8 @@ public class GrokRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord>
   @Override
   protected Schema getDefaultSchema() {
     // default is a nullable String
-    return Schema.recordOf("record", Schema.Field.of("body", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    return Schema.recordOf("record",
+        Schema.Field.of("body", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
   }
 
   @Override

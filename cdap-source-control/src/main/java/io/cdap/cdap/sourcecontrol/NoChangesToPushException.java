@@ -20,6 +20,7 @@ package io.cdap.cdap.sourcecontrol;
  * Exception thrown when there's no changes needed to push to linked repository
  */
 public class NoChangesToPushException extends Exception {
+
   public NoChangesToPushException(String message) {
     super(message);
   }

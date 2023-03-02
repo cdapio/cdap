@@ -30,8 +30,8 @@ import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Marker;
 
 /**
-* Class used to serialize/de-serialize ILoggingEvent.
-*/
+ * Class used to serialize/de-serialize ILoggingEvent.
+ */
 public final class LoggingEvent implements ILoggingEvent {
 
   private final ByteBuffer encoded;
@@ -85,8 +85,8 @@ public final class LoggingEvent implements ILoggingEvent {
   }
 
   /**
-   * Returns the {@link ByteBuffer} that this event is decoded from or {@code null} if
-   * the original encoded buffer is unknown.
+   * Returns the {@link ByteBuffer} that this event is decoded from or {@code null} if the original
+   * encoded buffer is unknown.
    */
   @Nullable
   public ByteBuffer getEncoded() {
@@ -164,7 +164,8 @@ public final class LoggingEvent implements ILoggingEvent {
   @Override
   public LoggerContextVO getLoggerContextVO() {
     if (!loggerContextVOPreserved) {
-      loggerContextVO =  LoggerContextSerializer.decode((GenericRecord) record.get("loggerContextVO"));
+      loggerContextVO = LoggerContextSerializer.decode(
+          (GenericRecord) record.get("loggerContextVO"));
       loggerContextVOPreserved = true;
     }
     return loggerContextVO;
@@ -173,7 +174,8 @@ public final class LoggingEvent implements ILoggingEvent {
   @Override
   public IThrowableProxy getThrowableProxy() {
     if (!throwableProxyPreserved) {
-      throwableProxy = ThrowableProxySerializer.decode((GenericRecord) record.get("throwableProxy"));
+      throwableProxy = ThrowableProxySerializer.decode(
+          (GenericRecord) record.get("throwableProxy"));
       throwableProxyPreserved = true;
     }
     return throwableProxy;
@@ -183,7 +185,8 @@ public final class LoggingEvent implements ILoggingEvent {
   public StackTraceElement[] getCallerData() {
     if (!callerDataPreserved) {
       //noinspection unchecked
-      callerData = CallerDataSerializer.decode((GenericArray<GenericRecord>) record.get("callerData"));
+      callerData = CallerDataSerializer.decode(
+          (GenericArray<GenericRecord>) record.get("callerData"));
       callerDataPreserved = true;
     }
     return callerData;
@@ -253,20 +256,21 @@ public final class LoggingEvent implements ILoggingEvent {
   @Override
   public String toString() {
     return "LoggingEvent{" +
-      "timestamp=" + getTimeStamp() +
-      ", formattedMessage='" + getFormattedMessage() + '\'' +
-      ", threadName='" + getThreadName() + '\'' +
-      ", level=" + getLevel() +
-      ", message='" + getMessage() + '\'' +
-      ", argumentArray=" + (getArgumentArray() == null ? null : Arrays.toString(getArgumentArray())) +
-      ", formattedMessage='" + getFormattedMessage() + '\'' +
-      ", loggerName='" + getLoggerName() + '\'' +
-      ", loggerContextVO=" + getLoggerContextVO() +
-      ", throwableProxy=" + getThrowableProxy() +
-      ", callerData=" + (getCallerData() == null ? null : Arrays.toString(getCallerData())) +
-      ", hasCallerData=" + hasCallerData() +
-      ", marker=" + getMarker() +
-      ", mdc=" + getMDCPropertyMap() +
-      '}';
+        "timestamp=" + getTimeStamp() +
+        ", formattedMessage='" + getFormattedMessage() + '\'' +
+        ", threadName='" + getThreadName() + '\'' +
+        ", level=" + getLevel() +
+        ", message='" + getMessage() + '\'' +
+        ", argumentArray=" + (getArgumentArray() == null ? null
+        : Arrays.toString(getArgumentArray())) +
+        ", formattedMessage='" + getFormattedMessage() + '\'' +
+        ", loggerName='" + getLoggerName() + '\'' +
+        ", loggerContextVO=" + getLoggerContextVO() +
+        ", throwableProxy=" + getThrowableProxy() +
+        ", callerData=" + (getCallerData() == null ? null : Arrays.toString(getCallerData())) +
+        ", hasCallerData=" + hasCallerData() +
+        ", marker=" + getMarker() +
+        ", mdc=" + getMDCPropertyMap() +
+        '}';
   }
 }

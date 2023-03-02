@@ -32,7 +32,7 @@ public final class KafkaPipelineConfig {
   private final long checkpointIntervalMillis;
 
   public KafkaPipelineConfig(String topic, Set<Integer> partitions, long maxBufferSize,
-                             long eventDelayMillis, int kafkaFetchBufferSize, long checkpointIntervalMillis) {
+      long eventDelayMillis, int kafkaFetchBufferSize, long checkpointIntervalMillis) {
     this.topic = topic;
     this.partitions = ImmutableSet.copyOf(partitions);
     this.maxBufferSize = maxBufferSize;
@@ -68,12 +68,12 @@ public final class KafkaPipelineConfig {
   @Override
   public String toString() {
     return "KafkaPipelineConfig{" +
-      "topic='" + topic + '\'' +
-      ", partitions=" + partitions +
-      ", maxBufferSize=" + maxBufferSize +
-      ", eventDelayMillis=" + eventDelayMillis +
-      ", kafkaFetchBufferSize=" + kafkaFetchBufferSize +
-      ", checkpointIntervalMillis=" + checkpointIntervalMillis +
-      '}';
+        "topic='" + topic + '\'' +
+        ", partitions=" + partitions +
+        ", maxBufferSize=" + maxBufferSize +
+        ", eventDelayMillis=" + eventDelayMillis +
+        ", kafkaFetchBufferSize=" + kafkaFetchBufferSize +
+        ", checkpointIntervalMillis=" + checkpointIntervalMillis +
+        '}';
   }
 }

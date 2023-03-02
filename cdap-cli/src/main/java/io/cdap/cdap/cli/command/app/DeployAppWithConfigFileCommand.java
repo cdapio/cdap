@@ -37,12 +37,14 @@ import java.util.List;
  * Deploys an application given a config file.
  */
 public class DeployAppWithConfigFileCommand extends AbstractAuthCommand {
+
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployAppWithConfigFileCommand(ApplicationClient applicationClient, FilePathResolver resolver,
-                                        CLIConfig cliConfig) {
+  public DeployAppWithConfigFileCommand(ApplicationClient applicationClient,
+      FilePathResolver resolver,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -51,14 +53,17 @@ public class DeployAppWithConfigFileCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.APP_JAR_FILE.toString()));
-    Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
-    Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
+    Preconditions.checkArgument(file.exists(),
+        "File " + file.getAbsolutePath() + " does not exist");
+    Preconditions.checkArgument(file.canRead(),
+        "File " + file.getAbsolutePath() + " is not readable");
 
     String configPath = arguments.getOptional(ArgumentName.APP_CONFIG_FILE.toString());
     StringBuilder configString = new StringBuilder();
     File configFile = resolver.resolvePathToFile(configPath);
-    List<String> lines = Files.readAllLines(configFile.getAbsoluteFile().toPath(), StandardCharsets.UTF_8);
-    for (String line: lines) {
+    List<String> lines = Files.readAllLines(configFile.getAbsoluteFile().toPath(),
+        StandardCharsets.UTF_8);
+    for (String line : lines) {
       configString.append(line);
     }
     applicationClient.deploy(cliConfig.getCurrentNamespace(), file, configString.toString());
@@ -68,12 +73,13 @@ public class DeployAppWithConfigFileCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("deploy app <%s> with config <%s>", ArgumentName.APP_JAR_FILE, ArgumentName.APP_CONFIG_FILE);
+    return String.format("deploy app <%s> with config <%s>", ArgumentName.APP_JAR_FILE,
+        ArgumentName.APP_CONFIG_FILE);
   }
 
   @Override
   public String getDescription() {
     return String.format("Deploys %s, optionally with a configuration file", Fragment.of(Article.A,
-                                                                                         ElementType.APP.getName()));
+        ElementType.APP.getName()));
   }
 }

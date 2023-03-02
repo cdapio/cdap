@@ -52,18 +52,19 @@ public class LogProcessorPipelineContext implements Flushable, Syncable, Metrics
   private final MetricsContext metricsContext;
 
   public LogProcessorPipelineContext(CConfiguration cConf, String name, final LoggerContext context,
-                                     final MetricsContext metricsContext, int instanceId) {
+      final MetricsContext metricsContext, int instanceId) {
     this.name = name;
     this.loggerContext = context;
     this.effectiveLoggerCache = CacheBuilder.newBuilder()
-      .maximumSize(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_SIZE))
-      .expireAfterAccess(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS), TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<String, Logger>() {
-        @Override
-        public Logger load(String loggerName) throws Exception {
-          return Loggers.getEffectiveLogger(context, loggerName);
-        }
-      });
+        .maximumSize(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_SIZE))
+        .expireAfterAccess(cConf.getInt(Constants.Logging.PIPELINE_LOGGER_CACHE_EXPIRATION_MS),
+            TimeUnit.MILLISECONDS)
+        .build(new CacheLoader<String, Logger>() {
+          @Override
+          public Logger load(String loggerName) throws Exception {
+            return Loggers.getEffectiveLogger(context, loggerName);
+          }
+        });
 
     // Grab all the appender instances in the context
     Set<Appender<ILoggingEvent>> appenders = Sets.newIdentityHashSet();
@@ -94,11 +95,12 @@ public class LogProcessorPipelineContext implements Flushable, Syncable, Metrics
   }
 
   /**
-   * Flushes all appenders in this context. It will always try to flush all appenders even some might failed in between.
+   * Flushes all appenders in this context. It will always try to flush all appenders even some
+   * might failed in between.
    *
-   * @throws IOException if flushing of any appender failed. If more than one appender flush failed,
-   *         the exception from the first appender failure will be thrown, with the subsequent failures
-   *         added as suppressed exception
+   * @throws IOException if flushing of any appender failed. If more than one appender flush
+   *     failed, the exception from the first appender failure will be thrown, with the subsequent
+   *     failures added as suppressed exception
    */
   @Override
   public void flush() throws IOException {
@@ -118,12 +120,12 @@ public class LogProcessorPipelineContext implements Flushable, Syncable, Metrics
   }
 
   /**
-   * Calls {@link Syncable#sync()} on all appenders in this context. It will always try to call sync on all
-   * appenders event some might failed in between.
+   * Calls {@link Syncable#sync()} on all appenders in this context. It will always try to call sync
+   * on all appenders event some might failed in between.
    *
-   * @throws IOException if any appender failed to perform sync. If more than one appender sync failed,
-   *         the exception from the first appender failure will be thrown, with the subsequent failures
-   *         added as suppressed exception
+   * @throws IOException if any appender failed to perform sync. If more than one appender sync
+   *     failed, the exception from the first appender failure will be thrown, with the subsequent
+   *     failures added as suppressed exception
    */
   @Override
   public void sync() throws IOException {
@@ -157,8 +159,8 @@ public class LogProcessorPipelineContext implements Flushable, Syncable, Metrics
   }
 
   /**
-   * Adds the new exception to an existing exception. If there is no existing exception, simply return the
-   * new exception.
+   * Adds the new exception to an existing exception. If there is no existing exception, simply
+   * return the new exception.
    */
   private <E extends Exception> E addException(@Nullable E exception, E newException) {
     if (exception == null) {

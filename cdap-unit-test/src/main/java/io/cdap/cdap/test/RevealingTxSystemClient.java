@@ -29,7 +29,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 
 /**
- * A TransactionSystemClient that creates transaction objects with additional fields for validation.
+ * A TransactionSystemClient that creates transaction objects with additional fields for
+ * validation.
  */
 public class RevealingTxSystemClient implements TransactionSystemClient {
 
@@ -56,13 +57,15 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionNotInProgressException {
     //noinspection deprecation
     return txClient.canCommit(tx, changeIds);
   }
 
   @Override
-  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionFailureException {
     txClient.canCommitOrThrow(tx, changeIds);
   }
 
@@ -128,9 +131,10 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
   }
 
   /**
-   * This transaction class allows us to return additional details about the transaction to the client.
-   * For now, it is only the transaction timeout, but we can add more information later.
-   * This can then be used by test cases to validate that the transaction was started with the right properties.
+   * This transaction class allows us to return additional details about the transaction to the
+   * client. For now, it is only the transaction timeout, but we can add more information later.
+   * This can then be used by test cases to validate that the transaction was started with the right
+   * properties.
    */
   public static class RevealingTransaction extends Transaction {
 

@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * An error that contributed to an invalid JoinDefinition.
  */
 public class JoinError {
+
   private final Type type;
   private final String message;
   private final String correctiveAction;
@@ -63,8 +64,8 @@ public class JoinError {
     }
     JoinError joinError = (JoinError) o;
     return type == joinError.type &&
-      Objects.equals(message, joinError.message) &&
-      Objects.equals(correctiveAction, joinError.correctiveAction);
+        Objects.equals(message, joinError.message) &&
+        Objects.equals(correctiveAction, joinError.correctiveAction);
   }
 
   @Override

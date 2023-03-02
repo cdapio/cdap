@@ -125,10 +125,8 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 /**
  * Performs the actual execution of mapreduce job.
  *
- * Service start -> Performs job setup, initialize and submit job
- * Service run -> Poll for job completion
- * Service triggerStop -> kill job
- * Service stop -> destroy, cleanup
+ * Service start -> Performs job setup, initialize and submit job Service run -> Poll for job
+ * completion Service triggerStop -> kill job Service stop -> destroy, cleanup
  */
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
@@ -136,8 +134,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
 
   /**
-   * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
-   * AM in secure mode.
+   * Do not remove: we need this variable for loading MRClientSecurityInfo class required for
+   * communicating with AM in secure mode.
    */
   @SuppressWarnings("unused")
   private org.apache.hadoop.mapreduce.v2.app.MRClientSecurityInfo mrClientSecurityInfo;
@@ -161,10 +159,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private volatile boolean stopRequested;
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
-                          final MapReduce mapReduce, MapReduceSpecification specification,
-                          final BasicMapReduceContext context, Location programJarLocation,
-                          NamespacePathLocator locationFactory, ClusterMode clusterMode,
-                          FieldLineageWriter fieldLineageWriter) {
+      final MapReduce mapReduce, MapReduceSpecification specification,
+      final BasicMapReduceContext context, Location programJarLocation,
+      NamespacePathLocator locationFactory, ClusterMode clusterMode,
+      FieldLineageWriter fieldLineageWriter) {
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;
@@ -211,9 +209,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Configuration mapredConf = job.getConfiguration();
 
       MapReduceClassLoader classLoader = new MapReduceClassLoader(injector, cConf, mapredConf,
-                                                                  context.getProgram().getClassLoader(),
-                                                                  context.getApplicationSpecification().getPlugins(),
-                                                                  context.getPluginInstantiator());
+          context.getProgram().getClassLoader(),
+          context.getApplicationSpecification().getPlugins(),
+          context.getPluginInstantiator());
       cleanupTask = createCleanupTask(classLoader, cleanupTask);
       context.setMapReduceClassLoader(classLoader);
       context.setJob(job);
@@ -251,8 +249,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       // set resources for the job
-      TaskType.MAP.configure(mapredConf, cConf, context.getMapperRuntimeArguments(), context.getMapperResources());
-      TaskType.REDUCE.configure(mapredConf, cConf, context.getReducerRuntimeArguments(), context.getReducerResources());
+      TaskType.MAP.configure(mapredConf, cConf, context.getMapperRuntimeArguments(),
+          context.getMapperResources());
+      TaskType.REDUCE.configure(mapredConf, cConf, context.getReducerRuntimeArguments(),
+          context.getReducerResources());
 
       // replace user's Mapper, Reducer, Partitioner, and Comparator classes with our wrappers in job config
       MapperWrapper.wrap(job);
@@ -282,14 +282,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add(launcherJar.getName());
 
         // Localize logback.xml
-        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation.append("logback.xml.jar"));
+        Location logbackLocation = ProgramRunners.createLogbackJar(
+            tempLocation.append("logback.xml.jar"));
         if (logbackLocation != null) {
           job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());
 
-          mapredConf.set("yarn.app.mapreduce.am.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-          mapredConf.set("mapreduce.map.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
-          mapredConf.set("mapreduce.reduce.env", "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("yarn.app.mapreduce.am.env",
+              "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.map.env",
+              "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
+          mapredConf.set("mapreduce.reduce.env",
+              "CDAP_LOG_DIR=" + ApplicationConstants.LOG_DIR_EXPANSION_VAR);
         }
 
         // (CDAP-7052) Locate the name of the javax.ws.rs-api jar to make it last in the classpath
@@ -321,7 +325,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // Add extra jars set in cConf
         for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
           if ("file".equals(jarURI.getScheme())) {
-            Location extraJarLocation = copyFileToLocation(new File(jarURI.getPath()), tempLocation);
+            Location extraJarLocation = copyFileToLocation(new File(jarURI.getPath()),
+                tempLocation);
             job.addCacheFile(extraJarLocation.toURI());
           } else {
             job.addCacheFile(jarURI);
@@ -329,7 +334,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           classpath.add(LocalizationUtils.getLocalizedName(jarURI));
         }
 
-        hbaseDDLExecutorDirectory = getLocalizedHBaseDDLExecutorDir(tempDir, cConf, job, tempLocation);
+        hbaseDDLExecutorDirectory = getLocalizedHBaseDDLExecutorDir(tempDir, cConf, job,
+            tempLocation);
         // Add the mapreduce application classpath, followed by the javax.ws.rs-api at last.
         MapReduceContainerHelper.addMapReduceClassPath(mapredConf, classpath);
         if (jaxrsClassPath != null) {
@@ -337,7 +343,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         }
 
         mapredConf.set(MRJobConfig.MAPREDUCE_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
-        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH, Joiner.on(",").join(classpath));
+        mapredConf.set(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+            Joiner.on(",").join(classpath));
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
@@ -349,7 +356,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       // submits job and returns immediately.
       // Set the context classloader to the program invocation one (which is a weak reference wrapped MRClassloader)
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgramInvocationClassLoader());
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+          context.getProgramInvocationClassLoader());
       try {
         job.submit();
       } finally {
@@ -379,9 +387,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected void run() throws Exception {
     MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(job, context);
-    long reportIntervalMillis = MapReduceMetricsUtil.getReportIntervalMillis(cConf, context.getRuntimeArguments());
+    long reportIntervalMillis = MapReduceMetricsUtil.getReportIntervalMillis(cConf,
+        context.getRuntimeArguments());
     LOG.debug("Interval for reporting MapReduce stats is {} seconds.",
-              TimeUnit.MILLISECONDS.toSeconds(reportIntervalMillis));
+        TimeUnit.MILLISECONDS.toSeconds(reportIntervalMillis));
 
     long nextTimeToReport = 0L;
 
@@ -401,7 +410,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     context.setState(getFinalProgramState(jobStatus));
     boolean success = context.getState().getStatus() == ProgramStatus.COMPLETED;
 
-    LOG.info("MapReduce Job completed{}. Job details: [{}]", success ? " successfully" : "", context);
+    LOG.info("MapReduce Job completed{}. Job details: [{}]", success ? " successfully" : "",
+        context);
 
     // NOTE: we want to report the final stats (they may change since last report and before job completed)
     metricsWriter.reportStats();
@@ -471,8 +481,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // as system property for Hive to work in local mode. The variable substitution of hadoop conf
       // gives system property the highest precedence.
       jobConf.set("mapreduce.cluster.local.dir", new File(hadoopTmpDir, "local").getAbsolutePath());
-      jobConf.set("mapreduce.jobtracker.system.dir", new File(hadoopTmpDir, "system").getAbsolutePath());
-      jobConf.set("mapreduce.jobtracker.staging.root.dir", new File(hadoopTmpDir, "staging").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.system.dir",
+          new File(hadoopTmpDir, "system").getAbsolutePath());
+      jobConf.set("mapreduce.jobtracker.staging.root.dir",
+          new File(hadoopTmpDir, "staging").getAbsolutePath());
       jobConf.set("mapreduce.cluster.temp.dir", new File(hadoopTmpDir, "temp").getAbsolutePath());
     }
 
@@ -483,7 +495,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       jobConf.setBoolean(Job.JOB_AM_ACCESS_DISABLED, false);
 
       Credentials credentials = UserGroupInformation.getCurrentUser().getCredentials();
-      LOG.debug("Running in secure mode; adding all user credentials: {}", credentials.getAllTokens());
+      LOG.debug("Running in secure mode; adding all user credentials: {}",
+          credentials.getAllTokens());
       job.getCredentials().addAll(credentials);
     }
 
@@ -500,12 +513,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private File createTempDirectory() {
     ProgramId programId = context.getProgram().getId();
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File runtimeServiceDir = new File(tempDir, "runner");
     File dir = new File(runtimeServiceDir, String.format("%s.%s.%s.%s.%s",
-                                                         programId.getType().name().toLowerCase(),
-                                                         programId.getNamespace(), programId.getApplication(),
-                                                         programId.getProgram(), context.getRunId().getId()));
+        programId.getType().name().toLowerCase(),
+        programId.getNamespace(), programId.getApplication(),
+        programId.getProgram(), context.getRunId().getId()));
     dir.mkdirs();
     return dir;
   }
@@ -516,18 +529,19 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location createTempLocationDirectory() throws IOException {
     ProgramId programId = context.getProgram().getId();
 
-    String tempLocationName = String.format("%s/%s.%s.%s.%s.%s", cConf.get(Constants.AppFabric.TEMP_DIR),
-                                            programId.getType().name().toLowerCase(),
-                                            programId.getNamespace(), programId.getApplication(),
-                                            programId.getProgram(), context.getRunId().getId());
+    String tempLocationName = String.format("%s/%s.%s.%s.%s.%s",
+        cConf.get(Constants.AppFabric.TEMP_DIR),
+        programId.getType().name().toLowerCase(),
+        programId.getNamespace(), programId.getApplication(),
+        programId.getProgram(), context.getRunId().getId());
     Location location = locationFactory.get(programId.getNamespaceId()).append(tempLocationName);
     location.mkdirs();
     return location;
   }
 
   /**
-   * For MapReduce programs created after 3.5, calls the initialize method of the {@link ProgramLifecycle}.
-   * This method also sets up the Input/Output within the same transaction.
+   * For MapReduce programs created after 3.5, calls the initialize method of the {@link
+   * ProgramLifecycle}. This method also sets up the Input/Output within the same transaction.
    */
   private void beforeSubmit(final Job job) throws Exception {
     context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
@@ -536,19 +550,20 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // the option to override initialize(context) (if they implement ProgramLifeCycle)
     TransactionControl defaultTxControl = context.getDefaultTxControl();
     TransactionControl txControl = mapReduce instanceof AbstractMapReduce
-      ? Transactions.getTransactionControl(defaultTxControl, AbstractMapReduce.class,
-                                           mapReduce, "initialize")
-      : mapReduce instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class,
-                                           mapReduce, "initialize", MapReduceContext.class)
-      : defaultTxControl;
+        ? Transactions.getTransactionControl(defaultTxControl, AbstractMapReduce.class,
+        mapReduce, "initialize")
+        : mapReduce instanceof ProgramLifecycle
+            ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class,
+            mapReduce, "initialize", MapReduceContext.class)
+            : defaultTxControl;
 
     context.initializeProgram(programLifecycle, txControl, false);
 
     // once the initialize method is executed, set the status of the MapReduce to RUNNING
     context.setState(new ProgramState(ProgramStatus.RUNNING, null));
 
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgramInvocationClassLoader());
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+        context.getProgramInvocationClassLoader());
     try {
       // set input/outputs info, and get one of the configured mapper's TypeToken
       TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
@@ -573,8 +588,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
 
     return (jobStatus.getState() == JobStatus.State.SUCCEEDED)
-      ? new ProgramState(ProgramStatus.COMPLETED, null)
-      : new ProgramState(ProgramStatus.FAILED, jobStatus.getFailureInfo());
+        ? new ProgramState(ProgramStatus.COMPLETED, null)
+        : new ProgramState(ProgramStatus.FAILED, jobStatus.getFailureInfo());
   }
 
   /**
@@ -583,8 +598,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private void destroy() {
     TransactionControl defaultTxControl = context.getDefaultTxControl();
     TransactionControl txControl = mapReduce instanceof ProgramLifecycle
-      ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class, mapReduce, "destroy")
-      : defaultTxControl;
+        ? Transactions.getTransactionControl(defaultTxControl, MapReduce.class, mapReduce,
+        "destroy")
+        : defaultTxControl;
 
     context.destroyProgram(programLifecycle, txControl, false);
     if (emitFieldLineage()) {
@@ -616,36 +632,39 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,
-                                     Map.Entry<Class, Class> firstMapperClassOutputTypes,
-                                     Class<? extends Mapper> secondMapperClass) {
-    Map.Entry<Class, Class> mapperOutputKeyValueTypes = getMapperOutputKeyValueTypes(secondMapperClass);
+      Map.Entry<Class, Class> firstMapperClassOutputTypes,
+      Class<? extends Mapper> secondMapperClass) {
+    Map.Entry<Class, Class> mapperOutputKeyValueTypes = getMapperOutputKeyValueTypes(
+        secondMapperClass);
     if (!firstMapperClassOutputTypes.getKey().equals(mapperOutputKeyValueTypes.getKey())
-      || !firstMapperClassOutputTypes.getValue().equals(mapperOutputKeyValueTypes.getValue())) {
+        || !firstMapperClassOutputTypes.getValue().equals(mapperOutputKeyValueTypes.getValue())) {
       throw new IllegalArgumentException(
-        String.format("Type mismatch in output type of mappers: %s and %s. " +
-                        "Map output key types: %s and %s. " +
-                        "Map output value types: %s and %s.",
-                      firstMapperClass, secondMapperClass,
-                      firstMapperClassOutputTypes.getKey(), mapperOutputKeyValueTypes.getKey(),
-                      firstMapperClassOutputTypes.getValue(), mapperOutputKeyValueTypes.getValue()));
+          String.format("Type mismatch in output type of mappers: %s and %s. " +
+                  "Map output key types: %s and %s. " +
+                  "Map output value types: %s and %s.",
+              firstMapperClass, secondMapperClass,
+              firstMapperClassOutputTypes.getKey(), mapperOutputKeyValueTypes.getKey(),
+              firstMapperClassOutputTypes.getValue(), mapperOutputKeyValueTypes.getValue()));
     }
   }
 
-  private Map.Entry<Class, Class> getMapperOutputKeyValueTypes(Class<? extends Mapper> mapperClass) {
+  private Map.Entry<Class, Class> getMapperOutputKeyValueTypes(
+      Class<? extends Mapper> mapperClass) {
     TypeToken<Mapper> firstType = resolveClass(mapperClass, Mapper.class);
     Type[] firstTypeArgs = ((ParameterizedType) firstType.getType()).getActualTypeArguments();
     return new AbstractMap.SimpleEntry<Class, Class>(TypeToken.of(firstTypeArgs[2]).getRawType(),
-                                                     TypeToken.of(firstTypeArgs[3]).getRawType());
+        TypeToken.of(firstTypeArgs[3]).getRawType());
   }
 
   /**
-   * Sets the configurations used for inputs.
-   * Multiple mappers could be defined, so we first check that their output types are consistent.
+   * Sets the configurations used for inputs. Multiple mappers could be defined, so we first check
+   * that their output types are consistent.
    *
-   * @return the TypeToken for one of the mappers (doesn't matter which one, since we check that all of their output
-   * key/value types are consistent. Returns null if the mapper class was not configured directly on the job and the
-   * job's mapper class is to be used.
-   * @throws IllegalArgumentException if any of the configured mapper output types are inconsistent.
+   * @return the TypeToken for one of the mappers (doesn't matter which one, since we check that all
+   *     of their output key/value types are consistent. Returns null if the mapper class was not
+   *     configured directly on the job and the job's mapper class is to be used.
+   * @throws IllegalArgumentException if any of the configured mapper output types are
+   *     inconsistent.
    */
   @Nullable
   private TypeToken<Mapper> setInputsIfNeeded(Job job) throws IOException, ClassNotFoundException {
@@ -660,7 +679,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Map<String, String> inputFormatConfiguration = mapperInput.getInputFormatConfiguration();
 
       // default to what is configured on the job, if user didn't specify a mapper for an input
-      Class<? extends Mapper> mapperClass = mapperInput.getMapper() == null ? jobMapperClass : mapperInput.getMapper();
+      Class<? extends Mapper> mapperClass =
+          mapperInput.getMapper() == null ? jobMapperClass : mapperInput.getMapper();
 
       // check output key/value type consistency, except for the first input
       if (firstMapperClass == null) {
@@ -671,7 +691,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       MultipleInputs.addInput(job, mapperInputEntry.getKey(),
-                              mapperInput.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
+          mapperInput.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
     }
 
     // if firstMapperClass is null, then, user is not going through our APIs to add input; leave the job's input format
@@ -715,21 +735,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // case 1: job conf has a programmatic umask. It prevails.
       mustFixUmasks = !outputsWithUmask.isEmpty();
       if (mustFixUmasks) {
-        LOG.info("Overriding permissions of outputs {} because a umask of {} was set programmatically in the job " +
-                   "configuration.", outputsWithUmask, jobConfUmask);
+        LOG.info(
+            "Overriding permissions of outputs {} because a umask of {} was set programmatically in the job "
+                +
+                "configuration.", outputsWithUmask, jobConfUmask);
       }
     } else if (allOutputsHaveUmask && allOutputsAgree) {
       // case 2: no programmatic umask in job conf, all outputs want the same umask: set it in job conf
       String umaskToUse = outputUmasks.iterator().next();
       jobconf.set(HADOOP_UMASK_PROPERTY, umaskToUse);
       LOG.debug("Setting umask of {} in job configuration because all outputs {} agree on it.",
-                umaskToUse, outputsWithUmask);
+          umaskToUse, outputsWithUmask);
     } else {
       // case 3: some outputs configure a umask, but not all of them, or not all the same: use job conf default
       mustFixUmasks = !outputsWithUmask.isEmpty();
       if (mustFixUmasks) {
-        LOG.warn("Overriding permissions of outputs {} because they configure different permissions. Falling back " +
-                   "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
+        LOG.warn(
+            "Overriding permissions of outputs {} because they configure different permissions. Falling back "
+                +
+                "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
       }
     }
 
@@ -741,7 +765,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
           outputConfig.remove(HADOOP_UMASK_PROPERTY);
           outputs.set(i, new ProvidedOutput(output.getOutput(), output.getOutputFormatProvider(),
-                                            output.getOutputFormatClassName(), outputConfig));
+              output.getOutputFormatClassName(), outputConfig));
         }
       }
     }
@@ -751,12 +775,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ProgramId programId = context.getProgram().getId();
     // MRJobClient expects the following format (for RunId to be the first component)
     return String.format("%s.%s.%s.%s.%s",
-                         context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
-                         programId.getNamespace(), programId.getApplication(), programId.getProgram());
+        context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
+        programId.getNamespace(), programId.getApplication(), programId.getProgram());
   }
 
   /**
-   * Creates a jar that contains everything that are needed for running the MapReduce program by Hadoop.
+   * Creates a jar that contains everything that are needed for running the MapReduce program by
+   * Hadoop.
    *
    * @return a new {@link File} containing the job jar
    */
@@ -778,7 +803,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        if (className.startsWith("org.apache.spark") || classPathUrl.toString().contains("spark-assembly")) {
+        if (className.startsWith("org.apache.spark") || classPathUrl.toString()
+            .contains("spark-assembly")) {
           return false;
         }
         return hadoopClassExcluder.accept(className, classUrl, classPathUrl);
@@ -822,7 +848,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
         classes.add(hbaseTableUtilClass);
       } catch (ProvisionException e) {
-        LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+        LOG.warn(
+            "Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
       }
     }
 
@@ -839,8 +866,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Returns a resolved {@link TypeToken} of the given super type by reading a class from the job configuration that
-   * extends from super type.
+   * Returns a resolved {@link TypeToken} of the given super type by reading a class from the job
+   * configuration that extends from super type.
    *
    * @param conf the job configuration
    * @param typeAttr The job configuration attribute for getting the user class
@@ -873,12 +900,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Sets the output key and value classes in the job configuration by inspecting the {@link Mapper} and {@link Reducer}
-   * if it is not set by the user.
+   * Sets the output key and value classes in the job configuration by inspecting the {@link Mapper}
+   * and {@link Reducer} if it is not set by the user.
    *
    * @param job the MapReduce job
-   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job). Has already been
-   *                        resolved from the job's mapper class.
+   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job).
+   *     Has already been resolved from the job's mapper class.
    */
   private void setOutputClassesIfNeeded(Job job, @Nullable TypeToken<?> mapperTypeToken) {
     Configuration conf = job.getConfiguration();
@@ -913,12 +940,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Sets the map output key and value classes in the job configuration by inspecting the {@link Mapper}
-   * if it is not set by the user.
+   * Sets the map output key and value classes in the job configuration by inspecting the {@link
+   * Mapper} if it is not set by the user.
    *
    * @param job the MapReduce job
-   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job). Has already been
-   *                        resolved from the job's mapper class.
+   * @param mapperTypeToken TypeToken of a configured mapper (may not be configured on the job).
+   *     Has already been resolved from the job's mapper class.
    */
   private void setMapOutputClassesIfNeeded(Job job, @Nullable TypeToken<?> mapperTypeToken) {
     Configuration conf = job.getConfiguration();
@@ -960,19 +987,20 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private static final Pattern PROGRAMATIC_SOURCE_PATTERN = Pattern.compile("program{1,2}atically");
 
   /**
-   * Returns, based on the sources of a configuration property, whether this property was set programmatically.
-   * This is the case if the first (that is, oldest) source is "programatic" or "programmatic" (depending on the
-   * Hadoop version).
+   * Returns, based on the sources of a configuration property, whether this property was set
+   * programmatically. This is the case if the first (that is, oldest) source is "programatic" or
+   * "programmatic" (depending on the Hadoop version).
    *
-   * Note: the "program(m)atic" will always be the first source. If the configuration is written to a file and
-   * then loaded again, then the file name will become the second source, etc. This is the case, for example,
-   * in a mapper or reducer task.
+   * Note: the "program(m)atic" will always be the first source. If the configuration is written to
+   * a file and then loaded again, then the file name will become the second source, etc. This is
+   * the case, for example, in a mapper or reducer task.
    *
    * See {@link Configuration#getPropertySources(String)}.
    */
   private static boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
-    return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0]).matches();
+    return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0])
+        .matches();
   }
 
 
@@ -980,7 +1008,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Copies a plugin archive jar to the target location.
    *
    * @param targetDir directory where the archive jar should be created
-   * @return {@link Location} to the plugin archive or {@code null} if no plugin archive is available from the context.
+   * @return {@link Location} to the plugin archive or {@code null} if no plugin archive is
+   *     available from the context.
    */
   @Nullable
   private Location createPluginArchive(Location targetDir) throws IOException {
@@ -1011,14 +1040,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
 
-    ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
+    ByteStreams.copy(Locations.newInputSupplier(programJarLocation),
+        Locations.newOutputSupplier(programJarCopy));
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
 
   /**
-   * Creates a launcher jar that contains the MR AM main class and the MR task main class. It is for ClassLoader
-   * construction before delegating the actual execution to the actual MR main classes.
+   * Creates a launcher jar that contains the MR AM main class and the MR task main class. It is for
+   * ClassLoader construction before delegating the actual execution to the actual MR main classes.
    *
    * @see MapReduceContainerLauncher
    * @see ContainerLauncherGenerator
@@ -1027,14 +1057,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location launcherJar = targetDir.append("launcher.jar");
 
     ContainerLauncherGenerator.generateLauncherJar(
-      Arrays.asList(
-        "org.apache.hadoop.mapreduce.v2.app.MRAppMaster",
-        "org.apache.hadoop.mapred.YarnChild"
-      ), MapReduceContainerLauncher.class, launcherJar);
+        Arrays.asList(
+            "org.apache.hadoop.mapreduce.v2.app.MRAppMaster",
+            "org.apache.hadoop.mapred.YarnChild"
+        ), MapReduceContainerLauncher.class, launcherJar);
     return launcherJar;
   }
 
-  private Runnable createCleanupTask(final Object...resources) {
+  private Runnable createCleanupTask(final Object... resources) {
     return () -> {
       for (Object resource : resources) {
         if (resource == null) {
@@ -1102,11 +1132,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
      * @param cConf the cdap configuration
      * @param runtimeArgs the runtime arguments applicable for this task type
      * @param resources resources information or {@code null} if resources is not set in the
-     *                  {@link MapReduceSpecification} during deployment time and also not set through
-     *                  runtime arguments with the {@link SystemArguments#MEMORY_KEY} setting.
+     *     {@link MapReduceSpecification} during deployment time and also not set through runtime
+     *     arguments with the {@link SystemArguments#MEMORY_KEY} setting.
      */
     public void configure(Configuration conf, CConfiguration cConf,
-                          Map<String, String> runtimeArgs, @Nullable Resources resources) {
+        Map<String, String> runtimeArgs, @Nullable Resources resources) {
 
       // Sets the container vcores if it is not set programmatically by the initialize() method, but is provided
       // through runtime arguments or MR spec.
@@ -1120,7 +1150,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           vcores = resources.getVirtualCores();
           conf.setInt(vcoreConfKey, vcores);
           vcoreSource = runtimeArgs.containsKey(SystemArguments.CORES_KEY)
-            ? "from runtime arguments " + SystemArguments.CORES_KEY : "programmatically";
+              ? "from runtime arguments " + SystemArguments.CORES_KEY : "programmatically";
         }
       }
 
@@ -1132,10 +1162,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         memorySource = "from job configuration";
       } else {
         // Sets the container memory size if it is not set programmatically by the initialize() method.
-        memoryMB = resources == null ? conf.getInt(memoryConfKey, defaultMemoryMB) : resources.getMemoryMB();
+        memoryMB = resources == null ? conf.getInt(memoryConfKey, defaultMemoryMB)
+            : resources.getMemoryMB();
         conf.setInt(memoryConfKey, memoryMB);
         memorySource = runtimeArgs.containsKey(SystemArguments.MEMORY_KEY)
-          ? "from runtime arguments " + SystemArguments.MEMORY_KEY : "programmatically";
+            ? "from runtime arguments " + SystemArguments.MEMORY_KEY : "programmatically";
       }
 
       // Setup the jvm opts, which includes options from cConf and the -Xmx setting
@@ -1143,8 +1174,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       int reservedMemory = cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB);
       double minHeapRatio = cConf.getDouble(Configs.Keys.HEAP_RESERVED_MIN_RATIO);
       String maxHeapSource =
-        "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB +
-          " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
+          "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB +
+              " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
 
       // Optionally overrides the settings from the runtime arguments
       Map<String, String> configs = SystemArguments.getTwillContainerConfigs(runtimeArgs, memoryMB);
@@ -1157,32 +1188,33 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       int maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(memoryMB,
-                                                                                     reservedMemory, minHeapRatio);
+          reservedMemory, minHeapRatio);
 
-      String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS) + " -Xmx" + maxHeapSize + "m";
+      String jvmOpts =
+          cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS) + " -Xmx" + maxHeapSize + "m";
       // If the job conf has the jvm opts set programmatically, then prepend it with what being determined above;
       // otherwise, append. The reason is, we want to have the one set programmatically has higher precedence,
       // while the one set cluster wide (in mapred-site.xml) has lower precedence.
       jvmOpts = isProgrammaticConfig(conf, javaOptsKey)
-        ? jvmOpts + " " + conf.get(javaOptsKey, "")
-        : conf.get(javaOptsKey, "") + " " + jvmOpts;
+          ? jvmOpts + " " + conf.get(javaOptsKey, "")
+          : conf.get(javaOptsKey, "") + " " + jvmOpts;
       conf.set(javaOptsKey, jvmOpts.trim());
 
       LOG.debug("MapReduce {} task container memory is {}MB, set {}. " +
-                  "Maximum heap memory size of {}MB, set {}.{}",
-                name().toLowerCase(), memoryMB, memorySource, maxHeapSize, maxHeapSource,
-                vcores > 0 ? " Virtual cores is " + vcores + ", set " + vcoreSource + "." : ".");
+              "Maximum heap memory size of {}MB, set {}.{}",
+          name().toLowerCase(), memoryMB, memorySource, maxHeapSize, maxHeapSource,
+          vcores > 0 ? " Virtual cores is " + vcores + ", set " + vcoreSource + "." : ".");
     }
   }
 
   /**
-   * Localizes resources requested by users in the MapReduce Program's beforeSubmit phase.
-   * In Local mode, also copies resources to a temporary directory.
+   * Localizes resources requested by users in the MapReduce Program's beforeSubmit phase. In Local
+   * mode, also copies resources to a temporary directory.
    *
    * @param job the {@link Job} for this MapReduce program
    * @param targetDir in local mode, a temporary directory to copy the resources to
-   * @return a {@link Map} of resource name to the resource path. The resource path will be absolute in local mode,
-   * while it will just contain the file name in distributed mode.
+   * @return a {@link Map} of resource name to the resource path. The resource path will be absolute
+   *     in local mode, while it will just contain the file name in distributed mode.
    */
   private Map<String, String> localizeUserResources(Job job, File targetDir) throws IOException {
     Map<String, String> localizedResources = new HashMap<>();
@@ -1194,13 +1226,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // in local mode, also add localize resources in a temporary directory
         localizedFilePath =
-          LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir).getAbsolutePath();
+            LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir)
+                .getAbsolutePath();
       } else {
         URI uri = entry.getValue().getURI();
         // in distributed mode, use the MapReduce Job object to localize resources
         URI actualURI;
         try {
-          actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), name);
+          actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(),
+              name);
         } catch (URISyntaxException e) {
           // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
           // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
@@ -1224,7 +1258,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   @Nullable
   private String getLocalizedHBaseDDLExecutorDir(File tempDir, CConfiguration cConf, Job job,
-                                                 Location tempLocation) throws IOException {
+      Location tempLocation) throws IOException {
     String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
     if (ddlExecutorExtensionDir == null) {
       // Nothing to localize

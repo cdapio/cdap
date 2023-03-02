@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
  * Helper class to resolve scheduler queue name.
  */
 public class SchedulerQueueResolver {
+
   private final String defaultQueue;
   private final String systemQueue;
 

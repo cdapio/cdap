@@ -29,10 +29,9 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Given an open http connection on an {@link HttpResponder}, instances of this class
- * can be used to send  a list of Json objects in a streaming fashion, with necessary
- * prefix and suffix.
- * Please use respective child class depending on the prefix and suffix requirement.
+ * Given an open http connection on an {@link HttpResponder}, instances of this class can be used to
+ * send  a list of Json objects in a streaming fashion, with necessary prefix and suffix. Please use
+ * respective child class depending on the prefix and suffix requirement.
  */
 public abstract class JsonListResponder {
 
@@ -44,9 +43,10 @@ public abstract class JsonListResponder {
 
   /**
    * Construct an instance of JsonListResponder
+   *
    * @param gson {@link Gson}
-   * @param responder instance of {@link HttpResponder} which will be used to send Json objects in
-   * streaming fashion
+   * @param responder instance of {@link HttpResponder} which will be used to send Json objects
+   *     in streaming fashion
    */
   protected JsonListResponder(
       Gson gson, HttpResponder responder) {
@@ -75,6 +75,7 @@ public abstract class JsonListResponder {
 
   /**
    * Write the value as json to {@link HttpResponder}
+   *
    * @param value the object being sent
    */
   public void send(Object value) {
@@ -109,8 +110,8 @@ public abstract class JsonListResponder {
   }
 
   /**
-   * Write the footer in the response and end any arrays and any objects
-   * created in the startResponse.
+   * Write the footer in the response and end any arrays and any objects created in the
+   * startResponse.
    */
   protected abstract void finishResponse() throws IOException;
 }

@@ -113,9 +113,10 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -199,8 +200,8 @@ public class ArtifactLocalizerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                              Constants.Logging.COMPONENT_NAME,
-                                                              Constants.Service.ARTIFACT_LOCALIZER);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.ARTIFACT_LOCALIZER);
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     tokenManager = injector.getInstance(TokenManager.class);

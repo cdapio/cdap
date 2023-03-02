@@ -46,7 +46,7 @@ public class PreviewSecureStore implements SecureStore, SecureStoreManager {
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     //TODO put data in in-mempry map
   }
 

@@ -28,12 +28,13 @@ import java.util.Map;
  * {@link ArtifactManager} for use in unit tests
  */
 public class DefaultArtifactManager implements ArtifactManager {
+
   private final ArtifactRepository artifactRepository;
   private final ArtifactId artifactId;
 
   @Inject
   DefaultArtifactManager(ArtifactRepository artifactRepository,
-                         @Assisted("artifactId") ArtifactId artifactId) {
+      @Assisted("artifactId") ArtifactId artifactId) {
     this.artifactRepository = artifactRepository;
     this.artifactId = artifactId;
   }

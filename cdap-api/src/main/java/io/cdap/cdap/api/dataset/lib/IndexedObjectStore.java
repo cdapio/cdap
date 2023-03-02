@@ -30,10 +30,11 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * An ObjectStore Dataset extension that supports access to objects via indices; lookups by the index will return
- * all the objects stored in the object store that have the index value.
+ * An ObjectStore Dataset extension that supports access to objects via indices; lookups by the
+ * index will return all the objects stored in the object store that have the index value.
  *
- * The dataset uses two tables: an object store, to store the actual data, and a second table for the index.
+ * The dataset uses two tables: an object store, to store the actual data, and a second table for
+ * the index.
  *
  * @param <T> the type of objects in the store
  */
@@ -88,8 +89,8 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Read all the objects from the objectStore for a given index. Returns all the objects that match the secondaryKey.
-   * Returns an empty list if no values are found. Never returns null.
+   * Read all the objects from the objectStore for a given index. Returns all the objects that match
+   * the secondaryKey. Returns an empty list if no values are found. Never returns null.
    *
    * @param secondaryKey for the lookup.
    * @return List of Objects matching the secondaryKey.
@@ -104,24 +105,27 @@ public class IndexedObjectStore<T> extends AbstractDataset {
 
     // if the index has no match, return nothing
     if (!row.isEmpty()) {
-      resultList = row.getColumns().keySet().stream().map(objectStore::read).collect(Collectors.toList());
+      resultList = row.getColumns().keySet().stream().map(objectStore::read)
+          .collect(Collectors.toList());
     }
     return Collections.unmodifiableList(resultList);
   }
 
-  private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
+  private List<byte[]> secondaryKeysToDelete(Set<byte[]> existingSecondaryKeys,
+      Set<byte[]> newSecondaryKeys) {
     // If it is not in newSecondaryKeys then it needs to be deleted.
     return existingSecondaryKeys.stream()
-      .filter(secondaryKey -> !newSecondaryKeys.contains(secondaryKey))
-      .collect(Collectors.toList());
+        .filter(secondaryKey -> !newSecondaryKeys.contains(secondaryKey))
+        .collect(Collectors.toList());
   }
 
-  private List<byte[]> secondaryKeysToAdd(Set<byte[]> existingSecondaryKeys, Set<byte[]> newSecondaryKeys) {
+  private List<byte[]> secondaryKeysToAdd(Set<byte[]> existingSecondaryKeys,
+      Set<byte[]> newSecondaryKeys) {
     // If it is not in existingSecondaryKeys then it needs to be added
     if (!existingSecondaryKeys.isEmpty()) {
       return newSecondaryKeys.stream()
-        .filter(secondaryKey -> !existingSecondaryKeys.contains(secondaryKey))
-        .collect(Collectors.toList());
+          .filter(secondaryKey -> !existingSecondaryKeys.contains(secondaryKey))
+          .collect(Collectors.toList());
     }
 
     // all the newValues should be added
@@ -129,8 +133,8 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Writes to the dataset, deleting any existing secondaryKey corresponding to the key and updates the indexTable with
-   * the secondaryKey that is passed.
+   * Writes to the dataset, deleting any existing secondaryKey corresponding to the key and updates
+   * the indexTable with the secondaryKey that is passed.
    *
    * @param key key for storing the object
    * @param object object to be stored
@@ -156,20 +160,22 @@ public class IndexedObjectStore<T> extends AbstractDataset {
     Set<byte[]> newSecondaryKeys = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     newSecondaryKeys.addAll(Arrays.asList(secondaryKeys));
 
-    List<byte[]> secondaryKeysDeleted = secondaryKeysToDelete(existingSecondaryKeys, newSecondaryKeys);
+    List<byte[]> secondaryKeysDeleted = secondaryKeysToDelete(existingSecondaryKeys,
+        newSecondaryKeys);
     if (secondaryKeysDeleted.size() > 0) {
-      deleteSecondaryKeys(key, secondaryKeysDeleted.toArray(new byte[secondaryKeysDeleted.size()][]));
+      deleteSecondaryKeys(key,
+          secondaryKeysDeleted.toArray(new byte[secondaryKeysDeleted.size()][]));
     }
 
-    List<byte[]> secondaryKeysAdded =  secondaryKeysToAdd(existingSecondaryKeys, newSecondaryKeys);
+    List<byte[]> secondaryKeysAdded = secondaryKeysToAdd(existingSecondaryKeys, newSecondaryKeys);
 
     //for each key store the secondaryKey. This will be used while deleting old index values.
     if (secondaryKeysAdded.size() > 0) {
       byte[][] fooValues = new byte[secondaryKeysAdded.size()][];
       Arrays.fill(fooValues, EMPTY_VALUE);
       index.put(getPrefixedPrimaryKey(key),
-                 secondaryKeysAdded.toArray(new byte[secondaryKeysAdded.size()][]),
-                 fooValues);
+          secondaryKeysAdded.toArray(new byte[secondaryKeysAdded.size()][]),
+          fooValues);
     }
 
     for (byte[] secondaryKey : secondaryKeysAdded) {
@@ -208,8 +214,8 @@ public class IndexedObjectStore<T> extends AbstractDataset {
   }
 
   /**
-   * Deletes an index that is no longer needed. After deleting the index, lookups using the index value will no
-   * longer return the object.
+   * Deletes an index that is no longer needed. After deleting the index, lookups using the index
+   * value will no longer return the object.
    *
    * @param key key for the object
    * @param secondaryKey index to be pruned

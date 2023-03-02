@@ -42,8 +42,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A service that registers {@link OperationalStats} extensions as JMX Beans. The Beans are registered with the JMX
- * domain {@link OperationalStatsUtils#JMX_DOMAIN} with the following properties:
+ * A service that registers {@link OperationalStats} extensions as JMX Beans. The Beans are
+ * registered with the JMX domain {@link OperationalStatsUtils#JMX_DOMAIN} with the following
+ * properties:
  * <ol>
  *   <li>{@link OperationalStatsUtils#SERVICE_NAME_KEY} = name of the service, as defined by
  *   {@link OperationalStats#getServiceName()};</li>
@@ -54,9 +55,10 @@ import org.slf4j.LoggerFactory;
  * It also updates the Beans periodically by calling their {@link OperationalStats#collect()} method.
  */
 public class OperationalStatsService extends AbstractExecutionThreadService {
+
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsService.class);
   private static final Logger READ_FAILURE_LOG =
-    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.HOURS.toMillis(6)));
+      Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.HOURS.toMillis(6)));
 
   private final OperationalStatsLoader operationalStatsLoader;
   private final long statsRefreshInterval;
@@ -72,22 +74,26 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Registers all JMX {@link MXBean MXBeans} from {@link OperationalStats} extensions in the extensions directory.
+   * Registers all JMX {@link MXBean MXBeans} from {@link OperationalStats} extensions in the
+   * extensions directory.
    */
   @Override
   protected void startUp() throws Exception {
     runThread = Thread.currentThread();
 
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
+    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll()
+        .entrySet()) {
       OperationalStats operationalStats = entry.getValue();
       ObjectName objectName = getObjectName(operationalStats);
       if (objectName == null) {
-        LOG.warn("Found an operational extension with null service name and stat type - {}. Ignoring this extension.",
-                 OperationalStats.class.getName());
+        LOG.warn(
+            "Found an operational extension with null service name and stat type - {}. Ignoring this extension.",
+            OperationalStats.class.getName());
         continue;
       }
-      LOG.debug("Registering operational extension: {}; extension id: {}", operationalStats, entry.getKey());
+      LOG.debug("Registering operational extension: {}; extension id: {}", operationalStats,
+          entry.getKey());
       // initialize operational stats
       operationalStats.initialize(injector);
       // register MBean
@@ -119,13 +125,15 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
    */
   private void collectOperationalStats() throws InterruptedException {
     LOG.trace("Running operational stats extension service iteration");
-    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
+    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll()
+        .entrySet()) {
       if (!isRunning()) {
         return;
       }
 
       OperationalStats stats = entry.getValue();
-      LOG.trace("Collecting stats for service {} of type {}", stats.getServiceName(), stats.getStatType());
+      LOG.trace("Collecting stats for service {} of type {}", stats.getServiceName(),
+          stats.getStatType());
       try {
         stats.collect();
       } catch (Throwable t) {
@@ -141,7 +149,7 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
           throw (InterruptedException) rootCause;
         }
         READ_FAILURE_LOG.warn("Failed to collect stats for service {} of type {} due to {}",
-                              stats.getServiceName(), stats.getStatType(), rootCause.getMessage());
+            stats.getServiceName(), stats.getStatType(), rootCause.getMessage());
       }
     }
   }
@@ -162,12 +170,15 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll().entrySet()) {
+    for (Map.Entry<OperationalExtensionId, OperationalStats> entry : operationalStatsLoader.getAll()
+        .entrySet()) {
       OperationalStats operationalStats = entry.getValue();
       ObjectName objectName = getObjectName(operationalStats);
       if (objectName == null) {
-        LOG.warn("Found an operational extension with null service name and stat type while unregistering - {}. " +
-                   "Ignoring this extension.", operationalStats.getClass().getName());
+        LOG.warn(
+            "Found an operational extension with null service name and stat type while unregistering - {}. "
+                +
+                "Ignoring this extension.", operationalStats.getClass().getName());
         continue;
       }
       try {
@@ -191,7 +202,8 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
 
   @Nullable
   private ObjectName getObjectName(OperationalStats operationalStats) {
-    OperationalExtensionId operationalExtensionId = OperationalStatsUtils.getOperationalExtensionId(operationalStats);
+    OperationalExtensionId operationalExtensionId = OperationalStatsUtils.getOperationalExtensionId(
+        operationalStats);
     if (operationalExtensionId == null) {
       return null;
     }

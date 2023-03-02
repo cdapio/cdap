@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * Metrics implemented using the common http netty framework.
  */
 public class MetricsQueryService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsQueryService.class);
 
   private final NettyHttpService httpService;
@@ -49,9 +50,9 @@ public class MetricsQueryService extends AbstractIdleService {
 
   @Inject
   public MetricsQueryService(CConfiguration cConf, SConfiguration sConf,
-                             @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
-                             DiscoveryService discoveryService,
-                             CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      @Named(Constants.Service.METRICS) Set<HttpHandler> handlers,
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     // netty http server config
     String address = cConf.get(Constants.Metrics.ADDRESS);
     int backlogcnxs = cConf.getInt(Constants.Metrics.BACKLOG_CONNECTIONS, 20000);
@@ -59,14 +60,15 @@ public class MetricsQueryService extends AbstractIdleService {
     int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
     int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.METRICS)
-      .setHttpHandlers(handlers)
-      .setHost(address)
-      .setPort(cConf.getInt(Constants.Metrics.PORT))
-      .setConnectionBacklog(backlogcnxs)
-      .setExecThreadPoolSize(execthreads)
-      .setBossThreadPoolSize(bossthreads)
-      .setWorkerThreadPoolSize(workerthreads);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.METRICS)
+        .setHttpHandlers(handlers)
+        .setHost(address)
+        .setPort(cConf.getInt(Constants.Metrics.PORT))
+        .setConnectionBacklog(backlogcnxs)
+        .setExecThreadPoolSize(execthreads)
+        .setBossThreadPoolSize(bossthreads)
+        .setWorkerThreadPoolSize(workerthreads);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -76,25 +78,26 @@ public class MetricsQueryService extends AbstractIdleService {
     this.discoveryService = discoveryService;
 
     LOG.info("Configuring MetricsService " +
-               ", address: " + address +
-               ", backlog connections: " + backlogcnxs +
-               ", execthreads: " + execthreads +
-               ", bossthreads: " + bossthreads +
-               ", workerthreads: " + workerthreads);
+        ", address: " + address +
+        ", backlog connections: " + backlogcnxs +
+        ", execthreads: " + execthreads +
+        ", bossthreads: " + bossthreads +
+        ", workerthreads: " + workerthreads);
   }
 
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.METRICS));
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.METRICS));
 
     LOG.info("Starting Metrics Service...");
     httpService.start();
     LOG.info("Started Metrics HTTP Service...");
     // Register the service
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.METRICS, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.METRICS, httpService)));
     LOG.info("Metrics Service started successfully on {}", httpService.getBindAddress());
   }
 

@@ -27,10 +27,12 @@ import java.util.Objects;
  */
 @Beta
 public class ProgramFieldOperationInfo {
+
   private final List<ProgramInfo> programs;
   private final List<FieldOperationInfo> operations;
 
-  public ProgramFieldOperationInfo(List<ProgramInfo> programs, List<FieldOperationInfo> operations) {
+  public ProgramFieldOperationInfo(List<ProgramInfo> programs,
+      List<FieldOperationInfo> operations) {
     this.programs = Collections.unmodifiableList(new ArrayList<>(programs));
     this.operations = Collections.unmodifiableList(new ArrayList<>(operations));
   }
@@ -53,7 +55,7 @@ public class ProgramFieldOperationInfo {
     }
     ProgramFieldOperationInfo info = (ProgramFieldOperationInfo) o;
     return Objects.equals(programs, info.programs) &&
-            Objects.equals(operations, info.operations);
+        Objects.equals(operations, info.operations);
   }
 
   @Override

@@ -27,24 +27,27 @@ import javax.annotation.Nullable;
  * Represents the CONDITION node in the {@link Workflow}.
  */
 public class WorkflowConditionNode extends WorkflowNode {
+
   private final List<WorkflowNode> ifBranch;
   private final List<WorkflowNode> elseBranch;
   private final String predicateClassName;
   private final ConditionSpecification conditionSpecification;
 
-  public WorkflowConditionNode(String nodeId, String predicateClassName, List<WorkflowNode> ifBranch,
-                               List<WorkflowNode> elseBranch) {
+  public WorkflowConditionNode(String nodeId, String predicateClassName,
+      List<WorkflowNode> ifBranch,
+      List<WorkflowNode> elseBranch) {
     this(nodeId, ifBranch, elseBranch, predicateClassName, null);
   }
 
   public WorkflowConditionNode(String nodeId, ConditionSpecification conditionSpecification,
-                               List<WorkflowNode> ifBranch, List<WorkflowNode> elseBranch) {
-    this(nodeId, ifBranch, elseBranch, conditionSpecification.getClassName(), conditionSpecification);
+      List<WorkflowNode> ifBranch, List<WorkflowNode> elseBranch) {
+    this(nodeId, ifBranch, elseBranch, conditionSpecification.getClassName(),
+        conditionSpecification);
   }
 
   private WorkflowConditionNode(String nodeId, List<WorkflowNode> ifBranch,
-                                List<WorkflowNode> elseBranch, String predicateClassName,
-                                @Nullable ConditionSpecification conditionSpecification) {
+      List<WorkflowNode> elseBranch, String predicateClassName,
+      @Nullable ConditionSpecification conditionSpecification) {
     super(nodeId, WorkflowNodeType.CONDITION);
     this.ifBranch = ifBranch;
     this.elseBranch = elseBranch;

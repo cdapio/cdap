@@ -19,5 +19,6 @@ package io.cdap.cdap.cli.util.table;
  * Configures {@link TableRenderer#render(TableRendererConfig, PrintStream, Table)}
  */
 public interface TableRendererConfig {
+
   int getLineWidth();
 }

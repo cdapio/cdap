@@ -36,6 +36,7 @@ import java.util.List;
  * Reader to read log buffer files.
  */
 public class LogBufferReader implements Closeable {
+
   private static final String FILE_SUFFIX = ".buf";
   private final int batchSize;
   private final String baseDir;
@@ -56,7 +57,7 @@ public class LogBufferReader implements Closeable {
    * @throws IOException if there is any error while opening file to read
    */
   public LogBufferReader(String baseDir, int batchSize, long maxFileId, long currFileId,
-                         long currPos) throws IOException {
+      long currPos) throws IOException {
     this.baseDir = baseDir;
     this.batchSize = batchSize;
     // if no checkpoints are written, currFileId and currPos will be -1. In that case the first event should not be
@@ -65,7 +66,8 @@ public class LogBufferReader implements Closeable {
     this.currFileId = currFileId < 0 ? 0 : currFileId;
     this.skipFirstEvent = currFileId >= 0;
     this.maxFileId = maxFileId;
-    this.eventReader = new LogBufferEventReader(baseDir, this.currFileId, currPos < 0 ? 0 : currPos);
+    this.eventReader = new LogBufferEventReader(baseDir, this.currFileId,
+        currPos < 0 ? 0 : currPos);
   }
 
   /**
@@ -118,11 +120,11 @@ public class LogBufferReader implements Closeable {
   }
 
 
-
   /**
    * Log buffer event reader to read log events from a log buffer file.
    */
   private static final class LogBufferEventReader implements Closeable {
+
     private static final int BUFFER_SIZE = 32 * 1024; // 32k buffer
     private final DataInputStream inputStream;
     private final LoggingEventSerializer serializer;
@@ -156,7 +158,7 @@ public class LogBufferReader implements Closeable {
       byte[] eventBytes = new byte[length];
       inputStream.read(eventBytes);
       LogBufferEvent event = new LogBufferEvent(serializer.fromBytes(ByteBuffer.wrap(eventBytes)),
-                                                eventBytes.length, new LogBufferFileOffset(fileId, pos));
+          eventBytes.length, new LogBufferFileOffset(fileId, pos));
       // update curr position to point to next event
       pos = pos + Bytes.SIZEOF_INT + length;
       return event;

@@ -25,13 +25,13 @@ import java.nio.ByteBuffer;
 
 /**
  * An instance of this class is for consuming an HTTP request body incrementally. Methods defined in
- * {@link HttpServiceHandler} can return an instance of this class to consume the request body in small chunks,
- * to avoid running out of memory for requests with a large body.
+ * {@link HttpServiceHandler} can return an instance of this class to consume the request body in
+ * small chunks, to avoid running out of memory for requests with a large body.
  *
  * Example:
  *
  * <p>
- *   <pre><code>
+ * <pre><code>
  *      public class MyHttpHandler extends AbstractHttpServiceHandler {
  *
  *        {@literal @}POST
@@ -70,12 +70,12 @@ import java.nio.ByteBuffer;
 public abstract class HttpContentConsumer {
 
   /**
-   * This method is invoked when a new chunk of the request body is available to be consumed.
-   * It is guaranteed that no concurrent calls to this method will be made.
+   * This method is invoked when a new chunk of the request body is available to be consumed. It is
+   * guaranteed that no concurrent calls to this method will be made.
    *
    * <p>
-   * Access to transactional {@link Dataset Datasets} must be through the
-   * {@link Transactional#execute(TxRunnable)} method.
+   * Access to transactional {@link Dataset Datasets} must be through the {@link
+   * Transactional#execute(TxRunnable)} method.
    * </p>
    *
    * @param chunk a {@link ByteBuffer} containing a chunk of the request body
@@ -86,9 +86,9 @@ public abstract class HttpContentConsumer {
 
   /**
    * This method is invoked when the end of the request body is reached. It must use the given
-   * {@link HttpServiceResponder} to send the response in order to complete the HTTP call. This method is
-   * always executed inside a single transaction unless annotated with
-   * {@link TransactionPolicy(TransactionControl}.
+   * {@link HttpServiceResponder} to send the response in order to complete the HTTP call. This
+   * method is always executed inside a single transaction unless annotated with {@link
+   * TransactionPolicy(TransactionControl}.
    *
    * @param responder a {@link HttpServiceResponder} for sending response
    * @throws Exception if there is any error
@@ -97,16 +97,17 @@ public abstract class HttpContentConsumer {
   public abstract void onFinish(HttpServiceResponder responder) throws Exception;
 
   /**
-   * This method is invoked when there is an error while processing the request body chunks. It must use the given
-   * {@link HttpServiceResponder} to send the response in order to complete the HTTP call.
+   * This method is invoked when there is an error while processing the request body chunks. It must
+   * use the given {@link HttpServiceResponder} to send the response in order to complete the HTTP
+   * call.
    *
    * <p>
-   * Any issues related to network as well as any {@link Exception Exceptions} raised
-   * from either {@link #onReceived(ByteBuffer, Transactional)}
-   * or {@link #onFinish(HttpServiceResponder)} methods will have this method invoked.
+   * Any issues related to network as well as any {@link Exception Exceptions} raised from either
+   * {@link #onReceived(ByteBuffer, Transactional)} or {@link #onFinish(HttpServiceResponder)}
+   * methods will have this method invoked.
    * </p><p>
-   * This method is always executed inside a single transaction unless annotated with
-   * {@link TransactionPolicy(TransactionControl}.
+   * This method is always executed inside a single transaction unless annotated with {@link
+   * TransactionPolicy(TransactionControl}.
    * </p>
    *
    * @param responder a {@link HttpServiceResponder} for sending response

@@ -22,10 +22,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Identifies a user, group or role which can be authorized to perform an {@link Permission} on a {@link EntityId}.
+ * Identifies a user, group or role which can be authorized to perform an {@link Permission} on a
+ * {@link EntityId}.
  */
 @Beta
 public class Principal {
+
   /**
    * Identifies the type of {@link Principal}.
    */
@@ -52,7 +54,7 @@ public class Principal {
   }
 
   public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal,
-                   @Nullable Credential credential) {
+      @Nullable Credential credential) {
     this.name = name;
     this.type = type;
     this.kerberosPrincipal = kerberosPrincipal;
@@ -98,7 +100,7 @@ public class Principal {
     Principal other = (Principal) o;
 
     return Objects.equals(name, other.name) && Objects.equals(type, other.type) &&
-      Objects.equals(kerberosPrincipal, other.kerberosPrincipal);
+        Objects.equals(kerberosPrincipal, other.kerberosPrincipal);
   }
 
   @Override
@@ -115,10 +117,10 @@ public class Principal {
   @Override
   public String toString() {
     return "Principal{" +
-      "name='" + name + '\'' +
-      ", type=" + type +
-      ", kerberosPrincipal=" + kerberosPrincipal +
-      ", credential=" + credential +
-      '}';
+        "name='" + name + '\'' +
+        ", type=" + type +
+        ", kerberosPrincipal=" + kerberosPrincipal +
+        ", credential=" + credential +
+        '}';
   }
 }

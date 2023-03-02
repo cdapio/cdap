@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * Options for a MasterEnvironment.
  */
 public class EnvironmentOptions {
+
   @Option(name = "env", usage = "Name of the CDAP master environment extension provider")
   private String envProvider;
 

@@ -36,7 +36,8 @@ import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 
 /**
- * An abstract base for {@link ArtifactManager} implementation. It has logic to construct the artifact classloader.
+ * An abstract base for {@link ArtifactManager} implementation. It has logic to construct the
+ * artifact classloader.
  */
 public abstract class AbstractArtifactManager implements ArtifactManager {
 
@@ -45,7 +46,7 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
 
   protected AbstractArtifactManager(CConfiguration cConf) {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
   }
@@ -59,46 +60,53 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
    * @throws IOException if failed to locate the {@link Location} of the artifact
    */
   protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                                  @Nullable String namespace) throws IOException, UnauthorizedException;
+      @Nullable String namespace) throws IOException, UnauthorizedException;
 
   /**
-   * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied
-   * parentClassLoader, if that parent classloader is null, bootstrap classloader is used as parent.
-   * This is a closeable classloader, caller should call close when he is done using it, during close directory
-   * cleanup will be performed.
+   * Create a class loader with artifact jar unpacked contents and parent for this classloader is
+   * the supplied parentClassLoader, if that parent classloader is null, bootstrap classloader is
+   * used as parent. This is a closeable classloader, caller should call close when he is done using
+   * it, during close directory cleanup will be performed.
    *
    * @param artifactInfo artifact info whose artifact will be unpacked to create classloader
-   * @param parentClassLoader  optional parent classloader, if null bootstrap classloader will be used
+   * @param parentClassLoader optional parent classloader, if null bootstrap classloader will be
+   *     used
    * @return CloseableClassLoader call close on this CloseableClassLoader for cleanup
-   * @throws IOException if artifact is not found or there were any error while getting artifact
+   * @throws IOException if artifact is not found or there were any error while getting
+   *     artifact
    */
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, UnauthorizedException {
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, UnauthorizedException {
     return createClassLoader(null, artifactInfo, parentClassLoader);
   }
 
   @Override
-  public CloseableClassLoader createClassLoader(@Nullable String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, UnauthorizedException {
-    ClassLoaderFolder folder = BundleJarUtil.prepareClassLoaderFolder(getArtifactLocation(artifactInfo, namespace),
-                                                                      () -> DirUtils.createTempDir(tmpDir));
+  public CloseableClassLoader createClassLoader(@Nullable String namespace,
+      ArtifactInfo artifactInfo,
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, UnauthorizedException {
+    ClassLoaderFolder folder = BundleJarUtil.prepareClassLoaderFolder(
+        getArtifactLocation(artifactInfo, namespace),
+        () -> DirUtils.createTempDir(tmpDir));
     DirectoryClassLoader directoryClassLoader =
-      new DirectoryClassLoader(folder.getDir(),
-                               parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");
-    return new CloseableClassLoader(directoryClassLoader, new ClassLoaderCleanup(directoryClassLoader, folder));
+        new DirectoryClassLoader(folder.getDir(),
+            parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");
+    return new CloseableClassLoader(directoryClassLoader,
+        new ClassLoaderCleanup(directoryClassLoader, folder));
   }
 
   /**
    * Helper class to cleanup temporary directory created for artifact classloader.
    */
   private static final class ClassLoaderCleanup implements Closeable {
+
     private final DirectoryClassLoader directoryClassLoader;
     private final ClassLoaderFolder folder;
 
-    private ClassLoaderCleanup(DirectoryClassLoader directoryClassLoader, ClassLoaderFolder folder) {
+    private ClassLoaderCleanup(DirectoryClassLoader directoryClassLoader,
+        ClassLoaderFolder folder) {
       this.directoryClassLoader = directoryClassLoader;
       this.folder = folder;
     }

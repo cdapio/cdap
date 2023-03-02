@@ -54,13 +54,14 @@ final class CachingMessageTable implements MessageTable {
   private final MessageTableCacheProvider cacheProvider;
   private final TimeProvider timeProvider;
 
-  CachingMessageTable(CConfiguration cConf, MessageTable messageTable, MessageTableCacheProvider cacheProvider) {
+  CachingMessageTable(CConfiguration cConf, MessageTable messageTable,
+      MessageTableCacheProvider cacheProvider) {
     this(cConf, messageTable, cacheProvider, TimeProvider.SYSTEM_TIME);
   }
 
   @VisibleForTesting
   CachingMessageTable(CConfiguration cConf, MessageTable messageTable,
-                      MessageTableCacheProvider cacheProvider, TimeProvider timeProvider) {
+      MessageTableCacheProvider cacheProvider, TimeProvider timeProvider) {
     // Half the tx pruning grace period to be the grace period for scanning the message cache.
     // This is to make sure we won't scan for cached entries that might be pruned.
     this.gracePeriod = cConf.getLong(PRUNE_GRACE_PERIOD) / 2;
@@ -71,7 +72,7 @@ final class CachingMessageTable implements MessageTable {
 
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime,
-                                        int limit, @Nullable Transaction transaction) throws IOException {
+      int limit, @Nullable Transaction transaction) throws IOException {
     MessageCache<Entry> messageCache = cacheProvider.getMessageCache(metadata.getTopicId());
     if (messageCache == null) {
       // If no caching for the given topic, just return result from table directly
@@ -81,23 +82,28 @@ final class CachingMessageTable implements MessageTable {
     // First scan from cache.
     Entry lookupEntry = new CacheMessageTableEntry(metadata, startTime, (short) 0);
     // Adjust the cache scan start time based on the pruning grace period if fetch with transaction
-    Entry adjustedEntry = transaction == null ? lookupEntry : adjustLookupEntry(metadata, lookupEntry);
+    Entry adjustedEntry =
+        transaction == null ? lookupEntry : adjustLookupEntry(metadata, lookupEntry);
     MessageCache.Scanner<Entry> scanner = messageCache.scan(adjustedEntry, true,
-                                                            limit, createFilter(metadata, transaction));
+        limit, createFilter(metadata, transaction));
 
     // No need to scan the table if there is no adjustment on the start time and the cache has everything needed
-    if (lookupEntry == adjustedEntry && cacheHasAllEntries(lookupEntry, scanner, messageCache.getComparator())) {
+    if (lookupEntry == adjustedEntry && cacheHasAllEntries(lookupEntry, scanner,
+        messageCache.getComparator())) {
       return scanner;
     }
 
     // Otherwise scan the table and return a combine result.
-    CloseableIterator<Entry> tableIterator = messageTable.fetch(metadata, startTime, limit, transaction);
-    return new CombineMessageEntryIterator(tableIterator, scanner, messageCache.getComparator(), limit);
+    CloseableIterator<Entry> tableIterator = messageTable.fetch(metadata, startTime, limit,
+        transaction);
+    return new CombineMessageEntryIterator(tableIterator, scanner, messageCache.getComparator(),
+        limit);
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
-                                        int limit, @Nullable Transaction transaction) throws IOException {
+  public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId,
+      boolean inclusive,
+      int limit, @Nullable Transaction transaction) throws IOException {
 
     MessageCache<Entry> messageCache = cacheProvider.getMessageCache(metadata.getTopicId());
     if (messageCache == null) {
@@ -107,21 +113,25 @@ final class CachingMessageTable implements MessageTable {
 
     // First scan from cache, starting from the given message id
     Entry lookupEntry = new CacheMessageTableEntry(metadata,
-                                                   messageId.getPublishTimestamp(), messageId.getSequenceId());
+        messageId.getPublishTimestamp(), messageId.getSequenceId());
 
     // Adjust the cache scan start time based on the pruning grace period if fetch with transaction
-    Entry adjustedEntry = transaction == null ? lookupEntry : adjustLookupEntry(metadata, lookupEntry);
+    Entry adjustedEntry =
+        transaction == null ? lookupEntry : adjustLookupEntry(metadata, lookupEntry);
     MessageCache.Scanner<Entry> scanner = messageCache.scan(adjustedEntry, inclusive,
-                                                            limit, createFilter(metadata, transaction));
+        limit, createFilter(metadata, transaction));
 
     // No need to scan the table if there is no adjustment on the start messageId and the cache has everything needed
-    if (lookupEntry == adjustedEntry && cacheHasAllEntries(lookupEntry, scanner, messageCache.getComparator())) {
+    if (lookupEntry == adjustedEntry && cacheHasAllEntries(lookupEntry, scanner,
+        messageCache.getComparator())) {
       return scanner;
     }
 
     // Otherwise scan the table and return a combine result.
-    CloseableIterator<Entry> tableIterator = messageTable.fetch(metadata, messageId, inclusive, limit, transaction);
-    return new CombineMessageEntryIterator(tableIterator, scanner, messageCache.getComparator(), limit);
+    CloseableIterator<Entry> tableIterator = messageTable.fetch(metadata, messageId, inclusive,
+        limit, transaction);
+    return new CombineMessageEntryIterator(tableIterator, scanner, messageCache.getComparator(),
+        limit);
   }
 
   @Override
@@ -147,19 +157,19 @@ final class CachingMessageTable implements MessageTable {
       // Rollback from the cache first so that we don't have to worry about invalid list pruning for the cache,
       // assuming the rollback from cache shouldn't fail.
       Entry startEntry = new CacheMessageTableEntry(metadata,
-                                                    rollbackDetail.getStartTimestamp(),
-                                                    (short) rollbackDetail.getStartSequenceId());
+          rollbackDetail.getStartTimestamp(),
+          (short) rollbackDetail.getStartSequenceId());
       Entry endEntry = new CacheMessageTableEntry(metadata,
-                                                  rollbackDetail.getEndTimestamp(),
-                                                  (short) rollbackDetail.getEndSequenceId());
+          rollbackDetail.getEndTimestamp(),
+          (short) rollbackDetail.getEndSequenceId());
       messageCache.updateEntries(startEntry, endEntry, new MessageCache.EntryUpdater<Entry>() {
         @Override
         public void updateEntry(Entry entry) {
           if (!(entry instanceof CacheMessageTableEntry)) {
             // This shouldn't happen
             throw new IllegalStateException("Entries in MessageCache must be of type "
-                                              + CacheMessageTableEntry.class.getName()
-                                              + ", but got type " + entry.getClass().getName() + " instead.");
+                + CacheMessageTableEntry.class.getName()
+                + ", but got type " + entry.getClass().getName() + " instead.");
           }
           ((CacheMessageTableEntry) entry).rollback();
         }
@@ -180,8 +190,8 @@ final class CachingMessageTable implements MessageTable {
    *
    * @param metadata the topic metadata
    * @param entry the {@link Entry} to adjust
-   * @return the same {@link Entry} instance if no adjustment was made; otherwise return a new instance
-   *         with the publish timestamp adjusted base on the grace period.
+   * @return the same {@link Entry} instance if no adjustment was made; otherwise return a new
+   *     instance with the publish timestamp adjusted base on the grace period.
    */
   private Entry adjustLookupEntry(TopicMetadata metadata, Entry entry) {
     long minStartTime = timeProvider.currentTimeMillis() - gracePeriod;
@@ -192,11 +202,11 @@ final class CachingMessageTable implements MessageTable {
   }
 
   /**
-   * Returns {@code true} if the scanner created from the message cache contains all entries starting from the given
-   * start entry; otherwise return {@code false}.
+   * Returns {@code true} if the scanner created from the message cache contains all entries
+   * starting from the given start entry; otherwise return {@code false}.
    */
   private boolean cacheHasAllEntries(Entry startEntry, MessageCache.Scanner<Entry> scanner,
-                                     Comparator<MessageTable.Entry> comparator) {
+      Comparator<MessageTable.Entry> comparator) {
     Entry firstInCache = scanner.getFirstInCache();
     return firstInCache != null && comparator.compare(firstInCache, startEntry) <= 0;
   }
@@ -204,7 +214,8 @@ final class CachingMessageTable implements MessageTable {
   /**
    * Creates a {@link MessageFilter} for scanning entries from the {@link MessageCache}.
    */
-  private MessageFilter<Entry> createFilter(TopicMetadata metadata, @Nullable Transaction transaction) {
+  private MessageFilter<Entry> createFilter(TopicMetadata metadata,
+      @Nullable Transaction transaction) {
     final int generation = metadata.getGeneration();
 
     // If there is no transaction in reading, the filter just need to match with the topic generation
@@ -212,7 +223,7 @@ final class CachingMessageTable implements MessageTable {
       return new MessageFilter<Entry>() {
         @Override
         public Result apply(Entry entry) {
-          return generation ==  entry.getGeneration() ? Result.ACCEPT : Result.SKIP;
+          return generation == entry.getGeneration() ? Result.ACCEPT : Result.SKIP;
         }
       };
     }
@@ -224,7 +235,8 @@ final class CachingMessageTable implements MessageTable {
         if (generation != entry.getGeneration()) {
           return Result.SKIP;
         }
-        if (entry instanceof CacheMessageTableEntry && ((CacheMessageTableEntry) entry).isRollback()) {
+        if (entry instanceof CacheMessageTableEntry
+            && ((CacheMessageTableEntry) entry).isRollback()) {
           return Result.SKIP;
         }
         return super.apply(entry);
@@ -233,8 +245,8 @@ final class CachingMessageTable implements MessageTable {
   }
 
   /**
-   * A {@link CloseableIterator} of {@link Entry} by combine entries scanned from {@link MessageTable}
-   * and from {@link MessageCache}.
+   * A {@link CloseableIterator} of {@link Entry} by combine entries scanned from {@link
+   * MessageTable} and from {@link MessageCache}.
    */
   private static final class CombineMessageEntryIterator extends AbstractCloseableIterator<Entry> {
 
@@ -246,9 +258,9 @@ final class CachingMessageTable implements MessageTable {
     private int count;
 
     private CombineMessageEntryIterator(CloseableIterator<Entry> tableIterator,
-                                        MessageCache.Scanner<Entry> scanner,
-                                        Comparator<Entry> comparator,
-                                        int limit) {
+        MessageCache.Scanner<Entry> scanner,
+        Comparator<Entry> comparator,
+        int limit) {
       this.tableIterator = tableIterator;
       this.scanner = scanner;
       this.comparator = comparator;
@@ -329,8 +341,9 @@ final class CachingMessageTable implements MessageTable {
   }
 
   /**
-   * A {@link Entry} implementation used for entries in {@link MessageCache}, which allows
-   * altering the transaction write point for rollback purpose of messages that were published transactionally.
+   * A {@link Entry} implementation used for entries in {@link MessageCache}, which allows altering
+   * the transaction write point for rollback purpose of messages that were published
+   * transactionally.
    */
   @VisibleForTesting
   static final class CacheMessageTableEntry implements Entry {

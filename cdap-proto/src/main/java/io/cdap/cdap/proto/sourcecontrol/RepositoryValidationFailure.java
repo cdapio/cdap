@@ -22,6 +22,7 @@ import java.util.Objects;
  * Class that handles Repository Configuration validation failure.
  */
 public class RepositoryValidationFailure {
+
   private final String message;
 
   public RepositoryValidationFailure(String message) {

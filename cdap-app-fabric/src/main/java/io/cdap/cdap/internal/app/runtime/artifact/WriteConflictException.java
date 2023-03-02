@@ -20,8 +20,8 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.id.Id;
 
 /**
- * Thrown when there is a write conflict adding an artifact, such as when multiple writers are trying to
- * write the same artifact at the same time.
+ * Thrown when there is a write conflict adding an artifact, such as when multiple writers are
+ * trying to write the same artifact at the same time.
  */
 public class WriteConflictException extends ConflictException {
 

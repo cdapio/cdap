@@ -32,23 +32,24 @@ import java.util.Map;
  * Codec used to serialize and deserialize {@link PartitionKey}s.
  */
 public class PartitionKeyCodec extends ComparableCodec
-  implements JsonSerializer<PartitionKey>, JsonDeserializer<PartitionKey> {
+    implements JsonSerializer<PartitionKey>, JsonDeserializer<PartitionKey> {
 
   @Override
   public PartitionKey deserialize(JsonElement jsonElement, Type type,
-                                  JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+      JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
     JsonObject jsonObject = jsonElement.getAsJsonObject();
     PartitionKey.Builder builder = PartitionKey.builder();
     for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
       JsonArray jsonArray = entry.getValue().getAsJsonArray();
-      builder.addField(entry.getKey(), deserializeComparable(jsonArray, jsonDeserializationContext));
+      builder.addField(entry.getKey(),
+          deserializeComparable(jsonArray, jsonDeserializationContext));
     }
     return builder.build();
   }
 
   @Override
   public JsonElement serialize(PartitionKey partitionKey, Type type,
-                               JsonSerializationContext jsonSerializationContext) {
+      JsonSerializationContext jsonSerializationContext) {
     JsonObject jsonObj = new JsonObject();
     for (Map.Entry<String, Comparable> entry : partitionKey.getFields().entrySet()) {
       jsonObj.add(entry.getKey(), serializeComparable(entry.getValue(), jsonSerializationContext));

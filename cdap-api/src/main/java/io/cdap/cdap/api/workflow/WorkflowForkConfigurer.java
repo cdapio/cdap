@@ -21,28 +21,36 @@ import io.cdap.cdap.api.customaction.CustomAction;
 
 /**
  * Defines an interface for the fork in the {@link Workflow}.
- * @param <T> the type of the object returned by the join method. For the outer fork
- *            created by the {@link WorkflowConfigurer}, join method returns {@link WorkflowConfigurer}.
- *            For the nested fork created by the {@link WorkflowForkConfigurer}, join method
- *            returns {@link WorkflowForkConfigurer} of the parent fork.
+ *
+ * @param <T> the type of the object returned by the join method. For the outer fork created by
+ *     the {@link WorkflowConfigurer}, join method returns {@link WorkflowConfigurer}. For the
+ *     nested fork created by the {@link WorkflowForkConfigurer}, join method returns {@link
+ *     WorkflowForkConfigurer} of the parent fork.
  */
 public interface WorkflowForkConfigurer<T> {
+
   /**
-   * Adds a MapReduce program as a next sequential step to the current branch of the {@link WorkflowForkNode}
+   * Adds a MapReduce program as a next sequential step to the current branch of the {@link
+   * WorkflowForkNode}
+   *
    * @param mapReduce the name of the MapReduce program to be added
    * @return the configurer for the current fork
    */
   WorkflowForkConfigurer<T> addMapReduce(String mapReduce);
 
   /**
-   * Adds a Spark program as a next sequential step to the current branch of the {@link WorkflowForkNode}
+   * Adds a Spark program as a next sequential step to the current branch of the {@link
+   * WorkflowForkNode}
+   *
    * @param spark the name of the Spark program to be added
    * @return the configurer for the current fork
    */
   WorkflowForkConfigurer<T> addSpark(String spark);
 
   /**
-   * Adds custom action a a next sequential step to the current branch of the {@link WorkflowForkNode}
+   * Adds custom action a a next sequential step to the current branch of the {@link
+   * WorkflowForkNode}
+   *
    * @param action {@link CustomAction} to be added to the fork
    * @return the configurer for the current fork
    */
@@ -50,19 +58,23 @@ public interface WorkflowForkConfigurer<T> {
 
   /**
    * Adds a nested fork to the current fork
+   *
    * @return the configurer for the nested fork
    */
   WorkflowForkConfigurer<? extends WorkflowForkConfigurer<T>> fork();
 
   /**
    * Adds a condition to the current branch of the fork.
+   *
    * @param predicate the {@link Predicate} to be evaluated at the condition node
    * @return the configurer for the condition
    */
-  WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(Predicate<WorkflowContext> predicate);
+  WorkflowConditionConfigurer<? extends WorkflowForkConfigurer<T>> condition(
+      Predicate<WorkflowContext> predicate);
 
   /**
    * Adds a condition to the current branch of the fork.
+   *
    * @param condition the {@link Condition} to be evaluated at the condition node
    * @return the configurer for the condition
    */
@@ -70,12 +82,14 @@ public interface WorkflowForkConfigurer<T> {
 
   /**
    * Adds a branch to the {@link WorkflowForkNode}
+   *
    * @return the configurer for the fork
    */
   WorkflowForkConfigurer<T> also();
 
   /**
    * Joins the current fork
+   *
    * @return the configurer for the parent fork
    */
   T join();

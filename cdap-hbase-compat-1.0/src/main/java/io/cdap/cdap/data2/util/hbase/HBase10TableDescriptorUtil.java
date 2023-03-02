@@ -46,9 +46,10 @@ public class HBase10TableDescriptorUtil {
   private static HColumnDescriptor getHColumnDesciptor(ColumnFamilyDescriptor descriptor) {
     HColumnDescriptor hFamily = new HColumnDescriptor(descriptor.getName());
     hFamily.setMaxVersions(descriptor.getMaxVersions());
-    hFamily.setCompressionType(Compression.Algorithm.valueOf(descriptor.getCompressionType().name()));
+    hFamily.setCompressionType(
+        Compression.Algorithm.valueOf(descriptor.getCompressionType().name()));
     hFamily.setBloomFilterType(org.apache.hadoop.hbase.regionserver.BloomType.valueOf(
-      descriptor.getBloomType().name()));
+        descriptor.getBloomType().name()));
     for (Map.Entry<String, String> property : descriptor.getProperties().entrySet()) {
       hFamily.setValue(property.getKey(), property.getValue());
     }
@@ -62,7 +63,8 @@ public class HBase10TableDescriptorUtil {
       htd.addFamily(getHColumnDesciptor(family.getValue()));
     }
 
-    for (Map.Entry<String, CoprocessorDescriptor> coprocessor : descriptor.getCoprocessors().entrySet()) {
+    for (Map.Entry<String, CoprocessorDescriptor> coprocessor : descriptor.getCoprocessors()
+        .entrySet()) {
       CoprocessorDescriptor cpd = coprocessor.getValue();
       try {
         Path path = cpd.getPath() == null ? null : new Path(cpd.getPath());
@@ -91,21 +93,24 @@ public class HBase10TableDescriptorUtil {
 
     // TODO: should add configurations as well
     return new TableDescriptor(descriptor.getTableName().getNamespaceAsString(),
-                               descriptor.getTableName().getQualifierAsString(), families, coprocessors, properties);
+        descriptor.getTableName().getQualifierAsString(), families, coprocessors, properties);
   }
 
   private static ColumnFamilyDescriptor getColumnFamilyDescriptor(HColumnDescriptor descriptor) {
     String name = descriptor.getNameAsString();
     int maxVersions = descriptor.getMaxVersions();
     ColumnFamilyDescriptor.CompressionType compressionType
-      = ColumnFamilyDescriptor.CompressionType.valueOf(descriptor.getCompressionType().getName().toUpperCase());
+        = ColumnFamilyDescriptor.CompressionType.valueOf(
+        descriptor.getCompressionType().getName().toUpperCase());
     ColumnFamilyDescriptor.BloomType bloomType
-      = ColumnFamilyDescriptor.BloomType.valueOf(descriptor.getBloomFilterType().name().toUpperCase());
+        = ColumnFamilyDescriptor.BloomType.valueOf(
+        descriptor.getBloomFilterType().name().toUpperCase());
 
     Map<String, String> properties = new HashMap<>();
-    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : descriptor.getValues().entrySet()) {
+    for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> value : descriptor.getValues()
+        .entrySet()) {
       properties.put(org.apache.hadoop.hbase.util.Bytes.toString(value.getKey().get()),
-                     org.apache.hadoop.hbase.util.Bytes.toString(value.getValue().get()));
+          org.apache.hadoop.hbase.util.Bytes.toString(value.getValue().get()));
     }
     return new ColumnFamilyDescriptor(name, maxVersions, compressionType, bloomType, properties);
   }

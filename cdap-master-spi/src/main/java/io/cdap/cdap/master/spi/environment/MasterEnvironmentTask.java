@@ -22,20 +22,21 @@ package io.cdap.cdap.master.spi.environment;
 public interface MasterEnvironmentTask {
 
   /**
-   * Called by the system to run a short living task.
-   * If {@link RuntimeException} is raised from this method, the exception will be logged and
-   * the {@link #failureRetryDelay(Throwable)} will be called to determined the delay in milliseconds for
-   * the next call to this method.
+   * Called by the system to run a short living task. If {@link RuntimeException} is raised from
+   * this method, the exception will be logged and the {@link #failureRetryDelay(Throwable)} will be
+   * called to determined the delay in milliseconds for the next call to this method.
    *
-   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP environment
-   * @return delay in milliseconds till the next time this method will be invoked. If it returns a negative number,
-   *         no more invocation will happen
+   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP
+   *     environment
+   * @return delay in milliseconds till the next time this method will be invoked. If it returns a
+   *     negative number, no more invocation will happen
    */
   long run(MasterEnvironmentContext context);
 
   /**
-   * Returns the delay in milliseconds till the next time the {@link #run(MasterEnvironmentContext)} gets invoked
-   * again when there was an exception raised by the {@link #run(MasterEnvironmentContext)} method.
+   * Returns the delay in milliseconds till the next time the {@link #run(MasterEnvironmentContext)}
+   * gets invoked again when there was an exception raised by the {@link
+   * #run(MasterEnvironmentContext)} method.
    *
    * @param t the exception raised by the {@link #run(MasterEnvironmentContext)} method
    * @return delay in milliseconds. By default is 5000 milliseconds.
@@ -46,6 +47,7 @@ public interface MasterEnvironmentTask {
 
   /**
    * Returns the name of the task.
+   *
    * @return task name
    */
   default String getName() {

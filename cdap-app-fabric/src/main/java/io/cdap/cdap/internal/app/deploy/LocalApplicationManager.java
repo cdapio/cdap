@@ -80,18 +80,18 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   LocalApplicationManager(CConfiguration cConf, PipelineFactory pipelineFactory,
-                          Store store, OwnerAdmin ownerAdmin,
-                          DatasetFramework datasetFramework,
-                          @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                          @Assisted ProgramTerminator programTerminator, MetricsSystemClient metricsSystemClient,
-                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                          MetadataServiceClient metadataServiceClient,
-                          Impersonator impersonator, AuthenticationContext authenticationContext,
-                          Scheduler programScheduler,
-                          AccessEnforcer accessEnforcer,
-                          StructuredTableAdmin structuredTableAdmin,
-                          CapabilityReader capabilityReader,
-                          ConfiguratorFactory configuratorFactory, MetricsCollectionService metricsCollectionService) {
+      Store store, OwnerAdmin ownerAdmin,
+      DatasetFramework datasetFramework,
+      @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
+      @Assisted ProgramTerminator programTerminator, MetricsSystemClient metricsSystemClient,
+      UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
+      MetadataServiceClient metadataServiceClient,
+      Impersonator impersonator, AuthenticationContext authenticationContext,
+      Scheduler programScheduler,
+      AccessEnforcer accessEnforcer,
+      StructuredTableAdmin structuredTableAdmin,
+      CapabilityReader capabilityReader,
+      ConfiguratorFactory configuratorFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -116,18 +116,22 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
-                                                  capabilityReader, configuratorFactory));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(
+        new LocalArtifactLoaderStage(cConf, store, accessEnforcer, authenticationContext,
+            capabilityReader, configuratorFactory));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin,
+        authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
-                                                   authenticationContext, artifactRepository, impersonator));
+    pipeline.addLast(
+        new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework, ownerAdmin,
+            authenticationContext, artifactRepository, impersonator));
     pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin,
-                                                     authenticationContext));
+        authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
-                                                    metricsSystemClient, metadataServiceClient, programScheduler));
+        metricsSystemClient, metadataServiceClient, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
-    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin, metricsCollectionService));
+    pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin,
+        metricsCollectionService));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
     pipeline.addLast(new MetadataWriterStage(metadataServiceClient));
     pipeline.setFinally(new DeploymentCleanupStage());

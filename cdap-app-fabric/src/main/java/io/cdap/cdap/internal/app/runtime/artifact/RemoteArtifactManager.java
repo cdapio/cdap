@@ -52,16 +52,17 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * Implementation for {@link io.cdap.cdap.api.artifact.ArtifactManager}
- * communicating with internal REST endpoints {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal}
- * and returning artifact info.
+ * Implementation for {@link io.cdap.cdap.api.artifact.ArtifactManager} communicating with internal
+ * REST endpoints {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal} and returning
+ * artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
+  }.getType();
 
   private final LocationFactory locationFactory;
   private final NamespaceId namespaceId;
@@ -70,25 +71,27 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
-  RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory, @Assisted NamespaceId namespaceId,
-                        @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory,
-                        Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient) {
+  RemoteArtifactManager(CConfiguration cConf, LocationFactory locationFactory,
+      @Assisted NamespaceId namespaceId,
+      @Assisted RetryStrategy retryStrategy, RemoteClientFactory remoteClientFactory,
+      Optional<ArtifactLocalizerClient> optionalArtifactLocalizerClient) {
     super(cConf);
     this.locationFactory = locationFactory;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
     this.artifactLocalizerClient = optionalArtifactLocalizerClient.orElse(null);
     this.remoteClientInternal = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false),
-      String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false),
+        String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
   }
 
   /**
-   * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
-   * namespace.
+   * For the specified namespace, return the available artifacts in the namespace and also the
+   * artifacts in system namespace.
    * <p>
-   * If the app-fabric service is unavailable, it will be retried based on the passed in retry strategy.
+   * If the app-fabric service is unavailable, it will be retried based on the passed in retry
+   * strategy.
    *
    * @return {@link List<ArtifactInfo>}
    * @throws IOException If there are any exception while retrieving artifacts
@@ -99,21 +102,23 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   }
 
   /**
-   * For the specified namespace, return the available artifacts in the namespace and also the artifacts in system
-   * namespace.
+   * For the specified namespace, return the available artifacts in the namespace and also the
+   * artifacts in system namespace.
    * <p>
-   * If the app-fabric service is unavailable, it will be retried based on the passed in retry strategy.
+   * If the app-fabric service is unavailable, it will be retried based on the passed in retry
+   * strategy.
    *
    * @return {@link List<ArtifactInfo>}
    * @throws IOException If there are any exception while retrieving artifacts
    */
   @Override
-  public List<ArtifactInfo> listArtifacts(String namespace) throws IOException, UnauthorizedException {
+  public List<ArtifactInfo> listArtifacts(String namespace)
+      throws IOException, UnauthorizedException {
     try {
       return Retries.callWithRetries(() -> {
         HttpRequest.Builder requestBuilder =
-          remoteClientInternal.requestBuilder(HttpMethod.GET,
-                                              String.format("namespaces/%s/artifacts", namespace));
+            remoteClientInternal.requestBuilder(HttpMethod.GET,
+                String.format("namespaces/%s/artifacts", namespace));
         return getArtifactsList(requestBuilder.build());
       }, retryStrategy);
     } catch (UnauthorizedException | IOException e) {
@@ -123,7 +128,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     }
   }
 
-  private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest) throws IOException, UnauthorizedException {
+  private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest)
+      throws IOException, UnauthorizedException {
     HttpResponse httpResponse = remoteClientInternal.execute(httpRequest);
 
     if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
@@ -134,12 +140,13 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
       return GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_INFO_LIST_TYPE);
     }
 
-    throw new IOException("Exception while getting artifacts list " + httpResponse.getResponseBodyAsString());
+    throw new IOException(
+        "Exception while getting artifacts list " + httpResponse.getResponseBodyAsString());
   }
 
   @Override
   protected Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                         @Nullable String artifactNamespace) throws IOException, UnauthorizedException {
+      @Nullable String artifactNamespace) throws IOException, UnauthorizedException {
 
     String namespace;
     if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
@@ -152,20 +159,22 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
 
     // If ArtifactLocalizerClient is set, use it to get the cached location of artifact.
     if (artifactLocalizerClient != null) {
-      ArtifactId artifactId = new ArtifactId(namespace, artifactInfo.getName(), artifactInfo.getVersion());
+      ArtifactId artifactId = new ArtifactId(namespace, artifactInfo.getName(),
+          artifactInfo.getVersion());
       try {
         // Always request for the unpacked version since the artifaction location is used for creation of
         // artifact ClassLoader only.
-        return Locations.toLocation(artifactLocalizerClient.getUnpackedArtifactLocation(artifactId));
+        return Locations.toLocation(
+            artifactLocalizerClient.getUnpackedArtifactLocation(artifactId));
       } catch (ArtifactNotFoundException e) {
         throw new IOException(String.format("Artifact %s is not found", artifactId), e);
       }
     }
 
     HttpRequest.Builder requestBuilder =
-      remoteClientInternal.requestBuilder(
-        HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
-                                      namespace, artifactInfo.getName(), artifactInfo.getVersion()));
+        remoteClientInternal.requestBuilder(
+            HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
+                namespace, artifactInfo.getName(), artifactInfo.getVersion()));
 
     HttpResponse httpResponse = remoteClientInternal.execute(requestBuilder.build());
 
@@ -174,14 +183,15 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     }
     if (httpResponse.getResponseCode() != 200) {
       throw new IOException(String.format("Exception while getting artifacts list %s",
-                                          httpResponse.getResponseBodyAsString()));
+          httpResponse.getResponseBodyAsString()));
     }
 
     String path = httpResponse.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
     if (!location.exists()) {
-      throw new IOException(String.format("Artifact location does not exist %s for artifact %s version %s",
-                                          path, artifactInfo.getName(), artifactInfo.getVersion()));
+      throw new IOException(
+          String.format("Artifact location does not exist %s for artifact %s version %s",
+              path, artifactInfo.getName(), artifactInfo.getVersion()));
     }
     return location;
   }

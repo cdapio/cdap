@@ -52,25 +52,28 @@ public class DescribeAppCommand extends AbstractAuthCommand {
     List<ProgramRecord> programsList = applicationClient.listPrograms(appId);
 
     Table table = Table.builder()
-      .setHeader("type", "id", "description")
-      .setRows(programsList, new RowMaker<ProgramRecord>() {
-        @Override
-        public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(object.getType().getPrettyName(), object.getName(), object.getDescription());
-        }
-      }).build();
+        .setHeader("type", "id", "description")
+        .setRows(programsList, new RowMaker<ProgramRecord>() {
+          @Override
+          public List<?> makeRow(ProgramRecord object) {
+            return Lists.newArrayList(object.getType().getPrettyName(), object.getName(),
+                object.getDescription());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("describe app <%s> [version <%s>]", ArgumentName.APP, ArgumentName.APP_VERSION);
+    return String.format("describe app <%s> [version <%s>]", ArgumentName.APP,
+        ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Describes %s with an optional version. If version is not provided, default version '%s' " +
-                           "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
-                         ApplicationId.DEFAULT_VERSION);
+    return String.format(
+        "Describes %s with an optional version. If version is not provided, default version '%s' " +
+            "will be used.", Fragment.of(Article.A, ElementType.APP.getName()),
+        ApplicationId.DEFAULT_VERSION);
   }
 }

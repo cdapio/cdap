@@ -30,6 +30,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
  * Creates a system profile if it doesn't already exist.
  */
 public class SystemProfileCreator extends BaseStepExecutor<SystemProfileCreator.Arguments> {
+
   private final ProfileService profileService;
 
   @Inject
@@ -39,8 +40,9 @@ public class SystemProfileCreator extends BaseStepExecutor<SystemProfileCreator.
 
   @Override
   public void execute(Arguments arguments) {
-    Profile profile = new Profile(arguments.name, arguments.getLabel(), arguments.getDescription(), EntityScope.SYSTEM,
-                                  arguments.getProvisioner());
+    Profile profile = new Profile(arguments.name, arguments.getLabel(), arguments.getDescription(),
+        EntityScope.SYSTEM,
+        arguments.getProvisioner());
     profileService.createIfNotExists(arguments.getId(), profile);
   }
 
@@ -48,6 +50,7 @@ public class SystemProfileCreator extends BaseStepExecutor<SystemProfileCreator.
    * Arguments required to create a profile
    */
   static class Arguments extends ProfileCreateRequest implements Validatable {
+
     private final String name;
 
     Arguments(String name, String label, String description, ProvisionerInfo provisioner) {

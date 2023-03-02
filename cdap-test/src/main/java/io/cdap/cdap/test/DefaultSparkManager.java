@@ -27,12 +27,13 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * A default implementation of {@link SparkManager}.
  */
-public class DefaultSparkManager extends AbstractProgramManager<SparkManager> implements SparkManager {
+public class DefaultSparkManager extends AbstractProgramManager<SparkManager> implements
+    SparkManager {
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public DefaultSparkManager(ProgramId programId, ApplicationManager applicationManager,
-                             DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient) {
     super(programId, applicationManager);
     this.discoveryServiceClient = discoveryServiceClient;
   }
@@ -51,7 +52,8 @@ public class DefaultSparkManager extends AbstractProgramManager<SparkManager> im
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
     return ServiceDiscoverable.createServiceBaseURL(
-      new RandomEndpointStrategy(() -> discoveryServiceClient.discover(ServiceDiscoverable.getName(programId)))
-        .pick(timeout, timeoutUnit), programId);
+        new RandomEndpointStrategy(
+            () -> discoveryServiceClient.discover(ServiceDiscoverable.getName(programId)))
+            .pick(timeout, timeoutUnit), programId);
   }
 }

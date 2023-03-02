@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
  * Http server that serves access tokens.
  */
 public class AccessTokenGeneratorService extends DaemonMain {
+
   private static final Logger LOG = LoggerFactory.getLogger(AccessTokenGeneratorService.class);
   // Http handler configuration
   static final String ADDRESS_CONFIG = "access.token.generator.bind.address";
@@ -101,7 +102,7 @@ public class AccessTokenGeneratorService extends DaemonMain {
   }
 
   @Override
-  public void stop()  {
+  public void stop() {
     LOG.info("Stopping AccessTokenGeneratorService.");
     try {
       httpService.stop();
@@ -117,13 +118,14 @@ public class AccessTokenGeneratorService extends DaemonMain {
 
   @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/accesstoken")
   public static class TokenGeneratorHttpHandler extends AbstractHttpHandler {
+
     private final CConfiguration cConf;
     private final TokenManager tokenManager;
     private final Codec<AccessToken> tokenCodec;
 
     @Inject
     TokenGeneratorHttpHandler(CConfiguration cConf, TokenManager tokenManager,
-                              Codec<AccessToken> tokenCodec) {
+        Codec<AccessToken> tokenCodec) {
       this.cConf = cConf;
       this.tokenManager = tokenManager;
       this.tokenCodec = tokenCodec;
@@ -132,22 +134,22 @@ public class AccessTokenGeneratorService extends DaemonMain {
     @GET
     @Path("/")
     public void getToken(FullHttpRequest request, HttpResponder responder,
-                         @QueryParam("username") String username,
-                         @QueryParam("identifierType") @DefaultValue("INTERNAL") String identifierType)
-      throws IOException, BadRequestException {
+        @QueryParam("username") String username,
+        @QueryParam("identifierType") @DefaultValue("INTERNAL") String identifierType)
+        throws IOException, BadRequestException {
       UserIdentity.IdentifierType type;
       try {
         type = UserIdentity.IdentifierType.valueOf(identifierType);
       } catch (IllegalArgumentException e) {
         throw new BadRequestException(String.format("Invalid identifierType. Valid values: %s",
-                                                    Joiner.on(',').join(UserIdentity.IdentifierType.values())));
+            Joiner.on(',').join(UserIdentity.IdentifierType.values())));
       }
       long expirationTime = cConf.getLong(Constants.Security.TOKEN_EXPIRATION);
       long issueTime = System.currentTimeMillis();
       long expireTime = issueTime + expirationTime;
       UserIdentity userIdentity = new UserIdentity(username, type,
-                                                   Collections.emptyList(),
-                                                   issueTime, expireTime);
+          Collections.emptyList(),
+          issueTime, expireTime);
       AccessToken token = tokenManager.signIdentifier(userIdentity);
       String encodedToken = Base64.getEncoder().encodeToString(tokenCodec.encode(token));
       responder.sendString(HttpResponseStatus.OK, encodedToken);
@@ -156,16 +158,16 @@ public class AccessTokenGeneratorService extends DaemonMain {
 
   private Injector createInjector(CConfiguration cConf) {
     return Guice.createInjector(
-      new ConfigModule(cConf),
-      new IOModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // We don't do anything with metrics, so just bind to the no-op implementation
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-        }
-      },
-      CoreSecurityRuntimeModule.getDistributedModule(cConf));
+        new ConfigModule(cConf),
+        new IOModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // We don't do anything with metrics, so just bind to the no-op implementation
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          }
+        },
+        CoreSecurityRuntimeModule.getDistributedModule(cConf));
   }
 
   @Override
@@ -173,22 +175,22 @@ public class AccessTokenGeneratorService extends DaemonMain {
     Option portOption = new Option("p", "port", true, "Server port.");
     portOption.setType(Integer.class);
     Option workerPoolSizeOption = new Option("w", "workerPoolSize", true,
-                                             "Size of worker thread pool.");
+        "Size of worker thread pool.");
     workerPoolSizeOption.setType(Integer.class);
     Option execPoolSizeOption = new Option("e", "execPoolSize", true,
-                                           "Size of executor thread pool.");
+        "Size of executor thread pool.");
     execPoolSizeOption.setType(Integer.class);
     Option tokenExpirationOption = new Option("t", "tokenExpiration", true,
-                                              "Access token expiration time in milliseconds.");
+        "Access token expiration time in milliseconds.");
     tokenExpirationOption.setType(Integer.class);
 
     Options options = new Options()
-      .addOption(new Option("h", "help", false, "Print this usage message."))
-      .addOption(new Option("a", "address", true, "Server IP address."))
-      .addOption(portOption)
-      .addOption(workerPoolSizeOption)
-      .addOption(execPoolSizeOption)
-      .addOption(tokenExpirationOption);
+        .addOption(new Option("h", "help", false, "Print this usage message."))
+        .addOption(new Option("a", "address", true, "Server IP address."))
+        .addOption(portOption)
+        .addOption(workerPoolSizeOption)
+        .addOption(execPoolSizeOption)
+        .addOption(tokenExpirationOption);
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -207,7 +209,8 @@ public class AccessTokenGeneratorService extends DaemonMain {
       cConf.setInt(EXEC_POOL_SIZE_CONFIG, (int) commandLine.getParsedOptionValue("e"));
     }
     if (commandLine.hasOption("t")) {
-      cConf.setInt(Constants.Security.TOKEN_EXPIRATION, (int) commandLine.getParsedOptionValue("e"));
+      cConf.setInt(Constants.Security.TOKEN_EXPIRATION,
+          (int) commandLine.getParsedOptionValue("e"));
     }
 
     Injector injector = createInjector(cConf);
@@ -215,19 +218,19 @@ public class AccessTokenGeneratorService extends DaemonMain {
     this.handler = injector.getInstance(TokenGeneratorHttpHandler.class);
     SConfiguration sConf = injector.getInstance(SConfiguration.class);
     NettyHttpService.Builder builder = NettyHttpService.builder("accesstoken.generator")
-      .setHost(cConf.get(ADDRESS_CONFIG, ADDRESS_DEFAULT))
-      .setPort(cConf.getInt(PORT_CONFIG, PORT_DEFAULT))
-      .setExecThreadPoolSize(cConf.getInt(EXEC_POOL_SIZE_CONFIG, EXEC_POOL_SIZE_DEFAULT))
-      .setWorkerThreadPoolSize(cConf.getInt(WORKER_POOL_SIZE_CONFIG, WORKER_POOL_SIZE_DEFAULT))
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHttpHandlers(handler);
+        .setHost(cConf.get(ADDRESS_CONFIG, ADDRESS_DEFAULT))
+        .setPort(cConf.getInt(PORT_CONFIG, PORT_DEFAULT))
+        .setExecThreadPoolSize(cConf.getInt(EXEC_POOL_SIZE_CONFIG, EXEC_POOL_SIZE_DEFAULT))
+        .setWorkerThreadPoolSize(cConf.getInt(WORKER_POOL_SIZE_CONFIG, WORKER_POOL_SIZE_DEFAULT))
+        .setExceptionHandler(new HttpExceptionHandler())
+        .setHttpHandlers(handler);
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
     }
     httpService = builder.build();
   }
 
-  public static void main(String[] args)throws Exception {
+  public static void main(String[] args) throws Exception {
     new AccessTokenGeneratorService().doMain(args);
   }
 }

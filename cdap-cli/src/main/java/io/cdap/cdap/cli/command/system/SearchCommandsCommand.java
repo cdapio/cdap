@@ -38,7 +38,7 @@ public class SearchCommandsCommand extends HelpCommand {
   private final Supplier<Iterable<CommandSet<Command>>> commands;
 
   public SearchCommandsCommand(Supplier<Iterable<CommandSet<Command>>> commands,
-                               TableRendererConfig tableRendererConfig) {
+      TableRendererConfig tableRendererConfig) {
     super(commands, tableRendererConfig);
     this.commands = commands;
   }
@@ -65,7 +65,8 @@ public class SearchCommandsCommand extends HelpCommand {
     };
 
     output.println();
-    Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(), CommandCategory.GENERAL, filter);
+    Multimap<String, Command> categorizedCommands = categorizeCommands(commands.get(),
+        CommandCategory.GENERAL, filter);
     if (categorizedCommands.isEmpty()) {
       output.printf("No matches found for \"%s\"", originalQuery);
       output.println();

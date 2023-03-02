@@ -52,15 +52,17 @@ import javax.annotation.Nullable;
  * @param <T> the type of input for the created transform executors
  */
 public abstract class TransformExecutorFactory<T> {
+
   protected final String sourceStageName;
   protected final MacroEvaluator macroEvaluator;
   protected final PipelinePluginInstantiator pluginInstantiator;
   protected final Metrics metrics;
   protected final boolean collectStageStatistics;
 
-  protected TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, MacroEvaluator macroEvaluator,
-                                     Metrics metrics, @Nullable String sourceStageName,
-                                     boolean collectStageStatistics) {
+  protected TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator,
+      MacroEvaluator macroEvaluator,
+      Metrics metrics, @Nullable String sourceStageName,
+      boolean collectStageStatistics) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
     this.sourceStageName = sourceStageName;
@@ -76,45 +78,50 @@ public abstract class TransformExecutorFactory<T> {
 
   protected abstract PipeStage getSinkPipeStage(StageSpec stageSpec) throws Exception;
 
-  private <IN, ERROR> TrackedMultiOutputTransform<IN, ERROR> getMultiOutputTransform(StageSpec stageSpec)
-    throws Exception {
+  private <IN, ERROR> TrackedMultiOutputTransform<IN, ERROR> getMultiOutputTransform(
+      StageSpec stageSpec)
+      throws Exception {
     String stageName = stageSpec.getName();
     SplitterTransform<IN, ERROR> splitterTransform =
-      pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     TransformContext transformContext = createRuntimeContext(stageSpec);
     splitterTransform.initialize(transformContext);
 
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     StageStatisticsCollector collector = collectStageStatistics ?
-      getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
-    return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics, getDataTracer(stageName), collector);
+        getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
+    return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics,
+        getDataTracer(stageName), collector);
   }
 
   @SuppressWarnings("unchecked")
-  protected <IN, OUT> TrackedTransform<IN, OUT> getTransformation(StageSpec stageSpec) throws Exception {
+  protected <IN, OUT> TrackedTransform<IN, OUT> getTransformation(StageSpec stageSpec)
+      throws Exception {
 
     String stageName = stageSpec.getName();
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     StageStatisticsCollector collector = collectStageStatistics ?
-      getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
+        getStatisticsCollector(stageName) : NoopStageStatisticsCollector.INSTANCE;
 
     Transformation transformation = getInitializedTransformation(stageSpec);
     // we emit metrics for records into alert publishers when the actual alerts are published,
     // not when we write the alerts to the temporary dataset
-    String recordsInMetric = AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;
-    return new TrackedTransform<>(transformation, stageMetrics, recordsInMetric, Constants.Metrics.RECORDS_OUT,
-                                  getDataTracer(stageName), collector);
+    String recordsInMetric =
+        AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;
+    return new TrackedTransform<>(transformation, stageMetrics, recordsInMetric,
+        Constants.Metrics.RECORDS_OUT,
+        getDataTracer(stageName), collector);
   }
 
   /**
-   * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
-   * transforms, and sinks in the pipeline.
+   * Create a transform executor for the specified pipeline. Will instantiate and initialize all
+   * sources, transforms, and sinks in the pipeline.
    *
    * @param pipeline the pipeline to create a transform executor for
    * @return executor for the pipeline
    * @throws InstantiationException if there was an error instantiating a plugin
-   * @throws Exception              if there was an error initializing a plugin
+   * @throws Exception if there was an error initializing a plugin
    */
   public PipeTransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
     // populate the pipe stages in reverse topological order to ensure that an output is always created before its
@@ -122,7 +129,8 @@ public abstract class TransformExecutorFactory<T> {
     Dag pipelineDag = pipeline.getDag();
     // dag is null if the pipeline phase contains a single stage.
     List<String> traversalOrder = pipelineDag == null ?
-      Collections.singletonList(pipeline.iterator().next().getName()) : pipelineDag.getTopologicalOrder();
+        Collections.singletonList(pipeline.iterator().next().getName())
+        : pipelineDag.getTopologicalOrder();
     Collections.reverse(traversalOrder);
 
     Map<String, PipeStage> pipeStages = new HashMap<>();
@@ -131,12 +139,13 @@ public abstract class TransformExecutorFactory<T> {
     }
 
     // sourceStageName will be null in reducers, so need to handle that case
-    Set<String> startingPoints = (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
+    Set<String> startingPoints =
+        (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
     return new PipeTransformExecutor<>(pipeStages, startingPoints);
   }
 
   private PipeStage getPipeStage(PipelinePhase pipeline, String stageName,
-                                 Map<String, PipeStage> pipeStages) throws Exception {
+      Map<String, PipeStage> pipeStages) throws Exception {
     StageSpec stageSpec = pipeline.getStage(stageName);
     String pluginType = stageSpec.getPluginType();
 
@@ -165,8 +174,9 @@ public abstract class TransformExecutorFactory<T> {
     // into a RecordInfo
     // ConnectorSources require a special emitter since they need to build RecordInfo from the temporary dataset
     PipeEmitter.Builder emitterBuilder =
-      Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources().contains(stageName) ?
-        ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources()
+            .contains(stageName) ?
+            ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
 
     Map<String, StageSpec.Port> outputPorts = stageSpec.getOutputPorts();
     for (String outputStageName : pipeline.getStageOutputs(stageName)) {
@@ -185,10 +195,13 @@ public abstract class TransformExecutorFactory<T> {
         // if the output is a connector like agg5.connector, the outputPorts will contain the original 'agg5' as
         // a key, but not 'agg5.connector' so we need to lookup the original stage from the connector's plugin spec
         String originalOutputName = Constants.Connector.PLUGIN_TYPE.equals(outputStageType) ?
-          outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME) : outputStageName;
+            outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME)
+            : outputStageName;
 
-        String port = outputPorts.containsKey(originalOutputName) ? outputPorts.get(originalOutputName).getPort()
-          : null;
+        String port =
+            outputPorts.containsKey(originalOutputName) ? outputPorts.get(originalOutputName)
+                .getPort()
+                : null;
         if (port != null) {
           emitterBuilder.addOutputConsumer(outputPipeStage, port);
         } else {
@@ -200,7 +213,8 @@ public abstract class TransformExecutorFactory<T> {
 
     if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
       // this is a SplitterTransform, needs to emit records to the right outputs based on port
-      return new MultiOutputTransformPipeStage<>(stageName, getMultiOutputTransform(stageSpec), pipeEmitter);
+      return new MultiOutputTransformPipeStage<>(stageName, getMultiOutputTransform(stageSpec),
+          pipeEmitter);
     } else {
       return new UnwrapPipeStage<>(stageName, getTransformation(stageSpec), pipeEmitter);
     }
@@ -212,7 +226,7 @@ public abstract class TransformExecutorFactory<T> {
    * @param stageInfo the stage info
    * @return the initialized Transformation
    * @throws InstantiationException if the plugin for the stage could not be instantiated
-   * @throws Exception              if there was a problem initializing the plugin
+   * @throws Exception if there was a problem initializing the plugin
    */
   private <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
   getInitializedTransformation(StageSpec stageInfo) throws Exception {

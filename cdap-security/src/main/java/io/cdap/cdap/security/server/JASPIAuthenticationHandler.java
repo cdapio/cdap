@@ -43,6 +43,7 @@ import org.eclipse.jetty.security.jaspi.modules.BasicAuthModule;
  * An Authentication handler that supports JASPI plugins for External Authentication.
  */
 public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
+
   private JAASLoginService loginService;
   private IdentityService identityService;
 
@@ -65,15 +66,18 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
     HashMap<String, ServerAuthContext> serverAuthContextMap = new HashMap<>();
     ServletCallbackHandler callbackHandler = new ServletCallbackHandler(getHandlerLoginService());
     ServerAuthModule authModule = new BasicAuthModule(callbackHandler, "JAASRealm");
-    serverAuthContextMap.put("authContextID", new ServerAuthContextImpl(Collections.singletonList(authModule)));
+    serverAuthContextMap.put("authContextID",
+        new ServerAuthContextImpl(Collections.singletonList(authModule)));
 
     ServerAuthContextType serverAuthContextType = new ServerAuthContextType("HTTP", "server *",
-                                                                            "authContextID",
-                                                                            new AuthModuleType<ServerAuthModule>());
-    ServerAuthConfigType serverAuthConfigType = new ServerAuthConfigType(serverAuthContextType, true);
-    ServerAuthConfig serverAuthConfig = new ServerAuthConfigImpl(serverAuthConfigType, serverAuthContextMap);
+        "authContextID",
+        new AuthModuleType<ServerAuthModule>());
+    ServerAuthConfigType serverAuthConfigType = new ServerAuthConfigType(serverAuthContextType,
+        true);
+    ServerAuthConfig serverAuthConfig = new ServerAuthConfigImpl(serverAuthConfigType,
+        serverAuthContextMap);
     return new JaspiAuthenticator(serverAuthConfig, null, callbackHandler,
-                                  new Subject(), true, getHandlerIdentityService());
+        new Subject(), true, getHandlerIdentityService());
   }
 
   @Override
@@ -86,6 +90,7 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
 
   /**
    * Dynamically load the configuration properties set by the user for a JASPI plugin.
+   *
    * @return Configuration
    */
   @Override
@@ -93,9 +98,9 @@ public class JASPIAuthenticationHandler extends AbstractAuthenticationHandler {
     return new Configuration() {
       @Override
       public AppConfigurationEntry[] getAppConfigurationEntry(String s) {
-        return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
-                                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, new HashMap<>(handlerProps))
+        return new AppConfigurationEntry[]{
+            new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
+                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, new HashMap<>(handlerProps))
         };
       }
     };

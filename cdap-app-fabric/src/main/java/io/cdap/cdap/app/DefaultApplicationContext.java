@@ -25,6 +25,7 @@ import io.cdap.cdap.api.app.ApplicationContext;
  * @param <T> config class
  */
 public class DefaultApplicationContext<T extends Config> implements ApplicationContext<T> {
+
   private final T appConfig;
 
   public DefaultApplicationContext() {

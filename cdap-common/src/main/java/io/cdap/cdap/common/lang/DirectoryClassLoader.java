@@ -55,22 +55,25 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
 
   private final Manifest manifest;
 
-  public DirectoryClassLoader(File dir, ClassLoader parent, String...libDirs) {
+  public DirectoryClassLoader(File dir, ClassLoader parent, String... libDirs) {
     this(dir, "", parent, ImmutableSet.copyOf(libDirs));
   }
 
-  public DirectoryClassLoader(File dir, @Nullable String extraClassPath, ClassLoader parent, String...libDirs) {
+  public DirectoryClassLoader(File dir, @Nullable String extraClassPath, ClassLoader parent,
+      String... libDirs) {
     this(dir, extraClassPath, parent, Arrays.asList(libDirs));
   }
 
-  public DirectoryClassLoader(File dir, @Nullable String extraClassPath, ClassLoader parent, Iterable<String> libDirs) {
+  public DirectoryClassLoader(File dir, @Nullable String extraClassPath, ClassLoader parent,
+      Iterable<String> libDirs) {
     super(getClassPathURLs(dir, extraClassPath, ImmutableSet.copyOf(libDirs)), parent);
 
     // Try to load the Manifest from the unpacked directory
     Manifest manifest = null;
     try {
       try (
-        InputStream input = new FileInputStream(new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)))
+          InputStream input = new FileInputStream(
+              new File(dir, JarFile.MANIFEST_NAME.replace('/', File.separatorChar)))
       ) {
         manifest = new Manifest(input);
       }
@@ -82,8 +85,8 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
   }
 
   /**
-   * Returns the {@link Manifest} in the directory if it contains the file
-   * {@link JarFile#MANIFEST_NAME} or {@code null} if there is no manifest available.
+   * Returns the {@link Manifest} in the directory if it contains the file {@link
+   * JarFile#MANIFEST_NAME} or {@code null} if there is no manifest available.
    */
   @Nullable
   public Manifest getManifest() {
@@ -91,8 +94,8 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
   }
 
   /**
-   * Always return {@code false} as this class won't do any class rewriting. Subclasses overriding this method
-   * should also override {@link #rewriteClass(String, InputStream)}.
+   * Always return {@code false} as this class won't do any class rewriting. Subclasses overriding
+   * this method should also override {@link #rewriteClass(String, InputStream)}.
    */
   @Override
   protected boolean needIntercept(String className) {
@@ -101,10 +104,12 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
-    throw new UnsupportedOperationException("Class rewriting of class '" + className + "' is not supported");
+    throw new UnsupportedOperationException(
+        "Class rewriting of class '" + className + "' is not supported");
   }
 
-  private static URL[] getClassPathURLs(File dir, @Nullable String extraClassPath, Set<String> libDirs) {
+  private static URL[] getClassPathURLs(File dir, @Nullable String extraClassPath,
+      Set<String> libDirs) {
     try {
       List<URL> urls = Lists.newArrayList(dir.toURI().toURL());
       addJarURLs(dir, urls);
@@ -114,7 +119,8 @@ public class DirectoryClassLoader extends InterceptableClassLoader {
       }
 
       if (extraClassPath != null) {
-        for (String path : Splitter.on(File.pathSeparatorChar).omitEmptyStrings().split(extraClassPath)) {
+        for (String path : Splitter.on(File.pathSeparatorChar).omitEmptyStrings()
+            .split(extraClassPath)) {
           String wildcardSuffix = File.separator + "*";
 
           if (path.endsWith(wildcardSuffix)) {

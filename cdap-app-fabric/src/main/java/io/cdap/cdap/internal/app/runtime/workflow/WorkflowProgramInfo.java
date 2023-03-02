@@ -43,29 +43,34 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   private final boolean consolidateFieldOperations;
 
   /**
-   * Optionally creates a {@link WorkflowProgramInfo} from the given arguments. If the arguments don't contain
-   * workflow information, {@code null} will be returned.
+   * Optionally creates a {@link WorkflowProgramInfo} from the given arguments. If the arguments
+   * don't contain workflow information, {@code null} will be returned.
    */
   @Nullable
   public static WorkflowProgramInfo create(Arguments arguments) {
     String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
     String workflowNodeId = arguments.getOption(ProgramOptionConstants.WORKFLOW_NODE_ID);
     String workflowRunId = arguments.getOption(ProgramOptionConstants.WORKFLOW_RUN_ID);
-    String programNameInWorkflow = arguments.getOption(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
+    String programNameInWorkflow = arguments.getOption(
+        ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW);
     String workflowToken = arguments.getOption(ProgramOptionConstants.WORKFLOW_TOKEN);
     boolean consolidateFieldOperations
-            = Boolean.parseBoolean(arguments.getOption(ProgramOptionConstants.ENABLE_FIELD_LINEAGE_CONSOLIDATION));
+        = Boolean.parseBoolean(
+        arguments.getOption(ProgramOptionConstants.ENABLE_FIELD_LINEAGE_CONSOLIDATION));
 
-    if (workflowName == null || workflowNodeId == null || workflowRunId == null || workflowToken == null) {
+    if (workflowName == null || workflowNodeId == null || workflowRunId == null
+        || workflowToken == null) {
       return null;
     }
 
-    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId, programNameInWorkflow,
-                                   GSON.fromJson(workflowToken, BasicWorkflowToken.class), consolidateFieldOperations);
+    return new WorkflowProgramInfo(workflowName, workflowNodeId, workflowRunId,
+        programNameInWorkflow,
+        GSON.fromJson(workflowToken, BasicWorkflowToken.class), consolidateFieldOperations);
   }
 
-  WorkflowProgramInfo(String workflowName, String workflowNodeId, String workflowRunId, String programNameInWorkflow,
-                      BasicWorkflowToken workflowToken, boolean consolidateFieldOperations) {
+  WorkflowProgramInfo(String workflowName, String workflowNodeId, String workflowRunId,
+      String programNameInWorkflow,
+      BasicWorkflowToken workflowToken, boolean consolidateFieldOperations) {
     this.workflowName = workflowName;
     this.workflowNodeId = workflowNodeId;
     this.workflowRunId = workflowRunId;
@@ -123,9 +128,8 @@ public final class WorkflowProgramInfo implements WorkflowInfo, Serializable {
   }
 
   /**
-   * Return {@code true} if the Workflow is going to consolidate the field operations
-   * rather than emitting them from nodes running inside the Workflow, otherwise {@code false}
-   * is returned.
+   * Return {@code true} if the Workflow is going to consolidate the field operations rather than
+   * emitting them from nodes running inside the Workflow, otherwise {@code false} is returned.
    */
   public boolean fieldLineageConsolidationEnabled() {
     return consolidateFieldOperations;

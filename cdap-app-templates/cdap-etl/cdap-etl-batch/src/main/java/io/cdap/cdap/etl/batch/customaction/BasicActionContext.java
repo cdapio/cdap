@@ -44,14 +44,16 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation for the {@link ActionContext}.
  */
-public class BasicActionContext extends AbstractStageContext implements ActionContext  {
+public class BasicActionContext extends AbstractStageContext implements ActionContext {
+
   private static final Logger LOG = LoggerFactory.getLogger(BasicActionContext.class);
   private static final String EXTERNAL_DATASET_TYPE = "externalDataset";
 
   private final CustomActionContext context;
   private final Admin admin;
 
-  public BasicActionContext(CustomActionContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+  public BasicActionContext(CustomActionContext context, PipelineRuntime pipelineRuntime,
+      StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec);
     this.context = context;
     this.admin = context.getAdmin();
@@ -79,7 +81,7 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     context.getAdmin().put(namespace, name, data, description, properties);
   }
 
@@ -95,9 +97,10 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
 
   @Override
   public void registerLineage(String referenceName, AccessType accessType)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     Supplier<Dataset> datasetSupplier =
-      () -> Transactionals.execute(context, (TxCallable<Dataset>) ctx -> ctx.getDataset(referenceName));
+        () -> Transactionals.execute(context,
+            (TxCallable<Dataset>) ctx -> ctx.getDataset(referenceName));
     ExternalDatasets.registerLineage(admin, referenceName, accessType, null, datasetSupplier);
   }
 

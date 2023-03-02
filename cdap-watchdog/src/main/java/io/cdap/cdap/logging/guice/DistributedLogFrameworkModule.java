@@ -43,14 +43,15 @@ public class DistributedLogFrameworkModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID)).toInstance(instanceId);
+    bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID))
+        .toInstance(instanceId);
     bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT))
-      .toInstance(instanceCount);
+        .toInstance(instanceCount);
     bind(AppenderContext.class).to(DistributedAppenderContext.class);
 
     // Bind the status service
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-      (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
+        (binder(), HttpHandler.class, Names.named(Constants.LogSaver.LOG_SAVER_HANDLER));
     CommonHandlers.add(handlerBinder);
     bind(LogSaverStatusService.class).in(Scopes.SINGLETON);
     expose(LogSaverStatusService.class);

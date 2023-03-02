@@ -33,40 +33,47 @@ import org.apache.twill.common.Cancellable;
  *
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-abstract class AppResourceWatcherThread<T extends KubernetesObject> extends AbstractWatcherThread<T> {
+abstract class AppResourceWatcherThread<T extends KubernetesObject> extends
+    AbstractWatcherThread<T> {
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Deployment} events.
    */
-  static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace, String selector,
-                                                                        ApiClientFactory apiClientFactory) {
+  static AppResourceWatcherThread<V1Deployment> createDeploymentWatcher(String namespace,
+      String selector,
+      ApiClientFactory apiClientFactory) {
     return new AppResourceWatcherThread<V1Deployment>("apps", "v1", "deployments",
-                                                      namespace, selector, apiClientFactory) { };
+        namespace, selector, apiClientFactory) {
+    };
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1StatefulSet} events.
    */
-  static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector,
-                                                                          ApiClientFactory apiClientFactory) {
+  static AppResourceWatcherThread<V1StatefulSet> createStatefulSetWatcher(String namespace,
+      String selector,
+      ApiClientFactory apiClientFactory) {
     return new AppResourceWatcherThread<V1StatefulSet>("apps", "v1", "statefulsets",
-                                                       namespace, selector, apiClientFactory) { };
+        namespace, selector, apiClientFactory) {
+    };
   }
 
   /**
    * Creates a {@link AppResourceWatcherThread} for watching {@link V1Job} events.
    */
   static AppResourceWatcherThread<V1Job> createJobWatcher(String namespace, String selector,
-                                                          ApiClientFactory apiClientFactory) {
+      ApiClientFactory apiClientFactory) {
     return new AppResourceWatcherThread<V1Job>("batch", "v1", "jobs",
-                                               namespace, selector, apiClientFactory) { };
+        namespace, selector, apiClientFactory) {
+    };
   }
 
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
 
-  private AppResourceWatcherThread(String group, String version, String plural, String namespace, String selector,
-                                   ApiClientFactory apiClientFactory) {
+  private AppResourceWatcherThread(String group, String version, String plural, String namespace,
+      String selector,
+      ApiClientFactory apiClientFactory) {
     super("kube-" + plural + "-watch", namespace, group, version, plural, apiClientFactory);
     setDaemon(true);
     this.selector = selector;
@@ -80,7 +87,6 @@ abstract class AppResourceWatcherThread<T extends KubernetesObject> extends Abst
     closeWatch();
     return () -> listeners.remove(wrappedListener);
   }
-
 
 
   @Override

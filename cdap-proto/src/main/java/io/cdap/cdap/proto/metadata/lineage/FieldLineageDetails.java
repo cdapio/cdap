@@ -26,22 +26,26 @@ import javax.annotation.Nullable;
 /**
  * Represents the lineage associated with the field of a dataset in detail.
  *
- * In incoming direction, it consists of the datasets and their fields ({@link DatasetField})
- * that this field originates from, as well as the programs and operations that generated this
- * field from those origins.
+ * In incoming direction, it consists of the datasets and their fields ({@link DatasetField}) that
+ * this field originates from, as well as the programs and operations that generated this field from
+ * those origins.
  *
- * In outgoing direction, it consists of the datasets and their fields ({@link DatasetField})
- * that were computed from this field, along with the programs and operations that
- * performed the computation.
+ * In outgoing direction, it consists of the datasets and their fields ({@link DatasetField}) that
+ * were computed from this field, along with the programs and operations that performed the
+ * computation.
  */
 @Beta
 public class FieldLineageDetails {
+
   private final List<ProgramFieldOperationInfo> incoming;
   private final List<ProgramFieldOperationInfo> outgoing;
 
-  public FieldLineageDetails(List<ProgramFieldOperationInfo> incoming, List<ProgramFieldOperationInfo> outgoing) {
-    this.incoming = incoming == null ? null : Collections.unmodifiableList(new ArrayList<>(incoming));
-    this.outgoing = outgoing == null ? null : Collections.unmodifiableList(new ArrayList<>(outgoing));
+  public FieldLineageDetails(List<ProgramFieldOperationInfo> incoming,
+      List<ProgramFieldOperationInfo> outgoing) {
+    this.incoming =
+        incoming == null ? null : Collections.unmodifiableList(new ArrayList<>(incoming));
+    this.outgoing =
+        outgoing == null ? null : Collections.unmodifiableList(new ArrayList<>(outgoing));
   }
 
   @Nullable
@@ -64,7 +68,7 @@ public class FieldLineageDetails {
     }
     FieldLineageDetails details = (FieldLineageDetails) o;
     return Objects.equals(incoming, details.incoming) &&
-            Objects.equals(outgoing, details.outgoing);
+        Objects.equals(outgoing, details.outgoing);
   }
 
   @Override

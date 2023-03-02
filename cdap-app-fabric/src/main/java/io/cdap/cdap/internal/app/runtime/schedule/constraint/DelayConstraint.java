@@ -21,9 +21,11 @@ import io.cdap.cdap.proto.ProtoConstraint;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A constraint which requires a certain amount of delay pass after the trigger is fired, before executing the program.
+ * A constraint which requires a certain amount of delay pass after the trigger is fired, before
+ * executing the program.
  */
-public class DelayConstraint extends ProtoConstraint.DelayConstraint implements CheckableConstraint {
+public class DelayConstraint extends ProtoConstraint.DelayConstraint implements
+    CheckableConstraint {
 
   public DelayConstraint(long delayAfterTrigger, TimeUnit unit) {
     super(delayAfterTrigger, unit);
@@ -36,6 +38,6 @@ public class DelayConstraint extends ProtoConstraint.DelayConstraint implements 
       return ConstraintResult.SATISFIED;
     }
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                context.getJob().getCreationTime() + millisAfterTrigger);
+        context.getJob().getCreationTime() + millisAfterTrigger);
   }
 }

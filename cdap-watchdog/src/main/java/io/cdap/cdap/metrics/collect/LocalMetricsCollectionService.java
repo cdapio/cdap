@@ -41,8 +41,8 @@ import java.util.stream.IntStream;
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
-                    Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+          Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
   private final CConfiguration cConf;
   private final MetricStore metricStore;
@@ -52,8 +52,9 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore,
-                                MetricsCleanUpService metricsCleanUpService) {
-    super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
+      MetricsCleanUpService metricsCleanUpService) {
+    super(TimeUnit.SECONDS.toMillis(
+        cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
     this.cConf = cConf;
     this.metricStore = metricStore;
     this.metricsCleanUpService = metricsCleanUpService;
@@ -63,7 +64,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   /**
    * Setter method for the optional binding on the {@link MessagingMetricsProcessorServiceFactory}.
    */
-  @Inject (optional = true)
+  @Inject(optional = true)
   public void setMessagingMetricsProcessorFactory(MessagingMetricsProcessorServiceFactory factory) {
     this.messagingMetricsProcessorFactory = factory;
   }
@@ -84,8 +85,9 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
     // If there is a metrics processor for TMS, start it.
     if (messagingMetricsProcessorFactory != null) {
       messagingMetricsProcessor = messagingMetricsProcessorFactory.create(
-        IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM)).boxed().collect(Collectors.toSet()),
-        getContext(METRICS_PROCESSOR_CONTEXT), 0);
+          IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM)).boxed()
+              .collect(Collectors.toSet()),
+          getContext(METRICS_PROCESSOR_CONTEXT), 0);
       messagingMetricsProcessor.startAndWait();
     }
 

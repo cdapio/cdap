@@ -30,57 +30,59 @@ public final class MasterUtils {
   /**
    * Explicitly disallow default constructor for utility class
    */
-  private MasterUtils() { }
+  private MasterUtils() {
+  }
 
   /**
    * Creates a set of system service resource keys
+   *
    * @param cConf the configured CDAP settings
    * @return a set of {@link ServiceResourceKeys} for all system services
    */
   public static Set<ServiceResourceKeys> createSystemServicesResourceKeysSet(CConfiguration cConf) {
     ImmutableSet.Builder<ServiceResourceKeys> builder = ImmutableSet.<ServiceResourceKeys>builder()
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.TRANSACTION,
-                                   Constants.Transaction.Container.MEMORY_MB,
-                                   Constants.Transaction.Container.NUM_CORES,
-                                   Constants.Transaction.Container.NUM_INSTANCES,
-                                   Constants.Transaction.Container.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.METRICS,
-                                   Constants.Metrics.MEMORY_MB,
-                                   Constants.Metrics.NUM_CORES,
-                                   Constants.Metrics.NUM_INSTANCES,
-                                   Constants.Metrics.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.METRICS_PROCESSOR,
-                                   Constants.MetricsProcessor.MEMORY_MB,
-                                   Constants.MetricsProcessor.NUM_CORES,
-                                   Constants.MetricsProcessor.NUM_INSTANCES,
-                                   Constants.MetricsProcessor.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.LOGSAVER,
-                                   Constants.LogSaver.MEMORY_MB,
-                                   Constants.LogSaver.NUM_CORES,
-                                   Constants.LogSaver.NUM_INSTANCES,
-                                   Constants.LogSaver.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.DATASET_EXECUTOR,
-                                   Constants.Dataset.Executor.CONTAINER_MEMORY_MB,
-                                   Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES,
-                                   Constants.Dataset.Executor.CONTAINER_INSTANCES,
-                                   Constants.Dataset.Executor.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.MESSAGING_SERVICE,
-                                   Constants.MessagingSystem.CONTAINER_MEMORY_MB,
-                                   Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES,
-                                   Constants.MessagingSystem.CONTAINER_INSTANCES,
-                                   Constants.MessagingSystem.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.SUPPORT_BUNDLE_SERVICE,
-                                   Constants.SupportBundle.SERVICE_MEMORY_MB,
-                                   Constants.SupportBundle.SERVICE_NUM_CORES,
-                                   Constants.SupportBundle.CONTAINER_INSTANCES,
-                                   Constants.SupportBundle.MAX_INSTANCES));
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.TRANSACTION,
+            Constants.Transaction.Container.MEMORY_MB,
+            Constants.Transaction.Container.NUM_CORES,
+            Constants.Transaction.Container.NUM_INSTANCES,
+            Constants.Transaction.Container.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.METRICS,
+            Constants.Metrics.MEMORY_MB,
+            Constants.Metrics.NUM_CORES,
+            Constants.Metrics.NUM_INSTANCES,
+            Constants.Metrics.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.METRICS_PROCESSOR,
+            Constants.MetricsProcessor.MEMORY_MB,
+            Constants.MetricsProcessor.NUM_CORES,
+            Constants.MetricsProcessor.NUM_INSTANCES,
+            Constants.MetricsProcessor.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.LOGSAVER,
+            Constants.LogSaver.MEMORY_MB,
+            Constants.LogSaver.NUM_CORES,
+            Constants.LogSaver.NUM_INSTANCES,
+            Constants.LogSaver.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.DATASET_EXECUTOR,
+            Constants.Dataset.Executor.CONTAINER_MEMORY_MB,
+            Constants.Dataset.Executor.CONTAINER_VIRTUAL_CORES,
+            Constants.Dataset.Executor.CONTAINER_INSTANCES,
+            Constants.Dataset.Executor.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.MESSAGING_SERVICE,
+            Constants.MessagingSystem.CONTAINER_MEMORY_MB,
+            Constants.MessagingSystem.CONTAINER_VIRTUAL_CORES,
+            Constants.MessagingSystem.CONTAINER_INSTANCES,
+            Constants.MessagingSystem.MAX_INSTANCES))
+        .add(new ServiceResourceKeys(cConf,
+            Constants.Service.SUPPORT_BUNDLE_SERVICE,
+            Constants.SupportBundle.SERVICE_MEMORY_MB,
+            Constants.SupportBundle.SERVICE_NUM_CORES,
+            Constants.SupportBundle.CONTAINER_INSTANCES,
+            Constants.SupportBundle.MAX_INSTANCES));
     return builder.build();
   }
 }

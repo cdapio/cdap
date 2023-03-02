@@ -27,8 +27,6 @@ public interface EventWriterProvider {
 
   /**
    * Method which retrieve a {@link Map} of {@link EventWriter} and the Extension Type.
-   *
-   * @return
    */
   Map<String, EventWriter> loadEventWriters();
 }

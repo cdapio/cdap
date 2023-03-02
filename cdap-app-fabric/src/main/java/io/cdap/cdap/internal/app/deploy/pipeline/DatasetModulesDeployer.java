@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * Deploys Dataset Modules.
  */
 final class DatasetModulesDeployer {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetModulesDeployer.class);
 
   private final DatasetFramework datasetFramework;
@@ -50,10 +51,11 @@ final class DatasetModulesDeployer {
   private final boolean allowDatasetUncheckedUpgrade;
 
   DatasetModulesDeployer(DatasetFramework datasetFramework,
-                         DatasetFramework inMemoryDatasetFramework, CConfiguration cConf) {
+      DatasetFramework inMemoryDatasetFramework, CConfiguration cConf) {
     this.datasetFramework = datasetFramework;
     this.systemDatasetFramework = inMemoryDatasetFramework;
-    this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.allowDatasetUncheckedUpgrade = cConf.getBoolean(
+        Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   /**
@@ -66,7 +68,8 @@ final class DatasetModulesDeployer {
    * @throws Exception if there was a problem deploying a module
    */
   void deployModules(NamespaceId namespaceId, Map<String, String> modules,
-                     Location jarLocation, ClassLoader artifactClassLoader, String authorizingUser) throws Exception {
+      Location jarLocation, ClassLoader artifactClassLoader, String authorizingUser)
+      throws Exception {
     List<String> implicitModules = new ArrayList<>();
     for (Map.Entry<String, String> moduleEntry : modules.entrySet()) {
       String moduleName = moduleEntry.getKey();
@@ -80,17 +83,19 @@ final class DatasetModulesDeployer {
         implicitModules.add(typeName);
         continue;
       }
-      loadAndDeployModule(artifactClassLoader, typeName, jarLocation, moduleName, namespaceId, authorizingUser);
+      loadAndDeployModule(artifactClassLoader, typeName, jarLocation, moduleName, namespaceId,
+          authorizingUser);
     }
     for (String typeName : implicitModules) {
       final DatasetTypeId typeId = namespaceId.datasetType(typeName);
 
-      DatasetTypeMeta typeMeta = AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetTypeMeta>() {
-        @Override
-        public DatasetTypeMeta call() throws Exception {
-          return datasetFramework.getTypeInfo(typeId);
-        }
-      });
+      DatasetTypeMeta typeMeta = AuthorizationUtil.authorizeAs(authorizingUser,
+          new Callable<DatasetTypeMeta>() {
+            @Override
+            public DatasetTypeMeta call() throws Exception {
+              return datasetFramework.getTypeInfo(typeId);
+            }
+          });
       if (typeMeta != null) {
         String existingModule = Iterables.getLast(typeMeta.getModules()).getName();
         if (modules.containsKey(existingModule)) {
@@ -98,14 +103,17 @@ final class DatasetModulesDeployer {
           continue;
         }
       }
-      loadAndDeployModule(artifactClassLoader, typeName, jarLocation, typeName, namespaceId, authorizingUser);
+      loadAndDeployModule(artifactClassLoader, typeName, jarLocation, typeName, namespaceId,
+          authorizingUser);
     }
   }
 
   /**
-   * Returns {@code true} if the given set of dataset modules containing non system defined dataset type.
+   * Returns {@code true} if the given set of dataset modules containing non system defined dataset
+   * type.
    */
-  boolean hasNonSystemDatasetModules(Map<String, String> modules) throws DatasetManagementException {
+  boolean hasNonSystemDatasetModules(Map<String, String> modules)
+      throws DatasetManagementException {
     for (String type : modules.values()) {
       if (!systemDatasetFramework.hasSystemType(type)) {
         return true;
@@ -114,9 +122,10 @@ final class DatasetModulesDeployer {
     return false;
   }
 
-  private void loadAndDeployModule(ClassLoader artifactClassLoader, String className, final Location jarLocation,
-                                   String moduleName, NamespaceId namespaceId,
-                                   String authorizingUser) throws Exception {
+  private void loadAndDeployModule(ClassLoader artifactClassLoader, String className,
+      final Location jarLocation,
+      String moduleName, NamespaceId namespaceId,
+      String authorizingUser) throws Exception {
 
     // note: using app class loader to load module class
     @SuppressWarnings("unchecked")
@@ -146,7 +155,8 @@ final class DatasetModulesDeployer {
         module = new SingleTypeModule(clazz);
       } else {
         throw new IllegalArgumentException(String.format(
-          "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset", clazz.getName()));
+            "Cannot use class %s to add dataset module: it must be of type DatasetModule or Dataset",
+            clazz.getName()));
       }
       LOG.info("Adding module: {}", clazz.getName());
       AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {

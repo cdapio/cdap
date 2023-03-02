@@ -25,6 +25,7 @@ import java.io.Serializable;
  */
 @Beta
 public class SQLReadRequest implements Serializable {
+
   private final String datasetName;
   private final SQLEngineInput input;
 
@@ -32,6 +33,7 @@ public class SQLReadRequest implements Serializable {
 
   /**
    * Creates a new SQLReadRequest instance
+   *
    * @param datasetName dataset name
    * @param input SQL engine input configuration
    */

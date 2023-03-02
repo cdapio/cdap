@@ -23,28 +23,29 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public interface BatchJoinerContext extends BatchContext {
+
   /**
-   * Set the number of partitions to use to join values. If none is set, the execution engine will decide
-   * how many partitions to use.
+   * Set the number of partitions to use to join values. If none is set, the execution engine will
+   * decide how many partitions to use.
    *
    * @param numPartitions the number of partitions to use when joining.
    */
   void setNumPartitions(int numPartitions);
 
   /**
-   * Set the join key class. This is not required if the joiner is parameterized with a concrete class
-   * for the join key. This method is required if the join key class is only known at configure time
-   * versus compile time. For example, an joiner may support joining on a configurable record field,
-   * and not know the type of that field until configure time.
+   * Set the join key class. This is not required if the joiner is parameterized with a concrete
+   * class for the join key. This method is required if the join key class is only known at
+   * configure time versus compile time. For example, an joiner may support joining on a
+   * configurable record field, and not know the type of that field until configure time.
    *
    * @param joinKeyClass the join key class
    */
   void setJoinKeyClass(Class<?> joinKeyClass);
 
   /**
-   * Set the join input record class. This is not required if the joiner is parameterized with a concrete class
-   * for the join input. This method is required if the input record class is only known at configure time
-   * versus compile time.
+   * Set the join input record class. This is not required if the joiner is parameterized with a
+   * concrete class for the join input. This method is required if the input record class is only
+   * known at configure time versus compile time.
    *
    * @param joinInputRecordClass the join input record class
    */

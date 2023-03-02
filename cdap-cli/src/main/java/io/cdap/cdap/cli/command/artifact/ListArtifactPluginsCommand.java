@@ -59,32 +59,34 @@ public class ListArtifactPluginsCommand extends AbstractAuthCommand {
       pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType);
     } else {
       pluginSummaries = artifactClient.getPluginSummaries(artifactId, pluginType,
-        ArtifactScope.valueOf(scopeStr.toUpperCase()));
+          ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
     Table table = Table.builder()
-      .setHeader("type", "name", "classname", "description", "artifact")
-      .setRows(pluginSummaries, new RowMaker<PluginSummary>() {
-        @Override
-        public List<?> makeRow(PluginSummary object) {
-          return Lists.newArrayList(
-            object.getType(), object.getName(), object.getClassName(), object.getDescription(),
-            object.getArtifact().toString());
-        }
-      }).build();
+        .setHeader("type", "name", "classname", "description", "artifact")
+        .setRows(pluginSummaries, new RowMaker<PluginSummary>() {
+          @Override
+          public List<?> makeRow(PluginSummary object) {
+            return Lists.newArrayList(
+                object.getType(), object.getName(), object.getClassName(), object.getDescription(),
+                object.getArtifact().toString());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
     return String.format("list artifact plugins <%s> <%s> <%s> [<%s>]", ArgumentName.ARTIFACT_NAME,
-      ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.SCOPE);
+        ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
     return String.format("Lists all plugins of a specific type available to a specific %s. " +
-      "Returns the type, name, classname, and description of the plugin, as well as the %s the plugin came from. " +
-      "If no scope is provided, %s are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
-      ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
+            "Returns the type, name, classname, and description of the plugin, as well as the %s the plugin came from. "
+            +
+            "If no scope is provided, %s are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
+        ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getName(),
+        ElementType.ARTIFACT.getNamePlural());
   }
 }

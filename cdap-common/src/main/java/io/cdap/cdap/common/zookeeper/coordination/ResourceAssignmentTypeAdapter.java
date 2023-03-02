@@ -33,10 +33,11 @@ import org.apache.twill.discovery.Discoverable;
  * The Gson codec for {@link ResourceAssignment}.
  */
 class ResourceAssignmentTypeAdapter implements JsonSerializer<ResourceAssignment>,
-                                               JsonDeserializer<ResourceAssignment> {
+    JsonDeserializer<ResourceAssignment> {
 
   @Override
-  public JsonElement serialize(ResourceAssignment src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ResourceAssignment src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.addProperty("name", src.getName());
 
@@ -57,7 +58,7 @@ class ResourceAssignmentTypeAdapter implements JsonSerializer<ResourceAssignment
 
   @Override
   public ResourceAssignment deserialize(JsonElement json, Type typeOfT,
-                                        JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     if (!json.isJsonObject()) {
       throw new JsonParseException("Expect a json object, got " + json);
     }
@@ -65,8 +66,9 @@ class ResourceAssignmentTypeAdapter implements JsonSerializer<ResourceAssignment
     JsonObject jsonObj = json.getAsJsonObject();
     String name = jsonObj.get("name").getAsString();
 
-    Multimap<Discoverable, PartitionReplica> assignments = TreeMultimap.create(DiscoverableComparator.COMPARATOR,
-                                                                               PartitionReplica.COMPARATOR);
+    Multimap<Discoverable, PartitionReplica> assignments = TreeMultimap.create(
+        DiscoverableComparator.COMPARATOR,
+        PartitionReplica.COMPARATOR);
     JsonArray assignmentsJson = context.deserialize(jsonObj.get("assignments"), JsonArray.class);
     for (JsonElement element : assignmentsJson) {
       if (!element.isJsonArray()) {

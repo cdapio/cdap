@@ -20,10 +20,11 @@ import java.security.Permission;
 import java.security.PermissionCollection;
 
 /**
- * This class is a extention of the existing java {@link SecurityManager} to allow
- * managing the permission of containers of application started by app-fabric.
+ * This class is a extention of the existing java {@link SecurityManager} to allow managing the
+ * permission of containers of application started by app-fabric.
  */
 public final class ApplicationSecurity extends SecurityManager {
+
   /**
    * Collection of security permissions.
    */
@@ -38,7 +39,7 @@ public final class ApplicationSecurity extends SecurityManager {
    * Invoked by the builder only.
    *
    * @param permissions a collection of {@link Permission} objects.
-   * @param adminClass  Class that had administratives
+   * @param adminClass Class that had administratives
    */
   private ApplicationSecurity(PermissionCollection permissions, Class<?> adminClass) {
     this.permissions = permissions;
@@ -78,7 +79,8 @@ public final class ApplicationSecurity extends SecurityManager {
     // If there is a security manager already installed, this method first calls the security manager's
     // checkPermission method with a RuntimePermission("setSecurityManager") permission to ensure it's ok to
     // replace the existing security manager. This may result in throwing a SecurityException.
-    if (permission instanceof RuntimePermission && "setSecurityManager".equals(permission.getName())) {
+    if (permission instanceof RuntimePermission && "setSecurityManager".equals(
+        permission.getName())) {
       throw new SecurityException("Cannot set security manager");
     }
 
@@ -87,9 +89,9 @@ public final class ApplicationSecurity extends SecurityManager {
       return;
     } else {
       throw new SecurityException(
-                                   "Access denied to " + permission.getClass()
-                                     + ", name : " + permission.getName()
-                                     + ", actions : " + permission.getActions()
+          "Access denied to " + permission.getClass()
+              + ", name : " + permission.getName()
+              + ", actions : " + permission.getActions()
       );
     }
   }
@@ -104,10 +106,11 @@ public final class ApplicationSecurity extends SecurityManager {
   }
 
   /**
-   * Builder for constructing the permissions collection.
-   * The permission collection is a allowed permission list.
+   * Builder for constructing the permissions collection. The permission collection is a allowed
+   * permission list.
    */
   public static class Builder {
+
     private final PermissionCollection perms;
     private Class<?> klass;
 
@@ -130,8 +133,8 @@ public final class ApplicationSecurity extends SecurityManager {
     }
 
     /**
-     * Defines the admin class that has capability to operate outside of restriction
-     * as set by {@link ApplicationSecurity}.
+     * Defines the admin class that has capability to operate outside of restriction as set by
+     * {@link ApplicationSecurity}.
      *
      * @param klass that has admin rights within this security manager.
      * @return this builder.
@@ -142,8 +145,7 @@ public final class ApplicationSecurity extends SecurityManager {
     }
 
     /**
-     * Applies the permission. Replaces the security manager for the JVM if there
-     * none set.
+     * Applies the permission. Replaces the security manager for the JVM if there none set.
      */
     public void apply() {
       System.setSecurityManager(new ApplicationSecurity(perms, klass));

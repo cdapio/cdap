@@ -46,6 +46,7 @@ import javax.annotation.Nullable;
  * Dataset instances metadata store
  */
 public final class DatasetInstanceTable {
+
   private static final Gson GSON = new Gson();
 
   private StructuredTable table;
@@ -57,24 +58,30 @@ public final class DatasetInstanceTable {
   @Nullable
   public DatasetSpecification get(DatasetId id) throws IOException {
     Optional<StructuredRow> row =
-      table.read(
-        ImmutableList.of(Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
-                                            id.getNamespace()),
-                         Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD, id.getDataset())));
+        table.read(
+            ImmutableList.of(
+                Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
+                    id.getNamespace()),
+                Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD,
+                    id.getDataset())));
     if (!row.isPresent()) {
       return null;
     }
     return GSON.fromJson(
-      row.get().getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD), DatasetSpecification.class);
+        row.get().getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD),
+        DatasetSpecification.class);
   }
 
   public void write(NamespaceId namespaceId, DatasetSpecification instanceSpec) throws IOException {
-    Field<String> namespaceField = Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
-                                                      namespaceId.getEntityName());
+    Field<String> namespaceField = Fields.stringField(
+        StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
+        namespaceId.getEntityName());
     Field<String> datasetField =
-      Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD, instanceSpec.getName());
+        Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD,
+            instanceSpec.getName());
     Field<String> metadataField =
-      Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD, GSON.toJson(instanceSpec));
+        Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD,
+            GSON.toJson(instanceSpec));
     table.upsert(ImmutableList.of(namespaceField, datasetField, metadataField));
   }
 
@@ -83,10 +90,10 @@ public final class DatasetInstanceTable {
       return false;
     }
     table.delete(
-      ImmutableList.of(Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
-                                          datasetInstanceId.getNamespace()),
-                       Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD,
-                                          datasetInstanceId.getDataset())));
+        ImmutableList.of(Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
+                datasetInstanceId.getNamespace()),
+            Fields.stringField(StoreDefinition.DatasetInstanceStore.DATASET_FIELD,
+                datasetInstanceId.getDataset())));
     return true;
   }
 
@@ -95,32 +102,37 @@ public final class DatasetInstanceTable {
    */
   public Collection<DatasetSpecification> getAll(NamespaceId namespaceId) throws IOException {
     Predicate<DatasetSpecification> localDatasetFilter = input -> input != null
-      && !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+        && !Boolean.parseBoolean(
+        input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
     return getAll(namespaceId, localDatasetFilter);
   }
 
-  public Collection<DatasetSpecification> get(NamespaceId namespaceId, final Map<String, String> properties)
-    throws IOException {
+  public Collection<DatasetSpecification> get(NamespaceId namespaceId,
+      final Map<String, String> properties)
+      throws IOException {
     Predicate<DatasetSpecification> propertyFilter = input -> input != null
-      && Maps.difference(properties, input.getProperties()).entriesOnlyOnLeft().isEmpty();
+        && Maps.difference(properties, input.getProperties()).entriesOnlyOnLeft().isEmpty();
 
     return getAll(namespaceId, propertyFilter);
   }
 
-  private Collection<DatasetSpecification> getAll(NamespaceId namespaceId, Predicate<DatasetSpecification> filter)
-    throws IOException {
+  private Collection<DatasetSpecification> getAll(NamespaceId namespaceId,
+      Predicate<DatasetSpecification> filter)
+      throws IOException {
     List<DatasetSpecification> result;
     try (CloseableIterator<StructuredRow> iterator = table.scan(
-      Range.singleton(
-        ImmutableList.of(
-          Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD, namespaceId.getNamespace()))),
-      Integer.MAX_VALUE)) {
+        Range.singleton(
+            ImmutableList.of(
+                Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD,
+                    namespaceId.getNamespace()))),
+        Integer.MAX_VALUE)) {
       result = new ArrayList<>();
       while (iterator.hasNext()) {
         DatasetSpecification datasetSpecification =
-          GSON.fromJson(
-            iterator.next().getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD),
-            DatasetSpecification.class);
+            GSON.fromJson(
+                iterator.next()
+                    .getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD),
+                DatasetSpecification.class);
         if (filter.test(datasetSpecification)) {
           result.add(datasetSpecification);
         }
@@ -130,8 +142,9 @@ public final class DatasetInstanceTable {
   }
 
   public Collection<DatasetSpecification> getByTypes(NamespaceId namespaceId, Set<String> typeNames)
-    throws IOException {
-    Predicate<DatasetSpecification> filter = input -> input != null && typeNames.contains(input.getType());
+      throws IOException {
+    Predicate<DatasetSpecification> filter = input -> input != null && typeNames.contains(
+        input.getType());
     return getAll(namespaceId, filter);
   }
 }

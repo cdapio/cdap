@@ -33,11 +33,12 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.security.TokenCache;
 
 /**
- * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of a PartitionedFileSet
- * Dataset.
+ * This class extends the FileOutputFormat and allows writing dynamically to multiple partitions of
+ * a PartitionedFileSet Dataset.
  *
- * This class is used in {@link PartitionedFileSetDataset} and is referred to this class by name because data-fabric
- * doesn't depends on app-fabric, while this class needs access to app-fabric class {@link BasicMapReduceTaskContext}.
+ * This class is used in {@link PartitionedFileSetDataset} and is referred to this class by name
+ * because data-fabric doesn't depends on app-fabric, while this class needs access to app-fabric
+ * class {@link BasicMapReduceTaskContext}.
  *
  * @param <K> Type of key
  * @param <V> Type of value
@@ -49,18 +50,19 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
    * Create a composite record writer that can write key/value data to different output files.
    *
    * @return a composite record writer
-   * @throws IOException
    */
   @Override
   public RecordWriter<K, V> getRecordWriter(final TaskAttemptContext job) throws IOException {
     boolean concurrencyAllowed =
-      job.getConfiguration().getBoolean(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY, true);
+        job.getConfiguration()
+            .getBoolean(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY, true);
     if (concurrencyAllowed) {
       return new MultiWriter<>(job);
     } else {
       return new SingleWriter<>(job);
     }
   }
+
   // suffixes a Path with a job-specific string
   static Path createJobSpecificPath(Path path, JobContext jobContext) {
     String outputPathSuffix = "_temporary_" + jobContext.getJobID().getId();
@@ -68,7 +70,8 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
   }
 
   @Override
-  public synchronized FileOutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException {
+  public synchronized FileOutputCommitter getOutputCommitter(TaskAttemptContext context)
+      throws IOException {
     final Path jobSpecificOutputPath = createJobSpecificPath(getOutputPath(context), context);
     return new DynamicPartitioningOutputCommitter(jobSpecificOutputPath, context);
   }
@@ -83,29 +86,32 @@ public class DynamicPartitioningOutputFormat<K, V> extends FileOutputFormat<K, V
 
     // get delegation token for outDir's file system
     TokenCache.obtainTokensForNamenodes(job.getCredentials(),
-                                        new Path[]{outDir}, job.getConfiguration());
+        new Path[]{outDir}, job.getConfiguration());
 
     // we permit multiple jobs writing to the same output directory. We handle this by each one writing to distinct
     // paths within that directory. See createJobSpecificPath method and usages of it.
 
     // additionally check that output dataset and dynamic partitioner class name has been set in conf
-    if (job.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET) == null) {
+    if (job.getConfiguration().get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET)
+        == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
+          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     }
 
     Class<? extends DynamicPartitioner> partitionerClass = job.getConfiguration()
-      .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
+        .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null,
+            DynamicPartitioner.class);
     if (partitionerClass == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                          + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME);
+          + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME);
     }
 
     Class<? extends FileOutputFormat> delegateOutputFormatClass = job.getConfiguration()
-      .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+        .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null,
+            FileOutputFormat.class);
     if (delegateOutputFormatClass == null) {
       throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
+          + Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME);
     }
   }
 

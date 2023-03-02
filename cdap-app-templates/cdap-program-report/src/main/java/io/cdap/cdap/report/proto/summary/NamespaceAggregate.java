@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents an aggregate of program runs by the namespace.
  */
 public class NamespaceAggregate extends ProgramRunAggregate {
+
   private final String namespace;
 
   public NamespaceAggregate(String namespace, long runs) {

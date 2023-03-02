@@ -52,16 +52,18 @@ public class SystemAppManagementService extends AbstractIdleService {
 
   @Inject
   SystemAppManagementService(CConfiguration cConf, ApplicationLifecycleService appLifecycleService,
-                             ProgramLifecycleService programLifecycleService) {
+      ProgramLifecycleService programLifecycleService) {
     this.systemAppConfigDirPath = new File(cConf.get(Constants.SYSTEM_APP_CONFIG_DIR));
-    this.systemAppEnableExecutor = new SystemAppEnableExecutor(appLifecycleService, programLifecycleService);
+    this.systemAppEnableExecutor = new SystemAppEnableExecutor(appLifecycleService,
+        programLifecycleService);
   }
 
   @Override
   protected void startUp() {
     LOG.debug("Starting {}", getClass().getSimpleName());
     executorService =
-      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("sys-app-management-service"));
+        Executors.newSingleThreadExecutor(
+            Threads.createDaemonThreadFactory("sys-app-management-service"));
     executorService.execute(() -> {
       try {
         // Execute all steps for each config file in system config directory.
@@ -74,7 +76,7 @@ public class SystemAppManagementService extends AbstractIdleService {
 
   private void bootStrapSystemAppConfigDir() throws Exception {
     LOG.debug("Number of config files {} in system app config directory.",
-              DirUtils.listFiles(systemAppConfigDirPath).size());
+        DirUtils.listFiles(systemAppConfigDirPath).size());
     for (File sysAppConfigFile : DirUtils.listFiles(systemAppConfigDirPath)) {
       LOG.debug("Running steps in config file {}", sysAppConfigFile.getAbsoluteFile());
       executeSysConfig(sysAppConfigFile.getAbsoluteFile());
@@ -93,10 +95,10 @@ public class SystemAppManagementService extends AbstractIdleService {
       if (step.getType() == SystemAppStep.Type.ENABLE_SYSTEM_APP) {
         systemAppEnableExecutor.deployAppAndStartPrograms(step.getArguments());
         LOG.debug("Deployed and enabled system app with id {} and label {}. Config file: {}.",
-                  step.getArguments().getId(), step.getLabel(), fileName);
+            step.getArguments().getId(), step.getLabel(), fileName);
       } else {
         LOG.warn("Unknown system app step type {} for step label {}. Config file: {}. Ignoring it.",
-                 step.getLabel(), step.getType(), fileName);
+            step.getLabel(), step.getType(), fileName);
       }
     }
   }

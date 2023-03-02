@@ -17,7 +17,8 @@
 package io.cdap.cdap.proto.security;
 
 /**
- * This enum holds a list of all know {@link Permission} enums and can be used to help identify specific permission.
+ * This enum holds a list of all know {@link Permission} enums and can be used to help identify
+ * specific permission.
  */
 public enum PermissionType {
   STANDARD(StandardPermission.class),
@@ -32,16 +33,14 @@ public enum PermissionType {
   }
 
   /**
-   *
-   * @return enum class for this permission type. All permissions of that class must return this type from their
-   * {@link Permission#getPermissionType()} call.
+   * @return enum class for this permission type. All permissions of that class must return this
+   *     type from their {@link Permission#getPermissionType()} call.
    */
   public Class<? extends Permission> getPermissionClass() {
     return permissionClass;
   }
 
   /**
-   *
    * @param permissionType {@link #name} of {@link Permission#getPermissionType()}
    * @param permissionName {@link Permission#name()}
    * @return {@link Permission} identified by type and name pair

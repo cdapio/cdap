@@ -36,6 +36,7 @@ public final class HTableNameConverter {
 
   /**
    * Encode a HBase entity name to ASCII encoding using {@link URLEncoder}.
+   *
    * @param entityName entity string to be encoded
    * @return encoded string
    */
@@ -81,9 +82,10 @@ public final class HTableNameConverter {
    * Gets the system configuration table prefix.
    *
    * @param prefix Prefix string
-   * @return System configuration table prefix (full table name minus the table qualifier).
-   * Example input: "cdap.table.name"     -->  output: "cdap_system."   (input table is in default namespace)
-   * Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (input table is in a custom namespace)
+   * @return System configuration table prefix (full table name minus the table qualifier). Example
+   *     input: "cdap.table.name"     -->  output: "cdap_system."   (input table is in default
+   *     namespace) Example input: "cdap_ns:table.name"  -->  output: "cdap_system:"   (input table
+   *     is in a custom namespace)
    */
   public static String getSysConfigTablePrefix(String prefix) {
     return prefix + "_" + NamespaceId.SYSTEM.getNamespace() + ":";
@@ -121,7 +123,7 @@ public final class HTableNameConverter {
       @SuppressWarnings("ConstantConditions")
       String[] parts = qualifier.split("\\.", 2);
       Preconditions.checkArgument(parts.length == 2,
-                                  String.format("expected table name to contain '.': %s", qualifier));
+          String.format("expected table name to contain '.': %s", qualifier));
       qualifier = parts[1];
 
       // strip 'user.' from the beginning of table name since we prepend it in getBackwardCompatibleTableName

@@ -37,7 +37,7 @@ public class TransactionServiceManager extends AbstractMasterServiceManager {
 
   @Inject
   TransactionServiceManager(CConfiguration cConf, TwillRunner twillRunner,
-                            TransactionSystemClient txClient, DiscoveryServiceClient discoveryClient) {
+      TransactionSystemClient txClient, DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient, Constants.Service.TRANSACTION, twillRunner);
     this.txClient = txClient;
   }

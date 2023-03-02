@@ -24,9 +24,9 @@ import javax.annotation.Nullable;
 import org.apache.tephra.Transaction;
 
 /**
- * A builder to setup parameters for fetching messages from the messaging system.
- * Sub-class needs to override the {@link #fetch()} method to return a {@link CloseableIterator}
- * for fetching messages.
+ * A builder to setup parameters for fetching messages from the messaging system. Sub-class needs to
+ * override the {@link #fetch()} method to return a {@link CloseableIterator} for fetching
+ * messages.
  */
 public abstract class MessageFetcher {
 
@@ -43,8 +43,9 @@ public abstract class MessageFetcher {
    * will clear the start time set by the {@link #setStartTime(long)} method.
    *
    * @param startOffset the message id to start fetching from.
-   * @param inclusive if {@code true}, it will include the message identified by the given message id as the
-   *                  first message (if still available in the system); otherwise it won't be included.
+   * @param inclusive if {@code true}, it will include the message identified by the given
+   *     message id as the first message (if still available in the system); otherwise it won't be
+   *     included.
    * @return this instance
    */
   public MessageFetcher setStartMessage(byte[] startOffset, boolean inclusive) {
@@ -55,15 +56,16 @@ public abstract class MessageFetcher {
   }
 
   /**
-   * Setup the message fetching start time (publish time). Calling this method will clear the
-   * start offset set by the {@link #setStartMessage(byte[], boolean)} method.
+   * Setup the message fetching start time (publish time). Calling this method will clear the start
+   * offset set by the {@link #setStartMessage(byte[], boolean)} method.
    *
    * @param startTime timestamp in milliseconds
    * @return this instance
    */
   public MessageFetcher setStartTime(long startTime) {
     if (startTime < 0) {
-      throw new IllegalArgumentException("Invalid message fetching start time. Start time must be >= 0");
+      throw new IllegalArgumentException(
+          "Invalid message fetching start time. Start time must be >= 0");
     }
     this.startTime = startTime;
     this.startOffset = null;
@@ -82,7 +84,8 @@ public abstract class MessageFetcher {
   }
 
   /**
-   * Sets the maximum limit on number of messages to be fetched. By default, this is set to {@code Integer.MAX_VALUE}.
+   * Sets the maximum limit on number of messages to be fetched. By default, this is set to {@code
+   * Integer.MAX_VALUE}.
    *
    * @param limit maximum number of messages to be fetched
    * @return this instance
@@ -119,7 +122,8 @@ public abstract class MessageFetcher {
   }
 
   /**
-   * Returns a {@link CloseableIterator} that iterates over messages fetched from the messaging system.
+   * Returns a {@link CloseableIterator} that iterates over messages fetched from the messaging
+   * system.
    *
    * @throws TopicNotFoundException if the topic does not exist
    * @throws IOException if it fails to create the iterator

@@ -38,12 +38,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it prefixes plugin ids
- * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
- * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
+ * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it
+ * prefixes plugin ids to provide isolation for each etl stage. For example, a source can use a
+ * plugin with id 'jdbcdriver' and a sink can also use a plugin with id 'jdbcdriver' without
+ * clobbering each other.
  */
 public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInputPipelineConfigurer,
-  MultiOutputPipelineConfigurer {
+    MultiOutputPipelineConfigurer {
+
   private final Engine engine;
   private final PluginConfigurer pluginConfigurer;
   private final DatasetConfigurer datasetConfigurer;
@@ -53,19 +55,21 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   private final FeatureFlagsProvider featureFlagsProvider;
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
-    C configurer, String stageName, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
-    this(configurer, stageName, engine, new DefaultStageConfigurer(stageName), featureFlagsProvider);
+      C configurer, String stageName, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
+    this(configurer, stageName, engine, new DefaultStageConfigurer(stageName),
+        featureFlagsProvider);
   }
 
   public <C extends PluginConfigurer & DatasetConfigurer> DefaultPipelineConfigurer(
-    C configurer, String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
-    FeatureFlagsProvider featureFlagsProvider) {
+      C configurer, String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
+      FeatureFlagsProvider featureFlagsProvider) {
     this(configurer, configurer, stageName, engine, stageConfigurer, featureFlagsProvider);
   }
 
-  public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer, DatasetConfigurer datasetConfigurer,
-                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
-                                   FeatureFlagsProvider featureFlagsProvider) {
+  public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer,
+      DatasetConfigurer datasetConfigurer,
+      String stageName, Engine engine, DefaultStageConfigurer stageConfigurer,
+      FeatureFlagsProvider featureFlagsProvider) {
     this.pluginConfigurer = pluginConfigurer;
     this.datasetConfigurer = datasetConfigurer;
     this.stageName = stageName;
@@ -101,7 +105,8 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
   }
 
   @Override
-  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
+  public void createDataset(String datasetName, Class<? extends Dataset> datasetClass,
+      DatasetProperties props) {
     datasetConfigurer.createDataset(datasetName, datasetClass, props);
   }
 
@@ -112,34 +117,41 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInput
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties) {
     return pluginConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                         PluginSelector selector) {
-    return pluginConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
+    return pluginConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties,
+        selector);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                     PluginProperties properties) {
-    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
+      PluginProperties properties) {
+    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId),
+        properties);
   }
 
   @Nullable
   @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                                     PluginSelector selector) {
-    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
+    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId),
+        properties, selector);
   }
 
   @Override
-  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
+  public Map<String, String> evaluateMacros(Map<String, String> properties,
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException {
     return pluginConfigurer.evaluateMacros(properties, evaluator, options);
   }
 

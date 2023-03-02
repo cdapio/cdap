@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public final class DimensionValue {
+
   private final String name;
   private final String value;
 
@@ -53,7 +54,8 @@ public final class DimensionValue {
 
     DimensionValue dimensionValue = (DimensionValue) o;
 
-    boolean result = value == null ? dimensionValue.value == null : value.equals(dimensionValue.value);
+    boolean result =
+        value == null ? dimensionValue.value == null : value.equals(dimensionValue.value);
     return result && name.equals(dimensionValue.name);
   }
 

@@ -31,27 +31,28 @@ import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import org.apache.twill.api.RunId;
 
 /**
- * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from json.
+ * Helper class to encoded/decode {@link io.cdap.cdap.api.schedule.TriggeringScheduleInfo} to/from
+ * json.
  */
 public class TriggeringScheduleInfoAdapter {
 
   public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
     return ApplicationSpecificationAdapter.addTypeAdapters(builder)
-      .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
-      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
-      .registerTypeAdapterFactory(new TypeAdapterFactory() {
-        @Override
-        public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-          if (TriggeringScheduleInfo.class.equals(type.getRawType())) {
-            //noinspection unchecked
-            return (TypeAdapter<T>) gson.getAdapter(DefaultTriggeringScheduleInfo.class);
+        .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
+        .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
+        .registerTypeAdapterFactory(new TypeAdapterFactory() {
+          @Override
+          public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+            if (TriggeringScheduleInfo.class.equals(type.getRawType())) {
+              //noinspection unchecked
+              return (TypeAdapter<T>) gson.getAdapter(DefaultTriggeringScheduleInfo.class);
+            }
+            if (WorkflowToken.class.equals(type.getRawType())) {
+              //noinspection unchecked
+              return (TypeAdapter<T>) gson.getAdapter(BasicWorkflowToken.class);
+            }
+            return null;
           }
-          if (WorkflowToken.class.equals(type.getRawType())) {
-            //noinspection unchecked
-            return (TypeAdapter<T>) gson.getAdapter(BasicWorkflowToken.class);
-          }
-          return null;
-        }
-      });
+        });
   }
 }

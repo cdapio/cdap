@@ -23,11 +23,14 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 /**
  * Exception thrown when the service is not running.
  */
-public class ServiceUnavailableException extends RetryableException implements HttpErrorStatusProvider {
+public class ServiceUnavailableException extends RetryableException implements
+    HttpErrorStatusProvider {
+
   private final String serviceName;
 
   public ServiceUnavailableException(String serviceName) {
-    this(serviceName, "Service '" + serviceName + "' is not available. Please wait until it is up and running.");
+    this(serviceName,
+        "Service '" + serviceName + "' is not available. Please wait until it is up and running.");
   }
 
   public ServiceUnavailableException(String serviceName, String message) {
@@ -36,7 +39,9 @@ public class ServiceUnavailableException extends RetryableException implements H
   }
 
   public ServiceUnavailableException(String serviceName, Throwable cause) {
-    this(serviceName, "Service '" + serviceName + "' is not available. Please wait until it is up and running.", cause);
+    this(serviceName,
+        "Service '" + serviceName + "' is not available. Please wait until it is up and running.",
+        cause);
   }
 
   public ServiceUnavailableException(String serviceName, String message, Throwable cause) {

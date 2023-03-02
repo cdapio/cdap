@@ -33,10 +33,10 @@ public class ServiceCommands extends CommandSet<Command> {
   @Inject
   public ServiceCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(CallServiceCommand.class))
-        .add(injector.getInstance(GetServiceEndpointsCommand.class))
-        .add(injector.getInstance(CheckServiceAvailabilityCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(CallServiceCommand.class))
+            .add(injector.getInstance(GetServiceEndpointsCommand.class))
+            .add(injector.getInstance(CheckServiceAvailabilityCommand.class))
+            .build());
   }
 }

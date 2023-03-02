@@ -28,7 +28,8 @@ import java.util.stream.StreamSupport;
 /**
  * A Constraint which requires a certain duration pass since the last execution of the schedule.
  */
-public class LastRunConstraint extends ProtoConstraint.LastRunConstraint implements CheckableConstraint {
+public class LastRunConstraint extends ProtoConstraint.LastRunConstraint implements
+    CheckableConstraint {
 
   public LastRunConstraint(long durationSinceLastRun, TimeUnit unit) {
     super(durationSinceLastRun, unit);
@@ -36,17 +37,17 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    long startTime = TimeUnit.MILLISECONDS.toSeconds(context.getCheckTimeMillis() - millisSinceLastRun);
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(
+        context.getCheckTimeMillis() - millisSinceLastRun);
     // We only need to check program runs within recent history, adding a buffer of 1 day, because the time range
     // is for the start time of the program. It may start before `millisSinceLastRun`, but complete after it.
     // Note: this will miss out on active workflow runs that started more than ~1day ago (suspended/lengthy workflows)
     Iterable<RunRecordDetail> runRecords =
-      context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.ALL,
-                             startTime - TimeUnit.DAYS.toSeconds(1), Long.MAX_VALUE, 100).values();
+        context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.ALL,
+            startTime - TimeUnit.DAYS.toSeconds(1), Long.MAX_VALUE, 100).values();
     // We can limit to 100, since just 1 program in the recent history is enough to make the constraint fail.
     // We want use 100 as the limit instead of 1, because we want to attempt to get the latest completed run,
     // instead of just the first (in order to more accurately compute a next runtime
-
 
     if (Iterables.isEmpty(filter(runRecords, startTime))) {
       return ConstraintResult.SATISFIED;
@@ -55,12 +56,13 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
       return ConstraintResult.NEVER_SATISFIED;
     }
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
+        context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
   }
 
   // Filters run records that are: FAILED, KILLED; keeps only: RUNNING, SUSPENDED, COMPLETED.
   // Also filters COMLPETED run records that have completed before the specified startTime.
-  private Iterable<RunRecordDetail> filter(Iterable<RunRecordDetail> runRecords, final long startTime) {
+  private Iterable<RunRecordDetail> filter(Iterable<RunRecordDetail> runRecords,
+      final long startTime) {
     return StreamSupport.stream(runRecords.spliterator(), false).filter(input -> {
       //noinspection ConstantConditions
       if (ProgramRunStatus.COMPLETED == input.getStatus() && input.getStopTs() < startTime) {

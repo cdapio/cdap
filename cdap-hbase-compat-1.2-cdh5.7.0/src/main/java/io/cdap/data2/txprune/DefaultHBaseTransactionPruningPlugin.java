@@ -41,7 +41,7 @@ public class DefaultHBaseTransactionPruningPlugin extends HBaseTransactionPrunin
     try (Admin admin = this.connection.getAdmin()) {
       if (admin.tableExists(stateTable)) {
         LOG.debug("Not creating pruneStateTable {} since it already exists.",
-                  stateTable.getNameWithNamespaceInclAsString());
+            stateTable.getNameWithNamespaceInclAsString());
         return;
       }
 
@@ -52,13 +52,13 @@ public class DefaultHBaseTransactionPruningPlugin extends HBaseTransactionPrunin
     } catch (TableExistsException ex) {
       // Expected if the prune state table is being created at the same time by another client
       LOG.debug("Not creating pruneStateTable {} since it already exists.",
-                stateTable.getNameWithNamespaceInclAsString(), ex);
+          stateTable.getNameWithNamespaceInclAsString(), ex);
     }
   }
 
   @Override
   protected boolean isTransactionalTable(HTableDescriptor tableDescriptor) {
     return tableDescriptor.hasCoprocessor(DefaultTransactionProcessor.class.getName()) ||
-      tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName());
+        tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName());
   }
 }

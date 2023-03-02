@@ -52,8 +52,8 @@ public final class LocalizeResource {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("archive", archive)
-      .add("uri", uri)
-      .toString();
+        .add("archive", archive)
+        .add("uri", uri)
+        .toString();
   }
 }

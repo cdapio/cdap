@@ -23,6 +23,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * Indicates that object is gone (e.g. moved into finished / deleted status)
  */
 public class GoneException extends Exception implements HttpErrorStatusProvider {
+
   public GoneException() {
   }
 

@@ -66,12 +66,14 @@ import org.slf4j.LoggerFactory;
 /**
  * A ProgramRuntimeService that keeps an in memory map for all running programs.
  */
-public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements ProgramRuntimeService {
+public abstract class AbstractProgramRuntimeService extends AbstractIdleService implements
+    ProgramRuntimeService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRuntimeService.class);
-  private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(ProgramController.State.COMPLETED,
-                                                                                      ProgramController.State.KILLED,
-                                                                                      ProgramController.State.ERROR);
+  private static final EnumSet<ProgramController.State> COMPLETED_STATES = EnumSet.of(
+      ProgramController.State.COMPLETED,
+      ProgramController.State.KILLED,
+      ProgramController.State.ERROR);
   private final CConfiguration cConf;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
@@ -82,9 +84,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private TwillRunnerService remoteTwillRunnerService;
   private ExecutorService executor;
 
-  protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                          ProgramStateWriter programStateWriter,
-                                          ProgramRunDispatcherFactory programRunDispatcherFactory) {
+  protected AbstractProgramRuntimeService(CConfiguration cConf,
+      ProgramRunnerFactory programRunnerFactory,
+      ProgramStateWriter programStateWriter,
+      ProgramRunDispatcherFactory programRunDispatcherFactory) {
     this.cConf = cConf;
     this.programRunDispatcherFactory = programRunDispatcherFactory;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
@@ -96,36 +99,42 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   protected abstract boolean isDistributed();
 
   /**
-   * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is optional because
-   * in unit-test we don't have need for that.
+   * Optional guice injection for the {@link ProgramRunnerFactory} used for remote execution. It is
+   * optional because in unit-test we don't have need for that.
    */
   @Inject(optional = true)
-  void setRemoteProgramRunnerFactory(@Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
+  void setRemoteProgramRunnerFactory(
+      @Constants.AppFabric.RemoteExecution ProgramRunnerFactory runnerFactory) {
     this.remoteProgramRunnerFactory = runnerFactory;
   }
 
   /**
-   * Optional guice injection for the {@link TwillRunnerService} used for remote execution. It is optional because
-   * in unit-test we don't have need for that.
+   * Optional guice injection for the {@link TwillRunnerService} used for remote execution. It is
+   * optional because in unit-test we don't have need for that.
    */
   @Inject(optional = true)
-  void setRemoteTwillRunnerService(@Constants.AppFabric.RemoteExecution TwillRunnerService twillRunnerService) {
+  void setRemoteTwillRunnerService(
+      @Constants.AppFabric.RemoteExecution TwillRunnerService twillRunnerService) {
     this.remoteTwillRunnerService = twillRunnerService;
   }
 
   @Override
-  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
-    ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(programDescriptor, options, runId,
-                                                                                    isDistributed());
+  public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options,
+      RunId runId) {
+    ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
+        programDescriptor, options, runId,
+        isDistributed());
     ProgramId programId = programDescriptor.getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     DelayedProgramController controller = new DelayedProgramController(programRunId);
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId, dispatcherContext::executeCleanupTasks);
+    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId,
+        dispatcherContext::executeCleanupTasks);
     updateRuntimeInfo(runtimeInfo);
     executor.execute(() -> {
       try {
-        controller.setProgramController(programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
-                                          .dispatchProgram(dispatcherContext));
+        controller.setProgramController(
+            programRunDispatcherFactory.getProgramRunDispatcher(programId.getType())
+                .dispatchProgram(dispatcherContext));
       } catch (Exception e) {
         controller.failed(e);
         programStateWriter.error(programRunId, e);
@@ -138,10 +147,11 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   public ProgramLiveInfo getLiveInfo(ProgramId programId) {
     return isRunning(programId) ? new InMemoryProgramLiveInfo(programId)
-      : new NotRunningProgramLiveInfo(programId);
+        : new NotRunningProgramLiveInfo(programId);
   }
 
-  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanUpTask) {
+  protected RuntimeInfo createRuntimeInfo(ProgramController controller, ProgramId programId,
+      Runnable cleanUpTask) {
     return new SimpleRuntimeInfo(controller, programId, cleanUpTask);
   }
 
@@ -199,7 +209,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       for (TwillController controller : liveInfo.getControllers()) {
         // For remote twill runner, the twill run id and cdap run id are the same
         RunId runId = controller.getRunId();
-        if (result.computeIfAbsent(runId, rid -> createRuntimeInfo(programId, runId, controller)) == null) {
+        if (result.computeIfAbsent(runId, rid -> createRuntimeInfo(programId, runId, controller))
+            == null) {
           LOG.warn("Unable to create runtime info for program {} with run id {}", programId, runId);
         }
       }
@@ -234,9 +245,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     // Also don't keep a thread around if it is idle for more than 60 seconds.
     int poolSize = cConf.getInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS);
     ThreadPoolExecutor executor = new ThreadPoolExecutor(poolSize, poolSize, 60, TimeUnit.SECONDS,
-                                                         new LinkedBlockingQueue<>(),
-                                                         new ThreadFactoryBuilder()
-                                                           .setNameFormat("program-start-%d").build());
+        new LinkedBlockingQueue<>(),
+        new ThreadFactoryBuilder()
+            .setNameFormat("program-start-%d").build());
     executor.allowCoreThreadTimeOut(true);
     this.executor = executor;
   }
@@ -254,17 +265,21 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param twillRunner the {@link TwillRunner} to lookup from
    * @param programRunId the program run id
    * @param twillRunId the twill {@link RunId}
-   * @return the corresponding {@link RuntimeInfo} or {@code null} if no runtime information was found
+   * @return the corresponding {@link RuntimeInfo} or {@code null} if no runtime information was
+   *     found
    */
   @Nullable
-  protected RuntimeInfo lookupFromTwillRunner(TwillRunner twillRunner, ProgramRunId programRunId, RunId twillRunId) {
-    TwillController twillController = twillRunner.lookup(TwillAppNames.toTwillAppName(programRunId.getParent()),
-                                                         twillRunId);
+  protected RuntimeInfo lookupFromTwillRunner(TwillRunner twillRunner, ProgramRunId programRunId,
+      RunId twillRunId) {
+    TwillController twillController = twillRunner.lookup(
+        TwillAppNames.toTwillAppName(programRunId.getParent()),
+        twillRunId);
     if (twillController == null) {
       return null;
     }
 
-    return createRuntimeInfo(programRunId.getParent(), RunIds.fromString(programRunId.getRun()), twillController);
+    return createRuntimeInfo(programRunId.getParent(), RunIds.fromString(programRunId.getRun()),
+        twillController);
   }
 
   /**
@@ -346,15 +361,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    *
    * @param programId the program id for the program run
    * @param runId the run id for the program run
-   * @param twillController the {@link TwillController} controlling the corresponding twill application
-   * @return a {@link RuntimeInfo} or {@code null} if not able to create the {@link RuntimeInfo} due to unexpected
-   *         and unrecoverable error/bug.
+   * @param twillController the {@link TwillController} controlling the corresponding twill
+   *     application
+   * @return a {@link RuntimeInfo} or {@code null} if not able to create the {@link RuntimeInfo} due
+   *     to unexpected and unrecoverable error/bug.
    */
   @Nullable
-  protected RuntimeInfo createRuntimeInfo(ProgramId programId, RunId runId, TwillController twillController) {
+  protected RuntimeInfo createRuntimeInfo(ProgramId programId, RunId runId,
+      TwillController twillController) {
     try {
       ProgramController controller = createController(programId, runId, twillController);
-      RuntimeInfo runtimeInfo = controller == null ? null : createRuntimeInfo(controller, programId, () -> { });
+      RuntimeInfo runtimeInfo =
+          controller == null ? null : createRuntimeInfo(controller, programId, () -> {
+          });
 
       if (runtimeInfo != null) {
         updateRuntimeInfo(runtimeInfo);
@@ -370,13 +389,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    *
    * @param programId the program id for the program run
    * @param runId the run id for the program run
-   * @param controller the {@link TwillController} controlling the corresponding twill application
+   * @param controller the {@link TwillController} controlling the corresponding twill
+   *     application
    * @return a {@link ProgramController} or {@code null} if there is unexpected error/bug
    */
   @Nullable
-  private ProgramController createController(ProgramId programId, RunId runId, TwillController controller) {
+  private ProgramController createController(ProgramId programId, RunId runId,
+      TwillController controller) {
     ProgramRunnerFactory factory = runId.equals(controller.getRunId())
-      ? remoteProgramRunnerFactory : programRunnerFactory;
+        ? remoteProgramRunnerFactory : programRunnerFactory;
 
     ProgramRunner programRunner;
     try {
@@ -385,8 +406,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // This shouldn't happen. If it happen, it means CDAP was incorrectly install such that some of the program
       // type is not support (maybe due to version mismatch in upgrade).
       LOG.error("Unsupported program type {} for program {}. " +
-                  "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
-                programId.getType(), programId);
+              "It is likely caused by incorrect CDAP installation or upgrade to incompatible CDAP version",
+          programId.getType(), programId);
       return null;
     }
 
@@ -394,13 +415,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // This is also unexpected. If it happen, it means the CDAP core or the runtime provider extension was wrongly
       // implemented
       ResourceReport resourceReport = controller.getResourceReport();
-      LOG.error("Unable to create ProgramController for program {} for twill application {}. It is likely caused by " +
-                  "invalid CDAP program runtime extension.",
-                programId, resourceReport == null ? "'unknown twill application'" : resourceReport.getApplicationId());
+      LOG.error(
+          "Unable to create ProgramController for program {} for twill application {}. It is likely caused by "
+              +
+              "invalid CDAP program runtime extension.",
+          programId, resourceReport == null ? "'unknown twill application'"
+              : resourceReport.getApplicationId());
       return null;
     }
 
-    return ((ProgramControllerCreator) programRunner).createProgramController(programId.run(runId), controller);
+    return ((ProgramControllerCreator) programRunner).createProgramController(programId.run(runId),
+        controller);
   }
 
   /**

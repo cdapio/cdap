@@ -22,7 +22,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * The runtime configurer that can be got when the app is reconfigured before the actual program run
+ * The runtime configurer that can be got when the app is reconfigured before the actual program
+ * run
  */
 public interface RuntimeConfigurer extends ServiceDiscoverer {
 
@@ -32,10 +33,10 @@ public interface RuntimeConfigurer extends ServiceDiscoverer {
   Map<String, String> getRuntimeArguments();
 
   /**
-   * @return The app spec generated when the app is initially deployed, null if there is no such spec, for example,
-   * for preview run, there is no existing app spec
+   * @return The app spec generated when the app is initially deployed, null if there is no such
+   *     spec, for example, for preview run, there is no existing app spec
    *
-   * This is deprecated, Use {@link ApplicationConfigurer#getDeployedApplicationSpec()}
+   *     This is deprecated, Use {@link ApplicationConfigurer#getDeployedApplicationSpec()}
    */
   @Nullable
   @Deprecated

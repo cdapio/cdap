@@ -26,4 +26,5 @@ import java.io.Closeable;
  * @param <V> The value type.
  */
 public interface CloseableBatchWritable<K, V> extends BatchWritable<K, V>, Closeable {
+
 }

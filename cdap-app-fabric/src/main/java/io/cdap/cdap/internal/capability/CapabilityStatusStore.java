@@ -37,7 +37,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * CapabilityStatusStore which takes care of reading , writing capability status and provides additional helpful methods
+ * CapabilityStatusStore which takes care of reading , writing capability status and provides
+ * additional helpful methods
  */
 public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter {
 
@@ -50,48 +51,55 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
   }
 
   @Override
-  public void checkAllEnabled(Collection<String> capabilities) throws IOException, CapabilityNotAvailableException {
+  public void checkAllEnabled(Collection<String> capabilities)
+      throws IOException, CapabilityNotAvailableException {
     List<List<Field<?>>> multiKeys = new ArrayList<>();
     capabilities.forEach(capability -> multiKeys
-      .add(Collections.singletonList(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability))));
+        .add(Collections.singletonList(
+            Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability))));
     Map<String, String> capabilityMap = TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITIES);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITIES);
       return capabilityTable.multiRead(multiKeys).stream().
-        collect(Collectors.toMap(
-          structuredRow -> structuredRow.getString(StoreDefinition.CapabilitiesStore.NAME_FIELD),
-          structuredRow -> structuredRow.getString(StoreDefinition.CapabilitiesStore.STATUS_FIELD)
-        ));
+          collect(Collectors.toMap(
+              structuredRow -> structuredRow.getString(
+                  StoreDefinition.CapabilitiesStore.NAME_FIELD),
+              structuredRow -> structuredRow.getString(
+                  StoreDefinition.CapabilitiesStore.STATUS_FIELD)
+          ));
 
     }, IOException.class);
     for (String capability : capabilities) {
       if (!capabilityMap.containsKey(capability) || CapabilityStatus
-        .valueOf(capabilityMap.get(capability).toUpperCase()) != CapabilityStatus.ENABLED) {
+          .valueOf(capabilityMap.get(capability).toUpperCase()) != CapabilityStatus.ENABLED) {
         throw new CapabilityNotAvailableException(capability);
       }
     }
   }
 
   @Override
-  public Map<String, CapabilityConfig> getConfigs(Collection<String> capabilities) throws IOException {
+  public Map<String, CapabilityConfig> getConfigs(Collection<String> capabilities)
+      throws IOException {
     List<List<Field<?>>> multiKeys = new ArrayList<>();
     capabilities.forEach(capability -> multiKeys
-      .add(Collections.singletonList(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability))));
+        .add(Collections.singletonList(
+            Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability))));
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITIES);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITIES);
       return capabilityTable.multiRead(multiKeys).stream().
-        collect(Collectors.toMap(
-          structuredRow -> structuredRow.getString(StoreDefinition.CapabilitiesStore.NAME_FIELD),
-          structuredRow -> GSON
-            .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD), CapabilityConfig.class))
-        );
+          collect(Collectors.toMap(
+              structuredRow -> structuredRow.getString(
+                  StoreDefinition.CapabilitiesStore.NAME_FIELD),
+              structuredRow -> GSON
+                  .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD),
+                      CapabilityConfig.class))
+          );
     }, IOException.class);
   }
 
   /**
    * Returns list of all capability records
-   *
-   * @return
-   * @throws IOException
    */
   public Map<String, CapabilityRecord> getCapabilityRecords() throws IOException {
     Map<String, CapabilityRecord> capabilityRecordMap = new HashMap<>();
@@ -99,108 +107,111 @@ public class CapabilityStatusStore implements CapabilityReader, CapabilityWriter
       //query all operations
       Map<String, CapabilityOperationRecord> capabilityOperationMap = new HashMap<>();
       StructuredTable capabilityOperationTable = context
-        .getTable(StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
+          .getTable(StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
       CloseableIterator<StructuredRow> operationsResultIterator = capabilityOperationTable
-        .scan(Range.all(), Integer.MAX_VALUE);
+          .scan(Range.all(), Integer.MAX_VALUE);
       operationsResultIterator.forEachRemaining(structuredRow -> {
         String capability = structuredRow.getString(StoreDefinition.CapabilitiesStore.NAME_FIELD);
         CapabilityOperationRecord capabilityOperationRecord = new CapabilityOperationRecord(
-          capability, CapabilityAction
-          .valueOf(structuredRow.getString(StoreDefinition.CapabilitiesStore.ACTION_FIELD).toUpperCase()),
-          GSON
-            .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD), CapabilityConfig.class));
+            capability, CapabilityAction
+            .valueOf(structuredRow.getString(StoreDefinition.CapabilitiesStore.ACTION_FIELD)
+                .toUpperCase()),
+            GSON
+                .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD),
+                    CapabilityConfig.class));
         capabilityOperationMap.put(capability, capabilityOperationRecord);
       });
       //query all capabilities
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITIES);
-      CloseableIterator<StructuredRow> capabilityResultIterator = capabilityTable.scan(Range.all(), Integer.MAX_VALUE);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITIES);
+      CloseableIterator<StructuredRow> capabilityResultIterator = capabilityTable.scan(Range.all(),
+          Integer.MAX_VALUE);
       capabilityResultIterator.forEachRemaining(structuredRow -> {
         String capability = structuredRow.getString(StoreDefinition.CapabilitiesStore.NAME_FIELD);
         CapabilityStatusRecord capabilityStatusRecord = new CapabilityStatusRecord(
-          capability,
-          CapabilityStatus
-            .valueOf(structuredRow.getString(StoreDefinition.CapabilitiesStore.STATUS_FIELD).toUpperCase()),
-          GSON
-            .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD), CapabilityConfig.class));
+            capability,
+            CapabilityStatus
+                .valueOf(structuredRow.getString(StoreDefinition.CapabilitiesStore.STATUS_FIELD)
+                    .toUpperCase()),
+            GSON
+                .fromJson(structuredRow.getString(StoreDefinition.CapabilitiesStore.CONFIG_FIELD),
+                    CapabilityConfig.class));
         //add to result and remove from operations map
         capabilityRecordMap
-          .put(capability,
-               new CapabilityRecord(capabilityStatusRecord, capabilityOperationMap.remove(capability)));
+            .put(capability,
+                new CapabilityRecord(capabilityStatusRecord,
+                    capabilityOperationMap.remove(capability)));
       });
       //add the remaining operations to result
       capabilityOperationMap.keySet().forEach(capability -> capabilityRecordMap
-        .put(capability, new CapabilityRecord(null, capabilityOperationMap.get(capability))));
+          .put(capability, new CapabilityRecord(null, capabilityOperationMap.get(capability))));
       return capabilityRecordMap;
     }, IOException.class);
   }
 
   /**
    * Add or update capability
-   *
-   * @param capability
-   * @param status
-   * @throws IOException
    */
   @Override
   public void addOrUpdateCapability(String capability, CapabilityStatus status,
-                                    CapabilityConfig config) throws IOException {
+      CapabilityConfig config) throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITIES);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITIES);
       Collection<Field<?>> fields = new ArrayList<>();
       fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability));
-      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.STATUS_FIELD, status.name().toLowerCase()));
-      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.CONFIG_FIELD, GSON.toJson(config)));
-      fields.add(Fields.longField(StoreDefinition.CapabilitiesStore.UPDATED_TIME_FIELD, System.currentTimeMillis()));
+      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.STATUS_FIELD,
+          status.name().toLowerCase()));
+      fields.add(
+          Fields.stringField(StoreDefinition.CapabilitiesStore.CONFIG_FIELD, GSON.toJson(config)));
+      fields.add(Fields.longField(StoreDefinition.CapabilitiesStore.UPDATED_TIME_FIELD,
+          System.currentTimeMillis()));
       capabilityTable.upsert(fields);
     }, IOException.class);
   }
 
   /**
    * Delete capability
-   *
-   * @param capability
-   * @throws IOException
    */
   @Override
   public void deleteCapability(String capability) throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITIES);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITIES);
       capabilityTable
-        .delete(Collections.singleton(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability)));
+          .delete(Collections.singleton(
+              Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability)));
     }, IOException.class);
   }
 
   /**
    * Adds or update capability operations
-   *
-   * @param capability
-   * @param actionType
-   * @param config
-   * @throws IOException
    */
   public void addOrUpdateCapabilityOperation(String capability, CapabilityAction actionType,
-                                             CapabilityConfig config) throws IOException {
+      CapabilityConfig config) throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
       Collection<Field<?>> fields = new ArrayList<>();
       fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability));
-      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.ACTION_FIELD, actionType.name().toLowerCase()));
-      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.CONFIG_FIELD, GSON.toJson(config)));
+      fields.add(Fields.stringField(StoreDefinition.CapabilitiesStore.ACTION_FIELD,
+          actionType.name().toLowerCase()));
+      fields.add(
+          Fields.stringField(StoreDefinition.CapabilitiesStore.CONFIG_FIELD, GSON.toJson(config)));
       capabilityTable.upsert(fields);
     }, IOException.class);
   }
 
   /**
    * Deletes capability operations
-   *
-   * @param capability
-   * @throws IOException
    */
   public void deleteCapabilityOperation(String capability) throws IOException {
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable capabilityTable = context.getTable(StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
+      StructuredTable capabilityTable = context.getTable(
+          StoreDefinition.CapabilitiesStore.CAPABILITY_OPERATIONS);
       capabilityTable
-        .delete(Collections.singleton(Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability)));
+          .delete(Collections.singleton(
+              Fields.stringField(StoreDefinition.CapabilitiesStore.NAME_FIELD, capability)));
     }, IOException.class);
   }
 }

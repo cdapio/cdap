@@ -49,21 +49,23 @@ public class GetDatasetLineageCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     long currentTime = System.currentTimeMillis();
-    DatasetId dataset = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
+    DatasetId dataset = cliConfig.getCurrentNamespace()
+        .dataset(arguments.get(ArgumentName.DATASET.toString()));
     long start = getTimestamp(arguments.getOptional("start", "min"), currentTime);
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
     LineageRecord lineage = client.getLineage(dataset, start, end, levels);
     Table table = Table.builder()
-      .setHeader("start", "end", "relations", "programs", "data")
-      .setRows(
-        Collections.<List<String>>singletonList(
-          Lists.newArrayList(
-            Long.toString(lineage.getStart()), Long.toString(lineage.getEnd()), GSON.toJson(lineage.getRelations()),
-            GSON.toJson(lineage.getPrograms()), GSON.toJson(lineage.getData()))
-        )
-      ).build();
+        .setHeader("start", "end", "relations", "programs", "data")
+        .setRows(
+            Collections.<List<String>>singletonList(
+                Lists.newArrayList(
+                    Long.toString(lineage.getStart()), Long.toString(lineage.getEnd()),
+                    GSON.toJson(lineage.getRelations()),
+                    GSON.toJson(lineage.getPrograms()), GSON.toJson(lineage.getData()))
+            )
+        ).build();
 
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
@@ -71,7 +73,7 @@ public class GetDatasetLineageCommand extends AbstractCommand {
   @Override
   public String getPattern() {
     return String.format("get lineage dataset <%s> [start <start>] [end <end>] [levels <levels>]",
-                         ArgumentName.DATASET);
+        ArgumentName.DATASET);
   }
 
   @Override

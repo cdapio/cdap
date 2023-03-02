@@ -21,15 +21,17 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Result for the program count, if there is an exception about the run count, the count will be null, and the exception
- * is contained
+ * Result for the program count, if there is an exception about the run count, the count will be
+ * null, and the exception is contained
  */
 public class RunCountResult {
+
   private final ProgramReference programReference;
   private final Long count;
   private final Exception exception;
 
-  public RunCountResult(ProgramReference programReference, @Nullable Long count, @Nullable Exception exception) {
+  public RunCountResult(ProgramReference programReference, @Nullable Long count,
+      @Nullable Exception exception) {
     this.programReference = programReference;
     this.count = count;
     this.exception = exception;
@@ -60,8 +62,8 @@ public class RunCountResult {
 
     RunCountResult that = (RunCountResult) o;
     return Objects.equals(programReference, that.programReference) &&
-      Objects.equals(count, that.count) &&
-      Objects.equals(exception, that.exception);
+        Objects.equals(count, that.count) &&
+        Objects.equals(exception, that.exception);
   }
 
   @Override

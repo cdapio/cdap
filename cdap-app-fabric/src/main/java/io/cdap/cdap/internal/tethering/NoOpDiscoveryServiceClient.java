@@ -30,11 +30,13 @@ import org.apache.twill.discovery.ServiceDiscovered;
  * A DiscoveryServiceClient implementation that will always return the same url.
  */
 public class NoOpDiscoveryServiceClient implements DiscoveryServiceClient {
+
   private URL url;
 
   public NoOpDiscoveryServiceClient(String url) throws MalformedURLException {
     this.url = new URL(url);
   }
+
   @Override
   public ServiceDiscovered discover(String name) {
     DefaultServiceDiscovered serviceDiscovered = new DefaultServiceDiscovered(name);
@@ -48,7 +50,7 @@ public class NoOpDiscoveryServiceClient implements DiscoveryServiceClient {
     }
     int port = url.getPort() != -1 ? url.getPort() : uriScheme.getDefaultPort();
     Discoverable discoverable = uriScheme.createDiscoverable(name,
-                                                             InetSocketAddress.createUnresolved(url.getHost(), port));
+        InetSocketAddress.createUnresolved(url.getHost(), port));
     serviceDiscovered.setDiscoverables(Collections.singleton(discoverable));
     return serviceDiscovered;
   }

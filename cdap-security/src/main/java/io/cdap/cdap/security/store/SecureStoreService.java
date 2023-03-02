@@ -24,4 +24,5 @@ import io.cdap.cdap.api.security.store.SecureStoreManager;
  * Secure store service.
  */
 public interface SecureStoreService extends SecureStore, SecureStoreManager, Service {
+
 }

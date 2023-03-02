@@ -25,6 +25,7 @@ import java.util.Map;
  * todo: extract TaskType enum in its own class
  */
 public final class MapReduceMetrics {
+
   public static final String METRIC_INPUT_RECORDS = "process.entries.in";
   public static final String METRIC_OUTPUT_RECORDS = "process.entries.out";
   public static final String METRIC_BYTES = "process.bytes";
@@ -45,8 +46,8 @@ public final class MapReduceMetrics {
     Reducer("r");
 
     private static final Map<org.apache.hadoop.mapreduce.TaskType, TaskType> LOOKUP_BY_MAP =
-      ImmutableMap.of(org.apache.hadoop.mapreduce.TaskType.MAP, Mapper,
-                      org.apache.hadoop.mapreduce.TaskType.REDUCE, Reducer);
+        ImmutableMap.of(org.apache.hadoop.mapreduce.TaskType.MAP, Mapper,
+            org.apache.hadoop.mapreduce.TaskType.REDUCE, Reducer);
 
     private final String id;
 
@@ -63,12 +64,12 @@ public final class MapReduceMetrics {
     }
 
     /**
-     * @return the corresponding {@link TaskType} for the given {@link org.apache.hadoop.mapreduce.TaskType}, or throws
-     * IllegalArgumentException if there is no corresponding TaskType.
+     * @return the corresponding {@link TaskType} for the given {@link org.apache.hadoop.mapreduce.TaskType},
+     *     or throws IllegalArgumentException if there is no corresponding TaskType.
      */
     public static TaskType from(org.apache.hadoop.mapreduce.TaskType hadoopTaskType) {
       Preconditions.checkArgument(LOOKUP_BY_MAP.containsKey(hadoopTaskType),
-                                  "No TaskType for value: %s.", hadoopTaskType);
+          "No TaskType for value: %s.", hadoopTaskType);
       return LOOKUP_BY_MAP.get(hadoopTaskType);
     }
   }

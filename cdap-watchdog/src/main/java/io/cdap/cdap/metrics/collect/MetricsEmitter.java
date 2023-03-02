@@ -24,7 +24,9 @@ public interface MetricsEmitter {
 
   /**
    * Emits metric
-   * @return A {@link io.cdap.cdap.api.metrics.MetricValue} representing metrics for the given timestamp
+   *
+   * @return A {@link io.cdap.cdap.api.metrics.MetricValue} representing metrics for the given
+   *     timestamp
    */
   MetricValue emit();
 }

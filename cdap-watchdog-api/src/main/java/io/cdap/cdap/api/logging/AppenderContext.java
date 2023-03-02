@@ -50,7 +50,6 @@ public abstract class AppenderContext extends LoggerContext {
 
   /**
    * Returns a {@link MetricsContext} for emitting metrics.
-   * @return
    */
   public abstract MetricsContext getMetricsContext();
 }

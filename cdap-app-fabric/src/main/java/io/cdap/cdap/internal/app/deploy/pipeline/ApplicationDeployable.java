@@ -58,25 +58,26 @@ public class ApplicationDeployable {
   private final boolean isUpgrade;
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
-                               ApplicationId applicationId, ApplicationSpecification specification,
-                               @Nullable ApplicationSpecification existingAppSpec,
-                               ApplicationDeployScope applicationDeployScope,
-                               ApplicationClass applicationClass) {
-    this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
-         null, null, false);
+      ApplicationId applicationId, ApplicationSpecification specification,
+      @Nullable ApplicationSpecification existingAppSpec,
+      ApplicationDeployScope applicationDeployScope,
+      ApplicationClass applicationClass) {
+    this(artifactId, artifactLocation, applicationId, specification, existingAppSpec,
+        applicationDeployScope,
+        applicationClass, null, true, Collections.emptyList(), Collections.emptyMap(),
+        null, null, false);
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
-                               ApplicationId applicationId, ApplicationSpecification specification,
-                               @Nullable ApplicationSpecification existingAppSpec,
-                               ApplicationDeployScope applicationDeployScope,
-                               ApplicationClass applicationClass,
-                               @Nullable KerberosPrincipalId ownerPrincipal,
-                               boolean updateSchedules,
-                               Collection<StructuredTableSpecification> systemTables,
-                               Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
-                               @Nullable SourceControlMeta sourceControlMeta, boolean isUpgrade) {
+      ApplicationId applicationId, ApplicationSpecification specification,
+      @Nullable ApplicationSpecification existingAppSpec,
+      ApplicationDeployScope applicationDeployScope,
+      ApplicationClass applicationClass,
+      @Nullable KerberosPrincipalId ownerPrincipal,
+      boolean updateSchedules,
+      Collection<StructuredTableSpecification> systemTables,
+      Map<MetadataScope, Metadata> metadata, @Nullable ChangeDetail changeDetail,
+      @Nullable SourceControlMeta sourceControlMeta, boolean isUpgrade) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -115,7 +116,6 @@ public class ApplicationDeployable {
   }
 
   /**
-   *
    * @return {@link ApplicationClass} of the Application
    */
   public ApplicationClass getApplicationClass() {
@@ -130,8 +130,8 @@ public class ApplicationDeployable {
   }
 
   /**
-   * Returns the {@link ApplicationSpecification} of the older version of the application or {@code null} if
-   * it doesn't exist.
+   * Returns the {@link ApplicationSpecification} of the older version of the application or {@code
+   * null} if it doesn't exist.
    */
   @Nullable
   public ApplicationSpecification getExistingAppSpec() {

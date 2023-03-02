@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Represents the ACTION node in the {@link Workflow}.
  */
 public class WorkflowActionNode extends WorkflowNode {
+
   private final ScheduleProgramInfo program;
   private final CustomActionSpecification customActionSpecification;
 
@@ -35,12 +36,12 @@ public class WorkflowActionNode extends WorkflowNode {
 
   public WorkflowActionNode(String nodeId, CustomActionSpecification customActionSpecification) {
     super(nodeId, WorkflowNodeType.ACTION);
-    this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION, customActionSpecification.getName());
+    this.program = new ScheduleProgramInfo(SchedulableProgramType.CUSTOM_ACTION,
+        customActionSpecification.getName());
     this.customActionSpecification = customActionSpecification;
   }
 
   /**
-   *
    * @return the program information associated with the {@link WorkflowNode}
    */
   public ScheduleProgramInfo getProgram() {
@@ -48,8 +49,8 @@ public class WorkflowActionNode extends WorkflowNode {
   }
 
   /**
-   * @return the {@link CustomActionSpecification} if this {@link WorkflowNode} represents the custom action,
-   * otherwise null is returned
+   * @return the {@link CustomActionSpecification} if this {@link WorkflowNode} represents the
+   *     custom action, otherwise null is returned
    */
   @Nullable
   public CustomActionSpecification getCustomActionSpecification() {

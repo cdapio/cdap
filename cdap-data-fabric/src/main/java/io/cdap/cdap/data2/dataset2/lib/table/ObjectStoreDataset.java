@@ -48,6 +48,7 @@ import javax.annotation.Nullable;
 
 /**
  * Default implementation for {@link ObjectStore}
+ *
  * @param <T> the type of objects in the store
  */
 @Beta
@@ -64,7 +65,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   private ReflectionDatumReader<T> datumReader;
 
   public ObjectStoreDataset(String name, KeyValueTable kvTable, TypeRepresentation typeRep,
-                            Schema schema, @Nullable ClassLoader classLoader) {
+      Schema schema, @Nullable ClassLoader classLoader) {
     super(name, kvTable);
     this.kvTable = kvTable;
     this.typeRep = typeRep;
@@ -74,7 +75,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   public ObjectStoreDataset(String name, KeyValueTable kvTable,
-                            TypeRepresentation typeRep, Schema schema) {
+      TypeRepresentation typeRep, Schema schema) {
     this(name, kvTable, typeRep, schema, null);
   }
 
@@ -99,9 +100,11 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   @ReadOnly
   @Override
   public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
-    final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
+    final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow,
+        stopRow);
     return new AbstractCloseableIterator<KeyValue<byte[], T>>() {
       boolean closed;
+
       @Override
       protected KeyValue<byte[], T> computeNext() {
         Preconditions.checkState(!closed);
@@ -151,7 +154,8 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   @SuppressWarnings("unchecked")
   private ReflectionDatumReader<T> getReflectionDatumReader() {
     if (datumReader == null) {
-      datumReader = new ReflectionDatumReader<>(schema, (TypeToken<T>) TypeToken.of(this.typeRep.toType()));
+      datumReader = new ReflectionDatumReader<>(schema,
+          (TypeToken<T>) TypeToken.of(this.typeRep.toType()));
     }
     return datumReader;
   }
@@ -203,6 +207,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
    * {@link io.cdap.cdap.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
    */
   public class ObjectRecordMaker implements Scannables.RecordMaker<byte[], T, KeyValue<byte[], T>> {
+
     @Override
     public KeyValue<byte[], T> makeRecord(byte[] key, T value) {
       return new KeyValue<>(key, value);
@@ -210,7 +215,8 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   /**
-   * The split reader for objects is reading a table split using the underlying KeyValueTable's split reader.
+   * The split reader for objects is reading a table split using the underlying KeyValueTable's
+   * split reader.
    */
   public class ObjectScanner extends SplitReader<byte[], T> {
 

@@ -27,6 +27,7 @@ import java.util.Set;
  * Contents of control message for {@link TetheringControlMessage.Type#START_PROGRAM} jobs
  */
 public class TetheringLaunchMessage {
+
   // Map of file names and its compressed contents
   private final Map<String, byte[]> localizeFiles;
   // Select cConf entries
@@ -34,8 +35,9 @@ public class TetheringLaunchMessage {
   // Namespace to run program on
   private final String runtimeNamespace;
 
-  private TetheringLaunchMessage(Map<String, byte[]> localizeFiles, Map<String, String> cConfEntries,
-                                 String runtimeNamespace) {
+  private TetheringLaunchMessage(Map<String, byte[]> localizeFiles,
+      Map<String, String> cConfEntries,
+      String runtimeNamespace) {
     this.localizeFiles = localizeFiles;
     this.cConfEntries = cConfEntries;
     this.runtimeNamespace = runtimeNamespace;
@@ -56,10 +58,10 @@ public class TetheringLaunchMessage {
   @Override
   public String toString() {
     return "TetheringLaunchMessage{" +
-      "localizeFiles='" + localizeFiles + '\'' +
-      ", cConfEntries=" + cConfEntries +
-      ", runtimeNamespace=" + runtimeNamespace +
-      '}';
+        "localizeFiles='" + localizeFiles + '\'' +
+        ", cConfEntries=" + cConfEntries +
+        ", runtimeNamespace=" + runtimeNamespace +
+        '}';
   }
 
   @Override
@@ -73,8 +75,8 @@ public class TetheringLaunchMessage {
 
     TetheringLaunchMessage that = (TetheringLaunchMessage) o;
     return Objects.equals(localizeFiles, that.localizeFiles) &&
-      Objects.equals(cConfEntries, that.cConfEntries) &&
-      Objects.equals(runtimeNamespace, that.runtimeNamespace);
+        Objects.equals(cConfEntries, that.cConfEntries) &&
+        Objects.equals(runtimeNamespace, that.runtimeNamespace);
   }
 
   @Override
@@ -86,6 +88,7 @@ public class TetheringLaunchMessage {
    * Builder for TetheringLaunchMessage
    */
   public static final class Builder {
+
     private final Set<String> fileNames = new HashSet<>();
     private final Map<String, byte[]> localizeFiles = new HashMap<>();
     private final Map<String, String> cConfEntries = new HashMap<>();

@@ -28,15 +28,14 @@ import java.util.stream.Collectors;
 public class FileSetArguments {
 
   /**
-   * The paths of the files to be read. Specified as a runtime argument for the dataset.
-   * Each path is relative to the dataset's base path, and multiple paths can be given,
-   * separated by commas.
+   * The paths of the files to be read. Specified as a runtime argument for the dataset. Each path
+   * is relative to the dataset's base path, and multiple paths can be given, separated by commas.
    */
   public static final String INPUT_PATHS = "input.paths";
 
   /**
-   * The path of the file to write. Specified as a runtime argument for the dataset.
-   * The path is relative to the dataset's base path.
+   * The path of the file to write. Specified as a runtime argument for the dataset. The path is
+   * relative to the dataset's base path.
    */
   public static final String OUTPUT_PATH = "output.path";
 
@@ -49,6 +48,7 @@ public class FileSetArguments {
 
   /**
    * Sets multiple input paths in the runtime arguments for a file dataset.
+   *
    * @param paths A comma-separated sequence of paths
    */
   public static void setInputPaths(Map<String, String> arguments, String paths) {
@@ -78,7 +78,8 @@ public class FileSetArguments {
   }
 
   /**
-   * Sets the baseLocation of the file dataset as the output location in the runtime arguments for a file dataset.
+   * Sets the baseLocation of the file dataset as the output location in the runtime arguments for a
+   * file dataset.
    */
   public static void setBaseOutputPath(Map<String, String> arguments) {
     // use null to indicate to use the base location of the file dataset as the output path
@@ -114,6 +115,7 @@ public class FileSetArguments {
     if (pathsArg == null) {
       return Collections.emptyList();
     }
-    return Arrays.stream(pathsArg.split("\\s*,\\s*")).filter(path -> !path.isEmpty()).collect(Collectors.toList());
+    return Arrays.stream(pathsArg.split("\\s*,\\s*")).filter(path -> !path.isEmpty())
+        .collect(Collectors.toList());
   }
 }

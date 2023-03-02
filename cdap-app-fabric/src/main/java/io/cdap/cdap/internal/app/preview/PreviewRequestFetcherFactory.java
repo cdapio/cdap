@@ -20,8 +20,10 @@ package io.cdap.cdap.internal.app.preview;
  * Factory for creating {@link PreviewRequestFetcher}.
  */
 public interface PreviewRequestFetcherFactory {
+
   /**
    * Creates an instance of {@link PreviewRequestFetcher}
+   *
    * @param pollerInfo information about poller service
    * @return an instance of {@link PreviewRequestFetcher}
    */

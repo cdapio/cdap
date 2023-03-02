@@ -53,16 +53,17 @@ public class ListArtifactsCommand extends AbstractAuthCommand {
       artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace());
     } else {
       artifactSummaries = artifactClient.list(cliConfig.getCurrentNamespace(),
-                                              ArtifactScope.valueOf(artifactScope.toUpperCase()));
+          ArtifactScope.valueOf(artifactScope.toUpperCase()));
     }
     Table table = Table.builder()
-      .setHeader("name", "version", "scope")
-      .setRows(artifactSummaries, new RowMaker<ArtifactSummary>() {
-        @Override
-        public List<?> makeRow(ArtifactSummary object) {
-          return Lists.newArrayList(object.getName(), object.getVersion(), object.getScope().name());
-        }
-      }).build();
+        .setHeader("name", "version", "scope")
+        .setRows(artifactSummaries, new RowMaker<ArtifactSummary>() {
+          @Override
+          public List<?> makeRow(ArtifactSummary object) {
+            return Lists.newArrayList(object.getName(), object.getVersion(),
+                object.getScope().name());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
@@ -73,7 +74,9 @@ public class ListArtifactsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s. If no scope is provided, artifacts in all scopes are returned. " +
-      "Otherwise, only artifacts in the specified scope are returned.", ElementType.ARTIFACT.getNamePlural());
+    return String.format(
+        "Lists all %s. If no scope is provided, artifacts in all scopes are returned. " +
+            "Otherwise, only artifacts in the specified scope are returned.",
+        ElementType.ARTIFACT.getNamePlural());
   }
 }

@@ -27,18 +27,18 @@ import java.util.Set;
 
 
 /**
- * Executes Transforms one iteration at a time, tracking how many records were input into and output from
- * each transform.
+ * Executes Transforms one iteration at a time, tracking how many records were input into and output
+ * from each transform.
  *
  * @param <IN> the type of input object to the first transform
- *
  */
 public class TransformExecutor<IN> implements Destroyable {
 
   private final Set<String> startingPoints;
   private final Map<String, TransformDetail> transformDetailMap;
 
-  public TransformExecutor(Map<String, TransformDetail> transformDetailMap, Set<String> startingPoints) {
+  public TransformExecutor(Map<String, TransformDetail> transformDetailMap,
+      Set<String> startingPoints) {
     this.transformDetailMap = transformDetailMap;
     this.startingPoints = startingPoints;
   }
@@ -69,14 +69,13 @@ public class TransformExecutor<IN> implements Destroyable {
   }
 
   private <T> void executeTransformation(final String stageName,
-                                         Collection<T> input) throws Exception {
+      Collection<T> input) throws Exception {
     if (input == null) {
       return;
     }
 
     TransformDetail transformDetail = transformDetailMap.get(stageName);
     Transformation<T, Object> transformation = transformDetail.getTransformation();
-
 
     // clear old data for this stageName if its not a terminal node
     if (!transformDetail.getNextStages().isEmpty()) {

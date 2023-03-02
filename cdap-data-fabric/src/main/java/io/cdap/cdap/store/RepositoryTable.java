@@ -33,10 +33,11 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Dataset for namespace repository. It does not wrap its operations in a transaction.
- * It is up to the caller to decide what operations belong in a transaction.
+ * Dataset for namespace repository. It does not wrap its operations in a transaction. It is up to
+ * the caller to decide what operations belong in a transaction.
  */
 public class RepositoryTable {
+
   private static final Gson GSON = new Gson();
 
   private final StructuredTable table;
@@ -52,25 +53,28 @@ public class RepositoryTable {
    * @param config the source control repository configuration for the namespace
    */
   public void create(NamespaceId id, RepositoryConfig config) throws IOException {
-    Field<String> namespaceField = Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
-                                                      id.getNamespace());
-    Field<String> configField = Fields.stringField(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD,
-                                                   GSON.toJson(config));
-    Field<Long> timeField = Fields.longField(StoreDefinition.NamespaceStore.UPDATE_TIME, System.currentTimeMillis());
+    Field<String> namespaceField = Fields.stringField(
+        StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+        id.getNamespace());
+    Field<String> configField = Fields.stringField(
+        StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD,
+        GSON.toJson(config));
+    Field<Long> timeField = Fields.longField(StoreDefinition.NamespaceStore.UPDATE_TIME,
+        System.currentTimeMillis());
     table.upsert(Arrays.asList(namespaceField, configField, timeField));
   }
 
   /**
-   *
    * @param id the namespace id
    * @return {@link RepositoryMeta} the repository configuration metadata.
    */
   @Nullable
   public RepositoryMeta get(NamespaceId id) throws IOException {
-    return table.read(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
-                                                               id.getEntityName())))
-      .map(this::getRepositoryMeta)
-      .orElse(null);
+    return table.read(
+            Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+                id.getEntityName())))
+        .map(this::getRepositoryMeta)
+        .orElse(null);
   }
 
   /**
@@ -79,18 +83,20 @@ public class RepositoryTable {
    * @param id id of the namespace
    */
   public void delete(NamespaceId id) throws IOException {
-    table.delete(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
-                                                          id.getEntityName())));
+    table.delete(
+        Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+            id.getEntityName())));
   }
 
   @Nullable
   private RepositoryMeta getRepositoryMeta(StructuredRow row) {
     RepositoryConfig config =
-      Optional.ofNullable(row.getString(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD))
-      .map(field -> GSON.fromJson(field, RepositoryConfig.class))
-      .orElse(null);
+        Optional.ofNullable(
+                row.getString(StoreDefinition.NamespaceStore.REPOSITORY_CONFIGURATION_FIELD))
+            .map(field -> GSON.fromJson(field, RepositoryConfig.class))
+            .orElse(null);
     long updatedTimeMillis =
-      Optional.ofNullable(row.getLong(StoreDefinition.NamespaceStore.UPDATE_TIME)).orElse(0L);
+        Optional.ofNullable(row.getLong(StoreDefinition.NamespaceStore.UPDATE_TIME)).orElse(0L);
     return new RepositoryMeta(config, updatedTimeMillis);
   }
 }

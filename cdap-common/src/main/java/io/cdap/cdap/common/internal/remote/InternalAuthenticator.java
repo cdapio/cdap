@@ -19,14 +19,16 @@ package io.cdap.cdap.common.internal.remote;
 import java.util.function.BiConsumer;
 
 /**
- * An interface which uses a provided {@link java.util.function.BiConsumer} function to set headers on requests to
- * propagate internal identity.
+ * An interface which uses a provided {@link java.util.function.BiConsumer} function to set headers
+ * on requests to propagate internal identity.
  */
 public interface InternalAuthenticator {
+
   /**
    * Sets internal authentication headers using a provided header setting function.
    *
-   * @param headerSetter A BiConsumer header setting function used to set header values for a request.
+   * @param headerSetter A BiConsumer header setting function used to set header values for a
+   *     request.
    */
   void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter);
 }

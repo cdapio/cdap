@@ -44,7 +44,9 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
 @Name(DistinctReducibleAggregator.NAME)
 public class DistinctReducibleAggregator
-  extends BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
+    extends
+    BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "DistinctReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf config;
@@ -60,7 +62,8 @@ public class DistinctReducibleAggregator
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
 
-    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, config.getFields());
+    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema,
+        config.getFields());
     stageConfigurer.setOutputSchema(outputSchema);
   }
 
@@ -102,18 +105,20 @@ public class DistinctReducibleAggregator
   }
 
   @Override
-  public void finalize(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
+  public void finalize(StructuredRecord groupKey, StructuredRecord iterator,
+      Emitter<StructuredRecord> emitter) {
     emitter.emit(groupKey);
   }
 
-  private static Schema getOutputSchema(FailureCollector collector, Schema inputSchema, Iterable<String> fields) {
+  private static Schema getOutputSchema(FailureCollector collector, Schema inputSchema,
+      Iterable<String> fields) {
     List<Schema.Field> outputFields = new ArrayList<>();
     for (String fieldName : fields) {
       Schema.Field field = inputSchema.getField(fieldName);
       if (field == null) {
         collector.addFailure(String.format("Field %s does not exist in input schema.", fieldName),
-                             String.format("Make sure field %s is present in the input schema", fieldName))
-          .withConfigElement("fields", fieldName);
+                String.format("Make sure field %s is present in the input schema", fieldName))
+            .withConfigElement("fields", fieldName);
         continue;
       }
       outputFields.add(field);
@@ -126,6 +131,7 @@ public class DistinctReducibleAggregator
    * Plugin Configuration.
    */
   public static class Conf extends PluginConfig {
+
     private String fields;
 
     @Nullable
@@ -154,7 +160,7 @@ public class DistinctReducibleAggregator
     properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
     properties.put("partitions", new PluginPropertyField("partitions", "", "int", false, false));
     return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
-             .setDescription("").setClassName(DistinctReducibleAggregator.class.getName())
-             .setConfigFieldName("config").setProperties(properties).build();
+        .setDescription("").setClassName(DistinctReducibleAggregator.class.getName())
+        .setConfigFieldName("config").setProperties(properties).build();
   }
 }

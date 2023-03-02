@@ -25,8 +25,8 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
 /**
- * A {@link TransactionAware} that maintains {@link MessagePublisher},
- * {@link MessageFetcher} and {@link Transaction} information for a thread.
+ * A {@link TransactionAware} that maintains {@link MessagePublisher}, {@link MessageFetcher} and
+ * {@link Transaction} information for a thread.
  */
 final class BasicMessagingContext implements TransactionAware {
 

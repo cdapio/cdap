@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
  * {@link EntityExistenceVerifier} for {@link ApplicationId applications}.
  */
 public class ApplicationExistenceVerifier implements EntityExistenceVerifier<ApplicationId> {
+
   private final Store store;
 
   @Inject

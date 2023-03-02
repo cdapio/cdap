@@ -30,7 +30,6 @@ public interface DataprocClientFactory {
    * @param conf configuration about the dataproc clusters to operate on
    * @return a DataprocClient
    * @throws IOException if there was an exception reading the credentials
-   * @throws GeneralSecurityException
    */
   default DataprocClient create(DataprocConf conf) throws GeneralSecurityException, IOException {
     return create(conf, false);
@@ -40,11 +39,11 @@ public interface DataprocClientFactory {
    * Create a {@link DataprocClient} that can be used to perform dataproc operations.
    *
    * @param conf configuration about the dataproc clusters to operate on
-   * @param requireSSH whether the cluster should be open to SSH connections. When false, the client can avoid
-   *                   making various Compute calls to fetch additional information.
+   * @param requireSSH whether the cluster should be open to SSH connections. When false, the
+   *     client can avoid making various Compute calls to fetch additional information.
    * @return a DataprocClient
    * @throws IOException if there was an exception reading the credentials
-   * @throws GeneralSecurityException
    */
-  DataprocClient create(DataprocConf conf, boolean requireSSH) throws IOException, GeneralSecurityException;
+  DataprocClient create(DataprocConf conf, boolean requireSSH)
+      throws IOException, GeneralSecurityException;
 }

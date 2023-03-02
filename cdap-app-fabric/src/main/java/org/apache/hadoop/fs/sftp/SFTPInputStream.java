@@ -27,16 +27,17 @@ import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.apache.hadoop.util.StringUtils;
 
 /**
- * {@link SFTPInputStream}, copied from Hadoop and modified, that doesn't throw an exception when seeks are attempted
- * to the current position. Position equality check logic in {@link SFTPInputStream#seek} is the only change from the
- * original class in Hadoop. This change is required since {@link LineRecordReader} calls {@link SFTPInputStream#seek}
- * with value of 0. TODO: This file can be removed once https://issues.cask.co/browse/CDAP-5387 is addressed.
+ * {@link SFTPInputStream}, copied from Hadoop and modified, that doesn't throw an exception when
+ * seeks are attempted to the current position. Position equality check logic in {@link
+ * SFTPInputStream#seek} is the only change from the original class in Hadoop. This change is
+ * required since {@link LineRecordReader} calls {@link SFTPInputStream#seek} with value of 0. TODO:
+ * This file can be removed once https://issues.cask.co/browse/CDAP-5387 is addressed.
  */
 class SFTPInputStream extends FSInputStream {
 
   public static final String E_SEEK_NOTSUPPORTED = "Seek not supported";
   public static final String E_CLIENT_NULL =
-    "SFTP client null or not connected";
+      "SFTP client null or not connected";
   public static final String E_NULL_INPUTSTREAM = "Null InputStream";
   public static final String E_STREAM_CLOSED = "Stream closed";
   public static final String E_CLIENT_NOTCONNECTED = "Client not connected";
@@ -48,7 +49,7 @@ class SFTPInputStream extends FSInputStream {
   private long pos;
 
   SFTPInputStream(InputStream stream, ChannelSftp channel,
-                  FileSystem.Statistics stats) {
+      FileSystem.Statistics stats) {
 
     if (stream == null) {
       throw new IllegalArgumentException(E_NULL_INPUTSTREAM);
@@ -103,7 +104,7 @@ class SFTPInputStream extends FSInputStream {
 
   @Override
   public synchronized int read(byte[] buf, int off, int len)
-    throws IOException {
+      throws IOException {
     if (closed) {
       throw new IOException(E_STREAM_CLOSED);
     }

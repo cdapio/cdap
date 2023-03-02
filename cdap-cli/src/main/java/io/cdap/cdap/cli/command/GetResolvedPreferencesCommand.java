@@ -26,9 +26,11 @@ import io.cdap.cdap.client.PreferencesClient;
  * Get Resolved Preferences for instance, namespace, application, program
  */
 public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand {
+
   private final ElementType type;
 
-  protected GetResolvedPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected GetResolvedPreferencesCommand(ElementType type, PreferencesClient client,
+      CLIConfig cliConfig) {
     super(type, client, cliConfig, true);
     this.type = type;
   }
@@ -40,6 +42,7 @@ public class GetResolvedPreferencesCommand extends AbstractGetPreferencesCommand
 
   @Override
   public String getDescription() {
-    return String.format("Gets the resolved preferences of %s", Fragment.of(Article.A, type.getName()));
+    return String.format("Gets the resolved preferences of %s",
+        Fragment.of(Article.A, type.getName()));
   }
 }

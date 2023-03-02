@@ -43,11 +43,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class to instantiate {@link AccessController} extensions. Authorization extensions are instantiated using a
- * separate {@link ClassLoader} that is built using a bundled jar for the {@link AccessController} extension that
- * contains all its required dependencies. The {@link ClassLoader} is created with the parent as the classloader with
- * which the {@link AccessController} interface is instantiated. This parent only has classes required by the
- * {@code cdap-security-spi} module.
+ * Class to instantiate {@link AccessController} extensions. Authorization extensions are
+ * instantiated using a separate {@link ClassLoader} that is built using a bundled jar for the
+ * {@link AccessController} extension that contains all its required dependencies. The {@link
+ * ClassLoader} is created with the parent as the classloader with which the {@link
+ * AccessController} interface is instantiated. This parent only has classes required by the {@code
+ * cdap-security-spi} module.
  *
  * The {@link AccessControllerInstantiator} has the following expectations from the extension:
  * <ul>
@@ -84,28 +85,33 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
 
   @Inject
   @VisibleForTesting
-  public AccessControllerInstantiator(CConfiguration cConf, AuthorizationContextFactory authorizationContextFactory) {
+  public AccessControllerInstantiator(CConfiguration cConf,
+      AuthorizationContextFactory authorizationContextFactory) {
     this.cConf = cConf;
     this.instantiatorFactory = new InstantiatorFactory(false);
     this.authorizationContextFactory = authorizationContextFactory;
   }
 
   /**
-   * Returns an instance of the configured {@link AccessController} extension, or of {@link NoOpAccessController}, if
-   * authorization is disabled.
+   * Returns an instance of the configured {@link AccessController} extension, or of {@link
+   * NoOpAccessController}, if authorization is disabled.
    */
   @Override
   public AccessController get() {
     if (!cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       LOG.debug("Authorization is disabled. Authorization can be enabled  by setting " +
-                  Constants.Security.Authorization.ENABLED + " to true.");
+          Constants.Security.Authorization.ENABLED + " to true.");
       return NOOP_ACCESS_CONTROLLER;
     }
     if (!cConf.getBoolean(Constants.Security.ENABLED)) {
-      LOG.warn("Authorization is enabled. However, authentication is disabled. Authorization policies will not be " +
-                 "enforced. To enforce authorization policies please enable both authorization, by setting " +
-                 Constants.Security.Authorization.ENABLED + " to true and authentication, by setting " +
-                 Constants.Security.ENABLED + "to true.");
+      LOG.warn(
+          "Authorization is enabled. However, authentication is disabled. Authorization policies will not be "
+              +
+              "enforced. To enforce authorization policies please enable both authorization, by setting "
+              +
+              Constants.Security.Authorization.ENABLED + " to true and authentication, by setting "
+              +
+              Constants.Security.ENABLED + "to true.");
       return NOOP_ACCESS_CONTROLLER;
     }
 
@@ -125,21 +131,27 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
         throw new RuntimeException("Cannot create AccessController due to resources were closed");
       }
 
-      String accessControllerExtensionJarPath = cConf.get(Constants.Security.Authorization.EXTENSION_JAR_PATH);
-      String accessControllerExtraClasspath = cConf.get(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH);
+      String accessControllerExtensionJarPath = cConf.get(
+          Constants.Security.Authorization.EXTENSION_JAR_PATH);
+      String accessControllerExtraClasspath = cConf.get(
+          Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH);
       if (Strings.isNullOrEmpty(accessControllerExtensionJarPath)) {
         throw new IllegalArgumentException(
-          String.format("Access control extension jar path not found in configuration. Please set %s in " +
-                          "cdap-site.xml to the fully qualified path of the jar file to use as the authorization " +
-                          "backend.",
-                        Constants.Security.Authorization.EXTENSION_JAR_PATH));
+            String.format(
+                "Access control extension jar path not found in configuration. Please set %s in " +
+                    "cdap-site.xml to the fully qualified path of the jar file to use as the authorization "
+                    +
+                    "backend.",
+                Constants.Security.Authorization.EXTENSION_JAR_PATH));
       }
       try {
         File accessControllerExtensionJar = new File(accessControllerExtensionJarPath);
         ensureValidAuthExtensionJar(accessControllerExtensionJar);
-        accessControllerClassLoader = createAccessControllerClassLoader(accessControllerExtensionJar,
-                                                                        accessControllerExtraClasspath);
-        this.accessController = accessController = createAccessController(accessControllerClassLoader);
+        accessControllerClassLoader = createAccessControllerClassLoader(
+            accessControllerExtensionJar,
+            accessControllerExtraClasspath);
+        this.accessController = accessController = createAccessController(
+            accessControllerClassLoader);
         return accessController;
       } catch (Exception e) {
         throw Throwables.propagate(e);
@@ -148,22 +160,24 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
   }
 
   /**
-   * Creates a new instance of the configured {@link AccessController} extension, based on the provided extension jar
-   * file and initialize it.
+   * Creates a new instance of the configured {@link AccessController} extension, based on the
+   * provided extension jar file and initialize it.
    *
    * @return a new instance of the configured {@link AccessController} extension
    */
   private AccessController createAccessController(AccessControllerClassLoader classLoader)
-    throws InvalidAccessControllerException {
+      throws InvalidAccessControllerException {
     Class<?> accessControllerClass = loadAccessControllerClass(classLoader);
     // Set the context class loader to the AccessControllerClassLoader before creating a new instance of the extension,
     // so all classes required in this process are created from the AccessControllerClassLoader.
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
-    LOG.trace("Setting context classloader to {}. Old classloader was {}.", classLoader, oldClassLoader);
+    LOG.trace("Setting context classloader to {}. Old classloader was {}.", classLoader,
+        oldClassLoader);
     try {
       AccessController accessController;
       try {
-        Object extensionClass = instantiatorFactory.get(TypeToken.of(accessControllerClass)).create();
+        Object extensionClass = instantiatorFactory.get(TypeToken.of(accessControllerClass))
+            .create();
         if (extensionClass instanceof AccessController) {
           accessController = (AccessController) extensionClass;
         } else {
@@ -171,16 +185,19 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
         }
       } catch (Exception e) {
         throw new InvalidAccessControllerException(
-          String.format("Error while instantiating for access controller extension %s. " +
-                          "Please make sure that the extension " +
-                          "is a public class with a default constructor.", accessControllerClass.getName()), e);
+            String.format("Error while instantiating for access controller extension %s. " +
+                "Please make sure that the extension " +
+                "is a public class with a default constructor.", accessControllerClass.getName()),
+            e);
       }
-      AuthorizationContext context = authorizationContextFactory.create(createExtensionProperties());
+      AuthorizationContext context = authorizationContextFactory.create(
+          createExtensionProperties());
       try {
         accessController.initialize(context);
       } catch (Exception e) {
         throw new InvalidAccessControllerException(
-          String.format("Error while initializing access control extension %s.", accessControllerClass.getName()), e);
+            String.format("Error while initializing access control extension %s.",
+                accessControllerClass.getName()), e);
       }
       return accessController;
     } finally {
@@ -194,10 +211,12 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
   private Properties createExtensionProperties() {
     Properties extensionProperties = new Properties();
     for (Map.Entry<String, String> cConfEntry : cConf) {
-      if (cConfEntry.getKey().startsWith(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX)) {
+      if (cConfEntry.getKey()
+          .startsWith(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX)) {
         extensionProperties.put(
-          cConfEntry.getKey().substring(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX.length()),
-          cConfEntry.getValue()
+            cConfEntry.getKey()
+                .substring(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX.length()),
+            cConfEntry.getValue()
         );
       }
     }
@@ -205,12 +224,12 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
   }
 
   private AccessControllerClassLoader createAccessControllerClassLoader(File extensionJar,
-                                                                        @Nullable String extraClasspath)
-    throws InvalidAccessControllerException {
+      @Nullable String extraClasspath)
+      throws InvalidAccessControllerException {
     LOG.info("Creating access control extension using jar {}.", extensionJar);
 
     File tmpDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                  cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
       return new AccessControllerClassLoader(tmpDir, extensionJar, extraClasspath);
     } catch (IOException e) {
@@ -220,13 +239,13 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
         e.addSuppressed(ex);
       }
       throw new InvalidAccessControllerException("Failed to load access control extension from "
-                                                   + extensionJar + ".", e);
+          + extensionJar + ".", e);
     }
   }
 
   @SuppressWarnings("unchecked")
   private Class<?> loadAccessControllerClass(AccessControllerClassLoader classLoader)
-    throws InvalidAccessControllerException {
+      throws InvalidAccessControllerException {
 
     String accessControllerClassName = classLoader.getAccessControllerClassName();
     Class<?> accessControllerClass;
@@ -234,31 +253,38 @@ public class AccessControllerInstantiator implements Closeable, Supplier<AccessC
       accessControllerClass = classLoader.loadClass(accessControllerClassName);
     } catch (ClassNotFoundException e) {
       throw new InvalidAccessControllerException(
-        String.format("Access controle extension class %s not found. Please make sure that the right class " +
-                        "is specified  in the extension jar's manifest located at %s.",
-                      accessControllerClassName, classLoader.getExtensionJar()), e);
+          String.format(
+              "Access controle extension class %s not found. Please make sure that the right class "
+                  +
+                  "is specified  in the extension jar's manifest located at %s.",
+              accessControllerClassName, classLoader.getExtensionJar()), e);
     }
     if (!Authorizer.class.isAssignableFrom(accessControllerClass)
-      && !AccessController.class.isAssignableFrom(accessControllerClass)) {
+        && !AccessController.class.isAssignableFrom(accessControllerClass)) {
       throw new InvalidAccessControllerException(
-        String.format("Class %s defined as %s in the authorization extension's manifest at %s must implement %s or %s",
-                      accessControllerClass.getName(), Attributes.Name.MAIN_CLASS, classLoader.getExtensionJar(),
-                      AccessController.class.getName(), Authorizer.class.getName()));
+          String.format(
+              "Class %s defined as %s in the authorization extension's manifest at %s must implement %s or %s",
+              accessControllerClass.getName(), Attributes.Name.MAIN_CLASS,
+              classLoader.getExtensionJar(),
+              AccessController.class.getName(), Authorizer.class.getName()));
     }
     return accessControllerClass;
   }
 
-  private void ensureValidAuthExtensionJar(File accessControllerExtensionJar) throws InvalidAccessControllerException {
+  private void ensureValidAuthExtensionJar(File accessControllerExtensionJar)
+      throws InvalidAccessControllerException {
     if (!accessControllerExtensionJar.exists()) {
       throw new InvalidAccessControllerException(
-        String.format("Authorization extension jar %s specified as %s does not exist.", accessControllerExtensionJar,
-                      Constants.Security.Authorization.EXTENSION_JAR_PATH)
+          String.format("Authorization extension jar %s specified as %s does not exist.",
+              accessControllerExtensionJar,
+              Constants.Security.Authorization.EXTENSION_JAR_PATH)
       );
     }
     if (!accessControllerExtensionJar.isFile()) {
       throw new InvalidAccessControllerException(
-        String.format("Authorization extension jar %s specified as %s must be a file.", accessControllerExtensionJar,
-                      Constants.Security.Authorization.EXTENSION_JAR_PATH)
+          String.format("Authorization extension jar %s specified as %s must be a file.",
+              accessControllerExtensionJar,
+              Constants.Security.Authorization.EXTENSION_JAR_PATH)
       );
     }
   }

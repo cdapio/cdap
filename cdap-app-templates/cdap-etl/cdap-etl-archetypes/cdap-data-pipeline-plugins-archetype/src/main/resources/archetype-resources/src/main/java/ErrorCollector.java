@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 @Plugin(type = ErrorTransform.PLUGIN_TYPE)
 @Name("ErrorCollector")
 public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredRecord> {
+
   private final Config config;
 
   public ErrorCollector(Config config) {
@@ -43,23 +44,24 @@ public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredR
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer)
+      throws IllegalArgumentException {
     Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
     if (inputSchema != null) {
       if (inputSchema.getField(config.messageField) != null) {
         throw new IllegalArgumentException(String.format(
-          "Input schema already contains message field %s. Please set messageField to a different value.",
-          config.messageField));
+            "Input schema already contains message field %s. Please set messageField to a different value.",
+            config.messageField));
       }
       if (inputSchema.getField(config.codeField) != null) {
         throw new IllegalArgumentException(String.format(
-          "Input schema already contains code field %s. Please set codeField to a different value.",
-          config.codeField));
+            "Input schema already contains code field %s. Please set codeField to a different value.",
+            config.codeField));
       }
       if (inputSchema.getField(config.stageField) != null) {
         throw new IllegalArgumentException(String.format(
-          "Input schema already contains stage field %s. Please set stageField to a different value.",
-          config.stageField));
+            "Input schema already contains stage field %s. Please set stageField to a different value.",
+            config.stageField));
       }
       Schema outputSchema = getOutputSchema(config, inputSchema);
       pipelineConfigurer.getStageConfigurer().setOutputSchema(outputSchema);
@@ -67,9 +69,11 @@ public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredR
   }
 
   @Override
-  public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     StructuredRecord invalidRecord = input.getRecord();
-    StructuredRecord.Builder output = StructuredRecord.builder(getOutputSchema(config, invalidRecord.getSchema()));
+    StructuredRecord.Builder output = StructuredRecord.builder(
+        getOutputSchema(config, invalidRecord.getSchema()));
     for (Schema.Field field : invalidRecord.getSchema().getFields()) {
       output.set(field.getName(), invalidRecord.get(field.getName()));
     }
@@ -104,19 +108,20 @@ public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredR
    * The plugin config
    */
   public static class Config extends PluginConfig {
+
     @Nullable
     @Description("The name of the error message field to use in the output schema. " +
-      "If this not specified, the error message will be dropped.")
+        "If this not specified, the error message will be dropped.")
     private String messageField;
 
     @Nullable
     @Description("The name of the error code field to use in the output schema. " +
-      "If this not specified, the error code will be dropped.")
+        "If this not specified, the error code will be dropped.")
     private String codeField;
 
     @Nullable
     @Description("The name of the error stage field to use in the output schema. " +
-      "If this not specified, the error stage will be dropped.")
+        "If this not specified, the error stage will be dropped.")
     private String stageField;
 
   }

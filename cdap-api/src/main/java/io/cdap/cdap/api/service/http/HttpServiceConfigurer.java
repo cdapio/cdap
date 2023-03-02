@@ -26,8 +26,8 @@ import java.util.Map;
 public interface HttpServiceConfigurer extends DatasetConfigurer, PluginConfigurer {
 
   /**
-   * Sets a set of properties that will be available through the {@link HttpServiceHandlerSpecification#getProperties()}
-   * at runtime.
+   * Sets a set of properties that will be available through the {@link
+   * HttpServiceHandlerSpecification#getProperties()} at runtime.
    *
    * @param properties the properties to set
    */

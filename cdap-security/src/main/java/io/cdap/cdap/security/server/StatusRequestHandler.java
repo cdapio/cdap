@@ -28,8 +28,10 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
  * Handles status requests for authentication server
  */
 public class StatusRequestHandler extends AbstractHandler {
+
   @Override
-  public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+  public void handle(String target, Request baseRequest, HttpServletRequest request,
+      HttpServletResponse response)
       throws IOException, ServletException {
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);

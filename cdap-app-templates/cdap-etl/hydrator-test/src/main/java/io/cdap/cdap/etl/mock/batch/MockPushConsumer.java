@@ -31,6 +31,7 @@ import org.apache.spark.sql.Row;
  * Pull Dataset implementation for unit test
  */
 public class MockPushConsumer implements SQLDatasetConsumer {
+
   private final SQLDatasetDescription datasetDescription;
   private final String dirName;
 

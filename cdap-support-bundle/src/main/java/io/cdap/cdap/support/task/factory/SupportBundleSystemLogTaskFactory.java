@@ -24,16 +24,18 @@ import io.cdap.cdap.support.metadata.RemoteMonitorServicesFetcher;
 import io.cdap.cdap.support.task.SupportBundleSystemLogTask;
 
 /**
- * Support Bundle system log task factory to create system log task to collect system logs for the data fusion instance.
+ * Support Bundle system log task factory to create system log task to collect system logs for the
+ * data fusion instance.
  */
 public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFactory {
+
   private final CConfiguration cConf;
   private final RemoteLogsFetcher remoteLogsFetcher;
   private final RemoteMonitorServicesFetcher remoteMonitorServicesFetcher;
 
   @Inject
   SupportBundleSystemLogTaskFactory(CConfiguration cConf, RemoteLogsFetcher remoteLogsFetcher,
-                                    RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
+      RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.cConf = cConf;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
@@ -42,6 +44,6 @@ public class SupportBundleSystemLogTaskFactory implements SupportBundleTaskFacto
   @Override
   public SupportBundleSystemLogTask create(SupportBundleTaskConfiguration taskConfiguration) {
     return new SupportBundleSystemLogTask(taskConfiguration.getBasePath(), remoteLogsFetcher, cConf,
-                                          remoteMonitorServicesFetcher);
+        remoteMonitorServicesFetcher);
   }
 }

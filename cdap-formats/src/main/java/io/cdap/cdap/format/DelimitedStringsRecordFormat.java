@@ -39,21 +39,23 @@ import java.util.Map;
  * A {@link RecordFormat} that interprets the input as string of delimited fields.
  *
  * <p>
- * The delimiter can be explicitly set through the "delimiter" setting, and the character set can also be set through
- * the "charset" setting. By default, the format will use a schema of one field, where the field is an array of strings.
- * The schema can be set to a schema of fields, with the i'th field corresponding to the i'th value in the delimited
- * text. Fields can also be parsed as scalar types - boolean, integer, long, double, float, bytes, and string.
- * In addition, the very last field can be an array of strings.
+ * The delimiter can be explicitly set through the "delimiter" setting, and the character set can
+ * also be set through the "charset" setting. By default, the format will use a schema of one field,
+ * where the field is an array of strings. The schema can be set to a schema of fields, with the
+ * i'th field corresponding to the i'th value in the delimited text. Fields can also be parsed as
+ * scalar types - boolean, integer, long, double, float, bytes, and string. In addition, the very
+ * last field can be an array of strings.
  * </p>
  *
  * <p>
- * If the "mapping" setting is provided, then we will use the mapping to parse the events rather than
- * the order of the schema fields. "mapping" is in the format "index0:field0,index1:field1,..".
- * For example, if "mapping" is "1:name,2:age", then a event like "sdf,bob,32,sdf,lkj" would be transformed into
- * a record {@code {"name":"bob", "age":32}}.
+ * If the "mapping" setting is provided, then we will use the mapping to parse the events rather
+ * than the order of the schema fields. "mapping" is in the format "index0:field0,index1:field1,..".
+ * For example, if "mapping" is "1:name,2:age", then a event like "sdf,bob,32,sdf,lkj" would be
+ * transformed into a record {@code {"name":"bob", "age":32}}.
  * </p>
  */
 public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord> {
+
   public static final String CHARSET = "charset";
   public static final String DELIMITER = "delimiter";
   public static final String MAPPING = "mapping";
@@ -71,7 +73,8 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
   @Override
   protected Schema getDefaultSchema() {
     // default is a String[]
-    return Schema.recordOf("record", Schema.Field.of("body", Schema.arrayOf(Schema.of(Schema.Type.STRING))));
+    return Schema.recordOf("record",
+        Schema.Field.of("body", Schema.arrayOf(Schema.of(Schema.Type.STRING))));
   }
 
   @Override
@@ -114,8 +117,9 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
         for (Schema.Field field : schema.getFields()) {
           if (!field.getSchema().isSimpleOrNullableSimple()) {
             throw new IllegalArgumentException(
-              String.format("only simple types allowed (field '%s') when the '%s' setting is present",
-                            field.getName(), MAPPING));
+                String.format(
+                    "only simple types allowed (field '%s') when the '%s' setting is present",
+                    field.getName(), MAPPING));
           }
         }
       } else {
@@ -153,7 +157,7 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
     Map<String, String> stringMapping = splitter.split(mappingString);
     Preconditions.checkArgument(stringMapping.size() >= 1, "mapping cannot be empty");
     Preconditions.checkArgument(stringMapping.size() <= schema.getFields().size(),
-                                "mapping cannot contain more entries than schema fields");
+        "mapping cannot contain more entries than schema fields");
 
     Map<String, Integer> mapping = Maps.newHashMap();
 
@@ -162,7 +166,7 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
       String fieldName = entry.getValue();
 
       Preconditions.checkArgument(schema.getField(fieldName) != null,
-                                  "schema is missing the mapped field " + fieldName);
+          "schema is missing the mapped field " + fieldName);
       try {
         int fieldIndex = Integer.parseInt(fieldIndexString);
         mapping.put(fieldName, fieldIndex);
@@ -178,6 +182,7 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
    * Makes a {@link StructuredRecord} in {@link DelimitedStringsRecordFormat#read(byte[])}.
    */
   private interface RecordMaker {
+
     StructuredRecord make(Schema schema, Iterator<String> bodyFields);
   }
 
@@ -217,7 +222,8 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
             builder.set(fieldName, fields.toArray(new String[fields.size()]));
           } else {
             throw new UnexpectedFormatException(
-              String.format("string array type field '%s' must be the last schema field", fieldName));
+                String.format("string array type field '%s' must be the last schema field",
+                    fieldName));
           }
         } else {
           // simple type (not string array)
@@ -234,6 +240,7 @@ public class DelimitedStringsRecordFormat extends RecordFormat<ByteBuffer, Struc
    * {@link RecordMaker} that uses the "mapping" setting and a schema.
    */
   private static class MappedSchemaRecordMaker implements RecordMaker {
+
     private final Map<String, Integer> mapping;
     private final int lastMappingIndex;
 

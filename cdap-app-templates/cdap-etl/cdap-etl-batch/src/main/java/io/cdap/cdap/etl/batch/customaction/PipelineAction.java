@@ -49,9 +49,9 @@ public class PipelineAction extends AbstractCustomAction {
   private Metrics metrics;
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .create();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+      .create();
 
   public PipelineAction(BatchPhaseSpec phaseSpec) {
     this.phaseSpec = phaseSpec;
@@ -72,28 +72,31 @@ public class PipelineAction extends AbstractCustomAction {
   public void run() throws Exception {
     CustomActionContext context = getContext();
     Map<String, String> properties = context.getSpecification().getProperties();
-    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID),
+        BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageSpec stageSpec = phase.iterator().next();
     PluginContext pluginContext = new PipelinePluginContext(context, metrics,
-                                                            phaseSpec.isStageLoggingEnabled(),
-                                                            phaseSpec.isProcessTimingEnabled());
+        phaseSpec.isStageLoggingEnabled(),
+        phaseSpec.isProcessTimingEnabled());
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
     Action action =
-      pluginContext.newPluginInstance(stageSpec.getName(),
-                                      new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                                context.getLogicalStartTime(),
-                                                                context, context,
-                                                                context.getNamespace()));
+        pluginContext.newPluginInstance(stageSpec.getName(),
+            new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
+                context.getLogicalStartTime(),
+                context, context,
+                context.getNamespace()));
     ActionContext actionContext = new BasicActionContext(context, pipelineRuntime, stageSpec);
     if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {
       action.run(actionContext);
     }
     WorkflowToken token = context.getWorkflowToken();
     if (token == null) {
-      throw new IllegalStateException("WorkflowToken cannot be null when action is executed through Workflow.");
+      throw new IllegalStateException(
+          "WorkflowToken cannot be null when action is executed through Workflow.");
     }
-    for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
+    for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments()
+        .entrySet()) {
       token.put(entry.getKey(), entry.getValue());
     }
   }

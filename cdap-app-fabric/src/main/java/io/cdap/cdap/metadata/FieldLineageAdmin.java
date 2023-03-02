@@ -67,7 +67,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service to compute field lineage based on operations stored in {@link DefaultFieldLineageReader}.
+ * Service to compute field lineage based on operations stored in {@link
+ * DefaultFieldLineageReader}.
  */
 public class FieldLineageAdmin {
 
@@ -84,24 +85,24 @@ public class FieldLineageAdmin {
   }
 
   /**
-   * Get the set of fields written to the EndPoint by field lineage {@link WriteOperation}, over the given time range,
-   * optionally filtered to include only fields that have the given prefix. Additionally, can include fields from the
-   * dataset schema if those field are not present in lineage information for complete and coherent information
-   * about fields.
+   * Get the set of fields written to the EndPoint by field lineage {@link WriteOperation}, over the
+   * given time range, optionally filtered to include only fields that have the given prefix.
+   * Additionally, can include fields from the dataset schema if those field are not present in
+   * lineage information for complete and coherent information about fields.
    *
    * @param endPoint the EndPoint for which the fields need to be returned
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
    * @param prefix prefix for the field name, if {@code null} then all fields are returned
-   * @param includeCurrent determines whether to include dataset's current schema fields in the response. If true the
-   * result will be a union of all the fields present in lineage record with {@link Field#hasLineage} set to 'true'
-   * and fields present only in dataset schema will have {@link Field#hasLineage} set to 'false'.
-   *
-   * @return set of fields written to a given EndPoint and any unique fields present only in the schema of the
-   * dataset of includeCurrent is set to true
+   * @param includeCurrent determines whether to include dataset's current schema fields in the
+   *     response. If true the result will be a union of all the fields present in lineage record
+   *     with {@link Field#hasLineage} set to 'true' and fields present only in dataset schema will
+   *     have {@link Field#hasLineage} set to 'false'.
+   * @return set of fields written to a given EndPoint and any unique fields present only in the
+   *     schema of the dataset of includeCurrent is set to true
    */
   public Set<Field> getFields(EndPoint endPoint, long start, long end, @Nullable String prefix,
-                              boolean includeCurrent) throws IOException {
+      boolean includeCurrent) throws IOException {
 
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
 
@@ -110,15 +111,16 @@ public class FieldLineageAdmin {
       result.addAll(createFields(getFieldsWithNoFieldLineage(endPoint, lineageFields), false));
     }
     return Strings.isNullOrEmpty(prefix) ? Collections.unmodifiableSet(result) :
-      Collections.unmodifiableSet(filter(prefix, result));
+        Collections.unmodifiableSet(filter(prefix, result));
   }
 
   /**
-   * Get the summary for the specified EndPointField over a given time range depending on the direction specified.
-   * Summary in the "incoming" direction consists of set of EndPointFields which participated in the computation
-   * of the given EndPointField; summary in the "outgoing" direction consists of set of EndPointFields
-   * which were computed from the specified EndPointField. When direction is specified as 'both', incoming as well
-   * as outgoing summaries are returned.
+   * Get the summary for the specified EndPointField over a given time range depending on the
+   * direction specified. Summary in the "incoming" direction consists of set of EndPointFields
+   * which participated in the computation of the given EndPointField; summary in the "outgoing"
+   * direction consists of set of EndPointFields which were computed from the specified
+   * EndPointField. When direction is specified as 'both', incoming as well as outgoing summaries
+   * are returned.
    *
    * @param direction the direction in which summary need to be computed
    * @param endPointField the EndPointField for which summary to be returned
@@ -126,35 +128,44 @@ public class FieldLineageAdmin {
    * @param end end time (exclusive) in milliseconds
    * @return the FieldLineageSummary
    */
-  FieldLineageSummary getFieldLineage(Constants.FieldLineage.Direction direction, EndPointField endPointField,
-                                      long start, long end) {
+  FieldLineageSummary getFieldLineage(Constants.FieldLineage.Direction direction,
+      EndPointField endPointField,
+      long start, long end) {
     Set<DatasetField> incoming = null;
     Set<DatasetField> outgoing = null;
-    if (direction == Constants.FieldLineage.Direction.INCOMING || direction == Constants.FieldLineage.Direction.BOTH) {
-      Set<EndPointField> incomingSummary = fieldLineageReader.getIncomingSummary(endPointField, start, end);
+    if (direction == Constants.FieldLineage.Direction.INCOMING
+        || direction == Constants.FieldLineage.Direction.BOTH) {
+      Set<EndPointField> incomingSummary = fieldLineageReader.getIncomingSummary(endPointField,
+          start, end);
       incoming = convertSummaryToDatasetField(incomingSummary);
     }
-    if (direction == Constants.FieldLineage.Direction.OUTGOING || direction == Constants.FieldLineage.Direction.BOTH) {
-      Set<EndPointField> outgoingSummary = fieldLineageReader.getOutgoingSummary(endPointField, start, end);
+    if (direction == Constants.FieldLineage.Direction.OUTGOING
+        || direction == Constants.FieldLineage.Direction.BOTH) {
+      Set<EndPointField> outgoingSummary = fieldLineageReader.getOutgoingSummary(endPointField,
+          start, end);
       outgoing = convertSummaryToDatasetField(outgoingSummary);
     }
     return new FieldLineageSummary(incoming, outgoing);
   }
 
   /**
-   * Get the summary for the specified dataset over a given time range depending on the direction specified.
-   * The summary will contain all the field level lineage relations about all the fields in a dataset.
+   * Get the summary for the specified dataset over a given time range depending on the direction
+   * specified. The summary will contain all the field level lineage relations about all the fields
+   * in a dataset.
    *
    * @param direction the direction in which summary need to be computed
-   * @param endPoint the EndPoint whicn represents the dataset that field level lineage needs to get computed
+   * @param endPoint the EndPoint whicn represents the dataset that field level lineage needs to
+   *     get computed
    * @param start start time (inclusive) in milliseconds
    * @param end end time (exclusive) in milliseconds
-   * @return the summary which contains all the field level lineage information about all the fields in a dataset
+   * @return the summary which contains all the field level lineage information about all the fields
+   *     in a dataset
    * @throws IOException if fails to get teh schema of the dataset
    */
-  public DatasetFieldLineageSummary getDatasetFieldLineage(Constants.FieldLineage.Direction direction,
-                                                           EndPoint endPoint,
-                                                           long start, long end) throws IOException {
+  public DatasetFieldLineageSummary getDatasetFieldLineage(
+      Constants.FieldLineage.Direction direction,
+      EndPoint endPoint,
+      long start, long end) throws IOException {
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
     Map<DatasetId, Set<FieldRelation>> incomingRelations = new HashMap<>();
     Map<DatasetId, Set<FieldRelation>> outgoingRelations = new HashMap<>();
@@ -164,14 +175,17 @@ public class FieldLineageAdmin {
 
       // compute the incoming field level lineage
       if (direction == Constants.FieldLineage.Direction.INCOMING ||
-        direction == Constants.FieldLineage.Direction.BOTH) {
+          direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> incomingSummary =
-          convertSummaryToDatasetMap(fieldLineageReader.getIncomingSummary(endPointField, start, end));
+            convertSummaryToDatasetMap(
+                fieldLineageReader.getIncomingSummary(endPointField, start, end));
         // compute the field count for all incoming datasets
         incomingSummary.keySet().forEach(datasetId -> {
           fieldCount.computeIfAbsent(
-            datasetId, missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
-              EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start, end).size());
+              datasetId,
+              missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
+                  EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start,
+                  end).size());
         });
         // here the field itself will be the destination
         computeAndAddRelations(incomingRelations, field, true, incomingSummary);
@@ -179,14 +193,17 @@ public class FieldLineageAdmin {
 
       // compute the outgoing field level lineage
       if (direction == Constants.FieldLineage.Direction.OUTGOING ||
-        direction == Constants.FieldLineage.Direction.BOTH) {
+          direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> outgoingSummary =
-          convertSummaryToDatasetMap(fieldLineageReader.getOutgoingSummary(endPointField, start, end));
+            convertSummaryToDatasetMap(
+                fieldLineageReader.getOutgoingSummary(endPointField, start, end));
         // compute the field count for all outgoing datasets
         outgoingSummary.keySet().forEach(datasetId -> {
           fieldCount.computeIfAbsent(
-            datasetId, missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
-              EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start, end).size());
+              datasetId,
+              missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
+                  EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start,
+                  end).size());
         });
         // here the field itself will be the source
         computeAndAddRelations(outgoingRelations, field, false, outgoingSummary);
@@ -194,23 +211,26 @@ public class FieldLineageAdmin {
     }
 
     Set<String> noLineageFields = getFieldsWithNoFieldLineage(endPoint, lineageFields);
-    Set<String> allFields = ImmutableSet.<String>builder().addAll(lineageFields).addAll(noLineageFields).build();
+    Set<String> allFields = ImmutableSet.<String>builder().addAll(lineageFields)
+        .addAll(noLineageFields).build();
     return new DatasetFieldLineageSummary(direction, start, end,
-                                          new DatasetId(endPoint.getNamespace(), endPoint.getName()),
-                                          allFields, fieldCount, incomingRelations, outgoingRelations);
+        new DatasetId(endPoint.getNamespace(), endPoint.getName()),
+        allFields, fieldCount, incomingRelations, outgoingRelations);
   }
 
   /**
-   * Compute the relations from the given summary and add the field relation to the map of relations. The field is
-   * either the source or the destination in the relation.
+   * Compute the relations from the given summary and add the field relation to the map of
+   * relations. The field is either the source or the destination in the relation.
    */
-  private void computeAndAddRelations(Map<DatasetId, Set<FieldRelation>> relations, String field, boolean isDestination,
-                                      Map<DatasetId, Set<String>> summary) {
+  private void computeAndAddRelations(Map<DatasetId, Set<FieldRelation>> relations, String field,
+      boolean isDestination,
+      Map<DatasetId, Set<String>> summary) {
     for (Map.Entry<DatasetId, Set<String>> entry : summary.entrySet()) {
       DatasetId outgoing = entry.getKey();
       relations.computeIfAbsent(outgoing, k -> new HashSet<>());
       entry.getValue().forEach(otherField -> relations.get(outgoing).add(
-        isDestination ? new FieldRelation(otherField, field) : new FieldRelation(field, otherField)));
+          isDestination ? new FieldRelation(otherField, field)
+              : new FieldRelation(field, otherField)));
     }
   }
 
@@ -231,7 +251,7 @@ public class FieldLineageAdmin {
       EndPoint endPoint = endPointField.getEndPoint();
       // this can be null if the field is not related to any dataset, it can either be generated or dropped
       DatasetId datasetId = (endPoint.getNamespace() == null || endPoint.getName() == null) ? null :
-        new DatasetId(endPoint.getNamespace(), endPoint.getName());
+          new DatasetId(endPoint.getNamespace(), endPoint.getName());
       Set<String> fields = endPointFields.computeIfAbsent(datasetId, k -> new HashSet<>());
       fields.add(endPointField.getField());
     }
@@ -239,13 +259,14 @@ public class FieldLineageAdmin {
   }
 
   /**
-   * Get the operation details for the specified EndPointField over a given time range depending on the
-   * direction specified. Operation details in the "incoming" direction consists of consists of the datasets
-   * and their fields ({@link DatasetField}) that this field originates from, as well as the programs and
-   * operations that generated this field from those origins. In outgoing direction, it consists of the datasets
-   * and their fields ({@link DatasetField}) that were computed from this field, along with the programs and
-   * operations that performed the computation. When direction is specified as 'both', incoming as well
-   * as outgoing operations are returned.
+   * Get the operation details for the specified EndPointField over a given time range depending on
+   * the direction specified. Operation details in the "incoming" direction consists of consists of
+   * the datasets and their fields ({@link DatasetField}) that this field originates from, as well
+   * as the programs and operations that generated this field from those origins. In outgoing
+   * direction, it consists of the datasets and their fields ({@link DatasetField}) that were
+   * computed from this field, along with the programs and operations that performed the
+   * computation. When direction is specified as 'both', incoming as well as outgoing operations are
+   * returned.
    *
    * @param direction the direction in which operations need to be computed
    * @param endPointField the EndPointField for which operations to be returned
@@ -253,63 +274,72 @@ public class FieldLineageAdmin {
    * @param end end time (exclusive) in milliseconds
    * @return the FieldLineageDetails instance
    */
-  FieldLineageDetails getOperationDetails(Constants.FieldLineage.Direction direction, EndPointField endPointField,
-                                          long start, long end) {
+  FieldLineageDetails getOperationDetails(Constants.FieldLineage.Direction direction,
+      EndPointField endPointField,
+      long start, long end) {
     List<ProgramFieldOperationInfo> incoming = null;
     List<ProgramFieldOperationInfo> outgoing = null;
-    if (direction == Constants.FieldLineage.Direction.INCOMING || direction == Constants.FieldLineage.Direction.BOTH) {
-      List<ProgramRunOperations> incomingOperations = fieldLineageReader.getIncomingOperations(endPointField, start,
-                                                                                               end);
+    if (direction == Constants.FieldLineage.Direction.INCOMING
+        || direction == Constants.FieldLineage.Direction.BOTH) {
+      List<ProgramRunOperations> incomingOperations = fieldLineageReader.getIncomingOperations(
+          endPointField, start,
+          end);
       incoming = processOperations(incomingOperations);
     }
-    if (direction == Constants.FieldLineage.Direction.OUTGOING || direction == Constants.FieldLineage.Direction.BOTH) {
-      List<ProgramRunOperations> outgoingOperations = fieldLineageReader.getOutgoingOperations(endPointField, start,
-                                                                                               end);
+    if (direction == Constants.FieldLineage.Direction.OUTGOING
+        || direction == Constants.FieldLineage.Direction.BOTH) {
+      List<ProgramRunOperations> outgoingOperations = fieldLineageReader.getOutgoingOperations(
+          endPointField, start,
+          end);
       outgoing = processOperations(outgoingOperations);
     }
     return new FieldLineageDetails(incoming, outgoing);
   }
 
   private Set<String> getFieldsWithNoFieldLineage(EndPoint dataset,
-                                                  Set<String> lineageFields) throws IOException {
+      Set<String> lineageFields) throws IOException {
     // get the system properties of this dataset
     Map<String, String> properties = metadataAdmin.getProperties(MetadataScope.SYSTEM,
-                                                                 MetadataEntity.ofDataset(dataset.getNamespace(),
-                                                                                          dataset.getName()));
+        MetadataEntity.ofDataset(dataset.getNamespace(),
+            dataset.getName()));
     // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
     if (properties.containsKey(MetadataConstants.SCHEMA_KEY)) {
       String schema = properties.get(MetadataConstants.SCHEMA_KEY);
       Schema sc = Schema.parseJson(schema);
       if (sc.getFields() != null) {
-        Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName).collect(Collectors.toSet());
+        Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName)
+            .collect(Collectors.toSet());
         // filter out the fields that are part of the lineageFields
         return sc.getFields().stream()
-          .map(Schema.Field::getName)
-          .filter(name -> !lineageFields.contains(name))
-          .collect(Collectors.toSet());
+            .map(Schema.Field::getName)
+            .filter(name -> !lineageFields.contains(name))
+            .collect(Collectors.toSet());
       }
     } else {
-      LOG.trace("Received request to include schema fields for {} but no schema was found. Only fields present in " +
-                  "the lineage store will be returned.", dataset);
+      LOG.trace(
+          "Received request to include schema fields for {} but no schema was found. Only fields present in "
+              +
+              "the lineage store will be returned.", dataset);
     }
     return Collections.emptySet();
   }
 
-  private List<ProgramFieldOperationInfo> processOperations(List<ProgramRunOperations> programRunOperations) {
+  private List<ProgramFieldOperationInfo> processOperations(
+      List<ProgramRunOperations> programRunOperations) {
     List<ProgramFieldOperationInfo> result = new ArrayList<>();
     for (ProgramRunOperations entry : programRunOperations) {
       List<ProgramInfo> programInfo = computeProgramInfo(entry.getProgramRunIds());
-      List<FieldOperationInfo> fieldOperationInfo = computeFieldOperationInfo(entry.getOperations());
+      List<FieldOperationInfo> fieldOperationInfo = computeFieldOperationInfo(
+          entry.getOperations());
       result.add(new ProgramFieldOperationInfo(programInfo, fieldOperationInfo));
     }
     return result;
   }
 
   /**
-   * Computes the list of {@link ProgramInfo} from given set of ProgramRunIds.
-   * For each program, there is only one item in the returned list, representing the
-   * latest run of that program. Returned list is also sorted by the last executed time
-   * in descending order.
+   * Computes the list of {@link ProgramInfo} from given set of ProgramRunIds. For each program,
+   * there is only one item in the returned list, representing the latest run of that program.
+   * Returned list is also sorted by the last executed time in descending order.
    *
    * @param programRunIds set of program run ids from which program info to be computed
    * @return list of ProgramInfo
@@ -325,27 +355,29 @@ public class FieldLineageAdmin {
     }
 
     Stream<Map.Entry<ProgramId, Long>> sortedByLastExecutedTime =
-      programIdToLastExecutedTime.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+        programIdToLastExecutedTime.entrySet().stream()
+            .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
 
     List<ProgramInfo> programInfos;
 
     programInfos = sortedByLastExecutedTime.map(
-      programIdLongEntry -> new ProgramInfo(programIdLongEntry.getKey(),
-                                            programIdLongEntry.getValue())).collect(Collectors.toList());
+        programIdLongEntry -> new ProgramInfo(programIdLongEntry.getKey(),
+            programIdLongEntry.getValue())).collect(Collectors.toList());
 
     return programInfos;
   }
 
   /**
-   * Computes list of {@link FieldOperationInfo} from the given operations.
-   * Returned list contains the operations sorted in topological order i.e. each operation
-   * in the list is guaranteed to occur before any other operation that reads its outputs.
+   * Computes list of {@link FieldOperationInfo} from the given operations. Returned list contains
+   * the operations sorted in topological order i.e. each operation in the list is guaranteed to
+   * occur before any other operation that reads its outputs.
    *
    * @param operations set of operation to convert to FieldOperationInfo instances
    * @return list of FieldOperationInfo sorted topologically
    */
   private List<FieldOperationInfo> computeFieldOperationInfo(Set<Operation> operations) {
-    List<Operation> orderedOperations = FieldLineageInfo.getTopologicallySortedOperations(operations);
+    List<Operation> orderedOperations = FieldLineageInfo.getTopologicallySortedOperations(
+        operations);
     List<FieldOperationInfo> fieldOperationInfos = new ArrayList<>();
     for (Operation operation : orderedOperations) {
       fieldOperationInfos.add(convertToFieldOperationInfo(operation));
@@ -383,19 +415,22 @@ public class FieldLineageAdmin {
 
   private Set<Field> filter(String prefix, Set<Field> fields) {
     return fields.stream().filter(field ->
-                                    field.getName().toLowerCase().startsWith(prefix.toLowerCase()))
-      .collect(Collectors.toSet());
+            field.getName().toLowerCase().startsWith(prefix.toLowerCase()))
+        .collect(Collectors.toSet());
   }
 
   /**
    * Retrieves a summary of all endpoints in a given program run.
    *
    * @param namespaceId program namespace
-   * @param programReference start time of the run in millis corresponding to the id of a program run
+   * @param programReference start time of the run in millis corresponding to the id of a
+   *     program run
    * @param runId run ID which is a UUID
    * @return Summary of all Endpoints in the particular run of the pipeline.
    */
-  public EndpointsSummary getEndpoints(String namespaceId, ProgramReference programReference, RunId runId) {
-    return new EndpointsSummary(fieldLineageReader.getEndpoints(namespaceId, programReference, runId));
+  public EndpointsSummary getEndpoints(String namespaceId, ProgramReference programReference,
+      RunId runId) {
+    return new EndpointsSummary(
+        fieldLineageReader.getEndpoints(namespaceId, programReference, runId));
   }
 }

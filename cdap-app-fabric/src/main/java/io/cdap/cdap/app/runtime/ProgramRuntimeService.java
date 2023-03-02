@@ -35,6 +35,7 @@ public interface ProgramRuntimeService extends Service {
    * Represents information of a running program.
    */
   interface RuntimeInfo {
+
     ProgramController getController();
 
     ProgramType getType();
@@ -59,8 +60,9 @@ public interface ProgramRuntimeService extends Service {
    * Find the {@link RuntimeInfo} for a running program with the given {@link RunId}.
    *
    * @param programId The id of the program.
-   * @param runId     The program {@link RunId}.
-   * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is found.
+   * @param runId The program {@link RunId}.
+   * @return A {@link RuntimeInfo} for the running program or {@code null} if no such program is
+   *     found.
    */
   @Nullable
   RuntimeInfo lookup(ProgramId programId, RunId runId);
@@ -75,6 +77,7 @@ public interface ProgramRuntimeService extends Service {
 
   /**
    * Get {@link RuntimeInfo} for a specified program.
+   *
    * @param program The program for which the {@link RuntimeInfo} needs to be determined
    * @return An immutable map from {@link RunId} to {@link ProgramController}
    */
@@ -83,16 +86,15 @@ public interface ProgramRuntimeService extends Service {
   /**
    * Get runtime information about a running program. The content of this information is different
    * for each runtime environment. For example, in a distributed environment, this would contain the
-   * YARN application id and the container information for each runnable. For in-memory, it may be empty.
+   * YARN application id and the container information for each runnable. For in-memory, it may be
+   * empty.
    */
   ProgramLiveInfo getLiveInfo(ProgramId programId);
 
   /**
-   * Get information about running programs.
-   * Protected only to support v2 APIs
+   * Get information about running programs. Protected only to support v2 APIs
    *
-   * @param types Types of program to check
-   * returns List of info about running programs.
+   * @param types Types of program to check returns List of info about running programs.
    */
   List<RuntimeInfo> listAll(ProgramType... types);
 }

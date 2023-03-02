@@ -25,11 +25,13 @@ import java.util.Map;
  * Configuration Class that holds an Id and properties as a Map.
  */
 public final class Config {
+
   private final String name;
   private final Map<String, String> properties;
 
   /**
    * Constructor for Config Class.
+   *
    * @param name name of the configuration
    * @param properties map of properties
    */
@@ -55,7 +57,8 @@ public final class Config {
     }
 
     Config config = (Config) o;
-    return Objects.equal(this.name, config.name) && Objects.equal(this.properties, config.properties);
+    return Objects.equal(this.name, config.name) && Objects.equal(this.properties,
+        config.properties);
   }
 
   @Override

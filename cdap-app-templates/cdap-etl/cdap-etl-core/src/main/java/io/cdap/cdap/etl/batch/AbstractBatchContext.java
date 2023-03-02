@@ -38,14 +38,16 @@ import java.util.Map;
 /**
  * Base Batch Context.
  */
-public abstract class AbstractBatchContext extends AbstractTransformContext implements BatchContext {
+public abstract class AbstractBatchContext extends AbstractTransformContext implements
+    BatchContext {
+
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final DatasetContext datasetContext;
   protected final Admin admin;
   private final List<FieldOperation> fieldOperations;
 
   protected AbstractBatchContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
-                                 DatasetContext datasetContext, Admin admin) {
+      DatasetContext datasetContext, Admin admin) {
     super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext));
     this.datasetContext = datasetContext;
     this.admin = admin;
@@ -54,7 +56,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     admin.createDataset(datasetName, typeName, properties);
   }
 
@@ -70,19 +72,19 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return CALLER.callUnchecked(() -> datasetContext.getDataset(namespace, name));
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name,
-                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+      final Map<String, String> arguments) throws DatasetInstantiationException {
     return CALLER.callUnchecked(() -> datasetContext.getDataset(name, arguments));
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
-                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+      final Map<String, String> arguments) throws DatasetInstantiationException {
     return CALLER.callUnchecked(() -> datasetContext.getDataset(namespace, name, arguments));
   }
 

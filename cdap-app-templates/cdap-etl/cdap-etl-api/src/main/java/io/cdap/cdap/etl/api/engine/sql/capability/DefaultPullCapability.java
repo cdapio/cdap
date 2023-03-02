@@ -17,8 +17,8 @@
 package io.cdap.cdap.etl.api.engine.sql.capability;
 
 public enum DefaultPullCapability implements PullCapability {
-    // Uses Hadoop API classes (InputFormat) to read records into Spark RDDs.
-    HADOOP_RDD_PULL,
-    // Uses Spark RDD Operations to read records.
-    SPARK_RDD_PULL
+  // Uses Hadoop API classes (InputFormat) to read records into Spark RDDs.
+  HADOOP_RDD_PULL,
+  // Uses Spark RDD Operations to read records.
+  SPARK_RDD_PULL
 }

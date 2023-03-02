@@ -26,21 +26,26 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for StackTraceElementProxy.
  */
 final class StackTraceElementProxySerializer {
-  private StackTraceElementProxySerializer() {}
+
+  private StackTraceElementProxySerializer() {
+  }
 
   static GenericRecord encode(Schema schema, StackTraceElementProxy stackTraceElementProxy) {
     GenericRecord datum = new GenericData.Record(schema);
-    datum.put("stackTraceElement", StackTraceElementSerializer.encode(schema.getField("stackTraceElement").schema(),
-                                                        stackTraceElementProxy.getStackTraceElement()));
-    datum.put("classPackagingData", ClassPackagingDataSerializer.encode(schema.getField("classPackagingData").schema(),
-                                                         stackTraceElementProxy.getClassPackagingData()));
+    datum.put("stackTraceElement",
+        StackTraceElementSerializer.encode(schema.getField("stackTraceElement").schema(),
+            stackTraceElementProxy.getStackTraceElement()));
+    datum.put("classPackagingData",
+        ClassPackagingDataSerializer.encode(schema.getField("classPackagingData").schema(),
+            stackTraceElementProxy.getClassPackagingData()));
     return datum;
   }
 
   static StackTraceElementProxy decode(GenericRecord datum) {
     StackTraceElement ste =
-      StackTraceElementSerializer.decode((GenericRecord) datum.get("stackTraceElement"));
-    ClassPackagingData cpd = ClassPackagingDataSerializer.decode((GenericRecord) datum.get("classPackagingData"));
+        StackTraceElementSerializer.decode((GenericRecord) datum.get("stackTraceElement"));
+    ClassPackagingData cpd = ClassPackagingDataSerializer.decode(
+        (GenericRecord) datum.get("classPackagingData"));
     StackTraceElementProxy stackTraceElementProxy = new StackTraceElementProxy(ste);
     if (cpd != null) {
       stackTraceElementProxy.setClassPackagingData(cpd);

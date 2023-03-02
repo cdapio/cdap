@@ -21,11 +21,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
 /**
- * Defines a prefix-based namespace strategy for in-memory and LevelDB tables.
- * Only used to generate internal representation (name) of datasets, in-memory and LevelDB tables.
+ * Defines a prefix-based namespace strategy for in-memory and LevelDB tables. Only used to generate
+ * internal representation (name) of datasets, in-memory and LevelDB tables.
  *
- * Note: This namespacing should always only be one-way, i.e. we should never have to derive the components
- * (root prefix, namespace id and dataset name) from the namespaced name.
+ * Note: This namespacing should always only be one-way, i.e. we should never have to derive the
+ * components (root prefix, namespace id and dataset name) from the namespaced name.
  */
 public class PrefixedNamespaces {
 

@@ -51,10 +51,10 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 
   protected LogAppender() {
     this.loggerExtraTags = CacheBuilder
-      .newBuilder()
-      .maximumSize(LOGGER_CACHE_SIZE)
-      .expireAfterAccess(LOGGER_CACHE_EXPIRY_MILLIS, TimeUnit.MILLISECONDS)
-      .build();
+        .newBuilder()
+        .maximumSize(LOGGER_CACHE_SIZE)
+        .expireAfterAccess(LOGGER_CACHE_EXPIRY_MILLIS, TimeUnit.MILLISECONDS)
+        .build();
   }
 
   @Override
@@ -81,11 +81,10 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 
   /**
    * if event is for an exception deriving from ErrorCodeProvider, capture error group etc.
-   *
-   * @param event
    */
   private void addErrorCodeTags(ILoggingEvent event, Map<String, String> modifiableMDC) {
-    if (event.getThrowableProxy() == null || !(event.getThrowableProxy() instanceof ThrowableProxy)) {
+    if (event.getThrowableProxy() == null
+        || !(event.getThrowableProxy() instanceof ThrowableProxy)) {
       return;
     }
     Throwable throwable = ((ThrowableProxy) (event.getThrowableProxy())).getThrowable();
@@ -120,17 +119,15 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
 
   /**
    * Adds extra MDC tags to the given event.
-   *
-   * @return
    */
   private ILoggingEvent addExtraTags(ILoggingEvent event, LoggingContext loggingContext,
-                                     Map<String, String> modifiableMDC) {
+      Map<String, String> modifiableMDC) {
 
     addErrorCodeTags(event, modifiableMDC);
 
     // For error logs, if the logging context is in application scope, tag it as program logs.
     if (loggingContext.getSystemTagsMap().containsKey(ApplicationLoggingContext.TAG_APPLICATION_ID)
-      && event.getLevel() == Level.ERROR) {
+        && event.getLevel() == Level.ERROR) {
       modifiableMDC.put(ORIGIN_KEY, "program");
       return new DelegatingLoggingEvent(event, modifiableMDC);
     }

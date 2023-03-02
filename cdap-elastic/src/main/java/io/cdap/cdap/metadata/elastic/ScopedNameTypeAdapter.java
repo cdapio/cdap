@@ -27,12 +27,15 @@ import io.cdap.cdap.spi.metadata.ScopedName;
 import java.lang.reflect.Type;
 
 /**
- * Type adapter for the ScopedName. Because it is used in as a Map key, it must be serialized as a String.
+ * Type adapter for the ScopedName. Because it is used in as a Map key, it must be serialized as a
+ * String.
  */
-public class ScopedNameTypeAdapter implements JsonSerializer<ScopedName>, JsonDeserializer<ScopedName> {
+public class ScopedNameTypeAdapter implements JsonSerializer<ScopedName>,
+    JsonDeserializer<ScopedName> {
+
   @Override
   public ScopedName deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+      throws JsonParseException {
     return ScopedName.fromString(json.getAsString());
   }
 

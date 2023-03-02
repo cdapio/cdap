@@ -25,6 +25,7 @@ import java.util.List;
  * Each individual task status when generating support bundle.
  */
 public class SupportBundleTaskStatus {
+
   // unique task name, also defines directory task stores resulting files in
   private final String name;
   // task class name
@@ -44,8 +45,9 @@ public class SupportBundleTaskStatus {
   @SerializedName("finish-timestamp")
   private final Long finishTimestamp;
 
-  private SupportBundleTaskStatus(String name, String type, Long startTimestamp, List<SupportBundleTaskStatus> subTasks,
-                                 int retries, Long finishTimestamp, CollectionState status) {
+  private SupportBundleTaskStatus(String name, String type, Long startTimestamp,
+      List<SupportBundleTaskStatus> subTasks,
+      int retries, Long finishTimestamp, CollectionState status) {
     this.name = name;
     this.type = type;
     this.startTimestamp = startTimestamp;
@@ -64,7 +66,8 @@ public class SupportBundleTaskStatus {
 
   /**
    * @param previousTaskStatus outdated task status
-   * @return Builder to create a SupportBundleTaskStatus, initialized with values from the specified existing status
+   * @return Builder to create a SupportBundleTaskStatus, initialized with values from the specified
+   *     existing status
    */
   public static Builder builder(SupportBundleTaskStatus previousTaskStatus) {
     return new Builder(previousTaskStatus);
@@ -74,6 +77,7 @@ public class SupportBundleTaskStatus {
    * Builder to build bundle task status.
    */
   public static class Builder {
+
     private String name;
     private String type;
     private Long startTimestamp;
@@ -164,7 +168,8 @@ public class SupportBundleTaskStatus {
       if (status == null) {
         throw new IllegalArgumentException("Bundle task status must be specified.");
       }
-      return new SupportBundleTaskStatus(name, type, startTimestamp, subTasks, retries, finishTimestamp, status);
+      return new SupportBundleTaskStatus(name, type, startTimestamp, subTasks, retries,
+          finishTimestamp, status);
     }
   }
 

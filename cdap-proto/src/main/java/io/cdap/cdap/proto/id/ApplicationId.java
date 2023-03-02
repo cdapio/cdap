@@ -27,6 +27,7 @@ import java.util.Objects;
  * Uniquely identifies an application.
  */
 public class ApplicationId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   private final String application;
   private final String version;
   private transient Integer hashCode;
@@ -65,9 +66,9 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .appendAsType(MetadataEntity.APPLICATION, application)
-      .append(MetadataEntity.VERSION, version)
-      .build();
+        .appendAsType(MetadataEntity.APPLICATION, application)
+        .append(MetadataEntity.VERSION, version)
+        .build();
   }
 
   @Override
@@ -114,8 +115,8 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
     }
     ApplicationId that = (ApplicationId) o;
     return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(application, that.application) &&
-      Objects.equals(version, that.version);
+        Objects.equals(application, that.application) &&
+        Objects.equals(version, that.version);
   }
 
   @Override
@@ -131,7 +132,7 @@ public class ApplicationId extends NamespacedEntityId implements ParentedId<Name
   public static ApplicationId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ApplicationId(next(iterator, "namespace"), next(iterator, "application"),
-                             nextAndEnd(iterator, "version"));
+        nextAndEnd(iterator, "version"));
   }
 
   @Override

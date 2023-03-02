@@ -31,17 +31,19 @@ import java.util.List;
 /**
  * Deserializer of {@link ReportContent} from Json.
  */
-public class ReportContentDeserializer  implements JsonDeserializer<ReportContent> {
+public class ReportContentDeserializer implements JsonDeserializer<ReportContent> {
 
   @Override
-  public ReportContent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
-      if (json == null) {
-        return null;
-      }
-      if (!(json instanceof JsonObject)) {
-        throw new JsonParseException("Expected a JsonObject but found a " + json.getClass().getName());
-      }
+  public ReportContent deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
+    if (json == null) {
+      return null;
+    }
+    if (!(json instanceof JsonObject)) {
+      throw new JsonParseException(
+          "Expected a JsonObject but found a " + json.getClass().getName());
+    }
     JsonObject object = (JsonObject) json;
     JsonArray detailsJson = object.getAsJsonArray("details");
     List<String> details = detailsJson == null ? null : new ArrayList<>();
@@ -52,8 +54,8 @@ public class ReportContentDeserializer  implements JsonDeserializer<ReportConten
       }
     }
     return new ReportContent(object.getAsJsonPrimitive("offset").getAsLong(),
-                             object.getAsJsonPrimitive("limit").getAsInt(),
-                             object.getAsJsonPrimitive("total").getAsInt(),
-                             details);
+        object.getAsJsonPrimitive("limit").getAsInt(),
+        object.getAsJsonPrimitive("total").getAsInt(),
+        details);
   }
 }

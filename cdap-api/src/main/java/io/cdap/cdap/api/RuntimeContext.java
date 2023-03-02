@@ -59,8 +59,8 @@ public interface RuntimeContext extends FeatureFlagsProvider {
   Admin getAdmin();
 
   /**
-   * @param dataTracerName the name of the logger using which the debug information will be logged
-   *
+   * @param dataTracerName the name of the logger using which the debug information will be
+   *     logged
    * @return an {@link DataTracer} to perform data trace operations.
    */
   @Beta

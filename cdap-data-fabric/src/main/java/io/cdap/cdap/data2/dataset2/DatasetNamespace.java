@@ -26,24 +26,22 @@ import javax.annotation.Nullable;
 public interface DatasetNamespace {
 
   /**
-   * Namespaces (applies the namespace as a prefix) to the specified dataset instance name
-   * Used for dataset instances in the system namespace
-   * Calls #namespace(DatasetId.from(NamespaceId.SYSTEM, datasetInstanceName)
-   * @see #namespace(DatasetId)
+   * Namespaces (applies the namespace as a prefix) to the specified dataset instance name Used for
+   * dataset instances in the system namespace Calls #namespace(DatasetId.from(NamespaceId.SYSTEM,
+   * datasetInstanceName)
    *
    * @param datasetInstanceName name of the dataset instance to be namespaced
    * @return namespaced {@link DatasetId} of the dataset
+   * @see #namespace(DatasetId)
    */
   DatasetId namespace(String datasetInstanceName);
 
   /**
-   * Namespaces (applies the namespace as a prefix) to the specified {@link DatasetId}
-   * {@code
-   * String namespacedInstanceName = datasetInstanceId.getNamespace() + "." + datasetInstanceId.getId();
-   * return DatasetId.from(datasetInstanceId.getNamespace(), namespacedInstanceName)
-   * }
-   * e.g. If DatasetId(default, purchases) is passed, it will return
-   * DatasetId(default, cdap.default.purchases)
+   * Namespaces (applies the namespace as a prefix) to the specified {@link DatasetId} {@code String
+   * namespacedInstanceName = datasetInstanceId.getNamespace() + "." + datasetInstanceId.getId();
+   * return DatasetId.from(datasetInstanceId.getNamespace(), namespacedInstanceName) } e.g. If
+   * DatasetId(default, purchases) is passed, it will return DatasetId(default,
+   * cdap.default.purchases)
    *
    * @param datasetInstanceId {@link DatasetId} for the dataset instance to be namespaced
    * @return namespaced {@link DatasetId} of the dataset
@@ -51,8 +49,8 @@ public interface DatasetNamespace {
   DatasetId namespace(DatasetId datasetInstanceId);
 
   /**
-   * Namespaces (applies the namespace as a prefix) to the specified suffix
-   * Used for applying namespace to part table names
+   * Namespaces (applies the namespace as a prefix) to the specified suffix Used for applying
+   * namespace to part table names
    *
    * @param namespaceId the {@link NamespaceId} to namespace the suffix with
    * @param suffix the suffix to namespace
@@ -61,20 +59,20 @@ public interface DatasetNamespace {
   String namespace(NamespaceId namespaceId, String suffix);
 
   /**
-   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the specified instance name
-   * e.g. if cdap.myspace.myinstance is passed, this will return DatasetId(myspace, myinstance)
-   * @see #fromNamespaced(DatasetId)
+   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the specified instance
+   * name e.g. if cdap.myspace.myinstance is passed, this will return DatasetId(myspace,
+   * myinstance)
    *
    * @param namespaced namespaced name of the dataset
    * @return original {@link DatasetId} of the dataset or null if name is not within this namespace
+   * @see #fromNamespaced(DatasetId)
    */
   DatasetId fromNamespaced(String namespaced);
 
   /**
-   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the instance name in the
-   * specified {@link DatasetId}
-   * e.g. If DatasetId(default, cdap.default.purchases) is passed, this will return
-   * DatasetId(default, purchases)
+   * Returns a new {@link DatasetId} with the namespaceId prefix removed from the instance name in
+   * the specified {@link DatasetId} e.g. If DatasetId(default, cdap.default.purchases) is passed,
+   * this will return DatasetId(default, purchases)
    *
    * @param datasetInstanceId namespaced {@link DatasetId} of the dataset
    * @return original {@link DatasetId} of the dataset or null if name is not within this namespace

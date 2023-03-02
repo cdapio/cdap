@@ -23,6 +23,7 @@ import java.util.List;
  * Represents log events to be persisted.
  */
 public class LogBufferRequest implements Iterable<byte[]> {
+
   private final List<byte[]> logEvents;
   private final int logPartition;
 

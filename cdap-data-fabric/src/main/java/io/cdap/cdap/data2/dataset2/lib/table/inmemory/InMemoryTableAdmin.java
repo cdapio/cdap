@@ -25,6 +25,7 @@ import java.io.IOException;
  *
  */
 public class InMemoryTableAdmin implements DatasetAdmin {
+
   private final String name;
 
   public InMemoryTableAdmin(DatasetContext datasetContext, String name, CConfiguration cConf) {

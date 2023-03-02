@@ -44,9 +44,9 @@ final class CoordinationConstants {
    * The GSON object for encode/decode various objects used by the resource coordination service.
    */
   private static final Gson GSON = new GsonBuilder()
-                              .registerTypeAdapter(ResourceAssignment.class, new ResourceAssignmentTypeAdapter())
-                              .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
-                              .create();
+      .registerTypeAdapter(ResourceAssignment.class, new ResourceAssignmentTypeAdapter())
+      .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
+      .create();
 
   /**
    * Codec for {@link ResourceRequirement}.

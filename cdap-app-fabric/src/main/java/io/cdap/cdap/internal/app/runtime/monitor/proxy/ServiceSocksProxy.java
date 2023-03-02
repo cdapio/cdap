@@ -50,7 +50,7 @@ public class ServiceSocksProxy extends AbstractIdleService {
   private EventLoopGroup eventLoopGroup;
 
   public ServiceSocksProxy(DiscoveryServiceClient discoveryServiceClient,
-                           ServiceSocksProxyAuthenticator authenticator) {
+      ServiceSocksProxyAuthenticator authenticator) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.authenticator = authenticator;
   }
@@ -71,20 +71,21 @@ public class ServiceSocksProxy extends AbstractIdleService {
     ServerBootstrap bootstrap = new ServerBootstrap();
 
     // We don't perform any blocking task in the proxy, only IO relying, hence doesn't need large amount of threads.
-    eventLoopGroup = new NioEventLoopGroup(10, Threads.createDaemonThreadFactory("service-socks-proxy-%d"));
+    eventLoopGroup = new NioEventLoopGroup(10,
+        Threads.createDaemonThreadFactory("service-socks-proxy-%d"));
     bootstrap
-      .group(eventLoopGroup)
-      .channel(NioServerSocketChannel.class)
-      .childHandler(new ChannelInitializer<SocketChannel>() {
-        @Override
-        protected void initChannel(SocketChannel ch) {
-          channelGroup.add(ch);
+        .group(eventLoopGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<SocketChannel>() {
+          @Override
+          protected void initChannel(SocketChannel ch) {
+            channelGroup.add(ch);
 
-          ch.pipeline()
-            .addLast(new SocksPortUnificationServerHandler())
-            .addLast(new ServiceSocksServerHandler(discoveryServiceClient, authenticator));
-        }
-      });
+            ch.pipeline()
+                .addLast(new SocksPortUnificationServerHandler())
+                .addLast(new ServiceSocksServerHandler(discoveryServiceClient, authenticator));
+          }
+        });
 
     Channel serverChannel = bootstrap.bind(InetAddress.getLoopbackAddress(), 0).sync().channel();
     bindAddress = (InetSocketAddress) serverChannel.localAddress();

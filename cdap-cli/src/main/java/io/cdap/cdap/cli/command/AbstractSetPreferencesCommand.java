@@ -33,7 +33,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
   private final PreferencesClient client;
   private final ElementType type;
 
-  protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client, CLIConfig cliConfig) {
+  protected AbstractSetPreferencesCommand(ElementType type, PreferencesClient client,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.type = type;
     this.client = client;
@@ -42,7 +43,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
   protected abstract void printSuccessMessage(PrintStream printStream, ElementType type);
 
   protected void setPreferences(Arguments arguments, PrintStream printStream,
-                                Map<String, String> args) throws Exception {
+      Map<String, String> args) throws Exception {
     String[] programIdParts = new String[0];
     if (arguments.hasArgument(type.getArgumentName().toString())) {
       programIdParts = arguments.get(type.getArgumentName().toString()).split("\\.");
@@ -51,7 +52,7 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
   }
 
   protected void setPreferences(Arguments arguments, PrintStream printStream,
-                                Map<String, String> args, String[] programIdParts) throws Exception {
+      Map<String, String> args, String[] programIdParts) throws Exception {
     switch (type) {
       case INSTANCE:
         checkInputLength(programIdParts, 0);
@@ -79,7 +80,8 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         break;
 
       default:
-        throw new IllegalArgumentException("Unrecognized element type for preferences: " + type.getShortName());
+        throw new IllegalArgumentException(
+            "Unrecognized element type for preferences: " + type.getShortName());
     }
   }
 
@@ -99,15 +101,16 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case INSTANCE:
       case NAMESPACE:
         return String.format("set %s preferences <%s>",
-                             type.getShortName(), ArgumentName.PREFERENCES);
+            type.getShortName(), ArgumentName.PREFERENCES);
       case APP:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("set %s preferences <%s> <%s>", type.getShortName(), type.getArgumentName(),
-                             ArgumentName.PREFERENCES);
+        return String.format("set %s preferences <%s> <%s>", type.getShortName(),
+            type.getArgumentName(),
+            ArgumentName.PREFERENCES);
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }
@@ -117,15 +120,16 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
       case INSTANCE:
       case NAMESPACE:
         return String.format("load %s preferences <%s> <%s>", type.getShortName(),
-                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+            ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
       case APP:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
       case WORKER:
       case SPARK:
-        return String.format("load %s preferences <%s> <%s> <%s>", type.getShortName(), type.getArgumentName(),
-                             ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
+        return String.format("load %s preferences <%s> <%s> <%s>", type.getShortName(),
+            type.getArgumentName(),
+            ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
     }
     throw new RuntimeException("Unrecognized element type: " + type.getShortName());
   }

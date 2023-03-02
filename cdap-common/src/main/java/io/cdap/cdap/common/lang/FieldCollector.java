@@ -27,14 +27,16 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Helper class to collect all non-static fields with defaults to set while creating an instance
- * for deserialization
+ * Helper class to collect all non-static fields with defaults to set while creating an instance for
+ * deserialization
  */
 class FieldCollector extends FieldVisitor {
+
   private final Map<Field, Object> fieldsWithDefaults = new LinkedHashMap<>();
 
   @Override
-  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field)
+      throws Exception {
     if (Modifier.isStatic(field.getModifiers())) {
       return;
     }
@@ -42,7 +44,6 @@ class FieldCollector extends FieldVisitor {
   }
 
   /**
-   *
    * @return map of field name to default field value as defined by JLS for given type
    * @see Defaults#defaultValue(java.lang.Class)
    */

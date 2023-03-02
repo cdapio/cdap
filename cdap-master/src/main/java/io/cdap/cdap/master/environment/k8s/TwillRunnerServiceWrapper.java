@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.TwillRunnerService;
 
 /**
- * A Guava {@link Service} that wraps the {@link TwillRunnerService#start()} and {@link TwillRunnerService#stop()}
- * calls.
+ * A Guava {@link Service} that wraps the {@link TwillRunnerService#start()} and {@link
+ * TwillRunnerService#stop()} calls.
  */
 final class TwillRunnerServiceWrapper extends AbstractIdleService {
 

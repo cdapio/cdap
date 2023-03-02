@@ -25,7 +25,8 @@ public interface RepeatedTask {
    * Executes the task once.
    *
    * @return number of milliseconds to pass before calling this method again for the next execution.
-   *         Returning a value that is smaller than {@code 0} to indicate the task executing is completed.
+   *     Returning a value that is smaller than {@code 0} to indicate the task executing is
+   *     completed.
    * @throws Exception if the task execution failed.
    */
   long executeOnce() throws Exception;

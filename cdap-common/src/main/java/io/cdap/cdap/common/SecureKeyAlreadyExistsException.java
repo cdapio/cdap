@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.id.SecureKeyId;
  * Thrown when the user tries to create a secure key that already exists.
  */
 public class SecureKeyAlreadyExistsException extends AlreadyExistsException {
+
   private final SecureKeyId secureKeyId;
 
   public SecureKeyAlreadyExistsException(SecureKeyId secureKeyId) {

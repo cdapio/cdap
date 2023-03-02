@@ -34,9 +34,10 @@ public class FormatUtils {
    * Extract decimal value from a string, using the supplied schema to get precision and scale,
    *
    * @param decimalSchema schema to use
-   * @param strVal        value to extract
+   * @param strVal value to extract
    * @return Bigdecimal value
-   * @throws UnexpectedFormatException if the supplied string is not a valid Decimal value for the supplied schema
+   * @throws UnexpectedFormatException if the supplied string is not a valid Decimal value for
+   *     the supplied schema
    */
   public static BigDecimal parseDecimal(Schema decimalSchema, String strVal) {
     try {
@@ -47,14 +48,15 @@ public class FormatUtils {
       return new BigDecimal(strVal, mc).setScale(scale, RoundingMode.UNNECESSARY);
     } catch (NumberFormatException | ArithmeticException e) {
       throw new UnexpectedFormatException("Cannot convert String " + strVal + " to a Decimal" +
-                                            " with precision " + decimalSchema.getPrecision() +
-                                            " and scale " + decimalSchema.getScale(),
-                                          e);
+          " with precision " + decimalSchema.getPrecision() +
+          " and scale " + decimalSchema.getScale(),
+          e);
     }
   }
 
   /**
    * Encode a ByteBuffer or byte array object into a Base64 String
+   *
    * @param value value to encode
    * @return Base64 encoded string
    * @throws IOException if the supplied object is not a ByteBuffer or byte array
@@ -62,7 +64,8 @@ public class FormatUtils {
   public static String base64Encode(Object value) throws IOException {
     if (value instanceof ByteBuffer) {
       return Base64.getEncoder().encodeToString(extractFromByteBuffer((ByteBuffer) value));
-    } else if (value.getClass().isArray() && value.getClass().getComponentType().equals(byte.class)) {
+    } else if (value.getClass().isArray() && value.getClass().getComponentType()
+        .equals(byte.class)) {
       return Base64.getEncoder().encodeToString(((byte[]) value));
     } else {
       throw new IOException("Expected either ByteBuffer or byte[]. Got " + value.getClass());
@@ -71,9 +74,9 @@ public class FormatUtils {
 
   /**
    * Decode a Base64 string into a byte buffer
+   *
    * @param encoded encoded string
    * @return byte array containing the decoded string;
-   * @throws IOException
    */
   public static ByteBuffer base64Decode(String encoded) throws IOException {
     return ByteBuffer.wrap(Base64.getDecoder().decode(encoded));
@@ -81,6 +84,7 @@ public class FormatUtils {
 
   /**
    * Extract a byte array from a byte buffer
+   *
    * @param buffer byte buffer
    * @return byte[] representing the remaining contents of a byte buffer.
    */

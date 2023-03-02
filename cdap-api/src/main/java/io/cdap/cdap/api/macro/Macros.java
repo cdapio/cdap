@@ -25,6 +25,7 @@ import java.util.Set;
  * Class encapsulating lookup property macros and macro functions
  */
 public class Macros implements Serializable {
+
   private static final long serialVersionUID = 1606313949471664886L;
   private final Set<String> lookupProperties;
   private final Set<MacroFunction> macroFunctions;
@@ -59,7 +60,7 @@ public class Macros implements Serializable {
     Macros macros = (Macros) o;
 
     return Objects.equals(lookupProperties, macros.lookupProperties) &&
-      Objects.equals(macroFunctions, macros.macroFunctions);
+        Objects.equals(macroFunctions, macros.macroFunctions);
   }
 
   @Override
@@ -70,8 +71,8 @@ public class Macros implements Serializable {
   @Override
   public String toString() {
     return "Macros{" +
-      "lookupProperties=" + lookupProperties +
-      ", macroFunctions=" + macroFunctions +
-      '}';
+        "lookupProperties=" + lookupProperties +
+        ", macroFunctions=" + macroFunctions +
+        '}';
   }
 }

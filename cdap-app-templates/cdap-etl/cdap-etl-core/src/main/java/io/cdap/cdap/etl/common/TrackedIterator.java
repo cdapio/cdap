@@ -25,6 +25,7 @@ import java.util.Iterator;
  * @param <T> type of object in the iterator
  */
 public class TrackedIterator<T> implements Iterator<T> {
+
   private final Iterator<T> delegate;
   private final StageMetrics stageMetrics;
   private final String metricName;

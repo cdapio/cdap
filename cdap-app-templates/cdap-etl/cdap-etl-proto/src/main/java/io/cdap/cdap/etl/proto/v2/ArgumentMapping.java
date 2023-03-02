@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * The mapping between a triggering pipeline argument to a triggered pipeline argument.
  */
 public class ArgumentMapping {
+
   @Nullable
   private final String source;
   @Nullable
@@ -34,8 +35,8 @@ public class ArgumentMapping {
   }
 
   public ArgumentMapping(@Nullable String source,
-                         @Nullable String target,
-                         @Nullable TriggeringPipelineId pipeline) {
+      @Nullable String target,
+      @Nullable TriggeringPipelineId pipeline) {
     this.source = source;
     this.target = target;
     this.pipeline = pipeline;
@@ -68,9 +69,9 @@ public class ArgumentMapping {
   @Override
   public String toString() {
     return "ArgumentMapping{" +
-      "source='" + getSource() + '\'' +
-      ", target='" + getTarget() + '\'' +
-      ", triggeringPipelineId='" + getTriggeringPipelineId() + '\'' +
-      '}';
+        "source='" + getSource() + '\'' +
+        ", target='" + getTarget() + '\'' +
+        ", triggeringPipelineId='" + getTriggeringPipelineId() + '\'' +
+        '}';
   }
 }

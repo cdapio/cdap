@@ -34,7 +34,8 @@ public class MetricsProcessorStatusServiceModule extends PrivateModule {
   protected void configure() {
     bind(MetricsProcessorStatusService.class).in(Scopes.SINGLETON);
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder
-      (binder(), HttpHandler.class, Names.named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER));
+        (binder(), HttpHandler.class,
+            Names.named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER));
     CommonHandlers.add(handlerBinder);
     expose(MetricsProcessorStatusService.class);
   }

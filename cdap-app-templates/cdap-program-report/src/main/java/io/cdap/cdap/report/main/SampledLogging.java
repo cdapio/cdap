@@ -22,6 +22,7 @@ import org.slf4j.Logger;
  * log warning with interval count
  */
 public class SampledLogging {
+
   private final Logger logger;
   private final int sample;
   private long count;

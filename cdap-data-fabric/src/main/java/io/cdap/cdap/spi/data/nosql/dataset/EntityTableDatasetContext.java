@@ -26,10 +26,11 @@ import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 
 /**
- * Dataset context for entity tables. The regular dataset context classes cannot be used due to cyclic dependency
- * between dataset service and NoSQL StructuredTable.
+ * Dataset context for entity tables. The regular dataset context classes cannot be used due to
+ * cyclic dependency between dataset service and NoSQL StructuredTable.
  */
 class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
+
   private final TransactionContext txContext;
   private final TableDatasetSupplier datasetAccesor;
   // Dataset instances are keyed by arguments since the dataset name is the same for all NoSQL StructuredTable
@@ -88,7 +89,8 @@ class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments) {
+  public <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments) {
     throw new UnsupportedOperationException();
   }
 

@@ -23,6 +23,7 @@ import java.util.Objects;
  * Control messages sent from tether server to the client.
  */
 public class TetheringControlMessage {
+
   /**
    * Control messages type.
    */
@@ -64,7 +65,7 @@ public class TetheringControlMessage {
 
     TetheringControlMessage that = (TetheringControlMessage) o;
     return Objects.equals(type, that.type) &&
-      Arrays.equals(payload, that.payload);
+        Arrays.equals(payload, that.payload);
   }
 
   @Override

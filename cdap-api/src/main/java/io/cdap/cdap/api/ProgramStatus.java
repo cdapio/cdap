@@ -30,5 +30,6 @@ public enum ProgramStatus {
   FAILED,
   KILLED;
 
-  public static final Set<ProgramStatus> TERMINAL_STATES = new HashSet<>(Arrays.asList(COMPLETED, FAILED, KILLED));
+  public static final Set<ProgramStatus> TERMINAL_STATES = new HashSet<>(
+      Arrays.asList(COMPLETED, FAILED, KILLED));
 }

@@ -65,9 +65,10 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class LineageHTTPHandler extends AbstractHttpHandler {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .create();
 
   private final LineageAdmin lineageAdmin;
   private final FieldLineageAdmin fieldLineageAdmin;
@@ -76,7 +77,7 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
 
   @Inject
   LineageHTTPHandler(LineageAdmin lineageAdmin, FieldLineageAdmin fieldLineageAdmin,
-                     AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.lineageAdmin = lineageAdmin;
     this.fieldLineageAdmin = fieldLineageAdmin;
     this.accessEnforcer = accessEnforcer;
@@ -84,39 +85,42 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Get the lineage information about a dataset. This method does not give any information on field level lineage.
+   * Get the lineage information about a dataset. This method does not give any information on field
+   * level lineage.
    *
-   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
-   *                 using now and times added to it.
-   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
-   *               using now and times added to it.
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
    * @param levels the level to compute the lineage
    * @param collapse indicate how to collapse the lineage result
-   * @param rollup indicates whether to aggregate programs, currently supports rolling up programs into workflows
+   * @param rollup indicates whether to aggregate programs, currently supports rolling up
+   *     programs into workflows
    */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage")
   public void datasetLineage(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("dataset-id") String datasetId,
-                             @QueryParam("start") String startStr,
-                             @QueryParam("end") String endStr,
-                             @QueryParam("levels") @DefaultValue("10") int levels,
-                             @QueryParam("collapse") List<String> collapse,
-                             @QueryParam("rollup") String rollup) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("dataset-id") String datasetId,
+      @QueryParam("start") String startStr,
+      @QueryParam("end") String endStr,
+      @QueryParam("levels") @DefaultValue("10") int levels,
+      @QueryParam("collapse") List<String> collapse,
+      @QueryParam("rollup") String rollup) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
     DatasetId datasetInstance = new DatasetId(namespaceId, datasetId);
-    accessEnforcer.enforce(datasetInstance, authenticationContext.getPrincipal(), StandardPermission.GET);
+    accessEnforcer.enforce(datasetInstance, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(),
-                                                  levels, rollup);
+        levels, rollup);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(LineageSerializer.toLineageRecord(
-                         TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                         lineage, getCollapseTypes(collapse)), LineageRecord.class));
+        GSON.toJson(LineageSerializer.toLineageRecord(
+            TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+            TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+            lineage, getCollapseTypes(collapse)), LineageRecord.class));
   }
 
   /**
@@ -133,51 +137,54 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/endpoints")
   public void getEndpointSummary(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("app-name") String appName,
-                                 @PathParam("program-type") String programType,
-                                 @PathParam("program-name") String programName,
-                                 @PathParam("run-id") String runId) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-name") String appName,
+      @PathParam("program-type") String programType,
+      @PathParam("program-name") String programName,
+      @PathParam("run-id") String runId) throws Exception {
     ProgramReference programReference = null;
     try {
       RunIds.fromString(runId);
       programReference = new ProgramReference(namespaceId, appName,
-                                                               ProgramType.valueOfCategoryName(programType),
-                                                               programName);
+          ProgramType.valueOfCategoryName(programType),
+          programName);
     } catch (Exception e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
     EndpointsSummary endpointSummary = fieldLineageAdmin.getEndpoints(namespaceId, programReference,
-                                                                      RunIds.fromString(runId));
+        RunIds.fromString(runId));
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(endpointSummary));
   }
 
   /**
-   * Get the fields in the dataset. This method can be used to get fields that have lineage or all the fields in the
-   * dataset.
+   * Get the fields in the dataset. This method can be used to get fields that have lineage or all
+   * the fields in the dataset.
    *
-   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
-   *                 using now and times added to it.
-   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
-   *               using now and times added to it.
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
    * @param prefix the prefix of the field, if not provided, all fields will get return
-   * @param includeCurrent a boolean to indicate whether to include fields that do not have field level lineage
+   * @param includeCurrent a boolean to indicate whether to include fields that do not have
+   *     field level lineage
    */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields")
   public void datasetFields(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("dataset-id") String datasetId,
-                            @QueryParam("start") String startStr,
-                            @QueryParam("end") String endStr,
-                            @QueryParam("prefix") String prefix,
-                            @QueryParam("includeCurrent") boolean includeCurrent)
-    throws Exception {
-    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
-                           StandardPermission.GET);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("dataset-id") String datasetId,
+      @QueryParam("start") String startStr,
+      @QueryParam("end") String endStr,
+      @QueryParam("prefix") String prefix,
+      @QueryParam("includeCurrent") boolean includeCurrent)
+      throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId),
+        authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
-    Set<Field> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId), range.getStart(),
-                                                    range.getEnd(), prefix, includeCurrent);
+    Set<Field> result = fieldLineageAdmin.getFields(EndPoint.of(namespaceId, datasetId),
+        range.getStart(),
+        range.getEnd(), prefix, includeCurrent);
     // CDAP-14168: From 5.1 this endpoint supports returning a Set of Field object rather Set of String. For backward
     // compatibility in 5.1 the default behavior is to return a Set of String (field names). This default behavior
     // can be overridden by passing the query parameter 'includeCurrent' set to 'true' which will return set of
@@ -186,34 +193,36 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
     } else {
       responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(result.stream().map(Field::getName).collect(Collectors.toSet())));
+          GSON.toJson(result.stream().map(Field::getName).collect(Collectors.toSet())));
     }
   }
 
   /**
    * Get all the field level lineage about all fields in one dataset.
    *
-   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
-   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
-   *                 using now and times added to it.
-   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
-   *               using now and times added to it.
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING,
+   *     OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
    */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/allfieldlineage")
   public void datasetFieldLineage(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("dataset-id") String datasetId,
-                                  @QueryParam("direction") String directionStr,
-                                  @QueryParam("start") String startStr,
-                                  @QueryParam("end") String endStr) throws Exception {
-    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
-                           StandardPermission.GET);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("dataset-id") String datasetId,
+      @QueryParam("direction") String directionStr,
+      @QueryParam("start") String startStr,
+      @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId),
+        authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     DatasetFieldLineageSummary summary = fieldLineageAdmin.getDatasetFieldLineage(direction,
-                                                                                  EndPoint.of(namespaceId, datasetId),
-                                                                                  range.getStart(), range.getEnd());
+        EndPoint.of(namespaceId, datasetId),
+        range.getStart(), range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
   }
 
@@ -221,28 +230,31 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
    * Get the field level lineage about the specified field in one dataset.
    *
    * @param field the field name to compute field level lineage
-   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
-   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
-   *                 using now and times added to it.
-   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
-   *               using now and times added to it.
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING,
+   *     OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
    */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}")
   public void datasetFieldLineageSummary(HttpRequest request, HttpResponder responder,
-                                         @PathParam("namespace-id") String namespaceId,
-                                         @PathParam("dataset-id") String datasetId,
-                                         @PathParam("field-name") String field,
-                                         @QueryParam("direction") String directionStr,
-                                         @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) throws Exception {
-    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
-                           StandardPermission.GET);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("dataset-id") String datasetId,
+      @PathParam("field-name") String field,
+      @QueryParam("direction") String directionStr,
+      @QueryParam("start") String startStr,
+      @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId),
+        authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
-    FieldLineageSummary summary = fieldLineageAdmin.getFieldLineage(direction, endPointField, range.getStart(),
-                                                                    range.getEnd());
+    FieldLineageSummary summary = fieldLineageAdmin.getFieldLineage(direction, endPointField,
+        range.getStart(),
+        range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(summary));
   }
 
@@ -250,38 +262,43 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
    * Get the operation details about the specified field in one dataset.
    *
    * @param field the field name to compute field operation details
-   * @param directionStr the direction to compute the field level lineage, can be INCOMING, OUTGOING or BOTH
-   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a relative time,
-   *                 using now and times added to it.
-   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a relative time,
-   *               using now and times added to it.
+   * @param directionStr the direction to compute the field level lineage, can be INCOMING,
+   *     OUTGOING or BOTH
+   * @param startStr the start time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
+   * @param endStr the end time string, it can be a specific timestamp in milliseconds or a
+   *     relative time, using now and times added to it.
    */
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/lineage/fields/{field-name}/operations")
   public void datasetFieldLineageDetails(HttpRequest request, HttpResponder responder,
-                                         @PathParam("namespace-id") String namespaceId,
-                                         @PathParam("dataset-id") String datasetId,
-                                         @PathParam("field-name") String field,
-                                         @QueryParam("direction") @DefaultValue("both") String directionStr,
-                                         @QueryParam("start") String startStr,
-                                         @QueryParam("end") String endStr) throws Exception {
-    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId), authenticationContext.getPrincipal(),
-                           StandardPermission.GET);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("dataset-id") String datasetId,
+      @PathParam("field-name") String field,
+      @QueryParam("direction") @DefaultValue("both") String directionStr,
+      @QueryParam("start") String startStr,
+      @QueryParam("end") String endStr) throws Exception {
+    accessEnforcer.enforce(new DatasetId(namespaceId, datasetId),
+        authenticationContext.getPrincipal(),
+        StandardPermission.GET);
     TimeRange range = parseRange(startStr, endStr);
     Constants.FieldLineage.Direction direction = parseDirection(directionStr);
     EndPointField endPointField = new EndPointField(EndPoint.of(namespaceId, datasetId), field);
-    FieldLineageDetails details = fieldLineageAdmin.getOperationDetails(direction, endPointField, range.getStart(),
-                                                                        range.getEnd());
+    FieldLineageDetails details = fieldLineageAdmin.getOperationDetails(direction, endPointField,
+        range.getStart(),
+        range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
 
   private void checkLevels(int levels) throws BadRequestException {
     if (levels < 1) {
-      throw new BadRequestException(String.format("Invalid levels (%d), should be greater than 0.", levels));
+      throw new BadRequestException(
+          String.format("Invalid levels (%d), should be greater than 0.", levels));
     }
   }
 
-  private static Set<CollapseType> getCollapseTypes(@Nullable List<String> collapse) throws BadRequestException {
+  private static Set<CollapseType> getCollapseTypes(@Nullable List<String> collapse)
+      throws BadRequestException {
     if (collapse == null) {
       return Collections.emptySet();
     }
@@ -320,20 +337,24 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     }
 
     if (start < 0) {
-      throw new BadRequestException(String.format("Invalid start time (%s -> %d), should be >= 0.", startStr, start));
+      throw new BadRequestException(
+          String.format("Invalid start time (%s -> %d), should be >= 0.", startStr, start));
     }
     if (end < 0) {
-      throw new BadRequestException(String.format("Invalid end time (%s -> %d), should be >= 0.", endStr, end));
+      throw new BadRequestException(
+          String.format("Invalid end time (%s -> %d), should be >= 0.", endStr, end));
     }
     if (start > end) {
-      throw new BadRequestException(String.format("Start time (%s -> %d) should be lesser than end time (%s -> %d).",
-                                                  startStr, start, endStr, end));
+      throw new BadRequestException(
+          String.format("Start time (%s -> %d) should be lesser than end time (%s -> %d).",
+              startStr, start, endStr, end));
     }
 
     return new TimeRange(start, end);
   }
 
   private static class TimeRange {
+
     private final long start;
     private final long end;
 
@@ -351,14 +372,16 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     }
   }
 
-  private Constants.FieldLineage.Direction parseDirection(@Nullable String directionStr) throws BadRequestException {
+  private Constants.FieldLineage.Direction parseDirection(@Nullable String directionStr)
+      throws BadRequestException {
     try {
       return Constants.FieldLineage.Direction.valueOf(directionStr.toUpperCase());
     } catch (NullPointerException | IllegalArgumentException e) {
       String directionValues = Joiner.on(", ").join(Constants.FieldLineage.Direction.values());
-      throw new BadRequestException(String.format("Direction must be specified to get the field lineage " +
-                                                    "summary and should be one of the following: [%s].",
-                                                  directionValues.toLowerCase()));
+      throw new BadRequestException(
+          String.format("Direction must be specified to get the field lineage " +
+                  "summary and should be one of the following: [%s].",
+              directionValues.toLowerCase()));
     }
   }
 }

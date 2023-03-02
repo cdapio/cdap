@@ -36,7 +36,9 @@ import javax.annotation.Nullable;
 /**
  * Simple implementation of in-memory non-tx {@link NoTxKeyValueTable}.
  */
-public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
+public class InMemoryKVTableDefinition extends
+    AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
+
   private static final Map<String, Map<byte[], byte[]>> tables = Maps.newHashMap();
 
   public InMemoryKVTableDefinition(String name) {
@@ -46,23 +48,24 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new DatasetAdminImpl(spec.getName());
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      Map<String, String> arguments, ClassLoader classLoader) {
+      Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryKVTable(spec.getName());
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
+
     private final String tableName;
 
     private DatasetAdminImpl(String tableName) {
@@ -101,6 +104,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
   }
 
   private static final class InMemoryKVTable implements NoTxKeyValueTable {
+
     private final String tableName;
 
     private Map<byte[], byte[]> getTable() {
@@ -108,7 +112,8 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
     }
 
     InMemoryKVTable(String tableName) {
-      Preconditions.checkArgument(tables.containsKey(tableName), "Table does not exist: " + tableName);
+      Preconditions.checkArgument(tables.containsKey(tableName),
+          "Table does not exist: " + tableName);
       this.tableName = tableName;
     }
 
@@ -139,6 +144,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
    * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
+
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName()));

@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * Represents tag and its value associated with metrics data points.
  */
 public final class MetricTagValue {
+
   private final String name;
   private final String value;
 

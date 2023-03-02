@@ -102,15 +102,17 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
  *
  * @param <T> The {@link ProgramRunner} type.
  */
-public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements TwillRunnable {
+public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> implements
+    TwillRunnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillRunnable.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .registerTypeAdapter(org.apache.twill.internal.Arguments.class,
-                         new org.apache.twill.internal.json.ArgumentsCodec())
-    .create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .registerTypeAdapter(org.apache.twill.internal.Arguments.class,
+          new org.apache.twill.internal.json.ArgumentsCodec())
+      .create();
 
   protected String name;
 
@@ -137,9 +139,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Override
   public TwillRunnableSpecification configure() {
     return TwillRunnableSpecification.Builder.with()
-      .setName(name)
-      .noConfigs()
-      .build();
+        .setName(name)
+        .noConfigs()
+        .build();
   }
 
   @Override
@@ -181,23 +183,27 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
 
     Arguments systemArgs = programOptions.getArguments();
-    LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
-                                                                                             systemArgs.asMap()));
+    LoggingContextAccessor.setLoggingContext(
+        LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+            systemArgs.asMap()));
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
 
     // Loads configurations
     Configuration hConf = new Configuration();
     if (clusterMode == ClusterMode.ON_PREMISE) {
       hConf.clear();
-      hConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.HADOOP_CONF_FILE)).toURI().toURL());
+      hConf.addResource(
+          new File(systemArgs.getOption(ProgramOptionConstants.HADOOP_CONF_FILE)).toURI().toURL());
     }
     UserGroupInformation.setConfiguration(hConf);
 
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
-    cConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
+    cConf.addResource(
+        new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
 
-    Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
+    Injector injector = Guice.createInjector(
+        createModule(cConf, hConf, programOptions, programRunId));
 
     // Initialize log appender
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -219,17 +225,19 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     // Create the Program instance
     Location programJarLocation =
-      Locations.toLocation(new File(systemArgs.getOption(ProgramOptionConstants.PROGRAM_JAR)));
+        Locations.toLocation(new File(systemArgs.getOption(ProgramOptionConstants.PROGRAM_JAR)));
     ApplicationSpecification appSpec = readJsonFile(
-      new File(systemArgs.getOption(ProgramOptionConstants.APP_SPEC_FILE)), ApplicationSpecification.class);
+        new File(systemArgs.getOption(ProgramOptionConstants.APP_SPEC_FILE)),
+        ApplicationSpecification.class);
 
     // Expand the program jar for creating classloader
     ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-      programJarLocation, () -> new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
+        programJarLocation,
+        () -> new File("expanded." + System.currentTimeMillis() + programJarLocation.getName()));
 
     program = Programs.create(cConf, programRunner,
-                              new ProgramDescriptor(programOptions.getProgramId(), appSpec), programJarLocation,
-                              classLoaderFolder.getDir());
+        new ProgramDescriptor(programOptions.getProgramId(), appSpec), programJarLocation,
+        classLoaderFolder.getDir());
   }
 
   @Override
@@ -323,11 +331,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       LOG.info("Stopping program run {}.", programRunId);
 
       // Stop the program and block until the graceful shutdown timeout
-      ListenableFuture<ProgramController> stopFuture = controller.stop(context.getTerminationTimeoutMillis(),
-                                                                       TimeUnit.MILLISECONDS);
+      ListenableFuture<ProgramController> stopFuture = controller.stop(
+          context.getTerminationTimeoutMillis(),
+          TimeUnit.MILLISECONDS);
       long startTime = System.currentTimeMillis();
       stopFuture.get(context.getTerminationTimeoutMillis(), TimeUnit.MILLISECONDS);
-      LOG.debug("Program {} stop completed after {} ms", programRunId, System.currentTimeMillis() - startTime);
+      LOG.debug("Program {} stop completed after {} ms", programRunId,
+          System.currentTimeMillis() - startTime);
 
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
       throw Throwables.propagate(e);
@@ -340,21 +350,23 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
-   * Returns a set of extra system arguments that will be available through the {@link ProgramOptions#getArguments()}
-   * for the program execution.
+   * Returns a set of extra system arguments that will be available through the {@link
+   * ProgramOptions#getArguments()} for the program execution.
    */
   private Map<String, String> getExtraSystemArguments() {
     Map<String, String> args = new HashMap<>();
-    args.put(ProgramOptionConstants.INSTANCE_ID, context == null ? "0" : Integer.toString(context.getInstanceId()));
-    args.put(ProgramOptionConstants.INSTANCES, context == null ? "1" : Integer.toString(context.getInstanceCount()));
+    args.put(ProgramOptionConstants.INSTANCE_ID,
+        context == null ? "0" : Integer.toString(context.getInstanceId()));
+    args.put(ProgramOptionConstants.INSTANCES,
+        context == null ? "1" : Integer.toString(context.getInstanceCount()));
     args.put(ProgramOptionConstants.TWILL_RUN_ID, context.getApplicationRunId().getId());
     args.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
     return args;
   }
 
   /**
-   * Creates a Guice {@link Module} that will be used to create the Guice {@link Injector} used for the
-   * program execution.
+   * Creates a Guice {@link Module} that will be used to create the Guice {@link Injector} used for
+   * the program execution.
    *
    * @param cConf the CDAP configuration
    * @param hConf the Hadoop configuration
@@ -363,13 +375,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    * @return a guice {@link Module}.
    */
   protected Module createModule(CConfiguration cConf, Configuration hConf,
-                                ProgramOptions programOptions, ProgramRunId programRunId) {
-    return new DistributedProgramContainerModule(cConf, hConf, programRunId, programOptions, getServiceAnnouncer());
+      ProgramOptions programOptions, ProgramRunId programRunId) {
+    return new DistributedProgramContainerModule(cConf, hConf, programRunId, programOptions,
+        getServiceAnnouncer());
   }
 
   /**
-   * Returns the {@link ServiceAnnouncer} to use for the program execution or {@code null} if service announcement
-   * from program is not supported.
+   * Returns the {@link ServiceAnnouncer} to use for the program execution or {@code null} if
+   * service announcement from program is not supported.
    */
   @Nullable
   protected ServiceAnnouncer getServiceAnnouncer() {
@@ -383,12 +396,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Type type = TypeToken.of(getClass()).getSupertype(AbstractProgramTwillRunnable.class).getType();
     // Must be ParameterizedType
     Preconditions.checkState(type instanceof ParameterizedType,
-                             "Invalid class %s. Expected to be a ParameterizedType.", getClass());
+        "Invalid class %s. Expected to be a ParameterizedType.", getClass());
 
     Type programRunnerType = ((ParameterizedType) type).getActualTypeArguments()[0];
     // the ProgramRunnerType must be a Class
     Preconditions.checkState(programRunnerType instanceof Class,
-                             "ProgramRunner type is not a class: %s", programRunnerType);
+        "ProgramRunner type is not a class: %s", programRunnerType);
 
     @SuppressWarnings("unchecked")
     Class<T> programRunnerClass = (Class<T>) programRunnerType;
@@ -407,7 +420,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     // Use the name passed in by the constructor as the program name to construct the ProgramId
     return new SimpleProgramOptions(original.getProgramId(), new BasicArguments(arguments),
-                                    original.getUserArguments(), original.isDebug());
+        original.getUserArguments(), original.isDebug());
   }
 
   /**
@@ -420,12 +433,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   /**
-   * Returns a list of {@link Service} to start before the program execution and shutdown when program completed.
+   * Returns a list of {@link Service} to start before the program execution and shutdown when
+   * program completed.
    */
   private Deque<Service> createCoreServices(Injector injector, ProgramOptions programOptions) {
     Deque<Service> services = new LinkedList<>();
 
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    MetricsCollectionService metricsCollectionService = injector.getInstance(
+        MetricsCollectionService.class);
     services.add(metricsCollectionService);
 
     if (ProgramRunners.getClusterMode(programOptions) != ClusterMode.ON_PREMISE) {
@@ -440,15 +455,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
-                                    MetricsCollectionService metricsCollectionService, Collection<Service> services) {
-    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class, KafkaClientService.class,
-                                                      BrokerService.class, TokenManager.class)) {
+      MetricsCollectionService metricsCollectionService, Collection<Service> services) {
+    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class,
+        KafkaClientService.class,
+        BrokerService.class, TokenManager.class)) {
       Binding<? extends Service> binding = injector.getExistingBinding(Key.get(cls));
       if (binding != null) {
         services.add(binding.getProvider().get());
       }
     }
-    services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
+    services.add(
+        new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService,
+            context));
   }
 
   private void startCoreServices() {
@@ -465,7 +483,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       try {
         service.stopAndWait();
       } catch (Exception e) {
-        LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
+        LOG.warn("Exception raised when stopping service {} during program termination.", service,
+            e);
       }
     }
   }

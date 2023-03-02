@@ -65,8 +65,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind the ArtifactManager implementation and expose it.
     // It could used by ProgramRunner loaded through runtime extension.
     install(new FactoryModuleBuilder()
-              .implement(ArtifactManager.class, LocalArtifactManager.class)
-              .build(ArtifactManagerFactory.class));
+        .implement(ArtifactManager.class, LocalArtifactManager.class)
+        .build(ArtifactManagerFactory.class));
     expose(ArtifactManagerFactory.class);
 
     install(new AppStateModule());
@@ -74,7 +74,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
-      MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
+        MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     // Programs with multiple instances have an InMemoryProgramRunner that starts threads to manage all of their
     // instances.
     runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
@@ -106,7 +106,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     @Inject
     private DiscoveryServiceAnnouncer(DiscoveryService discoveryService,
-                                      @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
+        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
       this.discoveryService = discoveryService;
       this.hostname = hostname;
     }
@@ -114,13 +114,15 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     @Override
     public Cancellable announce(final String serviceName, final int port) {
       return discoveryService.register(
-        ResolvingDiscoverable.of(new Discoverable(serviceName, new InetSocketAddress(hostname, port))));
+          ResolvingDiscoverable.of(
+              new Discoverable(serviceName, new InetSocketAddress(hostname, port))));
     }
 
     @Override
     public Cancellable announce(String serviceName, int port, byte[] payload) {
       return discoveryService.register(
-        ResolvingDiscoverable.of(new Discoverable(serviceName, new InetSocketAddress(hostname, port), payload)));
+          ResolvingDiscoverable.of(
+              new Discoverable(serviceName, new InetSocketAddress(hostname, port), payload)));
     }
   }
 }

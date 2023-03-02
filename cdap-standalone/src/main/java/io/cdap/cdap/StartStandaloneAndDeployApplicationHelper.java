@@ -27,14 +27,14 @@ import java.io.InputStreamReader;
 public final class StartStandaloneAndDeployApplicationHelper {
 
   public static final String ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND =
-    "appfabric.standalone.deploy.command";
+      "appfabric.standalone.deploy.command";
 
   public static void main(String[] args) throws Exception {
     // Starting Standalone
     StandaloneMain.main(args);
 
     String deployCmd =
-      System.getProperty(ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND);
+        System.getProperty(ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND);
     System.out.println("Deploying application...");
     Process proc = Runtime.getRuntime().exec(deployCmd);
 
@@ -51,6 +51,7 @@ public final class StartStandaloneAndDeployApplicationHelper {
   }
 
   private static final class StreamTailer extends Thread {
+
     private InputStream is;
     private String type;
 
@@ -70,7 +71,8 @@ public final class StartStandaloneAndDeployApplicationHelper {
         }
 
       } catch (IOException ioe) {
-        System.out.println("Tailing output failed for type: " + type + ". You may not see new output from this stream");
+        System.out.println("Tailing output failed for type: " + type
+            + ". You may not see new output from this stream");
         ioe.printStackTrace();
         // DO NOTHING
       }

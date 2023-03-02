@@ -27,17 +27,19 @@ import io.cdap.cdap.api.dataset.Reconfigurable;
 
 /**
  * Basic abstract implementation of {@link DatasetDefinition}.
+ *
  * @param <D> defines data operations that can be performed on this dataset instance
  * @param <A> defines administrative operations that can be performed on this dataset instance
  */
 @Beta
 public abstract class AbstractDatasetDefinition<D extends Dataset, A extends DatasetAdmin>
-  implements DatasetDefinition<D, A> {
+    implements DatasetDefinition<D, A> {
 
   private final String name;
 
   /**
    * Ctor that takes in name of this dataset type.
+   *
    * @param name this dataset type name
    */
   protected AbstractDatasetDefinition(String name) {
@@ -50,21 +52,23 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
   }
 
   /**
-   * Reconfigure a dataset instance. Delegates to {@link Reconfigurable#reconfigure} if the dataset definition
-   * implements that interface, and delegates to {@link #configure} otherwise.
+   * Reconfigure a dataset instance. Delegates to {@link Reconfigurable#reconfigure} if the dataset
+   * definition implements that interface, and delegates to {@link #configure} otherwise.
+   *
    * @param def the dataset definition that will perform the (re)configure
    * @param name name of the dataset instance to reconfigure
    * @param newProps the updated dataset properties
    * @param currentSpec the current dataset specification
    * @return a new dataset specification representing the updated properties
-   * @throws IncompatibleUpdateException if the updated properties are incompatible with the existing properties
+   * @throws IncompatibleUpdateException if the updated properties are incompatible with the
+   *     existing properties
    */
   public static DatasetSpecification reconfigure(DatasetDefinition def, String name,
-                                                 DatasetProperties newProps, DatasetSpecification currentSpec)
-    throws IncompatibleUpdateException {
+      DatasetProperties newProps, DatasetSpecification currentSpec)
+      throws IncompatibleUpdateException {
 
     return def instanceof Reconfigurable
-      ? ((Reconfigurable) def).reconfigure(name, newProps, currentSpec)
-      : def.configure(name, newProps);
+        ? ((Reconfigurable) def).reconfigure(name, newProps, currentSpec)
+        : def.configure(name, newProps);
   }
 }

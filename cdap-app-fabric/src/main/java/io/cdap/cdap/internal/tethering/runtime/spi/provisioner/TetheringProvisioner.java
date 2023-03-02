@@ -39,14 +39,15 @@ import java.util.concurrent.TimeUnit;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * A provisioner that does not create or tear down clusters, but just uses an existing tethered CDAP instance.
+ * A provisioner that does not create or tear down clusters, but just uses an existing tethered CDAP
+ * instance.
  */
 public class TetheringProvisioner implements Provisioner {
 
   public static final String TETHERING_NAME = "tethering";
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    TETHERING_NAME, "Tethering",
-    "Runs programs on an existing tethered CDAP instance. Does not provision any resources.");
+      TETHERING_NAME, "Tethering",
+      "Runs programs on an existing tethered CDAP instance. Does not provision any resources.");
 
   private MessagingService messagingService;
   private TetheringStore tetheringStore;
@@ -94,7 +95,7 @@ public class TetheringProvisioner implements Provisioner {
   @Override
   public Cluster createCluster(ProvisionerContext context) {
     return new Cluster(context.getProgramRunInfo().getRun(), ClusterStatus.RUNNING,
-                       Collections.emptyList(), Collections.emptyMap());
+        Collections.emptyList(), Collections.emptyMap());
   }
 
   @Override
@@ -130,6 +131,7 @@ public class TetheringProvisioner implements Provisioner {
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     TetheringConf conf = TetheringConf.fromProperties(context.getProperties());
-    return Optional.of(new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore, locationFactory));
+    return Optional.of(new TetheringRuntimeJobManager(conf, cConf, messagingService, tetheringStore,
+        locationFactory));
   }
 }

@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  * A base implementation of {@link ApplicationManager}.
  */
 public abstract class AbstractApplicationManager implements ApplicationManager {
+
   protected final ApplicationId application;
 
   public AbstractApplicationManager(Id.Application application) {

@@ -43,7 +43,9 @@ import org.apache.twill.common.Threads;
  * Collects LevelDB-based dataset's metrics from levelDB.
  */
 // todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
-public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
+public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements
+    DatasetMetricsReporter {
+
   private static final int BYTES_IN_MB = 1024 * 1024;
 
   private final int reportIntervalInSec;
@@ -54,8 +56,8 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
 
   @Inject
   public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
-                                       LevelDBTableService ldbService, DatasetFramework dsFramework,
-                                       CConfiguration conf) {
+      LevelDBTableService ldbService, DatasetFramework dsFramework,
+      CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
@@ -82,7 +84,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("LevelDBDatasetMetricsReporter-scheduler"));
+        Threads.createDaemonThreadFactory("LevelDBDatasetMetricsReporter-scheduler"));
     return executor;
   }
 
@@ -94,7 +96,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   }
 
   private void report(Map<TableId, LevelDBTableService.TableStats> datasetStat)
-    throws DatasetManagementException, UnauthorizedException {
+      throws DatasetManagementException, UnauthorizedException {
     for (Map.Entry<TableId, LevelDBTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String namespace = statEntry.getKey().getNamespace();
       // emit metrics for only user datasets, tables in system namespace are ignored
@@ -103,13 +105,15 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
       }
       String tableName = statEntry.getKey().getTableName();
 
-      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(new NamespaceId(namespace));
+      Collection<DatasetSpecificationSummary> instances = dsFramework.getInstances(
+          new NamespaceId(namespace));
       for (DatasetSpecificationSummary spec : instances) {
-        DatasetSpecification specification = dsFramework.getDatasetSpec(new DatasetId(namespace, spec.getName()));
+        DatasetSpecification specification = dsFramework.getDatasetSpec(
+            new DatasetId(namespace, spec.getName()));
         if (specification.isParent(tableName)) {
           MetricsContext collector =
-            metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
-                                                      Constants.Metrics.Tag.DATASET, spec.getName()));
+              metricsService.getContext(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, namespace,
+                  Constants.Metrics.Tag.DATASET, spec.getName()));
           int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
           collector.gauge("dataset.size.mb", sizeInMb);
           break;

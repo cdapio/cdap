@@ -24,8 +24,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * This interface defines method to read from lineage store.
- * It is needed to break circular dependency.
+ * This interface defines method to read from lineage store. It is needed to break circular
+ * dependency.
  */
 public interface LineageStoreReader {
 
@@ -43,7 +43,8 @@ public interface LineageStoreReader {
    * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  Set<Relation> getRelations(DatasetId datasetInstance, long start, long end, Predicate<Relation> filter);
+  Set<Relation> getRelations(DatasetId datasetInstance, long start, long end,
+      Predicate<Relation> filter);
 
   /**
    * Fetch program-dataset access information for a program for a given period.

@@ -49,10 +49,11 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that accepts once on every N calls, with N exponentially increased from
-   * an initial value to a max value.
+   * Returns a {@link LogSampler} that accepts once on every N calls, with N exponentially increased
+   * from an initial value to a max value.
    */
-  public static LogSampler exponentialLimit(final int initialCount, final int maxCount, final double multiplier) {
+  public static LogSampler exponentialLimit(final int initialCount, final int maxCount,
+      final double multiplier) {
     Preconditions.checkArgument(initialCount > 0, "Initial count must be >= 0");
     Preconditions.checkArgument(maxCount > 0, "Max count must be >= 0");
     Preconditions.checkArgument(multiplier >= 1.0d, "Multiplier must be >= 1.0");
@@ -73,8 +74,8 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that accepts once as per the frequency. This method is equivalent to
-   * calling {@link #limitRate(long, TimeProvider)} using {@link TimeProvider#SYSTEM_TIME} as the
+   * Returns a {@link LogSampler} that accepts once as per the frequency. This method is equivalent
+   * to calling {@link #limitRate(long, TimeProvider)} using {@link TimeProvider#SYSTEM_TIME} as the
    * {@link TimeProvider}.
    */
   public static LogSampler limitRate(long frequency) {
@@ -113,10 +114,10 @@ public final class LogSamplers {
 
   /**
    * Returns a {@link LogSampler} that only perform sampling if the log message matches with one of
-   * the provided messages. This method is equivalent to calling {@link #onMessages(LogSampler, Iterable)}
-   * by converting the array of messages to a list.
+   * the provided messages. This method is equivalent to calling {@link #onMessages(LogSampler,
+   * Iterable)} by converting the array of messages to a list.
    */
-  public static LogSampler onMessages(LogSampler sampler, String...messages) {
+  public static LogSampler onMessages(LogSampler sampler, String... messages) {
     return onMessages(sampler, Arrays.asList(messages));
   }
 
@@ -140,19 +141,23 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that only perform sampling if the log message matches with the regex {@link Pattern}.
+   * Returns a {@link LogSampler} that only perform sampling if the log message matches with the
+   * regex {@link Pattern}.
    *
    * @param sampler the {@link LogSampler} to call if the log message matches
    * @param pattern the regex pattern
-   * @param matchAll {@code true} to match the pattern with the whole message; {@code false} to match any sub-sequence
+   * @param matchAll {@code true} to match the pattern with the whole message; {@code false} to
+   *     match any sub-sequence
    */
-  public static LogSampler onPattern(final LogSampler sampler, final Pattern pattern, final boolean matchAll) {
+  public static LogSampler onPattern(final LogSampler sampler, final Pattern pattern,
+      final boolean matchAll) {
     return new LogSampler() {
       @Override
       public boolean accept(String message, int logLevel) {
         Matcher matcher = pattern.matcher(message);
         // If the message doesn't match the pattern, let it pass
-        return !(matchAll ? matcher.matches() : matcher.find()) || sampler.accept(message, logLevel);
+        return !(matchAll ? matcher.matches() : matcher.find()) || sampler.accept(message,
+            logLevel);
       }
     };
   }
@@ -193,10 +198,10 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that will accept a log event if any of the provided {@link LogSampler}s accepted
-   * the log event.
+   * Returns a {@link LogSampler} that will accept a log event if any of the provided {@link
+   * LogSampler}s accepted the log event.
    */
-  public static LogSampler any(final LogSampler...samplers) {
+  public static LogSampler any(final LogSampler... samplers) {
     Preconditions.checkArgument(samplers.length > 0, "Must provide at least one sampler");
     return new LogSampler() {
       @Override
@@ -213,10 +218,10 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that will accept a log event if all of the provided {@link LogSampler}s accepted
-   * the log event.
+   * Returns a {@link LogSampler} that will accept a log event if all of the provided {@link
+   * LogSampler}s accepted the log event.
    */
-  public static LogSampler all(final LogSampler...samplers) {
+  public static LogSampler all(final LogSampler... samplers) {
     Preconditions.checkArgument(samplers.length > 0, "Must provide at least one sampler");
     return new LogSampler() {
       @Override
@@ -255,8 +260,8 @@ public final class LogSamplers {
   }
 
   /**
-   * Returns a {@link LogSampler} that only perform sampling if the event log level is smaller than or equal to
-   * the provided log level.
+   * Returns a {@link LogSampler} that only perform sampling if the event log level is smaller than
+   * or equal to the provided log level.
    */
   private static LogSampler onLogLevel(final LogSampler sampler, final int level) {
     return new LogSampler() {

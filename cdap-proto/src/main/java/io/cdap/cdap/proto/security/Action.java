@@ -18,20 +18,29 @@ package io.cdap.cdap.proto.security;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Types of actions that users can perform on entities.
- * Actions are inherited, so granting an action on a namespace
- * would also grant that action on entities in that namespace.
+ * Types of actions that users can perform on entities. Actions are inherited, so granting an action
+ * on a namespace would also grant that action on entities in that namespace.
+ *
  * @deprecated please use {@link Permission}
  */
-@Beta @Deprecated
+@Beta
+@Deprecated
 public enum Action implements ActionOrPermission {
-  /** Read data, metrics, and logs from the entity */
+  /**
+   * Read data, metrics, and logs from the entity
+   */
   READ(StandardPermission.GET),
-  /** Write data to the entitIterator<RawMessageTableEntry> entriesy */
+  /**
+   * Write data to the entitIterator<RawMessageTableEntry> entriesy
+   */
   WRITE(StandardPermission.UPDATE),
-  /** Execute a program */
+  /**
+   * Execute a program
+   */
   EXECUTE(ApplicationPermission.EXECUTE),
-  /** Platform-related read/write privileges e.g. application and artifact deployment */
+  /**
+   * Platform-related read/write privileges e.g. application and artifact deployment
+   */
   ADMIN(StandardPermission.UPDATE),
   ;
 

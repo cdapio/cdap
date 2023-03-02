@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetTypeHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
   private static final Gson GSON = new Gson();
 
@@ -69,14 +70,15 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules")
   public void listModules(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(typeService.listModules(new NamespaceId(namespaceId))));
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(typeService.listModules(new NamespaceId(namespaceId))));
   }
 
   @DELETE
   @Path("/data/modules")
   public void deleteModules(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId) throws Exception {
+      @PathParam("namespace-id") String namespaceId) throws Exception {
     typeService.deleteAll(new NamespaceId(namespaceId));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -85,17 +87,18 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @Path("/data/modules/{name}")
   @AuditPolicy(AuditDetail.HEADERS)
   public BodyConsumer addModule(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
-                                @QueryParam("force") final boolean forceUpdate,
-                                @HeaderParam(HEADER_CLASS_NAME) final String className) throws Exception {
-    return typeService.addModule(new NamespaceId(namespaceId).datasetModule(name), className, forceUpdate);
+      @PathParam("namespace-id") String namespaceId, @PathParam("name") final String name,
+      @QueryParam("force") final boolean forceUpdate,
+      @HeaderParam(HEADER_CLASS_NAME) final String className) throws Exception {
+    return typeService.addModule(new NamespaceId(namespaceId).datasetModule(name), className,
+        forceUpdate);
   }
 
   @DELETE
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId,
-                           @PathParam("name") String name) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("name") String name) throws Exception {
     typeService.delete(new NamespaceId(namespaceId).datasetModule(name));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -103,25 +106,26 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String name) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("name") String name) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(typeService.getModule(new NamespaceId(namespaceId).datasetModule(name))));
+        GSON.toJson(typeService.getModule(new NamespaceId(namespaceId).datasetModule(name))));
   }
 
   @GET
   @Path("/data/types")
   public void listTypes(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(typeService.listTypes(new NamespaceId(namespaceId))));
+      @PathParam("namespace-id") String namespaceId) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(typeService.listTypes(new NamespaceId(namespaceId))));
   }
 
   @GET
   @Path("/data/types/{name}")
   public void getTypeInfo(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId,
-                          @PathParam("name") String name) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("name") String name) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(typeService.getType(new NamespaceId(namespaceId).datasetType(name))));
+        GSON.toJson(typeService.getType(new NamespaceId(namespaceId).datasetType(name))));
   }
 }

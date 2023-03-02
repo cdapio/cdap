@@ -37,13 +37,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class InternalAccessEnforcer extends AbstractAccessEnforcer {
+
   private static final Logger LOG = LoggerFactory.getLogger(InternalAccessEnforcer.class);
 
   private final TokenManager tokenManager;
   private final Codec<AccessToken> accessTokenCodec;
 
   @Inject
-  InternalAccessEnforcer(CConfiguration cConf, TokenManager tokenManager, Codec<AccessToken> accessTokenCodec) {
+  InternalAccessEnforcer(CConfiguration cConf, TokenManager tokenManager,
+      Codec<AccessToken> accessTokenCodec) {
     super(cConf);
     this.tokenManager = tokenManager;
     this.accessTokenCodec = accessTokenCodec;
@@ -51,19 +53,19 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
 
   @Override
   public void enforce(EntityId entity, Principal principal,
-                      Set<? extends Permission> permissions) throws AccessException {
+      Set<? extends Permission> permissions) throws AccessException {
     validateAccessTokenAndIdentity(principal.getName(), principal.getFullCredential());
   }
 
   @Override
   public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
-                              Permission permission) throws AccessException {
+      Permission permission) throws AccessException {
     validateAccessTokenAndIdentity(principal.getName(), principal.getFullCredential());
   }
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds,
-                                           Principal principal) throws AccessException {
+      Principal principal) throws AccessException {
     try {
       validateAccessTokenAndIdentity(principal.getName(), principal.getFullCredential());
       return entityIds;
@@ -72,12 +74,14 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     }
   }
 
-  private void validateAccessTokenAndIdentity(String principalName, Credential credential) throws AccessException {
+  private void validateAccessTokenAndIdentity(String principalName, Credential credential)
+      throws AccessException {
     if (credential == null) {
       throw new IllegalStateException("Attempted to internally enforce access on null credential");
     }
     if (!credential.getType().equals(Credential.CredentialType.INTERNAL)) {
-      throw new IllegalStateException("Attempted to internally enforce access on non-internal credential type");
+      throw new IllegalStateException(
+          "Attempted to internally enforce access on non-internal credential type");
     }
     AccessToken accessToken;
     try {
@@ -92,14 +96,16 @@ public class InternalAccessEnforcer extends AbstractAccessEnforcer {
     }
     UserIdentity userIdentity = accessToken.getIdentifier();
     if (!userIdentity.getUsername().equals(principalName)) {
-      LOG.debug(String.format("Internal access token username differs from principal name; got token " +
-                                                "name '%s', expected principal name '%s'",
-                                              userIdentity.getUsername(), principalName));
+      LOG.debug(
+          String.format("Internal access token username differs from principal name; got token " +
+                  "name '%s', expected principal name '%s'",
+              userIdentity.getUsername(), principalName));
     }
     if (userIdentity.getIdentifierType() == null || !userIdentity.getIdentifierType()
-      .equals(UserIdentity.IdentifierType.INTERNAL)) {
-      throw new AccessException(String.format("Invalid internal access token type; got '%s', want '%s'",
-                                              userIdentity.getIdentifierType(), UserIdentity.IdentifierType.INTERNAL));
+        .equals(UserIdentity.IdentifierType.INTERNAL)) {
+      throw new AccessException(
+          String.format("Invalid internal access token type; got '%s', want '%s'",
+              userIdentity.getIdentifierType(), UserIdentity.IdentifierType.INTERNAL));
     }
   }
 }

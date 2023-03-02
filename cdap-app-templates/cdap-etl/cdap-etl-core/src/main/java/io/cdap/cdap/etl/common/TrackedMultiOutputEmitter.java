@@ -23,18 +23,21 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import java.util.Map;
 
 /**
- * Wrapper around another MultiOutputEmitter that tracks how many records were emitted to each port.
+ * Wrapper around another MultiOutputEmitter that tracks how many records were emitted to each
+ * port.
  *
  * @param <E> the type of error object to emit
  */
 public class TrackedMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
+
   private final MultiOutputEmitter<E> delegate;
   private final StageMetrics stageMetrics;
   private final DataTracer dataTracer;
   private final StageStatisticsCollector collector;
 
-  public TrackedMultiOutputEmitter(MultiOutputEmitter<E> delegate, StageMetrics stageMetrics, DataTracer dataTracer,
-                                   StageStatisticsCollector collector) {
+  public TrackedMultiOutputEmitter(MultiOutputEmitter<E> delegate, StageMetrics stageMetrics,
+      DataTracer dataTracer,
+      StageStatisticsCollector collector) {
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
     this.dataTracer = dataTracer;

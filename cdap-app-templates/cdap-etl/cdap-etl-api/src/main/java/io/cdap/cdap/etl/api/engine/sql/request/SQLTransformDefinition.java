@@ -25,15 +25,17 @@ import java.util.Map;
  * Defines resulting relational transform that is requested by the plugin
  */
 public class SQLTransformDefinition implements Serializable {
+
   private final String outputDatasetName;
   private final Relation outputRelation;
   private final Schema outputSchema;
   private final Map<String, Relation> outputRelations;
   private final Map<String, Schema> outputSchemas;
 
-  public SQLTransformDefinition(String outputDatasetName, Relation outputRelation, Schema outputSchema,
-                                Map<String, Relation> outputRelations,
-                                Map<String, Schema> outputSchemas) {
+  public SQLTransformDefinition(String outputDatasetName, Relation outputRelation,
+      Schema outputSchema,
+      Map<String, Relation> outputRelations,
+      Map<String, Schema> outputSchemas) {
     this.outputDatasetName = outputDatasetName;
     this.outputRelation = outputRelation;
     this.outputSchema = outputSchema;
@@ -42,7 +44,6 @@ public class SQLTransformDefinition implements Serializable {
   }
 
   /**
-   *
    * @return primary output dataset name
    */
   public String getOutputDatasetName() {
@@ -50,7 +51,6 @@ public class SQLTransformDefinition implements Serializable {
   }
 
   /**
-   *
    * @return primary output relation
    */
   public Relation getOutputRelation() {
@@ -58,7 +58,6 @@ public class SQLTransformDefinition implements Serializable {
   }
 
   /**
-   *
    * @return primary output dataset schema
    */
   public Schema getOutputSchema() {
@@ -66,7 +65,6 @@ public class SQLTransformDefinition implements Serializable {
   }
 
   /**
-   *
    * @return map of output dataset name to the relation that defines it
    */
   public Map<String, Relation> getOutputRelations() {
@@ -74,7 +72,6 @@ public class SQLTransformDefinition implements Serializable {
   }
 
   /**
-   *
    * @return map of output dataset name to it's schema
    */
   public Map<String, Schema> getOutputSchemas() {

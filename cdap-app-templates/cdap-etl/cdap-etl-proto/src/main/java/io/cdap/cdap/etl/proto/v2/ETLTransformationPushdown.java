@@ -19,9 +19,11 @@ package io.cdap.cdap.etl.proto.v2;
 import java.util.Objects;
 
 /**
- * Class used to represent the configuration properties that are needed to configure Transformation Pushdown.
+ * Class used to represent the configuration properties that are needed to configure Transformation
+ * Pushdown.
  */
 public class ETLTransformationPushdown {
+
   private final ETLPlugin plugin;
 
   /**
@@ -57,7 +59,7 @@ public class ETLTransformationPushdown {
   @Override
   public String toString() {
     return "ETLTransformationPushdown{" +
-      "plugin=" + plugin +
-      '}';
+        "plugin=" + plugin +
+        '}';
   }
 }
