@@ -66,32 +66,20 @@ public class AppDeletionPublisher {
    *
    * @param appId entity id who emits the message
    */
-  public void publishAppDeletionEvent(ApplicationId appId) {
+  public void publishAppDeletionEvent(ApplicationId appId) throws IOException {
     AppDeletionMessage message = new AppDeletionMessage(appId);
     LOG.trace("Publishing app delete message: {}", message);
-    Retries.supplyWithRetries(
-      () -> {
-        try {
-          messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), topic.getTopic(),
-                                                         GSON.toJson(message));
-        } catch (TopicNotFoundException | ServiceUnavailableException e) {
-          throw new RetryableException(e);
-        } catch (IOException | AccessException e) {
-          throw Throwables.propagate(e);
-        }
+    try {
+      Retries.callWithRetries(() -> {
+        messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), topic.getTopic(),
+                                                       GSON.toJson(message));
         return null;
-        },
-      retryStrategy);
-      Retries.supplyWithRetries(() -> {
-        try {
-          messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), topic.getTopic(),
-                                                         GSON.toJson(message));
-        } catch (TopicNotFoundException | ServiceUnavailableException e) {
-          throw new RetryableException(e);
-        } catch (IOException | AccessException e) {
-          throw Throwables.propagate(e);
-        }
-        return null;
-        }, retryStrategy, t -> t instanceof RetryableException);
+      }, retryStrategy, t -> t instanceof TopicNotFoundException || t instanceof RetryableException ||
+        t instanceof IOException);
+    } catch (IOException | RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

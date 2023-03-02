@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Unit test for {@link io.cdap.cdap.app.deploy.AppDeletionSubscriberService} and corresponding writers.
+ * Unit test for {@link io.cdap.cdap.metadata.AppDeletionSubscriberService} and corresponding writers.
  */
 public class AppDeletionSubscriberServiceTest extends AppFabricTestBase {
   private Injector injector = getInjector();

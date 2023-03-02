@@ -1,3 +1,5 @@
+package io.cdap.cdap.metadata;
+
 /*
  * Copyright © 2023 Cask Data, Inc.
  *
@@ -13,7 +15,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.cdap.cdap.app.deploy;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -25,47 +26,41 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.state.AppStateTable;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
-import io.cdap.cdap.messaging.subscriber.AbstractEventSubscriberService;
-import io.cdap.cdap.proto.artifact.AppDeletionMessage;
+import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.tephra.TxConstants;
 
 import java.io.IOException;
-import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
- * A TMS Subscriber Service responsible for consuming app deletion messages from TMS and executes removal from
- * the app spec table. Subscribes to the Constants.AppFabric.APP_DELETION_EVENT_TOPIC topic.
+ * An abstract base class for implementing metadata event message consumption from TMS.
+ *
+ * @param <T> the type that each message will be decoded to.
  */
-public class AppDeletionSubscriberService extends AbstractEventSubscriberService<AppDeletionMessage> {
-  private static final String SUBSCRIBER = "appdelete.";
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .create();
-
+public abstract class AbstractMetadataStoreMessagingSubscriberService<T> extends AbstractMessagingSubscriberService<T> {
   private final CConfiguration cConf;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
   private final MetricsCollectionService metricsCollectionService;
+  private final Class<T> messageClass;
 
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
 
-  @Inject
-  AppDeletionSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                            MetricsCollectionService metricsCollectionService,
-                            TransactionRunner transactionRunner) {
+  AbstractMetadataStoreMessagingSubscriberService(CConfiguration cConf, MessagingService messagingService,
+                                                  MetricsCollectionService metricsCollectionService,
+                                                  TransactionRunner transactionRunner, Class<T> messageClass) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.APP_DELETION_EVENT_TOPIC)),
       cConf.getInt(Constants.AppFabric.APP_DELETE_EVENT_FETCH_SIZE),
@@ -77,7 +72,7 @@ public class AppDeletionSubscriberService extends AbstractEventSubscriberService
         Constants.Metrics.Tag.INSTANCE_ID, "0",
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
         Constants.Metrics.Tag.TOPIC, cConf.get(Constants.AppFabric.APP_DELETION_EVENT_TOPIC),
-        Constants.Metrics.Tag.CONSUMER, SUBSCRIBER
+        Constants.Metrics.Tag.CONSUMER, "appdelete."
       )));
 
     this.cConf = cConf;
@@ -85,39 +80,7 @@ public class AppDeletionSubscriberService extends AbstractEventSubscriberService
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
     this.metricsCollectionService = metricsCollectionService;
-  }
-
-  @Override
-  protected TransactionRunner getTransactionRunner() {
-    return transactionRunner;
-  }
-
-  @Override
-  protected void processMessages(Iterator<ImmutablePair<String, AppDeletionMessage>> messages) throws Exception {
-    while (messages.hasNext()) {
-      ImmutablePair<String, AppDeletionMessage> pair = messages.next();
-      AppDeletionMessage message = pair.getSecond();
-      ApplicationId appId = message.getApplicationId();
-      removeApp(appId);
-    }
-  }
-
-  private void removeApp(ApplicationId id) throws IOException {
-    TransactionRunners.run(transactionRunner, context -> {
-      getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
-      AppMetadataStore metaStore = getAppMetadataStore(context);
-      metaStore.deleteApplication(id.getAppReference());
-      metaStore.deleteApplicationEditRecord(id.getAppReference());
-      metaStore.deleteProgramHistory(id.getAppReference());
-    });
-  }
-
-  private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
-    return AppMetadataStore.create(context);
-  }
-
-  private AppStateTable getAppStateTable(StructuredTableContext context) throws TableNotFoundException {
-    return new AppStateTable(context);
+    this.messageClass = messageClass;
   }
 
   @Override
@@ -126,7 +89,27 @@ public class AppDeletionSubscriberService extends AbstractEventSubscriberService
   }
 
   @Override
-  protected AppDeletionMessage decodeMessage(Message message) throws Exception {
-    return message.decodePayload(r -> GSON.fromJson(r, AppDeletionMessage.class));
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
+  }
+
+  @Override
+  protected T decodeMessage(Message message) {
+    return message.decodePayload(r -> GSON.fromJson(r, messageClass));
+  }
+
+  @Nullable
+  @Override
+  protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "appdelete.");
+  }
+
+  @Override
+  protected void storeMessageId(StructuredTableContext context, String messageId)
+    throws IOException, TableNotFoundException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "appdelete.", messageId);
   }
 }
+

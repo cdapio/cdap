@@ -641,12 +641,18 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().delete(fields);
   }
 
-  public void deleteApplication(ApplicationReference appRef)
+  private void deleteApplication(ApplicationReference appRef)
     throws IOException {
     getApplicationSpecificationTable().deleteAll(getNamespaceApplicationAndStatusRange(appRef));
   }
 
-  public void deleteApplicationEditRecord(ApplicationReference appRef) throws IOException {
+  public void removeApplicationData(ApplicationReference appRef) throws IOException {
+    deleteApplication(appRef);
+    deleteApplicationEditRecord(appRef);
+    deleteProgramHistory(appRef);
+  }
+
+  private void deleteApplicationEditRecord(ApplicationReference appRef) throws IOException {
     List<Field<?>> fields = getNamespaceApplicationKeys(appRef);
     getApplicationEditTable().delete(fields);
   }
@@ -1933,7 +1939,7 @@ public class AppMetadataStore {
       Range.singleton(getCountApplicationPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationId)));
   }
 
-  public void deleteProgramHistory(ApplicationReference appRef) throws IOException {
+  private void deleteProgramHistory(ApplicationReference appRef) throws IOException {
     getRunRecordsTable()
       .deleteAll(Range.singleton(getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_ACTIVE, appRef)));
     getRunRecordsTable()
