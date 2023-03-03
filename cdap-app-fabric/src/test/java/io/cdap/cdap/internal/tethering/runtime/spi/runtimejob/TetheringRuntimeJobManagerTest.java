@@ -16,7 +16,9 @@
 
 package io.cdap.cdap.internal.tethering.runtime.spi.runtimejob;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +32,7 @@ import io.cdap.cdap.api.messaging.MessageFetcher;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -38,6 +41,8 @@ import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
+import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJobInfo;
 import io.cdap.cdap.internal.tethering.NamespaceAllocation;
 import io.cdap.cdap.internal.tethering.PeerAlreadyExistsException;
 import io.cdap.cdap.internal.tethering.PeerInfo;
@@ -45,6 +50,7 @@ import io.cdap.cdap.internal.tethering.PeerMetadata;
 import io.cdap.cdap.internal.tethering.TetheringControlMessage;
 import io.cdap.cdap.internal.tethering.TetheringStatus;
 import io.cdap.cdap.internal.tethering.TetheringStore;
+import io.cdap.cdap.internal.tethering.proto.v1.TetheringLaunchMessage;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringConf;
 import io.cdap.cdap.internal.tethering.runtime.spi.provisioner.TetheringProvisioner;
 import io.cdap.cdap.messaging.MessagingService;
@@ -52,10 +58,23 @@ import io.cdap.cdap.messaging.TopicMetadata;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.store.StoreDefinition;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
@@ -68,16 +87,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 public class TetheringRuntimeJobManagerTest {
 
@@ -226,5 +235,36 @@ public class TetheringRuntimeJobManagerTest {
                                                      TetheringConf.TETHERED_NAMESPACE_PROPERTY,
                                                      TETHERED_NAMESPACE_NAME);
     TetheringConf.fromProperties(properties);
+  }
+
+  @Test
+  public void testCreateLaunchPayload() throws IOException {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").workflow("workflow").run(RunIds.generate());
+    String tempDir = TEMP_FOLDER.newFolder().getAbsolutePath();
+    List<LocalFile> localFiles = ImmutableList.of(
+      createFile(tempDir, DistributedProgramRunner.LOGBACK_FILE_NAME),
+      createFile(tempDir, DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
+      createFile(tempDir, DistributedProgramRunner.APP_SPEC_FILE_NAME)
+    );
+    Set<String> localFilenames = ImmutableSet.of(DistributedProgramRunner.LOGBACK_FILE_NAME,
+                                                 DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME,
+                                                 DistributedProgramRunner.APP_SPEC_FILE_NAME);
+
+    RuntimeJobInfo runtimeJobInfo = new DefaultRuntimeJobInfo(programRunId,
+                                                              localFiles,
+                                                              Collections.emptyMap());
+    TetheringLaunchMessage payload = runtimeJobManager.createLaunchPayload(runtimeJobInfo);
+    Assert.assertEquals(TETHERED_NAMESPACE_NAME, payload.getRuntimeNamespace());
+    Assert.assertEquals(localFilenames, payload.getFiles().keySet());
+  }
+
+  private LocalFile createFile(String dir, String filename) throws IOException {
+    String fileContents = "contents of " + filename;
+    File file = new File(dir, filename);
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+      writer.write(fileContents);
+    }
+    return new DefaultLocalFile(file.getName(), file.toURI(), file.lastModified(), file.length(),
+                                false, null);
   }
 }

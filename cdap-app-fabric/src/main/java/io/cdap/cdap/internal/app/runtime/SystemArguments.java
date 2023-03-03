@@ -104,6 +104,8 @@ public final class SystemArguments {
   // natively in kubernetes.
   public static final String RUNTIME_CLEANUP_DISABLED = "system.runtime.cleanup.disabled";
 
+  public static final String JVM_OPTS = "system.program.jvm.opts";
+
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
    * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
