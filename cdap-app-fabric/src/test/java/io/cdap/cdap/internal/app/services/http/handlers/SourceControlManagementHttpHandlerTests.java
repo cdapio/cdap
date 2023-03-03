@@ -53,20 +53,22 @@ import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.common.http.HttpResponse;
-import java.util.Arrays;
-import java.util.Map;
-import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Arrays;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link SourceControlManagementHttpHandler}
@@ -339,16 +341,16 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   }
 
   @Test
-  public void testPushAppPushFailureException() throws Exception {
+  public void testPushAppSourceControlException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp", "version1");
 
     // Push one application to linked repository
     String commitMessage = "push one app";
-    Mockito.doThrow(new PushFailureException("Failed to push app")).when(sourceControlService)
+    Mockito.doThrow(new SourceControlException("Failed to push app")).when(sourceControlService)
       .pushApp(Mockito.any(), Mockito.eq(commitMessage));
     HttpResponse response = pushApplication(NamespaceId.DEFAULT.appReference(appId1.getId()), commitMessage);
 
-    // Assert the PushFailureException
+    // Assert the SourceControlException
     assertResponseCode(500, response);
     Assert.assertTrue(response.getResponseBodyAsString().contains("Failed to push app"));
   }
@@ -364,7 +366,7 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     HttpResponse response = pushApplication(NamespaceId.DEFAULT.appReference(appId1.getId()), commitMessage);
 
     // Assert the AuthenticationConfigException
-    assertResponseCode(400, response);
+    assertResponseCode(500, response);
     Assert.assertTrue(response.getResponseBodyAsString().contains("Repository config not valid"));
   }
 
@@ -424,22 +426,63 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     HttpResponse response = pullApplication(NamespaceId.DEFAULT.appReference(appId1.getId()));
 
     // Assert the AuthenticationConfigException
-    assertResponseCode(400, response);
+    assertResponseCode(500, response);
     Assert.assertTrue(response.getResponseBodyAsString().contains("Repo configuration is invalid"));
   }
 
   @Test
-  public void testPullAppPullFailureException() throws Exception {
+  public void testPullAppSourceControlException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp", "version1");
 
     // Pull one application from repository
-    Mockito.doThrow(new PullFailureException("Failed to pull application", new Exception()))
+    Mockito.doThrow(new SourceControlException("Failed to pull application", new Exception()))
       .when(sourceControlService).pullAndDeploy(Mockito.any());
     HttpResponse response = pullApplication(NamespaceId.DEFAULT.appReference(appId1.getId()));
 
     // Assert the pull failure
     assertResponseCode(500, response);
     Assert.assertTrue(response.getResponseBodyAsString().contains("Failed to pull application"));
+  }
+
+  @Test
+  public void testListAppsSucceed() throws Exception {
+    RepositoryApp app1 = new RepositoryApp("app1", "hash1");
+    RepositoryApp app2 = new RepositoryApp("app2", "hash2");
+    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(Arrays.asList(app1, app2));
+    Mockito.doReturn(expectedListResult).when(sourceControlService)
+      .listApps(Mockito.any());
+
+    HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
+    assertResponseCode(200, response);
+    RepositoryAppsResponse result = readResponse(response, RepositoryAppsResponse.class);
+
+    Assert.assertEquals(result.getApps(), expectedListResult.getApps());
+  }
+
+  @Test
+  public void testListAppsFailed() throws Exception {
+    Mockito.doThrow(SourceControlException.class).when(sourceControlService)
+      .listApps(Mockito.any());
+
+    HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
+    assertResponseCode(500, response);
+  }
+
+  @Test
+  public void testListAppsFailedAuth() throws Exception {
+    Mockito.doThrow(AuthenticationConfigException.class).when(sourceControlService)
+      .listApps(Mockito.any());
+
+    HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
+    assertResponseCode(500, response);
+  }
+
+  @Test
+  public void testListAppsNotFound() throws Exception {
+    Mockito.doThrow(new NotFoundException("apps not found")).when(sourceControlService)
+      .listApps(Mockito.any());
+    HttpResponse response = listApplicationsFromRepository(Id.Namespace.DEFAULT.getId());
+    assertResponseCode(404, response);
   }
 
   private String buildRepoRequestString(Provider provider, String link, String defaultBranch,

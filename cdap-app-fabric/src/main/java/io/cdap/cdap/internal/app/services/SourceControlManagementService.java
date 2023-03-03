@@ -47,10 +47,10 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppContext;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
@@ -58,10 +58,11 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
-import java.io.IOException;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Optional;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -157,12 +158,12 @@ public class SourceControlManagementService {
    * @return {@link PushAppResponse}
    * @throws NotFoundException if the application is not found or the repository config is not found
    * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner store
-   * @throws PushFailureException if {@link SourceControlOperationRunner} fails to push
+   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to push
+   * @throws AuthenticationConfigException if the repository configuration authentication fails
    * @throws NoChangesToPushException if there's no change of the application between namespace and linked repository
    */
   public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
-    throws NotFoundException, IOException, PushFailureException,
-           NoChangesToPushException, AuthenticationConfigException {
+    throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
@@ -189,7 +190,7 @@ public class SourceControlManagementService {
    * @throws Exception when {@link ApplicationLifecycleService} fails to deploy.
    * @throws NoChangesToPullException if the fileHashes are the same
    * @throws NotFoundException if the repository config is not found or the application in repository is not found
-   * @throws PullFailureException if unexpected errors happen when pulling the application.
+   * @throws SourceControlException if unexpected errors happen when pulling the application.
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
   public ApplicationRecord pullAndDeploy(ApplicationReference appRef) throws Exception {
@@ -222,11 +223,11 @@ public class SourceControlManagementService {
    * @return {@link PullAppResponse}
    * @throws NoChangesToPullException if the fileHashes are the same
    * @throws NotFoundException if the repository config is not found or the application in repository is not found
-   * @throws PullFailureException if unexpected errors happen when pulling the application.
+   * @throws SourceControlException if unexpected errors happen when pulling the application.
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
   private PullAppResponse<?> pullAndValidateApplication(ApplicationReference appRef)
-    throws NoChangesToPullException, NotFoundException, PullFailureException, AuthenticationConfigException {
+    throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
     PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(appRef, repoConfig);
@@ -238,4 +239,20 @@ public class SourceControlManagementService {
     }
     return pullResponse;
   }
+
+  /**
+   * The method to list all applications found in linked repository.
+   *
+   * @return {@link RepositoryAppsResponse}
+   * @throws RepositoryNotFoundException   if the repository config is not found
+   * @throws AuthenticationConfigException if git auth config is not found
+   * @throws SourceControlException if {@link SourceControlOperationRunner} fails to list applications
+   */
+  public RepositoryAppsResponse listApps(NamespaceId namespace) throws NotFoundException,
+    AuthenticationConfigException {
+    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
+    RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
+    return sourceControlOperationRunner.list(namespace, repoConfig);
+  }
+
 }

@@ -28,15 +28,17 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
-import java.nio.charset.StandardCharsets;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.charset.StandardCharsets;
+import javax.inject.Inject;
 
 /**
  * Remote implementation for {@link SourceControlOperationRunner}.
@@ -60,8 +62,8 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
   }
 
   @Override
-  public PushAppResponse push(PushAppContext pushAppContext)
-    throws PushFailureException, NoChangesToPushException, AuthenticationConfigException {
+  public PushAppResponse push(PushAppContext pushAppContext) throws NoChangesToPushException,
+    AuthenticationConfigException {
     try {
       RunnableTaskRequest request =
         RunnableTaskRequest.getBuilder(PushAppTask.class.getName()).withParam(GSON.toJson(pushAppContext)).build();
@@ -85,16 +87,22 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
         throw new AuthenticationConfigException(exceptionMessage, cause);
       }
 
-      throw new PushFailureException(exceptionMessage, cause);
+      throw new SourceControlException(exceptionMessage, cause);
     } catch (Exception ex) {
-      throw new PushFailureException(ex.getMessage(), ex);
+      throw new SourceControlException(ex.getMessage(), ex);
     }
   }
 
   @Override
-  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig)
-    throws PullFailureException, NotFoundException, AuthenticationConfigException {
+  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws NotFoundException,
+    AuthenticationConfigException {
     // TODO: CDAP-20356, pull application in task worker
     throw new UnsupportedOperationException("Not implemented");
   }
+
+  @Override
+  public RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig)
+    throws AuthenticationConfigException, NotFoundException {
+    // TODO: CDAP-20357, list applications in task worker
+    throw new UnsupportedOperationException("Not implemented");  }
 }

@@ -49,8 +49,6 @@ import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
-import java.util.ArrayList;
-import java.util.UUID;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -60,6 +58,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * Tests for {@link RemoteSourceControlOperationRunner}
@@ -181,7 +182,7 @@ public class RemoteSourceControlOperationRunnerTest {
     Assert.assertEquals(pushResponse.getVersion(), mockAppDetails.getAppVersion());
   }
 
-  @Test(expected = PushFailureException.class)
+  @Test(expected = SourceControlException.class)
   public void testRemoteSourceControlOperationRunnerPushFailureException() throws Exception {
     // Get the actual repo config
     String serverURL = gitServer.getServerURL();

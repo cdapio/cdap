@@ -17,19 +17,17 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 /**
- * Exception thrown when push operation fails in operation runner.
- * Encapsulates all underlying exceptions.
+ * Exception thrown when source control operation fails in runner.
+ * Encapsulates some underlying exceptions.
+ * Should be subclassed for common root-causes
  */
-public class PushFailureException extends Exception {
-  public PushFailureException(String message, Exception cause) {
+// TODO https://cdap.atlassian.net/browse/CDAP-20410 Classify and make suberrors based on root causes
+public class SourceControlException extends RuntimeException {
+  public SourceControlException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public PushFailureException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public PushFailureException(String message) {
+  public SourceControlException(String message) {
     super(message);
   }
 }

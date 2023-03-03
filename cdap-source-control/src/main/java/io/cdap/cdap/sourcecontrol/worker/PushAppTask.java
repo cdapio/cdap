@@ -25,13 +25,13 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppContext;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * The task that pushes an application to linked repository.
@@ -50,7 +50,7 @@ public class PushAppTask extends SourceControlTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context)
-    throws AuthenticationConfigException, PushFailureException, NoChangesToPushException, IOException {
+    throws AuthenticationConfigException, NoChangesToPushException, IOException {
     PushAppContext pushContext = GSON.fromJson(context.getParam(), PushAppContext.class);
 
     LOG.info("Pushing application {} in worker.", pushContext.getAppToPush().getName());
