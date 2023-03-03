@@ -27,17 +27,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
-import java.util.function.Supplier;
-import javax.annotation.Nullable;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
@@ -60,6 +50,17 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * A git repository manager that is responsible for handling interfacing with git. It provides version control
@@ -170,17 +171,17 @@ public class RepositoryManager implements AutoCloseable {
    * @return the hash of the written file.
    * @throws GitAPIException          when the underlying git commands fail
    * @throws NoChangesToPushException when there's no file changes for the commit
-   * @throws NoChangesToPushException when failed to get the fileHash before push, or the {@link PushResult} status is
+   * @throws SourceControlException when failed to get the fileHash before push, or the {@link PushResult} status is
    * not OK
    */
   public String commitAndPush(CommitMeta commitMeta, Path fileChanged)
-    throws NoChangesToPushException, GitAPIException, PushFailureException {
+    throws NoChangesToPushException, GitAPIException {
     validateInitialized();
 
     // if the status is clean skip
     Status preStageStatus = git.status().call();
     if (preStageStatus.isClean()) {
-      throw new NoChangesToPushException("No changes have been maid for the applications to push.");
+      throw new NoChangesToPushException("No changes have been made for the applications to push.");
     }
 
     git.add().addFilepattern(fileChanged.toString()).call();
@@ -191,11 +192,11 @@ public class RepositoryManager implements AutoCloseable {
     try {
       fileHash = getFileHash(fileChanged, commit);
     } catch (IOException e) {
-      throw new PushFailureException(String.format("Failed to get fileHash for %s", fileChanged), e);
+      throw new SourceControlException(String.format("Failed to get fileHash for %s", fileChanged), e);
     }
 
     if (fileHash == null) {
-      throw new PushFailureException(String.format("Failed to get fileHash for %s, because the path is not " +
+      throw new SourceControlException(String.format("Failed to get fileHash for %s, because the path is not " +
                                                      "found in Git tree", fileChanged));
     }
 
@@ -205,7 +206,7 @@ public class RepositoryManager implements AutoCloseable {
     for (PushResult result : pushResults) {
       for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
-          throw new PushFailureException(String.format("Push failed for %s: %s", fileChanged, rru.getStatus()));
+          throw new SourceControlException(String.format("Push failed for %s: %s", fileChanged, rru.getStatus()));
         }
       }
     }

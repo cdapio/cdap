@@ -40,15 +40,14 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
 import io.cdap.cdap.proto.sourcecontrol.SetRepositoryResponse;
-import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -128,6 +127,30 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   }
 
   /**
+   * Lists applications found in linked repository for the given namespace.
+   * Returns the application name and git-filehash for each application config file found
+   * <pre>
+   * {
+   *  apps:[
+   *    {
+   *      "name": "xyz",
+   *      "fileHash": "abc"
+   *    }
+   *  ]
+   * }
+   * </pre>
+   */
+  @GET
+  @Path("/apps")
+  public void listApplications(FullHttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId) throws Exception {
+    checkSourceControlFeatureFlag();
+    NamespaceId namespace = validateNamespaceId(namespaceId);
+    RepositoryAppsResponse listResponse = sourceControlService.listApps(namespace);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(listResponse));
+  }
+
+  /**
    * Pushes an application configs of the latest version to linked repository in Json format. It expects a post body
    * that has an optional commit message
    * E.g.
@@ -155,12 +178,8 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     try {
       PushAppResponse pushResponse = sourceControlService.pushApp(appRef, appsRequest.getCommitMessage());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pushResponse));
-    } catch (AuthenticationConfigException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (NoChangesToPushException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
-    } catch (PushFailureException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -180,10 +199,6 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appRecord));
     } catch (NoChangesToPullException e) {
       responder.sendString(HttpResponseStatus.OK, e.getMessage());
-    } catch (AuthenticationConfigException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (PullFailureException e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 

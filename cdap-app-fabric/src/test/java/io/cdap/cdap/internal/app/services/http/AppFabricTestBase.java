@@ -1479,6 +1479,10 @@ public abstract class AppFabricTestBase {
                                 appRef.getNamespace(), appRef.getApplication()));
   }
 
+  protected HttpResponse listApplicationsFromRepository(String namespace) throws Exception {
+    return doGet(String.format("%s/namespaces/%s/repository/apps", Constants.Gateway.API_VERSION_3, namespace));
+  }
+
   protected String getPreferenceURI() {
     return "";
   }

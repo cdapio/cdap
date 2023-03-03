@@ -16,11 +16,21 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
- * Exception thrown when push operation fails in operation runner. Encapsulates all underlying exceptions.
+ * Response class encapsulating information about a list of applications found in repository
  */
-public class PullFailureException extends Exception {
-  public PullFailureException(String message, Exception cause) {
-    super(message, cause);
+public class RepositoryAppsResponse {
+  private final List<RepositoryApp> apps;
+
+  public RepositoryAppsResponse(List<RepositoryApp> apps) {
+    this.apps = Collections.unmodifiableList(new ArrayList<>(apps));
+  }
+
+  public List<RepositoryApp> getApps() {
+    return apps;
   }
 }

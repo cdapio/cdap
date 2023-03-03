@@ -31,18 +31,20 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InMemorySourceControlOperationRunnerTest {
   private static final String FAKE_APP_NAME = "app1";
@@ -126,7 +128,7 @@ public class InMemorySourceControlOperationRunnerTest {
     Assert.assertTrue(verifyConfigFileContent(baseRepoDirPath));
   }
 
-  @Test(expected = PushFailureException.class)
+  @Test(expected = SourceControlException.class)
   public void testPushFailedToCreateDirectory() throws Exception {
     // Setting the repo dir as file causing failure in Files.createDirectories
     Path tmpRepoDirPath = TMP_FOLDER.newFile().toPath();
@@ -138,11 +140,11 @@ public class InMemorySourceControlOperationRunnerTest {
     operationRunner.push(pushContext);
   }
 
-  @Test(expected = PushFailureException.class)
+  @Test(expected = SourceControlException.class)
   public void testPushFailedToWriteFile() throws Exception {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
     Path baseRepoDirPath = tmpRepoDirPath.resolve(pathPrefix);
-    // creating a directory where validateAppConfigRelativePath should throw PushFailureException
+    // creating a directory where validateAppConfigRelativePath should throw SourceControlException
     Files.createDirectories(baseRepoDirPath.resolve(testAppDetails.getName() + ".json"));
 
     Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getRepositoryRoot();
@@ -151,7 +153,7 @@ public class InMemorySourceControlOperationRunnerTest {
     operationRunner.push(pushContext);
   }
 
-  @Test(expected = PushFailureException.class)
+  @Test(expected = SourceControlException.class)
   public void testPushFailedInvalidSymlinkPath() throws Exception {
     Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
     Path baseRepoDirPath = tmpRepoDirPath.resolve(pathPrefix);
@@ -184,6 +186,70 @@ public class InMemorySourceControlOperationRunnerTest {
     Mockito.doThrow(new NoChangesToPushException("no changes to push"))
       .when(mockRepositoryManager).commitAndPush(Mockito.any(), Mockito.any());
     operationRunner.push(pushContext);
+  }
+
+  @Test
+  public void testListSuccess() throws Exception {
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+
+    Path file1 = tmpRepoDirPath.resolve("file1.json");
+    Path file2 = tmpRepoDirPath.resolve("file2.some.json");
+    Files.write(file1, new byte[]{});
+    Files.write(file2, new byte[]{});
+
+    // Skip non json file
+    Files.write(tmpRepoDirPath.resolve("file3"), new byte[]{});
+    // Skip directory
+    Files.createDirectories(tmpRepoDirPath.resolve("file4.json"));
+    // Skip symlink
+    Files.createSymbolicLink(tmpRepoDirPath.resolve("file_link.json"), file1);
+
+    RepositoryApp app1 = new RepositoryApp("file1", "testHash1");
+    RepositoryApp app2 = new RepositoryApp("file2.some", "testHash2");
+
+    Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Mockito.doReturn(app1.getFileHash()).when(mockRepositoryManager).getFileHash(file1.getFileName(), FAKE_COMMIT_HASH);
+    Mockito.doReturn(app2.getFileHash()).when(mockRepositoryManager).getFileHash(file2.getFileName(), FAKE_COMMIT_HASH);
+    Mockito.doNothing().when(mockRepositoryManager).close();
+
+    List<RepositoryApp> listedApps = operationRunner.list(NAMESPACE, testRepoConfig).getApps();
+
+    Assert.assertEquals(2, listedApps.size());
+    Assert.assertEquals(listedApps.get(0), app1);
+    Assert.assertEquals(listedApps.get(1), app2);
+  }
+
+  @Test(expected = SourceControlException.class)
+  public void testListFailedToClone() throws Exception {
+    Mockito.doThrow(new IOException()).when(mockRepositoryManager).cloneRemote();
+    Mockito.doNothing().when(mockRepositoryManager).close();
+    operationRunner.list(NAMESPACE, testRepoConfig);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testListMissingBasePath() throws Exception {
+    Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
+    Mockito.doNothing().when(mockRepositoryManager).close();
+    
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+    Mockito.doReturn(tmpRepoDirPath.resolve("missing")).when(mockRepositoryManager).getBasePath();
+
+    operationRunner.list(NAMESPACE, testRepoConfig);
+  }
+
+  @Test(expected = SourceControlException.class)
+  public void testListFailedToGetHash() throws Exception {
+    Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
+    Mockito.doNothing().when(mockRepositoryManager).close();
+
+    Path tmpRepoDirPath = TMP_FOLDER.newFolder().toPath();
+    Mockito.doReturn(tmpRepoDirPath).when(mockRepositoryManager).getBasePath();
+    Path file1 = tmpRepoDirPath.resolve("file1.some.json");
+    Files.write(file1, new byte[]{});
+    Mockito.doThrow(new IOException()).when(mockRepositoryManager).getFileHash(file1.getFileName(), FAKE_COMMIT_HASH);
+
+    operationRunner.list(NAMESPACE, testRepoConfig);
   }
 
   @Test
@@ -230,7 +296,7 @@ public class InMemorySourceControlOperationRunnerTest {
     }
   }
 
-  @Test(expected = PullFailureException.class)
+  @Test(expected = SourceControlException.class)
   public void testPullCloneFailure() throws Exception {
     setupPullTest();
     ApplicationReference appRef = new ApplicationReference(NAMESPACE, FAKE_APP_NAME);

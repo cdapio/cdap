@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -28,12 +29,13 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 public interface SourceControlOperationRunner {
   /**
    * @param pushAppContext {@link PushAppContext} pf the application to be pushed
-   * @return {@link PushAppResponse} file-paths and file-hashes for the updated configs.
-   * @throws PushFailureException when the push operation fails for any unexpected reason.
-   * @throws NoChangesToPushException when the there's no change for the application to push.
-   * @throws AuthenticationConfigException when the repository configuration is invalid.
+   * @return file-paths and file-hashes for the updated configs.
+   * @throws NoChangesToPushException      if there is no effective changes on the config file to commit
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws SourceControlException when the push operation fails for any other reason.
    */
-  PushAppResponse push(PushAppContext pushAppContext) throws PushFailureException, NoChangesToPushException,
+  PushAppResponse push(PushAppContext pushAppContext) throws NoChangesToPushException,
     AuthenticationConfigException;
 
   /**
@@ -41,12 +43,22 @@ public interface SourceControlOperationRunner {
    *
    * @param appRef The {@link ApplicationReference} of the application to pull from
    * @return the details of the pulled application.
-   * @throws PullFailureException          when the operation fails for any reason.
    * @throws NotFoundException             when the requested application is not found in the Git repository.
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
    *                                       call remote Git.
    * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
+   * @throws SourceControlException when the operation fails for any other reason.
    */
-  PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws PullFailureException,
-    NotFoundException, AuthenticationConfigException;
+  PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws NotFoundException,
+    AuthenticationConfigException;
+
+  /**
+   * @return Name and git-file-hashes for the detected config files.
+   * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
+   *                                       call remote Git.
+   * @throws NotFoundException when the given path-prefix is missing in the repository.
+   * @throws SourceControlException when the list operation fails for any other reason.
+   */
+  RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig) throws AuthenticationConfigException,
+    NotFoundException;
 }

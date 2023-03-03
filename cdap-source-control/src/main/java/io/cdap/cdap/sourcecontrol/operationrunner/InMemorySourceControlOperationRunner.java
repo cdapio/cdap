@@ -22,23 +22,32 @@ import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileFilter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * In-Memory implementation for {@link SourceControlOperationRunner}.
@@ -58,14 +67,15 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PushAppResponse push(PushAppContext pushContext) throws PushFailureException, NoChangesToPushException,
+  public PushAppResponse push(PushAppContext pushContext) throws NoChangesToPushException,
     AuthenticationConfigException {
     try (RepositoryManager repositoryManager = repoManagerFactory.create(pushContext.getNamespaceId(),
                                                                          pushContext.getRepositoryConfig())) {
       try {
         repositoryManager.cloneRemote();
       } catch (GitAPIException | IOException e) {
-        throw new PushFailureException(String.format("Failed to clone remote repository: %s", e.getMessage()), e);
+        throw new SourceControlException(String.format("Failed to clone remote repository: %s",
+                                                       e.getMessage()), e);
       }
 
       LOG.info("Pushing application configs for : {}", pushContext.getAppToPush().getName());
@@ -76,8 +86,8 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws PullFailureException,
-    NotFoundException, AuthenticationConfigException, IllegalArgumentException {
+  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig)
+    throws NotFoundException, AuthenticationConfigException {
     String applicationName = appRef.getApplication();
     String configFileName = generateConfigFileName(applicationName);
     LOG.info("Cloning remote to pull application {}", applicationName);
@@ -98,18 +108,18 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
       return new PullAppResponse<>(applicationName, fileHash, appRequest);
     } catch (GitAPIException e) {
-      throw new PullFailureException(String.format("Failed to pull application %s: %s",
-                                                   applicationName,
-                                                   e.getMessage()), e);
+      throw new SourceControlException(String.format("Failed to pull application %s: %s",
+                                                     applicationName,
+                                                     e.getMessage()), e);
     } catch (JsonSyntaxException e) {
       throw new IllegalArgumentException(String.format(
         "Failed to de-serialize application json at path %s. Ensure application json is valid.",
         appRelativePath), e);
     } catch (NotFoundException | AuthenticationConfigException | IllegalArgumentException e) {
-      // TODO(CDAP-CDAP-20410): Create exception classes that derive from a common class instead of propagating.
+      // TODO(CDAP-20410): Create exception classes that derive from a common class instead of propagating.
       throw e;
     } catch (Exception e) {
-      throw new PullFailureException(String.format("Failed to pull application %s.", applicationName), e);
+      throw new SourceControlException(String.format("Failed to pull application %s.", applicationName), e);
     }
   }
 
@@ -121,18 +131,18 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
    * @param commitDetails     {@link CommitMeta} from user input
    * @return {@link PushAppResponse}
    * @throws NoChangesToPushException if there's no change between the application in namespace and git repository
-   * @throws PushFailureException     for failures while writing config file or doing git operations
+   * @throws SourceControlException   for failures while writing config file or doing git operations
    */
   private PushAppResponse writeAppDetailAndPush(RepositoryManager repositoryManager,
                                                 ApplicationDetail appToPush,
                                                 CommitMeta commitDetails)
-    throws NoChangesToPushException, PushFailureException {
+    throws NoChangesToPushException {
     try {
       // Creates the base directory if it does not exist. This method does not throw an exception if the directory
       // already exists. This is for the case that the repo is new and user configured prefix path.
       Files.createDirectories(repositoryManager.getBasePath());
     } catch (IOException e) {
-      throw new PushFailureException("Failed to create repository base directory", e);
+      throw new SourceControlException("Failed to create repository base directory", e);
     }
 
     String configFileName = generateConfigFileName(appToPush.getName());
@@ -142,17 +152,18 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
     try {
       filePathToWrite = validateAppConfigRelativePath(repositoryManager, appRelativePath);
     } catch (IllegalArgumentException e) {
-      throw new PushFailureException(String.format("Failed to push application %s: %s",
-                                                   appToPush.getName(),
-                                                   e.getMessage()), e);
+      throw new SourceControlException(String.format("Failed to push application %s: %s",
+                                                     appToPush.getName(),
+                                                     e.getMessage()), e);
     }
     // Opens the file for writing, creating the file if it doesn't exist,
     // or truncating an existing regular-file to a size of 0
     try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
       GSON.toJson(appToPush, writer);
     } catch (IOException e) {
-      throw new PushFailureException(String.format("Failed to write application config to path %s", appRelativePath),
-                                     e);
+      throw new SourceControlException(String.format("Failed to write application config to path %s",
+                                                     appRelativePath),
+                                       e);
     }
 
     LOG.debug("Wrote application configs for {} in file {}", appToPush.getName(), appRelativePath);
@@ -163,7 +174,7 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       String gitFileHash = repositoryManager.commitAndPush(commitDetails, appRelativePath);
       return new PushAppResponse(appToPush.getName(), appToPush.getAppVersion(), gitFileHash);
     } catch (GitAPIException e) {
-      throw new PushFailureException(String.format("Failed to push config to git: %s", e.getMessage()), e);
+      throw new SourceControlException(String.format("Failed to push config to git: %s", e.getMessage()), e);
     }
   }
 
@@ -196,6 +207,52 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       throw new IllegalArgumentException(String.format("%s refers to a directory not a file.", appRelativePath));
     }
     return filePath;
+  }
+
+  @Override
+  public RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig) throws
+    AuthenticationConfigException, NotFoundException {
+    try (RepositoryManager repositoryManager = repoManagerFactory.create(namespace, repoConfig)) {
+      String currentCommit = repositoryManager.cloneRemote();
+      Path basePath = repositoryManager.getBasePath();
+
+      if (!Files.exists(basePath)) {
+        throw new NotFoundException(String.format("Missing repository base path %s", basePath));
+      }
+
+      FileFilter configFileFilter = getConfigFileFilter();
+      List<File> configFiles = DirUtils.listFiles(basePath.toFile(), configFileFilter);
+      List<RepositoryApp> responses = new ArrayList<>();
+
+      // TODO CDAP-20420 Implement bulk fetch file hash in RepositoryManager
+      for (File configFile : configFiles) {
+        String applicationName = FileUtils.getNameWithoutExtension(configFile.getName());
+        try {
+          String fileHash = repositoryManager.getFileHash(basePath.relativize(configFile.toPath()), currentCommit);
+          responses.add(new RepositoryApp(applicationName, fileHash));
+        } catch (NotFoundException e) {
+          // ignore file if not found in git tree
+          LOG.warn("Skipping config for application {}: {}", applicationName, e.getMessage());
+        }
+      }
+      return new RepositoryAppsResponse(responses);
+    } catch (IOException | GitAPIException e) {
+      throw new SourceControlException(String.format("Failed to list application configs in directory %s: %s",
+                                                     repoConfig.getPathPrefix(), e.getMessage()), e);
+    }
+  }
+
+
+  /**
+   * @return A {@link java.io.FileFilter} that will filter application config files with following rules
+   * 1. Filter non-symbolic link files
+   * 2. Filter files with extension json
+   */
+  private FileFilter getConfigFileFilter() {
+    return file -> {
+      return Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS) && // only allow regular files
+        FileUtils.getExtension(file.getName()).equalsIgnoreCase("json"); // filter json extension
+    };
   }
 }
 

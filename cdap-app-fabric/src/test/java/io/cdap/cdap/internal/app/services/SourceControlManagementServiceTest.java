@@ -45,14 +45,17 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
+import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Arrays;
 
 /**
  * Tests for {@link SourceControlManagementService}
@@ -241,7 +244,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testPushAppsPushFailureException() throws Exception {
+  public void testPushAppsSourceControlException() throws Exception {
     // Deploy one application in default namespace
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
@@ -259,14 +262,14 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Set the repository config
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
-    Mockito.doThrow(new PushFailureException("push apps failed", new Exception()))
+    Mockito.doThrow(new SourceControlException("push apps failed", new Exception()))
       .when(mockSourceControlOperationRunner).push(Mockito.any());
 
     // Assert the result is as expected
     try {
       sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
       Assert.fail();
-    } catch (PushFailureException e) {
+    } catch (SourceControlException e) {
       // no-op
     }
 
@@ -387,7 +390,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testPullAndDeployPullFailureException() throws Exception {
+  public void testPullAndDeploySourceControlException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     String namespace = Id.Namespace.DEFAULT.getId();
     NamespaceId namespaceId = new NamespaceId(namespace);
@@ -399,13 +402,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .setTokenName("token").setUsername("user").build();
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
-    Mockito.doThrow(new PullFailureException("Failed to pull application", new Exception()))
+    Mockito.doThrow(new SourceControlException("Failed to pull application", new Exception()))
       .when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
       Assert.fail();
-    } catch (PullFailureException e) {
+    } catch (SourceControlException e) {
       // no-op
     }
 
@@ -453,5 +456,38 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     deleteApp(appId1, 200);
     deleteArtifact(artifactId, 200);
     sourceControlService.deleteRepository(namespaceId);
+  }
+
+  @Test
+  public void testListAppsSucceed() throws Exception {
+    RepositoryApp app1 = new RepositoryApp("app1", "hash1");
+    RepositoryApp app2 = new RepositoryApp("app2", "hash2");
+    RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(Arrays.asList(app1, app2));
+    NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
+    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
+      .setTokenName("token").setUsername("user").build();
+    sourceControlService.setRepository(namespaceId, namespaceRepo);
+
+    Mockito.doReturn(expectedListResult)
+      .when(mockSourceControlOperationRunner).list(namespaceId, namespaceRepo);
+
+    RepositoryAppsResponse result = sourceControlService.listApps(namespaceId);
+
+    Assert.assertEquals(result.getApps(), expectedListResult.getApps());
+  }
+
+  @Test(expected = SourceControlException.class)
+  public void testListAppsFailed() throws Exception {
+    NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
+    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
+      .setTokenName("token").setUsername("user").build();
+    sourceControlService.setRepository(namespaceId, namespaceRepo);
+
+    Mockito.doThrow(SourceControlException.class)
+      .when(mockSourceControlOperationRunner).list(namespaceId, namespaceRepo);
+
+    sourceControlService.listApps(namespaceId);
   }
 }
