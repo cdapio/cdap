@@ -191,7 +191,7 @@ public class RepositoryManager implements AutoCloseable {
     try {
       fileHash = getFileHash(fileChanged, commit);
     } catch (IOException e) {
-      throw new PushFailureException(String.format("Failed to get fileHash for %s before push", fileChanged), e);
+      throw new PushFailureException(String.format("Failed to get fileHash for %s", fileChanged), e);
     }
 
     if (fileHash == null) {

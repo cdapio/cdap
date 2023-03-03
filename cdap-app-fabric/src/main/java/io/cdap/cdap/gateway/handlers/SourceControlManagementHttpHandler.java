@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.gateway.handlers;
 
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -157,7 +158,7 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
     } catch (AuthenticationConfigException e) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (NoChangesToPushException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+      responder.sendString(HttpResponseStatus.OK, e.getMessage());
     } catch (PushFailureException e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
@@ -187,11 +188,18 @@ public class SourceControlManagementHttpHandler extends AbstractAppFabricHttpHan
   }
 
   private PushAppRequest validateAndGetAppsRequest(FullHttpRequest request) throws BadRequestException {
+    PushAppRequest appRequest;
     try {
-      return parseBody(request, PushAppRequest.class);
+      appRequest = parseBody(request, PushAppRequest.class);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid request body: " + e.getMessage());
     }
+
+    if (appRequest == null || Strings.isNullOrEmpty(appRequest.getCommitMessage())) {
+      throw new BadRequestException("Please specify commit message in the request body.");
+    }
+
+    return appRequest;
   }
 
   /**

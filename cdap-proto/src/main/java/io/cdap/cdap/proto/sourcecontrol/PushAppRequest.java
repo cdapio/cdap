@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.proto.sourcecontrol;
 
-import javax.annotation.Nullable;
-
 /**
  * The request class to push an application to linked git repository.
  */
@@ -28,7 +26,6 @@ public class PushAppRequest {
     this.commitMessage = commitMessage;
   }
 
-  @Nullable
   public String getCommitMessage() {
     return commitMessage;
   }

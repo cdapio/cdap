@@ -57,12 +57,10 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Optional;
-import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -154,14 +152,14 @@ public class SourceControlManagementService {
   /**
    * The method to push an application to linked repository
    * @param appRef {@link ApplicationReference}
-   * @param commitMessage optional commit message from user
+   * @param commitMessage enforced commit message from user
    * @return {@link PushAppResponse}
    * @throws NotFoundException if the application is not found or the repository config is not found
    * @throws IOException if {@link ApplicationLifecycleService} fails to get the adminOwner store
    * @throws PushFailureException if {@link SourceControlOperationRunner} fails to push
    * @throws NoChangesToPushException if there's no change of the application between namespace and linked repository
    */
-  public PushAppResponse pushApp(ApplicationReference appRef, @Nullable String commitMessage)
+  public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
     throws NotFoundException, IOException, PushFailureException,
            NoChangesToPushException, AuthenticationConfigException {
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
