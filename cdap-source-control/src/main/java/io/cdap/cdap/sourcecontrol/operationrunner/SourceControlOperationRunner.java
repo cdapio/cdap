@@ -17,7 +17,6 @@
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -28,20 +27,20 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
  */
 public interface SourceControlOperationRunner {
   /**
-   * @param pushAppContext {@link PushAppContext} pf the application to be pushed
+   * @param pushAppOperationRequest {@link PushAppOperationRequest} of the application to be pushed
    * @return file-paths and file-hashes for the updated configs.
    * @throws NoChangesToPushException      if there is no effective changes on the config file to commit
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
    *                                       call remote Git.
    * @throws SourceControlException when the push operation fails for any other reason.
    */
-  PushAppResponse push(PushAppContext pushAppContext) throws NoChangesToPushException,
+  PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
     AuthenticationConfigException;
 
   /**
    * Gets an application spec from a Git repository.
    *
-   * @param appRef The {@link ApplicationReference} of the application to pull from
+   * @param pulAppOperationRequest The {@link PulAppOperationRequest} of the application to pull from
    * @return the details of the pulled application.
    * @throws NotFoundException             when the requested application is not found in the Git repository.
    * @throws AuthenticationConfigException when there is an error while creating the authentication credentials to
@@ -49,7 +48,7 @@ public interface SourceControlOperationRunner {
    * @throws IllegalArgumentException      when the fetched application json or file path is invalid.
    * @throws SourceControlException when the operation fails for any other reason.
    */
-  PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws NotFoundException,
+  PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
     AuthenticationConfigException;
 
   /**
