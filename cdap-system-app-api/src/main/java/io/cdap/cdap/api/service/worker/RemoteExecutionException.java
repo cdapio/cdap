@@ -42,13 +42,18 @@ public class RemoteExecutionException extends Exception {
    * @return An exception which retains the local stacktrace.
    */
   public static RemoteExecutionException fromBasicThrowable(BasicThrowable basicThrowable) {
-    BasicThrowable cause = basicThrowable.getCause();
-    Exception causeException = cause == null ? null : fromBasicThrowable(cause);
-    RemoteTaskException remoteTaskException = new RemoteTaskException(basicThrowable.getClassName(),
-                                                                      basicThrowable.getMessage(), causeException);
-    remoteTaskException.setStackTrace(basicThrowable.getStackTraces());
-
+    RemoteTaskException remoteTaskException = recursiveWrapBasicThrowable(basicThrowable);
     // Wrap the remote exception as the cause so that we retain the local stacktrace of the exception.
     return new RemoteExecutionException(remoteTaskException);
+  }
+
+  private static RemoteTaskException recursiveWrapBasicThrowable(BasicThrowable basicThrowable) {
+    BasicThrowable cause = basicThrowable.getCause();
+    RemoteTaskException causeException = cause == null ? null : recursiveWrapBasicThrowable(cause);
+    RemoteTaskException remoteTaskException = new RemoteTaskException(basicThrowable.getClassName(),
+        basicThrowable.getMessage(), causeException);
+    remoteTaskException.setStackTrace(basicThrowable.getStackTraces());
+
+    return remoteTaskException;
   }
 }
