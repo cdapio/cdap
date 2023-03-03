@@ -185,8 +185,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
                                                               appId1.getId() + " hash");
 
-    Mockito.doReturn(expectedAppResponse)
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
 
     // Assert the result is as expected
     PushAppResponse result = sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
@@ -220,8 +219,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
                                                               appId1.getId() + " hash");
 
-    Mockito.doReturn(expectedAppResponse)
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -262,7 +260,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doThrow(new PushFailureException("push apps failed", new Exception()))
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).push(Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -436,8 +434,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Push the application and update source control metadata
     String mockedFileHash = appId1.getId() + " hash";
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(), mockedFileHash);
-    Mockito.doReturn(expectedAppResponse)
-      .when(mockSourceControlOperationRunner).push(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
     sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
 
     // Set up the pullResponse so that the fileHashes are the same

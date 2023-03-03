@@ -144,7 +144,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import io.cdap.cdap.sourcecontrol.SourceControlModule;
+import io.cdap.cdap.sourcecontrol.guice.SourceControlModule;
 import io.cdap.http.HttpHandler;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

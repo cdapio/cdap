@@ -25,6 +25,10 @@ public class AuthenticationConfigException extends Exception {
     super(message, cause);
   }
 
+  public AuthenticationConfigException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
   public AuthenticationConfigException(String message) {
     super(message);
   }

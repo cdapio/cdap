@@ -48,6 +48,7 @@ import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullFailureException;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppContext;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushFailureException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
@@ -172,8 +173,8 @@ public class SourceControlManagementService {
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
     CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(appRef.getParent(), repoConfig,
-                                                                     appDetail, commitMeta);
+    PushAppResponse pushResponse = sourceControlOperationRunner.push(new PushAppContext(appRef.getParent(), repoConfig,
+                                                                                        appDetail, commitMeta));
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
