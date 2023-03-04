@@ -20,7 +20,8 @@ import java.nio.ByteBuffer;
 import org.apache.hadoop.hbase.client.Put;
 
 /**
- * Default implementation of {@link PutBuilder}. Specific HBase compat module can extends and override methods.
+ * Default implementation of {@link PutBuilder}. Specific HBase compat module can extends and
+ * override methods.
  */
 class DefaultPutBuilder implements PutBuilder {
 
@@ -29,7 +30,7 @@ class DefaultPutBuilder implements PutBuilder {
   DefaultPutBuilder(byte[] row) {
     this.put = new Put(row);
   }
-  
+
   DefaultPutBuilder(Put put) {
     this.put = new Put(put);
   }

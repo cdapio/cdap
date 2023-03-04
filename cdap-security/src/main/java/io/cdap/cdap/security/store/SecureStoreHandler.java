@@ -51,12 +51,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Exposes REST APIs for {@link SecureStore} and
- * {@link SecureStoreManager}.
+ * Exposes REST APIs for {@link SecureStore} and {@link SecureStoreManager}.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/securekeys")
 public class SecureStoreHandler extends AbstractHttpHandler {
-  private static final Type REQUEST_TYPE = new TypeToken<SecureKeyCreateRequest>() { }.getType();
+
+  private static final Type REQUEST_TYPE = new TypeToken<SecureKeyCreateRequest>() {
+  }.getType();
   private static final Gson GSON = new Gson();
 
   private final SecureStore secureStore;
@@ -72,51 +73,56 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   @PUT
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void create(FullHttpRequest httpRequest, HttpResponder httpResponder,
-                     @PathParam("namespace-id") String namespace,
-                     @PathParam("key-name") String name) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     SecureKeyCreateRequest secureKeyCreateRequest;
     try {
       secureKeyCreateRequest = parseBody(httpRequest);
     } catch (IOException e) {
       SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
-                                                                ImmutableMap.of("key", "value"));
-      throw new BadRequestException("Unable to parse the request. The request body should be of the following format." +
-                                      " \n" + GSON.toJson(dummy));
+          ImmutableMap.of("key", "value"));
+      throw new BadRequestException(
+          "Unable to parse the request. The request body should be of the following format."
+              + " \n" + GSON.toJson(dummy));
     }
 
-    if (Strings.isNullOrEmpty(secureKeyCreateRequest.getData()) || secureKeyCreateRequest.getData().trim().isEmpty()) {
-      throw new BadRequestException("The data field must not be null or empty. The data will be stored securely " +
-                                      "under provided key name.");
+    if (Strings.isNullOrEmpty(secureKeyCreateRequest.getData()) || secureKeyCreateRequest.getData()
+        .trim().isEmpty()) {
+      throw new BadRequestException(
+          "The data field must not be null or empty. The data will be stored securely "
+              + "under provided key name.");
     }
 
     secureStoreManager.put(namespace, name, secureKeyCreateRequest.getData(),
-                           secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
+        secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/{key-name}")
   @DELETE
-  public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                     @PathParam("key-name") String name) throws Exception {
+  public void delete(HttpRequest httpRequest, HttpResponder httpResponder,
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name) throws Exception {
     secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/{key-name}")
   @GET
-  public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
-                  @PathParam("key-name") String name) throws Exception {
+  public void get(HttpRequest httpRequest, HttpResponder httpResponder,
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.get(namespace, name).get(),
-                                new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
+        new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
   }
 
   @Path("/{key-name}/metadata")
   @GET
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
-                          @PathParam("namespace-id") String namespace,
-                          @PathParam("key-name") String name) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("key-name") String name) throws Exception {
     SecureStoreData secureStoreData = secureStore.get(namespace, name);
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStoreData.getMetadata()));
   }
@@ -124,7 +130,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   @Path("/")
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder,
-                   @PathParam("namespace-id") String namespace) throws Exception {
+      @PathParam("namespace-id") String namespace) throws Exception {
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.list(namespace)));
   }
 
@@ -134,7 +140,8 @@ public class SecureStoreHandler extends AbstractHttpHandler {
       throw new IOException("Unable to read contents of the request.");
     }
 
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content),
+        StandardCharsets.UTF_8)) {
       return GSON.fromJson(reader, REQUEST_TYPE);
     }
   }

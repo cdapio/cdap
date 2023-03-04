@@ -21,12 +21,13 @@ import io.cdap.cdap.etl.api.Destroyable;
 
 
 /**
- * A stage in the PipeTransformExecutor. Pipe transforms should send each output record immediately to all output stages
- * without buffering anything in memory.
+ * A stage in the PipeTransformExecutor. Pipe transforms should send each output record immediately
+ * to all output stages without buffering anything in memory.
  *
  * @param <T> type of input record
  */
 public abstract class PipeStage<T> implements Destroyable {
+
   private final String stageName;
 
   protected PipeStage(String stageName) {
@@ -49,9 +50,12 @@ public abstract class PipeStage<T> implements Destroyable {
       Throwable rootCause = Throwables.getRootCause(e);
       // Create StageFailureException to save the Stage information
       throw new StageFailureException(
-        String.format("Failed to execute pipeline stage '%s' with the error: %s. Please review your pipeline " +
-                        "configuration and check the system logs for more details.", stageName, rootCause.getMessage()),
-        rootCause);
+          String.format(
+              "Failed to execute pipeline stage '%s' with the error: %s. Please review your pipeline "
+
+                  + "configuration and check the system logs for more details.", stageName,
+              rootCause.getMessage()),
+          rootCause);
     }
   }
 

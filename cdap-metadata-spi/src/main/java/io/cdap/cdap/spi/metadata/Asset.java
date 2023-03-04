@@ -20,10 +20,10 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.util.Objects;
 
 /**
- * Represents an Asset with a FQN which is a fully-qualified identifier.
- * It refers to the data source that is being read from or written into - e.g. BigQuery Dataset, DB Table, etc.
- * FQN is formed by using the plugin properties that together identifies an asset. For e.g. in case of DB plugins,
- * the plugin can be of the form {dbType}.{host}:{port}.{database}.{schema}.
+ * Represents an Asset with a FQN which is a fully-qualified identifier. It refers to the data
+ * source that is being read from or written into - e.g. BigQuery Dataset, DB Table, etc. FQN is
+ * formed by using the plugin properties that together identifies an asset. For e.g. in case of DB
+ * plugins, the plugin can be of the form {dbType}.{host}:{port}.{database}.{schema}.
  */
 @Beta
 public class Asset {
@@ -32,6 +32,7 @@ public class Asset {
 
   /**
    * Creates an instance of Asset.
+   *
    * @param fqn fully-qualified name of the Asset.
    */
   public Asset(String fqn) {
@@ -64,8 +65,8 @@ public class Asset {
 
   @Override
   public String toString() {
-    return "Dataset{" +
-      "fqn='" + fqn + '\'' +
-      '}';
+    return "Dataset{"
+        + "fqn='" + fqn + '\''
+        + '}';
   }
 }

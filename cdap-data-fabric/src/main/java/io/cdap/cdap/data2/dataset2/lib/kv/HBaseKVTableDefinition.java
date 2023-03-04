@@ -50,8 +50,9 @@ import org.apache.hadoop.hbase.client.Table;
 /**
  * Simple implementation of hbase non-tx {@link NoTxKeyValueTable}.
  */
-public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin>
-  implements Reconfigurable {
+public class HBaseKVTableDefinition extends
+    AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin>
+    implements Reconfigurable {
 
   private static final byte[] DATA_COLUMN_FAMILY = Bytes.toBytes("d");
 
@@ -69,43 +70,46 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String name, DatasetProperties properties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     return DatasetSpecification.builder(name, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new DatasetAdminImpl(datasetContext, spec.getName(), tableUtil, hConf, cConf);
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(datasetContext, spec.getName(), hConf, tableUtil);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
+
     private final Configuration hConf;
     private final CConfiguration cConf;
     private final TableId tableId;
     private final HBaseDDLExecutorFactory ddlExecutorFactory;
     protected final HBaseTableUtil tableUtil;
 
-    private DatasetAdminImpl(DatasetContext datasetContext, String tableName, HBaseTableUtil tableUtil,
-                             Configuration hConf, CConfiguration cConf) throws IOException {
+    private DatasetAdminImpl(DatasetContext datasetContext, String tableName,
+        HBaseTableUtil tableUtil,
+        Configuration hConf, CConfiguration cConf) throws IOException {
       this.hConf = hConf;
       this.cConf = cConf;
       this.tableUtil = tableUtil;
-      this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
+      this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()),
+          tableName);
       this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
     }
 
@@ -119,10 +123,11 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     @Override
     public void create() throws IOException {
       ColumnFamilyDescriptorBuilder cfdBuilder =
-        HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(DATA_COLUMN_FAMILY), hConf);
+          HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(DATA_COLUMN_FAMILY),
+              hConf);
 
       TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf)
-        .addColumnFamily(cfdBuilder.build());
+          .addColumnFamily(cfdBuilder.build());
 
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
         ddlExecutor.createTableIfNotExists(tdBuilder.build(), null);
@@ -155,15 +160,17 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   }
 
   private static final class KVTableImpl implements NoTxKeyValueTable {
+
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
     private final HBaseTableUtil tableUtil;
     private final Table table;
 
     KVTableImpl(DatasetContext datasetContext, String tableName,
-                Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+        Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
       this.tableUtil = tableUtil;
-      TableId tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), tableName);
+      TableId tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()),
+          tableName);
       this.table = this.tableUtil.createTable(hConf, tableId);
     }
 
@@ -175,8 +182,8 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
           table.delete(tableUtil.buildDelete(key).build());
         } else {
           Put put = tableUtil.buildPut(key)
-            .add(DATA_COLUMN_FAMILY, DEFAULT_COLUMN, value)
-            .build();
+              .add(DATA_COLUMN_FAMILY, DEFAULT_COLUMN, value)
+              .build();
           table.put(put);
         }
       } catch (IOException e) {
@@ -206,6 +213,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
    * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
+
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName()));

@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
  * Exception thrown on invalid input
  */
 public class BadRequestException extends AccessException implements HttpErrorStatusProvider {
+
   public BadRequestException(Role role) {
     super(String.format("%s not found.", role));
   }

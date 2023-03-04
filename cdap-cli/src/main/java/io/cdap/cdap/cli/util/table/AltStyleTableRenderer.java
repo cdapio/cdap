@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 
 /**
  * {@link TableRenderer} implementation to print an ASCII table in the alt style. e.g.
- *
+ * <pre>
  * +=======================================================================+
  * | pid                                  | end status | start      | stop |
  * +=======================================================================+
@@ -44,9 +44,11 @@ import javax.annotation.Nullable;
  * | 531dff0a-0441-424b-ae5b-023cc7383344 | STOPPED    | 1405454043 | 0    |
  * | d9cae8f9-3fd3-45f4-b4e9-102ef38cf4e1 | STOPPED    | 1405371545 | 0    |
  * +=======================================================================+
+ * </pre>
  *
  * E.g. when cells are multiple lines:
  *
+ * <pre>
  * +========================================================================================+
  * | c1                         | c2                         | c3333                        |
  * +========================================================================================+
@@ -69,6 +71,7 @@ import javax.annotation.Nullable;
  * | r3333                      | r3                         | r3                           |
  * |                            |                            | 1                            |
  * +========================================================================================+
+ * </pre>
  */
 public class AltStyleTableRenderer implements TableRenderer {
 
@@ -94,12 +97,13 @@ public class AltStyleTableRenderer implements TableRenderer {
     int width = config.getLineWidth();
 
     List<String> tableHeader = table.getHeader();
-    Iterable<List<String>> tableRows = Iterables.filter(table.getRows(), new Predicate<List<String>>() {
-      @Override
-      public boolean apply(@Nullable List<String> input) {
-        return input != null;
-      }
-    });
+    Iterable<List<String>> tableRows = Iterables.filter(table.getRows(),
+        new Predicate<List<String>>() {
+          @Override
+          public boolean apply(@Nullable List<String> input) {
+            return input != null;
+          }
+        });
 
     List<Row> rows = Lists.newArrayList();
 
@@ -200,7 +204,8 @@ public class AltStyleTableRenderer implements TableRenderer {
    * @param collection Collection for collecting the generated {@link Row} object.
    * @return Returns true if the row spans multiple lines.
    */
-  private boolean generateRow(List<String> row, int[] columnWidths, Collection<? super Row> collection) {
+  private boolean generateRow(List<String> row, int[] columnWidths,
+      Collection<? super Row> collection) {
     ImmutableList.Builder<Cell> builder = ImmutableList.builder();
 
     boolean multiLines = false;
@@ -252,7 +257,8 @@ public class AltStyleTableRenderer implements TableRenderer {
    * @param maxOuterTableWidth Maximum outer width of the table.
    * @return An array of integers, with contains maximum width for each column.
    */
-  private int[] calculateColumnWidths(List<String> header, Iterable<List<String>> rows, int maxOuterTableWidth) {
+  private int[] calculateColumnWidths(List<String> header, Iterable<List<String>> rows,
+      int maxOuterTableWidth) {
     int[] widths;
     if (!header.isEmpty()) {
       widths = new int[header.size()];
@@ -282,7 +288,7 @@ public class AltStyleTableRenderer implements TableRenderer {
     }
 
     int numBorderAndSpaceChars = (widths.length + 1) // for the '|' borders
-      + (2 * widths.length); // for the spaces within each column
+        + (2 * widths.length); // for the spaces within each column
 
     // outer width of the table if every row was in a single line
     int flatOuterTableWidth = numBorderAndSpaceChars;

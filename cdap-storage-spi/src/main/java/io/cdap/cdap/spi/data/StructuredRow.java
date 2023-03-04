@@ -26,55 +26,66 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface StructuredRow {
+
   /**
-   * @return the value of the field named fieldName as integer, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type
+   * @return the value of the field named fieldName as integer, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type
    */
   @Nullable
   Integer getInteger(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as long, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema,
-   * or is of incompatible type. Integer field will be automatically widened to Long.
+   * @return the value of the field named fieldName as long, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type. Integer field will be automatically widened to Long.
    */
   @Nullable
   Long getLong(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as boolean, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type.
+   * @return the value of the field named fieldName as boolean, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type.
    */
   @Nullable
   Boolean getBoolean(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as string, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema,
-   * or is of incompatible type. Numeric to string conversion will not be done.
+   * @return the value of the field named fieldName as string, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type. Numeric to string conversion will not be done.
    */
   @Nullable
   String getString(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as float, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type
+   * @return the value of the field named fieldName as float, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type
    */
   @Nullable
   Float getFloat(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as double, or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema,
-   * or is of incompatible type. Float field will be automatically widened to Double.
+   * @return the value of the field named fieldName as double, or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type. Float field will be automatically widened to Double.
    */
   @Nullable
   Double getDouble(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as byte[], or null if the field value is not defined
-   * @throws InvalidFieldException if the fieldName is not part of the table schema,
-   * or is of incompatible type.
+   * @return the value of the field named fieldName as byte[], or null if the field value is not
+   *     defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of
+   *     incompatible type.
    */
   @Nullable
   byte[] getBytes(String fieldName) throws InvalidFieldException;

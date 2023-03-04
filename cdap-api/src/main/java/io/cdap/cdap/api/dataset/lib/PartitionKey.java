@@ -57,8 +57,8 @@ public class PartitionKey {
 
   @Override
   public boolean equals(Object other) {
-    return this == other ||
-      (other != null && getClass() == other.getClass()
+    return this == other
+        || (other != null && getClass() == other.getClass()
         && getFields().equals(((PartitionKey) other).getFields())); // fields is never null
   }
 
@@ -75,8 +75,8 @@ public class PartitionKey {
   }
 
   /**
-   * @return a builder for a partition key with a known partitioning. This builder will
-   *         only accept fields that are defined in the partitioning.
+   * @return a builder for a partition key with a known partitioning. This builder will only accept
+   *     fields that are defined in the partitioning.
    */
   public static Builder builder(Partitioning partitioning) {
     return new Builder(partitioning);
@@ -103,10 +103,9 @@ public class PartitionKey {
      *
      * @param name the field name
      * @param value the value of the field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         if the value is null, or if the partitioning is known and does not contain the field name,
-     *         or the field is defined with a different type.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, if the value is null, or if the partitioning is known and does not contain the
+     *     field name, or the field is defined with a different type.
      */
     public Builder addField(String name, Comparable value) {
       if (name == null || name.isEmpty()) {
@@ -116,18 +115,21 @@ public class PartitionKey {
         throw new IllegalArgumentException("Field value cannot be null.");
       }
       if (fields.containsKey(name)) {
-        throw new IllegalArgumentException(String.format("Field '%s' already exists in partition key.", name));
+        throw new IllegalArgumentException(
+            String.format("Field '%s' already exists in partition key.", name));
       }
       if (partitioning != null) {
         if (!partitioning.getFields().containsKey(name)) {
-          throw new IllegalArgumentException(String.format("Field '%s' is an unknown field in partitioning %s",
-                                                           name, partitioning));
+          throw new IllegalArgumentException(
+              String.format("Field '%s' is an unknown field in partitioning %s",
+                  name, partitioning));
         }
         try {
           partitioning.getFields().get(name).validate(value);
         } catch (IllegalArgumentException e) {
           throw new IllegalArgumentException(String.format(
-            "Value for field '%s' is incompatible with the partitioning: %s", name, e.getMessage()));
+              "Value for field '%s' is incompatible with the partitioning: %s", name,
+              e.getMessage()));
         }
       }
       fields.put(name, value);
@@ -139,10 +141,9 @@ public class PartitionKey {
      *
      * @param name the field name
      * @param value the value of the field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         if the value is null, or if the partitioning is known and does not contain the field name,
-     *         or the field is defined with a different type.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, if the value is null, or if the partitioning is known and does not contain the
+     *     field name, or the field is defined with a different type.
      */
     public Builder addStringField(String name, String value) {
       return addField(name, value);
@@ -153,10 +154,9 @@ public class PartitionKey {
      *
      * @param name the field name
      * @param value the value of the field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         if the value is null, or if the partitioning is known and does not contain the field name,
-     *         or the field is defined with a different type.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, if the value is null, or if the partitioning is known and does not contain the
+     *     field name, or the field is defined with a different type.
      */
     public Builder addIntField(String name, int value) {
       return addField(name, value);
@@ -167,10 +167,9 @@ public class PartitionKey {
      *
      * @param name the field name
      * @param value the value of the field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         if the value is null, or if the partitioning is known and does not contain the field name,
-     *         or the field is defined with a different type.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, if the value is null, or if the partitioning is known and does not contain the
+     *     field name, or the field is defined with a different type.
      */
     public Builder addLongField(String name, long value) {
       return addField(name, value);
@@ -179,8 +178,8 @@ public class PartitionKey {
     /**
      * Create the partition key.
      *
-     * @throws IllegalStateException if no fields have been added,
-     *         or the partitioning is known and not all fields have been added.
+     * @throws IllegalStateException if no fields have been added, or the partitioning is known
+     *     and not all fields have been added.
      */
     public PartitionKey build() {
       if (fields.isEmpty()) {
@@ -188,8 +187,8 @@ public class PartitionKey {
       }
       if (partitioning != null && !partitioning.getFields().keySet().equals(fields.keySet())) {
         throw new IllegalStateException(String.format(
-          "Partition key is incomplete: It only contains fields %s, but the partitioning requires %s",
-          fields.keySet(), partitioning.getFields().keySet()));
+            "Partition key is incomplete: It only contains fields %s, but the partitioning requires %s",
+            fields.keySet(), partitioning.getFields().keySet()));
       }
       return new PartitionKey(fields);
     }

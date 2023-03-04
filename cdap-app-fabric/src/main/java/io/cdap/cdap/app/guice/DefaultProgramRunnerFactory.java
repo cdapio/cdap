@@ -60,9 +60,9 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
 
   @Inject
   DefaultProgramRunnerFactory(Injector injector, ProgramRuntimeProvider.Mode mode,
-                              ProgramRuntimeProviderLoader runtimeProviderLoader,
-                              Map<ProgramType, Provider<ProgramRunner>> defaultRunnerProviders,
-                              ProgramStateWriter programStateWriter) {
+      ProgramRuntimeProviderLoader runtimeProviderLoader,
+      Map<ProgramType, Provider<ProgramRunner>> defaultRunnerProviders,
+      ProgramStateWriter programStateWriter) {
     this.injector = injector;
     this.defaultRunnerProviders = defaultRunnerProviders;
     this.mode = mode;
@@ -93,7 +93,8 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
 
     // Wrap a state change listener around the controller returned by the program runner in standalone mode
     // In distributed mode, program state changes are recorded in the event handler by Twill AM.
-    return (mode == ProgramRuntimeProvider.Mode.LOCAL || publishProgramState) ? wrapProgramRunner(runner) : runner;
+    return (mode == ProgramRuntimeProvider.Mode.LOCAL || publishProgramState) ? wrapProgramRunner(
+        runner) : runner;
   }
 
   /**
@@ -107,9 +108,11 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   }
 
   /**
-   * A {@link ProgramRunner} that wraps around another {@link ProgramRunner} and publish events on program state change.
+   * A {@link ProgramRunner} that wraps around another {@link ProgramRunner} and publish events on
+   * program state change.
    */
-  private static class StatePublishProgramRunner implements ProgramRunner, ProgramClassLoaderProvider, Closeable {
+  private static class StatePublishProgramRunner implements ProgramRunner,
+      ProgramClassLoaderProvider, Closeable {
 
     private final ProgramRunner runner;
     private final ProgramStateWriter programStateWriter;
@@ -125,7 +128,8 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     }
 
     protected ProgramController addStateChangeListener(ProgramController controller) {
-      controller.addListener(new StateChangeListener(controller, programStateWriter), Threads.SAME_THREAD_EXECUTOR);
+      controller.addListener(new StateChangeListener(controller, programStateWriter),
+          Threads.SAME_THREAD_EXECUTOR);
       return controller;
     }
 
@@ -147,27 +151,30 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   }
 
   /**
-   * A {@link StatePublishProgramRunner} that also implements {@link ProgramControllerCreator}.
-   * It is implemented by delegating to the underlying {@link ProgramRunner}
-   * that also implement {@link ProgramControllerCreator}.
+   * A {@link StatePublishProgramRunner} that also implements {@link ProgramControllerCreator}. It
+   * is implemented by delegating to the underlying {@link ProgramRunner} that also implement {@link
+   * ProgramControllerCreator}.
    */
   private static class StatePublishProgramRunnerControllerCreator
-    extends StatePublishProgramRunner implements ProgramControllerCreator {
+      extends StatePublishProgramRunner implements ProgramControllerCreator {
 
     private final ProgramControllerCreator controllerCreator;
 
-    private StatePublishProgramRunnerControllerCreator(ProgramRunner runner, ProgramStateWriter programStateWriter) {
+    private StatePublishProgramRunnerControllerCreator(ProgramRunner runner,
+        ProgramStateWriter programStateWriter) {
       super(runner, programStateWriter);
       if (!(runner instanceof ProgramControllerCreator)) {
-        throw new IllegalArgumentException("ProgramRunner " + runner +
-                                             " does not implement " + ProgramControllerCreator.class);
+        throw new IllegalArgumentException("ProgramRunner " + runner
+            + " does not implement " + ProgramControllerCreator.class);
       }
       this.controllerCreator = (ProgramControllerCreator) runner;
     }
 
     @Override
-    public ProgramController createProgramController(ProgramRunId programRunId, TwillController twillController) {
-      return addStateChangeListener(controllerCreator.createProgramController(programRunId, twillController));
+    public ProgramController createProgramController(ProgramRunId programRunId,
+        TwillController twillController) {
+      return addStateChangeListener(
+          controllerCreator.createProgramController(programRunId, twillController));
     }
   }
 }

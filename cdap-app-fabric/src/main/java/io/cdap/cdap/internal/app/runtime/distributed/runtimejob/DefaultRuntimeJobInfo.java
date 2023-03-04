@@ -37,14 +37,14 @@ public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
 
 
   public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files,
-                               Map<String, String> jvmProperties) {
+      Map<String, String> jvmProperties) {
     this.info = new ProgramRunInfo.Builder()
-      .setNamespace(programRunId.getNamespace())
-      .setApplication(programRunId.getApplication())
-      .setVersion(programRunId.getVersion())
-      .setProgramType(programRunId.getType().name())
-      .setProgram(programRunId.getProgram())
-      .setRun(programRunId.getRun()).build();
+        .setNamespace(programRunId.getNamespace())
+        .setApplication(programRunId.getApplication())
+        .setVersion(programRunId.getVersion())
+        .setProgramType(programRunId.getType().name())
+        .setProgram(programRunId.getProgram())
+        .setRun(programRunId.getRun()).build();
     this.files = Collections.unmodifiableCollection(new ArrayList<>(files));
     this.jvmProperties = Collections.unmodifiableMap(new LinkedHashMap<>(jvmProperties));
   }

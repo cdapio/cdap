@@ -70,8 +70,9 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public AbstractServiceHttpServer(String host, Program program, ProgramOptions programOptions, int instanceId,
-                                   ServiceAnnouncer serviceAnnouncer, TransactionControl defaultTxControl) {
+  public AbstractServiceHttpServer(String host, Program program, ProgramOptions programOptions,
+      int instanceId,
+      ServiceAnnouncer serviceAnnouncer, TransactionControl defaultTxControl) {
     this.host = host;
     this.program = program;
     this.programOptions = programOptions;
@@ -93,7 +94,8 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
 
   protected abstract LoggingContext getLoggingContext();
 
-  protected abstract List<? extends AbstractDelegatorContext<T>> createDelegatorContexts() throws Exception;
+  protected abstract List<? extends AbstractDelegatorContext<T>> createDelegatorContexts()
+      throws Exception;
 
   // this method will run before the netty http service starts
   protected void initializeService() throws Exception {
@@ -106,45 +108,50 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
   }
 
   /**
-   * Creates a {@link NettyHttpService} from the given host, and list of {@link AbstractDelegatorContext}s
+   * Creates a {@link NettyHttpService} from the given host, and list of {@link
+   * AbstractDelegatorContext}s
    *
    * @param delegatorContexts the list {@link ServiceHttpServer.HandlerDelegatorContext}
-   * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
+   * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the
+   *     HTTP requests
    */
-  private NettyHttpService createNettyHttpService(Iterable<? extends AbstractDelegatorContext<T>> delegatorContexts) {
+  private NettyHttpService createNettyHttpService(
+      Iterable<? extends AbstractDelegatorContext<T>> delegatorContexts) {
     // The service URI is always prefixed for routing purpose
     String pathPrefix = String.format("%s/namespaces/%s/apps/%s/%s/%s/methods",
-                                      Constants.Gateway.API_VERSION_3,
-                                      program.getNamespaceId(),
-                                      program.getApplicationId(),
-                                      getRoutingPathName(),
-                                      program.getName());
+        Constants.Gateway.API_VERSION_3,
+        program.getNamespaceId(),
+        program.getApplicationId(),
+        getRoutingPathName(),
+        program.getName());
     String versionedPathPrefix = String.format("%s/namespaces/%s/apps/%s/versions/%s/%s/%s/methods",
-                                               Constants.Gateway.API_VERSION_3,
-                                               program.getNamespaceId(),
-                                               program.getApplicationId(),
-                                               program.getId().getVersion(),
-                                               getRoutingPathName(),
-                                               program.getName());
+        Constants.Gateway.API_VERSION_3,
+        program.getNamespaceId(),
+        program.getApplicationId(),
+        program.getId().getVersion(),
+        getRoutingPathName(),
+        program.getName());
 
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, defaultTxControl);
-    HttpHandlerFactory versionedFactory = new HttpHandlerFactory(versionedPathPrefix, defaultTxControl);
+    HttpHandlerFactory versionedFactory = new HttpHandlerFactory(versionedPathPrefix,
+        defaultTxControl);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (AbstractDelegatorContext<T> context : delegatorContexts) {
       nettyHttpHandlers.add(factory.createHttpHandler(context.getHandlerType(), context,
-                                                      context.getHandlerMetricsContext()));
+          context.getHandlerMetricsContext()));
       nettyHttpHandlers.add(versionedFactory.createHttpHandler(context.getHandlerType(), context,
-                                                               context.getHandlerMetricsContext()));
+          context.getHandlerMetricsContext()));
     }
 
     NettyHttpService.Builder builder = createHttpServiceBuilder(program.getName() + "-http")
-      .setHost(host)
-      .setPort(0)
-      .setHttpHandlers(nettyHttpHandlers);
+        .setHost(host)
+        .setPort(0)
+        .setHttpHandlers(nettyHttpHandlers);
 
-    return SystemArguments.configureNettyHttpService(programOptions.getUserArguments().asMap(), builder).build();
+    return SystemArguments.configureNettyHttpService(programOptions.getUserArguments().asMap(),
+        builder).build();
   }
 
   /**
@@ -178,7 +185,7 @@ public abstract class AbstractServiceHttpServer<T> extends AbstractIdleService {
     int port = bindAddress.getPort();
     // Announce the service with its version as the payload
     cancelDiscovery = serviceAnnouncer.announce(ServiceDiscoverable.getName(programId), port,
-                                                Bytes.toBytes(programId.getVersion()));
+        Bytes.toBytes(programId.getVersion()));
     LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it

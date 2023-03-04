@@ -25,6 +25,8 @@ public final class ConfigExistsException extends AlreadyExistsException {
 
 
   public ConfigExistsException(String namespace, String type, String id) {
-    super(String.format("Configuration: %s of Type: %s in Namespace: %s is already present", id, type, namespace));
+    super(
+        String.format("Configuration: %s of Type: %s in Namespace: %s is already present", id, type,
+            namespace));
   }
 }

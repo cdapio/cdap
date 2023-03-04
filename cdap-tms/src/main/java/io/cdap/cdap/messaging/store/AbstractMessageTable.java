@@ -56,13 +56,15 @@ public abstract class AbstractMessageTable implements MessageTable {
    *
    * @param scanRequest information about the scan to perform
    * @return {@link CloseableIterator} of {@link RawMessageTableEntry}s
-   * @throws IOException throw if there was an error while trying to read the entries from the table
+   * @throws IOException throw if there was an error while trying to read the entries from the
+   *     table
    */
-  protected abstract CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest) throws IOException;
+  protected abstract CloseableIterator<RawMessageTableEntry> scan(ScanRequest scanRequest)
+      throws IOException;
 
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long startTime, int limit,
-                                        @Nullable Transaction transaction) throws IOException {
+      @Nullable Transaction transaction) throws IOException {
     byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
@@ -74,15 +76,17 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   @Override
-  public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId, boolean inclusive,
-                                        final int limit, @Nullable final Transaction transaction) throws IOException {
+  public CloseableIterator<Entry> fetch(TopicMetadata metadata, MessageId messageId,
+      boolean inclusive,
+      final int limit, @Nullable final Transaction transaction) throws IOException {
     byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, messageId.getPublishTimestamp());
     Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getSequenceId());
     byte[] stopRow = Bytes.stopKeyForPrefix(topic);
-    ScanRequest scanRequest = new ScanRequest(metadata, startRow, stopRow, messageId.getPublishTimestamp());
+    ScanRequest scanRequest = new ScanRequest(metadata, startRow, stopRow,
+        messageId.getPublishTimestamp());
     CloseableIterator<RawMessageTableEntry> scanner = scan(scanRequest);
     return new FetchIterator(scanner, limit, inclusive ? null : startRow, transaction);
   }
@@ -100,18 +104,20 @@ public abstract class AbstractMessageTable implements MessageTable {
     byte[] startRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(startRow, 0, topic, 0, topic.length);
     Bytes.putLong(startRow, topic.length, rollbackDetail.getStartTimestamp());
-    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG, (short) rollbackDetail.getStartSequenceId());
+    Bytes.putShort(startRow, topic.length + Bytes.SIZEOF_LONG,
+        (short) rollbackDetail.getStartSequenceId());
 
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT];
     Bytes.putBytes(stopRow, 0, topic, 0, topic.length);
     Bytes.putLong(stopRow, topic.length, rollbackDetail.getEndTimestamp());
-    Bytes.putShort(stopRow, topic.length + Bytes.SIZEOF_LONG, (short) rollbackDetail.getEndSequenceId());
+    Bytes.putShort(stopRow, topic.length + Bytes.SIZEOF_LONG,
+        (short) rollbackDetail.getEndSequenceId());
 
     byte[] txWritePointer = Bytes.toBytes(-1 * rollbackDetail.getTransactionWritePointer());
     RollbackRequest rollbackRequest = new RollbackRequest(startRow, Bytes.stopKeyForPrefix(stopRow),
-                                                          txWritePointer,
-                                                          rollbackDetail.getStartTimestamp(),
-                                                          rollbackDetail.getEndTimestamp());
+        txWritePointer,
+        rollbackDetail.getStartTimestamp(),
+        rollbackDetail.getEndTimestamp());
     rollback(rollbackRequest);
   }
 
@@ -119,16 +125,18 @@ public abstract class AbstractMessageTable implements MessageTable {
    * An {@link Iterator} for fetching {@link Entry} from the the message table.
    */
   private static class FetchIterator extends AbstractCloseableIterator<Entry> {
+
     private final CloseableIterator<RawMessageTableEntry> scanner;
     private final TransactionMessageFilter filter;
     private byte[] skipStartRow;
     private boolean closed;
     private int maxLimit;
 
-    FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit, @Nullable byte[] skipStartRow,
-                  @Nullable Transaction transaction) {
+    FetchIterator(CloseableIterator<RawMessageTableEntry> scanner, int limit,
+        @Nullable byte[] skipStartRow,
+        @Nullable Transaction transaction) {
       this.scanner = scanner;
-      this.filter =  transaction == null ? null : new TransactionMessageFilter(transaction);
+      this.filter = transaction == null ? null : new TransactionMessageFilter(transaction);
       this.skipStartRow = skipStartRow;
       this.maxLimit = limit;
     }
@@ -147,15 +155,15 @@ public abstract class AbstractMessageTable implements MessageTable {
           byte[] row = skipStartRow;
           // After first row, we don't need to match anymore
           skipStartRow = null;
-           if (Bytes.equals(row, tableEntry.getKey().getRowKey())) {
-             continue;
-           }
+          if (Bytes.equals(row, tableEntry.getKey().getRowKey())) {
+            continue;
+          }
         }
         MessageFilter.Result status = accept(tableEntry.getTxPtr());
         if (status == MessageFilter.Result.ACCEPT) {
           maxLimit--;
           return new ImmutableMessageTableEntry(tableEntry.getKey().getRowKey(),
-                                                tableEntry.getPayload(), tableEntry.getTxPtr());
+              tableEntry.getPayload(), tableEntry.getTxPtr());
         }
 
         if (status == MessageFilter.Result.HOLD) {
@@ -186,8 +194,8 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   /**
-   * A {@link Iterator} for iterating over {@link RawMessageTableEntry} based on a given
-   * iterator of {@link Entry}.
+   * A {@link Iterator} for iterating over {@link RawMessageTableEntry} based on a given iterator of
+   * {@link Entry}.
    */
   private static class StoreIterator extends AbstractIterator<RawMessageTableEntry> {
 
@@ -211,7 +219,8 @@ public abstract class AbstractMessageTable implements MessageTable {
 
       Entry entry = entries.next();
       // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
-      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
+      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation
+          != entry.getGeneration())) {
         topicId = entry.getTopicId();
         generation = entry.getGeneration();
         topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());

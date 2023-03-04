@@ -27,8 +27,8 @@ import java.sql.SQLException;
 public interface StorageProviderNamespaceAdmin {
 
   /**
-   * Create a namespace in the storage providers.
-   * Can perform operations such as creating directories, creating namespaces, etc.
+   * Create a namespace in the storage providers. Can perform operations such as creating
+   * directories, creating namespaces, etc.
    *
    * @param namespaceMeta {@link NamespaceMeta} for the namespace to create
    * @throws IOException if there are errors while creating the namespace
@@ -36,8 +36,8 @@ public interface StorageProviderNamespaceAdmin {
   void create(NamespaceMeta namespaceMeta) throws IOException, SQLException;
 
   /**
-   * Delete a namespace from the storage providers.
-   * Can perform operations such as deleting directories, deleting namespaces, etc.
+   * Delete a namespace from the storage providers. Can perform operations such as deleting
+   * directories, deleting namespaces, etc.
    *
    * @param namespaceId {@link NamespaceId} for the namespace to delete
    * @throws IOException if there are errors while deleting the namespace

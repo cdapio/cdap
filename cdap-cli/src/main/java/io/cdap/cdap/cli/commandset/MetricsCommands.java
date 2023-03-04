@@ -35,11 +35,11 @@ public class MetricsCommands extends CommandSet<Command> implements Categorized 
   @Inject
   public MetricsCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(SearchMetricTagsCommand.class))
-        .add(injector.getInstance(SearchMetricNamesCommand.class))
-        .add(injector.getInstance(GetMetricCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(SearchMetricTagsCommand.class))
+            .add(injector.getInstance(SearchMetricNamesCommand.class))
+            .add(injector.getInstance(GetMetricCommand.class))
+            .build());
   }
 
   @Override

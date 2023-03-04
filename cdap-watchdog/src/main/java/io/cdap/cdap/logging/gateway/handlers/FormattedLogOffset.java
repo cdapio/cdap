@@ -26,6 +26,7 @@ import io.cdap.cdap.logging.read.LogOffset;
  * Formatted LogOffset
  */
 public class FormattedLogOffset {
+
   private static final char SEPARATOR = '.';
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
@@ -45,8 +46,10 @@ public class FormattedLogOffset {
     }
 
     Iterable<String> splits = Splitter.on(SEPARATOR).split(offsetStr);
-    Preconditions.checkArgument(Iterables.size(splits) == 2, "Invalid offset provided: %s", offsetStr);
+    Preconditions.checkArgument(Iterables.size(splits) == 2, "Invalid offset provided: %s",
+        offsetStr);
 
-    return new LogOffset(Long.valueOf(Iterables.get(splits, 0)), Long.valueOf(Iterables.get(splits, 1)));
+    return new LogOffset(Long.valueOf(Iterables.get(splits, 0)),
+        Long.valueOf(Iterables.get(splits, 1)));
   }
 }

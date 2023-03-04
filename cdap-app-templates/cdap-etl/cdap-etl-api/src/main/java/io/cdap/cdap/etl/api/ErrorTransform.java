@@ -17,12 +17,13 @@
 package io.cdap.cdap.etl.api;
 
 /**
- * A special type of {@link Transform} that will get as input all errors emitted by the previous stage.
- * A record is emitted as an error using {@link Emitter#emitError(InvalidEntry)}.
+ * A special type of {@link Transform} that will get as input all errors emitted by the previous
+ * stage. A record is emitted as an error using {@link Emitter#emitError(InvalidEntry)}.
  *
  * @param <IN> the type of error record
  * @param <OUT> the type of output record
  */
 public abstract class ErrorTransform<IN, OUT> extends Transform<ErrorRecord<IN>, OUT> {
+
   public static final String PLUGIN_TYPE = "errortransform";
 }

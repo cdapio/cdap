@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
  * UncaughtExceptionHandler to log uncaught exceptions
  */
 public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(UncaughtExceptionHandler.class);
 
   @Override

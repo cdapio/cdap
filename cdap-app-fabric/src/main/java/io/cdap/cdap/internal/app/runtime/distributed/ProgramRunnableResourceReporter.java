@@ -30,23 +30,26 @@ import org.apache.twill.api.TwillContext;
  * Reports resource metrics about the runnable program.
  */
 final class ProgramRunnableResourceReporter extends AbstractResourceReporter {
+
   private final TwillContext runContext;
 
   ProgramRunnableResourceReporter(ProgramId programId,
-                                  MetricsCollectionService collectionService, TwillContext context) {
+      MetricsCollectionService collectionService, TwillContext context) {
     super(collectionService.getContext(getMetricContext(programId, context)));
     this.runContext = context;
   }
 
   @Override
   public void reportResources() {
-    sendMetrics(Collections.emptyMap(), 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores());
+    sendMetrics(Collections.emptyMap(), 1, runContext.getMaxMemoryMB(),
+        runContext.getVirtualCores());
   }
 
   /**
    * Returns the metric context.  A metric context is of the form
-   * {applicationId}.{programTypeId}.{programId}.{componentId}.  So for flows, it will look like
-   * appX.f.flowY.flowletZ. For mapreduce jobs, appX.b.mapredY.{optional m|r}.
+   * {@code {applicationId}.{programTypeId}.{programId}.{componentId}}.
+   * So for flows, it will look like appX.f.flowY.flowletZ. For mapreduce jobs,
+   * appX.b.mapredY.{optional m|r}.
    */
   private static Map<String, String> getMetricContext(ProgramId programId, TwillContext context) {
     Map<String, String> tags = new HashMap<>();

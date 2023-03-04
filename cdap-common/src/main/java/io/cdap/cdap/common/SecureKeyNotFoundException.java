@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.id.SecureKeyId;
  * Thrown when a secure key is not found.
  */
 public class SecureKeyNotFoundException extends NotFoundException {
+
   private final SecureKeyId secureKeyId;
 
   public SecureKeyNotFoundException(SecureKeyId secureKeyId) {

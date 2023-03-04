@@ -21,19 +21,22 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Provides handy methods to distribute
  */
 public class RowKeyDistributorByOneBytePrefix extends AbstractRowKeyDistributor {
+
   private static final byte[][] PREFIXES;
 
   static {
     PREFIXES = new byte[Byte.MAX_VALUE][];
     for (byte i = 0; i < Byte.MAX_VALUE; i++) {
-      PREFIXES[i] = new byte[] {i};
+      PREFIXES[i] = new byte[]{i};
     }
   }
 
   private byte maxPrefix;
   private byte nextPrefix;
 
-  /** Constructor reflection. DO NOT USE */
+  /**
+   * Constructor reflection. DO NOT USE
+   */
   public RowKeyDistributorByOneBytePrefix() {
   }
 

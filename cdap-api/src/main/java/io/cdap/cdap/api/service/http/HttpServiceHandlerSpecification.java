@@ -30,7 +30,9 @@ import java.util.Set;
 /**
  * Specification for a {@link HttpServiceHandler}.
  */
-public final class HttpServiceHandlerSpecification extends AbstractProgramSpecification implements PropertyProvider {
+public final class HttpServiceHandlerSpecification extends AbstractProgramSpecification implements
+    PropertyProvider {
+
   private final Map<String, String> properties;
   private final Set<String> datasets;
   private final List<ServiceHttpEndpoint> endpoints;
@@ -39,8 +41,8 @@ public final class HttpServiceHandlerSpecification extends AbstractProgramSpecif
    * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
   public HttpServiceHandlerSpecification(String className, String name,
-                                         String description, Map<String, String> properties,
-                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
+      String description, Map<String, String> properties,
+      Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
     super(className, name, description, Collections.emptyMap());
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
@@ -65,14 +67,16 @@ public final class HttpServiceHandlerSpecification extends AbstractProgramSpecif
   }
 
   /**
-   * @return An immutable set of {@link Dataset} names that are used by the {@link HttpServiceHandler}.
+   * @return An immutable set of {@link Dataset} names that are used by the {@link
+   *     HttpServiceHandler}.
    */
   public Set<String> getDatasets() {
     return datasets;
   }
 
   /**
-   * @return An immutable set of {@link ServiceHttpEndpoint}s that are exposed by the {@link HttpServiceHandler}.
+   * @return An immutable set of {@link ServiceHttpEndpoint}s that are exposed by the {@link
+   *     HttpServiceHandler}.
    */
   public List<ServiceHttpEndpoint> getEndpoints() {
     return endpoints;

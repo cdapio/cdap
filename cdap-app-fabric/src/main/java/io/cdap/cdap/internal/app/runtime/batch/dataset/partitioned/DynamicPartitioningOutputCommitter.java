@@ -51,15 +51,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An OutputCommitter which creates partitions in a configured PartitionedFileSet dataset for all of the partitions
- * that were written to by a DynamicPartitioningOutputFormat
- * It enables this by having each job write to a job-specific temporary path within that output directory.
- * Then, upon commitJob, it moves the files to the final, parent directory if the final output directories do not
- * already exist.
+ * An OutputCommitter which creates partitions in a configured PartitionedFileSet dataset for all of
+ * the partitions that were written to by a DynamicPartitioningOutputFormat It enables this by
+ * having each job write to a job-specific temporary path within that output directory. Then, upon
+ * commitJob, it moves the files to the final, parent directory if the final output directories do
+ * not already exist.
  */
 public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DynamicPartitioningOutputCommitter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      DynamicPartitioningOutputCommitter.class);
 
   private final TaskAttemptContext taskContext;
   private final Path jobSpecificOutputPath;
@@ -70,7 +71,8 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   // Note that the outputPath passed in is treated as a temporary directory.
   // The commitJob method moves the files from within this directory to an parent (final) directory.
   // The cleanupJob method removes this directory.
-  public DynamicPartitioningOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
+  public DynamicPartitioningOutputCommitter(Path outputPath, TaskAttemptContext context)
+      throws IOException {
     super(outputPath, context);
     this.taskContext = context;
     this.jobSpecificOutputPath = outputPath;
@@ -80,12 +82,14 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   public void commitJob(JobContext context) throws IOException {
     Configuration configuration = context.getConfiguration();
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
-    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(this.taskContext);
+    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider()
+        .get(this.taskContext);
 
-    String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
+    String outputDatasetName = configuration.get(
+        Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     outputDataset = taskContext.getDataset(outputDatasetName);
     DynamicPartitioner.PartitionWriteOption partitionWriteOption = DynamicPartitioner.PartitionWriteOption.valueOf(
-      configuration.get(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_WRITE_OPTION));
+        configuration.get(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_WRITE_OPTION));
     Partitioning partitioning = outputDataset.getPartitioning();
 
     partitionsToAdd = new HashMap<>();
@@ -102,7 +106,8 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         if (lastPathSepIdx == -1) {
           // this shouldn't happen because each relative path should consist of at least one partition key and
           // the output file name
-          LOG.warn("Skipping path '{}'. It's relative path '{}' has fewer than two parts", path, relativePath);
+          LOG.warn("Skipping path '{}'. It's relative path '{}' has fewer than two parts", path,
+              relativePath);
           continue;
         }
         // relativePath = "../key1/key2/part-m-00000"
@@ -143,13 +148,13 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       mergePaths(fc, from, finalOutput);
     }
 
-
     // compute the metadata to be written to every output partition
     Map<String, String> metadata =
-      ConfigurationUtil.getNamedConfigurations(this.taskContext.getConfiguration(),
-                                               PartitionedFileSetArguments.OUTPUT_PARTITION_METADATA_PREFIX);
+        ConfigurationUtil.getNamedConfigurations(this.taskContext.getConfiguration(),
+            PartitionedFileSetArguments.OUTPUT_PARTITION_METADATA_PREFIX);
 
-    boolean allowAppend = partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND;
+    boolean allowAppend =
+        partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND;
     // create all the necessary partitions
     for (Map.Entry<String, PartitionKey> entry : partitionsToAdd.entrySet()) {
       outputDataset.addPartition(entry.getValue(), entry.getKey(), metadata, true, allowAppend);
@@ -166,7 +171,8 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         createOrUpdate(fc, new Path(pathToMark, SUCCEEDED_FILE_NAME));
         // also create a _SUCCESS-<RunId>, if allowing append
         if (allowAppend) {
-          createOrUpdate(fc, new Path(pathToMark, SUCCEEDED_FILE_NAME + "-" + taskContext.getProgramRunId().getRun()));
+          createOrUpdate(fc, new Path(pathToMark,
+              SUCCEEDED_FILE_NAME + "-" + taskContext.getProgramRunId().getRun()));
         }
       }
     }
@@ -182,8 +188,9 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
     if (pathParts.size() != partitioning.getFields().size()) {
       throw new IllegalArgumentException(
-        String.format("relativePath '%s' does not have same number of components as partitioning '%s",
-                      relativePath, partitioning));
+          String.format(
+              "relativePath '%s' does not have same number of components as partitioning '%s",
+              relativePath, partitioning));
     }
 
     PartitionKey.Builder builder = PartitionKey.builder();
@@ -218,14 +225,16 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         // if this is non-null, then at least some paths have been created. We need to remove them
         if (partitionsToAdd != null) {
           for (String pathToDelete : partitionsToAdd.keySet()) {
-            Location locationToDelete = outputDataset.getEmbeddedFileSet().getLocation(pathToDelete);
+            Location locationToDelete = outputDataset.getEmbeddedFileSet()
+                .getLocation(pathToDelete);
             try {
               if (locationToDelete.exists()) {
                 locationToDelete.delete(true);
               }
             } catch (IOException e) {
               // not sure how this can happen, but we want to keep going. Log and continue
-              LOG.warn("Attempt to clean up partition location {} failed", locationToDelete.toURI().getPath(), e);
+              LOG.warn("Attempt to clean up partition location {} failed",
+                  locationToDelete.toURI().getPath(), e);
             }
           }
         }
@@ -243,9 +252,11 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   // directory for a Partition. If both find that the partition directory does not exist at the same time, then the
   // second one that does the rename from the 'from' directory to the 'to' directory would have actually resulted
   // in moving the 'from' directory INTO the 'to' directory, since it was created by the first MR.
+
   /**
-   * Merge two paths together.  Anything in from will be moved into to, if there
-   * are any name conflicts while merging the files or directories in from win.
+   * Merge two paths together.  Anything in from will be moved into to, if there are any name
+   * conflicts while merging the files or directories in from win.
+   *
    * @param fc the FileContext to use
    * @param from the path data is coming from.
    * @param to the path data is going to.
@@ -289,11 +300,12 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   }
 
   // copied from superclass
+
   /**
    * Get a list of all paths where output from committed tasks are stored.
+   *
    * @param context the context of the current job
    * @return the list of these Paths/FileStatuses.
-   * @throws IOException
    */
   private FileStatus[] getAllCommittedTaskPaths(JobContext context) throws IOException {
     Path jobAttemptPath = getJobAttemptPath(context);
@@ -302,16 +314,15 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   }
 
   /**
-   * given two paths as input:
-   *    base: /my/base/path
-   *    file: /my/base/path/some/other/file
-   * return "some/other/file"
+   * given two paths as input: base: /my/base/path file: /my/base/path/some/other/file return
+   * "some/other/file"
    */
   private String getRelative(Path base, Path file) {
     return base.toUri().relativize(file.toUri()).getPath();
   }
 
   private static class CommittedTaskFilter implements PathFilter {
+
     @Override
     public boolean accept(Path path) {
       return !PENDING_DIR_NAME.equals(path.getName());

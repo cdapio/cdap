@@ -29,8 +29,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A utility class for batch processing (i.e. MapReduce). It works by exposing functionality to configure a
- * {@link PartitionedFileSet} as input to a MapReduceContext with runtime arguments to appropriately process partitions.
+ * A utility class for batch processing (i.e. MapReduce). It works by exposing functionality to
+ * configure a {@link PartitionedFileSet} as input to a MapReduceContext with runtime arguments to
+ * appropriately process partitions.
  */
 @Beta
 public class PartitionBatchInput {
@@ -40,37 +41,41 @@ public class PartitionBatchInput {
    * but using {@link ConsumerConfiguration#DEFAULT}.
    */
   public static BatchPartitionCommitter setInput(MapReduceContext mapreduceContext,
-                                                 String partitionedFileSetName,
-                                                 DatasetStatePersistor statePersistor) {
-    return setInput(mapreduceContext, partitionedFileSetName, statePersistor, ConsumerConfiguration.DEFAULT);
+      String partitionedFileSetName,
+      DatasetStatePersistor statePersistor) {
+    return setInput(mapreduceContext, partitionedFileSetName, statePersistor,
+        ConsumerConfiguration.DEFAULT);
   }
 
   /**
-   * Used from the initialize method of the implementing batch job to configure as input a PartitionedFileSet that has
-   * specified a set of {@link Partition}s of a {@link PartitionedFileSet} to be processed by the run of the batch job.
-   * It does this by reading back the previous state, determining the new partitions to read, computing the new
-   * state, and persisting this new state. It then configures this dataset as input to the mapreduce context that is
-   * passed in.
+   * Used from the initialize method of the implementing batch job to configure as input a
+   * PartitionedFileSet that has specified a set of {@link Partition}s of a {@link
+   * PartitionedFileSet} to be processed by the run of the batch job. It does this by reading back
+   * the previous state, determining the new partitions to read, computing the new state, and
+   * persisting this new state. It then configures this dataset as input to the mapreduce context
+   * that is passed in.
    *
-   * @param mapreduceContext MapReduce context used to access the PartitionedFileSet, and on which the input is
-   *                         configured
-   * @param partitionedFileSetName the name of the {@link PartitionedFileSet} to consume partitions from
-   * @param statePersistor a {@link DatasetStatePersistor} responsible for defining how the partition consumer state is
-   *                       managed
+   * @param mapreduceContext MapReduce context used to access the PartitionedFileSet, and on
+   *     which the input is configured
+   * @param partitionedFileSetName the name of the {@link PartitionedFileSet} to consume
+   *     partitions from
+   * @param statePersistor a {@link DatasetStatePersistor} responsible for defining how the
+   *     partition consumer state is managed
    * @param consumerConfiguration defines parameters for the partition consumption
    * @return a BatchPartitionCommitter used to persist the state of the partition consumer
    */
   public static BatchPartitionCommitter setInput(MapReduceContext mapreduceContext,
-                                                 String partitionedFileSetName,
-                                                 DatasetStatePersistor statePersistor,
-                                                 ConsumerConfiguration consumerConfiguration) {
+      String partitionedFileSetName,
+      DatasetStatePersistor statePersistor,
+      ConsumerConfiguration consumerConfiguration) {
     PartitionedFileSet partitionedFileSet = mapreduceContext.getDataset(partitionedFileSetName);
     final PartitionConsumer partitionConsumer =
-      new ConcurrentPartitionConsumer(partitionedFileSet,
-                                      new DelegatingStatePersistor(mapreduceContext, statePersistor),
-                                      consumerConfiguration);
+        new ConcurrentPartitionConsumer(partitionedFileSet,
+            new DelegatingStatePersistor(mapreduceContext, statePersistor),
+            consumerConfiguration);
 
-    final List<PartitionDetail> consumedPartitions = partitionConsumer.consumePartitions().getPartitions();
+    final List<PartitionDetail> consumedPartitions = partitionConsumer.consumePartitions()
+        .getPartitions();
 
     Map<String, String> arguments = new HashMap<>();
     PartitionedFileSetArguments.addInputPartitions(arguments, consumedPartitions);
@@ -80,9 +85,11 @@ public class PartitionBatchInput {
   }
 
   /**
-   * Used to persist the state of the partition consumer. Call this method at the end of processing the partitions.
+   * Used to persist the state of the partition consumer. Call this method at the end of processing
+   * the partitions.
    */
   public interface BatchPartitionCommitter {
+
     void onFinish(boolean succeeded);
   }
 }

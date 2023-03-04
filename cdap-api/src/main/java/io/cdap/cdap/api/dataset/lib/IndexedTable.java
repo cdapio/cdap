@@ -49,7 +49,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements a table that creates and maintains indexes on values stored within a configured set of column names.
+ * Implements a table that creates and maintains indexes on values stored within a configured set of
+ * column names.
  *
  * <p>
  * This dataset uses two tables:
@@ -87,7 +88,7 @@ import org.slf4j.LoggerFactory;
  *   }
  * }</code></pre>
  * </p>
- * 
+ *
  * <p>
  * Note that this means that the column names which should be indexed cannot contain the comma character,
  * as it would break parsing of the configuration property.
@@ -106,19 +107,21 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /**
    * Configuration key for defining column names to index in the DatasetSpecification properties.
-   * Multiple column names should be listed as a comma-separated string, e.g. "column1,column2,etc".
+   * Multiple column names should be listed as a comma-separated string, e.g.
+   * "column1,column2,etc".
    */
   public static final String INDEX_COLUMNS_CONF_KEY = "columnsToIndex";
 
   /**
-   * Configuration that specifies that the index columns will be specified at runtime, rather than at configure time.
-   * Using this property, a single index table can shared across multiple logical tables.
+   * Configuration that specifies that the index columns will be specified at runtime, rather than
+   * at configure time. Using this property, a single index table can shared across multiple logical
+   * tables.
    */
   public static final String DYNAMIC_INDEXING = "dynamicIndexing";
 
   /**
-   * Configuration that specifies the prefix to use to distinguish indexed rows of different tables when dynamic
-   * indexing is enabled.
+   * Configuration that specifies the prefix to use to distinguish indexed rows of different tables
+   * when dynamic indexing is enabled.
    */
   public static final String DYNAMIC_INDEXING_PREFIX = "dynamicIndexingPrefix";
 
@@ -127,7 +130,7 @@ public class IndexedTable extends AbstractDataset implements Table {
    */
   private static final byte[] IDX_COL = {'r'};
   private static final byte DELIMITER_BYTE = 0;
-  private static final byte[] KEY_DELIMITER = new byte[] { DELIMITER_BYTE };
+  private static final byte[] KEY_DELIMITER = new byte[]{DELIMITER_BYTE};
 
   private final boolean hasColumnWithDelimiter;
   // the two underlying tables
@@ -138,7 +141,7 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /**
    * Configuration time constructor.
-   * 
+   *
    * @param name the name of the table
    * @param table table to use as the table
    * @param index table to use as the index
@@ -162,7 +165,8 @@ public class IndexedTable extends AbstractDataset implements Table {
    * @param columnsToIndex the names of the data columns to index
    * @param keyPrefix the dynamic indexing prefix. See {@link IndexedTable#DYNAMIC_INDEXING_PREFIX}
    */
-  public IndexedTable(String name, Table table, Table index, SortedSet<byte[]> columnsToIndex, byte[] keyPrefix) {
+  public IndexedTable(String name, Table table, Table index, SortedSet<byte[]> columnsToIndex,
+      byte[] keyPrefix) {
     super(name, table, index);
     this.table = table;
     this.index = index;
@@ -172,10 +176,10 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Checks if a set of columns contains the DELIMITER_BYTE.
-   * This is needed because only when a column has a null byte in it do we need to check for false positive in the scan
-   * on the index by checking against the column's value in the data table.
-   * For instance, a false positive can arise with an index on the following two rows:
+   * Checks if a set of columns contains the DELIMITER_BYTE. This is needed because only when a
+   * column has a null byte in it do we need to check for false positive in the scan on the index by
+   * checking against the column's value in the data table. For instance, a false positive can arise
+   * with an index on the following two rows:
    * <ul>
    *  <li>Row #1: column name: a\0b, column value: c</li>
    *  <li>Row #2: column name: a, column value: b\0c</li>
@@ -240,12 +244,13 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Reads table rows by the given secondary index key.  If no rows are indexed by the given key, then a
-   * {@link io.cdap.cdap.api.dataset.table.Scanner} with no results will be returned.
-   * 
-   * @return a Scanner returning rows from the data table, whose stored value for the given column matches the
-   * given value.
-   * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
+   * Reads table rows by the given secondary index key.  If no rows are indexed by the given key,
+   * then a {@link io.cdap.cdap.api.dataset.table.Scanner} with no results will be returned.
+   *
+   * @return a Scanner returning rows from the data table, whose stored value for the given column
+   *     matches the given value.
+   * @throws java.lang.IllegalArgumentException if the given column is not configured for
+   *     indexing.
    */
   @ReadOnly
   public Scanner readByIndex(byte[] column, byte[] value) {
@@ -257,41 +262,47 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Reads table rows within the given secondary index key range. If no rows are indexed, falling within the given
-   * range, then a {@link io.cdap.cdap.api.dataset.table.Scanner} with no results will be returned.
+   * Reads table rows within the given secondary index key range. If no rows are indexed, falling
+   * within the given range, then a {@link io.cdap.cdap.api.dataset.table.Scanner} with no results
+   * will be returned.
    *
    * @param column the column to use for the index lookup
-   * @param startValue the inclusive start of the range for which rows must fall within to be returned in the scan.
-   *                   {@code null} means start from first row of the table
-   * @param endValue the exclusive end of the range for which rows must fall within to be returned in the scan
-   *                 {@code null} means end with the last row of the table
-   * @return a Scanner returning rows from the data table, whose stored value for the given column is within the the
-   *         given range.
-   * @throws java.lang.IllegalArgumentException if the given column is not configured for indexing.
+   * @param startValue the inclusive start of the range for which rows must fall within to be
+   *     returned in the scan. {@code null} means start from first row of the table
+   * @param endValue the exclusive end of the range for which rows must fall within to be
+   *     returned in the scan {@code null} means end with the last row of the table
+   * @return a Scanner returning rows from the data table, whose stored value for the given column
+   *     is within the the given range.
+   * @throws java.lang.IllegalArgumentException if the given column is not configured for
+   *     indexing.
    */
   @ReadOnly
-  public Scanner scanByIndex(byte[] column, @Nullable byte[] startValue, @Nullable byte[] endValue) {
+  public Scanner scanByIndex(byte[] column, @Nullable byte[] startValue,
+      @Nullable byte[] endValue) {
     assertIndexedColumn(column);
     // KEY_DELIMITER is not used at the end of the rowKeys, because they are used for a range scan,
     // instead of a fixed-match lookup
     byte[] startRow = startValue == null ? Bytes.concat(keyPrefix, column, KEY_DELIMITER) :
-      Bytes.concat(keyPrefix, column, KEY_DELIMITER, startValue);
-    byte[] stopRow = endValue == null ? Bytes.stopKeyForPrefix(Bytes.concat(keyPrefix, column, KEY_DELIMITER)) :
-      Bytes.concat(keyPrefix, column, KEY_DELIMITER, endValue);
+        Bytes.concat(keyPrefix, column, KEY_DELIMITER, startValue);
+    byte[] stopRow =
+        endValue == null ? Bytes.stopKeyForPrefix(Bytes.concat(keyPrefix, column, KEY_DELIMITER)) :
+            Bytes.concat(keyPrefix, column, KEY_DELIMITER, endValue);
     Scanner indexScan = index.scan(startRow, stopRow);
     return new IndexRangeScanner(indexScan, column, startValue, endValue);
   }
 
   private void assertIndexedColumn(byte[] column) {
     if (!indexedColumns.contains(column)) {
-      throw new IllegalArgumentException("Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
+      throw new IllegalArgumentException(
+          "Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
     }
   }
 
   /**
-   * Writes a put to the data table. If any of the columns in the {@link Put} are configured to be indexed, the
-   * appropriate indexes will be updated with the indexed values referencing the data table row.
-   * 
+   * Writes a put to the data table. If any of the columns in the {@link Put} are configured to be
+   * indexed, the appropriate indexes will be updated with the indexed values referencing the data
+   * table row.
+   *
    * @param put The put operation to store
    */
   @WriteOnly
@@ -354,8 +365,9 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Perform a delete on the data table. Any index entries referencing the deleted row will also be removed.
-   * 
+   * Perform a delete on the data table. Any index entries referencing the deleted row will also be
+   * removed.
+   *
    * @param delete The delete operation identifying the row and optional columns to remove
    */
   @WriteOnly
@@ -388,7 +400,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @WriteOnly
   @Override
   public void delete(byte[] row, byte[] column) {
-    delete(row, new byte[][]{ column });
+    delete(row, new byte[][]{column});
   }
 
   @WriteOnly
@@ -417,11 +429,9 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Perform a swap operation by primary key.
-   * Parameters are as if they were on a non-indexed table.
-   * Note that if the swap is on the secondary key column,
-   * then the index must be updated; otherwise, this is a
-   * pass-through to the underlying table.
+   * Perform a swap operation by primary key. Parameters are as if they were on a non-indexed table.
+   * Note that if the swap is on the secondary key column, then the index must be updated;
+   * otherwise, this is a pass-through to the underlying table.
    */
   @ReadWrite
   @Override
@@ -430,8 +440,8 @@ public class IndexedTable extends AbstractDataset implements Table {
     // the index is not affected - just execute the swap.
     // also, if the swap is on the index column, but the old value
     // is the same as the new value, then the index is not affected either.
-    if (!indexedColumns.contains(column) ||
-        Arrays.equals(expected, newValue)) {
+    if (!indexedColumns.contains(column)
+        || Arrays.equals(expected, newValue)) {
       return table.compareAndSwap(row, column, expected, newValue);
     }
 
@@ -467,25 +477,27 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Increments (atomically) the specified row and column by the specified amount, and returns the new value.
-   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
-   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
-   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
+   * Increments (atomically) the specified row and column by the specified amount, and returns the
+   * new value. Note that performing this operation on an indexed column will generally have a
+   * negative impact on performance, since up to three writes will need to be performed for every
+   * increment (one removing the index for the previous, pre-increment value, one adding the index
+   * for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(byte[], byte[], long)
    */
   @ReadWrite
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long amount) {
-    byte[] newValue = incrementAndGet(row, new byte[][]{ column }, new long[]{ amount }).get(column);
+    byte[] newValue = incrementAndGet(row, new byte[][]{column}, new long[]{amount}).get(column);
     return Bytes.toLong(newValue);
   }
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, and returns the new values.
-   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
-   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
-   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
+   * Increments (atomically) the specified row and columns by the specified amounts, and returns the
+   * new values. Note that performing this operation on an indexed column will generally have a
+   * negative impact on performance, since up to three writes will need to be performed for every
+   * increment (one removing the index for the previous, pre-increment value, one adding the index
+   * for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(byte[], byte[][], long[])
    */
@@ -505,9 +517,10 @@ public class IndexedTable extends AbstractDataset implements Table {
       byte[] existingBytes = existingRow.get(columns[i]);
       if (existingBytes != null) {
         if (existingBytes.length != Bytes.SIZEOF_LONG) {
-          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                            " row: " + Bytes.toStringBinary(row) +
-                                            " column: " + Bytes.toStringBinary(columns[i]));
+          throw new NumberFormatException(
+              "Attempted to increment a value that is not convertible to long,"
+                  + " row: " + Bytes.toStringBinary(row)
+                  + " column: " + Bytes.toStringBinary(columns[i]));
         }
         existingValue = Bytes.toLong(existingBytes);
         if (indexedColumns.contains(columns[i])) {
@@ -526,10 +539,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, and returns the new values.
-   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
-   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
-   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
+   * Increments (atomically) the specified row and columns by the specified amounts, and returns the
+   * new values. Note that performing this operation on an indexed column will generally have a
+   * negative impact on performance, since up to three writes will need to be performed for every
+   * increment (one removing the index for the previous, pre-increment value, one adding the index
+   * for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(Increment)
    */
@@ -544,14 +558,15 @@ public class IndexedTable extends AbstractDataset implements Table {
       longValues[i++] = value;
     }
     return incrementAndGet(increment.getRow(),
-                           incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
-                           longValues);
+        incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
+        longValues);
   }
 
 
   /**
-   * Increments (atomically) the specified row and column by the specified amount, without returning the new value.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Increments (atomically) the specified row and column by the specified amount, without returning
+   * the new value. Note that performing this operation on an indexed column throws {@link
+   * java.lang.IllegalArgumentException}.
    *
    * @see Table#increment(byte[], byte[], long)
    */
@@ -561,14 +576,15 @@ public class IndexedTable extends AbstractDataset implements Table {
     // read-less increments should not be used on indexed columns
     if (indexedColumns.contains(column)) {
       throw new IllegalArgumentException("Read-less increment is not supported on indexed column '"
-                                           + Bytes.toStringBinary(column) + "'");
+          + Bytes.toStringBinary(column) + "'");
     }
     table.increment(row, column, amount);
   }
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Increments (atomically) the specified row and columns by the specified amounts, without
+   * returning the new values. Note that performing this operation on an indexed column throws
+   * {@link java.lang.IllegalArgumentException}.
    *
    * @see Table#increment(byte[], byte[][], long[])
    */
@@ -578,16 +594,18 @@ public class IndexedTable extends AbstractDataset implements Table {
     // read-less increments should not be used on indexed columns
     for (byte[] col : columns) {
       if (indexedColumns.contains(col)) {
-        throw new IllegalArgumentException("Read-less increment is not supported on indexed column '"
-                                             + Bytes.toStringBinary(col) + "'");
+        throw new IllegalArgumentException(
+            "Read-less increment is not supported on indexed column '"
+                + Bytes.toStringBinary(col) + "'");
       }
     }
     table.increment(row, columns, amounts);
   }
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Increments (atomically) the specified row and columns by the specified amounts, without
+   * returning the new values. Note that performing this operation on an indexed column throws
+   * {@link java.lang.IllegalArgumentException}.
    *
    * @see Table#increment(Increment)
    */
@@ -596,8 +614,9 @@ public class IndexedTable extends AbstractDataset implements Table {
   public void increment(Increment increment) {
     for (byte[] col : increment.getValues().keySet()) {
       if (indexedColumns.contains(col)) {
-        throw new IllegalArgumentException("Read-less increment is not supported on indexed column '"
-                                             + Bytes.toStringBinary(col) + "'");
+        throw new IllegalArgumentException(
+            "Read-less increment is not supported on indexed column '"
+                + Bytes.toStringBinary(col) + "'");
       }
     }
     table.increment(increment);
@@ -659,6 +678,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   private abstract class AbstractIndexScanner implements Scanner {
+
     // scanner over index table
     private final Scanner baseScanner;
     private final byte[] column;
@@ -684,12 +704,13 @@ public class IndexedTable extends AbstractDataset implements Table {
       for (Row indexRow = baseScanner.next(); indexRow != null; indexRow = baseScanner.next()) {
         byte[] rowkey = indexRow.get(IDX_COL);
         if (rowkey == null) {
-          LOG.warn("Row of Indexed table '{}' is missing index column. Row key: {}", getName(), indexRow.getRow());
+          LOG.warn("Row of Indexed table '{}' is missing index column. Row key: {}", getName(),
+              indexRow.getRow());
           continue;
         }
         byte[] columnValue = Arrays.copyOfRange(indexRow.getRow(),
-                                                keyPrefix.length + column.length + 1,
-                                                indexRow.getRow().length - rowkey.length - 1);
+            keyPrefix.length + column.length + 1,
+            indexRow.getRow().length - rowkey.length - 1);
         // Verify that datarow matches the expected row key to avoid issues with column name or value
         // containing the delimiter used. This is a sufficient check, as long as columns don't contain the null byte.
         if (matches(columnValue)) {
@@ -715,6 +736,7 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   // scanner that matches column values based upon exact match
   private class IndexScanner extends AbstractIndexScanner {
+
     private final byte[] value;
 
     IndexScanner(Scanner baseScanner, byte[] column, byte[] value) {
@@ -730,10 +752,12 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   // scanner that matches column values based upon range
   private class IndexRangeScanner extends AbstractIndexScanner {
+
     private final byte[] start;
     private final byte[] end;
 
-    IndexRangeScanner(Scanner baseScanner, byte[] column, @Nullable byte[] start, @Nullable byte[] end) {
+    IndexRangeScanner(Scanner baseScanner, byte[] column, @Nullable byte[] start,
+        @Nullable byte[] end) {
       super(baseScanner, column);
       this.start = start;
       this.end = end;
@@ -742,7 +766,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     @Override
     protected boolean matches(byte[] columnValue) {
       return (start == null || Bytes.compareTo(columnValue, start) >= 0)
-        && (end == null || Bytes.compareTo(columnValue, end) < 0);
+          && (end == null || Bytes.compareTo(columnValue, end) < 0);
     }
   }
 }

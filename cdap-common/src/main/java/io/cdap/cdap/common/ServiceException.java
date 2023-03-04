@@ -37,13 +37,14 @@ public class ServiceException extends RuntimeException implements HttpErrorStatu
   }
 
   public ServiceException(String message, @Nullable Throwable cause, @Nullable String jsonDetails,
-                          HttpResponseStatus status) {
+      HttpResponseStatus status) {
     super(message, cause);
     this.status = status;
     this.jsonDetails = jsonDetails;
   }
 
-  public ServiceException(@Nullable Throwable cause, @Nullable String jsonDetails, HttpResponseStatus status) {
+  public ServiceException(@Nullable Throwable cause, @Nullable String jsonDetails,
+      HttpResponseStatus status) {
     super(cause);
     this.status = status;
     this.jsonDetails = jsonDetails;

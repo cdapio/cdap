@@ -50,8 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The MultipleOutputs class simplifies writing output data to multiple outputs.
- * It has been adapted from org.apache.hadoop.mapreduce.lib.output.MultipleOutputs.
+ * The MultipleOutputs class simplifies writing output data to multiple outputs. It has been adapted
+ * from org.apache.hadoop.mapreduce.lib.output.MultipleOutputs.
  */
 public class MultipleOutputs implements Closeable {
 
@@ -79,9 +79,11 @@ public class MultipleOutputs implements Closeable {
   /**
    * Checks the existence of a named output within a collection.
    *
-   * @throws IllegalArgumentException if the output name is not existing/absent, as appropriate.
+   * @throws IllegalArgumentException if the output name is not existing/absent, as
+   *     appropriate.
    */
-  private static void checkNamedOutputName(String namedOutput, Collection<String> namedOutputs, boolean expectToExist) {
+  private static void checkNamedOutputName(String namedOutput, Collection<String> namedOutputs,
+      boolean expectToExist) {
     if (!expectToExist && namedOutputs.contains(namedOutput)) {
       // this shouldn't happen, because it is already protected against in BasicMapReduceContext#addOutput
       throw new IllegalArgumentException("Named output '" + namedOutput + "' already defined");
@@ -93,13 +95,15 @@ public class MultipleOutputs implements Closeable {
   // Returns list of channel names.
   static List<String> getNamedOutputsList(JobContext job) {
     Iterable<String> parts =
-      Splitter.on(" ").omitEmptyStrings().split(job.getConfiguration().get(MULTIPLE_OUTPUTS, ""));
+        Splitter.on(" ").omitEmptyStrings().split(job.getConfiguration().get(MULTIPLE_OUTPUTS, ""));
     return Lists.newArrayList(parts);
   }
 
   // Returns the named output OutputFormat.
-  static Class<? extends OutputFormat> getNamedOutputFormatClass(JobContext job, String namedOutput) {
-    return job.getConfiguration().getClass(MO_PREFIX + namedOutput + FORMAT, null, OutputFormat.class);
+  static Class<? extends OutputFormat> getNamedOutputFormatClass(JobContext job,
+      String namedOutput) {
+    return job.getConfiguration()
+        .getClass(MO_PREFIX + namedOutput + FORMAT, null, OutputFormat.class);
   }
 
   // Returns the key class for a named output.
@@ -115,17 +119,17 @@ public class MultipleOutputs implements Closeable {
   /**
    * Adds a named output for the job.
    *
-   * @param job               job to add the named output
-   * @param namedOutput       named output name, it has to be a word, letters
-   *                          and numbers only (alphanumeric)
+   * @param job job to add the named output
+   * @param namedOutput named output name, it has to be a word, letters and numbers only
+   *     (alphanumeric)
    * @param outputFormatClass name of the OutputFormat class.
-   * @param keyClass          key class
-   * @param valueClass        value class
-   * @param outputConfigs     configurations for the output
+   * @param keyClass key class
+   * @param valueClass value class
+   * @param outputConfigs configurations for the output
    */
   @SuppressWarnings("unchecked")
   public static void addNamedOutput(Job job, String namedOutput, String outputFormatClass,
-                                    Class<?> keyClass, Class<?> valueClass, Map<String, String> outputConfigs) {
+      Class<?> keyClass, Class<?> valueClass, Map<String, String> outputConfigs) {
     assertValidName(namedOutput);
     checkNamedOutputName(namedOutput, getNamedOutputsList(job), false);
     Configuration conf = job.getConfiguration();
@@ -145,19 +149,19 @@ public class MultipleOutputs implements Closeable {
   private static void assertValidName(String name) {
     // use the same check as used on datasets when they're created, since the output name can be any dataset name
     Preconditions.checkArgument(EntityId.isValidId(name),
-                                "Name '%s' must consist only of ASCII letters, numbers, _, or -.", name);
+        "Name '%s' must consist only of ASCII letters, numbers, _, or -.", name);
   }
 
   /**
-   * Creates and initializes multiple outputs support,
-   * it should be instantiated in the Mapper/Reducer setup method.
+   * Creates and initializes multiple outputs support, it should be instantiated in the
+   * Mapper/Reducer setup method.
    *
    * @param context the TaskInputOutputContext object
    */
   public MultipleOutputs(TaskInputOutputContext context) {
     this.context = context;
     namedOutputs = Collections.unmodifiableSet(
-      new HashSet<>(MultipleOutputs.getNamedOutputsList(context)));
+        new HashSet<>(MultipleOutputs.getNamedOutputsList(context)));
     recordWriters = new HashMap<>();
   }
 
@@ -165,18 +169,20 @@ public class MultipleOutputs implements Closeable {
    * Write key and value to the namedOutput.
    *
    * @param namedOutput the named output name
-   * @param key         the key
-   * @param value       the value
+   * @param key the key
+   * @param value the value
    */
   @SuppressWarnings("unchecked")
-  public <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException {
+  public <K, V> void write(String namedOutput, K key, V value)
+      throws IOException, InterruptedException {
     checkNamedOutputName(namedOutput, namedOutputs, true);
     getRecordWriter(namedOutput).write(key, value);
   }
 
   // by being synchronized MultipleOutputTask can be use with a MultithreadedMapper.
   @SuppressWarnings("unchecked")
-  private synchronized RecordWriter getRecordWriter(String namedOutput) throws IOException, InterruptedException {
+  private synchronized RecordWriter getRecordWriter(String namedOutput)
+      throws IOException, InterruptedException {
     // look for record-writer in the cache
     RecordWriter writer = recordWriters.get(namedOutput);
 
@@ -199,7 +205,7 @@ public class MultipleOutputs implements Closeable {
       // not packaged in programs and plugins.
       // see CDAP-14562 for more info
       ClassLoader outputClassLoader = new CombineClassLoader(outputFormatClassLoader,
-                                                             Thread.currentThread().getContextClassLoader());
+          Thread.currentThread().getContextClassLoader());
       // This is needed in case the OutputFormat's classloader conflicts with the program classloader (for example,
       // TableOutputFormat).
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(outputClassLoader);
@@ -208,7 +214,7 @@ public class MultipleOutputs implements Closeable {
         // We use ReflectionUtils to instantiate the OutputFormat, because it also calls setConf on the object, if it
         // is a org.apache.hadoop.conf.Configurable.
         OutputFormat<?, ?> outputFormat =
-          ReflectionUtils.newInstance(outputFormatClass, taskContext.getConfiguration());
+            ReflectionUtils.newInstance(outputFormatClass, taskContext.getConfiguration());
         writer = new MeteredRecordWriter<>(outputFormat.getRecordWriter(taskContext), context);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
@@ -235,10 +241,11 @@ public class MultipleOutputs implements Closeable {
     return taskContext;
   }
 
-  static TaskAttemptContext getNamedTaskContext(TaskAttemptContext context, String namedOutput) throws IOException {
+  static TaskAttemptContext getNamedTaskContext(TaskAttemptContext context, String namedOutput)
+      throws IOException {
     Job job = getNamedJob(context, namedOutput);
     return new TaskAttemptContextImpl(job.getConfiguration(),
-                                      context.getTaskAttemptID(), new WrappedStatusReporter(context));
+        context.getTaskAttemptID(), new WrappedStatusReporter(context));
   }
 
   static JobContext getNamedJobContext(JobContext context, String namedOutput) throws IOException {
@@ -255,8 +262,9 @@ public class MultipleOutputs implements Closeable {
     job.setOutputValueClass(getNamedOutputValueClass(context, namedOutput));
 
     Configuration conf = job.getConfiguration();
-    Map<String, String> namedConfigurations = ConfigurationUtil.getNamedConfigurations(context.getConfiguration(),
-                                                                                       computePrefixName(namedOutput));
+    Map<String, String> namedConfigurations = ConfigurationUtil.getNamedConfigurations(
+        context.getConfiguration(),
+        computePrefixName(namedOutput));
     LOG.trace("Setting config for named output {}: {}", namedOutput, namedConfigurations);
     ConfigurationUtil.setAll(namedConfigurations, conf);
     return job;
@@ -265,13 +273,15 @@ public class MultipleOutputs implements Closeable {
   /**
    * Wraps RecordWriter to increment output counters.
    *
-   * Normally, the user calls context#write(key, value) - context in this case is a Hadoop class, which automatically
-   * increments the counter as well as writing the record.
-   * In the case of multiple outputs, the user calls context#write(outputName, key, value) - in this case, the context
-   * is a CDAP class, and this doesn't at all translate into a call to Hadoop's context#write. Because of that, the
-   * metrics for output records aren't automatically incremented.
+   * Normally, the user calls context#write(key, value) - context in this case is a Hadoop class,
+   * which automatically increments the counter as well as writing the record. In the case of
+   * multiple outputs, the user calls context#write(outputName, key, value) - in this case, the
+   * context is a CDAP class, and this doesn't at all translate into a call to Hadoop's
+   * context#write. Because of that, the metrics for output records aren't automatically
+   * incremented.
    */
   private static class MeteredRecordWriter<K, V> extends RecordWriter<K, V> {
+
     private final RecordWriter<K, V> writer;
     private final String groupName;
     private final String counterName;
@@ -296,7 +306,8 @@ public class MultipleOutputs implements Closeable {
     }
 
     private String getCounterName(TaskInputOutputContext context) {
-      MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(context.getTaskAttemptID().getTaskType());
+      MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(
+          context.getTaskAttemptID().getTaskType());
       switch (taskType) {
         case Mapper:
           return TaskCounter.MAP_OUTPUT_RECORDS.name();
@@ -343,8 +354,7 @@ public class MultipleOutputs implements Closeable {
   }
 
   /**
-   * Closes all the opened outputs.
-   * This should be called from cleanup method of map/reduce task.
+   * Closes all the opened outputs. This should be called from cleanup method of map/reduce task.
    */
   @Override
   public void close() {
@@ -352,13 +362,15 @@ public class MultipleOutputs implements Closeable {
   }
 
   /**
-   * Closes a collection of RecordWriters, suppressing any exceptions until close is called on each of them.
+   * Closes a collection of RecordWriters, suppressing any exceptions until close is called on each
+   * of them.
+   *
    * @param recordWriters The map of RecordWriters to close
    * @param taskContexts The map of context to pass during close of each RecordWriter
    * @param <K> type of the key for recordWriter map
    */
   public static <K> void closeRecordWriters(Map<K, RecordWriter<?, ?>> recordWriters,
-                                            Map<K, TaskAttemptContext> taskContexts) {
+      Map<K, TaskAttemptContext> taskContexts) {
     RuntimeException ex = null;
     for (Map.Entry<K, RecordWriter<?, ?>> entry : recordWriters.entrySet()) {
       try {

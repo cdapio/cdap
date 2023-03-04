@@ -34,8 +34,9 @@ public class EntityResult<T> {
   private final int limit;
   private final int totalResults;
 
-  public EntityResult(Collection<? extends T> entities, @Nullable String cursor, int offset, int limit,
-                      int totalResults) {
+  public EntityResult(Collection<? extends T> entities, @Nullable String cursor, int offset,
+      int limit,
+      int totalResults) {
     this.entities = Collections.unmodifiableSet(new LinkedHashSet<>(entities));
     this.cursor = cursor;
     this.offset = offset;

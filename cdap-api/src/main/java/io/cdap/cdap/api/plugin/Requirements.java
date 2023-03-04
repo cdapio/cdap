@@ -22,12 +22,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A class to encapsulate all the different types of requirements provided by
- * {@link io.cdap.cdap.api.annotation.Requirements}.
+ * A class to encapsulate all the different types of requirements provided by {@link
+ * io.cdap.cdap.api.annotation.Requirements}.
  */
 public class Requirements {
 
-  public static final Requirements EMPTY = new Requirements(Collections.emptySet(), Collections.emptySet());
+  public static final Requirements EMPTY = new Requirements(Collections.emptySet(),
+      Collections.emptySet());
 
   // currently this class only contains one set but we are using the object for storage during serialization so that we
   // can add more when needed in future
@@ -37,8 +38,8 @@ public class Requirements {
   private final Set<String> capabilities;
 
   /**
-   * Creates a {@link Requirements} object from the given {@link Set}. Note: Requirements are case insensitive and all
-   * the requisites will be converted into lowercase.
+   * Creates a {@link Requirements} object from the given {@link Set}. Note: Requirements are case
+   * insensitive and all the requisites will be converted into lowercase.
    *
    * @param datasetTypes a {@link Set} containing dataset type requirements
    */
@@ -48,20 +49,22 @@ public class Requirements {
 
   public Requirements(Set<String> datasetTypes, Set<String> capabilities) {
     this.datasetTypes = datasetTypes.isEmpty() ? Collections.emptySet() :
-      Collections.unmodifiableSet(datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
+        Collections.unmodifiableSet(
+            datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
     this.capabilities = capabilities.isEmpty() ? Collections.emptySet() :
-      Collections.unmodifiableSet(capabilities.stream().map(String::toLowerCase).collect(Collectors.toSet()));
+        Collections.unmodifiableSet(
+            capabilities.stream().map(String::toLowerCase).collect(Collectors.toSet()));
   }
 
   /**
-   * @return {@link Set} containing the dataset type requirement which can be be empty if there are no requirements
+   * @return {@link Set} containing the dataset type requirement which can be be empty if there are
+   *     no requirements
    */
   public Set<String> getDatasetTypes() {
     return datasetTypes;
   }
 
   /**
-   *
    * @return {@link Set} containing capability names or empty set
    */
   public Set<String> getCapabilities() {
@@ -77,7 +80,8 @@ public class Requirements {
       return false;
     }
     Requirements that = (Requirements) o;
-    return Objects.equals(datasetTypes, that.datasetTypes) && Objects.equals(capabilities, that.capabilities);
+    return Objects.equals(datasetTypes, that.datasetTypes) && Objects.equals(capabilities,
+        that.capabilities);
   }
 
   @Override
@@ -87,10 +91,10 @@ public class Requirements {
 
   @Override
   public String toString() {
-    return "Requirements{" +
-      "datasetTypes=" + datasetTypes +
-      "capabilities=" + capabilities +
-      '}';
+    return "Requirements{"
+        + "datasetTypes=" + datasetTypes
+        + "capabilities=" + capabilities
+        + '}';
   }
 
   public boolean isEmpty() {

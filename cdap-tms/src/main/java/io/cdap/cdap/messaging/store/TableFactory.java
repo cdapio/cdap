@@ -21,7 +21,8 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * A factory to create instances of {@link MessageTable}, {@link PayloadTable} and {@link MetadataTable}.
+ * A factory to create instances of {@link MessageTable}, {@link PayloadTable} and {@link
+ * MetadataTable}.
  */
 public interface TableFactory extends Closeable {
 
@@ -32,7 +33,8 @@ public interface TableFactory extends Closeable {
   PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException;
 
   /**
-   * Perform any initialization required. This method will be called before any other method is called.
+   * Perform any initialization required. This method will be called before any other method is
+   * called.
    */
   default void init() throws IOException {
     // no-op

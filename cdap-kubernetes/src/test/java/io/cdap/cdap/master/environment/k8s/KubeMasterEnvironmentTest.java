@@ -142,18 +142,21 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInNonInstallNamespaceMountsConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
-      "memberships/test-cluster";
+    String workloadIdentityProvider =
+        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
+            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
     kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
-    conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY, "test-email@gmail.com");
+    conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+        "test-email@gmail.com");
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1, 1);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1,
+        1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 
@@ -171,8 +174,9 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInInstallNamespaceWithNoEmailMountsConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
-      "memberships/test-cluster";
+    String workloadIdentityProvider =
+        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
+            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
@@ -181,7 +185,8 @@ public class KubeMasterEnvironmentTest {
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_INSTALL_NAMESPACE);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1, 1);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1,
+        1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 
@@ -199,17 +204,20 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityDisabledDoesNotMountConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
-      "memberships/test-cluster";
+    String workloadIdentityProvider =
+        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
+            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
     kubeMasterEnvironment.setCDAPInstallNamespace(KUBE_INSTALL_NAMESPACE);
 
     Map<String, String> conf = new HashMap<>();
-    conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY, "test-email@gmail.com");
+    conf.put(KubeTwillRunnerService.WORKLOAD_IDENTITY_GCP_SERVICE_ACCOUNT_EMAIL_PROPERTY,
+        "test-email@gmail.com");
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1, 1);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1,
+        1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 
@@ -227,8 +235,9 @@ public class KubeMasterEnvironmentTest {
   public void testGenerateSparkConfigWithWorkloadIdentityEnabledInDifferentNamespaceWithNoEmailDoesNotMountConfigMap()
     throws Exception {
     String workloadIdentityPool = "test-workload-pool";
-    String workloadIdentityProvider = "https://gkehub.googleapis.com/projects/test-project-id/locations/global/" +
-      "memberships/test-cluster";
+    String workloadIdentityProvider =
+        "https://gkehub.googleapis.com/projects/test-project-id/locations/global/"
+            + "memberships/test-cluster";
     kubeMasterEnvironment.setWorkloadIdentityEnabled();
     kubeMasterEnvironment.setWorkloadIdentityPool(workloadIdentityPool);
     kubeMasterEnvironment.setWorkloadIdentityServiceAccountTokenTTLSeconds(172800L);
@@ -237,7 +246,8 @@ public class KubeMasterEnvironmentTest {
     Map<String, String> conf = new HashMap<>();
     conf.put(KubeMasterEnvironment.NAMESPACE_PROPERTY, KUBE_NAMESPACE);
 
-    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1, 1);
+    SparkSubmitContext sparkSubmitContext = new SparkSubmitContext(Collections.emptyMap(), conf, 1,
+        1);
 
     SparkConfig sparkConfig = kubeMasterEnvironment.generateSparkSubmitConfig(sparkSubmitContext);
 

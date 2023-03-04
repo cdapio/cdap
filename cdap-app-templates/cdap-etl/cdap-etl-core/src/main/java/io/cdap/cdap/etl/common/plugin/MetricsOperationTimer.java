@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  * An operation timer that emits metrics.
  */
 public class MetricsOperationTimer implements OperationTimer {
+
   private final StageMetrics stageMetrics;
   private final Stopwatch stopwatch;
   private long minTime;
@@ -49,8 +50,8 @@ public class MetricsOperationTimer implements OperationTimer {
   }
 
   /**
-   * Stops the stopwatch. Future reads will return the fixed duration that had
-   * elapsed up to this point.
+   * Stops the stopwatch. Future reads will return the fixed duration that had elapsed up to this
+   * point.
    *
    * @throws IllegalStateException if the stopwatch is already stopped.
    */

@@ -25,13 +25,15 @@ public class NamespacedConnectionConfig extends ConnectionConfig {
 
   private final NamespaceId namespace;
 
-  public NamespacedConnectionConfig(NamespaceId namespace, String hostname, int port, boolean sslEnabled) {
+  public NamespacedConnectionConfig(NamespaceId namespace, String hostname, int port,
+      boolean sslEnabled) {
     super(hostname, port, sslEnabled);
     this.namespace = namespace;
   }
 
   public NamespacedConnectionConfig(NamespaceId namespace, ConnectionConfig connectionConfig) {
-    super(connectionConfig.getHostname(), connectionConfig.getPort(), connectionConfig.isSSLEnabled());
+    super(connectionConfig.getHostname(), connectionConfig.getPort(),
+        connectionConfig.isSSLEnabled());
     this.namespace = namespace;
   }
 

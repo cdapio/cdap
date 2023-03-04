@@ -17,7 +17,8 @@
 package io.cdap.cdap.etl.proto;
 
 /**
- * Upgradeable config for ETL applications, which allows chain upgrading until the latest version is reached.
+ * Upgradeable config for ETL applications, which allows chain upgrading until the latest version is
+ * reached.
  *
  * @param <T> type of config it gets upgraded to.
  */
@@ -29,10 +30,10 @@ public interface UpgradeableConfig<T extends UpgradeableConfig> {
   boolean canUpgrade();
 
   /**
-   * Return an upgraded config, which may be upgradeable itself.
-   * This allows v0 to upgrade to v1, which can then be upgraded to v2, and so on.
-   * In this way, as long as each config version knows how to upgrade to the next version,
-   * we will be able to upgrade from any old version to the most current version.
+   * Return an upgraded config, which may be upgradeable itself. This allows v0 to upgrade to v1,
+   * which can then be upgraded to v2, and so on. In this way, as long as each config version knows
+   * how to upgrade to the next version, we will be able to upgrade from any old version to the most
+   * current version.
    *
    * @param upgradeContext context for upgrading
    * @return the upgraded config

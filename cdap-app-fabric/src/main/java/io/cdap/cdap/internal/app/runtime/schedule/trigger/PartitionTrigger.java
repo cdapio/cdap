@@ -29,7 +29,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Trigger that schedules a ProgramSchedule, when a certain number of partitions are added to a PartitionedFileSet.
+ * A Trigger that schedules a ProgramSchedule, when a certain number of partitions are added to a
+ * PartitionedFileSet.
  */
 public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements SatisfiableTrigger {
 
@@ -68,14 +69,14 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
   @Override
   public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
     TriggerInfo triggerInfo =
-      new DefaultPartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
-                                      getPartitionsCount(context.getNotifications()));
+        new DefaultPartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
+            getPartitionsCount(context.getNotifications()));
     return Collections.singletonList(triggerInfo);
   }
 
   @Override
   public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
-                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+      Map<String, String> systemArgs, Map<String, String> userArgs) {
     // no-op
   }
 }

@@ -50,8 +50,8 @@ public class DynamicTransform<T> implements Function2<JavaRDD<T>, Time, JavaRDD<
   @Override
   public JavaRDD<RecordInfo<Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (function == null) {
-      function = isMultiOutput ?
-        new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache) :
+      function = isMultiOutput
+        ? new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache) :
         new TransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache);
     }
     return input.flatMap(function);

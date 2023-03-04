@@ -37,8 +37,8 @@ import javax.annotation.concurrent.ThreadSafe;
 /**
  * Class to support writing to message/payload tables with high concurrency.
  *
- * It uses a non-blocking algorithm to batch writes from concurrent threads. The algorithm is the same as
- * the one used in ConcurrentStreamWriter.
+ * It uses a non-blocking algorithm to batch writes from concurrent threads. The algorithm is the
+ * same as the one used in ConcurrentStreamWriter.
  *
  * The algorithm is like this:
  *
@@ -55,8 +55,8 @@ import javax.annotation.concurrent.ThreadSafe;
  * 8. If the PendingStoreRequest enqueued by this thread is NOT COMPLETED, go back to step 2.
  * </pre>
  *
- * The spin lock between step 2 to step 8 is necessary as it guarantees events enqueued by all threads would eventually
- * get written and flushed.
+ * The spin lock between step 2 to step 8 is necessary as it guarantees events enqueued by all
+ * threads would eventually get written and flushed.
  */
 @ThreadSafe
 final class ConcurrentMessageWriter implements Closeable {
@@ -68,7 +68,8 @@ final class ConcurrentMessageWriter implements Closeable {
   private final AtomicBoolean closed;
 
   /**
-   * Constructor with a {@link NoopMetricsContext}. This constructor should only be used in unit-testing.
+   * Constructor with a {@link NoopMetricsContext}. This constructor should only be used in
+   * unit-testing.
    */
   @VisibleForTesting
   ConcurrentMessageWriter(StoreRequestWriter<?> messagesWriter) {
@@ -79,7 +80,8 @@ final class ConcurrentMessageWriter implements Closeable {
    * Constructor.
    *
    * @param messagesWriter the {@link StoreRequestWriter} for persisting {@link StoreRequest}.
-   * @param metricsCollector the {@link MetricsCollector} for collecting metrics emitted by this class.
+   * @param metricsCollector the {@link MetricsCollector} for collecting metrics emitted by this
+   *     class.
    */
   ConcurrentMessageWriter(StoreRequestWriter<?> messagesWriter, MetricsCollector metricsCollector) {
     this.messagesWriter = messagesWriter;
@@ -90,13 +92,13 @@ final class ConcurrentMessageWriter implements Closeable {
   }
 
   /**
-   * Persists the given {@link StoreRequest} to the {@link StoreRequestWriter} in this class. This method
-   * is safe to be called concurrently from multiple threads.
+   * Persists the given {@link StoreRequest} to the {@link StoreRequestWriter} in this class. This
+   * method is safe to be called concurrently from multiple threads.
    *
    * @param storeRequest contains information about payload to be store
    * @param metadata {@link TopicMetadata} for the topic in the {@link StoreRequest}
    * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
-   *         information for rollback; otherwise {@code null} will be returned.
+   *     information for rollback; otherwise {@code null} will be returned.
    * @throws IOException if failed to persist the data
    */
   @Nullable
@@ -122,13 +124,13 @@ final class ConcurrentMessageWriter implements Closeable {
         return null;
       }
       return new SimpleRollbackDetail(pendingStoreRequest.getTransactionWritePointer(),
-                                      pendingStoreRequest.getStartTimestamp(), pendingStoreRequest.getStartSequenceId(),
-                                      pendingStoreRequest.getEndTimestamp(), pendingStoreRequest.getEndSequenceId());
+          pendingStoreRequest.getStartTimestamp(), pendingStoreRequest.getStartSequenceId(),
+          pendingStoreRequest.getEndTimestamp(), pendingStoreRequest.getEndSequenceId());
     } else {
       metricsCollector.increment("persist.failure", 1L);
       Throwables.propagateIfInstanceOf(pendingStoreRequest.getFailureCause(), IOException.class);
       throw new IOException("Unable to write message to " + storeRequest.getTopicId(),
-                            pendingStoreRequest.getFailureCause());
+          pendingStoreRequest.getFailureCause());
     }
   }
 
@@ -136,7 +138,7 @@ final class ConcurrentMessageWriter implements Closeable {
    * Tries to acquire the writer flag and persist the pending requests.
    *
    * @return {@code true} if acquired the writer flag and called {@link PendingStoreQueue#persist(StoreRequestWriter)};
-   *         otherwise {@code false} will be returned.
+   *     otherwise {@code false} will be returned.
    */
   private boolean tryWrite() {
     if (!writerFlag.compareAndSet(false, true)) {
@@ -216,8 +218,8 @@ final class ConcurrentMessageWriter implements Closeable {
     }
 
     /**
-     * Marks all inflight requests as collected through the {@link Iterator#next()} method as completed.
-     * This method must be called while holding the writer flag.
+     * Marks all inflight requests as collected through the {@link Iterator#next()} method as
+     * completed. This method must be called while holding the writer flag.
      */
     void completeAll(@Nullable Throwable failureCause) {
       Iterator<PendingStoreRequest> iterator = inflightRequests.iterator();
@@ -240,7 +242,7 @@ final class ConcurrentMessageWriter implements Closeable {
     private final int endSequenceId;
 
     SimpleRollbackDetail(long transactionWritePointer, long startTimestamp,
-                         int startSequenceId, long endTimestamp, int endSequenceId) {
+        int startSequenceId, long endTimestamp, int endSequenceId) {
       this.transactionWritePointer = transactionWritePointer;
       this.startTimestamp = startTimestamp;
       this.startSequenceId = startSequenceId;

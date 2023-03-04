@@ -23,6 +23,7 @@ import java.util.Map;
  * An interface to manage interactions with an {@link ArtifactId artifact} in tests.
  */
 public interface ArtifactManager {
+
   /**
    * Write properties to the artifact.
    *

@@ -40,13 +40,15 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * An abstract {@link InputFormat} implementation that reads from {@link BatchReadable}.
+ *
  * @param <KEY> Type of key.
  * @param <VALUE> Type of value.
  */
 public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
 
   private static final Gson GSON = new Gson();
-  private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   // Keys for storing values in Hadoop Configuration
   private static final String DATASET_NAMESPACE = "input.datasetinputformat.dataset.namespace";
@@ -57,16 +59,15 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
   /**
    * Sets dataset and splits information into the given {@link Configuration}.
    *
-   * @param hConf            configuration to modify
+   * @param hConf configuration to modify
    * @param datasetNamespace namespace of the dataset
-   * @param datasetName      name of the dataset
+   * @param datasetName name of the dataset
    * @param datasetArguments arguments for the dataset
-   * @param splits           list of splits on the dataset
-   * @throws IOException
+   * @param splits list of splits on the dataset
    */
   public static void setDatasetSplits(Configuration hConf, @Nullable String datasetNamespace,
-                                      String datasetName, Map<String, String> datasetArguments,
-                                      List<Split> splits) throws IOException {
+      String datasetName, Map<String, String> datasetArguments,
+      List<Split> splits) throws IOException {
     if (datasetNamespace != null) {
       hConf.set(DATASET_NAMESPACE, datasetNamespace);
     }
@@ -83,7 +84,8 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
   }
 
   @Override
-  public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
+  public List<InputSplit> getSplits(final JobContext context)
+      throws IOException, InterruptedException {
     // Decode splits from Configuration
     String splitsConf = context.getConfiguration().get(SPLITS);
     if (splitsConf == null) {
@@ -102,8 +104,8 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
 
   @Override
   public RecordReader<KEY, VALUE> createRecordReader(InputSplit split,
-                                                     TaskAttemptContext context)
-    throws IOException, InterruptedException {
+      TaskAttemptContext context)
+      throws IOException, InterruptedException {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
     Configuration conf = context.getConfiguration();
@@ -113,25 +115,26 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
     Map<String, String> datasetArgs = GSON.fromJson(conf.get(DATASET_ARGS), DATASET_ARGS_TYPE);
 
     @SuppressWarnings("unchecked")
-    BatchReadable<KEY, VALUE> batchReadable = createBatchReadable(context, datasetNamespace, datasetName, datasetArgs);
+    BatchReadable<KEY, VALUE> batchReadable = createBatchReadable(context, datasetNamespace,
+        datasetName, datasetArgs);
     SplitReader<KEY, VALUE> splitReader = batchReadable.createSplitReader(inputSplit.getSplit());
     return new SplitReaderRecordReader<>(splitReader);
   }
 
   /**
-   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading records from
-   * the given dataset.
+   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading
+   * records from the given dataset.
    *
    * @param context the hadoop task context
    * @param datasetName name of the dataset to read from
    * @param datasetArgs arguments of the dataset to read from
    */
   protected abstract BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
-                                                                   String datasetName, Map<String, String> datasetArgs);
+      String datasetName, Map<String, String> datasetArgs);
 
   /**
-   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading records from
-   * the given dataset from another namespace.
+   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading
+   * records from the given dataset from another namespace.
    *
    * @param context the hadoop task context
    * @param datasetNamespace namesoace of the dataset
@@ -139,8 +142,8 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
    * @param datasetArgs arguments of the dataset to read from
    */
   protected abstract BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
-                                                                   @Nullable String datasetNamespace,
-                                                                   String datasetName, Map<String, String> datasetArgs);
+      @Nullable String datasetNamespace,
+      String datasetName, Map<String, String> datasetArgs);
 
 
   /**
@@ -158,7 +161,8 @@ public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends Input
     }
 
     @Override
-    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    public void initialize(InputSplit split, TaskAttemptContext context)
+        throws IOException, InterruptedException {
       DataSetInputSplit inputSplit = (DataSetInputSplit) split;
       splitReader.initialize(inputSplit.getSplit());
     }

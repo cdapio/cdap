@@ -99,11 +99,13 @@ import org.slf4j.LoggerFactory;
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
 public class DefaultStore implements Store {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
 
   // mds is specific for metadata, we do not want to add workflow stats related information to the mds,
   // as it is not specifically metadata
-  private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
+  private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset(
+      "workflow.stats");
   private static final Map<String, String> EMPTY_STRING_MAP = Collections.emptyMap();
   // If store does not support reverse scanning, we reorder in memory.
   // This is maximum number of items we will reorder at a time
@@ -130,16 +132,19 @@ public class DefaultStore implements Store {
    * @param framework framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework)
-    throws IOException, DatasetManagementException, UnauthorizedException {
-    framework.addInstance(Table.class.getName(), AppMetadataStore.APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
-    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
+      throws IOException, DatasetManagementException, UnauthorizedException {
+    framework.addInstance(Table.class.getName(), AppMetadataStore.APP_META_INSTANCE_ID,
+        DatasetProperties.EMPTY);
+    framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID,
+        DatasetProperties.EMPTY);
   }
 
   private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
   }
 
-  private WorkflowTable getWorkflowTable(StructuredTableContext context) throws TableNotFoundException {
+  private WorkflowTable getWorkflowTable(StructuredTableContext context)
+      throws TableNotFoundException {
     return new WorkflowTable(context.getTable(StoreDefinition.WorkflowStore.WORKFLOW_STATISTICS));
   }
 
@@ -175,9 +180,10 @@ public class DefaultStore implements Store {
 
   @Override
   public void setProvisioning(ProgramRunId id, Map<String, String> runtimeArgs,
-                              Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
+      Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
     TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).recordProgramProvisioning(id, runtimeArgs, systemArgs, sourceId, artifactId);
+      getAppMetadataStore(context).recordProgramProvisioning(id, runtimeArgs, systemArgs, sourceId,
+          artifactId);
     });
   }
 
@@ -189,7 +195,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs, byte[] sourceId) {
+  public void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs,
+      byte[] sourceId) {
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).recordProgramStart(id, twillRunId, systemArgs, sourceId);
     });
@@ -203,9 +210,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTsSecs, long terminateTsSecs) {
+  public void setStopping(ProgramRunId id, byte[] sourceId, long stoppingTsSecs,
+      long terminateTsSecs) {
     TransactionRunners.run(transactionRunner, context -> {
-      getAppMetadataStore(context).recordProgramStopping(id, sourceId, stoppingTsSecs, terminateTsSecs);
+      getAppMetadataStore(context).recordProgramStopping(id, sourceId, stoppingTsSecs,
+          terminateTsSecs);
     });
   }
 
@@ -216,7 +225,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus,
-                      BasicThrowable failureCause, byte[] sourceId) {
+      BasicThrowable failureCause, byte[] sourceId) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
@@ -233,8 +242,8 @@ public class DefaultStore implements Store {
   }
 
   private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowTable workflowTable,
-                                       WorkflowId workflowId, String runId)
-    throws IOException, TableNotFoundException {
+      WorkflowId workflowId, String runId)
+      throws IOException, TableNotFoundException {
     RunRecordDetail runRecord = metaStore.getRun(workflowId.run(runId));
     if (runRecord == null) {
       return;
@@ -242,9 +251,10 @@ public class DefaultStore implements Store {
     ApplicationId app = workflowId.getParent();
     ApplicationSpecification appSpec = getApplicationSpec(metaStore, app);
     if (appSpec == null || appSpec.getWorkflows() == null
-      || appSpec.getWorkflows().get(workflowId.getProgram()) == null) {
-      LOG.warn("Missing ApplicationSpecification for {}, " +
-                 "potentially caused by application removal right after stopping workflow {}", app, workflowId);
+        || appSpec.getWorkflows().get(workflowId.getProgram()) == null) {
+      LOG.warn("Missing ApplicationSpecification for {}, "
+              + "potentially caused by application removal right after stopping workflow {}", app,
+          workflowId);
       return;
     }
 
@@ -254,23 +264,25 @@ public class DefaultStore implements Store {
     List<WorkflowTable.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : runRecord.getProperties().entrySet()) {
       if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey())
-        || "workflowNodeState".equals(entry.getKey()))) {
+          || "workflowNodeState".equals(entry.getKey()))) {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
-        ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
+        ProgramType programType = ProgramType.valueOfSchedulableType(
+            workflowNode.getProgram().getProgramType());
         ProgramId innerProgram = app.program(programType, entry.getKey());
         RunRecordDetail innerProgramRun = metaStore.getRun(innerProgram.run(entry.getValue()));
-        if (innerProgramRun != null && innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
+        if (innerProgramRun != null && innerProgramRun.getStatus()
+            .equals(ProgramRunStatus.COMPLETED)) {
           Long stopTs = innerProgramRun.getStopTs();
           // since the program is completed, the stop ts cannot be null
           if (stopTs == null) {
-            LOG.warn("Since the program has completed, expected its stop time to not be null. " +
-                       "Not writing workflow completed record for Program = {}, Workflow = {}, Run = {}",
-                     innerProgram, workflowId, runRecord);
+            LOG.warn("Since the program has completed, expected its stop time to not be null. "
+                    + "Not writing workflow completed record for Program = {}, Workflow = {}, Run = {}",
+                innerProgram, workflowId, runRecord);
             workFlowNodeFailed = true;
             break;
           }
           programRunsList.add(new WorkflowTable.ProgramRun(entry.getKey(), entry.getValue(),
-                                                           programType, stopTs - innerProgramRun.getStartTs()));
+              programType, stopTs - innerProgramRun.getStartTs()));
         } else {
           workFlowNodeFailed = true;
           break;
@@ -308,16 +320,19 @@ public class DefaultStore implements Store {
 
   @Override
   @Nullable
-  public WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName, String workflowName,
-                                                  long startTime, long endTime, List<Double> percentiles) {
+  public WorkflowStatistics getWorkflowStatistics(NamespaceId namespaceId, String appName,
+      String workflowName,
+      long startTime, long endTime, List<Double> percentiles) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
+      ApplicationMeta latestAppMeta = getAppMetadataStore(context).getLatest(
+          namespaceId.appReference(appName));
       if (latestAppMeta == null) {
         // if app is not found then there is no workflow stats
         return null;
       }
-      WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName, latestAppMeta.getSpec().getAppVersion(),
-                                     workflowName);
+      WorkflowId id = new WorkflowId(namespaceId.getNamespace(), appName,
+          latestAppMeta.getSpec().getAppVersion(),
+          workflowName);
       return getWorkflowTable(context).getStatistics(id, startTime, endTime, percentiles);
     });
   }
@@ -330,22 +345,26 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName, String workflowName,
-                                                        String runId) {
+  public WorkflowTable.WorkflowRunRecord getWorkflowRun(NamespaceId namespaceId, String appName,
+      String workflowName,
+      String runId) {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetaStore = getAppMetadataStore(context);
-      WorkflowId workflowId = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName, runId);
+      WorkflowId workflowId = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName,
+          runId);
       return getWorkflowTable(context).getRecord(workflowId, runId);
     });
   }
 
   @Override
-  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId, String appName,
-                                                                           String workflowName, String runId, int limit,
-                                                                           long timeInterval) {
-    return  TransactionRunners.run(transactionRunner, context -> {
+  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(NamespaceId namespaceId,
+      String appName,
+      String workflowName, String runId, int limit,
+      long timeInterval) {
+    return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetaStore = getAppMetadataStore(context);
-      WorkflowId workflow = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName, runId);
+      WorkflowId workflow = getWorkflowIdFromRun(appMetaStore, namespaceId, appName, workflowName,
+          runId);
       return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
@@ -353,22 +372,23 @@ public class DefaultStore implements Store {
   /**
    * Fetches the run record for particular run of a program without version.
    *
-   * @param appMetaStore     AppMetadataStore
-   * @param namespaceId      namespace id
-   * @param appName          application name
-   * @param workflowName     the name of the workflow program
-   * @param runId            the run id
-   * @return          run record for the specified program and runRef, null if not found
+   * @param appMetaStore AppMetadataStore
+   * @param namespaceId namespace id
+   * @param appName application name
+   * @param workflowName the name of the workflow program
+   * @param runId the run id
+   * @return run record for the specified program and runRef, null if not found
    */
   private WorkflowId getWorkflowIdFromRun(AppMetadataStore appMetaStore, NamespaceId namespaceId,
-                                          String appName, String workflowName, String runId)
-    throws IOException, NotFoundException {
-    ProgramReference programRef = namespaceId.appReference(appName).program(ProgramType.WORKFLOW, workflowName);
+      String appName, String workflowName, String runId)
+      throws IOException, NotFoundException {
+    ProgramReference programRef = namespaceId.appReference(appName)
+        .program(ProgramType.WORKFLOW, workflowName);
     // Fetch run record ignoring version
     RunRecordDetail runRecord = appMetaStore.getRun(programRef, runId);
     if (runRecord == null) {
       throw new NotFoundException(
-        String.format("No run record found for program %s and runID: %s", programRef, runId));
+          String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
 
     ApplicationId appId = namespaceId.app(appName, runRecord.getVersion());
@@ -381,40 +401,43 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
-                                                    long startTime, long endTime, int limit) {
+      long startTime, long endTime, int limit) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference, ProgramRunStatus status,
-                                                       long startTime, long endTime, int limit,
-                                                       Predicate<RunRecordDetail> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getAllRuns(ProgramReference programReference,
+      ProgramRunStatus status,
+      long startTime, long endTime, int limit,
+      Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getAllProgramRuns(programReference, status, startTime, endTime, limit,
-                                                            filter);
+      return getAppMetadataStore(context).getAllProgramRuns(programReference, status, startTime,
+          endTime, limit,
+          filter);
     });
   }
 
   @Override
   public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status,
-                                                    Predicate<RunRecordDetail> filter) {
+      Predicate<RunRecordDetail> filter) {
     return getRuns(status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
   @Override
   public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status, long startTime,
-                                                    long endTime, int limit,
-                                                    Predicate<RunRecordDetail> filter) {
+      long endTime, int limit,
+      Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(null, status, startTime, endTime, limit, filter);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getRuns(ApplicationId applicationId, ProgramRunStatus status, int limit,
-                                                    @Nullable Predicate<RunRecordDetail> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ApplicationId applicationId,
+      ProgramRunStatus status, int limit,
+      @Nullable Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(applicationId, status, limit, filter);
     });
@@ -430,22 +453,24 @@ public class DefaultStore implements Store {
   @Override
   public int countActiveRuns(@Nullable Integer limit) {
     return TransactionRunners.run(transactionRunner,
-                                  context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
+        context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
   }
 
   @Override
   public void scanActiveRuns(int txBatchSize, Consumer<RunRecordDetail> consumer) {
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(
+        AppMetadataStore.Cursor.EMPTY);
 
     AtomicInteger count = new AtomicInteger();
     do {
       count.set(0);
       TransactionRunners.run(transactionRunner, context -> {
-        AppMetadataStore.create(context).scanActiveRuns(cursorRef.get(), txBatchSize, (cursor, runRecordDetail) -> {
-          count.incrementAndGet();
-          cursorRef.set(cursor);
-          consumer.accept(runRecordDetail);
-        });
+        AppMetadataStore.create(context)
+            .scanActiveRuns(cursorRef.get(), txBatchSize, (cursor, runRecordDetail) -> {
+              count.incrementAndGet();
+              cursorRef.set(cursor);
+              consumer.accept(runRecordDetail);
+            });
       });
     }
     while (count.get() > 0);
@@ -460,7 +485,7 @@ public class DefaultStore implements Store {
 
   @Override
   public Map<ProgramRunId, RunRecordDetail> getActiveRuns(Set<NamespaceId> namespaces,
-                                                          Predicate<RunRecordDetail> filter) {
+      Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(namespaces, filter);
     });
@@ -474,7 +499,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(ApplicationReference applicationReference) {
+  public Map<ProgramRunId, RunRecordDetail> getAllActiveRuns(
+      ApplicationReference applicationReference) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(applicationReference);
     });
@@ -488,7 +514,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramReference> programRefs) {
+  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(
+      Collection<ProgramReference> programRefs) {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       // Get the active runs for programs that exist
@@ -512,8 +539,8 @@ public class DefaultStore implements Store {
   /**
    * Returns run record for a given run reference.
    *
-   * @param programRef    versionless program id of the run
-   * @param runId         the run id
+   * @param programRef versionless program id of the run
+   * @param runId the run id
    * @return run record for run reference
    */
   @Override
@@ -527,13 +554,13 @@ public class DefaultStore implements Store {
   public int addApplication(ApplicationId id, ApplicationMeta meta) throws ConflictException {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).createApplicationVersion(id, meta);
-      }, ConflictException.class);
+    }, ConflictException.class);
   }
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
   public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationId id,
-                                                                    ApplicationSpecification appSpec) {
+      ApplicationSpecification appSpec) {
 
     ApplicationMeta existing = TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getApplication(id);
@@ -545,20 +572,20 @@ public class DefaultStore implements Store {
       ApplicationSpecification existingAppSpec = existing.getSpec();
 
       Map<String, ProgramSpecification> existingSpec = ImmutableMap.<String, ProgramSpecification>builder()
-        .putAll(existingAppSpec.getMapReduce())
-        .putAll(existingAppSpec.getSpark())
-        .putAll(existingAppSpec.getWorkflows())
-        .putAll(existingAppSpec.getServices())
-        .putAll(existingAppSpec.getWorkers())
-        .build();
+          .putAll(existingAppSpec.getMapReduce())
+          .putAll(existingAppSpec.getSpark())
+          .putAll(existingAppSpec.getWorkflows())
+          .putAll(existingAppSpec.getServices())
+          .putAll(existingAppSpec.getWorkers())
+          .build();
 
       Map<String, ProgramSpecification> newSpec = ImmutableMap.<String, ProgramSpecification>builder()
-        .putAll(appSpec.getMapReduce())
-        .putAll(appSpec.getSpark())
-        .putAll(appSpec.getWorkflows())
-        .putAll(appSpec.getServices())
-        .putAll(appSpec.getWorkers())
-        .build();
+          .putAll(appSpec.getMapReduce())
+          .putAll(appSpec.getSpark())
+          .putAll(appSpec.getWorkflows())
+          .putAll(appSpec.getServices())
+          .putAll(appSpec.getWorkers())
+          .build();
 
       MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
       deletedProgramSpecs.addAll(mapDiff.entriesOnlyOnLeft().values());
@@ -569,29 +596,32 @@ public class DefaultStore implements Store {
 
   @Override
   public void setWorkerInstances(ProgramId id, int instances) {
-    Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
+    Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s",
+        instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
       WorkerSpecification newSpecification = new WorkerSpecification(workerSpec.getClassName(),
-                                                                     workerSpec.getName(),
-                                                                     workerSpec.getDescription(),
-                                                                     workerSpec.getProperties(),
-                                                                     workerSpec.getDatasets(),
-                                                                     workerSpec.getResources(),
-                                                                     instances, workerSpec.getPlugins());
+          workerSpec.getName(),
+          workerSpec.getDescription(),
+          workerSpec.getProperties(),
+          workerSpec.getDatasets(),
+          workerSpec.getResources(),
+          instances, workerSpec.getPlugins());
       ApplicationSpecification newAppSpec = replaceWorkerInAppSpec(appSpec, id, newSpecification);
       metaStore.updateAppSpec(id.getParent(), newAppSpec);
     });
 
-    LOG.trace("Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplication(), id.getProgram(), instances);
+    LOG.trace(
+        "Setting program instances: namespace: {}, application: {}, worker: {}, new instances count: {}",
+        id.getNamespaceId(), id.getApplication(), id.getProgram(), instances);
   }
 
   @Override
   public void setServiceInstances(ProgramId id, int instances) {
-    Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s", instances);
+    Preconditions.checkArgument(instances > 0, "Cannot change number of service instances to %s",
+        instances);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       ApplicationSpecification appSpec = getApplicationSpec(metaStore, id.getParent());
@@ -599,21 +629,24 @@ public class DefaultStore implements Store {
 
       // Create a new spec copy from the old one, except with updated instances number
       serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
-                                             serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                             serviceSpec.getResources(), instances, serviceSpec.getPlugins());
+          serviceSpec.getDescription(), serviceSpec.getHandlers(),
+          serviceSpec.getResources(), instances, serviceSpec.getPlugins());
 
-      ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(), serviceSpec);
+      ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getProgram(),
+          serviceSpec);
       metaStore.updateAppSpec(id.getParent(), newAppSpec);
     });
 
-    LOG.trace("Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
-              id.getNamespaceId(), id.getApplication(), id.getProgram(), instances);
+    LOG.trace(
+        "Setting program instances: namespace: {}, application: {}, service: {}, new instances count: {}",
+        id.getNamespaceId(), id.getApplication(), id.getProgram(), instances);
   }
 
   @Override
   public int getServiceInstances(ProgramId id) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context), id.getParent());
+      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context),
+          id.getParent());
       ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
       return serviceSpec.getInstances();
     });
@@ -622,7 +655,8 @@ public class DefaultStore implements Store {
   @Override
   public int getWorkerInstances(ProgramId id) {
     return TransactionRunners.run(transactionRunner, context -> {
-      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context), id.getParent());
+      ApplicationSpecification appSpec = getApplicationSpec(getAppMetadataStore(context),
+          id.getParent());
       WorkerSpecification workerSpec = getWorkerSpecOrFail(id, appSpec);
       return workerSpec.getInstances();
     });
@@ -630,7 +664,8 @@ public class DefaultStore implements Store {
 
   @Override
   public void removeApplication(ApplicationId id) {
-    LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(), id.getApplication());
+    LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(),
+        id.getApplication());
 
     TransactionRunners.run(transactionRunner, context -> {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
@@ -661,7 +696,7 @@ public class DefaultStore implements Store {
         return runRecord.getUserArgs();
       }
       LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
-                programRunId.getProgram(), programRunId.getRun());
+          programRunId.getProgram(), programRunId.getRun());
       return EMPTY_STRING_MAP;
     });
   }
@@ -683,13 +718,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationMeta> consumer) {
+  public void scanApplications(int txBatchSize,
+      BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     scanApplications(ScanApplicationsRequest.builder().build(), txBatchSize, consumer);
   }
 
   @Override
   public boolean scanApplications(ScanApplicationsRequest request, int txBatchSize,
-                                  BiConsumer<ApplicationId, ApplicationMeta> consumer) {
+      BiConsumer<ApplicationId, ApplicationMeta> consumer) {
 
     AtomicReference<ScanApplicationsRequest> requestRef = new AtomicReference<>(request);
     AtomicReference<ApplicationId> lastKey = new AtomicReference<>();
@@ -718,10 +754,10 @@ public class DefaultStore implements Store {
         break;
       }
       ScanApplicationsRequest nextBatchRequest = ScanApplicationsRequest
-        .builder(requestRef.get())
-        .setScanFrom(lastKey.get())
-        .setLimit(currentLimit.get())
-        .build();
+          .builder(requestRef.get())
+          .setScanFrom(lastKey.get())
+          .setLimit(currentLimit.get())
+          .build();
       requestRef.set(nextBatchRequest);
       lastKey.set(null);
     }
@@ -729,20 +765,21 @@ public class DefaultStore implements Store {
   }
 
   /**
-   * Special case where we are asked to get applications in descending order and the store does not support it.
-   * We scan keys in large batches and serve backwards
+   * Special case where we are asked to get applications in descending order and the store does not
+   * support it. We scan keys in large batches and serve backwards
+   *
    * @return if we read records up to request limit
    */
   private boolean scanApplicationsWithReorder(ScanApplicationsRequest request,
-                                              int txBatchSize,
-                                              BiConsumer<ApplicationId, ApplicationMeta> consumer) {
+      int txBatchSize,
+      BiConsumer<ApplicationId, ApplicationMeta> consumer) {
     AtomicReference<ScanApplicationsRequest> forwardRequest =
-      new AtomicReference<>(ScanApplicationsRequest.builder(request)
-      .setSortOrder(SortOrder.ASC)
-      .setScanFrom(request.getScanTo())
-      .setScanTo(request.getScanFrom())
-      .setLimit(Integer.MAX_VALUE)
-      .build());
+        new AtomicReference<>(ScanApplicationsRequest.builder(request)
+            .setSortOrder(SortOrder.ASC)
+            .setScanFrom(request.getScanTo())
+            .setScanTo(request.getScanFrom())
+            .setLimit(Integer.MAX_VALUE)
+            .build());
     AtomicBoolean needMoreScans = new AtomicBoolean(true);
     Deque<ApplicationId> ids = new ArrayDeque<>(1 + Math.min(maxReorderBatch, request.getLimit()));
     AtomicInteger currentLimit = new AtomicInteger(request.getLimit());
@@ -763,9 +800,9 @@ public class DefaultStore implements Store {
       });
       if (needMoreScans.get()) {
         forwardRequest.set(ScanApplicationsRequest
-                             .builder(forwardRequest.get())
-                             .setScanTo(ids.getFirst())
-                             .build());
+            .builder(forwardRequest.get())
+            .setScanTo(ids.getFirst())
+            .build());
       }
       while (!ids.isEmpty()) {
         TransactionRunners.run(transactionRunner, context -> {
@@ -806,7 +843,7 @@ public class DefaultStore implements Store {
   public Map<ProgramReference, ProgramId> getPrograms(Collection<ProgramReference> references) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).filterProgramsExistence(references).stream()
-        .collect(Collectors.toMap(ProgramId::getProgramReference, e -> e));
+          .collect(Collectors.toMap(ProgramId::getProgramReference, e -> e));
     });
   }
 
@@ -849,28 +886,32 @@ public class DefaultStore implements Store {
 
   @Nullable
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds,
-                                                      ApplicationId id) throws IOException, TableNotFoundException {
-    return Optional.ofNullable(getApplicationMeta(mds, id)).map(ApplicationMeta::getSpec).orElse(null);
+      ApplicationId id) throws IOException, TableNotFoundException {
+    return Optional.ofNullable(getApplicationMeta(mds, id)).map(ApplicationMeta::getSpec)
+        .orElse(null);
   }
 
   @Nullable
   private ApplicationMeta getApplicationMeta(AppMetadataStore mds,
-                                             ApplicationId id) throws IOException, TableNotFoundException {
+      ApplicationId id) throws IOException, TableNotFoundException {
     return mds.getApplication(id);
   }
 
   private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
-                                                             String serviceName,
-                                                             ServiceSpecification serviceSpecification) {
-    return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, serviceSpecification);
+      String serviceName,
+      ServiceSpecification serviceSpecification) {
+    return new ApplicationSpecificationWithChangedServices(appSpec, serviceName,
+        serviceSpecification);
   }
 
-  private static class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {
+  private static class ApplicationSpecificationWithChangedServices extends
+      ForwardingApplicationSpecification {
+
     private final String serviceName;
     private final ServiceSpecification serviceSpecification;
 
     private ApplicationSpecificationWithChangedServices(ApplicationSpecification delegate,
-                                                        String serviceName, ServiceSpecification serviceSpecification) {
+        String serviceName, ServiceSpecification serviceSpecification) {
       super(delegate);
       this.serviceName = serviceName;
       this.serviceSpecification = serviceSpecification;
@@ -884,48 +925,56 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static ServiceSpecification getServiceSpecOrFail(ProgramId id, @Nullable ApplicationSpecification appSpec) {
+  private static ServiceSpecification getServiceSpecOrFail(ProgramId id,
+      @Nullable ApplicationSpecification appSpec) {
     if (appSpec == null) {
-      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication());
+      throw new NoSuchElementException(
+          "no such application @ namespace id: " + id.getNamespaceId()
+              + ", app id: " + id.getApplication());
     }
 
     ServiceSpecification spec = appSpec.getServices().get(id.getProgram());
     if (spec == null) {
-      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespace() +
-                                         ", app id: " + id.getApplication() +
-                                         ", service id: " + id.getProgram());
+      throw new NoSuchElementException("no such service @ namespace id: " + id.getNamespace()
+          + ", app id: " + id.getApplication()
+          + ", service id: " + id.getProgram());
     }
     return spec;
   }
 
-  private static WorkerSpecification getWorkerSpecOrFail(ProgramId id, @Nullable ApplicationSpecification appSpec) {
+  private static WorkerSpecification getWorkerSpecOrFail(ProgramId id,
+      @Nullable ApplicationSpecification appSpec) {
     if (appSpec == null) {
-      throw new NoSuchElementException("no such application @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication());
+      throw new NoSuchElementException(
+          "no such application @ namespace id: " + id.getNamespaceId()
+              + ", app id: " + id.getApplication());
     }
 
     WorkerSpecification workerSpecification = appSpec.getWorkers().get(id.getProgram());
     if (workerSpecification == null) {
-      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId() +
-                                         ", app id: " + id.getApplication() +
-                                         ", worker id: " + id.getProgram());
+      throw new NoSuchElementException("no such worker @ namespace id: " + id.getNamespaceId()
+          + ", app id: " + id.getApplication()
+          + ", worker id: " + id.getProgram());
     }
     return workerSpecification;
   }
 
   private static ApplicationSpecification replaceWorkerInAppSpec(ApplicationSpecification appSpec,
-                                                                 ProgramId id,
-                                                                 WorkerSpecification workerSpecification) {
-    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getProgram(), workerSpecification);
+      ProgramId id,
+      WorkerSpecification workerSpecification) {
+    return new ApplicationSpecificationWithChangedWorkers(appSpec, id.getProgram(),
+        workerSpecification);
   }
 
-  private static class ApplicationSpecificationWithChangedWorkers extends ForwardingApplicationSpecification {
+  private static class ApplicationSpecificationWithChangedWorkers extends
+      ForwardingApplicationSpecification {
+
     private final String workerId;
     private final WorkerSpecification workerSpecification;
 
-    private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate, String workerId,
-                                                       WorkerSpecification workerSpec) {
+    private ApplicationSpecificationWithChangedWorkers(ApplicationSpecification delegate,
+        String workerId,
+        WorkerSpecification workerSpec) {
       super(delegate);
       this.workerId = workerId;
       this.workerSpecification = workerSpec;
@@ -946,7 +995,8 @@ public class DefaultStore implements Store {
       return getAppMetadataStore(context).getRunningInRangeActive(startTimeInSecs, endTimeInSecs);
     }));
     runs.addAll(TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getRunningInRangeCompleted(startTimeInSecs, endTimeInSecs);
+      return getAppMetadataStore(context).getRunningInRangeCompleted(startTimeInSecs,
+          endTimeInSecs);
     }));
     return runs;
   }
@@ -955,12 +1005,14 @@ public class DefaultStore implements Store {
   public long getProgramRunCount(ProgramId programId) throws NotFoundException {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
-      ApplicationSpecification appSpec = getApplicationSpec(appMetadataStore, programId.getParent());
+      ApplicationSpecification appSpec = getApplicationSpec(appMetadataStore,
+          programId.getParent());
       // app not found
       if (appSpec == null) {
         throw new NotFoundException(programId.getParent());
       }
-      ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec, programId.getProgramReference());
+      ProgramSpecification programSpec = getExistingAppProgramSpecification(appSpec,
+          programId.getProgramReference());
       // program not found
       if (programSpec == null) {
         throw new NotFoundException(programId);
@@ -978,7 +1030,8 @@ public class DefaultStore implements Store {
       if (appMeta == null) {
         throw new NotFoundException(programReference.getParent());
       }
-      ProgramSpecification programSpec = getExistingAppProgramSpecification(appMeta.getSpec(), programReference);
+      ProgramSpecification programSpec = getExistingAppProgramSpecification(appMeta.getSpec(),
+          programReference);
       // program not found
       if (programSpec == null) {
         throw new NotFoundException(programReference);
@@ -993,9 +1046,11 @@ public class DefaultStore implements Store {
       List<RunCountResult> result = new ArrayList<>();
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
-      Set<ProgramReference> existingPrograms = appMetadataStore.filterProgramsExistence(programRefs).stream().map(
-        ProgramId::getProgramReference).collect(Collectors.toSet());
-      Map<ProgramReference, Long> runCounts = appMetadataStore.getProgramTotalRunCounts(existingPrograms);
+      Set<ProgramReference> existingPrograms = appMetadataStore.filterProgramsExistence(programRefs)
+          .stream().map(
+              ProgramId::getProgramReference).collect(Collectors.toSet());
+      Map<ProgramReference, Long> runCounts = appMetadataStore.getProgramTotalRunCounts(
+          existingPrograms);
       for (ProgramReference programRef : programRefs) {
         if (!existingPrograms.contains(programRef)) {
           result.add(new RunCountResult(programRef, null, new NotFoundException(programRef)));
@@ -1008,29 +1063,31 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<ProgramHistory> getRuns(Collection<ProgramReference> programs, ProgramRunStatus status,
-                                      long startTime, long endTime, int limitPerProgram) {
+  public List<ProgramHistory> getRuns(Collection<ProgramReference> programs,
+      ProgramRunStatus status,
+      long startTime, long endTime, int limitPerProgram) {
     return TransactionRunners.run(transactionRunner, context -> {
       List<ProgramHistory> result = new ArrayList<>(programs.size());
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
 
       Set<ProgramId> existingPrograms = appMetadataStore.filterProgramsExistence(programs);
       Map<ProgramReference, ProgramId> programRefsMap =
-        existingPrograms.stream().collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
+          existingPrograms.stream()
+              .collect(Collectors.toMap(ProgramId::getProgramReference, p -> p));
 
       for (ProgramReference programRef : programs) {
         ProgramId latestProgramId = programRefsMap.get(programRef);
         if (latestProgramId == null) {
           ProgramId defaultVersion = programRef.id(ApplicationId.DEFAULT_VERSION);
           result.add(new ProgramHistory(defaultVersion, Collections.emptyList(),
-                                        new ProgramNotFoundException(defaultVersion)));
+              new ProgramNotFoundException(defaultVersion)));
           continue;
         }
 
         List<RunRecord> runs = appMetadataStore.getRuns(latestProgramId, status, startTime, endTime,
-                                                        limitPerProgram, null)
-          .values().stream()
-          .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
+                limitPerProgram, null)
+            .values().stream()
+            .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
         result.add(new ProgramHistory(latestProgramId, runs, null));
       }
 
@@ -1063,22 +1120,25 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void deleteAllStates(NamespaceId namespaceId, String appName) throws ApplicationNotFoundException {
+  public void deleteAllStates(NamespaceId namespaceId, String appName)
+      throws ApplicationNotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       verifyApplicationExists(context, namespaceId, appName);
       getAppStateTable(context).deleteAll(namespaceId, appName);
     }, ApplicationNotFoundException.class);
   }
 
-  private AppStateTable getAppStateTable(StructuredTableContext context) throws TableNotFoundException {
+  private AppStateTable getAppStateTable(StructuredTableContext context)
+      throws TableNotFoundException {
     return new AppStateTable(context);
   }
 
   private void verifyApplicationExists(StructuredTableContext context,
-                                       NamespaceId namespaceId,
-                                       String appName) throws ApplicationNotFoundException, IOException {
+      NamespaceId namespaceId,
+      String appName) throws ApplicationNotFoundException, IOException {
     // Check if app exists
-    ApplicationMeta latest = getAppMetadataStore(context).getLatest(namespaceId.appReference(appName));
+    ApplicationMeta latest = getAppMetadataStore(context).getLatest(
+        namespaceId.appReference(appName));
     if (latest == null || latest.getSpec() == null) {
       throw new ApplicationNotFoundException(namespaceId.app(appName));
     }
@@ -1086,13 +1146,15 @@ public class DefaultStore implements Store {
 
   /**
    * Returns the {@link ProgramSpecification} for the specified {@link ProgramId program}.
+   *
    * @param appSpec the {@link ApplicationSpecification} of the existing application
-   * @param programReference the {@link ProgramReference} for which the {@link ProgramSpecification} is requested
+   * @param programReference the {@link ProgramReference} for which the {@link
+   *     ProgramSpecification} is requested
    * @return the {@link ProgramSpecification} for the specified {@link ProgramId program}
    */
   @Nullable
   private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec,
-                                                                  ProgramReference programReference) {
+      ProgramReference programReference) {
     String programName = programReference.getProgram();
     ProgramType type = programReference.getType();
     switch (type) {

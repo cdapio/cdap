@@ -62,14 +62,14 @@ public class TestSparkCrossNSDatasetApp extends AbstractApplication {
     public void run(JavaSparkExecutionContext sec) throws Exception {
       JavaSparkContext jsc = new JavaSparkContext();
       Map<String, String> runtimeArguments = sec.getRuntimeArguments();
-      String inputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAMESPACE)) ?
-        sec.getNamespace() : runtimeArguments.get(INPUT_DATASET_NAMESPACE);
-      String inputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAME)) ?
-        "inputDataset" : runtimeArguments.get(INPUT_DATASET_NAME);
-      String outputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAMESPACE)) ?
-        sec.getNamespace() : runtimeArguments.get(OUTPUT_DATASET_NAMESPACE);
-      String outputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAME)) ?
-        "outputDataset" : runtimeArguments.get(OUTPUT_DATASET_NAME);
+      String inputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAMESPACE))
+          ? sec.getNamespace() : runtimeArguments.get(INPUT_DATASET_NAMESPACE);
+      String inputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(INPUT_DATASET_NAME))
+          ? "inputDataset" : runtimeArguments.get(INPUT_DATASET_NAME);
+      String outputDatasetNS = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAMESPACE))
+          ? sec.getNamespace() : runtimeArguments.get(OUTPUT_DATASET_NAMESPACE);
+      String outputDatasetName = Strings.isNullOrEmpty(runtimeArguments.get(OUTPUT_DATASET_NAME))
+          ? "outputDataset" : runtimeArguments.get(OUTPUT_DATASET_NAME);
 
       JavaPairRDD<byte[], byte[]> rdd = sec.fromDataset(inputDatasetNS, inputDatasetName);
       sec.saveAsDataset(rdd, outputDatasetNS, outputDatasetName);

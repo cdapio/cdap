@@ -23,13 +23,13 @@ public interface WorkerManager extends ProgramManager<WorkerManager> {
 
   /**
    * Changes the number of instances.
+   *
    * @param instances number of instances to change to
    */
   void setInstances(int instances);
 
   /**
    * Returns the number of instances.
-   *
    */
   int getInstances();
 }

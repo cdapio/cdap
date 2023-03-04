@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 import java.util.Map;
 
 /**
- * Implementation of {@link Metrics} for user-defined metrics.
- * Metrics will be emitted through {@link MetricsCollectionService}.
+ * Implementation of {@link Metrics} for user-defined metrics. Metrics will be emitted through
+ * {@link MetricsCollectionService}.
  */
 public class ProgramUserMetrics implements Metrics {
 
@@ -62,9 +62,10 @@ public class ProgramUserMetrics implements Metrics {
   public Metrics child(Map<String, String> tags) {
     Sets.SetView<String> intersection = Sets.intersection(getTags().keySet(), tags.keySet());
     if (!intersection.isEmpty()) {
-      throw new IllegalArgumentException(String.format("Tags with names '%s' already exists in the context. " +
-                                                         "Child Metrics cannot be created with duplicate tag names.",
-                                                       String.join(", ", intersection)));
+      throw new IllegalArgumentException(
+          String.format("Tags with names '%s' already exists in the context. "
+                  + "Child Metrics cannot be created with duplicate tag names.",
+              String.join(", ", intersection)));
     }
     return new ProgramUserMetrics(metricsContext.childContext(tags), false);
   }

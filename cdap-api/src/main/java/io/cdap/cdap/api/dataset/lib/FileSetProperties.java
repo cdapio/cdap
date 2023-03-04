@@ -37,17 +37,17 @@ public class FileSetProperties {
   public static final String DATA_EXTERNAL = "data.external";
 
   /**
-   * If true, the file set will use an existing directory as its base path and an existing Explore table.
-   * When the file set is deleted or truncated, the directory and its contents as well as the Explore table
-   * will not be deleted.
+   * If true, the file set will use an existing directory as its base path and an existing Explore
+   * table. When the file set is deleted or truncated, the directory and its contents as well as the
+   * Explore table will not be deleted.
    */
   public static final String DATA_USE_EXISTING = "data.use.existing";
 
   /**
-   * If true, the file set will use an existing directory as its base path and an existing Explore table,
-   * and it will take possession of them.
-   * When the file set is deleted or truncated, the directory and its contents as well as the Explore table
-   * will be deleted, just as if they had been created by this file set.
+   * If true, the file set will use an existing directory as its base path and an existing Explore
+   * table, and it will take possession of them. When the file set is deleted or truncated, the
+   * directory and its contents as well as the Explore table will be deleted, just as if they had
+   * been created by this file set.
    */
   public static final String DATA_POSSESS_EXISTING = "data.possess.existing";
 
@@ -62,30 +62,29 @@ public class FileSetProperties {
   public static final String OUTPUT_FORMAT = "output.format";
 
   /**
-   * Prefix for additional properties for the input format. They are added to the
-   * Hadoop configuration, with the prefix stripped from the name.
+   * Prefix for additional properties for the input format. They are added to the Hadoop
+   * configuration, with the prefix stripped from the name.
    */
   public static final String INPUT_PROPERTIES_PREFIX = "input.properties.";
 
   /**
-   * Prefix for additional properties for the output format. They are added to the
-   * Hadoop configuration, with the prefix stripped from the name.
+   * Prefix for additional properties for the output format. They are added to the Hadoop
+   * configuration, with the prefix stripped from the name.
    */
   public static final String OUTPUT_PROPERTIES_PREFIX = "output.properties.";
 
   /**
    * The permissions for the dataset. The value for this property must be given either as a
-   * 9-character String such as "rwxr-x---" or as an octal-base number such as 750. Permissions
-   * will be applied by each dataset depending on the access control paradigm of the storage
-   * engine.
+   * 9-character String such as "rwxr-x---" or as an octal-base number such as 750. Permissions will
+   * be applied by each dataset depending on the access control paradigm of the storage engine.
    */
   @Beta
   public static final String PROPERTY_FILES_PERMISSIONS = "dataset.files.permissions";
 
   /**
-   * The group name that the permission are assigned to. For file-based datasets, this group
-   * name is used as the group for created files and directories; for table-based datasets,
-   * group privileges will be granted to this group.
+   * The group name that the permission are assigned to. For file-based datasets, this group name is
+   * used as the group for created files and directories; for table-based datasets, group privileges
+   * will be granted to this group.
    */
   @Beta
   public static final String PROPERTY_FILES_GROUP = "dataset.files.group";
@@ -170,10 +169,12 @@ public class FileSetProperties {
   /**
    * @return a map of all properties whose key begins with the given prefix, without that prefix
    */
-  public static Map<String, String> propertiesWithPrefix(Map<String, String> properties, String prefix) {
+  public static Map<String, String> propertiesWithPrefix(Map<String, String> properties,
+      String prefix) {
     return properties.entrySet().stream()
-      .filter(entry -> entry.getKey().startsWith(prefix))
-      .collect(Collectors.toMap(entry -> entry.getKey().substring(prefix.length()), Map.Entry::getValue, (a, b) -> b));
+        .filter(entry -> entry.getKey().startsWith(prefix))
+        .collect(Collectors.toMap(entry -> entry.getKey().substring(prefix.length()),
+            Map.Entry::getValue, (a, b) -> b));
   }
 
   /**
@@ -184,9 +185,11 @@ public class FileSetProperties {
     private String format;
 
     /**
-     * Package visible default constructor, to allow sub-classing by other datasets in this package.
+     * Package visible default constructor, to allow sub-classing by other datasets in this
+     * package.
      */
-    Builder() { }
+    Builder() {
+    }
 
     /**
      * Sets the base path for the file dataset.
@@ -275,7 +278,8 @@ public class FileSetProperties {
       add(name, value);
       return this;
     }
-/**
+
+    /**
      * Set the default permissions for files and directories
      */
     @Beta

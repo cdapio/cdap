@@ -171,8 +171,8 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
 
     JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
 
-    JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null ?
-      keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
+    JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null
+      ? keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
 
     FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
       new AggregatorAggregateFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
@@ -195,8 +195,8 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
       pluginFunctionContext, functionCacheFactory.newCache());
     Function2<Object, Object, Object> mergePartitionFunction =
       new AggregatorMergePartitionFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
-    JavaPairRDD<Object, Object> groupedCollection = partitions == null ?
-      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
+    JavaPairRDD<Object, Object> groupedCollection = partitions == null
+      ? keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
       keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction, partitions);
 
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =

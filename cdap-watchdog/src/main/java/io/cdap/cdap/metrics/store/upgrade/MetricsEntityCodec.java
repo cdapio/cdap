@@ -53,14 +53,15 @@ final class MetricsEntityCodec {
     this.entityCaches = Maps.newEnumMap(MetricsEntityType.class);
     for (MetricsEntityType type : MetricsEntityType.values()) {
       LoadingCache<String, byte[]> cache = CacheBuilder.newBuilder()
-                                                       .expireAfterAccess(CACHE_EXPIRE_MINUTE, TimeUnit.MINUTES)
-                                                       .build(createCacheLoader(type));
+          .expireAfterAccess(CACHE_EXPIRE_MINUTE, TimeUnit.MINUTES)
+          .build(createCacheLoader(type));
       this.entityCaches.put(type, cache);
     }
   }
 
   /**
    * Encodes a '.' separated entity into bytes.
+   *
    * @param type Type of the entity.
    * @param entity Value of the entity.
    * @return byte[] representing the given entity.
@@ -71,6 +72,7 @@ final class MetricsEntityCodec {
 
   /**
    * Encodes a dot separated entity into bytes without padding.
+   *
    * @param type Type of the entity.
    * @param entity Value of the entity.
    * @return byte[] representing the given entity.
@@ -87,8 +89,9 @@ final class MetricsEntityCodec {
   }
 
   /**
-   * Encodes a '.' separated entity into bytes. If the entity has less than the given parts or {@code null},
-   * the remaining bytes would be padded by the given padding.
+   * Encodes a '.' separated entity into bytes. If the entity has less than the given parts or
+   * {@code null}, the remaining bytes would be padded by the given padding.
+   *
    * @param type Type of the entity.
    * @param entity Value of the entity.
    * @param padding Padding byte to apply for padding.
@@ -112,17 +115,18 @@ final class MetricsEntityCodec {
   }
 
   /**
-   * Encodes a '.' separated entity into bytes. If the entity has less than the given parts, the remaining bytes
-   * would be padded by the given padding. Also return a fuzzy mask with byte value = 1 for the padded bytes and
-   * 0 for non padded bytes.
+   * Encodes a '.' separated entity into bytes. If the entity has less than the given parts, the
+   * remaining bytes would be padded by the given padding. Also return a fuzzy mask with byte value
+   * = 1 for the padded bytes and 0 for non padded bytes.
    *
    * @param type Type of the entity.
    * @param entity Value of the entity.
    * @param padding Padding byte to apply for padding.
-   * @return ImmutablePair with first byte[] representing the given entity that may have padding at the end and
-   *         second byte[] as the fuzzy mask.
+   * @return ImmutablePair with first byte[] representing the given entity that may have padding at
+   *     the end and second byte[] as the fuzzy mask.
    */
-  public ImmutablePair<byte[], byte[]> paddedFuzzyEncode(MetricsEntityType type, String entity, int padding) {
+  public ImmutablePair<byte[], byte[]> paddedFuzzyEncode(MetricsEntityType type, String entity,
+      int padding) {
     int idSize = entityTable.getIdSize();
     int depth = getDepth(type);
     String[] entityParts = entity == null ? EMPTY_STRINGS : ENTITY_SPLITTER.split(entity, depth);
@@ -167,7 +171,7 @@ final class MetricsEntityCodec {
         break;
       }
       builder.append(entityTable.getName(id, type.getType() + i))
-        .append('.');
+          .append('.');
     }
 
     builder.setLength(builder.length() - 1);
@@ -184,6 +188,7 @@ final class MetricsEntityCodec {
 
   /**
    * Creates a CacheLoader for entity name to encoded byte[].
+   *
    * @param type Type of the entity.
    */
   private CacheLoader<String, byte[]> createCacheLoader(final MetricsEntityType type) {

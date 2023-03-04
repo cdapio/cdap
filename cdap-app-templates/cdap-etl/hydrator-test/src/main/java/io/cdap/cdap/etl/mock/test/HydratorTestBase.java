@@ -100,6 +100,7 @@ import java.util.concurrent.TimeUnit;
  * Performs common setup logic
  */
 public class HydratorTestBase extends TestBase {
+
   // need to specify each PluginClass so that they can be used outside of this project. If we don't do this,
   // when the plugin jar is created, it will add lib/hydrator-test.jar to the plugin jar.
   // The ArtifactInspector will not examine any library jars for plugins, because it assumes plugins are always
@@ -107,39 +108,49 @@ public class HydratorTestBase extends TestBase {
   // So since the plugins are in lib/hydrator-test.jar, CDAP won't find any plugins in the jar.
   // To work around, we'll just explicitly specify each plugin.
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
-    MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, MockSQLEngine.PLUGIN_CLASS,
-    MockSQLEngineWithCapabilities.PLUGIN_CLASS, MockSQLEngineWithStageSettings.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
-    MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
-    MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
-    StringValueFilterTransform.PLUGIN_CLASS, FilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
-    StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
-    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSourceWithReadCapability.PLUGIN_CLASS,
-    MockSink.PLUGIN_CLASS, MockSinkWithWriteCapability.PLUGIN_CLASS,
-    DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS,
-    FileConnector.PLUGIN_CLASS, IncapableSource.PLUGIN_CLASS, IncapableSink.PLUGIN_CLASS,
-    LookupTransform.PLUGIN_CLASS, SleepTransform.PLUGIN_CLASS, NodeStatesAction.PLUGIN_CLASS,
-    DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS, ExceptionTransform.PLUGIN_CLASS,
-    PluginValidationTransform.PLUGIN_CLASS
+      FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+      GroupFilterAggregator.PLUGIN_CLASS,
+      MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, MockSQLEngine.PLUGIN_CLASS,
+      MockSQLEngineWithCapabilities.PLUGIN_CLASS, MockSQLEngineWithStageSettings.PLUGIN_CLASS,
+      DupeFlagger.PLUGIN_CLASS,
+      MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
+      MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
+      DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+      FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
+      StringValueFilterTransform.PLUGIN_CLASS, FilterTransform.PLUGIN_CLASS,
+      DropNullTransform.PLUGIN_CLASS,
+      MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
+      StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS,
+      FilterErrorTransform.PLUGIN_CLASS,
+      NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS,
+      NullAlertTransform.PLUGIN_CLASS,
+      MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
+      MockSourceWithReadCapability.PLUGIN_CLASS,
+      MockSink.PLUGIN_CLASS, MockSinkWithWriteCapability.PLUGIN_CLASS,
+      DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS,
+      FileConnector.PLUGIN_CLASS, IncapableSource.PLUGIN_CLASS, IncapableSink.PLUGIN_CLASS,
+      LookupTransform.PLUGIN_CLASS, SleepTransform.PLUGIN_CLASS, NodeStatesAction.PLUGIN_CLASS,
+      DistinctAggregator.PLUGIN_CLASS, NullErrorTransform.PLUGIN_CLASS,
+      ExceptionTransform.PLUGIN_CLASS,
+      PluginValidationTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
-    io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
-    io.cdap.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
-    io.cdap.cdap.etl.mock.spark.streaming.MockSink.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    FilterTransform.PLUGIN_CLASS,
-    FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
-    FieldCountReducibleAggregator.PLUGIN_CLASS,
-    GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
-    StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
-    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
-    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    SleepTransform.PLUGIN_CLASS, RecoveringTransform.PLUGIN_CLASS
+      io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
+      io.cdap.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
+      io.cdap.cdap.etl.mock.spark.streaming.MockSink.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
+      DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
+      IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS,
+      DropNullTransform.PLUGIN_CLASS,
+      FilterTransform.PLUGIN_CLASS,
+      FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+      FieldCountReducibleAggregator.PLUGIN_CLASS,
+      GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS,
+      DupeFlagger.PLUGIN_CLASS,
+      StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
+      FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
+      NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS,
+      NullAlertTransform.PLUGIN_CLASS,
+      SleepTransform.PLUGIN_CLASS, RecoveringTransform.PLUGIN_CLASS
   );
   protected static ArtifactId batchMocksArtifactId;
   protected static ArtifactId streamingMocksArtifactId;
@@ -147,71 +158,76 @@ public class HydratorTestBase extends TestBase {
   public HydratorTestBase() {
   }
 
-  protected static void setupBatchArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static void setupBatchArtifacts(ArtifactId artifactId, Class<?> appClass)
+      throws Exception {
     // add the app artifact
     addAppArtifact(artifactId, appClass,
-                   BatchSource.class.getPackage().getName(),
-                   Action.class.getPackage().getName(),
-                   AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
-                   Condition.class.getPackage().getName(),
-                   PipelineConfigurable.class.getPackage().getName(),
-                   AccessType.class.getPackage().getName(),
-                   InvalidStageException.class.getPackage().getName(),
-                   SQLEngine.class.getPackage().getName(),
-                   SQLDataset.class.getPackage().getName(),
-                   SQLPushRequest.class.getPackage().getName(),
-                   PushCapability.class.getPackage().getName(),
-                   SparkRecordCollection.class.getPackage().getName(),
-                   Connector.class.getPackage().getName(),
-                   "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
+        BatchSource.class.getPackage().getName(),
+        Action.class.getPackage().getName(),
+        AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
+        Condition.class.getPackage().getName(),
+        PipelineConfigurable.class.getPackage().getName(),
+        AccessType.class.getPackage().getName(),
+        InvalidStageException.class.getPackage().getName(),
+        SQLEngine.class.getPackage().getName(),
+        SQLDataset.class.getPackage().getName(),
+        SQLPushRequest.class.getPackage().getName(),
+        PushCapability.class.getPackage().getName(),
+        SparkRecordCollection.class.getPackage().getName(),
+        Connector.class.getPackage().getName(),
+        "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic",
+        "org.apache.avro.io");
 
-    batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks",
-                                          artifactId.getVersion());
+    batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(),
+        artifactId.getArtifact() + "-mocks",
+        artifactId.getVersion());
     // add plugins artifact
     addPluginArtifact(batchMocksArtifactId,
-                      artifactId,
-                      BATCH_MOCK_PLUGINS,
-                      io.cdap.cdap.etl.mock.batch.MockSource.class,
-                      io.cdap.cdap.etl.mock.batch.MockSink.class,
-                      MockExternalSource.class, MockExternalSink.class,
-                      MockSQLEngine.class,
-                      MockSQLEngineWithCapabilities.class,
-                      MockSQLEngineWithStageSettings.class,
-                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
-                      IntValueFilterTransform.class, StringValueFilterTransform.class,
-                      FieldCountAggregator.class, FieldsPrefixTransform.class,
-                      StringValueFilterCompute.class, NullFieldSplitterTransform.class, NullAlertTransform.class,
-                      FileMoveAction.class);
+        artifactId,
+        BATCH_MOCK_PLUGINS,
+        io.cdap.cdap.etl.mock.batch.MockSource.class,
+        io.cdap.cdap.etl.mock.batch.MockSink.class,
+        MockExternalSource.class, MockExternalSink.class,
+        MockSQLEngine.class,
+        MockSQLEngineWithCapabilities.class,
+        MockSQLEngineWithStageSettings.class,
+        DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
+        IntValueFilterTransform.class, StringValueFilterTransform.class,
+        FieldCountAggregator.class, FieldsPrefixTransform.class,
+        StringValueFilterCompute.class, NullFieldSplitterTransform.class, NullAlertTransform.class,
+        FileMoveAction.class);
   }
 
-  protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass)
+      throws Exception {
     // add the app artifact
     addAppArtifact(artifactId, appClass,
-                   StreamingSource.class.getPackage().getName(),
-                   Transform.class.getPackage().getName(),
-                   AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
-                   SparkCompute.class.getPackage().getName(),
-                   InvalidStageException.class.getPackage().getName(),
-                   PipelineConfigurable.class.getPackage().getName(),
-                   // have to export this package, otherwise getting ClassCastException in unit test
-                   FieldOperation.class.getPackage().getName());
+        StreamingSource.class.getPackage().getName(),
+        Transform.class.getPackage().getName(),
+        AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
+        SparkCompute.class.getPackage().getName(),
+        InvalidStageException.class.getPackage().getName(),
+        PipelineConfigurable.class.getPackage().getName(),
+        // have to export this package, otherwise getting ClassCastException in unit test
+        FieldOperation.class.getPackage().getName());
 
-
-    streamingMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");
+    streamingMocksArtifactId = new ArtifactId(artifactId.getNamespace(),
+        artifactId.getArtifact() + "-mocks", "1.0.0");
     // add plugins artifact
     addPluginArtifact(streamingMocksArtifactId,
-                      artifactId,
-                      STREAMING_MOCK_PLUGINS,
-                      io.cdap.cdap.etl.mock.spark.streaming.MockSource.class,
-                      io.cdap.cdap.etl.mock.batch.MockSink.class,
-                      io.cdap.cdap.etl.mock.spark.streaming.MockSink.class,
-                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
-                      IntValueFilterTransform.class, StringValueFilterTransform.class,
-                      StringValueFilterCompute.class, Window.class,
-                      NullFieldSplitterTransform.class, NullAlertTransform.class);
+        artifactId,
+        STREAMING_MOCK_PLUGINS,
+        io.cdap.cdap.etl.mock.spark.streaming.MockSource.class,
+        io.cdap.cdap.etl.mock.batch.MockSink.class,
+        io.cdap.cdap.etl.mock.spark.streaming.MockSink.class,
+        DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
+        IntValueFilterTransform.class, StringValueFilterTransform.class,
+        StringValueFilterCompute.class, Window.class,
+        NullFieldSplitterTransform.class, NullAlertTransform.class);
   }
 
-  protected static void waitForAppToDeploy(ApplicationManager appManager, ApplicationId pipeline) throws Exception {
+  protected static void waitForAppToDeploy(ApplicationManager appManager, ApplicationId pipeline)
+      throws Exception {
     Retries.callWithRetries(() -> {
       try {
         appManager.getInfo();

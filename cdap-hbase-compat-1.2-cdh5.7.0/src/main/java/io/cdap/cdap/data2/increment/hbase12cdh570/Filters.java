@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.filter.FilterList;
  * Utility methods for working with HBase filters.
  */
 public final class Filters {
+
   /**
    * Adds {@code overrideFilter} on to {@code baseFilter}, if it exists, otherwise replaces it.
    */

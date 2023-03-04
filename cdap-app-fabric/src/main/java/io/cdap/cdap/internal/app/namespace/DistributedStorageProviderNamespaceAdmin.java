@@ -39,9 +39,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages namespaces on underlying systems - HDFS, HBase, Hive, etc.
  */
-public final class DistributedStorageProviderNamespaceAdmin extends AbstractStorageProviderNamespaceAdmin {
+public final class DistributedStorageProviderNamespaceAdmin extends
+    AbstractStorageProviderNamespaceAdmin {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedStorageProviderNamespaceAdmin.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      DistributedStorageProviderNamespaceAdmin.class);
 
   private final Configuration hConf;
   private final HBaseTableUtil tableUtil;
@@ -50,9 +52,9 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
 
   @Inject
   DistributedStorageProviderNamespaceAdmin(CConfiguration cConf,
-                                           NamespacePathLocator namespacePathLocator,
-                                           HBaseTableUtil tableUtil,
-                                           NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespacePathLocator namespacePathLocator,
+      HBaseTableUtil tableUtil,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf, namespacePathLocator, namespaceQueryAdmin);
     this.hConf = HBaseConfiguration.create();
     this.tableUtil = tableUtil;
@@ -77,7 +79,7 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
         if (namespaceMeta.getConfig().getGroupName() != null) {
           try {
             executor.grantPermissions(hbaseNamespace, null,
-                                      ImmutableMap.of("@" + namespaceMeta.getConfig().getGroupName(), "C"));
+                ImmutableMap.of("@" + namespaceMeta.getConfig().getGroupName(), "C"));
           } catch (IOException | RuntimeException e) {
             // don't leave a partial state behind, as this fails the create(), the namespace should be removed
             if (created) {
@@ -103,9 +105,10 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
 
     try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
       if (!tableUtil.hasNamespace(admin, hbaseNamespace)) {
-        throw new IOException(String.format("HBase namespace '%s' specified for new namespace '%s' does not" +
-                                              " exist. Please specify an existing HBase namespace.", hbaseNamespace,
-                                            namespaceMeta.getName()));
+        throw new IOException(
+            String.format("HBase namespace '%s' specified for new namespace '%s' does not"
+                    + " exist. Please specify an existing HBase namespace.", hbaseNamespace,
+                namespaceMeta.getName()));
       }
     }
   }
@@ -129,8 +132,9 @@ public final class DistributedStorageProviderNamespaceAdmin extends AbstractStor
     if (!Strings.isNullOrEmpty(namespaceConfig.getHbaseNamespace())) {
       // custom namespace mapping is set for HBase, hence don't do anything during delete since the lifecycle of the
       // namespace will be managed by the user
-      LOG.debug("Custom HBase mapping {} was found while deleting {}. Hence skipping deletion of HBase namespace",
-                namespaceConfig.getHbaseNamespace(), namespaceId);
+      LOG.debug(
+          "Custom HBase mapping {} was found while deleting {}. Hence skipping deletion of HBase namespace",
+          namespaceConfig.getHbaseNamespace(), namespaceId);
       return;
     }
     // delete HBase namespace

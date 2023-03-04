@@ -26,6 +26,7 @@ import io.cdap.cdap.operations.OperationalStats;
  * Base class for CDAP {@link OperationalStats}.
  */
 public abstract class AbstractCDAPStats extends AbstractOperationalStats {
+
   @VisibleForTesting
   static final String SERVICE_NAME = "CDAP";
 

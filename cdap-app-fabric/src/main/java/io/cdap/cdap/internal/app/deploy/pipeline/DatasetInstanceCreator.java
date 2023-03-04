@@ -36,18 +36,19 @@ import org.slf4j.LoggerFactory;
  * Creates dataset instances.
  */
 final class DatasetInstanceCreator {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceCreator.class);
   private final DatasetFramework datasetFramework;
   private final boolean allowDatasetUncheckedUpgrade;
 
   DatasetInstanceCreator(CConfiguration configuration, DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
-    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(
+        Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   /**
-   * Receives an input containing application specification and location
-   * and verifies both.
+   * Receives an input containing application specification and location and verifies both.
    *
    * @param namespaceId the namespace to create the dataset instance in
    * @param datasets the datasets to create
@@ -55,35 +56,36 @@ final class DatasetInstanceCreator {
    * @param authorizingUser the authorizing user who will be making the call
    */
   void createInstances(NamespaceId namespaceId, Map<String, DatasetCreationSpec> datasets,
-                       @Nullable final KerberosPrincipalId ownerPrincipal,
-                       String authorizingUser) throws Exception {
+      @Nullable final KerberosPrincipalId ownerPrincipal,
+      String authorizingUser) throws Exception {
     // create dataset instances
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : datasets.entrySet()) {
       String instanceName = instanceEntry.getKey();
       final DatasetId instanceId = namespaceId.dataset(instanceName);
       final DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       DatasetSpecification existingSpec =
-        AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
-          @Override
-          public DatasetSpecification call() throws Exception {
-            return datasetFramework.getDatasetSpec(instanceId);
-          }
-        });
+          AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
+            @Override
+            public DatasetSpecification call() throws Exception {
+              return datasetFramework.getDatasetSpec(instanceId);
+            }
+          });
       if (existingSpec == null) {
         LOG.info("Adding dataset instance: {}", instanceName);
         AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties(),
-                                         ownerPrincipal);
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
+                instanceSpec.getProperties(),
+                ownerPrincipal);
             return null;
           }
         });
       } else {
         if (!existingSpec.getType().equals(instanceSpec.getTypeName())) {
           throw new IncompatibleUpdateException(
-            String.format("Existing dataset '%s' of type '%s' may not be updated to type '%s'",
-                          instanceName, existingSpec.getType(), instanceSpec.getTypeName()));
+              String.format("Existing dataset '%s' of type '%s' may not be updated to type '%s'",
+                  instanceName, existingSpec.getType(), instanceSpec.getTypeName()));
         }
         if (allowDatasetUncheckedUpgrade) {
           LOG.info("Updating dataset instance: {}", instanceName);

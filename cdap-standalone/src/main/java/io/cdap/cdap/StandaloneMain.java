@@ -116,8 +116,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Standalone Main.
- * NOTE: Use AbstractIdleService
+ * Standalone Main. NOTE: Use AbstractIdleService
  */
 public class StandaloneMain {
 
@@ -177,7 +176,7 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
-                                                                     Constants.AppFabric.RemoteExecution.class));
+        Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
@@ -220,7 +219,8 @@ public class StandaloneMain {
   }
 
   /**
-   * INTERNAL METHOD. Returns the guice injector of Standalone. It's for testing only. Use with extra caution.
+   * INTERNAL METHOD. Returns the guice injector of Standalone. It's for testing only. Use with
+   * extra caution.
    */
   @VisibleForTesting
   public Injector getInjector() {
@@ -275,8 +275,9 @@ public class StandaloneMain {
     // We need to set the port after starting the localizer service.
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     // Set the artifact localizer port for the preview conf as well
-    injector.getInstance(Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
-      .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+    injector.getInstance(
+            Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+        .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     previewHttpServer.startAndWait();
     previewRunnerManager.startAndWait();
 
@@ -298,11 +299,12 @@ public class StandaloneMain {
     supportBundleInternalService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
-    int dashboardPort = sslEnabled ?
-      cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
-      cConf.getInt(Constants.Dashboard.BIND_PORT);
+    int dashboardPort = sslEnabled
+        ? cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
+        cConf.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("CDAP Sandbox started successfully.");
-    System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
+    System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost",
+        dashboardPort);
   }
 
   /**
@@ -368,7 +370,7 @@ public class StandaloneMain {
       LOG.error("Exception during shutdown", e);
     } finally {
       File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
       cleanupTempDir(tmpDir);
     }
 
@@ -396,9 +398,10 @@ public class StandaloneMain {
     // Includes logging extension jars as part of the system classpath.
     // It is needed to support custom appenders loaded from those extension jars.
     ClassLoader classLoader = MainClassLoader.createFromContext(
-      LoggingUtil.getExtensionJarsAsURLs(CConfiguration.create()));
+        LoggingUtil.getExtensionJarsAsURLs(CConfiguration.create()));
     if (classLoader == null) {
-      LOG.warn("Failed to create CDAP system ClassLoader. Lineage record and Audit Log will not be updated.");
+      LOG.warn(
+          "Failed to create CDAP system ClassLoader. Lineage record and Audit Log will not be updated.");
       doMain(args);
     } else {
       Thread.currentThread().setContextClassLoader(classLoader);
@@ -453,7 +456,8 @@ public class StandaloneMain {
     File localDataDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
-    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+    hConf.set("hadoop.tmp.dir",
+        new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
@@ -475,7 +479,7 @@ public class StandaloneMain {
     // Cleans up the temporary directory which might contain unnecessary files from previous CDAP standalone runs
     // This happens here instead of in startup because it needs to happen before Authorizer is created, see CDAP-17239
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     cleanupTempDir(tmpDir);
 
     return new StandaloneMain(modules, cConf);
@@ -485,7 +489,8 @@ public class StandaloneMain {
     cConf.setInt(Constants.Master.MAX_INSTANCES, 1);
     cConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE,
+        Constants.InMemoryPersistenceType.LEVELDB.name());
 
     // configure all services except for router and auth to bind to 127.0.0.1
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
@@ -502,49 +507,49 @@ public class StandaloneMain {
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
 
     return ImmutableList.of(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new KafkaClientModule(),
-      new MetricsHandlerModule(),
-      new LogQueryRuntimeModule().getStandaloneModules(),
-      new InMemoryDiscoveryModule(),
-      new LocalLocationModule(),
-      new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new DataSetServiceModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getStandaloneModules(),
-      new LocalLogAppenderModule(),
-      new LogReaderRuntimeModules().getStandaloneModules(),
-      new RouterModules().getStandaloneModules(),
-      new CoreSecurityRuntimeModule().getStandaloneModules(),
-      new ExternalAuthenticationModule(),
-      new SecureStoreServerModule(),
-      new MetadataServiceModule(),
-      new MetadataReaderWriterModules().getStandaloneModules(),
-      new AuditModule(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getStandaloneModules(),
-      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-      new PreviewManagerModule(false),
-      new PreviewRunnerManagerModule().getStandaloneModules(),
-      new MessagingServerRuntimeModule().getStandaloneModules(),
-      new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
-      new MonitorHandlerModule(false),
-      new RuntimeServerModule(),
-      new OperationalStatsModule(),
-      new MetricsWriterModule(),
-      new SupportBundleServiceModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Needed by MonitorHandlerModuler
-          bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new KafkaClientModule(),
+        new MetricsHandlerModule(),
+        new LogQueryRuntimeModule().getStandaloneModules(),
+        new InMemoryDiscoveryModule(),
+        new LocalLocationModule(),
+        new ProgramRunnerRuntimeModule().getStandaloneModules(),
+        new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),
+        new DataSetsModules().getStandaloneModules(),
+        new DataSetServiceModules().getStandaloneModules(),
+        new MetricsClientRuntimeModule().getStandaloneModules(),
+        new LocalLogAppenderModule(),
+        new LogReaderRuntimeModules().getStandaloneModules(),
+        new RouterModules().getStandaloneModules(),
+        new CoreSecurityRuntimeModule().getStandaloneModules(),
+        new ExternalAuthenticationModule(),
+        new SecureStoreServerModule(),
+        new MetadataServiceModule(),
+        new MetadataReaderWriterModules().getStandaloneModules(),
+        new AuditModule(),
+        new AuthenticationContextModules().getMasterModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getStandaloneModules(),
+        new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
+        new PreviewManagerModule(false),
+        new PreviewRunnerManagerModule().getStandaloneModules(),
+        new MessagingServerRuntimeModule().getStandaloneModules(),
+        new AppFabricServiceRuntimeModule(cConf).getStandaloneModules(),
+        new MonitorHandlerModule(false),
+        new RuntimeServerModule(),
+        new OperationalStatsModule(),
+        new MetricsWriterModule(),
+        new SupportBundleServiceModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            // Needed by MonitorHandlerModuler
+            bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+          }
         }
-      }
     );
   }
 }

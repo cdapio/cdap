@@ -60,16 +60,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tethering runtime job manager. This class sends runtime job details to the control channel, which will be passed
- * along for the tethered CDAP instance to run.
- * An instance of this class is created by {@link TetheringProvisioner}.
+ * Tethering runtime job manager. This class sends runtime job details to the control channel, which
+ * will be passed along for the tethered CDAP instance to run. An instance of this class is created
+ * by {@link TetheringProvisioner}.
  */
 public class TetheringRuntimeJobManager implements RuntimeJobManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(TetheringRuntimeJobManager.class);
   private static final Gson GSON = new GsonBuilder().create();
-  private static final Set<String> SELECT_CCONF_FIELDS = ImmutableSet.of("program.", "spark.", "workflow.",
-                                                                         "worker.", "app.program.");
+  private static final Set<String> SELECT_CCONF_FIELDS = ImmutableSet.of("program.", "spark.",
+      "workflow.",
+      "worker.", "app.program.");
 
   private final String tetheredInstanceName;
   private final String tetheredNamespace;
@@ -79,38 +80,40 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   private final TopicId topicId;
   private final LocationFactory locationFactory;
 
-  public TetheringRuntimeJobManager(TetheringConf conf, CConfiguration cConf, MessagingService messagingService,
-                                    TetheringStore tetheringStore, LocationFactory locationFactory) {
+  public TetheringRuntimeJobManager(TetheringConf conf, CConfiguration cConf,
+      MessagingService messagingService,
+      TetheringStore tetheringStore, LocationFactory locationFactory) {
     this.tetheredInstanceName = conf.getTetheredInstanceName();
     this.tetheredNamespace = conf.getTetheredNamespace();
     this.cConf = cConf;
     this.messagePublisher = new MultiThreadMessagingContext(messagingService).getMessagePublisher();
     this.tetheringStore = tetheringStore;
     this.topicId = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                               cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX) + tetheredInstanceName);
+        cConf.get(Constants.Tethering.CLIENT_TOPIC_PREFIX) + tetheredInstanceName);
     this.locationFactory = locationFactory;
   }
 
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    LOG.debug("Launching program run {} with following configurations: " +
-                "tethered instance name {}, tethered namespace {}.",
-              runInfo, tetheredInstanceName, tetheredNamespace);
+    LOG.debug("Launching program run {} with following configurations: "
+            + "tethered instance name {}, tethered namespace {}.",
+        runInfo, tetheredInstanceName, tetheredNamespace);
     checkTetheredConnection(tetheredInstanceName, tetheredNamespace);
     byte[] payload = Bytes.toBytes(GSON.toJson(createLaunchPayload(runtimeJobInfo)));
-    TetheringControlMessage message = new TetheringControlMessage(TetheringControlMessage.Type.START_PROGRAM, payload);
+    TetheringControlMessage message = new TetheringControlMessage(
+        TetheringControlMessage.Type.START_PROGRAM, payload);
     publishToControlChannel(message);
   }
 
   /**
-   * This method should be used carefully as currently it always returns UNKNOWN as RuntimeJobStatus.
-   * For the tethering case, in case of a successful program run, a call is made to
-   * kill(programRunInfo), for any status other than UNKNOWN or TERMINATING, a kill() is issued on the control
-   * channel. Returning UNKNOWN from this method makes sure, an unnecessary kill() is not issued
-   * In the future, if it were possible to get the actual job status from the tethered instance,
-   * this method should be changed to reflect the same.
-  * */
+   * This method should be used carefully as currently it always returns UNKNOWN as
+   * RuntimeJobStatus. For the tethering case, in case of a successful program run, a call is made
+   * to kill(programRunInfo), for any status other than UNKNOWN or TERMINATING, a kill() is issued
+   * on the control channel. Returning UNKNOWN from this method makes sure, an unnecessary kill() is
+   * not issued In the future, if it were possible to get the actual job status from the tethered
+   * instance, this method should be changed to reflect the same.
+   */
   @Override
   public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) {
     return Optional.of(new RuntimeJobDetail(programRunInfo, RuntimeJobStatus.UNKNOWN));
@@ -126,18 +129,18 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     if (status.isTerminated()) {
       return;
     }
-    LOG.debug("Stopping program run {} with following configurations: " +
-                "tethered instance name {}, tethered namespace {}.",
-              programRunInfo, tetheredInstanceName, tetheredNamespace);
+    LOG.debug("Stopping program run {} with following configurations: "
+            + "tethered instance name {}, tethered namespace {}.",
+        programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
-                                                                    TetheringControlMessage.Type.STOP_PROGRAM);
+        TetheringControlMessage.Type.STOP_PROGRAM);
     publishToControlChannel(message);
   }
 
   /**
    * Unless RuntimeJobStatus is explicitly set as RUNNING, this method gets jobDetail from
    * getDetails() which is equivalent to using RuntimeJobStatus.UNKNOWN
-   * */
+   */
   @Override
   public void kill(RuntimeJobDetail jobDetail) throws Exception {
     if (jobDetail == null) {
@@ -151,10 +154,11 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
       return;
     }
 
-    LOG.debug("Killing program run {} with following configurations: tethered instance name {}, tethered namespace {}.",
-              programRunInfo, tetheredInstanceName, tetheredNamespace);
+    LOG.debug(
+        "Killing program run {} with following configurations: tethered instance name {}, tethered namespace {}.",
+        programRunInfo, tetheredInstanceName, tetheredNamespace);
     TetheringControlMessage message = createProgramTerminatePayload(programRunInfo,
-                                                                    TetheringControlMessage.Type.KILL_PROGRAM);
+        TetheringControlMessage.Type.KILL_PROGRAM);
     publishToControlChannel(message);
   }
 
@@ -167,22 +171,25 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   void publishToControlChannel(TetheringControlMessage message) throws Exception {
     try {
       messagePublisher.publish(topicId.getNamespace(), topicId.getTopic(), StandardCharsets.UTF_8,
-                               GSON.toJson(message));
+          GSON.toJson(message));
     } catch (IOException | TopicNotFoundException e) {
       throw new Exception(String.format("Failed to publish to topic %s", topicId), e);
     }
   }
 
   /**
-   * Use GZIPOutputStream to compress the LocalFile. First attempts to read from location factory; if the file does
-   * not exist in the location factory base path, attempts to read from local disk.
+   * Use GZIPOutputStream to compress the LocalFile. First attempts to read from location factory;
+   * if the file does not exist in the location factory base path, attempts to read from local
+   * disk.
    */
   @VisibleForTesting
   byte[] getLocalFileAsCompressedBytes(LocalFile localFile) throws IOException {
-    LOG.trace("Compressing local file with name '{}' and URI '{}'", localFile.getName(), localFile.getURI());
+    LOG.trace("Compressing local file with name '{}' and URI '{}'", localFile.getName(),
+        localFile.getURI());
     InputStream in;
     // Determine whether to read from local file or location factory based on file scheme.
-    if (locationFactory.getHomeLocation().toURI().getScheme().equals(localFile.getURI().getScheme())) {
+    if (locationFactory.getHomeLocation().toURI().getScheme()
+        .equals(localFile.getURI().getScheme())) {
       in = locationFactory.create(localFile.getURI()).getInputStream();
     } else {
       in = new FileInputStream(new File(localFile.getURI()));
@@ -212,23 +219,27 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     } catch (IOException e) {
       throw new IllegalArgumentException("Failed to get peer information", e);
     }
-    if (peerInfo.getMetadata().getNamespaceAllocations().stream().noneMatch(n -> n.getNamespace().equals(namespace))) {
-      throw new IllegalArgumentException(String.format("Namespace %s is not provided by tethered peer %s",
-                                                       namespace, peer));
+    if (peerInfo.getMetadata().getNamespaceAllocations().stream()
+        .noneMatch(n -> n.getNamespace().equals(namespace))) {
+      throw new IllegalArgumentException(
+          String.format("Namespace %s is not provided by tethered peer %s",
+              namespace, peer));
     }
     if (!peerInfo.getTetheringStatus().equals(TetheringStatus.ACCEPTED)) {
-      throw new IllegalArgumentException(String.format("Connection to tethered peer %s must first be accepted", peer));
+      throw new IllegalArgumentException(
+          String.format("Connection to tethered peer %s must first be accepted", peer));
     }
   }
 
   /**
    * Add select LocalFiles and cConf entries to the control message payload
    */
-  private TetheringLaunchMessage createLaunchPayload(RuntimeJobInfo runtimeJobInfo) throws IOException {
+  private TetheringLaunchMessage createLaunchPayload(RuntimeJobInfo runtimeJobInfo)
+      throws IOException {
     TetheringLaunchMessage.Builder builder = new TetheringLaunchMessage.Builder()
-      .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
-      .addFileNames(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME)
-      .addFileNames(DistributedProgramRunner.APP_SPEC_FILE_NAME);
+        .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
+        .addFileNames(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME)
+        .addFileNames(DistributedProgramRunner.APP_SPEC_FILE_NAME);
 
     if (SecurityUtil.isInternalAuthEnabled(cConf)) {
       builder.addFileNames(Constants.Security.Authentication.RUNTIME_TOKEN_FILE);
@@ -237,7 +248,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     Collection<? extends LocalFile> localFiles = runtimeJobInfo.getLocalizeFiles();
     for (String fileName : builder.getFileNames()) {
       LocalFile localFile = localFiles.stream().filter(file -> file.getName().equals(fileName))
-        .findFirst().orElseThrow(() -> new IllegalStateException("Cannot find file" + fileName));
+          .findFirst().orElseThrow(() -> new IllegalStateException("Cannot find file" + fileName));
       builder.addLocalizeFiles(fileName, getLocalFileAsCompressedBytes(localFile));
     }
 
@@ -254,7 +265,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
    * Create control message payload to stop or kill a program.
    */
   private TetheringControlMessage createProgramTerminatePayload(ProgramRunInfo programRunInfo,
-                                                                TetheringControlMessage.Type messageType) {
+      TetheringControlMessage.Type messageType) {
     byte[] payload = Bytes.toBytes(GSON.toJson(programRunInfo));
     return new TetheringControlMessage(messageType, payload);
   }

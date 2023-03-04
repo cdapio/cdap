@@ -27,25 +27,28 @@ import org.apache.tephra.TransactionSystemClient;
  * A utility class for creating a {@link Transactional} to work with entity tables.
  */
 public final class NoSQLTransactionals {
+
   private NoSQLTransactionals() {
     // to prevent instantiation
   }
 
   /**
-   * Create a transactional for an entity table. The regular {@link io.cdap.cdap.api.Transactionals} class cannot be
-   * used due to cyclic dependency between dataset service and NoSQL StructuredTable.
+   * Create a transactional for an entity table. The regular {@link io.cdap.cdap.api.Transactionals}
+   * class cannot be used due to cyclic dependency between dataset service and NoSQL
+   * StructuredTable.
    *
    * @param txClient transaction client
    * @param datasetSupplier supplies the dataset for the entity table
    * @return transactional for the entity table
    */
   public static Transactional createTransactional(TransactionSystemClient txClient,
-                                                  TableDatasetSupplier datasetSupplier) {
+      TableDatasetSupplier datasetSupplier) {
     return new Transactional() {
       @Override
       public void execute(io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetSupplier)) {
+        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext,
+            datasetSupplier)) {
           txContext.start();
           finishExecute(txContext, datasetContext, runnable);
         } catch (Exception e) {
@@ -54,9 +57,11 @@ public final class NoSQLTransactionals {
       }
 
       @Override
-      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+      public void execute(int timeout, io.cdap.cdap.api.TxRunnable runnable)
+          throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetSupplier)) {
+        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext,
+            datasetSupplier)) {
           txContext.start(timeout);
           finishExecute(txContext, datasetContext, runnable);
         } catch (Exception e) {
@@ -65,12 +70,14 @@ public final class NoSQLTransactionals {
       }
 
       private void finishExecute(TransactionContext txContext, DatasetContext dsContext,
-                                 io.cdap.cdap.api.TxRunnable runnable)
-        throws TransactionFailureException {
+          io.cdap.cdap.api.TxRunnable runnable)
+          throws TransactionFailureException {
         try {
           runnable.run(dsContext);
         } catch (Exception e) {
-          txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
+          txContext.abort(
+              new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable,
+                  e));
         }
         // The call the txContext.abort above will always have exception thrown
         // Hence we'll only reach here if and only if the runnable.run() returns normally.

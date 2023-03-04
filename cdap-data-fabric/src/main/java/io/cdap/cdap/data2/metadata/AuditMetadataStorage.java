@@ -47,12 +47,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A metadata storage that delegates to another storage implementation
- * and publishes all metadata changes to the audit.
+ * A metadata storage that delegates to another storage implementation and publishes all metadata
+ * changes to the audit.
  */
 public class AuditMetadataStorage implements MetadataStorage {
+
   private static final Map<MetadataMutation.Type, String> MUTATION_COUNT_MAP;
   private static final Map<MetadataMutation.Type, String> MUTATION_ERROR_MAP;
+
   static {
     ImmutableMap.Builder<MetadataMutation.Type, String> countBuilder = ImmutableMap.builder();
     ImmutableMap.Builder<MetadataMutation.Type, String> errorBuilder = ImmutableMap.builder();
@@ -70,7 +72,7 @@ public class AuditMetadataStorage implements MetadataStorage {
 
   @Inject
   public AuditMetadataStorage(@Named(DataSetsModules.SPI_BASE_IMPL) MetadataStorage storage,
-                              MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService) {
     this.storage = storage;
     this.metricsCollectionService = metricsCollectionService;
   }
@@ -104,7 +106,8 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public MetadataChange apply(MetadataMutation mutation, MutationOptions options) throws IOException {
+  public MetadataChange apply(MetadataMutation mutation, MutationOptions options)
+      throws IOException {
     MetadataChange change;
     try {
       change = storage.apply(mutation, options);
@@ -119,7 +122,7 @@ public class AuditMetadataStorage implements MetadataStorage {
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
-                                    MutationOptions options) throws IOException {
+      MutationOptions options) throws IOException {
     List<MetadataChange> changes;
     try {
       changes = storage.batch(mutations, options);
@@ -169,7 +172,8 @@ public class AuditMetadataStorage implements MetadataStorage {
   }
 
   private void emitMetrics(String metricSuffix) {
-    MetricsCollector metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
+    MetricsCollector metricsCollector = metricsCollectionService.getContext(
+        Constants.Metrics.STORAGE_METRICS_TAGS);
     metricsCollector.increment(Constants.Metrics.MetadataStorage.METRICS_PREFIX + metricSuffix, 1L);
   }
 
@@ -191,28 +195,31 @@ public class AuditMetadataStorage implements MetadataStorage {
     }
 
     // previous state is already given
-    MetadataRecord previous = new MetadataRecord(change.getEntity(), scope, propsBefore, tagsBefore);
+    MetadataRecord previous = new MetadataRecord(change.getEntity(), scope, propsBefore,
+        tagsBefore);
 
     // compute what was added
     @SuppressWarnings("ConstantConditions")
     Map<String, String> propsAdded = Maps.filterEntries(
-      propsAfter, entry -> !entry.getValue().equals(propsBefore.get(entry.getKey())));
+        propsAfter, entry -> !entry.getValue().equals(propsBefore.get(entry.getKey())));
     Set<String> tagsAdded = Sets.difference(tagsAfter, tagsBefore);
     MetadataRecord additions = new MetadataRecord(change.getEntity(), scope, propsAdded, tagsAdded);
 
     // compute what was deleted
     @SuppressWarnings("ConstantConditions")
     Map<String, String> propsDeleted = Maps.filterEntries(
-      propsBefore, entry -> !entry.getValue().equals(propsAfter.get(entry.getKey())));
+        propsBefore, entry -> !entry.getValue().equals(propsAfter.get(entry.getKey())));
     Set<String> tagsDeleted = Sets.difference(tagsBefore, tagsAfter);
-    MetadataRecord deletions = new MetadataRecord(change.getEntity(), scope, propsDeleted, tagsDeleted);
+    MetadataRecord deletions = new MetadataRecord(change.getEntity(), scope, propsDeleted,
+        tagsDeleted);
 
     // and publish
     MetadataPayload payload = new MetadataPayloadBuilder()
-      .addPrevious(previous)
-      .addAdditions(additions)
-      .addDeletions(deletions)
-      .build();
-    AuditPublishers.publishAudit(auditPublisher, previous.getMetadataEntity(), AuditType.METADATA_CHANGE, payload);
+        .addPrevious(previous)
+        .addAdditions(additions)
+        .addDeletions(deletions)
+        .build();
+    AuditPublishers.publishAudit(auditPublisher, previous.getMetadataEntity(),
+        AuditType.METADATA_CHANGE, payload);
   }
 }

@@ -24,5 +24,6 @@ import java.util.List;
  * @param <T> the type of object to make rows from
  */
 public interface RowMaker<T> {
+
   List<?> makeRow(T object);
 }

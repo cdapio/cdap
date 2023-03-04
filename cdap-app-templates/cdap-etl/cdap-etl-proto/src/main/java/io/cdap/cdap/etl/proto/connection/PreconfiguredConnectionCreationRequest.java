@@ -23,10 +23,12 @@ import java.util.Objects;
  * Creation reqeuest for preconfigured connection with name and namespace
  */
 public class PreconfiguredConnectionCreationRequest extends ConnectionCreationRequest {
+
   private final String namespace;
   private final String name;
 
-  public PreconfiguredConnectionCreationRequest(String description, PluginInfo plugin, String namespace, String name) {
+  public PreconfiguredConnectionCreationRequest(String description, PluginInfo plugin,
+      String namespace, String name) {
     super(description, plugin);
     this.namespace = namespace;
     this.name = name;
@@ -53,8 +55,8 @@ public class PreconfiguredConnectionCreationRequest extends ConnectionCreationRe
     }
 
     PreconfiguredConnectionCreationRequest that = (PreconfiguredConnectionCreationRequest) o;
-    return Objects.equals(namespace, that.namespace) &&
-             Objects.equals(name, that.name);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(name, that.name);
   }
 
   @Override

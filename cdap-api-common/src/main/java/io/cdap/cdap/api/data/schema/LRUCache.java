@@ -24,10 +24,11 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 /**
- * A basic implementation of LRU cache. It uses a map to store cache values and a priority queue for tracking
- * last used time. The implementation only use pure Java class. Due to the limitation of the Java
- * priority queue of not having support for updating priority without removing/adding element, the implementation
- * is O(n) to the number of entries in the cache, hence it is more small cache (n < 100).
+ * A basic implementation of LRU cache. It uses a map to store cache values and a priority queue for
+ * tracking last used time. The implementation only use pure Java class. Due to the limitation of
+ * the Java priority queue of not having support for updating priority without removing/adding
+ * element, the implementation is O(n) to the number of entries in the cache, hence it is more small
+ * cache (n < 100).
  *
  * This class is thread safe.
  *

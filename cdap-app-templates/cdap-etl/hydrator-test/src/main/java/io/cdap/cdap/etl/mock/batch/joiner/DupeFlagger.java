@@ -40,11 +40,13 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Plugin that takes exactly 2 inputs and flags records in one input if they also appear in the other.
+ * Plugin that takes exactly 2 inputs and flags records in one input if they also appear in the
+ * other.
  */
 @Plugin(type = BatchJoiner.PLUGIN_TYPE)
 @Name(DupeFlagger.NAME)
 public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "DupeFlagger";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -59,15 +61,16 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     if (inputSchemas.size() != 2) {
       throw new IllegalArgumentException(String.format(
-        "The DupeFlagger plugin must have exactly two inputs with the same schema, but found %d inputs.",
-        inputSchemas.size()));
+          "The DupeFlagger plugin must have exactly two inputs with the same schema, but found %d inputs.",
+          inputSchemas.size()));
     }
     Iterator<Schema> schemaIterator = inputSchemas.values().iterator();
     Schema schema1 = schemaIterator.next();
     Schema schema2 = schemaIterator.next();
     if (!schema1.equals(schema2)) {
-      throw new IllegalArgumentException("The DupeFlagger plugin must have exactly two inputs with the same schema, " +
-                                           "but the schemas are not the same.");
+      throw new IllegalArgumentException(
+          "The DupeFlagger plugin must have exactly two inputs with the same schema, "
+              + "but the schemas are not the same.");
     }
     if (!config.containsMacro("keep")) {
       if (!inputSchemas.keySet().contains(config.keep)) {
@@ -98,7 +101,8 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
   }
 
   @Override
-  public StructuredRecord merge(StructuredRecord joinKey, Iterable<JoinElement<StructuredRecord>> joinRow) {
+  public StructuredRecord merge(StructuredRecord joinKey,
+      Iterable<JoinElement<StructuredRecord>> joinRow) {
     StructuredRecord record = null;
     boolean containsDupe = false;
     for (JoinElement<StructuredRecord> element : joinRow) {
@@ -115,7 +119,7 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
 
     Schema outputSchema = getOutputSchema(record.getSchema());
     StructuredRecord.Builder outputBuilder = StructuredRecord.builder(outputSchema)
-      .set(config.flagField, containsDupe);
+        .set(config.flagField, containsDupe);
     for (Schema.Field field : record.getSchema().getFields()) {
       outputBuilder.set(field.getName(), record.get(field.getName()));
     }
@@ -126,6 +130,7 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
    * Config for except plugin
    */
   public static class Config extends PluginConfig {
+
     @Macro
     @Description("input to keep")
     private final String keep;
@@ -156,9 +161,10 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("keep", new PluginPropertyField("keep", "input to keep", "string", true, false));
-    properties.put("flagField", new PluginPropertyField("flagField", "name of the flag field", "string", false, true));
+    properties.put("flagField",
+        new PluginPropertyField("flagField", "name of the flag field", "string", false, true));
     return PluginClass.builder().setName(NAME).setType(BatchJoiner.PLUGIN_TYPE)
-             .setDescription("").setClassName(DupeFlagger.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(DupeFlagger.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

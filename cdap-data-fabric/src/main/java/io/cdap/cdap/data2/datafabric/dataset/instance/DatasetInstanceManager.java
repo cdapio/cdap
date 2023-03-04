@@ -41,6 +41,7 @@ public class DatasetInstanceManager {
 
   /**
    * Adds dataset instance metadata
+   *
    * @param namespaceId the {@link NamespaceId} to add the dataset instance to
    * @param spec {@link DatasetSpecification} of the dataset instance to be added
    */
@@ -63,7 +64,8 @@ public class DatasetInstanceManager {
 
   /**
    * @param namespaceId {@link NamespaceId} for which dataset instances are required
-   * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
+   * @return collection of {@link DatasetSpecification} of all dataset instances in the given
+   *     namespace
    */
   public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
     return TransactionRunners.run(transactionRunner, context -> {
@@ -74,10 +76,11 @@ public class DatasetInstanceManager {
   /**
    * @param namespaceId {@link NamespaceId} for which dataset instances are required
    * @param properties {@link Map} of dataset properties
-   * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace which
-   * are having the specified properties
+   * @return collection of {@link DatasetSpecification} of all dataset instances in the given
+   *     namespace which are having the specified properties
    */
-  public Collection<DatasetSpecification> get(final NamespaceId namespaceId, final Map<String, String> properties) {
+  public Collection<DatasetSpecification> get(final NamespaceId namespaceId,
+      final Map<String, String> properties) {
     return TransactionRunners.run(transactionRunner, context -> {
       return new DatasetInstanceTable(context).get(namespaceId, properties);
     });
@@ -85,6 +88,7 @@ public class DatasetInstanceManager {
 
   /**
    * Deletes dataset instance
+   *
    * @param datasetInstanceId {@link DatasetId} of the instance to delete
    * @return true if deletion succeeded, false otherwise
    */

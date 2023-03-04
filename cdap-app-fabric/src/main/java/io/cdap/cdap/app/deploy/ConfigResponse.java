@@ -20,7 +20,8 @@ import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import javax.annotation.Nullable;
 
 /**
- * Interface defining the response as returned by the execution of the {@link Configurator#config()} method.
+ * Interface defining the response as returned by the execution of the {@link Configurator#config()}
+ * method.
  */
 public interface ConfigResponse {
 

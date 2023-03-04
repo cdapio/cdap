@@ -39,8 +39,8 @@ public class DefaultNamespacePathLocator implements NamespacePathLocator {
 
   @Inject
   public DefaultNamespacePathLocator(CConfiguration cConf,
-                                     LocationFactory locationFactory,
-                                     NamespaceQueryAdmin namespaceQueryAdmin) {
+      LocationFactory locationFactory,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -57,14 +57,16 @@ public class DefaultNamespacePathLocator implements NamespacePathLocator {
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
-      throw new IOException(String.format("Failed to get namespace meta for namespace %s", namespaceId), e);
+      throw new IOException(
+          String.format("Failed to get namespace meta for namespace %s", namespaceId), e);
     }
   }
 
   @Override
   public Location get(NamespaceMeta namespaceMeta) throws IOException {
     String rootDirectory = namespaceMeta.getConfig().getRootDirectory();
-    if (isReservedNamespace(namespaceMeta.getNamespaceId()) || Strings.isNullOrEmpty(rootDirectory)) {
+    if (isReservedNamespace(namespaceMeta.getNamespaceId()) || Strings.isNullOrEmpty(
+        rootDirectory)) {
       // if no custom mapping was specified, then use the default namespaces location
       return getNonCustomMappedLocation(namespaceMeta.getNamespaceId());
     }
@@ -87,7 +89,7 @@ public class DefaultNamespacePathLocator implements NamespacePathLocator {
   private boolean isReservedNamespace(NamespaceId namespaceId) {
     // We don't support custom location for CDAP reserved namespaces.
     return NamespaceId.DEFAULT.equals(namespaceId)
-      || NamespaceId.SYSTEM.equals(namespaceId)
-      || NamespaceId.CDAP.equals(namespaceId);
+        || NamespaceId.SYSTEM.equals(namespaceId)
+        || NamespaceId.CDAP.equals(namespaceId);
   }
 }

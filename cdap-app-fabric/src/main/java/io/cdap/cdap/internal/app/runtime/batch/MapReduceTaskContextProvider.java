@@ -88,8 +88,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   private final MapReduceClassLoader mapReduceClassLoader;
 
   /**
-   * Helper method to tell if the MR is running in local mode or not. This method doesn't really belongs to this
-   * class, but currently there is no better place for it.
+   * Helper method to tell if the MR is running in local mode or not. This method doesn't really
+   * belongs to this class, but currently there is no better place for it.
    */
   static boolean isLocal(Configuration hConf) {
     String mrFramework = hConf.get(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
@@ -97,9 +97,11 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   /**
-   * Creates an instance with the given {@link Injector} that will be used for getting service instances.
+   * Creates an instance with the given {@link Injector} that will be used for getting service
+   * instances.
    */
-  protected MapReduceTaskContextProvider(Injector injector, MapReduceClassLoader mapReduceClassLoader) {
+  protected MapReduceTaskContextProvider(Injector injector,
+      MapReduceClassLoader mapReduceClassLoader) {
     this.injector = injector;
     this.taskContexts = CacheBuilder.newBuilder().build(createCacheLoader(injector));
     this.accessEnforcer = injector.getInstance(AccessEnforcer.class);
@@ -136,41 +138,47 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   /**
-   * Returns the {@link BasicMapReduceTaskContext} for the given configuration. Since TaskAttemptContext is not
-   * provided, the returned MapReduceTaskContext will not have Metrics available.
-   * */
+   * Returns the {@link BasicMapReduceTaskContext} for the given configuration. Since
+   * TaskAttemptContext is not provided, the returned MapReduceTaskContext will not have Metrics
+   * available.
+   */
   public final <K, V> BasicMapReduceTaskContext<K, V> get(Configuration configuration) {
     return get(new ContextCacheKey(null, configuration));
   }
 
   private <K, V> BasicMapReduceTaskContext<K, V> get(ContextCacheKey key) {
     @SuppressWarnings("unchecked")
-    BasicMapReduceTaskContext<K, V> context = (BasicMapReduceTaskContext<K, V>) taskContexts.getUnchecked(key);
+    BasicMapReduceTaskContext<K, V> context = (BasicMapReduceTaskContext<K, V>) taskContexts.getUnchecked(
+        key);
     return context;
   }
 
 
   /**
-   * Creates a {@link Program} instance based on the information from the {@link MapReduceContextConfig}, using
-   * the given program ClassLoader.
+   * Creates a {@link Program} instance based on the information from the {@link
+   * MapReduceContextConfig}, using the given program ClassLoader.
    */
-  private Program createProgram(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
+  private Program createProgram(MapReduceContextConfig contextConfig,
+      ClassLoader programClassLoader) {
     Location programLocation;
     LocationFactory locationFactory = new LocalLocationFactory();
 
     // Use the program jar location regardless if local or distributed, since it is valid for both
-    programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
+    programLocation = locationFactory.create(
+        new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
 
     return new DefaultProgram(new ProgramDescriptor(contextConfig.getProgramId(),
-                                                    contextConfig.getApplicationSpecification()),
-                              programLocation, programClassLoader);
+        contextConfig.getApplicationSpecification()),
+        programLocation, programClassLoader);
   }
 
   /**
    * Creates a {@link CacheLoader} for the task context cache.
    */
-  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
-    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+  private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(
+      final Injector injector) {
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(
+        DiscoveryServiceClient.class);
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     SecureStore secureStore = injector.getInstance(SecureStore.class);
     SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
@@ -191,7 +199,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         // from a org.apache.hadoop.io.RawComparator, in which case we can get the JobId from the conf. Note that the
         // JobId isn't in the conf for the OutputCommitter#setupJob method, in which case we use the taskAttemptId
         Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
-                                                    taskAttemptId != null ? taskAttemptId.getJobID() : null);
+            taskAttemptId != null ? taskAttemptId.getJobID() : null);
         FileSystem fs = txFile.getFileSystem(key.getConfiguration());
         Transaction transaction = null;
         if (fs.exists(txFile)) {
@@ -201,28 +209,33 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         }
 
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
-        MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
+        MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(
+            key.getConfiguration());
 
         Program program = programRef.get();
         if (program == null) {
           // Creation of program is relatively cheap, so just create and do compare and set.
-          programRef.compareAndSet(null, createProgram(contextConfig, classLoader.getProgramClassLoader()));
+          programRef.compareAndSet(null,
+              createProgram(contextConfig, classLoader.getProgramClassLoader()));
           program = programRef.get();
         }
 
         WorkflowProgramInfo workflowInfo = contextConfig.getWorkflowProgramInfo();
-        DatasetFramework programDatasetFramework = workflowInfo == null ?
-          datasetFramework :
-          NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
-                                                                   program.getApplicationSpecification());
+        DatasetFramework programDatasetFramework = workflowInfo == null
+            ? datasetFramework :
+            NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo,
+                program.getApplicationSpecification());
 
         // Setup dataset framework context, if required
         if (programDatasetFramework instanceof ProgramContextAware) {
-          ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
-          ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programRunId));
+          ProgramRunId programRunId = program.getId()
+              .run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+          ((ProgramContextAware) programDatasetFramework).setContext(
+              new BasicProgramContext(programRunId));
         }
 
-        MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
+        MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce()
+            .get(program.getName());
 
         MetricsCollectionService metricsCollectionService = null;
         MapReduceMetrics.TaskType taskType = null;
@@ -238,30 +251,32 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
             // if this is not for a mapper or a reducer, we don't need the metrics collection service
             metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
             options = new SimpleProgramOptions(options.getProgramId(), options.getArguments(),
-                                               new BasicArguments(
-                                                 RuntimeArguments.extractScope(
-                                                   "task", taskType.toString().toLowerCase(),
-                                                   contextConfig.getProgramOptions().getUserArguments().asMap())),
-                                               options.isDebug());
+                new BasicArguments(
+                    RuntimeArguments.extractScope(
+                        "task", taskType.toString().toLowerCase(),
+                        contextConfig.getProgramOptions().getUserArguments().asMap())),
+                options.isDebug());
           }
         }
         CConfiguration cConf = injector.getInstance(CConfiguration.class);
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
         NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
         return new BasicMapReduceTaskContext(
-          program, options, cConf, taskType, taskId,
-          spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
-          transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
-          contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
-          accessEnforcer, authenticationContext, messagingService, mapReduceClassLoader, metadataReader,
-          metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-          remoteClientFactory, appStateStoreProvider);
+            program, options, cConf, taskType, taskId,
+            spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
+            transaction, programDatasetFramework, classLoader.getPluginInstantiator(),
+            contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
+            accessEnforcer, authenticationContext, messagingService, mapReduceClassLoader,
+            metadataReader,
+            metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
+            remoteClientFactory, appStateStoreProvider);
       }
     };
   }
 
   /**
-   * Private class to represent the caching key for the {@link BasicMapReduceTaskContext} instances.
+   * Private class to represent the caching key for the {@link BasicMapReduceTaskContext}
+   * instances.
    */
   private static final class ContextCacheKey {
 

@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * Represents a request to generate a program run report in an HTTP request.
  */
 public class ReportGenerationRequest {
+
   private final String name;
   private final Long start;
   private final Long end;
@@ -36,8 +37,9 @@ public class ReportGenerationRequest {
   @Nullable
   private final List<Filter> filters;
 
-  public ReportGenerationRequest(String name, Long start, Long end, List<String> fields, @Nullable List<Sort> sort,
-                                 @Nullable List<Filter> filters) {
+  public ReportGenerationRequest(String name, Long start, Long end, List<String> fields,
+      @Nullable List<Sort> sort,
+      @Nullable List<Filter> filters) {
     this.name = name;
     this.start = start;
     this.end = end;
@@ -55,23 +57,25 @@ public class ReportGenerationRequest {
   }
 
   /**
-   * @return the start of the time range within which the report is generated. All program runs in the report must be
-   *         still running at {@code start}, or with end time not earlier than {@code start}.
+   * @return the start of the time range within which the report is generated. All program runs in
+   *     the report must be still running at {@code start}, or with end time not earlier than {@code
+   *     start}.
    */
   public Long getStart() {
     return start;
   }
 
   /**
-   * @return the end of the time range within which the report is generated. All program runs in the report must
-   *         start before {@code end}.
+   * @return the end of the time range within which the report is generated. All program runs in the
+   *     report must start before {@code end}.
    */
   public Long getEnd() {
     return end;
   }
 
   /**
-   * @return names of the fields to be included in the final report. Must be valid fields from {@link ReportField}.
+   * @return names of the fields to be included in the final report. Must be valid fields from
+   *     {@link ReportField}.
    */
   public List<String> getFields() {
     return fields;
@@ -113,20 +117,23 @@ public class ReportGenerationRequest {
       errors.add("'fields' must be specified.");
     } else {
       errors.addAll(fields.stream().map(f -> new ReportGenerationRequest.Field(f).getError())
-                      .filter(e -> e != null).collect(Collectors.toList()));
+          .filter(e -> e != null).collect(Collectors.toList()));
     }
     if (filters != null) {
-      errors.addAll(filters.stream().map(Filter::getError).filter(e -> e != null).collect(Collectors.toList()));
+      errors.addAll(filters.stream().map(Filter::getError).filter(e -> e != null)
+          .collect(Collectors.toList()));
     }
     if (sort != null) {
       if (sort.size() > 1) {
         errors.add("Currently only one field is supported in sort.");
       }
-      errors.addAll(sort.stream().map(Sort::getError).filter(e -> e != null).collect(Collectors.toList()));
+      errors.addAll(
+          sort.stream().map(Sort::getError).filter(e -> e != null).collect(Collectors.toList()));
     }
     if (errors.size() > 0) {
-      throw new IllegalArgumentException("Please fix the following errors in the report generation request: "
-                                           + String.join("; ", errors));
+      throw new IllegalArgumentException(
+          "Please fix the following errors in the report generation request: "
+              + String.join("; ", errors));
     }
   }
 
@@ -134,6 +141,7 @@ public class ReportGenerationRequest {
    * Represents a flied in the report generation request.
    */
   public static class Field {
+
     private final String fieldName;
 
     public Field(String fieldName) {
@@ -145,8 +153,8 @@ public class ReportGenerationRequest {
     }
 
     /**
-     * @return the error of this field that are not allowed in a valid report generation request, or {@code null} if
-     * no such error exists.
+     * @return the error of this field that are not allowed in a valid report generation request, or
+     *     {@code null} if no such error exists.
      */
     @Nullable
     public String getError() {
@@ -154,7 +162,7 @@ public class ReportGenerationRequest {
         return null;
       }
       return String.format("Invalid field name '%s' in fields. Field name must be one of: [%s]",
-                           fieldName, String.join(", ", ReportField.FIELD_NAME_MAP.keySet()));
+          fieldName, String.join(", ", ReportField.FIELD_NAME_MAP.keySet()));
     }
 
     @Override
@@ -191,11 +199,11 @@ public class ReportGenerationRequest {
     }
 
     ReportGenerationRequest that = (ReportGenerationRequest) o;
-    return Objects.equals(this.name, that.name) &&
-      Objects.equals(this.start, that.start) &&
-      Objects.equals(this.end, that.end) &&
-      Objects.equals(this.fields, that.fields) &&
-      Objects.equals(this.sort, that.sort) &&
-      Objects.equals(this.filters, that.filters);
+    return Objects.equals(this.name, that.name)
+        && Objects.equals(this.start, that.start)
+        && Objects.equals(this.end, that.end)
+        && Objects.equals(this.fields, that.fields)
+        && Objects.equals(this.sort, that.sort)
+        && Objects.equals(this.filters, that.filters);
   }
 }

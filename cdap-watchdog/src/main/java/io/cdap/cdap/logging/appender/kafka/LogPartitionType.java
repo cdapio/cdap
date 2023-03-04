@@ -32,7 +32,8 @@ public enum LogPartitionType {
    * Computes a partition key based on the given {@link LoggingContext}.
    */
   public String getPartitionKey(LoggingContext loggingContext) {
-    String namespaceId = loggingContext.getSystemTagsMap().get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue();
+    String namespaceId = loggingContext.getSystemTagsMap()
+        .get(NamespaceLoggingContext.TAG_NAMESPACE_ID).getValue();
 
     if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
       return loggingContext.getLogPartition();
@@ -42,13 +43,15 @@ public enum LogPartitionType {
       case PROGRAM:
         return loggingContext.getLogPartition();
       case APPLICATION:
-        return namespaceId + ":" +
-                loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID).getValue();
+        return namespaceId + ":"
+            + loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_APPLICATION_ID)
+            .getValue();
       default:
         // this should never happen
         throw new IllegalArgumentException(
-                String.format("Invalid log partition type %s. Allowed partition types are program/application",
-                              getClass()));
+            String.format(
+                "Invalid log partition type %s. Allowed partition types are program/application",
+                getClass()));
     }
   }
 }

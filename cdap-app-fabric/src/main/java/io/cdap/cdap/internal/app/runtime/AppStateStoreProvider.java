@@ -22,8 +22,10 @@ import io.cdap.cdap.api.app.AppStateStore;
  * Provides implementation for {@link AppStateStore}.
  */
 public interface AppStateStoreProvider {
+
   /**
    * Returns implementation for {@link AppStateStore} for this app
+   *
    * @param namespace Namespace for the app
    * @param applicationName Application name
    * @return AppStateStore implementation

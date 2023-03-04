@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
  * Performs bootstrap steps.
  */
 public class BootstrapService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(BootstrapService.class);
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(50));
   private final BootstrapConfigProvider bootstrapConfigProvider;
@@ -63,10 +64,10 @@ public class BootstrapService extends AbstractIdleService {
 
   @Inject
   BootstrapService(BootstrapConfigProvider bootstrapConfigProvider, BootstrapStore bootstrapStore,
-                   Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors,
-                   SystemAppManagementService systemAppManagementService,
-                   CapabilityManagementService capabilityManagementService,
-                   SystemProgramManagementService systemProgramManagementService) {
+      Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors,
+      SystemAppManagementService systemAppManagementService,
+      CapabilityManagementService capabilityManagementService,
+      SystemProgramManagementService systemProgramManagementService) {
     this.bootstrapConfigProvider = bootstrapConfigProvider;
     this.bootstrapStore = bootstrapStore;
     this.systemAppManagementService = systemAppManagementService;
@@ -81,7 +82,8 @@ public class BootstrapService extends AbstractIdleService {
   protected void startUp() {
     LOG.info("Starting {}", getClass().getSimpleName());
     config = bootstrapConfigProvider.getConfig();
-    executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("bootstrap-service"));
+    executorService = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("bootstrap-service"));
     executorService.execute(() -> {
       try {
         if (isBootstrappedWithRetries()) {
@@ -91,7 +93,8 @@ public class BootstrapService extends AbstractIdleService {
           bootstrap();
         }
       } catch (InterruptedException e) {
-        LOG.info("Bootstrapping could not complete due to interruption. It will be re-run the next time CDAP starts.");
+        LOG.info(
+            "Bootstrapping could not complete due to interruption. It will be re-run the next time CDAP starts.");
       }
 
       // Only start SystemAppManagement service after bootstrap steps are run due to depedency on
@@ -147,7 +150,8 @@ public class BootstrapService extends AbstractIdleService {
    * @throws IllegalStateException if bootstrapping is already in progress
    * @throws InterruptedException if bootstrapping was interrupted
    */
-  public BootstrapResult bootstrap(Predicate<BootstrapStep> shouldSkip) throws InterruptedException {
+  public BootstrapResult bootstrap(Predicate<BootstrapStep> shouldSkip)
+      throws InterruptedException {
     List<BootstrapStepResult> results = new ArrayList<>(config.getSteps().size());
     if (!bootstrapping.compareAndSet(false, true)) {
       throw new IllegalStateException("Bootstrap already in progress.");
@@ -167,12 +171,14 @@ public class BootstrapService extends AbstractIdleService {
   }
 
   private BootstrapStepResult executeStep(BootstrapStep step,
-                                          Predicate<BootstrapStep> shouldSkip) throws InterruptedException {
+      Predicate<BootstrapStep> shouldSkip) throws InterruptedException {
     try {
       step.validate();
     } catch (IllegalArgumentException e) {
-      LOG.warn("Bootstrap step {} failed because it is malformed: {}", step.getLabel(), e.getMessage());
-      return new BootstrapStepResult(step.getLabel(), BootstrapStepResult.Status.FAILED, e.getMessage());
+      LOG.warn("Bootstrap step {} failed because it is malformed: {}", step.getLabel(),
+          e.getMessage());
+      return new BootstrapStepResult(step.getLabel(), BootstrapStepResult.Status.FAILED,
+          e.getMessage());
     }
 
     if (shouldSkip.test(step)) {
@@ -183,8 +189,8 @@ public class BootstrapService extends AbstractIdleService {
     if (bootstrapStepExecutor == null) {
       // should not be possible, as deserialization of the file into a BootStrapConfig should have failed
       return new BootstrapStepResult(step.getLabel(), BootstrapStepResult.Status.FAILED,
-                                     String.format("Unknown bootstrap step type '%s' for '%s'.",
-                                                   step.getType(), step.getLabel()));
+          String.format("Unknown bootstrap step type '%s' for '%s'.",
+              step.getType(), step.getLabel()));
     }
     return bootstrapStepExecutor.execute(step.getLabel(), step.getArguments());
   }
@@ -197,26 +203,28 @@ public class BootstrapService extends AbstractIdleService {
   }
 
   private boolean isBootstrappedWithRetries() {
-    return Retries.callWithRetries(this::isBootstrapped, RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
-      t -> {
-        // don't retry if we were interrupted, or if the service is not running
-        // normally this is only called when the service is starting, but it can be running in unit test
-        State serviceState = state();
-        if (serviceState != State.STARTING && serviceState != State.RUNNING) {
-          return false;
-        }
-        if (t instanceof InterruptedException) {
-          return false;
-        }
-        // Otherwise always retry, but log unexpected types of failures
-        // We expect things like SocketTimeoutException or ConnectException
-        // when talking to Dataset Service during startup
-        Throwable rootCause = Throwables.getRootCause(t);
-        if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
-          SAMPLING_LOG.warn("Error checking bootstrap state. "
-                              + "Bootstrap steps will not be run until state can be checked.", t);
-        }
-        return true;
-      });
+    return Retries.callWithRetries(this::isBootstrapped,
+        RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
+        t -> {
+          // don't retry if we were interrupted, or if the service is not running
+          // normally this is only called when the service is starting, but it can be running in unit test
+          State serviceState = state();
+          if (serviceState != State.STARTING && serviceState != State.RUNNING) {
+            return false;
+          }
+          if (t instanceof InterruptedException) {
+            return false;
+          }
+          // Otherwise always retry, but log unexpected types of failures
+          // We expect things like SocketTimeoutException or ConnectException
+          // when talking to Dataset Service during startup
+          Throwable rootCause = Throwables.getRootCause(t);
+          if (!(rootCause instanceof SocketTimeoutException
+              || rootCause instanceof ConnectException)) {
+            SAMPLING_LOG.warn("Error checking bootstrap state. "
+                + "Bootstrap steps will not be run until state can be checked.", t);
+          }
+          return true;
+        });
   }
 }

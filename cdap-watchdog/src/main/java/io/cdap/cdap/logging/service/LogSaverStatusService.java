@@ -37,21 +37,25 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 
 /**
- * LogSaver Service; currently only used for PingHandler, so that service can be discovered during CDAP-startup.
+ * LogSaver Service; currently only used for PingHandler, so that service can be discovered during
+ * CDAP-startup.
  */
 public class LogSaverStatusService extends AbstractIdleService {
+
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
-  public LogSaverStatusService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                               @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
-                               CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+  public LogSaverStatusService(CConfiguration cConf, SConfiguration sConf,
+      DiscoveryService discoveryService,
+      @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOGSAVER)
-      .setHttpHandlers(handlers)
-      .setHost(cConf.get(Constants.LogSaver.ADDRESS));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.LOGSAVER)
+        .setHttpHandlers(handlers)
+        .setHost(cConf.get(Constants.LogSaver.ADDRESS));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -63,12 +67,13 @@ public class LogSaverStatusService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.LOGSAVER));
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.LOGSAVER));
     httpService.start();
 
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOGSAVER, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.LOGSAVER, httpService)));
   }
 
   @Override
@@ -85,7 +90,7 @@ public class LogSaverStatusService extends AbstractIdleService {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("bindAddress", httpService.getBindAddress())
-      .toString();
+        .add("bindAddress", httpService.getBindAddress())
+        .toString();
   }
 }

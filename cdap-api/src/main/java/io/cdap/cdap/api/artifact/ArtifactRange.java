@@ -19,18 +19,22 @@ package io.cdap.cdap.api.artifact;
 import java.util.Objects;
 
 /**
- * Represents a range of versions for an artifact. The lower version is inclusive and the upper version is exclusive.
+ * Represents a range of versions for an artifact. The lower version is inclusive and the upper
+ * version is exclusive.
  */
 public class ArtifactRange extends ArtifactVersionRange {
+
   private final String namespace;
   private final String name;
 
-  public ArtifactRange(String namespace, String name, ArtifactVersion lower, ArtifactVersion upper) {
+  public ArtifactRange(String namespace, String name, ArtifactVersion lower,
+      ArtifactVersion upper) {
     this(namespace, name, lower, true, upper, false);
   }
 
-  public ArtifactRange(String namespace, String name, ArtifactVersion lower, boolean isLowerInclusive,
-                       ArtifactVersion upper, boolean isUpperInclusive) {
+  public ArtifactRange(String namespace, String name, ArtifactVersion lower,
+      boolean isLowerInclusive,
+      ArtifactVersion upper, boolean isUpperInclusive) {
     super(lower, isLowerInclusive, upper, isUpperInclusive);
     this.namespace = namespace;
     this.name = name;
@@ -42,6 +46,7 @@ public class ArtifactRange extends ArtifactVersionRange {
 
   /**
    * get the namespace the artifact belongs to
+   *
    * @return namespace
    */
   public String getNamespace() {
@@ -50,6 +55,7 @@ public class ArtifactRange extends ArtifactVersionRange {
 
   /**
    * get the name of the artifact
+   *
    * @return name of artifact
    */
   public String getName() {
@@ -67,12 +73,12 @@ public class ArtifactRange extends ArtifactVersionRange {
 
     ArtifactRange that = (ArtifactRange) o;
 
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(lower, that.lower) &&
-      Objects.equals(upper, that.upper) &&
-      isLowerInclusive == that.isLowerInclusive &&
-      isUpperInclusive == that.isUpperInclusive;
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(name, that.name)
+        && Objects.equals(lower, that.lower)
+        && Objects.equals(upper, that.upper)
+        && isLowerInclusive == that.isLowerInclusive
+        && isUpperInclusive == that.isUpperInclusive;
   }
 
   @Override
@@ -87,12 +93,12 @@ public class ArtifactRange extends ArtifactVersionRange {
 
   private String toString(StringBuilder builder) {
     return builder
-      .append(name)
-      .append(isLowerInclusive ? '[' : '(')
-      .append(lower.getVersion())
-      .append(',')
-      .append(upper.getVersion())
-      .append(isUpperInclusive ? ']' : ')')
-      .toString();
+        .append(name)
+        .append(isLowerInclusive ? '[' : '(')
+        .append(lower.getVersion())
+        .append(',')
+        .append(upper.getVersion())
+        .append(isUpperInclusive ? ']' : ')')
+        .toString();
   }
 }

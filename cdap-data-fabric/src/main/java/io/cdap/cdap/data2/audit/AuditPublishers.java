@@ -35,13 +35,16 @@ import org.slf4j.LoggerFactory;
  * Helper class to publish audit.
  */
 public final class AuditPublishers {
+
   private static final Logger LOG = LoggerFactory.getLogger(AuditPublishers.class);
   private static final AtomicBoolean WARNING_LOGGED = new AtomicBoolean(false);
   private static final Integer ACCESS_CACHE_MAX_SIZE = 1024;
   private static final Cache<AccessAuditInfo, Boolean> CACHE_AUDIT_LOGS =
-    CacheBuilder.newBuilder().expireAfterWrite(1L, TimeUnit.DAYS).maximumSize(ACCESS_CACHE_MAX_SIZE).build();
+      CacheBuilder.newBuilder().expireAfterWrite(1L, TimeUnit.DAYS)
+          .maximumSize(ACCESS_CACHE_MAX_SIZE).build();
 
-  private AuditPublishers() {}
+  private AuditPublishers() {
+  }
 
   /**
    * Publish access audit information using {@link AuditPublisher}.
@@ -52,7 +55,7 @@ public final class AuditPublishers {
    * @param accessor the entity accessing entityId
    */
   public static void publishAccess(@Nullable AuditPublisher publisher, EntityId entityId,
-                                   AccessType accessType, EntityId accessor) {
+      AccessType accessType, EntityId accessor) {
     if (publisher == null) {
       logWarning();
       return;
@@ -70,26 +73,26 @@ public final class AuditPublishers {
     switch (accessType) {
       case READ:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
-                                            accessor));
+            new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
+                accessor));
         break;
       case WRITE:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
-                                            accessor));
+            new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
+                accessor));
         break;
       case READ_WRITE:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
-                                            accessor));
+            new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.READ,
+                accessor));
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
-                                            accessor));
+            new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.WRITE,
+                accessor));
         break;
       case UNKNOWN:
         publisher.publish(entityId, AuditType.ACCESS,
-                          new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
-                                            accessor));
+            new AccessPayload(io.cdap.cdap.proto.audit.payload.access.AccessType.UNKNOWN,
+                accessor));
         break;
     }
   }
@@ -103,7 +106,7 @@ public final class AuditPublishers {
    * @param auditPayload audit payload
    */
   public static void publishAudit(@Nullable AuditPublisher publisher, EntityId entityId,
-                                  AuditType auditType, AuditPayload auditPayload) {
+      AuditType auditType, AuditPayload auditPayload) {
     publishAudit(publisher, entityId.toMetadataEntity(), auditType, auditPayload);
   }
 
@@ -116,7 +119,7 @@ public final class AuditPublishers {
    * @param auditPayload audit payload
    */
   public static void publishAudit(@Nullable AuditPublisher publisher, MetadataEntity metadataEntity,
-                                  AuditType auditType, AuditPayload auditPayload) {
+      AuditType auditType, AuditPayload auditPayload) {
     if (publisher == null) {
       logWarning();
       return;
@@ -139,6 +142,7 @@ public final class AuditPublishers {
    * Contains the accessed entity info and the access type.
    */
   private static class AccessAuditInfo {
+
     private final EntityId accessorEntity;
     private final EntityId accessedEntity;
     private final AccessType accessType;
@@ -177,18 +181,18 @@ public final class AuditPublishers {
       }
 
       AccessAuditInfo that = (AccessAuditInfo) obj;
-      return Objects.equals(accessorEntity, that.accessorEntity) &&
-        Objects.equals(accessedEntity, that.accessedEntity) &&
-        Objects.equals(accessType, that.accessType);
+      return Objects.equals(accessorEntity, that.accessorEntity)
+          && Objects.equals(accessedEntity, that.accessedEntity)
+          && Objects.equals(accessType, that.accessType);
     }
 
     @Override
     public String toString() {
-      return "AccessedEntityInfo{" +
-        "accessorEntity='" + accessorEntity + '\'' +
-        "accessedEntity='" + accessedEntity + '\'' +
-        ", accessType='" + accessType +
-        '}';
+      return "AccessedEntityInfo{"
+          + "accessorEntity='" + accessorEntity + '\''
+          + "accessedEntity='" + accessedEntity + '\''
+          + ", accessType='" + accessType
+          + '}';
     }
   }
 }

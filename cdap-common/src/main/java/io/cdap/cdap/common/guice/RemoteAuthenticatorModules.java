@@ -32,10 +32,12 @@ import javax.annotation.Nullable;
  */
 public final class RemoteAuthenticatorModules {
 
-  private RemoteAuthenticatorModules() {}
+  private RemoteAuthenticatorModules() {
+  }
 
   /**
    * Returns the default bindings for the {@link RemoteAuthenticator}.
+   *
    * @return A module with {@link RemoteAuthenticator} bindings
    */
   public static Module getDefaultModule() {
@@ -45,9 +47,9 @@ public final class RemoteAuthenticatorModules {
   /**
    * Returns the default bindings for the {@link RemoteAuthenticator}.
    *
-   * @param remoteAuthenticatorNameKey A {@link io.cdap.cdap.common.conf.CConfiguration} config which should be used
-   *                                   in place of system-wide remote authenticator bindings. If the resulting
-   *                                   authenticator key is null, it will fall back to the system-wide config.
+   * @param remoteAuthenticatorNameKey A {@link io.cdap.cdap.common.conf.CConfiguration} config
+   *     which should be used in place of system-wide remote authenticator bindings. If the
+   *     resulting authenticator key is null, it will fall back to the system-wide config.
    * @return A module with {@link RemoteAuthenticator} bindings
    */
   public static Module getDefaultModule(String remoteAuthenticatorNameKey) {
@@ -55,28 +57,30 @@ public final class RemoteAuthenticatorModules {
   }
 
   /**
-   * Returns bindings for the {@link RemoteAuthenticator} to be used for a particular named annotation. This is
-   * primarily used to bind a separate instance of remote authenticator (i.e. a service needs to have two different
-   * authenticator mechanisms to authenticate to two different services).
+   * Returns bindings for the {@link RemoteAuthenticator} to be used for a particular named
+   * annotation. This is primarily used to bind a separate instance of remote authenticator (i.e. a
+   * service needs to have two different authenticator mechanisms to authenticate to two different
+   * services).
    *
-   * @param annotation                 An annotation key to allow for splitting modules. If the annotation key is null,
-   *                                   the binding is applied globally.
-   * @param remoteAuthenticatorNameKey A {@link io.cdap.cdap.common.conf.CConfiguration} config which should be used
-   *                                   in place of system-wide remote authenticator bindings. If the resulting
-   *                                   authenticator key is null, it will fall back to the system-wide config.
+   * @param annotation An annotation key to allow for splitting modules. If the annotation key
+   *     is null, the binding is applied globally.
+   * @param remoteAuthenticatorNameKey A {@link io.cdap.cdap.common.conf.CConfiguration} config
+   *     which should be used in place of system-wide remote authenticator bindings. If the
+   *     resulting authenticator key is null, it will fall back to the system-wide config.
    * @return A module with {@link RemoteAuthenticator} bindings
    */
-  public static Module getDefaultModule(@Nullable String annotation, String remoteAuthenticatorNameKey) {
+  public static Module getDefaultModule(@Nullable String annotation,
+      String remoteAuthenticatorNameKey) {
     return new PrivateModule() {
       @Override
       protected void configure() {
         bind(String.class)
-          .annotatedWith(Names.named(DefaultRemoteAuthenticatorProvider.AUTHENTICATOR_NAME_KEY))
-          .toInstance(remoteAuthenticatorNameKey);
+            .annotatedWith(Names.named(DefaultRemoteAuthenticatorProvider.AUTHENTICATOR_NAME_KEY))
+            .toInstance(remoteAuthenticatorNameKey);
         bind(RemoteAuthenticatorExtensionLoader.class).in(Scopes.SINGLETON);
         if (annotation != null) {
           bind(RemoteAuthenticator.class).annotatedWith(Names.named(annotation))
-            .toProvider(DefaultRemoteAuthenticatorProvider.class);
+              .toProvider(DefaultRemoteAuthenticatorProvider.class);
           expose(RemoteAuthenticator.class).annotatedWith(Names.named(annotation));
         } else {
           bind(RemoteAuthenticator.class).toProvider(DefaultRemoteAuthenticatorProvider.class);

@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * An error with one of the output schema fields.
  */
 public class OutputSchemaError extends JoinError {
+
   private final String field;
   private final String expectedType;
 
@@ -31,7 +32,7 @@ public class OutputSchemaError extends JoinError {
   }
 
   public OutputSchemaError(String field, @Nullable String expectedType,
-                           String message, @Nullable String correctiveAction) {
+      String message, @Nullable String correctiveAction) {
     super(Type.OUTPUT_SCHEMA, message, correctiveAction);
     this.field = field;
     this.expectedType = expectedType;
@@ -58,8 +59,8 @@ public class OutputSchemaError extends JoinError {
       return false;
     }
     OutputSchemaError that = (OutputSchemaError) o;
-    return Objects.equals(field, that.field) &&
-      Objects.equals(expectedType, that.expectedType);
+    return Objects.equals(field, that.field)
+        && Objects.equals(expectedType, that.expectedType);
   }
 
   @Override

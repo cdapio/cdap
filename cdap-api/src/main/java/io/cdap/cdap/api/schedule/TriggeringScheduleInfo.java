@@ -23,6 +23,7 @@ import java.util.Map;
  * The information of a schedule that can be used by the program launched by the schedule.
  */
 public interface TriggeringScheduleInfo {
+
   /**
    * @return Schedule's name, which is unique in an application.
    */
@@ -34,10 +35,10 @@ public interface TriggeringScheduleInfo {
   String getDescription();
 
   /**
-   * @return An immutable list of trigger information contained in this schedule. If the trigger is not
-   *         composite trigger, the list only contains one trigger info for this trigger.
-   *         If the trigger is a composite trigger, the list will contain all the non-composite triggers
-   *         in the composite trigger.
+   * @return An immutable list of trigger information contained in this schedule. If the trigger is
+   *     not composite trigger, the list only contains one trigger info for this trigger. If the
+   *     trigger is a composite trigger, the list will contain all the non-composite triggers in the
+   *     composite trigger.
    */
   List<TriggerInfo> getTriggerInfos();
 

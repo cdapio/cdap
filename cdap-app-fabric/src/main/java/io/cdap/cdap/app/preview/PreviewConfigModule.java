@@ -41,6 +41,7 @@ import org.apache.hadoop.mapreduce.MRConfig;
  * Module for creating preview configurations.
  */
 public class PreviewConfigModule extends AbstractModule {
+
   public static final String PREVIEW_CCONF = "previewCConf";
   public static final String PREVIEW_HCONF = "previewHConf";
   public static final String PREVIEW_SCONF = "previewSConf";
@@ -58,11 +59,12 @@ public class PreviewConfigModule extends AbstractModule {
     // Change all services bind address to local host
     String localhost = InetAddress.getLoopbackAddress().getHostName();
     StreamSupport.stream(previewCConf.spliterator(), false)
-      .map(Map.Entry::getKey)
-      .filter(s -> s.endsWith(".bind.address"))
-      .forEach(key -> previewCConf.set(key, localhost));
+        .map(Map.Entry::getKey)
+        .filter(s -> s.endsWith(".bind.address"))
+        .forEach(key -> previewCConf.set(key, localhost));
 
-    Path previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+    Path previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview")
+        .toAbsolutePath();
     Path previewDir;
     try {
       previewDir = Files.createDirectories(previewDataDir);
@@ -74,7 +76,8 @@ public class PreviewConfigModule extends AbstractModule {
     previewCConf.set(Constants.Namespace.NAMESPACES_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     // Use No-SQL store for preview data
-    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
+        Constants.Dataset.DATA_STORAGE_NOSQL);
 
     // Don't load custom log pipelines in preview
     previewCConf.unset(Constants.Logging.PIPELINE_CONFIG_DIR);
@@ -98,7 +101,7 @@ public class PreviewConfigModule extends AbstractModule {
     previewHConf = new Configuration(hConf);
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
     previewHConf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY,
-                     previewDir.resolve("fs").toUri().toString());
+        previewDir.resolve("fs").toUri().toString());
 
     previewSConf = SConfiguration.copy(sConf);
   }
@@ -111,15 +114,16 @@ public class PreviewConfigModule extends AbstractModule {
   }
 
   /**
-   * Provider method to provide a singleton {@link LevelDBTableService}. A provider method is used instead of
-   * instance binding with the {@link LinkedBindingBuilder#toInstance(Object)} method so that the
-   * {@link LevelDBTableService#setConfiguration(CConfiguration)} is only called once from this method using
-   * the preview cConf.
+   * Provider method to provide a singleton {@link LevelDBTableService}. A provider method is used
+   * instead of instance binding with the {@link LinkedBindingBuilder#toInstance(Object)} method so
+   * that the {@link LevelDBTableService#setConfiguration(CConfiguration)} is only called once from
+   * this method using the preview cConf.
    */
   @Provides
   @Singleton
   @Named(PREVIEW_LEVEL_DB)
-  private LevelDBTableService provideLevelDBTableService(@Named(PREVIEW_CCONF) CConfiguration cConf) {
+  private LevelDBTableService provideLevelDBTableService(
+      @Named(PREVIEW_CCONF) CConfiguration cConf) {
     LevelDBTableService tableService = new LevelDBTableService();
     tableService.setConfiguration(cConf);
     return tableService;

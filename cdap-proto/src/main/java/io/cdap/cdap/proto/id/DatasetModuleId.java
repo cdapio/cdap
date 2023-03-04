@@ -25,6 +25,7 @@ import java.util.Objects;
  * Uniquely identifies a dataset module.
  */
 public class DatasetModuleId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   private final String module;
   private transient Integer hashCode;
 
@@ -57,8 +58,8 @@ public class DatasetModuleId extends NamespacedEntityId implements ParentedId<Na
       return false;
     }
     DatasetModuleId that = (DatasetModuleId) o;
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(module, that.module);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(module, that.module);
   }
 
   @Override

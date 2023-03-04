@@ -30,6 +30,7 @@ import javax.ws.rs.Path;
  * Echo handler.
  */
 public final class PrefixedEchoHandler extends AbstractHttpServiceHandler {
+
   public static final String NAME = "echoHandler";
 
   private String sdf = "";

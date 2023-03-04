@@ -45,9 +45,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of Owner table that stores the entity and kerberos principal using StructuredTable SPI.
+ * Implementation of Owner table that stores the entity and kerberos principal using StructuredTable
+ * SPI.
  */
 public class OwnerTable {
+
   private final StructuredTable table;
   private static final String ROW_KEY_SEPARATOR = ":";
   private static final String NAMESPACE_ROW_KEY_PREFIX = "n";
@@ -72,7 +74,7 @@ public class OwnerTable {
    * @throws AlreadyExistsException is thrown when the key entityId already exists.
    */
   public void add(final NamespacedEntityId entityId,
-                  final KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
+      final KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
     Optional<StructuredRow> row = table.read(ImmutableList.of
         (Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, createRowKey(entityId))));
     if (row.isPresent()) {
@@ -81,7 +83,7 @@ public class OwnerTable {
               entityId));
     }
     Field<String> principalField = Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD,
-                                                      createRowKey(entityId));
+        createRowKey(entityId));
     Field<byte[]> keytabField = Fields.bytesField(StoreDefinition.OwnerStore.KEYTAB_FIELD,
         Bytes.toBytes(kerberosPrincipalId.getPrincipal()));
     table.upsert(ImmutableList.of(principalField, keytabField));
@@ -112,25 +114,29 @@ public class OwnerTable {
     Optional<StructuredRow> row = table.read(ImmutableList.of
         (Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, createRowKey(entityId))));
 
-    return row.isPresent() ?
-        new KerberosPrincipalId(Bytes.toString(row.get().getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))) : null;
+    return row.isPresent()
+        ? new KerberosPrincipalId(
+        Bytes.toString(row.get().getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))) : null;
   }
 
   /**
-   * Batch version of {@link #getOwner(NamespacedEntityId)} for getting Kerberos principals for a set of entity ids.
+   * Batch version of {@link #getOwner(NamespacedEntityId)} for getting Kerberos principals for a
+   * set of entity ids.
    *
    * @param ids set of ids to get the Kerberos principals
    * @param <T> type of the entity id
-   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for entity id that
-   *         doesn't have an owner principal.
+   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for
+   *     entity id that doesn't have an owner principal.
    * @throws IOException if failed to read from the table
    */
-  public <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) throws IOException {
+  public <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids)
+      throws IOException {
     List<Collection<Field<?>>> keys = new ArrayList<>();
     Map<String, T> rowKeys = new HashMap<>();
     for (T id : ids) {
       String rowKey = createRowKey(id);
-      keys.add(Collections.singleton(Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, rowKey)));
+      keys.add(Collections.singleton(
+          Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD, rowKey)));
       rowKeys.put(rowKey, id);
     }
 
@@ -140,9 +146,11 @@ public class OwnerTable {
       T id = rowKeys.get(principalField);
       if (id == null) {
         // This shouldn't happen as the table shouldn't return a row that is not part of the query.
-        throw new IllegalStateException("Row key doesn't present in the set of requested ids: " + principalField);
+        throw new IllegalStateException(
+            "Row key doesn't present in the set of requested ids: " + principalField);
       }
-      result.put(id, new KerberosPrincipalId(Bytes.toString(row.getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))));
+      result.put(id, new KerberosPrincipalId(
+          Bytes.toString(row.getBytes(StoreDefinition.OwnerStore.KEYTAB_FIELD))));
     }
     return result;
   }
@@ -155,7 +163,7 @@ public class OwnerTable {
    */
   public void delete(final NamespacedEntityId entityId) throws IOException {
     table.delete(ImmutableList.of(Fields.stringField(StoreDefinition.OwnerStore.PRINCIPAL_FIELD,
-                                                     createRowKey(entityId))));
+        createRowKey(entityId))));
   }
 
   //Create row key from Namespaced Entity ID
@@ -256,10 +264,10 @@ public class OwnerTable {
         builder.append(scheduleId.getSchedule());
         break;
       default:
-        throw new IllegalArgumentException(String.format("Error converting id for entity, %s. " +
-                                                           "Unexpected entity type %s",
-                                                         namespacedEntityId.toString(),
-                                                         namespacedEntityId.getEntityType().toString()));
+        throw new IllegalArgumentException(String.format("Error converting id for entity, %s. "
+                + "Unexpected entity type %s",
+            namespacedEntityId.toString(),
+            namespacedEntityId.getEntityType().toString()));
 
     }
     return builder.toString();

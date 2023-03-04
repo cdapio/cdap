@@ -23,6 +23,7 @@ import java.util.List;
  * Specified operations to perform for system app in a CDAP instance.
  */
 public class SystemAppConfig {
+
   public static final SystemAppConfig EMPTY = new SystemAppConfig(Collections.emptyList());
   private final List<SystemAppStep> steps;
 

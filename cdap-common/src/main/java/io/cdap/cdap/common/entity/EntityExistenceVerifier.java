@@ -26,6 +26,7 @@ import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
  * @param <ENTITY> the entity type for which to ensure existence.
  */
 public interface EntityExistenceVerifier<ENTITY extends EntityId> {
+
   /**
    * Ensures that the specified {@link EntityId} exists.
    *

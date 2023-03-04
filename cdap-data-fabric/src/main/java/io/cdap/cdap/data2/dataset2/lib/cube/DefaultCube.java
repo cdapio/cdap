@@ -74,6 +74,7 @@ import org.slf4j.LoggerFactory;
  * Default implementation of {@link io.cdap.cdap.api.dataset.lib.cube.Cube}.
  */
 public class DefaultCube implements Cube, MeteredDataset {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCube.class);
   // Log the metrics processing progress no more than once per minute.
   private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
@@ -81,8 +82,9 @@ public class DefaultCube implements Cube, MeteredDataset {
   private static final DimensionValueComparator DIMENSION_VALUE_COMPARATOR = new DimensionValueComparator();
   // hard-limit on max records to scan
   private static final int MAX_RECORDS_TO_SCAN = 100 * 1000;
-  private static final EnumSet<AggregationOption> PARTITION_AGG_OPTIONS = EnumSet.of(AggregationOption.LATEST,
-                                                                                     AggregationOption.SUM);
+  private static final EnumSet<AggregationOption> PARTITION_AGG_OPTIONS = EnumSet.of(
+      AggregationOption.LATEST,
+      AggregationOption.SUM);
 
   private final Map<Integer, FactTable> resolutionToFactTable;
   private final Map<String, ? extends Aggregation> aggregations;
@@ -97,19 +99,19 @@ public class DefaultCube implements Cube, MeteredDataset {
    * Created a cube with no parallel computations / writes to same resultion
    */
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
-                     Map<String, ? extends Aggregation> aggregations,
-                     Map<String, AggregationAlias> aggregationAliasMap) {
+      Map<String, ? extends Aggregation> aggregations,
+      Map<String, AggregationAlias> aggregationAliasMap) {
     this(resolutions, factTableSupplier, aggregations, aggregationAliasMap, 1);
   }
 
   /**
-   * Creates a cube that can do up to writePrallelism parallel computations when writing data to each resolution
-   * table
+   * Creates a cube that can do up to writePrallelism parallel computations when writing data to
+   * each resolution table
    */
   public DefaultCube(int[] resolutions, FactTableSupplier factTableSupplier,
-                     Map<String, ? extends Aggregation> aggregations,
-                     Map<String, AggregationAlias> aggregationAliasMap,
-                     int writeParallelism) {
+      Map<String, ? extends Aggregation> aggregations,
+      Map<String, AggregationAlias> aggregationAliasMap,
+      int writeParallelism) {
     this.aggregations = aggregations;
     this.resolutionToFactTable = Maps.newHashMap();
     for (int resolution : resolutions) {
@@ -118,10 +120,10 @@ public class DefaultCube implements Cube, MeteredDataset {
     this.aggregationAliasMap = aggregationAliasMap;
     this.writeParallelism = writeParallelism;
     ThreadPoolExecutor executor = new ThreadPoolExecutor(resolutions.length * this.writeParallelism,
-                                                         resolutions.length * this.writeParallelism,
-                                                         30, TimeUnit.SECONDS,
-                                                         new LinkedBlockingQueue<>(),
-                                                         Threads.createDaemonThreadFactory("metrics-table-%d"));
+        resolutions.length * this.writeParallelism,
+        30, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(),
+        Threads.createDaemonThreadFactory("metrics-table-%d"));
     executor.allowCoreThreadTimeOut(true);
     this.executorService = executor;
   }
@@ -154,12 +156,13 @@ public class DefaultCube implements Cube, MeteredDataset {
           List<DimensionValue> dimensionValues = Lists.newArrayList();
           for (String dimensionName : agg.getDimensionNames()) {
             String dimensionValueKey =
-              aggregationAlias == null ? dimensionName : aggregationAlias.getAlias(dimensionName);
-            dimensionValues.add(new DimensionValue(dimensionName, fact.getDimensionValues().get(dimensionValueKey)));
+                aggregationAlias == null ? dimensionName : aggregationAlias.getAlias(dimensionName);
+            dimensionValues.add(new DimensionValue(dimensionName,
+                fact.getDimensionValues().get(dimensionValueKey)));
             dimValuesCount++;
           }
           toWrite.computeIfAbsent(dimensionValues, v -> new ArrayList<>())
-            .add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
+              .add(new Fact(fact.getTimestamp(), dimensionValues, fact.getMeasurements()));
           minTimestamp = Math.min(minTimestamp, fact.getTimestamp());
           maxTimestamp = Math.max(maxTimestamp, fact.getTimestamp());
           sumTimestamp += fact.getTimestamp();
@@ -172,14 +175,15 @@ public class DefaultCube implements Cube, MeteredDataset {
     Map<Integer, List<Future<?>>> futures = new HashMap<>();
     Consumer<List<Fact>> batchWriter = batch -> {
       for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
-        Future<?> future = executorService.submit(() -> numUpdates.addAndGet(table.getValue().add(batch)));
+        Future<?> future = executorService.submit(
+            () -> numUpdates.addAndGet(table.getValue().add(batch)));
         futures.computeIfAbsent(table.getKey(), k -> new ArrayList<>()).add(future);
       }
     };
 
     List<Fact> writeBatch = new ArrayList<>();
     int batchSize = (int) Math.min(Integer.MAX_VALUE, numFacts / writeParallelism);
-    for (List<Fact> metricFacts: toWrite.values()) {
+    for (List<Fact> metricFacts : toWrite.values()) {
       if (metricFacts.size() > batchSize) {
         batchWriter.accept(metricFacts);
       } else if (writeBatch.size() <= batchSize - metricFacts.size()) {
@@ -194,13 +198,12 @@ public class DefaultCube implements Cube, MeteredDataset {
       batchWriter.accept(writeBatch);
     }
 
-
     boolean failed = false;
     Exception failedException = null;
     StringBuilder failedMessage = new StringBuilder("Failed to add metrics to ");
-    for (Map.Entry<Integer, List<Future<?>>> futureList: futures.entrySet()) {
+    for (Map.Entry<Integer, List<Future<?>>> futureList : futures.entrySet()) {
       try {
-        for (Future<?> future: futureList.getValue()) {
+        for (Future<?> future : futureList.getValue()) {
           Uninterruptibles.getUninterruptibly(future);
         }
       } catch (ExecutionException e) {
@@ -230,10 +233,11 @@ public class DefaultCube implements Cube, MeteredDataset {
     if (numFacts > 0) {
       long avgTimestamp = sumTimestamp / numFacts;
       PROGRESS_LOG.debug(
-        "Persisted {} updates for {} facts with {} measurements for {} dimension sets " +
-          "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
-        numUpdates.get(), numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp, maxTimestamp,
-        avgTimestamp, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);
+          "Persisted {} updates for {} facts with {} measurements for {} dimension sets "
+              + "from {} cube facts for timestamps {}..{} (avg {}, lag {}s)",
+          numUpdates.get(), numFacts, numMeasurements, toWrite.size(), facts.size(), minTimestamp,
+          maxTimestamp,
+          avgTimestamp, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - avgTimestamp);
     }
   }
 
@@ -279,8 +283,9 @@ public class DefaultCube implements Cube, MeteredDataset {
 
     if (!resolutionToFactTable.containsKey(query.getResolution())) {
       incrementMetric("cube.query.request.failure.count", 1);
-      throw new IllegalArgumentException("There's no data aggregated for specified resolution to satisfy the query: " +
-                                           query.toString());
+      throw new IllegalArgumentException(
+          "There's no data aggregated for specified resolution to satisfy the query: " +
+              query.toString());
     }
 
     // 1) find aggregation to query
@@ -292,15 +297,15 @@ public class DefaultCube implements Cube, MeteredDataset {
       if (agg == null) {
         incrementMetric("cube.query.request.failure.count", 1);
         throw new IllegalArgumentException(
-          String.format("Specified aggregation %s is not found in cube aggregations: %s",
-                        query.getAggregation(), aggregations.keySet().toString()));
+            String.format("Specified aggregation %s is not found in cube aggregations: %s",
+                query.getAggregation(), aggregations.keySet().toString()));
       }
     } else {
       ImmutablePair<String, Aggregation> aggregation = findAggregation(query);
       if (aggregation == null) {
         incrementMetric("cube.query.request.failure.count", 1);
         throw new IllegalArgumentException("There's no data aggregated for specified dimensions " +
-                                             "to satisfy the query: " + query.toString());
+            "to satisfy the query: " + query.toString());
       }
       agg = aggregation.getSecond();
       aggName = aggregation.getFirst();
@@ -314,11 +319,12 @@ public class DefaultCube implements Cube, MeteredDataset {
     List<DimensionValue> dimensionValues = Lists.newArrayList();
     for (String dimensionName : agg.getDimensionNames()) {
       // if not defined in query, will be set as null, which means "any"
-      dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
+      dimensionValues.add(
+          new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
     }
 
     FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(),
-                                 query.getMeasurements().keySet(), dimensionValues);
+        query.getMeasurements().keySet(), dimensionValues);
 
     // 3) execute scan query
     FactTable table = resolutionToFactTable.get(query.getResolution());
@@ -344,10 +350,12 @@ public class DefaultCube implements Cube, MeteredDataset {
       if (query.getTagPredicate().test(agg.getDimensionNames())) {
         dimensionValues.clear();
         for (String dimensionName : agg.getDimensionNames()) {
-          dimensionValues.add(new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
+          dimensionValues.add(
+              new DimensionValue(dimensionName, query.getDimensionValues().get(dimensionName)));
         }
         FactTable factTable = resolutionToFactTable.get(query.getResolution());
-        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(), dimensionValues);
+        FactScan scan = new FactScan(query.getStartTs(), query.getEndTs(), query.getMeasureNames(),
+            dimensionValues);
         factTable.delete(scan);
       }
     }
@@ -373,7 +381,7 @@ public class DefaultCube implements Cube, MeteredDataset {
     for (Aggregation agg : aggregations.values()) {
       if (agg.getDimensionNames().containsAll(slice.keySet())) {
         result.addAll(table.findSingleDimensionValue(agg.getDimensionNames(), slice,
-                                                     query.getStartTs(), query.getEndTs()));
+            query.getStartTs(), query.getEndTs()));
       }
     }
 
@@ -397,7 +405,8 @@ public class DefaultCube implements Cube, MeteredDataset {
 
     for (Aggregation agg : aggregations.values()) {
       if (agg.getDimensionNames().containsAll(slice.keySet())) {
-        result.addAll(table.findMeasureNames(agg.getDimensionNames(), slice, query.getStartTs(), query.getEndTs()));
+        result.addAll(table.findMeasureNames(agg.getDimensionNames(), slice, query.getStartTs(),
+            query.getEndTs()));
       }
     }
 
@@ -406,6 +415,7 @@ public class DefaultCube implements Cube, MeteredDataset {
 
   /**
    * Sets {@link MetricsCollector} for metrics reporting.
+   *
    * @param metrics {@link MetricsCollector} to set.
    */
   @Override
@@ -429,11 +439,11 @@ public class DefaultCube implements Cube, MeteredDataset {
     for (Map.Entry<String, ? extends Aggregation> entry : aggregations.entrySet()) {
       Aggregation agg = entry.getValue();
       if (agg.getDimensionNames().containsAll(query.getGroupByDimensions()) &&
-        agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
+          agg.getDimensionNames().containsAll(query.getDimensionValues().keySet())) {
 
         // todo: choose aggregation smarter than just by number of dimensions :)
         if (currentBest == null ||
-          currentBest.getSecond().getDimensionNames().size() > agg.getDimensionNames().size()) {
+            currentBest.getSecond().getDimensionNames().size() > agg.getDimensionNames().size()) {
           currentBest = new ImmutablePair<>(entry.getKey(), agg);
         }
       }
@@ -442,7 +452,8 @@ public class DefaultCube implements Cube, MeteredDataset {
     return currentBest;
   }
 
-  private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query, FactScanner scanner) {
+  private Table<Map<String, String>, String, Map<Long, Long>> getTimeSeries(CubeQuery query,
+      FactScanner scanner) {
     // {dimension values, measure} -> {time -> value}s
     Table<Map<String, String>, String, Map<Long, Long>> result = HashBasedTable.create();
 
@@ -487,20 +498,24 @@ public class DefaultCube implements Cube, MeteredDataset {
 
         AggregationFunction function = query.getMeasurements().get(next.getMeasureName());
         if (AggregationFunction.SUM == function) {
-          Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
+          Long value = result.get(seriesDimensions, next.getMeasureName())
+              .get(timeValue.getTimestamp());
           value = value == null ? 0 : value;
           value += timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.MAX == function) {
-          Long value = result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
+          Long value = result.get(seriesDimensions, next.getMeasureName())
+              .get(timeValue.getTimestamp());
           value = value != null && value > timeValue.getValue() ? value : timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.MIN == function) {
-          Long value =  result.get(seriesDimensions, next.getMeasureName()).get(timeValue.getTimestamp());
+          Long value = result.get(seriesDimensions, next.getMeasureName())
+              .get(timeValue.getTimestamp());
           value = value != null && value < timeValue.getValue() ? value : timeValue.getValue();
           result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), value);
         } else if (AggregationFunction.LATEST == function) {
-          result.get(seriesDimensions, next.getMeasureName()).put(timeValue.getTimestamp(), timeValue.getValue());
+          result.get(seriesDimensions, next.getMeasureName())
+              .put(timeValue.getTimestamp(), timeValue.getValue());
         } else {
           // should never happen: developer error
           throw new RuntimeException("Unknown MeasureType: " + function);
@@ -514,10 +529,11 @@ public class DefaultCube implements Cube, MeteredDataset {
   }
 
   private Collection<TimeSeries> convertToQueryResult(
-    CubeQuery query, Table<Map<String, String>, String, Map<Long, Long>> resultTable) {
+      CubeQuery query, Table<Map<String, String>, String, Map<Long, Long>> resultTable) {
     List<TimeSeries> result = new ArrayList<>();
     // iterating each groupValue dimensions
-    for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap().entrySet()) {
+    for (Map.Entry<Map<String, String>, Map<String, Map<Long, Long>>> row : resultTable.rowMap()
+        .entrySet()) {
       // iterating each measure
       for (Map.Entry<String, Map<Long, Long>> measureEntry : row.getValue().entrySet()) {
         // generating time series for a grouping and a measure
@@ -536,12 +552,13 @@ public class DefaultCube implements Cube, MeteredDataset {
         }
         // only partition the data points if the data points are larger than the required limit and only do it for
         // option LATEST and SUM.
-        if (query.getLimit() < timeValues.size() && PARTITION_AGG_OPTIONS.contains(aggregationOption)) {
+        if (query.getLimit() < timeValues.size() && PARTITION_AGG_OPTIONS.contains(
+            aggregationOption)) {
           int partitionSize = timeValues.size() / query.getLimit();
           int remainder = timeValues.size() % query.getLimit();
           // ignore the first reminderth data points
           for (List<TimeValue> interval : Iterables.partition(timeValues.subList(remainder,
-                                                                                 timeValues.size()), partitionSize)) {
+              timeValues.size()), partitionSize)) {
             // for LATEST we only need to get the last data point in the interval
             if (aggregationOption.equals(AggregationOption.LATEST)) {
               resultTimeValues.add(interval.get(interval.size() - 1));
@@ -550,13 +567,15 @@ public class DefaultCube implements Cube, MeteredDataset {
             // for SUM we want to sum up all the values in the interval
             if (aggregationOption.equals(AggregationOption.SUM)) {
               long sum = interval.stream().mapToLong(TimeValue::getValue).sum();
-              resultTimeValues.add(new TimeValue(interval.get(interval.size() - 1).getTimestamp(), sum));
+              resultTimeValues.add(
+                  new TimeValue(interval.get(interval.size() - 1).getTimestamp(), sum));
             }
           }
         } else {
           // TODO: CDAP-15565 remove the interpolation logic since it is never maintained and adds huge complexity
           PeekingIterator<TimeValue> timeValueItor = Iterators.peekingIterator(
-            new TimeSeriesInterpolator(timeValues, query.getInterpolator(), query.getResolution()).iterator());
+              new TimeSeriesInterpolator(timeValues, query.getInterpolator(),
+                  query.getResolution()).iterator());
           while (timeValueItor.hasNext()) {
             TimeValue timeValue = timeValueItor.next();
             resultTimeValues.add(new TimeValue(timeValue.getTimestamp(), timeValue.getValue()));
@@ -588,6 +607,7 @@ public class DefaultCube implements Cube, MeteredDataset {
   }
 
   private static final class DimensionValueComparator implements Comparator<DimensionValue> {
+
     @Override
     public int compare(DimensionValue t1, DimensionValue t2) {
       int cmp = t1.getName().compareTo(t2.getName());

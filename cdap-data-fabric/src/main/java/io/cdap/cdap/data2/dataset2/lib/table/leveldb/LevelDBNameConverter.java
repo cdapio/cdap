@@ -24,6 +24,7 @@ import io.cdap.cdap.data2.util.TableId;
  * Utility Class for LevelDB Table names.
  */
 public class LevelDBNameConverter {
+
   public static TableId from(String levelDBTableName) {
     Preconditions.checkArgument(levelDBTableName != null, "Table name should not be null.");
     // remove table-prefix

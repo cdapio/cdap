@@ -49,7 +49,8 @@ import javax.annotation.Nullable;
 /**
  * A default implementation of {@link ServiceConfigurer}.
  */
-public class DefaultServiceConfigurer extends AbstractConfigurer implements SystemServiceConfigurer {
+public class DefaultServiceConfigurer extends AbstractConfigurer implements
+    SystemServiceConfigurer {
 
   private final String className;
   private final Id.Artifact artifactId;
@@ -69,11 +70,12 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
    * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
-                                  PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                  DefaultSystemTableConfigurer systemTableConfigurer,
-                                  @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                  FeatureFlagsProvider featureFlagsProvider) {
-    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      DefaultSystemTableConfigurer systemTableConfigurer,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -121,25 +123,29 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances, getPlugins(),
-                                    properties);
+    return new ServiceSpecification(className, name, description, handleSpecs, resources, instances,
+        getPlugins(),
+        properties);
   }
 
   /**
    * Constructs HttpServiceSpecifications for each of the handlers in the {@param handlers} list.
-   * Also performs verifications on these handlers (that a NettyHttpService can be constructed from them).
+   * Also performs verifications on these handlers (that a NettyHttpService can be constructed from
+   * them).
    */
-  private Map<String, HttpServiceHandlerSpecification> createHandlerSpecs(List<? extends HttpServiceHandler> handlers) {
+  private Map<String, HttpServiceHandlerSpecification> createHandlerSpecs(
+      List<? extends HttpServiceHandler> handlers) {
     verifyHandlers(handlers);
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer, 
-        runtimeInfo, getFeatureFlagsProvider());
+          handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator,
+          systemTableConfigurer,
+          runtimeInfo, getFeatureFlagsProvider());
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
-                                  "Handler with name %s already existed.", spec.getName());
+          "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
       addDatasetModules(configurer.getDatasetModules());
       addDatasetSpecs(configurer.getDatasetSpecs());
@@ -149,24 +155,27 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
   }
 
   private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
-    Preconditions.checkArgument(!handlers.isEmpty(), "Service %s should have at least one handler", name);
+    Preconditions.checkArgument(!handlers.isEmpty(), "Service %s should have at least one handler",
+        name);
     new HttpHandlerFactory("", TransactionControl.IMPLICIT).validateHttpHandler(handlers);
     for (HttpServiceHandler handler : handlers) {
       // check that a system service handler is only used in system namespace
       if (!deployNamespace.equals(Id.Namespace.fromEntityId(NamespaceId.SYSTEM))) {
         TypeToken<?> contextType = TypeToken.of(handler.getClass())
-          .resolveType(HttpServiceHandler.class.getTypeParameters()[0]);
+            .resolveType(HttpServiceHandler.class.getTypeParameters()[0]);
         if (SystemHttpServiceContext.class.isAssignableFrom(contextType.getRawType())) {
           throw new IllegalArgumentException(String.format(
-            "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceContext if the "
-              + "application is deployed in the system namespace.", handler.getClass().getSimpleName()));
+              "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceContext if the "
+                  + "application is deployed in the system namespace.",
+              handler.getClass().getSimpleName()));
         }
         TypeToken<?> configurerType = TypeToken.of(handler.getClass())
-          .resolveType(HttpServiceHandler.class.getTypeParameters()[1]);
+            .resolveType(HttpServiceHandler.class.getTypeParameters()[1]);
         if (SystemHttpServiceConfigurer.class.isAssignableFrom(configurerType.getRawType())) {
           throw new IllegalArgumentException(String.format(
-            "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceConfigurer if the "
-              + "application is deployed in the system namespace.", handler.getClass().getSimpleName()));
+              "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceConfigurer if the "
+                  + "application is deployed in the system namespace.",
+              handler.getClass().getSimpleName()));
         }
       }
     }

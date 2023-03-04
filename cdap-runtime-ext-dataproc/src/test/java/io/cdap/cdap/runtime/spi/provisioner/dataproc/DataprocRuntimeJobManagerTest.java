@@ -39,8 +39,9 @@ public class DataprocRuntimeJobManagerTest {
   @Test
   public void longJobNameTest() {
     ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-      .setNamespace("namespace").setApplication("very_very_long_app_name_is_provided_this_should_be" +
-                                                  "_trimed_so_that_correct_name_is_produced")
+        .setNamespace("namespace")
+        .setApplication("very_very_long_app_name_is_provided_this_should_be"
+            + "_trimed_so_that_correct_name_is_produced")
       .setVersion("1.0")
       .setProgramType("workflow")
       .setProgram("program").setRun(UUID.randomUUID().toString()).build();

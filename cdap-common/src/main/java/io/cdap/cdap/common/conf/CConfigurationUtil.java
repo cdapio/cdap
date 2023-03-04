@@ -34,11 +34,12 @@ import java.util.Set;
  */
 public class CConfigurationUtil extends Configuration {
 
-  private CConfigurationUtil() { }
+  private CConfigurationUtil() {
+  }
 
   /**
-   * Returns a {@link Map} that is backed by the given {@link CConfiguration}. Updates to the returned Map
-   * will be reflected in the {@link CConfiguration}.
+   * Returns a {@link Map} that is backed by the given {@link CConfiguration}. Updates to the
+   * returned Map will be reflected in the {@link CConfiguration}.
    */
   public static Map<String, String> asMap(CConfiguration cConf) {
     return new AbstractMap<String, String>() {
@@ -92,7 +93,8 @@ public class CConfigurationUtil extends Configuration {
     };
   }
 
-  public static void copyTxProperties(CConfiguration cConf, org.apache.hadoop.conf.Configuration destination) {
+  public static void copyTxProperties(CConfiguration cConf,
+      org.apache.hadoop.conf.Configuration destination) {
     Properties props = cConf.getProps();
     for (String property : props.stringPropertyNames()) {
       if (property.startsWith("data.tx") || property.startsWith("tx.persist")) {
@@ -102,13 +104,15 @@ public class CConfigurationUtil extends Configuration {
   }
 
   /**
-   * Copies the prefixed properties from {@link CConfiguration} into {@link org.apache.hadoop.conf.Configuration}.
+   * Copies the prefixed properties from {@link CConfiguration} into {@link
+   * org.apache.hadoop.conf.Configuration}.
+   *
    * @param prefix the prefix for the property which need to be copied
    * @param cConf source config
    * @param destination destination config
    */
   public static void copyPrefixedProperties(String prefix, CConfiguration cConf,
-                                            org.apache.hadoop.conf.Configuration destination) {
+      org.apache.hadoop.conf.Configuration destination) {
     Properties props = cConf.getProps();
     for (String property : props.stringPropertyNames()) {
       if (property.startsWith(prefix)) {
@@ -147,6 +151,7 @@ public class CConfigurationUtil extends Configuration {
 
   /**
    * Asserts that the given CConfiguration has valid properties.
+   *
    * @param cConf the CConfiguration object to check
    * @throws IllegalArgumentException if the given cConf is invalid.
    */
@@ -157,8 +162,8 @@ public class CConfigurationUtil extends Configuration {
   }
 
   /**
-   * Returns {@code true} if the given key is explicitly
-   * defined (i.e. not coming from cdap-default.xml) in the given configuration.
+   * Returns {@code true} if the given key is explicitly defined (i.e. not coming from
+   * cdap-default.xml) in the given configuration.
    */
   public static boolean isOverridden(CConfiguration cConf, String key) {
     String[] sources = cConf.getPropertySources(key);
@@ -169,7 +174,7 @@ public class CConfigurationUtil extends Configuration {
     String value = cConf.get(key);
     Preconditions.checkNotNull(value, "Entry of CConf with key: %s is null", key);
     Preconditions.checkArgument(value.matches("[a-zA-Z0-9]+"),
-                                "CConf entry with key: %s must consist " +
-                                  "of only alphanumeric characters; it is: %s", key, value);
+        "CConf entry with key: %s must consist "
+            + "of only alphanumeric characters; it is: %s", key, value);
   }
 }

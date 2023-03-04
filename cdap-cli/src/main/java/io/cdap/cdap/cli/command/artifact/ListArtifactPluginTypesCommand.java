@@ -56,30 +56,31 @@ public class ListArtifactPluginTypesCommand extends AbstractAuthCommand {
     if (scopeStr == null) {
       types = artifactClient.getPluginTypes(artifactId);
     } else {
-      types = artifactClient.getPluginTypes(artifactId, ArtifactScope.valueOf(scopeStr.toUpperCase()));
+      types = artifactClient.getPluginTypes(artifactId,
+          ArtifactScope.valueOf(scopeStr.toUpperCase()));
     }
 
     Table table = Table.builder()
-      .setHeader("plugin type")
-      .setRows(types, new RowMaker<String>() {
-        @Override
-        public List<?> makeRow(String object) {
-          return Lists.newArrayList(object);
-        }
-      }).build();
+        .setHeader("plugin type")
+        .setRows(types, new RowMaker<String>() {
+          @Override
+          public List<?> makeRow(String object) {
+            return Lists.newArrayList(object);
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
     return String.format("list artifact plugin-types <%s> <%s> [<%s>]",
-                         ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
+        ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Lists all plugin types usable by the specified %s. " +
-      "If no scope is provided, %s are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
-                         ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
+    return String.format("Lists all plugin types usable by the specified %s. "
+            + "If no scope is provided, %s are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
+        ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }

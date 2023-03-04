@@ -71,8 +71,8 @@ public class SystemAppTask implements RunnableTask {
 
   @Inject
   SystemAppTask(CConfiguration cConf,
-                DiscoveryService discoveryService,
-                DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -93,23 +93,26 @@ public class SystemAppTask implements RunnableTask {
 
     String systemAppNamespace = context.getNamespace();
     Id.Artifact artifactId = Id.Artifact
-      .from(Id.Namespace.from(systemAppNamespace), systemAppArtifactId.getName(),
+        .from(Id.Namespace.from(systemAppNamespace), systemAppArtifactId.getName(),
             systemAppArtifactId.getVersion());
     ArtifactLocalizerClient localizerClient = injector.getInstance(ArtifactLocalizerClient.class);
     File artifactLocation = localizerClient
-      .getUnpackedArtifactLocation(
-        Artifacts.toProtoArtifactId(new NamespaceId(systemAppNamespace), systemAppArtifactId));
+        .getUnpackedArtifactLocation(
+            Artifacts.toProtoArtifactId(new NamespaceId(systemAppNamespace), systemAppArtifactId));
 
-    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(), impersonator);
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(),
+        impersonator);
 
     try (CloseableClassLoader artifactClassLoader =
-           artifactRepository.createArtifactClassLoader(new ArtifactDescriptor(artifactId.getNamespace().getId(),
-                                                                               artifactId.toArtifactId(),
-                                                                               Locations.toLocation(artifactLocation)),
-                                                        classLoaderImpersonator);
-         SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector, systemAppNamespace,
-                                                                               systemAppArtifactId,
-                                                                               artifactClassLoader)) {
+        artifactRepository.createArtifactClassLoader(
+            new ArtifactDescriptor(artifactId.getNamespace().getId(),
+                artifactId.toArtifactId(),
+                Locations.toLocation(artifactLocation)),
+            classLoaderImpersonator);
+        SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector,
+            systemAppNamespace,
+            systemAppArtifactId,
+            artifactClassLoader)) {
       RunnableTaskRequest taskRequest = context.getEmbeddedRequest();
       String taskClassName = taskRequest.getClassName();
       if (taskClassName == null) {
@@ -126,8 +129,8 @@ public class SystemAppTask implements RunnableTask {
       LOG.debug("Launching system app task {}", taskClassName);
       RunnableTask runnableTask = (RunnableTask) injector.getInstance(clazz);
 
-
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest, systemAppTaskContext) {
+      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest,
+          systemAppTaskContext) {
         @Override
         public void writeResult(byte[] data) throws IOException {
           context.writeResult(data);
@@ -151,31 +154,33 @@ public class SystemAppTask implements RunnableTask {
 
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf,
-                                        DiscoveryService discoveryService,
-                                        DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient) {
     return Guice.createInjector(
-      new IOModule(),
-      CoreSecurityRuntimeModule.getDistributedModule(cConf),
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new MessagingClientModule(),
-      new LocalLocationModule(),
-      new SecureStoreClientModule(),
-      new AuthenticationContextModules().getMasterModule(),
-      new SystemAppModule(),
-      new RunnableTaskModule(discoveryService, discoveryServiceClient));
+        new IOModule(),
+        CoreSecurityRuntimeModule.getDistributedModule(cConf),
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new MessagingClientModule(),
+        new LocalLocationModule(),
+        new SecureStoreClientModule(),
+        new AuthenticationContextModules().getMasterModule(),
+        new SystemAppModule(),
+        new RunnableTaskModule(discoveryService, discoveryServiceClient));
   }
 
-  private SystemAppTaskContext buildTaskSystemAppContext(Injector injector, String systemAppNamespace,
-                                                         ArtifactId artifactId, ClassLoader artifactClassLoader) {
+  private SystemAppTaskContext buildTaskSystemAppContext(Injector injector,
+      String systemAppNamespace,
+      ArtifactId artifactId, ClassLoader artifactClassLoader) {
     PreferencesFetcher preferencesFetcher = injector.getInstance(PreferencesFetcher.class);
     PluginFinder pluginFinder = injector.getInstance(PluginFinder.class);
     SecureStore secureStore = injector.getInstance(SecureStore.class);
-    ArtifactManagerFactory artifactManagerFactory = injector.getInstance(ArtifactManagerFactory.class);
+    ArtifactManagerFactory artifactManagerFactory = injector.getInstance(
+        ArtifactManagerFactory.class);
     RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
     return new DefaultSystemAppTaskContext(injector.getInstance(CConfiguration.class),
-                                           preferencesFetcher, pluginFinder, secureStore, systemAppNamespace,
-                                           artifactId, artifactClassLoader, artifactManagerFactory,
-                                           Constants.Service.TASK_WORKER, remoteClientFactory);
+        preferencesFetcher, pluginFinder, secureStore, systemAppNamespace,
+        artifactId, artifactClassLoader, artifactManagerFactory,
+        Constants.Service.TASK_WORKER, remoteClientFactory);
   }
 }

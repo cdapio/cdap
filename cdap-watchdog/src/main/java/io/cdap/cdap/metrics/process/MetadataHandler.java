@@ -36,7 +36,7 @@ public interface MetadataHandler {
   /**
    * Update the cache with new value for the given key.
    *
-   * @param key   {@link MetricsMetaKey}
+   * @param key {@link MetricsMetaKey}
    * @param value {@link TopicProcessMeta}
    */
   void updateCache(MetricsMetaKey key, TopicProcessMeta value);
@@ -44,7 +44,8 @@ public interface MetadataHandler {
   /**
    * Save the current cache (save to store)
    *
-   * @param topicProcessMetaMap {@link Map} of {@link MetricsMetaKey} key and {@link TopicProcessMeta} values.
+   * @param topicProcessMetaMap {@link Map} of {@link MetricsMetaKey} key and {@link
+   *     TopicProcessMeta} values.
    */
   void saveCache(Map<MetricsMetaKey, TopicProcessMeta> topicProcessMetaMap);
 

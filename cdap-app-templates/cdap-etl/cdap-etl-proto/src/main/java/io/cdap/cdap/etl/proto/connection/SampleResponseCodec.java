@@ -40,12 +40,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Codec to serialize/deserialize sample response
  */
-public class SampleResponseCodec implements JsonSerializer<SampleResponse>, JsonDeserializer<SampleResponse> {
+public class SampleResponseCodec implements JsonSerializer<SampleResponse>,
+    JsonDeserializer<SampleResponse> {
+
   private static final Logger LOG = LoggerFactory.getLogger(SampleResponseCodec.class);
 
   @Override
   public SampleResponse deserialize(JsonElement json, Type typeOfT,
-                                    JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     ConnectorDetail detail = context.deserialize(jsonObj.get("detail"), ConnectorDetail.class);
     JsonElement schemaJson = jsonObj.get("schema");
@@ -59,7 +61,8 @@ public class SampleResponseCodec implements JsonSerializer<SampleResponse>, Json
     jsonArray.iterator().forEachRemaining(jsonElement -> {
       String recordString = jsonElement.getAsString();
       try {
-        StructuredRecord record = StructuredRecordStringConverter.fromJsonString(recordString, schema);
+        StructuredRecord record = StructuredRecordStringConverter.fromJsonString(recordString,
+            schema);
         sample.add(record);
       } catch (IOException e) {
         LOG.warn("Error converting the json string {} to StructuredRecord", recordString, e);
@@ -69,7 +72,8 @@ public class SampleResponseCodec implements JsonSerializer<SampleResponse>, Json
   }
 
   @Override
-  public JsonElement serialize(SampleResponse sample, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(SampleResponse sample, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
     jsonObj.add("detail", context.serialize(sample.getDetail(), ConnectorDetail.class));
     jsonObj.add("schema", context.serialize(sample.getSchema(), Schema.class));

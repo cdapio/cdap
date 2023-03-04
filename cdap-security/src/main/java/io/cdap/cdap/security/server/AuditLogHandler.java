@@ -41,11 +41,12 @@ public class AuditLogHandler extends DefaultHandler {
 
   @Override
   public void handle(String target, Request baseRequest, HttpServletRequest request,
-                     HttpServletResponse response) throws IOException, ServletException {
-    String requestLine = request.getMethod() + " " + request.getRequestURI() + " " + request.getProtocol();
+      HttpServletResponse response) throws IOException, ServletException {
+    String requestLine =
+        request.getMethod() + " " + request.getRequestURI() + " " + request.getProtocol();
     AuditLogEntry logEntry = new AuditLogEntry(requestLine, request.getRemoteUser(),
-                                               InetAddress.getByName(request.getRemoteAddr()).getHostAddress(),
-                                               Collections.<String, String>emptyMap());
+        InetAddress.getByName(request.getRemoteAddr()).getHostAddress(),
+        Collections.<String, String>emptyMap());
     logEntry.setResponse(response.getStatus(), ((Response) response).getContentCount());
     logger.trace(logEntry.toString());
   }

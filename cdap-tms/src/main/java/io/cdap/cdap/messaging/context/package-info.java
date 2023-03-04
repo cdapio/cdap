@@ -15,7 +15,7 @@
  */
 
 /**
- * This package contains implementations of {@link io.cdap.cdap.api.messaging.MessagingContext} to be used
- * in multi-threaded environment.
+ * This package contains implementations of {@link io.cdap.cdap.api.messaging.MessagingContext} to
+ * be used in multi-threaded environment.
  */
 package io.cdap.cdap.messaging.context;

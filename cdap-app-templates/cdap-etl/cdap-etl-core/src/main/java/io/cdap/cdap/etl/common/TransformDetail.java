@@ -24,9 +24,11 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
+ * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link
+ * DefaultEmitter}.
  */
 public class TransformDetail implements Emitter<Object> {
+
   private final Transformation transformation;
   private final Collection<String> nextStages;
   private final DefaultEmitter<Object> defaultEmitter;

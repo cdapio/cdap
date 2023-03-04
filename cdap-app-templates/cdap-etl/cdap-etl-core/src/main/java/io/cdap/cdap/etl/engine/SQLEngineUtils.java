@@ -23,6 +23,7 @@ public class SQLEngineUtils {
 
   /**
    * Builds a new stage name for the SQL Engine implementation.
+   *
    * @param pluginName the name of the plugin to use
    * @return new name for the SQL engine stage.
    */

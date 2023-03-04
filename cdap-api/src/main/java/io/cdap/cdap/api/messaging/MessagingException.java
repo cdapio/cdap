@@ -19,8 +19,8 @@ package io.cdap.cdap.api.messaging;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Signals that an exception related to the messaging system has occurred.
- * This class is the parent class for exceptions produced by the Transactional Messaging System.
+ * Signals that an exception related to the messaging system has occurred. This class is the parent
+ * class for exceptions produced by the Transactional Messaging System.
  */
 @Beta
 public class MessagingException extends Exception {

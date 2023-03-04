@@ -51,9 +51,10 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final String creationTime;
   private final Metadata systemAppMetadata;
 
-  public AppSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ApplicationId entityId,
-                                 ApplicationSpecification appSpec, ApplicationClass applicationClass,
-                                 String creationTime, @Nullable Metadata systemAppMetadata) {
+  public AppSystemMetadataWriter(MetadataServiceClient metadataServiceClient,
+      ApplicationId entityId,
+      ApplicationSpecification appSpec, ApplicationClass applicationClass,
+      String creationTime, @Nullable Metadata systemAppMetadata) {
     super(metadataServiceClient, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
@@ -91,15 +92,15 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   private void addCapabilities(ApplicationSpecification appSpec,
-                               ApplicationClass applicationClass,
-                               ImmutableMap.Builder<String, String> properties) {
+      ApplicationClass applicationClass,
+      ImmutableMap.Builder<String, String> properties) {
     //add from all plugins
     Set<String> capabilitiesSet = appSpec.getPlugins().values().stream()
-      .map(Plugin::getPluginClass)
-      .map(PluginClass::getRequirements)
-      .map(Requirements::getCapabilities)
-      .flatMap(Set::stream)
-      .collect(Collectors.toSet());
+        .map(Plugin::getPluginClass)
+        .map(PluginClass::getRequirements)
+        .map(Requirements::getCapabilities)
+        .flatMap(Set::stream)
+        .collect(Collectors.toSet());
     //add from application
     capabilitiesSet.addAll(applicationClass.getRequirements().getCapabilities());
     if (capabilitiesSet.isEmpty()) {
@@ -110,7 +111,8 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   @Override
   public Set<String> getSystemTagsToAdd() {
-    Set<String> systemTags = systemAppMetadata != null ? new HashSet<>(systemAppMetadata.getTags()) : new HashSet<>();
+    Set<String> systemTags =
+        systemAppMetadata != null ? new HashSet<>(systemAppMetadata.getTags()) : new HashSet<>();
     systemTags.add(appSpec.getArtifactId().getName());
     return Collections.unmodifiableSet(systemTags);
   }
@@ -124,17 +126,19 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   private void addPrograms(ProgramType programType, Iterable<? extends ProgramSpecification> specs,
-                           ImmutableMap.Builder<String, String> properties) {
+      ImmutableMap.Builder<String, String> properties) {
     for (ProgramSpecification spec : specs) {
-      properties.put(programType.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + spec.getName(),
-                     spec.getName());
+      properties.put(
+          programType.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR + spec.getName(),
+          spec.getName());
     }
   }
 
   private void addSchedules(ImmutableMap.Builder<String, String> properties) {
     for (ScheduleCreationSpec creationSpec : appSpec.getProgramSchedules().values()) {
       properties.put("schedule" + MetadataConstants.KEYVALUE_SEPARATOR + creationSpec.getName(),
-                     creationSpec.getName() + MetadataConstants.KEYVALUE_SEPARATOR + creationSpec.getDescription());
+          creationSpec.getName() + MetadataConstants.KEYVALUE_SEPARATOR
+              + creationSpec.getDescription());
     }
   }
 }

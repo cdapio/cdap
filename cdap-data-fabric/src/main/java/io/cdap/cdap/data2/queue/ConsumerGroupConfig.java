@@ -28,7 +28,8 @@ public class ConsumerGroupConfig {
   private final DequeueStrategy dequeueStrategy;
   private final String hashKey;
 
-  public ConsumerGroupConfig(long groupId, int groupSize, DequeueStrategy dequeueStrategy, String hashKey) {
+  public ConsumerGroupConfig(long groupId, int groupSize, DequeueStrategy dequeueStrategy,
+      String hashKey) {
     this.groupId = groupId;
     this.groupSize = groupSize;
     this.dequeueStrategy = dequeueStrategy;
@@ -58,11 +59,11 @@ public class ConsumerGroupConfig {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("groupId", groupId)
-      .add("groupSize", groupSize)
-      .add("dequeueStrategy", dequeueStrategy)
-      .add("hashKey", hashKey)
-      .toString();
+        .add("groupId", groupId)
+        .add("groupSize", groupSize)
+        .add("dequeueStrategy", dequeueStrategy)
+        .add("hashKey", hashKey)
+        .toString();
   }
 
   @Override
@@ -77,9 +78,9 @@ public class ConsumerGroupConfig {
     ConsumerGroupConfig other = (ConsumerGroupConfig) o;
 
     return groupId == other.groupId
-      && groupSize == other.groupSize
-      && dequeueStrategy == other.dequeueStrategy
-      && Objects.equal(hashKey, other.hashKey);
+        && groupSize == other.groupSize
+        && dequeueStrategy == other.dequeueStrategy
+        && Objects.equal(hashKey, other.hashKey);
   }
 
   @Override

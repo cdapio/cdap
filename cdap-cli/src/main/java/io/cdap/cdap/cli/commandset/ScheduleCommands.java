@@ -35,18 +35,19 @@ import io.cdap.common.cli.CommandSet;
  * Schedule commands.
  */
 public class ScheduleCommands extends CommandSet<Command> implements Categorized {
+
   @Inject
   public ScheduleCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(AddTimeScheduleCommand.class))
-        .add(injector.getInstance(DeleteScheduleCommand.class))
-        .add(injector.getInstance(GetScheduleStatusCommand.class))
-        .add(injector.getInstance(ListWorkflowSchedulesCommand.class))
-        .add(injector.getInstance(ResumeScheduleCommand.class))
-        .add(injector.getInstance(SuspendScheduleCommand.class))
-        .add(injector.getInstance(UpdateTimeScheduleCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(AddTimeScheduleCommand.class))
+            .add(injector.getInstance(DeleteScheduleCommand.class))
+            .add(injector.getInstance(GetScheduleStatusCommand.class))
+            .add(injector.getInstance(ListWorkflowSchedulesCommand.class))
+            .add(injector.getInstance(ResumeScheduleCommand.class))
+            .add(injector.getInstance(SuspendScheduleCommand.class))
+            .add(injector.getInstance(UpdateTimeScheduleCommand.class))
+            .build());
   }
 
   @Override

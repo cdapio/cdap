@@ -32,32 +32,36 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Interface that the {@link MetadataHttpHandler} uses to interact with Metadata.
- * All the create, update and remove operations through this interface are restricted to {@link MetadataScope#USER},
- * so that clients of the RESTful API cannot create, update or remove {@link MetadataScope#SYSTEM} metadata.
- * The operations to retrieve metadata properties and tags allow passing in a scope, so clients of the RESTful API
- * can retrieve both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM} metadata.
+ * Interface that the {@link MetadataHttpHandler} uses to interact with Metadata. All the create,
+ * update and remove operations through this interface are restricted to {@link MetadataScope#USER},
+ * so that clients of the RESTful API cannot create, update or remove {@link MetadataScope#SYSTEM}
+ * metadata. The operations to retrieve metadata properties and tags allow passing in a scope, so
+ * clients of the RESTful API can retrieve both {@link MetadataScope#USER} and {@link
+ * MetadataScope#SYSTEM} metadata.
  */
 public interface MetadataAdmin {
 
   /**
-   * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity metadataEntity}.
-   * Existing keys are updated with new values, newer keys are appended to the metadata. This API only supports adding
-   * properties in {@link MetadataScope#USER}.
+   * Adds the specified {@link Map} to the metadata of the specified {@link MetadataEntity
+   * metadataEntity}. Existing keys are updated with new values, newer keys are appended to the
+   * metadata. This API only supports adding properties in {@link MetadataScope#USER}.
    *
-   * @throws InvalidMetadataException if some of the properties violate metadata validation rules
+   * @throws InvalidMetadataException if some of the properties violate metadata validation
+   *     rules
    */
-  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
-    throws InvalidMetadataException, IOException;
+  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties,
+      MutationOptions options)
+      throws InvalidMetadataException, IOException;
 
   /**
-   * Adds the specified tags to specified {@link MetadataEntity}. This API only supports adding tags in
-   * {@link MetadataScope#USER}.
+   * Adds the specified tags to specified {@link MetadataEntity}. This API only supports adding tags
+   * in {@link MetadataScope#USER}.
    *
-   * @throws InvalidMetadataException if some of the properties violate metadata validation rules
+   * @throws InvalidMetadataException if some of the properties violate metadata validation
+   *     rules
    */
   void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
-    throws InvalidMetadataException, IOException;
+      throws InvalidMetadataException, IOException;
 
   /**
    * Returns all metadata (including properties and tags) for the specified {@link MetadataEntity}
@@ -72,79 +76,84 @@ public interface MetadataAdmin {
   Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException;
 
   /**
-   * Returns the metadata of specified kind (properties or tags) for the specified {@link MetadataEntity}
-   * in the specified {@link MetadataScope}.
+   * Returns the metadata of specified kind (properties or tags) for the specified {@link
+   * MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the scope to address, or null for all scopes
    * @param kind the kind of metadata to select, or null for all metadata
    */
-  Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
-    throws IOException;
+  Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope,
+      @Nullable MetadataKind kind)
+      throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both
-   * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}
+   *     {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}
    */
   Map<String, String> getProperties(MetadataEntity metadataEntity) throws IOException;
 
   /**
-   * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in the specified
-   * {@link MetadataScope}
+   * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in the
+   *     specified {@link MetadataScope}
    */
-  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
+  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity)
+      throws IOException;
 
   /**
-   * @return all the tags for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
-   * {@link MetadataScope#SYSTEM}
+   * @return all the tags for the specified {@link MetadataEntity} in both {@link
+   *     MetadataScope#USER} and {@link MetadataScope#SYSTEM}
    */
   Set<String> getTags(MetadataEntity metadataEntity) throws IOException;
 
   /**
-   * @return all the tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
+   * @return all the tags for the specified {@link MetadataEntity} in the specified {@link
+   *     MetadataScope}
    */
   Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
-   * Removes all the metadata (including properties and tags) for the specified {@link MetadataEntity}. This
-   * API only supports removing metadata in {@link MetadataScope#USER}.
+   * Removes all the metadata (including properties and tags) for the specified {@link
+   * MetadataEntity}. This API only supports removing metadata in {@link MetadataScope#USER}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove metadata for
    */
   void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
-   * Removes all properties from the metadata of the specified {@link MetadataEntity}. This API only supports
-   * removing properties in {@link MetadataScope#USER}.
+   * Removes all properties from the metadata of the specified {@link MetadataEntity}. This API only
+   * supports removing properties in {@link MetadataScope#USER}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove properties for
    */
   void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
-   * Removes the specified keys from the metadata properties of the specified {@link MetadataEntity}. This API only
-   * supports removing properties in {@link MetadataScope#USER}.
+   * Removes the specified keys from the metadata properties of the specified {@link
+   * MetadataEntity}. This API only supports removing properties in {@link MetadataScope#USER}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
    */
-  void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options) throws IOException;
+  void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options)
+      throws IOException;
 
   /**
-   * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing tags in
-   * {@link MetadataScope#USER}.
+   * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing
+   * tags in {@link MetadataScope#USER}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove tags for
    */
   void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
-   * Removes the specified tags from the specified {@link MetadataEntity}. This API only supports removing tags in
-   * {@link MetadataScope#USER}.
+   * Removes the specified tags from the specified {@link MetadataEntity}. This API only supports
+   * removing tags in {@link MetadataScope#USER}.
    *
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
    */
-  void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException;
+  void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
+      throws IOException;
 
   /**
    * Applies a metadata mutation directly.
@@ -156,7 +165,8 @@ public interface MetadataAdmin {
   /**
    * Applies a batch of metadata mutations
    */
-  void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException;
+  void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options)
+      throws IOException;
 
   /**
    * Executes a search for CDAP entities.

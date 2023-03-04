@@ -19,10 +19,11 @@ package io.cdap.cdap.runtime.spi.provisioner;
 import java.util.Objects;
 
 /**
- * Specification of a Provisioner. Includes information about the provisioner as a whole as well as information about
- * every property supported by the provisioner.
+ * Specification of a Provisioner. Includes information about the provisioner as a whole as well as
+ * information about every property supported by the provisioner.
  */
 public class ProvisionerSpecification {
+
   private final String name;
   private final String label;
   private final String description;
@@ -56,9 +57,9 @@ public class ProvisionerSpecification {
 
     ProvisionerSpecification that = (ProvisionerSpecification) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(label, that.label) &&
-      Objects.equals(description, that.description);
+    return Objects.equals(name, that.name)
+        && Objects.equals(label, that.label)
+        && Objects.equals(description, that.description);
   }
 
   @Override

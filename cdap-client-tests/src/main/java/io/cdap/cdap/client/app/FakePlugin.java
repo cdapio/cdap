@@ -25,6 +25,7 @@ import io.cdap.cdap.api.annotation.Plugin;
 @Plugin(type = "runnable")
 @Name("FakePlugin")
 public class FakePlugin implements Runnable {
+
   public static final String NAME = "FakePlugin";
 
   @Override

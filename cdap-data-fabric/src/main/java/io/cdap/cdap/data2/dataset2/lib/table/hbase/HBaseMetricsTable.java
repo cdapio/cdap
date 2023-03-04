@@ -72,7 +72,8 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsTable.class);
   // Exponentially log less on executor rejected execution due to limit threads
-  private static final Logger REJECTION_LOG = Loggers.sampling(LOG, LogSamplers.exponentialLimit(1, 1024, 2.0d));
+  private static final Logger REJECTION_LOG = Loggers.sampling(LOG,
+      LogSamplers.exponentialLimit(1, 1024, 2.0d));
 
   private final HBaseTableUtil tableUtil;
   private final TableId tableId;
@@ -83,9 +84,10 @@ public class HBaseMetricsTable implements MetricsTable {
   private ExecutorService scanExecutor;
 
   public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
-                           Configuration hConf, HBaseTableUtil tableUtil, CConfiguration cConf) throws IOException {
+      Configuration hConf, HBaseTableUtil tableUtil, CConfiguration cConf) throws IOException {
     this.tableUtil = tableUtil;
-    this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
+    this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()),
+        spec.getName());
 
     initializeVars(cConf, spec);
 
@@ -100,8 +102,8 @@ public class HBaseMetricsTable implements MetricsTable {
     this.rowKeyDistributor = null;
     RejectedExecutionHandler callerRunsPolicy = (r, executor) -> {
       REJECTION_LOG.info(
-        "No more threads in the HBase scan thread pool. Consider increase {}. Performing scan in caller thread {}",
-        Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName()
+          "No more threads in the HBase scan thread pool. Consider increase {}. Performing scan in caller thread {}",
+          Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS, Thread.currentThread().getName()
       );
       // Runs it from the caller thread
       if (!executor.isShutdown()) {
@@ -114,13 +116,14 @@ public class HBaseMetricsTable implements MetricsTable {
     // Uses daemon thread, hence no need to worry about shutdown
     // When all threads are busy, use the caller thread to execute
     this.scanExecutor = new ThreadPoolExecutor(0, maxScanThread, 60L, TimeUnit.SECONDS,
-                                               new SynchronousQueue<Runnable>(),
-                                               Threads.createDaemonThreadFactory("metrics-hbase-scanner-%d"),
-                                               callerRunsPolicy);
+        new SynchronousQueue<Runnable>(),
+        Threads.createDaemonThreadFactory("metrics-hbase-scanner-%d"),
+        callerRunsPolicy);
 
     this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
-      new RowKeyDistributorByHashPrefix.
-        OneByteSimpleHash(spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)));
+        new RowKeyDistributorByHashPrefix.
+            OneByteSimpleHash(
+            spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)));
 
   }
 
@@ -130,9 +133,9 @@ public class HBaseMetricsTable implements MetricsTable {
     try {
       byte[] distributedKey = createDistributedRowKey(row);
       Get get = tableUtil.buildGet(distributedKey)
-        .addColumn(columnFamily, column)
-        .setMaxVersions(1)
-        .build();
+          .addColumn(columnFamily, column)
+          .setMaxVersions(1)
+          .build();
       Result getResult = table.get(get);
       if (!getResult.isEmpty()) {
         return getResult.getValue(columnFamily, column);
@@ -188,13 +191,13 @@ public class HBaseMetricsTable implements MetricsTable {
       if (newValue == null) {
         // HBase API weirdness: we must use deleteColumns() because deleteColumn() deletes only the last version.
         Delete delete = tableUtil.buildDelete(distributedKey)
-          .deleteColumns(columnFamily, column)
-          .build();
+            .deleteColumns(columnFamily, column)
+            .build();
         return table.checkAndDelete(distributedKey, columnFamily, column, oldValue, delete);
       } else {
         Put put = tableUtil.buildPut(distributedKey)
-          .add(columnFamily, column, newValue)
-          .build();
+            .add(columnFamily, column, newValue)
+            .build();
         return table.checkAndPut(distributedKey, columnFamily, column, oldValue, put);
       }
     } catch (IOException e) {
@@ -213,8 +216,9 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                          " row: " + Bytes.toStringBinary(distributedKey));
+        throw new NumberFormatException(
+            "Attempted to increment a value that is not convertible to long,"
+                + " row: " + Bytes.toStringBinary(distributedKey));
       }
       throw new DataSetException("Increment failed on table " + tableId, e);
     }
@@ -237,8 +241,8 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private Put getIncrementalPut(byte[] row) {
     return tableUtil.buildPut(row)
-      .setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true))
-      .build();
+        .setAttribute(HBaseTable.DELTA_WRITE, Bytes.toBytes(true))
+        .build();
   }
 
   @Override
@@ -257,7 +261,8 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new NumberFormatException("Attempted to increment a value that is not convertible to long.");
+        throw new NumberFormatException(
+            "Attempted to increment a value that is not convertible to long.");
       }
       throw new DataSetException("Increment failed on table " + tableId, e);
     }
@@ -275,9 +280,10 @@ public class HBaseMetricsTable implements MetricsTable {
       // figure out whether this is an illegal increment
       // currently there is not other way to extract that from the HBase exception than string match
       if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
-        throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                          " row: " + Bytes.toStringBinary(distributedKey) +
-                                          " column: " + Bytes.toStringBinary(column));
+        throw new NumberFormatException(
+            "Attempted to increment a value that is not convertible to long,"
+                + " row: " + Bytes.toStringBinary(distributedKey) +
+                " column: " + Bytes.toStringBinary(column));
       }
       throw new DataSetException("IncrementAndGet failed on table " + tableId, e);
     }
@@ -299,7 +305,7 @@ public class HBaseMetricsTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
-                      @Nullable FuzzyRowFilter filter) {
+      @Nullable FuzzyRowFilter filter) {
     ScanBuilder scanBuilder = configureRangeScan(tableUtil.buildScan(), startRow, stopRow, filter);
     try {
       ResultScanner resultScanner = getScanner(scanBuilder);
@@ -311,11 +317,12 @@ public class HBaseMetricsTable implements MetricsTable {
 
   private ResultScanner getScanner(ScanBuilder scanBuilder) throws IOException {
     return rowKeyDistributor == null ? table.getScanner(scanBuilder.build()) :
-      DistributedScanner.create(table, scanBuilder.build(), rowKeyDistributor, scanExecutor);
+        DistributedScanner.create(table, scanBuilder.build(), rowKeyDistributor, scanExecutor);
   }
 
-  private ScanBuilder configureRangeScan(ScanBuilder scan, @Nullable byte[] startRow, @Nullable byte[] stopRow,
-                                         @Nullable FuzzyRowFilter filter) {
+  private ScanBuilder configureRangeScan(ScanBuilder scan, @Nullable byte[] startRow,
+      @Nullable byte[] stopRow,
+      @Nullable FuzzyRowFilter filter) {
     // todo: should be configurable
     scan.setCaching(1000);
 
@@ -327,14 +334,15 @@ public class HBaseMetricsTable implements MetricsTable {
     }
     scan.addFamily(columnFamily);
     if (filter != null) {
-      List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(filter.getFuzzyKeysData().size());
+      List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(
+          filter.getFuzzyKeysData().size());
       for (ImmutablePair<byte[], byte[]> pair : filter.getFuzzyKeysData()) {
         if (rowKeyDistributor != null) {
           fuzzyPairs.addAll(rowKeyDistributor.getDistributedFilterPairs(pair));
         } else {
           // Make a copy of filter pair because the key and mask will get modified in HBase FuzzyRowFilter.
           fuzzyPairs.add(Pair.newPair(Arrays.copyOf(pair.getFirst(), pair.getFirst().length),
-                                      Arrays.copyOf(pair.getSecond(), pair.getSecond().length)));
+              Arrays.copyOf(pair.getSecond(), pair.getSecond().length)));
         }
       }
       scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));

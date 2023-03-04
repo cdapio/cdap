@@ -20,13 +20,14 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * An interface providing a way of writing to local files.
- * Provides a pluggable interface for unit-testing file-based logic.
+ * An interface providing a way of writing to local files. Provides a pluggable interface for
+ * unit-testing file-based logic.
  */
 public interface LocalFileProvider {
+
   /**
-   * Returns a writable file object reference based on the provided name.
-   * Creates any necessary directories for the object prior to returning the reference.
+   * Returns a writable file object reference based on the provided name. Creates any necessary
+   * directories for the object prior to returning the reference.
    *
    * @param path The path of the file
    * @return a File object

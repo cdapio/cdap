@@ -31,21 +31,21 @@ public class DefaultCommands extends CommandSet<Command> {
   @Inject
   public DefaultCommands(Injector injector) {
     super(
-      ImmutableList.of(),
-      ImmutableList.<CommandSet<Command>>builder()
-        .add(injector.getInstance(GeneralCommands.class))
-        .add(injector.getInstance(MetricsCommands.class))
-        .add(injector.getInstance(ApplicationCommands.class))
-        .add(injector.getInstance(ArtifactCommands.class))
-        .add(injector.getInstance(ProgramCommands.class))
-        .add(injector.getInstance(DatasetCommands.class))
-        .add(injector.getInstance(ServiceCommands.class))
-        .add(injector.getInstance(PreferencesCommandSet.class))
-        .add(injector.getInstance(NamespaceCommands.class))
-        .add(injector.getInstance(ScheduleCommands.class))
-        .add(injector.getInstance(SecurityCommands.class))
-        .add(injector.getInstance(LineageCommands.class))
-        .add(injector.getInstance(MetadataCommands.class))
-        .build());
+        ImmutableList.of(),
+        ImmutableList.<CommandSet<Command>>builder()
+            .add(injector.getInstance(GeneralCommands.class))
+            .add(injector.getInstance(MetricsCommands.class))
+            .add(injector.getInstance(ApplicationCommands.class))
+            .add(injector.getInstance(ArtifactCommands.class))
+            .add(injector.getInstance(ProgramCommands.class))
+            .add(injector.getInstance(DatasetCommands.class))
+            .add(injector.getInstance(ServiceCommands.class))
+            .add(injector.getInstance(PreferencesCommandSet.class))
+            .add(injector.getInstance(NamespaceCommands.class))
+            .add(injector.getInstance(ScheduleCommands.class))
+            .add(injector.getInstance(SecurityCommands.class))
+            .add(injector.getInstance(LineageCommands.class))
+            .add(injector.getInstance(MetadataCommands.class))
+            .build());
   }
 }

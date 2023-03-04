@@ -25,14 +25,15 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * No-op implementation of {@link OwnerAdmin}. This is just a dummy OwnerAdmin which can be used in unit tests.
- * Although, this binding should not be used if the the unit test needs app fabric, stream admin or
- * dataset instance service as they need a functional OwnerAdmin.
+ * No-op implementation of {@link OwnerAdmin}. This is just a dummy OwnerAdmin which can be used in
+ * unit tests. Although, this binding should not be used if the the unit test needs app fabric,
+ * stream admin or dataset instance service as they need a functional OwnerAdmin.
  */
 public class NoOpOwnerAdmin implements OwnerAdmin {
+
   @Override
   public void add(NamespacedEntityId entityId,
-                  KerberosPrincipalId kerberosPrincipalId) throws AlreadyExistsException {
+      KerberosPrincipalId kerberosPrincipalId) throws AlreadyExistsException {
     // no-op
   }
 

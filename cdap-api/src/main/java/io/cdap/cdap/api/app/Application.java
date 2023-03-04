@@ -22,14 +22,15 @@ import io.cdap.cdap.api.Config;
  * Defines a CDAP Application.
  *
  * @param <T> {@link Config} class that represents the configuration of the Application.
- *
  */
 public interface Application<T extends Config> {
+
   /**
    * Configures the Application.
    *
    * @param configurer Collects the Application configuration
-   * @param context Used to access the environment, application configuration, and application (deployment) arguments
+   * @param context Used to access the environment, application configuration, and application
+   *     (deployment) arguments
    */
   void configure(ApplicationConfigurer configurer, ApplicationContext<T> context);
 
@@ -41,17 +42,20 @@ public interface Application<T extends Config> {
   }
 
   /**
-   * Updates application configuration based on config and update actions inside applicationUpdateContext.
+   * Updates application configuration based on config and update actions inside
+   * applicationUpdateContext.
    *
-   * @param applicationUpdateContext Used to access methods helpful for operations like upgrading plugin version for
-   * config.
+   * @param applicationUpdateContext Used to access methods helpful for operations like
+   *     upgrading plugin version for config.
    * @return {@link ApplicationUpdateResult} object for the config update operation.
-   * @throws UnsupportedOperationException if application does not support config update operation.
-   * @throws Exception if there was an exception during update of app config. This exception will often wrap
-   *                   the actual exception.
+   * @throws UnsupportedOperationException if application does not support config update
+   *     operation.
+   * @throws Exception if there was an exception during update of app config. This exception
+   *     will often wrap the actual exception.
    */
   default ApplicationUpdateResult<T> updateConfig(ApplicationUpdateContext applicationUpdateContext)
-    throws Exception {
-    throw new UnsupportedOperationException("Application config update operation is not supported.");
+      throws Exception {
+    throw new UnsupportedOperationException(
+        "Application config update operation is not supported.");
   }
 }

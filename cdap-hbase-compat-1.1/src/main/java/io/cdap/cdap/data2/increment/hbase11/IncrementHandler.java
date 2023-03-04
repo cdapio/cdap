@@ -57,17 +57,17 @@ import org.apache.tephra.TxConstants;
 /**
  * HBase coprocessor that handles reading and writing read-less increment operations.
  *
- * <p>Writes of incremental values are performed as normal {@code Put}s, flagged with a special attribute
- * {@link HBaseTable#DELTA_WRITE}.  The coprocessor intercepts these
- * writes and rewrites the cell value to use a special marker prefix.</p>
+ * <p>Writes of incremental values are performed as normal {@code Put}s, flagged with a special
+ * attribute {@link HBaseTable#DELTA_WRITE}.  The coprocessor intercepts these writes and rewrites
+ * the cell value to use a special marker prefix.</p>
  *
- * <p>For read (for {@code Get} and {@code Scan}) operations, all of the delta values are summed up for a column,
- * up to and including the most recent "full" (non-delta) value.  The sum of these delta values, plus the full value
- * (if found) is returned for the column.</p>
+ * <p>For read (for {@code Get} and {@code Scan}) operations, all of the delta values are summed up
+ * for a column, up to and including the most recent "full" (non-delta) value.  The sum of these
+ * delta values, plus the full value (if found) is returned for the column.</p>
  *
- * <p>To mitigate the performance impact on reading, this coprocessor also overrides the scanner used in flush and
- * compaction operations, using {@link IncrementSummingScanner} to generate a new "full" value aggregated from
- * all the successfully committed delta values.</p>
+ * <p>To mitigate the performance impact on reading, this coprocessor also overrides the scanner
+ * used in flush and compaction operations, using {@link IncrementSummingScanner} to generate a new
+ * "full" value aggregated from all the successfully committed delta values.</p>
  */
 public class IncrementHandler extends BaseRegionObserver {
 
@@ -99,7 +99,8 @@ public class IncrementHandler extends BaseRegionObserver {
     state.setTimestampOracle(timeOracle);
   }
 
-  private Map<byte[], byte[]> convertFamilyValues(Map<ImmutableBytesWritable, ImmutableBytesWritable> writableValues) {
+  private Map<byte[], byte[]> convertFamilyValues(
+      Map<ImmutableBytesWritable, ImmutableBytesWritable> writableValues) {
     Map<byte[], byte[]> converted = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e : writableValues.entrySet()) {
       converted.put(e.getKey().get(), e.getValue().get());
@@ -108,14 +109,16 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public void preGetOp(ObserverContext<RegionCoprocessorEnvironment> ctx, Get get, List<Cell> results)
-    throws IOException {
+  public void preGetOp(ObserverContext<RegionCoprocessorEnvironment> ctx, Get get,
+      List<Cell> results)
+      throws IOException {
     Scan scan = new Scan(get);
     scan.setMaxVersions();
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
     RegionScanner scanner = null;
     try {
-      scanner = new IncrementSummingScanner(region, scan.getBatch(), region.getScanner(scan), ScanType.USER_SCAN);
+      scanner = new IncrementSummingScanner(region, scan.getBatch(), region.getScanner(scan),
+          ScanType.USER_SCAN);
       scanner.next(results);
       ctx.bypass();
     } finally {
@@ -126,29 +129,32 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public Result preIncrementAfterRowLock(ObserverContext<RegionCoprocessorEnvironment> e, Increment increment)
-    throws IOException {
+  public Result preIncrementAfterRowLock(ObserverContext<RegionCoprocessorEnvironment> e,
+      Increment increment)
+      throws IOException {
 
     // this should only trigger for a transactional readless increment
     boolean isIncrement = increment.getAttribute(HBaseTable.DELTA_WRITE) != null;
-    boolean transactional = state.containsTransactionalFamily(increment.getFamilyCellMap().keySet());
+    boolean transactional = state.containsTransactionalFamily(
+        increment.getFamilyCellMap().keySet());
     if (!isIncrement || !transactional) {
       return null;
     }
     byte[] txBytes = increment.getAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY);
     if (txBytes == null) {
       throw new IllegalArgumentException("Attribute " + TxConstants.TX_OPERATION_ATTRIBUTE_KEY
-                                           + " must be set for transactional readless increments");
+          + " must be set for transactional readless increments");
     }
     byte[] wpBytes = increment.getAttribute(HBaseTable.WRITE_POINTER);
     if (wpBytes == null) {
       throw new IllegalArgumentException("Attribute " + HBaseTable.WRITE_POINTER
-                                           + " must be set for transactional readless increments");
+          + " must be set for transactional readless increments");
     }
     long writeVersion = Bytes.toLong(wpBytes);
     Get get = new Get(increment.getRow());
     get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txBytes);
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs()
+        .entrySet()) {
       byte[] family = entry.getKey();
       for (byte[] column : entry.getValue().keySet()) {
         get.addColumn(family, column);
@@ -158,11 +164,12 @@ public class IncrementHandler extends BaseRegionObserver {
 
     Put put = new Put(increment.getRow());
     put.setAttribute(HBaseTable.TX_MAX_LIFETIME_MILLIS_KEY,
-                     increment.getAttribute(HBaseTable.TX_MAX_LIFETIME_MILLIS_KEY));
+        increment.getAttribute(HBaseTable.TX_MAX_LIFETIME_MILLIS_KEY));
     put.setAttribute(HBaseTable.TX_ID, increment.getAttribute(HBaseTable.TX_ID));
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs()
+        .entrySet()) {
       byte[] family = entry.getKey();
-      for (Map.Entry<byte[], Long> colEntry: entry.getValue().entrySet()) {
+      for (Map.Entry<byte[], Long> colEntry : entry.getValue().entrySet()) {
         byte[] column = colEntry.getKey();
         long value = colEntry.getValue();
         byte[] existingValue = result.getValue(family, column);
@@ -170,7 +177,8 @@ public class IncrementHandler extends BaseRegionObserver {
           long delta = Bytes.toLong(existingValue);
           value += delta;
         }
-        put.add(new KeyValue(increment.getRow(), family, column, writeVersion, Bytes.toBytes(value)));
+        put.add(
+            new KeyValue(increment.getRow(), family, column, writeVersion, Bytes.toBytes(value)));
       }
     }
     if (!put.isEmpty()) {
@@ -181,8 +189,9 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit, Durability durability)
-    throws IOException {
+  public void prePut(ObserverContext<RegionCoprocessorEnvironment> ctx, Put put, WALEdit edit,
+      Durability durability)
+      throws IOException {
     // we assume that if any of the column families written to are transactional, the entire write is transactional
     boolean transactional = state.containsTransactionalFamily(put.getFamilyCellMap().keySet());
     boolean isIncrement = put.getAttribute(HBaseTable.DELTA_WRITE) != null;
@@ -200,13 +209,13 @@ public class IncrementHandler extends BaseRegionObserver {
         for (Cell cell : entry.getValue()) {
           // rewrite the cell value with a special prefix to identify it as a delta
           // for 0.98 we can update this to use cell tags
-          byte[] newValue = isIncrement ?
-              Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell)) :
+          byte[] newValue = isIncrement
+              ? Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell)) :
               CellUtil.cloneValue(cell);
           newCells.add(CellUtil.createCell(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell),
-                                           CellUtil.cloneQualifier(cell),
-                                           transactional ? cell.getTimestamp() : tsToAssign,
-                                           cell.getTypeByte(), newValue));
+              CellUtil.cloneQualifier(cell),
+              transactional ? cell.getTimestamp() : tsToAssign,
+              cell.getTypeByte(), newValue));
         }
         newFamilyMap.put(entry.getKey(), newCells);
       }
@@ -216,8 +225,9 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public void preDelete(ObserverContext<RegionCoprocessorEnvironment> e, Delete delete, WALEdit edit,
-                        Durability durability) throws IOException {
+  public void preDelete(ObserverContext<RegionCoprocessorEnvironment> e, Delete delete,
+      WALEdit edit,
+      Durability durability) throws IOException {
     boolean transactional = state.containsTransactionalFamily(delete.getFamilyCellMap().keySet());
     if (!transactional) {
       long tsToAssign = state.getUniqueTimestamp();
@@ -241,8 +251,9 @@ public class IncrementHandler extends BaseRegionObserver {
   }
 
   @Override
-  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
-    throws IOException {
+  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan,
+      RegionScanner s)
+      throws IOException {
     // must see all versions to aggregate increments
     scan.setMaxVersions();
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
@@ -251,39 +262,45 @@ public class IncrementHandler extends BaseRegionObserver {
 
   @Override
   public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> ctx, Scan scan,
-                                       RegionScanner scanner)
-    throws IOException {
+      RegionScanner scanner)
+      throws IOException {
     return new IncrementSummingScanner(region, scan.getBatch(), scanner, ScanType.USER_SCAN);
   }
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                  InternalScanner scanner) throws IOException {
+      InternalScanner scanner) throws IOException {
     byte[] family = store.getFamily().getName();
     return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
-        ScanType.COMPACT_RETAIN_DELETES, state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
+        ScanType.COMPACT_RETAIN_DELETES, state.getCompactionBound(family),
+        state.getOldestVisibleTimestamp(family));
   }
 
   static boolean isIncrement(Cell cell) {
-    return !CellUtil.isDelete(cell) && cell.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH &&
-      Bytes.equals(cell.getValueArray(), cell.getValueOffset(), IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
-                   IncrementHandlerState.DELTA_MAGIC_PREFIX, 0, IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
+    return !CellUtil.isDelete(cell)
+        && cell.getValueLength() == IncrementHandlerState.DELTA_FULL_LENGTH
+        && Bytes.equals(cell.getValueArray(), cell.getValueOffset(),
+        IncrementHandlerState.DELTA_MAGIC_PREFIX.length,
+        IncrementHandlerState.DELTA_MAGIC_PREFIX, 0,
+        IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, ScanType scanType) throws IOException {
+      InternalScanner scanner, ScanType scanType) throws IOException {
     byte[] family = store.getFamily().getName();
-    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner, scanType,
+    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
+        scanType,
         state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 
   @Override
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
-                                    InternalScanner scanner, ScanType scanType, CompactionRequest request)
-    throws IOException {
+      InternalScanner scanner, ScanType scanType, CompactionRequest request)
+      throws IOException {
     byte[] family = store.getFamily().getName();
-    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner, scanType,
+    return new IncrementSummingScanner(region, IncrementHandlerState.BATCH_UNLIMITED, scanner,
+        scanType,
         state.getCompactionBound(family), state.getOldestVisibleTimestamp(family));
   }
 }

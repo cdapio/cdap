@@ -65,8 +65,8 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-        o != null
+      return this == o
+          || o != null
           && getClass().equals(o.getClass())
           && Objects.equals(getCronExpression(), ((TimeTrigger) o).getCronExpression());
     }
@@ -120,11 +120,11 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-        o != null &&
-          getClass().equals(o.getClass()) &&
-          Objects.equals(getDataset(), ((PartitionTrigger) o).getDataset()) &&
-          Objects.equals(getNumPartitions(), ((PartitionTrigger) o).getNumPartitions());
+      return this == o
+          || o != null
+          && getClass().equals(o.getClass())
+          && Objects.equals(getDataset(), ((PartitionTrigger) o).getDataset())
+          && Objects.equals(getNumPartitions(), ((PartitionTrigger) o).getNumPartitions());
     }
 
     @Override
@@ -144,6 +144,7 @@ public abstract class ProtoTrigger implements Trigger {
    * @param <T> type of triggers contained in the composite trigger
    */
   public abstract static class AbstractCompositeTrigger<T extends Trigger> extends ProtoTrigger {
+
     private final List<T> triggers;
 
     public AbstractCompositeTrigger(Type type, List<T> triggers) {
@@ -159,17 +160,20 @@ public abstract class ProtoTrigger implements Trigger {
     @Override
     public void validate() {
       if (!getType().equals(Type.AND) && !getType().equals(Type.OR)) {
-        throw new IllegalArgumentException("Trigger type " + getType().name() + " is not a composite trigger.");
+        throw new IllegalArgumentException(
+            "Trigger type " + getType().name() + " is not a composite trigger.");
       }
       List<T> triggers = getTriggers();
       if (triggers.isEmpty()) {
-        throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
-                                                           "of type %s cannot be empty.", getType().name()));
+        throw new IllegalArgumentException(
+            String.format("Triggers passed in to construct a trigger "
+                + "of type %s cannot be empty.", getType().name()));
       }
       for (T trigger : triggers) {
         if (trigger == null) {
-          throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
-                                                             "of type %s cannot contain null.", getType().name()));
+          throw new IllegalArgumentException(
+              String.format("Triggers passed in to construct a trigger "
+                  + "of type %s cannot contain null.", getType().name()));
         }
       }
     }
@@ -194,9 +198,9 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public String toString() {
-      return getType() + "Trigger{" +
-        "triggers=" + triggers +
-        '}';
+      return getType() + "Trigger{"
+          + "triggers=" + triggers
+          + '}';
     }
   }
 
@@ -218,6 +222,7 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents an AND trigger in REST requests/responses.
    */
   public static class AndTrigger extends AbstractCompositeTrigger<ProtoTrigger> {
+
     public AndTrigger(List<ProtoTrigger> triggers) {
       super(Type.AND, triggers);
     }
@@ -227,6 +232,7 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents an OR trigger in REST requests/responses.
    */
   public static class OrTrigger extends AbstractCompositeTrigger<ProtoTrigger> {
+
     public OrTrigger(List<ProtoTrigger> triggers) {
       super(Type.OR, triggers);
     }
@@ -236,6 +242,7 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents a program status trigger for REST requests/responses
    */
   public static class ProgramStatusTrigger extends ProtoTrigger {
+
     protected final ProgramId programId;
     protected final Set<ProgramStatus> programStatuses;
 
@@ -257,11 +264,11 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public void validate() {
-      if (getProgramStatuses().contains(ProgramStatus.INITIALIZING) ||
-          getProgramStatuses().contains(ProgramStatus.RUNNING)) {
+      if (getProgramStatuses().contains(ProgramStatus.INITIALIZING)
+          || getProgramStatuses().contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
-                "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
-                programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
+            "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
+            programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
       }
 
       ProtoTrigger.validateNotNull(getProgramId(), "program id");
@@ -275,17 +282,18 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public boolean equals(Object o) {
-      return this == o ||
-        o != null &&
-          getClass().equals(o.getClass()) &&
-          Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses()) &&
-          Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
+      return this == o
+          || o != null
+          && getClass().equals(o.getClass())
+          && Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses())
+
+          && Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
     }
 
     @Override
     public String toString() {
       return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(),
-                                                           getProgramStatuses().toString());
+          getProgramStatuses().toString());
     }
   }
 
@@ -301,10 +309,12 @@ public abstract class ProtoTrigger implements Trigger {
       throw new IllegalArgumentException(name + " must be specified");
     }
     if (minValue != null && value.compareTo(minValue) < 0) {
-      throw new IllegalArgumentException(name + " must be greater than or equal to" + minValue + " but is " + value);
+      throw new IllegalArgumentException(
+          name + " must be greater than or equal to" + minValue + " but is " + value);
     }
     if (maxValue != null && value.compareTo(maxValue) > 0) {
-      throw new IllegalArgumentException(name + " must be less than or equal to " + maxValue + " but is " + value);
+      throw new IllegalArgumentException(
+          name + " must be less than or equal to " + maxValue + " but is " + value);
     }
   }
 }

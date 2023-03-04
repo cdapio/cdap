@@ -19,9 +19,8 @@ package io.cdap.cdap.api.security.store;
 import java.util.Arrays;
 
 /**
- * This represents the entity stored in the Secure Store.
- * The data is stored as UTF8 encoded byte array.
- * An instance of an implementation of SecureStoreData is created and returned from the
+ * This represents the entity stored in the Secure Store. The data is stored as UTF8 encoded byte
+ * array. An instance of an implementation of SecureStoreData is created and returned from the
  * {@link SecureStore}'s get method call.
  */
 public final class SecureStoreData {
@@ -31,13 +30,13 @@ public final class SecureStoreData {
 
   public SecureStoreData(SecureStoreMetadata metadata, byte[] data) {
     this.metadata = metadata;
-    this.data =  Arrays.copyOf(data, data.length);
+    this.data = Arrays.copyOf(data, data.length);
   }
 
   /**
-   * @return Returns an object representing the metadata associated with this element.
-   * The metadata for an element contains its name, description, creation time and a map of all the
-   * element's properties set by the user.
+   * @return Returns an object representing the metadata associated with this element. The metadata
+   *     for an element contains its name, description, creation time and a map of all the element's
+   *     properties set by the user.
    */
   public SecureStoreMetadata getMetadata() {
     return metadata;

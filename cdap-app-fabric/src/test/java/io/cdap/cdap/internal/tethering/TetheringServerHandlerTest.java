@@ -223,12 +223,12 @@ public class TetheringServerHandlerTest {
   public void tearDown() throws IOException {
     // Delete tethering if it exists
     HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.DELETE,
-                                                      config.resolveURL("tethering/connections/xyz"));
+        config.resolveURL("tethering/connections/xyz"));
 
     HttpResponse response = HttpRequests.execute(builder.build());
     int responseCode = response.getResponseCode();
-    Assert.assertTrue(responseCode == HttpResponseStatus.OK.code() ||
-                        responseCode == HttpResponseStatus.NOT_FOUND.code());
+    Assert.assertTrue(responseCode == HttpResponseStatus.OK.code()
+        || responseCode == HttpResponseStatus.NOT_FOUND.code());
   }
 
   @Test

@@ -22,6 +22,7 @@ import io.cdap.cdap.api.dataset.module.DatasetDefinitionRegistry;
  * Builds {@link DatasetDefinitionRegistry}.
  */
 public interface DatasetDefinitionRegistryFactory {
+
   /**
    * @return instance of {@link DatasetDefinitionRegistry}
    */

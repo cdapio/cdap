@@ -20,8 +20,10 @@ package io.cdap.cdap.api.service;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 /**
- * A System ServiceContext that exposes capabilities beyond those available to service contexts for user services.
+ * A System ServiceContext that exposes capabilities beyond those available to service contexts for
+ * user services.
  */
-public interface SystemServiceContext extends ServiceContext, TransactionRunner, SystemNamespaceAdmin {
+public interface SystemServiceContext extends ServiceContext, TransactionRunner,
+    SystemNamespaceAdmin {
 
 }

@@ -19,12 +19,14 @@ import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
- * DataTracerFactory will be injected in the Program context classes. This may not be directly used by Applications.
+ * DataTracerFactory will be injected in the Program context classes. This may not be directly used
+ * by Applications.
  */
 public interface DataTracerFactory {
 
   /**
    * Get the {@link DataTracer} used to put the debug data.
+   *
    * @param applicationId the name of the tracer with which the data to be associated
    * @param tracerName the name of the tracer with which the data to be associated
    * @return the instance of the DataTracer

@@ -17,13 +17,16 @@
 package io.cdap.cdap.etl.common.plugin;
 
 /**
- * Interface used to denote plugin wrappers. This interface exposes a method that can be used to get the wrapped
- * plugin instance.
+ * Interface used to denote plugin wrappers. This interface exposes a method that can be used to get
+ * the wrapped plugin instance.
+ *
  * @param <T> type of the plugin wrapped by this instance.
  */
 public interface PluginWrapper<T> {
+
   /**
    * Gets the wrapper plugin instance
+   *
    * @return wrapped plugin instance
    */
   T getWrapped();

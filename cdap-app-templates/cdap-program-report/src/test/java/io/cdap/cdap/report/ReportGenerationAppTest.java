@@ -462,8 +462,8 @@ public class ReportGenerationAppTest extends TestBase {
     boolean startMethodIsCorrect =
       reportContent.getDetails().stream().allMatch(content -> content.contains("\"startMethod\":\"TRIGGERED\""));
     if (!startMethodIsCorrect) {
-      Assert.fail("All report records are expected to contain startMethod TRIGGERED, " +
-                    "but actual results do not meet this requirement: " + reportContent.getDetails());
+      Assert.fail("All report records are expected to contain startMethod TRIGGERED, "
+          + "but actual results do not meet this requirement: " + reportContent.getDetails());
     }
   }
 
@@ -487,7 +487,8 @@ public class ReportGenerationAppTest extends TestBase {
    * @param currentTime the current time in millis
    */
   private static void populateMetaFiles(Location metaBaseLocation, Long currentTime) throws Exception {
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(ProgramRunInfoSerializer.SCHEMA);
+    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(
+        ProgramRunInfoSerializer.SCHEMA);
     DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
     String appName = "Pipeline";
     String version = "-SNAPSHOT";
@@ -495,15 +496,15 @@ public class ReportGenerationAppTest extends TestBase {
     String program1 = "SmartWorkflow_1";
     String program2 = "SmartWorkflow_2";
     // add a schedule info with program status trigger
-    String scheduleInfo = "{\"name\": \"sched\",\"description\": \"desc\",\"triggerInfos\": [" +
-      "{\"namespace\": \"default\",\"application\": \"app\",\"version\": \"-SNAPSHOT\",\"programType\": \"WORKFLOW\"," +
-      "\"run\":\"randomRunId\",\"entity\": \"PROGRAM\",\"program\": \"wf\",\"programStatus\": \"KILLED\"," +
-      "\"type\": \"PROGRAM_STATUS\"}]}";
+    String scheduleInfo = "{\"name\": \"sched\",\"description\": \"desc\",\"triggerInfos\": ["
+        + "{\"namespace\": \"default\",\"application\": \"app\",\"version\": \"-SNAPSHOT\","
+        + "\"programType\": \"WORKFLOW\",\"run\":\"randomRunId\",\"entity\": \"PROGRAM\","
+        + "\"program\": \"wf\",\"programStatus\": \"KILLED\",\"type\": \"PROGRAM_STATUS\"}]}";
     ProgramStartInfo startInfo =
-      new ProgramStartInfo(ImmutableMap.of(),
-                           new ArtifactId(TEST_ARTIFACT_NAME,
-                                          new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE,
-                           ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo));
+        new ProgramStartInfo(ImmutableMap.of(),
+            new ArtifactId(TEST_ARTIFACT_NAME,
+                new ArtifactVersion("1.0.0"), ArtifactScope.USER), USER_ALICE,
+            ImmutableMap.of(Constants.Notification.SCHEDULE_INFO_KEY, scheduleInfo));
     long delay = TimeUnit.MINUTES.toMillis(5);
     int mockMessageId = 0;
     for (String namespace : ImmutableList.of("default", "ns1", "ns2")) {

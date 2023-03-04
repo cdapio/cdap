@@ -19,8 +19,8 @@ package io.cdap.cdap.master.spi.twill;
 import javax.annotation.Nullable;
 
 /**
- * Specifies security context of a {@link org.apache.twill.api.TwillRunnable}.
- * This includes its identity, along with userId and groupId.
+ * Specifies security context of a {@link org.apache.twill.api.TwillRunnable}. This includes its
+ * identity, along with userId and groupId.
  */
 public class SecurityContext {
 
@@ -28,7 +28,8 @@ public class SecurityContext {
   private final Long groupId;
   private final String identity;
 
-  private SecurityContext(@Nullable Long userId, @Nullable Long groupId, @Nullable String identity) {
+  private SecurityContext(@Nullable Long userId, @Nullable Long groupId,
+      @Nullable String identity) {
     this.identity = identity;
     this.userId = userId;
     this.groupId = groupId;

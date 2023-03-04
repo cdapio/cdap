@@ -30,32 +30,34 @@ import org.slf4j.LoggerFactory;
  */
 class RuntimeJobRemoteProcessController implements RemoteProcessController {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RuntimeJobRemoteProcessController.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      RuntimeJobRemoteProcessController.class);
 
   private final Supplier<RuntimeJobManager> runtimeJobManagerSupplier;
   private final ProgramRunId programRunId;
   private final ProgramRunInfo programRunInfo;
 
-  RuntimeJobRemoteProcessController(ProgramRunId programRunId, Supplier<RuntimeJobManager> runtimeJobManagerSupplier) {
+  RuntimeJobRemoteProcessController(ProgramRunId programRunId,
+      Supplier<RuntimeJobManager> runtimeJobManagerSupplier) {
     this.runtimeJobManagerSupplier = runtimeJobManagerSupplier;
     this.programRunId = programRunId;
     this.programRunInfo = new ProgramRunInfo.Builder()
-      .setNamespace(programRunId.getNamespace())
-      .setApplication(programRunId.getApplication())
-      .setVersion(programRunId.getVersion())
-      .setProgramType(programRunId.getType().name())
-      .setProgram(programRunId.getProgram())
-      .setRun(programRunId.getRun())
-      .build();
+        .setNamespace(programRunId.getNamespace())
+        .setApplication(programRunId.getApplication())
+        .setVersion(programRunId.getVersion())
+        .setProgramType(programRunId.getType().name())
+        .setProgram(programRunId.getProgram())
+        .setRun(programRunId.getRun())
+        .build();
   }
 
   @Override
   public boolean isRunning() throws Exception {
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       return !runtimeJobManager.getDetail(programRunInfo)
-        .map(RuntimeJobDetail::getStatus)
-        .map(RuntimeJobStatus::isTerminated)
-        .orElse(true);
+          .map(RuntimeJobDetail::getStatus)
+          .map(RuntimeJobStatus::isTerminated)
+          .orElse(true);
     }
   }
 
@@ -63,8 +65,8 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
   public RuntimeJobStatus getStatus() throws Exception {
     try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       return runtimeJobManager.getDetail(programRunInfo)
-        .map(RuntimeJobDetail::getStatus)
-        .orElse(RuntimeJobStatus.UNKNOWN);
+          .map(RuntimeJobDetail::getStatus)
+          .orElse(RuntimeJobStatus.UNKNOWN);
     }
   }
 

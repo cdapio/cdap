@@ -25,6 +25,7 @@ public class ReplicationConstants {
    * Constants for Replication Status Tool
    */
   public static final class ReplicationStatusTool {
+
     public static final String REPLICATION_STATE_TABLE_NAME = "hbase.replicationtable.name";
     public static final String REPLICATION_STATE_TABLE_DEFAULT_NAME = "replicationstate";
     public static final String REPLICATION_STATE_TABLE_NAMESPACE = "hbase.replicationtable.namespace";

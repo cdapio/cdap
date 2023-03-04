@@ -33,9 +33,10 @@ public class ExecutionMetrics {
   private final int shuffleWriteRecords;
   private final long shuffleWriteBytes;
 
-  public ExecutionMetrics(String stageId, int inputRows, int outputRows, long inputBytes, long outputBytes,
-                          int shuffleReadRecords, long shuffleReadBytes, int shuffleWriteRecords,
-                          long shuffleWriteBytes) {
+  public ExecutionMetrics(String stageId, int inputRows, int outputRows, long inputBytes,
+      long outputBytes,
+      int shuffleReadRecords, long shuffleReadBytes, int shuffleWriteRecords,
+      long shuffleWriteBytes) {
     this.stageId = stageId;
     this.inputRows = inputRows;
     this.outputRows = outputRows;
@@ -89,17 +90,17 @@ public class ExecutionMetrics {
 
   @Override
   public String toString() {
-    return "ExecutionMetrics{" +
-      "stageId='" + stageId + '\'' +
-      ", inputRows=" + inputRows +
-      ", outputRows=" + outputRows +
-      ", inputBytes=" + inputBytes +
-      ", outputBytes=" + outputBytes +
-      ", shuffleReadRecords=" + shuffleReadRecords +
-      ", shuffleReadBytes=" + shuffleReadBytes +
-      ", shuffleWriteRecords=" + shuffleWriteRecords +
-      ", shuffleWriteBytes=" + shuffleWriteBytes +
-      '}';
+    return "ExecutionMetrics{"
+        + "stageId='" + stageId + '\''
+        + ", inputRows=" + inputRows
+        + ", outputRows=" + outputRows
+        + ", inputBytes=" + inputBytes
+        + ", outputBytes=" + outputBytes
+        + ", shuffleReadRecords=" + shuffleReadRecords
+        + ", shuffleReadBytes=" + shuffleReadBytes
+        + ", shuffleWriteRecords=" + shuffleWriteRecords
+        + ", shuffleWriteBytes=" + shuffleWriteBytes
+        + '}';
   }
 
   @Override
@@ -111,15 +112,17 @@ public class ExecutionMetrics {
       return false;
     }
     ExecutionMetrics that = (ExecutionMetrics) o;
-    return inputRows == that.inputRows && outputRows == that.outputRows && inputBytes == that.inputBytes
-      && outputBytes == that.outputBytes && shuffleReadRecords == that.shuffleReadRecords
-      && shuffleReadBytes == that.shuffleReadBytes && shuffleWriteRecords == that.shuffleWriteRecords
-      && shuffleWriteBytes == that.shuffleWriteBytes && Objects.equals(stageId, that.stageId);
+    return inputRows == that.inputRows && outputRows == that.outputRows
+        && inputBytes == that.inputBytes
+        && outputBytes == that.outputBytes && shuffleReadRecords == that.shuffleReadRecords
+        && shuffleReadBytes == that.shuffleReadBytes
+        && shuffleWriteRecords == that.shuffleWriteRecords
+        && shuffleWriteBytes == that.shuffleWriteBytes && Objects.equals(stageId, that.stageId);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(stageId, inputRows, outputRows, inputBytes, outputBytes,
-                     shuffleReadRecords, shuffleReadBytes, shuffleWriteRecords, shuffleWriteBytes);
+        shuffleReadRecords, shuffleReadBytes, shuffleWriteRecords, shuffleWriteBytes);
   }
 }

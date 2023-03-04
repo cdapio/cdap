@@ -54,7 +54,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link TableFactory} for creating tables used by the messaging system using the LevelDB implementation.
+ * A {@link TableFactory} for creating tables used by the messaging system using the LevelDB
+ * implementation.
  */
 public final class LevelDBTableFactory implements TableFactory {
 
@@ -79,24 +80,27 @@ public final class LevelDBTableFactory implements TableFactory {
   public LevelDBTableFactory(CConfiguration cConf) {
     this.baseDir = new File(cConf.get(Constants.MessagingSystem.LOCAL_DATA_DIR));
     this.dbOptions = new Options()
-      .blockSize(cConf.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE))
-      .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE, Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
-      .maxOpenFiles(cConf.getInt(Constants.CFG_DATA_LEVELDB_CACHESIZE_FILES)
-                      + Constants.DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET)
-      .errorIfExists(false)
-      .createIfMissing(true);
+        .blockSize(cConf.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE,
+            Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE))
+        .cacheSize(cConf.getLong(Constants.CFG_DATA_LEVELDB_CACHESIZE,
+            Constants.DEFAULT_DATA_LEVELDB_CACHESIZE))
+        .maxOpenFiles(cConf.getInt(Constants.CFG_DATA_LEVELDB_CACHESIZE_FILES)
+            + Constants.DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET)
+        .errorIfExists(false)
+        .createIfMissing(true);
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("leveldb-tms-data-cleanup"));
+        Threads.createDaemonThreadFactory("leveldb-tms-data-cleanup"));
     executor.scheduleAtFixedRate(new DataCleanup(), 0L,
-                                 Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
-                                 TimeUnit.SECONDS);
+        Long.parseLong(cConf.get(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY)),
+        TimeUnit.SECONDS);
 
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
     this.levelDBs = new ConcurrentHashMap<>();
     this.partitionedLevelDBs = new ConcurrentHashMap<>();
-    this.partitionSizeMillis = cConf.getLong(Constants.MessagingSystem.LOCAL_DATA_PARTITION_SECONDS) * 1000;
+    this.partitionSizeMillis =
+        cConf.getLong(Constants.MessagingSystem.LOCAL_DATA_PARTITION_SECONDS) * 1000;
   }
 
   @Override
@@ -202,13 +206,15 @@ public final class LevelDBTableFactory implements TableFactory {
 
   @VisibleForTesting
   static File getMessageTablePath(File baseDir, TopicId topicId, int generation, String tableName) {
-    return new File(baseDir, String.format("%s.%s.%s.%s.%d", MESSAGE_TABLE_VERSION, topicId.getNamespace(),
-                                           tableName, topicId.getTopic(), generation));
+    return new File(baseDir,
+        String.format("%s.%s.%s.%s.%d", MESSAGE_TABLE_VERSION, topicId.getNamespace(),
+            tableName, topicId.getTopic(), generation));
   }
 
   private LevelDBPartitionManager getPartitionedLevelDB(TopicMetadata topicMetadata,
-                                                        String tableName) throws IOException {
-    File topicDir = getMessageTablePath(baseDir, topicMetadata.getTopicId(), topicMetadata.getGeneration(), tableName);
+      String tableName) throws IOException {
+    File topicDir = getMessageTablePath(baseDir, topicMetadata.getTopicId(),
+        topicMetadata.getGeneration(), tableName);
     LevelDBPartitionManager partitionManager = partitionedLevelDBs.get(topicDir);
     if (partitionManager != null) {
       return partitionManager;
@@ -220,7 +226,8 @@ public final class LevelDBTableFactory implements TableFactory {
         return partitionManager;
       }
 
-      partitionManager = new LevelDBPartitionManager(ensureDirExists(topicDir), dbOptions, partitionSizeMillis);
+      partitionManager = new LevelDBPartitionManager(ensureDirExists(topicDir), dbOptions,
+          partitionSizeMillis);
       partitionedLevelDBs.put(topicDir, partitionManager);
     }
 
@@ -228,10 +235,12 @@ public final class LevelDBTableFactory implements TableFactory {
   }
 
   /**
-   * Returns the LevelDB {@link DB} object for the given {@link TopicMetadata}, which stores on the given file path.
+   * Returns the LevelDB {@link DB} object for the given {@link TopicMetadata}, which stores on the
+   * given file path.
    */
   private DB getLevelDB(TopicMetadata topicMetadata, String tablePrefix) throws IOException {
-    File dbPath = getDataDBPath(tablePrefix, topicMetadata.getTopicId(), topicMetadata.getGeneration());
+    File dbPath = getDataDBPath(tablePrefix, topicMetadata.getTopicId(),
+        topicMetadata.getGeneration());
 
     DB db = levelDBs.get(dbPath);
     if (db != null) {
@@ -254,7 +263,8 @@ public final class LevelDBTableFactory implements TableFactory {
   }
 
   private File getDataDBPath(String tableName, TopicId topicId, int generation) {
-    String fileName = String.format("%s.%s.%s.%d", topicId.getNamespace(), tableName, topicId.getTopic(), generation);
+    String fileName = String.format("%s.%s.%s.%d", topicId.getNamespace(), tableName,
+        topicId.getTopic(), generation);
     return new File(baseDir, fileName);
   }
 
@@ -265,7 +275,8 @@ public final class LevelDBTableFactory implements TableFactory {
 
   private File ensureDirExists(File dir) throws IOException {
     if (!DirUtils.mkdirs(dir)) {
-      throw new IOException("Failed to create local directory " + dir + " for the messaging system.");
+      throw new IOException(
+          "Failed to create local directory " + dir + " for the messaging system.");
     }
     return dir;
   }
@@ -295,7 +306,8 @@ public final class LevelDBTableFactory implements TableFactory {
           Deque<File> filesToDelete = new LinkedList<>();
           for (int olderGeneration = cleanOlderThan - 1; olderGeneration > 0; olderGeneration--) {
             // Message table
-            File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(), olderGeneration);
+            File dataDBPath = getDataDBPath(messageTableName, metadata.getTopicId(),
+                olderGeneration);
             if (!dataDBPath.exists()) {
               break;
             }
@@ -324,11 +336,13 @@ public final class LevelDBTableFactory implements TableFactory {
           // Message table
           // Check partitions and drop them if the end time is older than the TTL
           long thresholdTimestamp = now - TimeUnit.SECONDS.toMillis(metadata.getTTL());
-          LevelDBPartitionManager partitionManager = getPartitionedLevelDB(metadata, messageTableName);
+          LevelDBPartitionManager partitionManager = getPartitionedLevelDB(metadata,
+              messageTableName);
           partitionManager.prunePartitions(thresholdTimestamp);
 
           // Payload table
-          File dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(), metadata.getGeneration());
+          File dataDBPath = getDataDBPath(payloadTableName, metadata.getTopicId(),
+              metadata.getGeneration());
           DB levelDB = levelDBs.get(dataDBPath);
           if (levelDB != null && dataDBPath.exists()) {
             new LevelDBPayloadTable(levelDB, metadata).pruneMessages(now);
@@ -344,6 +358,7 @@ public final class LevelDBTableFactory implements TableFactory {
    * Metadata about table format versioning
    */
   private static class Metadata {
+
     private final int version;
 
     Metadata(int version) {

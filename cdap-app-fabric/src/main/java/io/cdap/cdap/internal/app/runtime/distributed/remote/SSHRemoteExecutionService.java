@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The service to maintain a SSH tunnel with remote port forwarding for the remote runtime to access CDAP services
- * via the tunnel.
+ * The service to maintain a SSH tunnel with remote port forwarding for the remote runtime to access
+ * CDAP services via the tunnel.
  */
 final class SSHRemoteExecutionService extends RemoteExecutionService {
 
@@ -47,10 +47,10 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
   private SSHSession sshSession;
 
   SSHRemoteExecutionService(CConfiguration cConf, ProgramRunId programRunId,
-                            SSHConfig sshConfig, int serviceSocksProxyPort,
-                            RemoteProcessController remoteProcessController,
-                            ProgramStateWriter programStateWriter,
-                            ScheduledExecutorService scheduledExecutor) {
+      SSHConfig sshConfig, int serviceSocksProxyPort,
+      RemoteProcessController remoteProcessController,
+      ProgramStateWriter programStateWriter,
+      ScheduledExecutorService scheduledExecutor) {
     super(cConf, programRunId, scheduledExecutor, remoteProcessController, programStateWriter);
     this.sshConfig = sshConfig;
     this.serviceSocksProxyPort = serviceSocksProxyPort;
@@ -83,17 +83,20 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
     // in which the remote port forwarding will be closed automatically
     int remotePort = session.createRemotePortForward(0, serviceSocksProxyPort).getRemotePort();
 
-    LOG.debug("Service SOCKS proxy started on port {} for program run {}", remotePort, programRunId);
+    LOG.debug("Service SOCKS proxy started on port {} for program run {}", remotePort,
+        programRunId);
     ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort);
 
     // Upload the service socks proxy information to the remote runtime
     String targetPath = session.executeAndWait("echo `pwd`/" + programRunId.getRun()).trim();
     session.executeAndWait("mkdir -p " + targetPath);
     byte[] content = GSON.toJson(info).getBytes(StandardCharsets.UTF_8);
-    String targetFileName = Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json";
+    String targetFileName =
+        Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json";
     String tmpFileName = targetFileName + "-" + System.currentTimeMillis() + ".tmp";
     //noinspection OctalInteger
-    session.copy(new ByteArrayInputStream(content), "/tmp", tmpFileName, content.length, 0600, null, null);
+    session.copy(new ByteArrayInputStream(content), "/tmp", tmpFileName, content.length, 0600, null,
+        null);
     session.executeAndWait(String.format("mv /tmp/%s /tmp/%s", tmpFileName, targetFileName));
     LOG.debug("Service proxy file uploaded to remote runtime for program run {}", programRunId);
 

@@ -34,7 +34,8 @@ public final class DataSetFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field)
+      throws Exception {
     if (Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet useDataSet = field.getAnnotation(UseDataSet.class);
       if (useDataSet != null && !useDataSet.value().isEmpty()) {

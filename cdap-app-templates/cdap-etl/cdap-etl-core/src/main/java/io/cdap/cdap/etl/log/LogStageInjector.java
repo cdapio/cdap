@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * Sets up a LogAppender that will inject the ETL stage name into the log message.
  */
 public class LogStageInjector {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogStageInjector.class);
   private static final AtomicBoolean initialized = new AtomicBoolean(false);
 
@@ -39,9 +40,9 @@ public class LogStageInjector {
   }
 
   /**
-   * Hijacks the appenders for the root logger and replaces them with a {@link LogStageAppender} that will insert
-   * the ETL stage name at the start of each message if the stage name is set. Uses {@link org.slf4j.MDC} to look up
-   * the current stage name.
+   * Hijacks the appenders for the root logger and replaces them with a {@link LogStageAppender}
+   * that will insert the ETL stage name at the start of each message if the stage name is set. Uses
+   * {@link org.slf4j.MDC} to look up the current stage name.
    */
   public static void start() {
     if (!initialized.compareAndSet(false, true)) {
@@ -50,7 +51,8 @@ public class LogStageInjector {
 
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof LoggerContext)) {
-      LOG.warn("LoggerFactory is not a logback LoggerContext. Stage names will not be injected into log messages.");
+      LOG.warn(
+          "LoggerFactory is not a logback LoggerContext. Stage names will not be injected into log messages.");
       return;
     }
 

@@ -74,10 +74,10 @@ public class Draft extends DraftStoreRequest<ETLConfig> {
       return false;
     }
     Draft draft = (Draft) o;
-    return createdTimeMillis == draft.createdTimeMillis &&
-      updatedTimeMillis == draft.updatedTimeMillis &&
-      configHash == draft.configHash &&
-      Objects.equals(id, draft.id);
+    return createdTimeMillis == draft.createdTimeMillis
+      && updatedTimeMillis == draft.updatedTimeMillis
+      && configHash == draft.configHash
+      && Objects.equals(id, draft.id);
   }
 
   @Override

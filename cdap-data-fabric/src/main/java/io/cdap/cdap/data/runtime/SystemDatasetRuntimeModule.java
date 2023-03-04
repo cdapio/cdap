@@ -60,10 +60,10 @@ import io.cdap.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
 
 /**
  * Provides guice bindings for {@link DatasetModule} that are by default available in the system.
- * The guice modules provided by this class are not intended to be used directly, but rather for providing
- * injections to {@link DatasetFramework}, hence for installing from other guice module.
- * This class is separated out so that combining different {@link DatasetFramework} and {@link DatasetModule} is
- * easier, especially for unit-test.
+ * The guice modules provided by this class are not intended to be used directly, but rather for
+ * providing injections to {@link DatasetFramework}, hence for installing from other guice module.
+ * This class is separated out so that combining different {@link DatasetFramework} and {@link
+ * DatasetModule} is easier, especially for unit-test.
  */
 public class SystemDatasetRuntimeModule extends RuntimeModule {
 
@@ -73,26 +73,31 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
-          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+            binder(), String.class, DatasetModule.class,
+            Constants.Dataset.Manager.DefaultDatasetModules.class);
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
         mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
         bindDefaultModules(mapBinder);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(InMemoryTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE))
+            .to(InMemoryTableDefinition.class);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .toInstance("table-no-tx");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(InMemoryMetricsTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .to(InMemoryMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
-        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
-          .toInstance(new InMemoryMetricsTableDefinition(MetricsTable.class.getName()));
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() {
+        })
+            .toInstance(new InMemoryMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }
@@ -103,31 +108,37 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
-          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+            binder(), String.class, DatasetModule.class,
+            Constants.Dataset.Manager.DefaultDatasetModules.class);
         // NOTE: order is important due to dependencies between modules
         mapBinder.addBinding("orderedTable-leveldb").toInstance(new LevelDBTableModule());
         mapBinder.addBinding("metricsTable-leveldb").toInstance(new LevelDBMetricsTableModule());
         bindDefaultModules(mapBinder);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(LevelDBTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE))
+            .to(LevelDBTableDefinition.class);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .toInstance("table-no-tx");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(LevelDBMetricsTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .to(LevelDBMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
-        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
-          .toInstance(new LevelDBMetricsTableDefinition(MetricsTable.class.getName()));
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() {
+        })
+            .toInstance(new LevelDBMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }
 
   private static final class OrderedTableModuleProvider implements Provider<DatasetModule> {
+
     private final CConfiguration cConf;
 
     @Inject
@@ -144,7 +155,8 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           return (DatasetModule) Class.forName(moduleName.trim()).newInstance();
         } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
           // Guice frowns on throwing exceptions from Providers, but if necessary use RuntimeException
-          throw new RuntimeException("Unable to obtain distributed table module extension class", ex);
+          throw new RuntimeException("Unable to obtain distributed table module extension class",
+              ex);
         }
       } else {
         return new HBaseTableModule();
@@ -158,27 +170,33 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
       @Override
       protected void configure() {
         MapBinder<String, DatasetModule> mapBinder = MapBinder.newMapBinder(
-          binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+            binder(), String.class, DatasetModule.class,
+            Constants.Dataset.Manager.DefaultDatasetModules.class);
 
         // NOTE: order is important due to dependencies between modules
-        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
+        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class)
+            .in(Singleton.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(HBaseTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE))
+            .to(HBaseTableDefinition.class);
 
         bind(String.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .toInstance("table-no-tx");
         bind(DatasetDefinition.class)
-          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(HBaseMetricsTableDefinition.class);
+            .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX))
+            .to(HBaseMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
-        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
-          .toInstance(new HBaseMetricsTableDefinition(MetricsTable.class.getName()));
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() {
+        })
+            .toInstance(new HBaseMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }
@@ -189,7 +207,8 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
   private void bindDefaultModules(MapBinder<String, DatasetModule> mapBinder) {
     mapBinder.addBinding("core").toInstance(new CoreDatasetsModule());
     mapBinder.addBinding(FileSetDataset.TYPE).toInstance(new FileSetModule());
-    mapBinder.addBinding(TimePartitionedFileSet.TYPE).toInstance(new TimePartitionedFileSetModule());
+    mapBinder.addBinding(TimePartitionedFileSet.TYPE)
+        .toInstance(new TimePartitionedFileSetModule());
     mapBinder.addBinding(PartitionedFileSet.TYPE).toInstance(new PartitionedFileSetModule());
     mapBinder.addBinding(ObjectMappedTable.TYPE).toInstance(new ObjectMappedTableModule());
     mapBinder.addBinding(Cube.TYPE).toInstance(new CubeModule());

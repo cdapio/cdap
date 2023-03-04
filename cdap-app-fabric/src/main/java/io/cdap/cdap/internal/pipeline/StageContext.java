@@ -24,17 +24,18 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Concrete implementation of {@link Context} for moving data from downstream
- * and to upstream stages.
+ * Concrete implementation of {@link Context} for moving data from downstream and to upstream
+ * stages.
  */
 public final class StageContext implements Context {
+
   private final Map<String, Object> properties;
   private final Object upStream;
   private Object downStream;
 
   /**
-   * Creates a new instance by copying the given {@link StageContext} downstream object as the new upstream object.
-   * It also copy all the properties from the given {@link StageContext}.
+   * Creates a new instance by copying the given {@link StageContext} downstream object as the new
+   * upstream object. It also copy all the properties from the given {@link StageContext}.
    */
   public static StageContext next(StageContext context) {
     return new StageContext(context.downStream, context.properties);

@@ -79,9 +79,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                  NamespacePathLocator namespacePathLocator,
-                  HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
-                  NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
+      NamespacePathLocator namespacePathLocator,
+      HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
+      NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     super(locationFactory, namespacePathLocator);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -91,7 +91,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
     this.datasetTablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    this.defaultNSUserTablePrefix = Pattern.compile(String.format("^%s\\.user\\..*", datasetTablePrefix));
+    this.defaultNSUserTablePrefix = Pattern.compile(
+        String.format("^%s\\.user\\..*", datasetTablePrefix));
     this.ddlExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
 
@@ -99,13 +100,13 @@ public class DatasetUpgrader extends AbstractUpgrader {
   public void upgrade() throws Exception {
     int numThreads = cConf.getInt(Constants.Upgrade.UPGRADE_THREAD_POOL_SIZE);
     ExecutorService executor =
-      Executors.newFixedThreadPool(numThreads,
-                                   new ThreadFactoryBuilder()
-                                     // all the threads should be created as 'cdap'
-                                     .setThreadFactory(Executors.privilegedThreadFactory())
-                                     .setNameFormat("dataset-upgrader-%d")
-                                     .setDaemon(true)
-                                     .build());
+        Executors.newFixedThreadPool(numThreads,
+            new ThreadFactoryBuilder()
+                // all the threads should be created as 'cdap'
+                .setThreadFactory(Executors.privilegedThreadFactory())
+                .setNameFormat("dataset-upgrader-%d")
+                .setDaemon(true)
+                .build());
     try {
       // Upgrade system dataset
       upgradeSystemDatasets(executor);
@@ -127,7 +128,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
         @Override
         public void run() {
           try {
-            LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(), spec.toString());
+            LOG.info("Upgrading dataset in system namespace: {}, spec: {}", spec.getName(),
+                spec.toString());
             DatasetAdmin admin = dsFramework.getAdmin(datasetId, null);
             // we know admin is not null, since we are looping over existing datasets
             //noinspection ConstantConditions
@@ -150,7 +152,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
         LOG.error("Failed to upgrade system dataset {}", entry.getKey(), entry.getValue());
       }
       throw new Exception(String.format("Error upgrading system datasets. %s of %s failed",
-                                        failed.size(), futures.size()));
+          failed.size(), futures.size()));
     }
   }
 
@@ -179,7 +181,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
           LOG.error("Failed to upgrade user table {}", entry.getKey(), entry.getValue());
         }
         throw new Exception(String.format("Error upgrading user tables. %s of %s failed",
-                                          failed.size(), allFutures.size()));
+            failed.size(), allFutures.size()));
       }
     } finally {
       for (Closeable closeable : toClose) {
@@ -188,13 +190,15 @@ public class DatasetUpgrader extends AbstractUpgrader {
     }
   }
 
-  private Map<String, Future<?>> upgradeUserTables(final NamespaceMeta namespaceMeta, final ExecutorService executor,
-                                                   final HBaseDDLExecutor ddlExecutor) throws Exception {
+  private Map<String, Future<?>> upgradeUserTables(final NamespaceMeta namespaceMeta,
+      final ExecutorService executor,
+      final HBaseDDLExecutor ddlExecutor) throws Exception {
     Map<String, Future<?>> futures = new HashMap<>();
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
     try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
       for (final HTableDescriptor desc :
-        hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
+          hAdmin.listTableDescriptorsByNamespace(
+              HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
         Callable<Void> callable = new Callable<Void>() {
           @Override
           public Void call() throws Exception {
@@ -208,7 +212,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
         };
 
         Future<?> future =
-          executor.submit(ImpersonationUtils.createImpersonatingCallable(impersonator, namespaceMeta, callable));
+            executor.submit(
+                ImpersonationUtils.createImpersonatingCallable(impersonator, namespaceMeta,
+                    callable));
         futures.put(desc.getNameAsString(), future);
       }
     }
@@ -221,32 +227,36 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
     final boolean supportsIncrement = HBaseTableAdmin.supportsReadlessIncrements(desc);
     final boolean transactional = HBaseTableAdmin.isTransactional(desc);
-    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, cConf, hBaseTableUtil, locationFactory) {
+    DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableId, hConf, cConf, hBaseTableUtil,
+        locationFactory) {
       @Override
       protected CoprocessorJar createCoprocessorJar() throws IOException {
         return HBaseTableAdmin.createCoprocessorJarInternal(cConf,
-                                                            coprocessorManager,
-                                                            hBaseTableUtil,
-                                                            transactional,
-                                                            supportsIncrement);
+            coprocessorManager,
+            hBaseTableUtil,
+            transactional,
+            supportsIncrement);
       }
 
       @Override
-      protected boolean needsUpdate(HTableDescriptor tableDescriptor, HTableDescriptorBuilder descriptorBuilder) {
+      protected boolean needsUpdate(HTableDescriptor tableDescriptor,
+          HTableDescriptorBuilder descriptorBuilder) {
         return false;
       }
 
       @Override
       public void create() throws IOException {
         // no-op
-        throw new UnsupportedOperationException("This DatasetAdmin is only used for upgrade() operation");
+        throw new UnsupportedOperationException(
+            "This DatasetAdmin is only used for upgrade() operation");
       }
     };
     admin.upgrade();
     LOG.info("Upgraded hbase table: {}", tableId);
   }
 
-  private void updateTableDesc(HTableDescriptor desc, HBaseDDLExecutor ddlExecutor) throws IOException {
+  private void updateTableDesc(HTableDescriptor desc, HBaseDDLExecutor ddlExecutor)
+      throws IOException {
     hBaseTableUtil.setVersion(desc);
     hBaseTableUtil.setHBaseVersion(desc);
     hBaseTableUtil.setTablePrefix(desc);
@@ -257,24 +267,26 @@ public class DatasetUpgrader extends AbstractUpgrader {
     String tableName = desc.getNameAsString();
     // If table is in system namespace: (starts with <tablePrefix>_system
     // or if it is not created by CDAP it is not user table
-    if (tableName.startsWith(String.format("%s_%s", this.datasetTablePrefix, NamespaceId.SYSTEM.getEntityName())) ||
-       (!isTableCreatedByCDAP(desc))) {
+    if (tableName.startsWith(
+        String.format("%s_%s", this.datasetTablePrefix, NamespaceId.SYSTEM.getEntityName()))
+        || (!isTableCreatedByCDAP(desc))) {
       return false;
     }
     // User tables are named differently in default vs non-default namespace
     // User table in default namespace starts with cdap.user
     // User table in Non-default namespace is a table that doesn't have
     //    system.queue or system.stream or system.sharded.queue
-    return defaultNSUserTablePrefix.matcher(tableName).matches() ||
-      // Note: if the user has created a dataset called system.* then we will not upgrade the table.
-      // CDAP-2977 should be fixed to have a cleaner fix for this.
-      !(isStreamOrQueueTable(tableName));
+    return defaultNSUserTablePrefix.matcher(tableName).matches()
+        ||
+        // Note: if the user has created a dataset called system.* then we will not upgrade the table.
+        // CDAP-2977 should be fixed to have a cleaner fix for this.
+        !(isStreamOrQueueTable(tableName));
   }
 
   private boolean isStreamOrQueueTable(String tableName) {
     // table name should start with "cdap_" or "cdap." for versions 3.4 or earlier (before namespace mapping)
-    return tableName.startsWith(datasetTablePrefix) && (tableName.contains("system.queue") ||
-      tableName.contains("system.stream") || tableName.contains("system.sharded.queue"));
+    return tableName.startsWith(datasetTablePrefix) && (tableName.contains("system.queue")
+        || tableName.contains("system.stream") || tableName.contains("system.sharded.queue"));
   }
 
   // Note: This check can be safely used for user table since we create meta.
@@ -284,7 +296,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  private Map<String, Throwable> waitForUpgrade(Map<String, Future<?>> upgradeFutures) throws InterruptedException {
+  private Map<String, Throwable> waitForUpgrade(Map<String, Future<?>> upgradeFutures)
+      throws InterruptedException {
     Map<String, Throwable> failed = new HashMap<>();
     for (Map.Entry<String, Future<?>> entry : upgradeFutures.entrySet()) {
       try {

@@ -41,7 +41,8 @@ public class GCPRemoteAuthenticator implements RemoteAuthenticator {
   private AccessToken accessToken;
 
   @VisibleForTesting
-  GCPRemoteAuthenticator(GoogleCredentials googleCredentials, Clock clock, @Nullable AccessToken accessToken) {
+  GCPRemoteAuthenticator(GoogleCredentials googleCredentials, Clock clock,
+      @Nullable AccessToken accessToken) {
     this.googleCredentials = googleCredentials;
     this.clock = clock;
     this.accessToken = accessToken;

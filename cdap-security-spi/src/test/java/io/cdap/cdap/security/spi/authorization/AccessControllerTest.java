@@ -193,8 +193,9 @@ public abstract class AccessControllerTest {
   private void verifyAuthFailure(EntityId entity, Principal principal, Permission permission) throws Exception {
     try {
       get().enforce(entity, principal, permission);
-      Assert.fail(String.format("Expected authorization failure, but it succeeded for entity %s, principal %s," +
-                                  " permission %s", entity, principal, permission));
+      Assert.fail(String.format(
+          "Expected authorization failure, but it succeeded for entity %s, principal %s,"
+              + " permission %s", entity, principal, permission));
     } catch (UnauthorizedException expected) {
       // expected
     }

@@ -36,9 +36,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.twill.common.Cancellable;
 
 /**
- * An abstract base implementation of {@link DelegatorContext} to provide context per thread implementation,
- * together with the context capturing capability that is suitable for {@link HttpContentProducer} and
- * {@link HttpContentConsumer} use cases.
+ * An abstract base implementation of {@link DelegatorContext} to provide context per thread
+ * implementation, together with the context capturing capability that is suitable for {@link
+ * HttpContentProducer} and {@link HttpContentConsumer} use cases.
  *
  * @param <T> type of the user service handler
  */
@@ -54,8 +54,9 @@ public abstract class AbstractDelegatorContext<T> implements DelegatorContext<T>
   private volatile boolean shutdown;
 
 
-  protected AbstractDelegatorContext(TypeToken<T> handlerType, InstantiatorFactory instantiatorFactory,
-                                     MetricsContext programMetricsContext, MetricsContext handlerMetricsContext) {
+  protected AbstractDelegatorContext(TypeToken<T> handlerType,
+      InstantiatorFactory instantiatorFactory,
+      MetricsContext programMetricsContext, MetricsContext handlerMetricsContext) {
     this.handlerType = handlerType;
     this.instantiatorFactory = instantiatorFactory;
     this.programMetricsContext = programMetricsContext;
@@ -86,11 +87,13 @@ public abstract class AbstractDelegatorContext<T> implements DelegatorContext<T>
   public final Cancellable capture() {
     // To capture, remove the executor from the cache.
     // The removal listener of the cache will be triggered for this thread entry with an EXPLICIT cause
-    final HandlerTaskExecutor executor = handlerExecutorCache.asMap().remove(Thread.currentThread());
+    final HandlerTaskExecutor executor = handlerExecutorCache.asMap()
+        .remove(Thread.currentThread());
     if (executor == null) {
       // Shouldn't happen, as the executor should of the current thread must be in the cache
       // Otherwise, it's a bug in the system.
-      throw new IllegalStateException("Handler context not found for thread " + Thread.currentThread());
+      throw new IllegalStateException(
+          "Handler context not found for thread " + Thread.currentThread());
     }
 
     final AtomicBoolean cancelled = new AtomicBoolean(false);
@@ -142,36 +145,38 @@ public abstract class AbstractDelegatorContext<T> implements DelegatorContext<T>
   /**
    * Creates an instance of {@link HandlerTaskExecutor} with a new user service handler instance.
    *
-   * @param instantiatorFactory the {@link InstantiatorFactory} for creating new user service handler instance
+   * @param instantiatorFactory the {@link InstantiatorFactory} for creating new user service
+   *     handler instance
    */
-  protected abstract HandlerTaskExecutor createTaskExecutor(InstantiatorFactory instantiatorFactory) throws Exception;
+  protected abstract HandlerTaskExecutor createTaskExecutor(InstantiatorFactory instantiatorFactory)
+      throws Exception;
 
   private LoadingCache<Thread, HandlerTaskExecutor> createHandlerTaskExecutorCache() {
     return CacheBuilder.newBuilder()
-      .weakKeys()
-      .removalListener((RemovalListener<Thread, HandlerTaskExecutor>) notification -> {
-        Thread thread = notification.getKey();
-        HandlerTaskExecutor executor = notification.getValue();
-        if (executor == null) {
-          return;
-        }
-        // If the removal is due to eviction (expired or GC'ed) or
-        // if the thread is no longer active, close the associated context.
-        if (shutdown || notification.wasEvicted() || thread == null || !thread.isAlive()) {
-          executor.close();
-        }
-      })
-      .build(new CacheLoader<Thread, HandlerTaskExecutor>() {
-        @Override
-        public HandlerTaskExecutor load(Thread key) throws Exception {
-          HandlerTaskExecutor executor = handlerExecutorPool.poll();
+        .weakKeys()
+        .removalListener((RemovalListener<Thread, HandlerTaskExecutor>) notification -> {
+          Thread thread = notification.getKey();
+          HandlerTaskExecutor executor = notification.getValue();
           if (executor == null) {
-            return createTaskExecutor(instantiatorFactory);
+            return;
           }
-          programMetricsContext.gauge("context.pool.size", handlerExecutorSize.decrementAndGet());
-          return executor;
-        }
-      });
+          // If the removal is due to eviction (expired or GC'ed) or
+          // if the thread is no longer active, close the associated context.
+          if (shutdown || notification.wasEvicted() || thread == null || !thread.isAlive()) {
+            executor.close();
+          }
+        })
+        .build(new CacheLoader<Thread, HandlerTaskExecutor>() {
+          @Override
+          public HandlerTaskExecutor load(Thread key) throws Exception {
+            HandlerTaskExecutor executor = handlerExecutorPool.poll();
+            if (executor == null) {
+              return createTaskExecutor(instantiatorFactory);
+            }
+            programMetricsContext.gauge("context.pool.size", handlerExecutorSize.decrementAndGet());
+            return executor;
+          }
+        });
   }
 
 

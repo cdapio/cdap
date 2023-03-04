@@ -36,20 +36,21 @@ import org.apache.twill.api.RunId;
  * Helper functions for {@link TriggerInfo}
  */
 public class TriggerInfos {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
-    .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
-    .registerTypeAdapter(WorkflowToken.class, new WorkflowTokenCodec())
-    .create();
+      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
+      .registerTypeAdapter(TriggerInfo.class, new TriggerInfoCodec())
+      .registerTypeAdapter(WorkflowToken.class, new WorkflowTokenCodec())
+      .create();
 
   private TriggerInfos() {
 
   }
 
   /**
-   * Deserialize {@link TriggeringScheduleInfo} if SystemArgs contains the key 'triggeringScheduleInfo'
-   * else returns null
-   * @param sysArgs
+   * Deserialize {@link TriggeringScheduleInfo} if SystemArgs contains the key
+   * 'triggeringScheduleInfo' else returns null
+   *
    * @return {@link TriggeringScheduleInfo}
    */
   @Nullable
@@ -59,14 +60,14 @@ public class TriggerInfos {
     }
     // since only implementation we use is `DefaultTriggeringScheduleInfo`
     return GSON.fromJson(
-      sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO),
-      DefaultTriggeringScheduleInfo.class);
+        sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO),
+        DefaultTriggeringScheduleInfo.class);
   }
 
   /**
    * Deserialize {@link Trigger.Type} if SystemArgs contains the key 'triggeringScheduleInfoType'
    * else returns null
-   * @param sysArgs
+   *
    * @return {@link Trigger.Type}
    */
   @Nullable
@@ -74,13 +75,14 @@ public class TriggerInfos {
     if (!sysArgs.containsKey(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO_TYPE)) {
       return null;
     }
-    return GSON.fromJson(sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO_TYPE), Trigger.Type.class);
+    return GSON.fromJson(sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO_TYPE),
+        Trigger.Type.class);
   }
 
   /**
-   * Creates a new {@link StartMetadata} from System Arguments, if sysArgs is null
-   * then returns null
-   * @param sysArgs
+   * Creates a new {@link StartMetadata} from System Arguments, if sysArgs is null then returns
+   * null
+   *
    * @return {@link StartMetadata}
    */
   @Nullable
@@ -93,6 +95,7 @@ public class TriggerInfos {
       return new StartMetadata(StartType.MANUAL, null);
     }
     Trigger.Type type = TriggerInfos.getTriggerType(sysArgs);
-    return new StartMetadata(StartType.valueOfCategoryName(type.getCategoryName()), triggeringScheduleInfo);
+    return new StartMetadata(StartType.valueOfCategoryName(type.getCategoryName()),
+        triggeringScheduleInfo);
   }
 }

@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * ETL Stage Configuration.
  */
 public final class ETLStage {
+
   private final String name;
   private final Plugin plugin;
   // TODO : can remove the following properties and clean up the constructor after UI support.
@@ -61,11 +62,11 @@ public final class ETLStage {
 
   @Override
   public String toString() {
-    return "ETLStage{" +
-      "name='" + name + '\'' +
-      ", plugin=" + plugin +
-      ", errorDatasetName='" + errorDatasetName + '\'' +
-      '}';
+    return "ETLStage{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + ", errorDatasetName='" + errorDatasetName + '\''
+        + '}';
   }
 
   @Override
@@ -79,9 +80,9 @@ public final class ETLStage {
 
     ETLStage that = (ETLStage) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin) &&
-      Objects.equals(errorDatasetName, that.errorDatasetName);
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin)
+        && Objects.equals(errorDatasetName, that.errorDatasetName);
   }
 
   @Override
@@ -89,19 +90,23 @@ public final class ETLStage {
     return Objects.hash(name, plugin, errorDatasetName);
   }
 
-  public io.cdap.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
-    ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type, plugin.getName());
+  public io.cdap.cdap.etl.proto.v2.ETLStage upgradeStage(String type,
+      UpgradeContext upgradeContext) {
+    ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type,
+        plugin.getName());
     if (artifactSelectorConfig == null) {
       artifactSelectorConfig = plugin.getArtifact();
     }
     io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
-      plugin.getName(), type, plugin.getProperties(), artifactSelectorConfig);
+        plugin.getName(), type, plugin.getProperties(), artifactSelectorConfig);
 
     if (errorDatasetName != null) {
       throw new IllegalStateException(
-        String.format("Cannot upgrade stage '%s'. Error datasets have been replaced by error collectors. " +
-                        "Please connect stage '%s' to an error collector, then connect the error collector " +
-                        "to a sink.", name, name));
+          String.format(
+              "Cannot upgrade stage '%s'. Error datasets have been replaced by error collectors. "
+                  + "Please connect stage '%s' to an error collector, then connect the error collector "
+
+                  + "to a sink.", name, name));
     }
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }

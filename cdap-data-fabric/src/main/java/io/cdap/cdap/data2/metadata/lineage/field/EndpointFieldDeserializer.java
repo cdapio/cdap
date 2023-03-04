@@ -30,8 +30,8 @@ import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
- * A Gson deserializer that caches {@link EndPointField} and reuse them.
- * This class is NOT thread safe. It is supposed to be use for deserializing one {@link FieldLineageInfo} object only.
+ * A Gson deserializer that caches {@link EndPointField} and reuse them. This class is NOT thread
+ * safe. It is supposed to be use for deserializing one {@link FieldLineageInfo} object only.
  */
 @NotThreadSafe
 public class EndpointFieldDeserializer implements JsonDeserializer<EndPointField> {
@@ -40,11 +40,11 @@ public class EndpointFieldDeserializer implements JsonDeserializer<EndPointField
 
   @Override
   public EndPointField deserialize(JsonElement json, Type typeOfT,
-                                   JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject obj = json.getAsJsonObject();
     EndPoint endPoint = context.deserialize(obj.getAsJsonObject("endPoint"), EndPoint.class);
     String field = Optional.ofNullable(obj.getAsJsonPrimitive("field"))
-      .map(JsonPrimitive::getAsString).orElse(null);
+        .map(JsonPrimitive::getAsString).orElse(null);
 
     EndPointField endPointField = new EndPointField(endPoint, field);
     return endpointFields.computeIfAbsent(endPointField, k -> endPointField);

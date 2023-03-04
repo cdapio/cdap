@@ -44,11 +44,14 @@ import javax.annotation.Nullable;
  * Operations on top of StructuredTable for Provisioning related CRUD operations
  */
 public class ProvisionerTable {
+
   private final StructuredTable table;
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .create();
+
   public ProvisionerTable(StructuredTableContext context) throws TableNotFoundException {
     this.table = context.getTable(StoreDefinition.ProvisionerStore.PROVISIONER_TABLE);
   }
@@ -63,7 +66,8 @@ public class ProvisionerTable {
       result = new ArrayList<>();
       while (iterator.hasNext()) {
         result.add(
-          deserialize(iterator.next().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD))
+            deserialize(iterator.next()
+                .getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD))
         );
       }
     }
@@ -72,31 +76,38 @@ public class ProvisionerTable {
 
   /**
    * Fetch Provisioning Task Information
+   *
    * @param key ProvisioningTaskKey for the corresponding task info.
    * @return instance of {@link ProvisioningTaskInfo}.
    * @throws IOException if there is an issue reading from underlying structured table.
    */
   @Nullable
   public ProvisioningTaskInfo getTaskInfo(ProvisioningTaskKey key) throws IOException {
-    Optional<StructuredRow> row = table.read(createPrimaryKey(key.getProgramRunId(), key.getType()));
-    return row.isPresent() ?
-      deserialize(row.get().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)) :
-      null;
+    Optional<StructuredRow> row = table.read(
+        createPrimaryKey(key.getProgramRunId(), key.getType()));
+    return row.isPresent()
+        ? deserialize(
+        row.get().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)) :
+        null;
   }
 
   /**
    * Persist the provisioning taskInfo.
+   *
    * @param taskInfo {@link ProvisioningTaskInfo}to be persisted.
    * @throws IOException if there is an issue writing to the underlying structured table.
    */
   public void putTaskInfo(ProvisioningTaskInfo taskInfo) throws IOException {
-    List<Field<?>> fields = createPrimaryKey(taskInfo.getTaskKey().getProgramRunId(), taskInfo.getTaskKey().getType());
-    fields.add(Fields.stringField(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD, serialize(taskInfo)));
+    List<Field<?>> fields = createPrimaryKey(taskInfo.getTaskKey().getProgramRunId(),
+        taskInfo.getTaskKey().getType());
+    fields.add(Fields.stringField(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD,
+        serialize(taskInfo)));
     table.upsert(fields);
   }
 
   /**
    * Delete provisioning task info for the corresponding program run id.
+   *
    * @param runId to delete.
    * @throws IOException if there is an issue deleting from the underlying structured table.
    */
@@ -107,17 +118,19 @@ public class ProvisionerTable {
 
   private List<Field<?>> createPrimaryKey(ProgramRunId runId, @Nullable ProvisioningOp.Type type) {
     List<Field<?>> fields = Lists.newArrayList(
-      Fields.stringField(StoreDefinition.ProvisionerStore.NAMESPACE_FIELD, runId.getNamespace()),
-      Fields.stringField(StoreDefinition.ProvisionerStore.APPLICATION_FIELD, runId.getApplication()),
-      Fields.stringField(StoreDefinition.ProvisionerStore.VERSION_FIELD, runId.getVersion()),
-      Fields.stringField(StoreDefinition.ProvisionerStore.PROGRAM_TYPE_FIELD, runId.getType().name()),
-      Fields.stringField(StoreDefinition.ProvisionerStore.PROGRAM_FIELD, runId.getProgram()),
-      Fields.stringField(StoreDefinition.ProvisionerStore.RUN_FIELD, runId.getRun()));
+        Fields.stringField(StoreDefinition.ProvisionerStore.NAMESPACE_FIELD, runId.getNamespace()),
+        Fields.stringField(StoreDefinition.ProvisionerStore.APPLICATION_FIELD,
+            runId.getApplication()),
+        Fields.stringField(StoreDefinition.ProvisionerStore.VERSION_FIELD, runId.getVersion()),
+        Fields.stringField(StoreDefinition.ProvisionerStore.PROGRAM_TYPE_FIELD,
+            runId.getType().name()),
+        Fields.stringField(StoreDefinition.ProvisionerStore.PROGRAM_FIELD, runId.getProgram()),
+        Fields.stringField(StoreDefinition.ProvisionerStore.RUN_FIELD, runId.getRun()));
 
-      if (null != type) {
-        fields.add(Fields.stringField(StoreDefinition.ProvisionerStore.KEY_TYPE, type.name()));
-      }
-      return fields;
+    if (null != type) {
+      fields.add(Fields.stringField(StoreDefinition.ProvisionerStore.KEY_TYPE, type.name()));
+    }
+    return fields;
   }
 
   private ProvisioningTaskInfo deserialize(String provisioningTaskInfo) {

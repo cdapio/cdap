@@ -30,7 +30,8 @@ public interface CachingPathProvider extends Function<Location, Optional<Path>> 
    * Returns an optional local path for caching for the given location.
    *
    * @param location the {@link Location} for getting the local cache path.
-   * @return a local file {@link Path} in the {@link Optional} or an empty {@link Optional} if no caching is needed.
+   * @return a local file {@link Path} in the {@link Optional} or an empty {@link Optional} if no
+   *     caching is needed.
    */
   @Override
   Optional<Path> apply(Location location);

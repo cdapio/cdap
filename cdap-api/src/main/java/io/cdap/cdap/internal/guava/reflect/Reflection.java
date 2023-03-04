@@ -50,12 +50,12 @@ final class Reflection {
    * <a href="http://java.sun.com/docs/books/jls/third_edition/html/execution.html#12.4.2">
    * JLS Section 12.4.2</a>.
    *
-   * <p>WARNING: Normally it's a smell if a class needs to be explicitly initialized, because static
-   * state hurts system maintainability and testability. In cases when you have no choice while
-   * inter-operating with a legacy framework, this method helps to keep the code less ugly.
+   * <p>WARNING: Normally it's a smell if a class needs to be explicitly initialized, because
+   * static state hurts system maintainability and testability. In cases when you have no choice
+   * while inter-operating with a legacy framework, this method helps to keep the code less ugly.
    *
-   * @throws ExceptionInInitializerError if an exception is thrown during
-   *   initialization of a class
+   * @throws ExceptionInInitializerError if an exception is thrown during initialization of a
+   *     class
    */
   public static void initialize(Class<?>... classes) {
     for (Class<?> clazz : classes) {
@@ -68,25 +68,26 @@ final class Reflection {
   }
 
   /**
-   * Returns a proxy instance that implements {@code interfaceType} by
-   * dispatching method invocations to {@code handler}. The class loader of
-   * {@code interfaceType} will be used to define the proxy class. To implement
-   * multiple interfaces or specify a class loader, use
-   * {@link Proxy#newProxyInstance}.
+   * Returns a proxy instance that implements {@code interfaceType} by dispatching method
+   * invocations to {@code handler}. The class loader of {@code interfaceType} will be used to
+   * define the proxy class. To implement multiple interfaces or specify a class loader, use {@link
+   * Proxy#newProxyInstance}.
    *
-   * @throws IllegalArgumentException if {@code interfaceType} does not specify
-   *     the type of a Java interface
+   * @throws IllegalArgumentException if {@code interfaceType} does not specify the type of a
+   *     Java interface
    */
   public static <T> T newProxy(
-    Class<T> interfaceType, InvocationHandler handler) {
+      Class<T> interfaceType, InvocationHandler handler) {
     Preconditions.checkNotNull(handler);
-    Preconditions.checkArgument(interfaceType.isInterface(), "%s is not an interface", interfaceType);
+    Preconditions.checkArgument(interfaceType.isInterface(), "%s is not an interface",
+        interfaceType);
     Object object = Proxy.newProxyInstance(
-      interfaceType.getClassLoader(),
-      new Class<?>[] { interfaceType },
-      handler);
+        interfaceType.getClassLoader(),
+        new Class<?>[]{interfaceType},
+        handler);
     return interfaceType.cast(object);
   }
 
-  private Reflection() {}
+  private Reflection() {
+  }
 }

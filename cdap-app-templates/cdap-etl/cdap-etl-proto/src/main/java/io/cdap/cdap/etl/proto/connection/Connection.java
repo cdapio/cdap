@@ -23,6 +23,7 @@ import java.util.Objects;
  * Connection information
  */
 public class Connection {
+
   private final String name;
   private final String connectionId;
   private final String connectionType;
@@ -34,13 +35,15 @@ public class Connection {
   private final PluginInfo plugin;
 
   public Connection(String name, String connectionType, String description, boolean preConfigured,
-                    boolean isDefault, long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
-    this(name, ConnectionId.getConnectionId(name), connectionType, description, preConfigured, isDefault,
-         createdTimeMillis, updatedTimeMillis, plugin);
+      boolean isDefault, long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
+    this(name, ConnectionId.getConnectionId(name), connectionType, description, preConfigured,
+        isDefault,
+        createdTimeMillis, updatedTimeMillis, plugin);
   }
 
-  public Connection(String name, String connectionId, String connectionType, String description, boolean preConfigured,
-                    boolean isDefault, long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
+  public Connection(String name, String connectionId, String connectionType, String description,
+      boolean preConfigured,
+      boolean isDefault, long createdTimeMillis, long updatedTimeMillis, PluginInfo plugin) {
     this.name = name;
     this.connectionId = connectionId;
     this.connectionType = connectionType;
@@ -99,17 +102,18 @@ public class Connection {
     }
 
     Connection that = (Connection) o;
-    return preConfigured == that.preConfigured &&
-      isDefault == that.isDefault &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(connectionId, that.connectionId) &&
-      Objects.equals(connectionType, that.connectionType) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(plugin, that.plugin);
+    return preConfigured == that.preConfigured
+        && isDefault == that.isDefault
+        && Objects.equals(name, that.name)
+        && Objects.equals(connectionId, that.connectionId)
+        && Objects.equals(connectionType, that.connectionType)
+        && Objects.equals(description, that.description)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, connectionId, connectionType, description, preConfigured, isDefault, plugin);
+    return Objects.hash(name, connectionId, connectionType, description, preConfigured, isDefault,
+        plugin);
   }
 }

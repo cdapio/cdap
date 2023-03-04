@@ -23,9 +23,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotations can be used by entities to emit metadata when the entity is created.
- * Currently, this can only be applied to plugins. Plugins with this annotation will have additional metadata
- * in system scope associated with it when the plugin is deployed.
+ * Annotations can be used by entities to emit metadata when the entity is created. Currently, this
+ * can only be applied to plugins. Plugins with this annotation will have additional metadata in
+ * system scope associated with it when the plugin is deployed.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

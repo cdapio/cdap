@@ -30,7 +30,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class MessagingServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  MessagingServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+  MessagingServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+      DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient, Constants.Service.MESSAGING_SERVICE, twillRunner);
   }
 

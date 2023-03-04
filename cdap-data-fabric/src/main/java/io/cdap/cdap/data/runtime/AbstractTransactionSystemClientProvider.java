@@ -24,7 +24,9 @@ import org.apache.tephra.TransactionSystemClient;
 /**
  * Class to provide the {@link TransactionSystemClient}.
  */
-abstract class AbstractTransactionSystemClientProvider implements Provider<TransactionSystemClient> {
+abstract class AbstractTransactionSystemClientProvider implements
+    Provider<TransactionSystemClient> {
+
   private final CConfiguration cConf;
 
   AbstractTransactionSystemClientProvider(CConfiguration cConf) {

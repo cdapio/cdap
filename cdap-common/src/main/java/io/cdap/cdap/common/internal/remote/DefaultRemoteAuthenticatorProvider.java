@@ -38,21 +38,21 @@ public class DefaultRemoteAuthenticatorProvider implements Provider<RemoteAuthen
 
   @Inject
   DefaultRemoteAuthenticatorProvider(CConfiguration cConf,
-                                     @Named(AUTHENTICATOR_NAME_KEY) String remoteAuthenticatorNameKey,
-                                     RemoteAuthenticatorExtensionLoader remoteAuthenticatorExtensionLoader) {
+      @Named(AUTHENTICATOR_NAME_KEY) String remoteAuthenticatorNameKey,
+      RemoteAuthenticatorExtensionLoader remoteAuthenticatorExtensionLoader) {
     // Use the authenticator name key for subcomponents if set, but default to overall system wide configuration key
     // if no override is set.
     String authenticatorName = cConf.get(remoteAuthenticatorNameKey);
     defaultAuthenticatorName = authenticatorName == null
-      ? cConf.get(Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME)
-      : authenticatorName;
+        ? cConf.get(Constants.RemoteAuthenticator.REMOTE_AUTHENTICATOR_NAME)
+        : authenticatorName;
     this.remoteAuthenticatorExtensionLoader = remoteAuthenticatorExtensionLoader;
     this.localRemoteAuthenticator = null;
   }
 
   /**
-   * Retrieves the current {@link RemoteAuthenticator} from the extension loader using the authenticator name or
-   * {@code null} if there is no current authenticator available.
+   * Retrieves the current {@link RemoteAuthenticator} from the extension loader using the
+   * authenticator name or {@code null} if there is no current authenticator available.
    */
   @Override
   public RemoteAuthenticator get() {
@@ -61,7 +61,8 @@ public class DefaultRemoteAuthenticatorProvider implements Provider<RemoteAuthen
     }
 
     // Try to get the current authenticator from the extension loader.
-    RemoteAuthenticator extensionRemoteAuthenticator = remoteAuthenticatorExtensionLoader.get(defaultAuthenticatorName);
+    RemoteAuthenticator extensionRemoteAuthenticator = remoteAuthenticatorExtensionLoader.get(
+        defaultAuthenticatorName);
     if (extensionRemoteAuthenticator != null) {
       return extensionRemoteAuthenticator;
     }
@@ -86,12 +87,13 @@ public class DefaultRemoteAuthenticatorProvider implements Provider<RemoteAuthen
 
   /**
    * Helper method for getting a mapped local authenticator class, or null if none exists.
+   *
    * @param remoteAuthenticatorName The remote authenticator name
    * @return The local remote authenticator
    */
   @Nullable
   private static RemoteAuthenticator getLocalAuthenticator(String remoteAuthenticatorName) {
-    switch(remoteAuthenticatorName) {
+    switch (remoteAuthenticatorName) {
       case GceRemoteAuthenticator.GCE_REMOTE_AUTHENTICATOR_NAME:
         return new GceRemoteAuthenticator();
       case NoOpRemoteAuthenticator.NO_OP_REMOTE_AUTHENTICATOR_NAME:

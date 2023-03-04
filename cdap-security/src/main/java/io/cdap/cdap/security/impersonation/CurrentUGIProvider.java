@@ -36,10 +36,11 @@ public class CurrentUGIProvider implements UGIProvider {
   }
 
   @Override
-  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws AccessException {
+  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest)
+      throws AccessException {
     try {
       return new UGIWithPrincipal(authenticationContext.getPrincipal().getKerberosPrincipal(),
-                                  UserGroupInformation.getCurrentUser());
+          UserGroupInformation.getCurrentUser());
     } catch (IOException e) {
       throw AuthEnforceUtil.propagateAccessException(e);
     }

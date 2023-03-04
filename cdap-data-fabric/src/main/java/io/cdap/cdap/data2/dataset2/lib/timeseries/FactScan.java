@@ -24,25 +24,29 @@ import java.util.List;
 /**
  * Defines a scan over facts in a {@link FactTable}.
  * <p/>
- * NOTE: it will only scan those facts that at the time of writing had all given dimensions (some could have
- *       null values).
+ * NOTE: it will only scan those facts that at the time of writing had all given dimensions (some
+ * could have null values).
  */
 public final class FactScan {
+
   private final List<DimensionValue> dimensionValues;
   private final Collection<String> measureNames;
   private final long startTs;
   private final long endTs;
 
-  public FactScan(long startTs, long endTs, Collection<String> measureNames, List<DimensionValue> dimensionValues) {
+  public FactScan(long startTs, long endTs, Collection<String> measureNames,
+      List<DimensionValue> dimensionValues) {
     this.endTs = endTs;
     this.startTs = startTs;
     this.measureNames = measureNames;
     this.dimensionValues = ImmutableList.copyOf(dimensionValues);
   }
 
-  public FactScan(long startTs, long endTs, String measureName, List<DimensionValue> dimensionValues) {
+  public FactScan(long startTs, long endTs, String measureName,
+      List<DimensionValue> dimensionValues) {
     this(startTs, endTs,
-         measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName), dimensionValues);
+        measureName == null ? ImmutableList.<String>of() : ImmutableList.of(measureName),
+        dimensionValues);
   }
 
   public FactScan(long startTs, long endTs, List<DimensionValue> dimensionValues) {

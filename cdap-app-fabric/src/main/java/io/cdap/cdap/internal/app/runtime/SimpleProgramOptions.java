@@ -38,7 +38,8 @@ public final class SimpleProgramOptions implements ProgramOptions {
     this(programId, arguments, userArguments, false);
   }
 
-  public SimpleProgramOptions(ProgramId programId, Arguments arguments, Arguments userArguments, boolean debug) {
+  public SimpleProgramOptions(ProgramId programId, Arguments arguments, Arguments userArguments,
+      boolean debug) {
     this.programId = programId;
     this.arguments = arguments;
     this.userArguments = userArguments;

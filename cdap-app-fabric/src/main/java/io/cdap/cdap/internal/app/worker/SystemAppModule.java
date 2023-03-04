@@ -43,7 +43,8 @@ public class SystemAppModule extends AbstractModule {
   protected void configure() {
     bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
-    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
+        .in(Scopes.SINGLETON);
     bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
     bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
     bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
@@ -52,7 +53,7 @@ public class SystemAppModule extends AbstractModule {
     OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
 
     install(new FactoryModuleBuilder()
-      .implement(ArtifactManager.class, RemoteArtifactManager.class)
-      .build(ArtifactManagerFactory.class));
+        .implement(ArtifactManager.class, RemoteArtifactManager.class)
+        .build(ArtifactManagerFactory.class));
   }
 }

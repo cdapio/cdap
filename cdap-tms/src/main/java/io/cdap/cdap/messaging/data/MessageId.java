@@ -26,7 +26,8 @@ import java.util.Arrays;
  */
 public class MessageId {
 
-  public static final int RAW_ID_SIZE = Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT;
+  public static final int RAW_ID_SIZE =
+      Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_LONG + Bytes.SIZEOF_SHORT;
 
   private final byte[] rawId;
   private final long publishTimestamp;
@@ -43,10 +44,11 @@ public class MessageId {
    * @param payloadSequenceId sequence id in the payload table of the message
    * @param buffer the buffer to encode raw id to
    * @param offset the starting offset in the buffer for storing the raw message id
-   * @return the offset in the buffer that points to the index right after then end of the raw message id
+   * @return the offset in the buffer that points to the index right after then end of the raw
+   *     message id
    */
   public static int putRawId(long publishTimestamp, short sequenceId,
-                             long writeTimestamp, short payloadSequenceId, byte[] buffer, int offset) {
+      long writeTimestamp, short payloadSequenceId, byte[] buffer, int offset) {
 
     if (buffer.length - offset < RAW_ID_SIZE) {
       throw new IllegalArgumentException("Not enough size in the buffer to encode Message ID");
@@ -58,8 +60,8 @@ public class MessageId {
   }
 
   /**
-   * Creates a instance based on the given raw id bytes. The provided byte array will be store as is without
-   * copying.
+   * Creates a instance based on the given raw id bytes. The provided byte array will be store as is
+   * without copying.
    */
   public MessageId(byte[] rawId) {
     this.rawId = rawId;
@@ -92,16 +94,16 @@ public class MessageId {
   }
 
   /**
-   * Returns the timestamp when the message was written to the Payload Table.
-   * If the message is not from the Payload Table, {@code 0} will be returned.
+   * Returns the timestamp when the message was written to the Payload Table. If the message is not
+   * from the Payload Table, {@code 0} will be returned.
    */
   public long getPayloadWriteTimestamp() {
     return writeTimestamp;
   }
 
   /**
-   * Returns the sequence id generated when the message was written to the Payload Table.
-   * If the message is not from the Payload Table, {@code 0} will be returned.
+   * Returns the sequence id generated when the message was written to the Payload Table. If the
+   * message is not from the Payload Table, {@code 0} will be returned.
    */
   public short getPayloadSequenceId() {
     return payloadSequenceId;

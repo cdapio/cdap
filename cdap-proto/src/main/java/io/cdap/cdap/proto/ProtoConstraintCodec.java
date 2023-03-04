@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * Serialization and deserialization of run constraints as Json.
  */
-public class ProtoConstraintCodec implements JsonSerializer<ProtoConstraint>, JsonDeserializer<ProtoConstraint> {
+public class ProtoConstraintCodec implements JsonSerializer<ProtoConstraint>,
+    JsonDeserializer<ProtoConstraint> {
 
   /**
    * Maps each type to a class for deserialization.
@@ -61,31 +62,36 @@ public class ProtoConstraintCodec implements JsonSerializer<ProtoConstraint>, Js
   /**
    * Constructs a Codec with a custom mapping from run constraint type to run constraint class.
    */
-  protected ProtoConstraintCodec(Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> typeClassMap) {
+  protected ProtoConstraintCodec(
+      Map<ProtoConstraint.Type, Class<? extends ProtoConstraint>> typeClassMap) {
     this.typeClassMap = typeClassMap;
   }
 
   @Override
-  public JsonElement serialize(ProtoConstraint src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ProtoConstraint src, Type typeOfSrc,
+      JsonSerializationContext context) {
     // this assumes that ProtoConstraint is an abstract class (every instance will have a concrete subclass type)
     return context.serialize(src, src.getClass());
   }
 
   @Override
-  public ProtoConstraint deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public ProtoConstraint deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     if (json == null) {
       return null;
     }
     if (!(json instanceof JsonObject)) {
-      throw new JsonParseException("Expected a JsonObject but found a " + json.getClass().getName());
+      throw new JsonParseException(
+          "Expected a JsonObject but found a " + json.getClass().getName());
     }
     JsonObject object = (JsonObject) json;
     JsonElement typeJson = object.get("type");
     ProtoConstraint.Type constraintType = context.deserialize(typeJson, ProtoConstraint.Type.class);
     Class<? extends ProtoConstraint> subClass = typeClassMap.get(constraintType);
     if (subClass == null) {
-      throw new JsonParseException("Unable to map constraint type " + constraintType + " to a run constraint class");
+      throw new JsonParseException(
+          "Unable to map constraint type " + constraintType + " to a run constraint class");
     }
     ProtoConstraint constraint = context.deserialize(json, subClass);
     constraint.validate();

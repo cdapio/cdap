@@ -39,7 +39,7 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
   private final CConfiguration cConf;
 
   public SupportBundleSystemLogTask(File basePath, RemoteLogsFetcher remoteLogsFetcher,
-                                    CConfiguration cConf, RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
+      CConfiguration cConf, RemoteMonitorServicesFetcher remoteMonitorServicesFetcher) {
     this.basePath = basePath;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteMonitorServicesFetcher = remoteMonitorServicesFetcher;
@@ -58,10 +58,12 @@ public class SupportBundleSystemLogTask implements SupportBundleTask {
     for (SystemServiceMeta serviceMeta : serviceMetaList) {
       long currentTimeMillis = System.currentTimeMillis();
       long fromMillis =
-        currentTimeMillis - TimeUnit.DAYS.toMillis(cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
-      File file = new File(systemLogPath, serviceMeta.getName() + SupportBundleFileNames.SYSTEM_LOG_SUFFIX_NAME);
+          currentTimeMillis - TimeUnit.DAYS.toMillis(
+              cConf.getInt(Constants.SupportBundle.SYSTEM_LOG_START_TIME));
+      File file = new File(systemLogPath,
+          serviceMeta.getName() + SupportBundleFileNames.SYSTEM_LOG_SUFFIX_NAME);
       remoteLogsFetcher.writeSystemServiceLog(componentId, serviceMeta.getName(), fromMillis / 1000,
-                                              currentTimeMillis / 1000, file);
+          currentTimeMillis / 1000, file);
     }
   }
 }

@@ -42,6 +42,7 @@ import org.apache.tephra.snapshot.SnapshotCodecProvider;
  * The Guice module of data fabric bindings for in memory execution.
  */
 public class DataFabricInMemoryModule extends AbstractModule {
+
   private final String txClientId;
 
   public DataFabricInMemoryModule(String txClientId) {
@@ -58,21 +59,25 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID)).to(txClientId);
     install(new FactoryModuleBuilder()
-              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
-              .build(TransactionExecutorFactory.class));
+        .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+        .build(TransactionExecutorFactory.class));
 
     // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
     bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
-    bind(TransactionSystemClient.class).toProvider(InMemoryTransactionSystemClientProvider.class).in(Scopes.SINGLETON);
+    bind(TransactionSystemClient.class).toProvider(InMemoryTransactionSystemClientProvider.class)
+        .in(Scopes.SINGLETON);
 
     install(new TransactionExecutorModule());
     install(new StorageModule());
   }
 
   /**
-   * In memory transaction client provider which provides the {@link TransactionSystemClient} for in-memory mode.
+   * In memory transaction client provider which provides the {@link TransactionSystemClient} for
+   * in-memory mode.
    */
-  static final class InMemoryTransactionSystemClientProvider extends AbstractTransactionSystemClientProvider {
+  static final class InMemoryTransactionSystemClientProvider extends
+      AbstractTransactionSystemClientProvider {
+
     private final Injector injector;
 
     @Inject
@@ -83,7 +88,8 @@ public class DataFabricInMemoryModule extends AbstractModule {
 
     @Override
     protected TransactionSystemClient getTransactionSystemClient() {
-      return new UninterruptibleTransactionSystemClient(injector.getInstance(InMemoryTxSystemClient.class));
+      return new UninterruptibleTransactionSystemClient(
+          injector.getInstance(InMemoryTxSystemClient.class));
     }
   }
 }

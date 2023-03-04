@@ -28,6 +28,7 @@ import java.util.Objects;
  * Identifies a versionless application.
  */
 public class ApplicationReference extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   private final String application;
   private transient Integer hashCode;
 
@@ -69,8 +70,8 @@ public class ApplicationReference extends NamespacedEntityId implements Parented
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .appendAsType(MetadataEntity.APPLICATION, application)
-      .build();
+        .appendAsType(MetadataEntity.APPLICATION, application)
+        .build();
   }
 
   @Override
@@ -84,7 +85,8 @@ public class ApplicationReference extends NamespacedEntityId implements Parented
       return false;
     }
     ApplicationReference that = (ApplicationReference) o;
-    return Objects.equals(namespace, that.namespace) && Objects.equals(application, that.application);
+    return Objects.equals(namespace, that.namespace) && Objects.equals(application,
+        that.application);
   }
 
   @SuppressWarnings("unused")

@@ -54,22 +54,23 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link DatasetFramework} that also records lineage (program-dataset access) records.
  */
-public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements ProgramContextAware {
+public class LineageWriterDatasetFramework extends ForwardingDatasetFramework implements
+    ProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageWriterDatasetFramework.class);
   private static final AccessEnforcer SYSTEM_NAMESPACE_ENFORCER = new NoOpAccessController();
   private static final DefaultDatasetRuntimeContext.DatasetAccessRecorder SYSTEM_NAMESPACE_ACCESS_RECORDER =
-    new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
-      @Override
-      public void recordLineage(AccessType accessType) {
-        // no-op
-      }
+      new DefaultDatasetRuntimeContext.DatasetAccessRecorder() {
+        @Override
+        public void recordLineage(AccessType accessType) {
+          // no-op
+        }
 
-      @Override
-      public void emitAudit(AccessType accessType) {
-        // no-op
-      }
-    };
+        @Override
+        public void emitAudit(AccessType accessType) {
+          // no-op
+        }
+      };
 
   private final UsageWriter usageWriter;
   private final LineageWriter lineageWriter;
@@ -80,11 +81,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   private AuditPublisher auditPublisher;
 
   @Inject
-  public LineageWriterDatasetFramework(@Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                                       LineageWriter lineageWriter,
-                                       UsageWriter usageWriter,
-                                       AuthenticationContext authenticationContext,
-                                       AccessEnforcer accessEnforcer) {
+  public LineageWriterDatasetFramework(
+      @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
+      LineageWriter lineageWriter,
+      UsageWriter usageWriter,
+      AuthenticationContext authenticationContext,
+      AccessEnforcer accessEnforcer) {
     super(datasetFramework);
     this.lineageWriter = lineageWriter;
     this.usageWriter = usageWriter;
@@ -106,12 +108,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
   @Nullable
   @Override
   public <T extends Dataset> T getDataset(final DatasetId datasetInstanceId,
-                                          final Map<String, String> arguments,
-                                          @Nullable final ClassLoader classLoader,
-                                          final DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable final Iterable<? extends EntityId> owners,
-                                          final AccessType accessType)
-    throws DatasetManagementException, IOException {
+      final Map<String, String> arguments,
+      @Nullable final ClassLoader classLoader,
+      final DatasetClassLoaderProvider classLoaderProvider,
+      @Nullable final Iterable<? extends EntityId> owners,
+      final AccessType accessType)
+      throws DatasetManagementException, IOException {
     Principal principal = authenticationContext.getPrincipal();
     try {
       // For system, skip authorization and lineage (user program shouldn't allow to access system dataset CDAP-6649)
@@ -127,13 +129,16 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       }
 
       return DefaultDatasetRuntimeContext.execute(
-        enforcer, accessRecorder, principal, datasetInstanceId, getConstructorDefaultAnnotation(accessType), () ->
-          LineageWriterDatasetFramework.super.getDataset(datasetInstanceId, arguments, classLoader,
-                                                         classLoaderProvider, owners, accessType));
+          enforcer, accessRecorder, principal, datasetInstanceId,
+          getConstructorDefaultAnnotation(accessType), () ->
+              LineageWriterDatasetFramework.super.getDataset(datasetInstanceId, arguments,
+                  classLoader,
+                  classLoaderProvider, owners, accessType));
     } catch (IOException | DatasetManagementException | ServiceUnavailableException e) {
       throw e;
     } catch (Exception e) {
-      throw new DatasetManagementException("Failed to create dataset instance: " + datasetInstanceId, e);
+      throw new DatasetManagementException(
+          "Failed to create dataset instance: " + datasetInstanceId, e);
     }
   }
 
@@ -156,11 +161,12 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
         lineageWriter.addAccess(programRunId, datasetInstanceId, accessType, componentId);
       } catch (Throwable t) {
         // Failure to write to lineage shouldn't cause dataset operation failure
-        LOG.warn("Failed to write lineage information for dataset {} with access type {} from {},{}",
-                 datasetInstanceId, accessType, programRunId, componentId);
+        LOG.warn(
+            "Failed to write lineage information for dataset {} with access type {} from {},{}",
+            datasetInstanceId, accessType, programRunId, componentId);
         // Log the stacktrace as debug to not polluting the log
         LOG.debug("Cause for lineage writing failure for {} {} {} {}",
-                  datasetInstanceId, accessType, programRunId, componentId, t);
+            datasetInstanceId, accessType, programRunId, componentId, t);
       }
     }
   }
@@ -174,10 +180,10 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
       } catch (Throwable t) {
         // TODO: CDAP-5244. Ideally we should fail if failed to publish audit.
         LOG.warn("Failed to write audit information for dataset {} with access type {} from {}",
-                 datasetInstanceId, accessType, programRunId);
+            datasetInstanceId, accessType, programRunId);
         // Log the stacktrace as debug to not polluting the log
         LOG.debug("Cause for audit writing failure for {} {} {}",
-                  datasetInstanceId, accessType, programRunId, t);
+            datasetInstanceId, accessType, programRunId, t);
       }
     }
   }
@@ -201,7 +207,8 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     }
   }
 
-  private final class BasicDatasetAccessRecorder implements DefaultDatasetRuntimeContext.DatasetAccessRecorder {
+  private final class BasicDatasetAccessRecorder implements
+      DefaultDatasetRuntimeContext.DatasetAccessRecorder {
 
     private final AccessType requestedAccessType;
     private final DatasetId datasetInstanceId;
@@ -210,7 +217,7 @@ public class LineageWriterDatasetFramework extends ForwardingDatasetFramework im
     private final Iterable<? extends EntityId> owners;
 
     private BasicDatasetAccessRecorder(DatasetId datasetInstanceId, AccessType accessType,
-                                       @Nullable Iterable<? extends EntityId> owners) {
+        @Nullable Iterable<? extends EntityId> owners) {
       this.datasetInstanceId = datasetInstanceId;
       this.requestedAccessType = accessType;
       this.owners = owners;

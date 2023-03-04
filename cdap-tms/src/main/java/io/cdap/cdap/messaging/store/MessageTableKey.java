@@ -21,6 +21,7 @@ import io.cdap.cdap.api.common.Bytes;
  * Row key used for an entry in a MessageTable.
  */
 public class MessageTableKey {
+
   private final byte[] rowKey;
   private final int topicLength;
   private long publishTimestamp;
@@ -47,9 +48,9 @@ public class MessageTableKey {
   }
 
   /**
-   * Set the publish timestamp and sequence id to the values set in the given row key.
-   * This method should only be used when the topic is the same, otherwise a new instance of the
-   * MessageTableKey should be created.
+   * Set the publish timestamp and sequence id to the values set in the given row key. This method
+   * should only be used when the topic is the same, otherwise a new instance of the MessageTableKey
+   * should be created.
    */
   public void setFromRowKey(byte[] rowKey) {
     long publishTimestamp = Bytes.toLong(rowKey, topicLength, Bytes.SIZEOF_LONG);

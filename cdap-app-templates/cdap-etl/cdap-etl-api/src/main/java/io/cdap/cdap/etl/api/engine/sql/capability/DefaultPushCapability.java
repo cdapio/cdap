@@ -17,8 +17,8 @@
 package io.cdap.cdap.etl.api.engine.sql.capability;
 
 public enum DefaultPushCapability implements PushCapability {
-    // Uses Hadoop API classes (OutputFormat) to write Spark RDDs into the SQL engine,
-    HADOOP_RDD_PUSH,
-    // Uses Spark RDD Operations to write records into the SQL engine.
-    SPARK_RDD_PUSH
+  // Uses Hadoop API classes (OutputFormat) to write Spark RDDs into the SQL engine,
+  HADOOP_RDD_PUSH,
+  // Uses Spark RDD Operations to write records into the SQL engine.
+  SPARK_RDD_PUSH
 }

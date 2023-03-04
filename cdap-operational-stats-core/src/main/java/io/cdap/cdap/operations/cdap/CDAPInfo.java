@@ -22,6 +22,7 @@ import io.cdap.cdap.operations.OperationalStats;
  * {@link OperationalStats} representing CDAP information.
  */
 public class CDAPInfo extends AbstractCDAPStats implements CDAPInfoMXBean {
+
   private final long startTime;
 
   public CDAPInfo() {

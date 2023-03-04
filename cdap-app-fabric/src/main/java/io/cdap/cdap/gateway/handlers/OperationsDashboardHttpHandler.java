@@ -61,16 +61,18 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * {@link io.cdap.http.HttpHandler} to handle program run operation dashboard and reports for v3 REST APIs
+ * {@link io.cdap.http.HttpHandler} to handle program run operation dashboard and reports for v3
+ * REST APIs
  * <p>
  * TODO: [CDAP-13355] Move this handler into report generation app
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
 public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(OperationsDashboardHttpHandler.class);
   private static final Gson GSON =
-    TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
+      TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final String MANUAL = "MANUAL";
   private static final String SCHEDULED = "SCHEDULED";
   private static final String TRIGGERED = "TRIGGERED";
@@ -81,7 +83,7 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
 
   @Inject
   public OperationsDashboardHttpHandler(ProgramHeartbeatService programHeartbeatService,
-                                        Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
+      Scheduler scheduler, TimeSchedulerService timeSchedulerService) {
     this.programHeartbeatService = programHeartbeatService;
     this.scheduler = scheduler;
     this.timeSchedulerService = timeSchedulerService;
@@ -90,9 +92,9 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   @GET
   @Path("/dashboard")
   public void readDashboardDetail(FullHttpRequest request, HttpResponder responder,
-                                  @QueryParam("start") long startTimeSecs,
-                                  @QueryParam("duration") int durationTimeSecs,
-                                  @QueryParam("namespace") Set<String> namespaces) throws Exception {
+      @QueryParam("start") long startTimeSecs,
+      @QueryParam("duration") int durationTimeSecs,
+      @QueryParam("namespace") Set<String> namespaces) throws Exception {
     if (startTimeSecs < 0) {
       throw new BadRequestException("'start' time cannot be smaller than 0.");
     }
@@ -100,7 +102,8 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       throw new BadRequestException("'duration' cannot be smaller than 0.");
     }
     if (namespaces.isEmpty()) {
-      throw new BadRequestException("'namespace' cannot be empty, please provide at least one namespace.");
+      throw new BadRequestException(
+          "'namespace' cannot be empty, please provide at least one namespace.");
     }
     long endTimeSecs = startTimeSecs + durationTimeSecs;
 
@@ -110,22 +113,22 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     // Find tasks that have been running for up to 30 days before the start timestamp.
     // If there are updates for any of these programs in the selected window, we'll use the record from the window.
     Collection<RunRecordDetail> programsRunningAtStartTime =
-      programHeartbeatService.findRunningAtTimestamp(startTimeSecs, namespaces);
+        programHeartbeatService.findRunningAtTimestamp(startTimeSecs, namespaces);
 
     // end time is exclusive
     Collection<RunRecordDetail> programsInWindow =
-      programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
+        programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
 
     // Get all the ProgramRunId for records in the selected window.
     Set<ProgramRunId> inWindowRunIds = programsInWindow.stream()
-      .map(RunRecordDetail::getProgramRunId)
-      .collect(Collectors.toSet());
+        .map(RunRecordDetail::getProgramRunId)
+        .collect(Collectors.toSet());
 
     // If there are records that were running before the start time, but have an update in the window, remove them
     // from the programs running result. This allows us to remove duplicate entries.
     programsRunningAtStartTime = programsRunningAtStartTime.stream()
-      .filter(rrd -> !inWindowRunIds.contains(rrd.getProgramRunId()))
-      .collect(Collectors.toList());
+        .filter(rrd -> !inWindowRunIds.contains(rrd.getProgramRunId()))
+        .collect(Collectors.toList());
 
     // Initialize result set.
     Collection<RunRecordDetail> runRecordMetas = new ArrayList<>();
@@ -136,18 +139,20 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
 
     // Sort result by start time.
     runRecordMetas = runRecordMetas.stream()
-      .sorted(Comparator.comparingLong(RunRecordDetail::getStartTs))
-      .collect(java.util.stream.Collectors.toList());
+        .sorted(Comparator.comparingLong(RunRecordDetail::getStartTs))
+        .collect(java.util.stream.Collectors.toList());
 
     List<DashboardProgramRunRecord> result = new ArrayList<>();
     for (RunRecordDetail runRecordMeta : runRecordMetas) {
       result.add(OperationsDashboardHttpHandler.runRecordToDashboardRecord(runRecordMeta));
     }
 
-    Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
+    Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new)
+        .collect(Collectors.toSet());
     // if the end time is in the future, also add scheduled program runs to the result
     // if start time in query is earlier than current time, use currentTime as start when querying future schedules
-    long scheduleStartTimeSeconds = startTimeSecs > currentTimeInSeconds ? startTimeSecs : currentTimeInSeconds;
+    long scheduleStartTimeSeconds =
+        startTimeSecs > currentTimeInSeconds ? startTimeSecs : currentTimeInSeconds;
     if (endTimeSecs > currentTimeInSeconds) {
       // end time is exclusive
       result.addAll(getAllScheduledRuns(namespaceIds, scheduleStartTimeSeconds, endTimeSecs + 1));
@@ -158,15 +163,15 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   /**
    * Gets all the scheduled program run in the given time range from the given namespaces.
    *
-   * @param namespaceIds  the namespaces to get the program runs from
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or equal to the
-   *                      start will be returned)
-   * @param endTimeSecs   the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end will
-   *                      be returned)
+   * @param namespaceIds the namespaces to get the program runs from
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time
+   *     larger or equal to the start will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time
+   *     smaller than the end will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
    */
   private List<DashboardProgramRunRecord> getAllScheduledRuns(Set<NamespaceId> namespaceIds,
-                                                              long startTimeSecs, long endTimeSecs) throws Exception {
+      long startTimeSecs, long endTimeSecs) throws Exception {
     List<DashboardProgramRunRecord> result = new ArrayList<>();
     // get enabled time schedules from all given namespaces
     for (ProgramSchedule programSchedule : getTimeSchedules(namespaceIds)) {
@@ -185,71 +190,75 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
    */
   private List<ProgramSchedule> getTimeSchedules(Set<NamespaceId> namespaceIds) {
     return namespaceIds.stream()
-      // get schedules from each namespace
-      .flatMap(ns -> scheduler.listSchedules(ns, schedule ->
-        // create a filter to get only time schedules
-        Trigger.Type.TIME.equals(schedule.getTrigger().getType()))
-        .stream()).collect(Collectors.toList());
+        // get schedules from each namespace
+        .flatMap(ns -> scheduler.listSchedules(ns, schedule ->
+                // create a filter to get only time schedules
+                Trigger.Type.TIME.equals(schedule.getTrigger().getType()))
+            .stream()).collect(Collectors.toList());
   }
 
   /**
    * For a given time schedule, gets all the scheduled program run in the given time range
    *
-   * @param schedule      the schedule to get scheduled program run with
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or equal to the
-   *                      start will be returned)
-   * @param endTimeSecs   the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end will
-   *                      be returned)
+   * @param schedule the schedule to get scheduled program run with
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time
+   *     larger or equal to the start will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time
+   *     smaller than the end will be returned)
    * @return a list of dashboard program run records with scheduled time as start time
-   * @throws Exception
    */
   private List<DashboardProgramRunRecord> getScheduledDashboardRecords(ProgramSchedule schedule,
-                                                                       long startTimeSecs, long endTimeSecs)
-    throws Exception {
+      long startTimeSecs, long endTimeSecs)
+      throws Exception {
     ProgramId programId = schedule.getProgramId();
     // get all the scheduled run times within the given time range of the given program
     List<ScheduledRuntime> scheduledRuntimes =
-      timeSchedulerService.getAllScheduledRunTimes(programId, programId.getType().getSchedulableType(), startTimeSecs,
-                                                   endTimeSecs);
+        timeSchedulerService.getAllScheduledRunTimes(programId,
+            programId.getType().getSchedulableType(), startTimeSecs,
+            endTimeSecs);
     String userId = schedule.getProperties().get(ProgramOptionConstants.USER_ID);
     String artifactId = schedule.getProperties().get(ProgramOptionConstants.ARTIFACT_ID);
     ArtifactSummary artifactSummary =
-      artifactId == null ? null : ArtifactSummary.from(GSON.fromJson(artifactId, ArtifactId.class));
+        artifactId == null ? null
+            : ArtifactSummary.from(GSON.fromJson(artifactId, ArtifactId.class));
     // for each scheduled runtime, construct a dashboard record for it with the scheduled time as start time
     return scheduledRuntimes.stream()
-      .map(scheduledRuntime ->
-             new DashboardProgramRunRecord(programId.getNamespace(), artifactSummary,
-                                           new DashboardProgramRunRecord.ApplicationNameVersion(
-                                             programId.getApplication(), programId.getVersion()),
-                                           programId.getType().name(), programId.getProgram(), null, userId, SCHEDULED,
-                                           // convert the scheduled time from millis to seconds as start time
-                                           TimeUnit.MILLISECONDS.toSeconds(scheduledRuntime.getTime()),
-                                           null, null, null, null, null))
-      .collect(Collectors.toList());
+        .map(scheduledRuntime ->
+            new DashboardProgramRunRecord(programId.getNamespace(), artifactSummary,
+                new DashboardProgramRunRecord.ApplicationNameVersion(
+                    programId.getApplication(), programId.getVersion()),
+                programId.getType().name(), programId.getProgram(), null, userId, SCHEDULED,
+                // convert the scheduled time from millis to seconds as start time
+                TimeUnit.MILLISECONDS.toSeconds(scheduledRuntime.getTime()),
+                null, null, null, null, null))
+        .collect(Collectors.toList());
   }
 
   /**
    * Converts a {@link RunRecordDetail} to a {@link DashboardProgramRunRecord}
    */
   @VisibleForTesting
-  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordDetail meta) throws IOException {
+  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordDetail meta)
+      throws IOException {
     ProgramRunId runId = meta.getProgramRunId();
     String startMethod = MANUAL;
-    String scheduleInfoJson = meta.getSystemArgs().get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
+    String scheduleInfoJson = meta.getSystemArgs()
+        .get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
     if (scheduleInfoJson != null) {
-      TriggeringScheduleInfo scheduleInfo = GSON.fromJson(scheduleInfoJson, TriggeringScheduleInfo.class);
+      TriggeringScheduleInfo scheduleInfo = GSON.fromJson(scheduleInfoJson,
+          TriggeringScheduleInfo.class);
       // assume there's no composite trigger, since composite is not supported in the UI yet
       startMethod = scheduleInfo.getTriggerInfos().stream().findFirst()
-        .map(trigger -> TriggerInfo.Type.TIME.equals(trigger.getType()) ? SCHEDULED : TRIGGERED
-        )
-        // return "manual" if there's no trigger in the schedule info, but this should never happen
-        .orElse(MANUAL);
+          .map(trigger -> TriggerInfo.Type.TIME.equals(trigger.getType()) ? SCHEDULED : TRIGGERED
+          )
+          // return "manual" if there's no trigger in the schedule info, but this should never happen
+          .orElse(MANUAL);
     }
     String user = meta.getPrincipal();
     if (user != null) {
       user = new KerberosName(user).getShortName();
     }
     return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(),
-                                         user, startMethod);
+        user, startMethod);
   }
 }

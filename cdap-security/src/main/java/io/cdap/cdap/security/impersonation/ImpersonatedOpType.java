@@ -19,9 +19,9 @@ package io.cdap.cdap.security.impersonation;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * A Enum which can represent categorizes different types of operations which are performed with impersonation.
- * Currently, explore queries running inside a namespace is categorized as {@link #EXPLORE} and all other operations
- * as {@link #OTHER}.
+ * A Enum which can represent categorizes different types of operations which are performed with
+ * impersonation. Currently, explore queries running inside a namespace is categorized as {@link
+ * #EXPLORE} and all other operations as {@link #OTHER}.
  */
 @Beta
 public enum ImpersonatedOpType {

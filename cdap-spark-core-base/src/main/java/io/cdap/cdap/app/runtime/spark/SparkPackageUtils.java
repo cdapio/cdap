@@ -170,8 +170,8 @@ public final class SparkPackageUtils {
     String sparkHome = System.getenv(SPARK_HOME);
 
     if (sparkHome == null && archivesPath == null) {
-      LOG.warn("Failed to determine location of PySpark libraries. Running PySpark program might fail. " +
-                 "Please set environment variable {} to make PySpark available.", SPARK_HOME);
+      LOG.warn("Failed to determine location of PySpark libraries. Running PySpark program might fail. "
+                 + "Please set environment variable {} to make PySpark available.", SPARK_HOME);
     } else {
       if (archivesPath != null) {
         // If the archives path is explicitly set, use it

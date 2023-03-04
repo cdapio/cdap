@@ -35,14 +35,17 @@ import java.util.Map;
  * Starts a program.
  */
 public class StartProgramCommand extends AbstractAuthCommand {
-  private static final Joiner.MapJoiner SPACE_EQUALS_JOINER = Joiner.on(" ").withKeyValueSeparator("=");
+
+  private static final Joiner.MapJoiner SPACE_EQUALS_JOINER = Joiner.on(" ")
+      .withKeyValueSeparator("=");
 
   protected final ElementType elementType;
   private final ProgramClient programClient;
 
   protected boolean isDebug;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public StartProgramCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -65,15 +68,17 @@ public class StartProgramCommand extends AbstractAuthCommand {
       // run with stored runtime args
       programClient.start(programId, isDebug, null);
       runtimeArgsString = SPACE_EQUALS_JOINER.join(programClient.getRuntimeArgs(programId));
-      output.printf("Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
-                    elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      output.printf(
+          "Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
+          elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     } else {
       // run with user-provided runtime args
       Map<String, String> runtimeArgs = ArgumentParser.parseMap(runtimeArgsString,
-                                                                ArgumentName.RUNTIME_ARGS.toString());
+          ArgumentName.RUNTIME_ARGS.toString());
       programClient.start(programId, isDebug, runtimeArgs);
-      output.printf("Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
-                    elementType.getName(), programName, appName, appVersion, runtimeArgsString);
+      output.printf(
+          "Successfully started %s '%s' of application '%s.%s' with provided runtime arguments '%s'\n",
+          elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     }
 
   }
@@ -81,12 +86,12 @@ public class StartProgramCommand extends AbstractAuthCommand {
   @Override
   public String getPattern() {
     return String.format("start %s <%s> [version <%s>] [<%s>]", elementType.getShortName(),
-                         elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUNTIME_ARGS);
+        elementType.getArgumentName(), ArgumentName.APP_VERSION, ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
     return String.format("Starts %s. '<%s>' is specified in the format 'key1=a key2=b'.",
-                         Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+        Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
   }
 }

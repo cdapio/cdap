@@ -58,7 +58,7 @@ public final class Metadata {
   public Metadata(MetadataScope scope, Set<String> tags, Map<String, String> properties) {
     this.tags = tags.stream().map(tag -> new ScopedName(scope, tag)).collect(Collectors.toSet());
     this.properties = properties.entrySet().stream().collect(Collectors.toMap(
-      entry -> new ScopedName(scope, entry.getKey()), Map.Entry::getValue));
+        entry -> new ScopedName(scope, entry.getKey()), Map.Entry::getValue));
   }
 
   /**
@@ -93,9 +93,9 @@ public final class Metadata {
    */
   public Set<String> getTags(MetadataScope scope) {
     return tags.stream()
-      .filter(tag -> scope.equals(tag.getScope()))
-      .map(ScopedName::getName)
-      .collect(Collectors.toSet());
+        .filter(tag -> scope.equals(tag.getScope()))
+        .map(ScopedName::getName)
+        .collect(Collectors.toSet());
   }
 
   /**
@@ -110,8 +110,8 @@ public final class Metadata {
    */
   public Map<String, String> getProperties(MetadataScope scope) {
     return properties.entrySet().stream()
-      .filter(entry -> scope.equals(entry.getKey().getScope()))
-      .collect(Collectors.toMap(entry -> entry.getKey().getName(), Map.Entry::getValue));
+        .filter(entry -> scope.equals(entry.getKey().getScope()))
+        .collect(Collectors.toMap(entry -> entry.getKey().getName(), Map.Entry::getValue));
   }
 
   /**
@@ -130,8 +130,8 @@ public final class Metadata {
       return false;
     }
     Metadata metadata = (Metadata) o;
-    return Objects.equals(tags, metadata.tags) &&
-      Objects.equals(properties, metadata.properties);
+    return Objects.equals(tags, metadata.tags)
+        && Objects.equals(properties, metadata.properties);
   }
 
   @Override
@@ -141,9 +141,9 @@ public final class Metadata {
 
   @Override
   public String toString() {
-    return "Metadata{" +
-      "tags=" + tags +
-      ", properties=" + properties +
-      '}';
+    return "Metadata{"
+        + "tags=" + tags
+        + ", properties=" + properties
+        + '}';
   }
 }

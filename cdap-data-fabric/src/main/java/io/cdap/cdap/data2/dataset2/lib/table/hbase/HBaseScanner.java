@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * Implements Scanner on top of HBase resultSetScanner.
  */
 public class HBaseScanner implements Scanner {
+
   private static final Logger LOG = LoggerFactory.getLogger(HBaseScanner.class);
 
   private final ResultScanner scanner;
@@ -39,7 +40,7 @@ public class HBaseScanner implements Scanner {
   private final AbstractRowKeyDistributor rowKeyDistributor;
 
   public HBaseScanner(ResultScanner scanner, byte[] columnFamily,
-                      @Nullable AbstractRowKeyDistributor rowKeyDistributor) {
+      @Nullable AbstractRowKeyDistributor rowKeyDistributor) {
     this.scanner = scanner;
     this.columnFamily = columnFamily;
     this.rowKeyDistributor = rowKeyDistributor;

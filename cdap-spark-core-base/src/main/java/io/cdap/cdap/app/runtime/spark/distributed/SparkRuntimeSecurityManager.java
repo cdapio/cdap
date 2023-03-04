@@ -42,8 +42,8 @@ final class SparkRuntimeSecurityManager extends SecurityManager {
   @Override
   public void checkPermission(Permission perm) {
     if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
-      LOG.warn("Spark program is setting SecurityManager. This can result in logs or metrics not " +
-                 "being collected when the Spark application completed.");
+      LOG.warn("Spark program is setting SecurityManager. This can result in logs or metrics not "
+                 + "being collected when the Spark application completed.");
     }
     if (delegate != null) {
       delegate.checkPermission(perm);
@@ -53,8 +53,8 @@ final class SparkRuntimeSecurityManager extends SecurityManager {
   @Override
   public void checkPermission(Permission perm, Object context) {
     if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
-      LOG.warn("Spark program is setting SecurityManager. This can result in logs or metrics not " +
-                 "being collected when the Spark application completed.");
+      LOG.warn("Spark program is setting SecurityManager. This can result in logs or metrics not "
+                 + "being collected when the Spark application completed.");
     }
     if (delegate != null) {
       delegate.checkPermission(perm, context);

@@ -23,11 +23,12 @@ import io.cdap.cdap.etl.api.SubmitterLifecycle;
 
 /**
  * Base class for multi input Batch run configuration methods.
+ *
  * @param <T> batch execution context
  */
 @Beta
 public abstract class MultiInputBatchConfigurable<T extends BatchContext>
-  implements MultiInputPipelineConfigurable, SubmitterLifecycle<T> {
+    implements MultiInputPipelineConfigurable, SubmitterLifecycle<T> {
 
   @Override
   public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
@@ -46,7 +47,8 @@ public abstract class MultiInputBatchConfigurable<T extends BatchContext>
   /**
    * Invoked after the Batch run finishes. Used to perform any end of the run logic.
    *
-   * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
+   * @param succeeded defines the result of batch execution: true if run succeeded, false
+   *     otherwise
    * @param context batch execution context
    */
   @Override

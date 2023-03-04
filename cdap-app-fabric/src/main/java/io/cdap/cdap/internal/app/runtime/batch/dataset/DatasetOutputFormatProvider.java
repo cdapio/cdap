@@ -27,7 +27,8 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * A {@link OutputFormatProvider} that provides information for batch job to write to {@link Dataset}.
+ * A {@link OutputFormatProvider} that provides information for batch job to write to {@link
+ * Dataset}.
  */
 public class DatasetOutputFormatProvider implements OutputFormatProvider, DatasetOutputCommitter {
 
@@ -36,7 +37,7 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
   private final Dataset dataset;
 
   public DatasetOutputFormatProvider(String namespace, String datasetName,
-                                     Map<String, String> datasetArgs, Dataset dataset) {
+      Map<String, String> datasetArgs, Dataset dataset) {
     if (dataset instanceof OutputFormatProvider) {
       this.outputFormatClassName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
       this.configuration = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
@@ -44,8 +45,8 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
       this.outputFormatClassName = MapReduceBatchWritableOutputFormat.class.getName();
       this.configuration = createDatasetConfiguration(namespace, datasetName, datasetArgs);
     } else {
-      throw new IllegalArgumentException("Dataset '" + dataset +
-                                           "' is neither OutputFormatProvider nor BatchWritable.");
+      throw new IllegalArgumentException("Dataset '" + dataset
+          + "' is neither OutputFormatProvider nor BatchWritable.");
     }
     this.dataset = dataset;
   }
@@ -61,7 +62,7 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
   }
 
   private Map<String, String> createDatasetConfiguration(String namespace, String datasetName,
-                                                         Map<String, String> datasetArgs) {
+      Map<String, String> datasetArgs) {
     Configuration hConf = new Configuration();
     hConf.clear();
     AbstractBatchWritableOutputFormat.setDataset(hConf, namespace, datasetName, datasetArgs);

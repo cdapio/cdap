@@ -42,8 +42,8 @@ public final class DatasetUsage {
 
   @Override
   public String toString() {
-    return "DatasetUsage{" +
-      "datasetId=" + datasetId +
-      '}';
+    return "DatasetUsage{"
+        + "datasetId=" + datasetId
+        + '}';
   }
 }

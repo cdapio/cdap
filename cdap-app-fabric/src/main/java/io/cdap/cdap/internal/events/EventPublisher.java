@@ -28,7 +28,7 @@ public interface EventPublisher {
    * Initialize this publisher
    *
    * @param eventWriters {@link Collection} of {@link EventWriter}s to which events has to be
-   *                     published.
+   *     published.
    */
   void initialize(Collection<EventWriter> eventWriters);
 

@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit;
 public interface KubeTwillControllerFactory {
 
   /**
-   * Creates a {@link KubeTwillController} instance. The deployment status should report available within the
-   * given amount of time.
+   * Creates a {@link KubeTwillController} instance. The deployment status should report available
+   * within the given amount of time.
    *
    * @param resourceType the type of resource
    * @param meta the metadata of the resource object
@@ -35,5 +35,6 @@ public interface KubeTwillControllerFactory {
    * @param timeoutUnit unit for the timeout value
    * @return a {@link KubeTwillController}
    */
-  KubeTwillController create(Type resourceType, V1ObjectMeta meta, long timeout, TimeUnit timeoutUnit);
+  KubeTwillController create(Type resourceType, V1ObjectMeta meta, long timeout,
+      TimeUnit timeoutUnit);
 }

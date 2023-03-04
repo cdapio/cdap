@@ -22,13 +22,14 @@ import java.util.List;
  * Response sent to tethering agent.
  */
 public class TetheringControlResponseV2 {
+
   // Control messages sent by server.
   private final List<TetheringControlMessageWithId> controlMessages;
   // Server's tethering status
   private final TetheringStatus tetheringStatus;
 
   public TetheringControlResponseV2(List<TetheringControlMessageWithId> controlMessages,
-                                    TetheringStatus tetheringStatus) {
+      TetheringStatus tetheringStatus) {
     this.controlMessages = controlMessages;
     this.tetheringStatus = tetheringStatus;
   }

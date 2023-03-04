@@ -44,14 +44,14 @@ public final class MessagingMetricsProcessorRuntimeService extends ResourceBalan
 
   @Inject
   MessagingMetricsProcessorRuntimeService(CConfiguration conf,
-                                          ZKClient zkClient,
-                                          DiscoveryService discoveryService,
-                                          DiscoveryServiceClient discoveryServiceClient,
-                                          MetricsCollectionService metricsCollectionService,
-                                          MessagingMetricsProcessorServiceFactory metricsProcessorFactory,
-                                          @Named(Constants.Metrics.TWILL_INSTANCE_ID) Integer instanceId) {
+      ZKClient zkClient,
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService,
+      MessagingMetricsProcessorServiceFactory metricsProcessorFactory,
+      @Named(Constants.Metrics.TWILL_INSTANCE_ID) Integer instanceId) {
     super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM),
-          zkClient, discoveryService, discoveryServiceClient);
+        zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.instanceId = instanceId;
@@ -60,6 +60,7 @@ public final class MessagingMetricsProcessorRuntimeService extends ResourceBalan
   @Override
   protected Service createService(Set<Integer> topicNumbers) {
     return factory.create(topicNumbers,
-                          metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT), instanceId);
+        metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT),
+        instanceId);
   }
 }

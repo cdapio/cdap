@@ -24,8 +24,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 public interface StorageProvider extends AutoCloseable {
 
   /**
-   * Initialization of the storage provide. This method will be called after the constructor
-   * and before any method is being called.
+   * Initialization of the storage provide. This method will be called after the constructor and
+   * before any method is being called.
    *
    * @param context a context object providing interaction with the CDAP platform.
    * @throws Exception if the storage provider failed to initialize itself
@@ -35,8 +35,8 @@ public interface StorageProvider extends AutoCloseable {
   }
 
   /**
-   * Returns the name of this storage provider. The name needs to match with the configuration provided through
-   * {@code data.storage.implementation}.
+   * Returns the name of this storage provider. The name needs to match with the configuration
+   * provided through {@code data.storage.implementation}.
    */
   String getName();
 
@@ -46,7 +46,8 @@ public interface StorageProvider extends AutoCloseable {
   StructuredTableAdmin getStructuredTableAdmin() throws Exception;
 
   /**
-   * Returns the {@link TransactionRunner} implementation for performing transactional operations for this storage.
+   * Returns the {@link TransactionRunner} implementation for performing transactional operations
+   * for this storage.
    */
   TransactionRunner getTransactionRunner() throws Exception;
 

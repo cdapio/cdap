@@ -19,8 +19,8 @@ import java.util.Collection;
 import org.apache.twill.discovery.Discoverable;
 
 /**
- * Handle changes in resource assignment. It takes resource assignment changes and invoke changes specific to
- * the {@link Discoverable} given in the constructor.
+ * Handle changes in resource assignment. It takes resource assignment changes and invoke changes
+ * specific to the {@link Discoverable} given in the constructor.
  */
 public abstract class ResourceHandler implements AssignmentChangeListener {
 

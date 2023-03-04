@@ -26,14 +26,17 @@ import java.security.KeyStore;
  * This Codec defines support for reading from KeyStore as well as reading and writing keys.
  */
 public interface FileSecureStoreCodec extends Codec<SecureStoreData> {
+
   /**
    * Returns the supported KeyStore scheme for the codec.
+   *
    * @return The KeyStore scheme.
    */
   String getKeyStoreScheme();
 
   /**
    * Defines how to construct the key alias from a KeyInfo.
+   *
    * @param keyInfo The key information for constructing a KeyStore alias
    * @return The alias of the key
    */
@@ -41,6 +44,7 @@ public interface FileSecureStoreCodec extends Codec<SecureStoreData> {
 
   /**
    * Defins how to construct the KeyInfo from a key alias.
+   *
    * @param keyAlias The alias of the key
    * @return The key information
    */
@@ -48,6 +52,7 @@ public interface FileSecureStoreCodec extends Codec<SecureStoreData> {
 
   /**
    * Defines how to retrieve the prefix used for namespace searching.
+   *
    * @param namespace The namespace to search
    * @return The alias prefix
    */

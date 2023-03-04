@@ -15,7 +15,7 @@
  */
 
 /**
- * Defines data formats for use in programs and data exploration.
- * APIs are experimental and are subject to change in future releases.
+ * Defines data formats for use in programs and data exploration. APIs are experimental and are
+ * subject to change in future releases.
  */
 package io.cdap.cdap.api.data.format;

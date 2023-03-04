@@ -25,11 +25,12 @@ import java.io.IOException;
  * A connector is a plugin which is able to explore and sample an external resource
  */
 public interface Connector extends Closeable {
+
   String PLUGIN_TYPE = "connector";
 
   /**
-   * Configure this connector, for example, the database connector will need to load the jdbc driver.
-   * This method is guaranteed to be called before any other method in this class.
+   * Configure this connector, for example, the database connector will need to load the jdbc
+   * driver. This method is guaranteed to be called before any other method in this class.
    */
   default void configure(ConnectorConfigurer configurer) throws IOException {
     // no-op
@@ -44,11 +45,11 @@ public interface Connector extends Closeable {
   void test(ConnectorContext context) throws ValidationException;
 
   /**
-   * Browse the resources on the given request. The browse request expects a path to represent the hierarchy of the
-   * resource. The path is expected to be separated by '/'.
-   * If the given path is not browsable, the result will contain the information on the current path.
-   * For example, for a file based connector, the path will just be the file/directory path
-   * for a database connector, the path can be {database}/{table}
+   * Browse the resources on the given request. The browse request expects a path to represent the
+   * hierarchy of the resource. The path is expected to be separated by '/'. If the given path is
+   * not browsable, the result will contain the information on the current path. For example, for a
+   * file based connector, the path will just be the file/directory path for a database connector,
+   * the path can be {database}/{table}
    *
    * @param context context for the connector
    * @param request the browse request
@@ -56,14 +57,16 @@ public interface Connector extends Closeable {
   BrowseDetail browse(ConnectorContext context, BrowseRequest request) throws IOException;
 
   /**
-   * Generate spec based on the given path, the spec should contain all the properties associated with the path.
-   * For example, for bigquery, this can be a map containing "datasets": {dataset}, "table": {table}
+   * Generate spec based on the given path, the spec should contain all the properties associated
+   * with the path. For example, for bigquery, this can be a map containing "datasets": {dataset},
+   * "table": {table}
    *
    * @param context context for the connector
    * @param path the path of the entity
    * @return the spec which contains all the properties associated with the path
    */
-  ConnectorSpec generateSpec(ConnectorContext context, ConnectorSpecRequest path) throws IOException;
+  ConnectorSpec generateSpec(ConnectorContext context, ConnectorSpecRequest path)
+      throws IOException;
 
   @Override
   default void close() throws IOException {

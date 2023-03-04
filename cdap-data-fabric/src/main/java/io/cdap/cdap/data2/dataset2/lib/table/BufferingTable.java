@@ -56,27 +56,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An abstract {@link TransactionAware} implementation of {@link io.cdap.cdap.api.dataset.table.Table} which
- * keeps data in memory buffer until transaction commits.
+ * An abstract {@link TransactionAware} implementation of {@link io.cdap.cdap.api.dataset.table.Table}
+ * which keeps data in memory buffer until transaction commits.
  * <p>
- * Subclasses should implement methods which deal with persistent store. This implementation merges data from persistent
- * store and in-memory buffer for read/write operations.
- * NOTE: this implementation does not allow storing null as a value of a column
- * NOTE: data fetched from persisted store should never have nulls in column values: this class doesn't check that and
- *       they could be exposed to user as nulls. At the same time since null value is not allowed by this implementation
- *       this could lead to un-expected results
+ * Subclasses should implement methods which deal with persistent store. This implementation merges
+ * data from persistent store and in-memory buffer for read/write operations. NOTE: this
+ * implementation does not allow storing null as a value of a column NOTE: data fetched from
+ * persisted store should never have nulls in column values: this class doesn't check that and they
+ * could be exposed to user as nulls. At the same time since null value is not allowed by this
+ * implementation this could lead to un-expected results
  * <p>
  * This implementation assumes that the table has name and conflicts are resolved on row level.
  * <p>
- * NOTE: this implementation doesn't cache any data in-memory besides changes. I.e. if you do get of same data that is
- *       not in in-memory buffer twice, two times it will try to fetch it from persistent store.
- *       Given the snapshot isolation tx model, this can be improved in future implementations.
+ * NOTE: this implementation doesn't cache any data in-memory besides changes. I.e. if you do get of
+ * same data that is not in in-memory buffer twice, two times it will try to fetch it from
+ * persistent store. Given the snapshot isolation tx model, this can be improved in future
+ * implementations.
  * <p>
- * NOTE: current implementation persists changes only at the end of transaction. Beware of OOME. There should be better
- *       implementation for MapReduce case (YMMV though, for counters/aggregations this implementation looks sweet)
+ * NOTE: current implementation persists changes only at the end of transaction. Beware of OOME.
+ * There should be better implementation for MapReduce case (YMMV though, for counters/aggregations
+ * this implementation looks sweet)
  * <p>
- * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it always hits the
- *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
+ * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it
+ * always hits the persisted store even if all needed data is in-memory buffer. See more info at
+ * method javadoc
  */
 // todo: copying passed params to write methods may be done more efficiently: no need to copy when no changes are made
 public abstract class BufferingTable extends AbstractTable implements MeteredDataset {
@@ -108,8 +111,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   protected Transaction tx;
 
   /**
-   * Creates an instance of {@link BufferingTable} with row level conflict detection, without readless increments,
-   * and no schema.
+   * Creates an instance of {@link BufferingTable} with row level conflict detection, without
+   * readless increments, and no schema.
    *
    * @param name the name of the table
    */
@@ -118,13 +121,15 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * Creates an instance of {@link BufferingTable} without readless increments disabled and no schema.
+   * Creates an instance of {@link BufferingTable} without readless increments disabled and no
+   * schema.
    *
    * @param name the name of the table
    * @param level the conflict detection level
    */
   public BufferingTable(String name, ConflictDetection level) {
-    this(name, false, TableProperties.builder().setConflictDetection(level).build().getProperties());
+    this(name, false,
+        TableProperties.builder().setConflictDetection(level).build().getProperties());
   }
 
   /**
@@ -135,12 +140,12 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * @param properties dataset properties for the table
    */
   public BufferingTable(String name, boolean enableReadlessIncrements,
-                        Map<String, String> properties) {
+      Map<String, String> properties) {
     super(properties);
 
     // for optimization purposes we don't allow table name of length greater than Byte.MAX_VALUE
     Preconditions.checkArgument(name.length() < Byte.MAX_VALUE,
-                                "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
+        "Too big table name: " + name + ", exceeds " + Byte.MAX_VALUE);
     this.name = name;
     this.conflictLevel = TableProperties.getConflictDetection(properties, ConflictDetection.ROW);
     this.enableReadlessIncrements = enableReadlessIncrements;
@@ -165,8 +170,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * Generates a byte array to be used as the transaction change prefix.
-   * Allows implementations to override it so the change prefix more closely represents the underlying storage.
+   * Generates a byte array to be used as the transaction change prefix. Allows implementations to
+   * override it so the change prefix more closely represents the underlying storage.
    *
    * @return transaction change prefix
    */
@@ -175,77 +180,82 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * Persists in-memory buffer. After this method returns we assume that data can be visible to other table clients
-   * (of course other clients may choose still not to see it based on transaction isolation logic).
-   * @param buff in-memory buffer to persist. Map is described as row->(column->value). Map can contain null values
-   *             which means that the corresponded column was deleted
-   * @throws Exception
+   * Persists in-memory buffer. After this method returns we assume that data can be visible to
+   * other table clients (of course other clients may choose still not to see it based on
+   * transaction isolation logic).
+   *
+   * @param buff in-memory buffer to persist. Map is described as row->(column->value). Map can
+   *     contain null values which means that the corresponded column was deleted
    */
   protected abstract void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> buff)
-    throws Exception;
+      throws Exception;
 
   /**
-   * Undos previously persisted changes. After this method returns we assume that data can be visible to other table
-   * clients (of course other clients may choose still not to see it based on transaction isolation logic).
-   * @param persisted previously persisted changes. Map is described as row->(column->value). Map can contain null
-   *                  values which means that the corresponded column was deleted
-   * @throws Exception
+   * Undos previously persisted changes. After this method returns we assume that data can be
+   * visible to other table clients (of course other clients may choose still not to see it based on
+   * transaction isolation logic).
+   *
+   * @param persisted previously persisted changes. Map is described as row->(column->value).
+   *     Map can contain null values which means that the corresponded column was deleted
    */
   protected abstract void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted)
-    throws Exception;
+      throws Exception;
 
   /**
-   * Fetches column->value pairs for set of columns from persistent store.
-   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   * Fetches column->value pairs for set of columns from persistent store. NOTE: persisted store can
+   * also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   *
    * @param row row key defines the row to fetch columns from
-   * @param columns set of columns to fetch. null means fetch everything; empty array which means fetch nothing.
+   * @param columns set of columns to fetch. null means fetch everything; empty array which
+   *     means fetch nothing.
    * @return map of column->value pairs, never null.
-   * @throws Exception
    */
-  protected abstract NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns)
-    throws Exception;
+  protected abstract NavigableMap<byte[], byte[]> getPersisted(byte[] row,
+      @Nullable byte[][] columns)
+      throws Exception;
 
   /**
-   * Fetches column->value pairs for range of columns from persistent store.
-   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
-   * NOTE: Using this method is generally always not efficient since it always hits the
-   *       persisted store even if all needed data is in-memory buffer. Since columns set is not strictly defined the
-   *       implementation always looks up for more columns in persistent store.
+   * Fetches column->value pairs for range of columns from persistent store. NOTE: persisted store
+   * can also be in-memory, it is called "persisted" to distinguish from in-memory buffer. NOTE:
+   * Using this method is generally always not efficient since it always hits the persisted store
+   * even if all needed data is in-memory buffer. Since columns set is not strictly defined the
+   * implementation always looks up for more columns in persistent store.
+   *
    * @param row row key defines the row to fetch columns from
    * @param startColumn first column in a range, inclusive
    * @param stopColumn last column in a range, exclusive
    * @param limit max number of columns to fetch
    * @return map of column->value pairs, never null.
-   * @throws Exception
    */
   protected abstract NavigableMap<byte[], byte[]> getPersisted(byte[] row,
-                                                               byte[] startColumn, byte[] stopColumn,
-                                                               int limit)
-    throws Exception;
+      byte[] startColumn, byte[] stopColumn,
+      int limit)
+      throws Exception;
 
   /**
-   * Scans range of rows from persistent store for a given {@link Scan}.
-   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   * Scans range of rows from persistent store for a given {@link Scan}. NOTE: persisted store can
+   * also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   *
    * @param scan scan configuration
    * @return instance of {@link Scanner}, never null
-   * @throws Exception
    */
   protected abstract Scanner scanPersisted(Scan scan) throws Exception;
 
   /**
-   * Fetches a list of rows from persistent store. Subclasses should override this if they can batch multiple
-   * gets into a single request, as the default implementation simply loops through the gets and calls
-   * {@link #getPersisted(byte[], byte[][])} on each get.
-   * NOTE: persisted store can also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   * Fetches a list of rows from persistent store. Subclasses should override this if they can batch
+   * multiple gets into a single request, as the default implementation simply loops through the
+   * gets and calls {@link #getPersisted(byte[], byte[][])} on each get. NOTE: persisted store can
+   * also be in-memory, it is called "persisted" to distinguish from in-memory buffer.
+   *
    * @param gets list of gets to perform
    * @return list of rows, one for each get
-   * @throws Exception
    */
   protected List<Map<byte[], byte[]>> getPersisted(List<Get> gets) throws Exception {
     List<Map<byte[], byte[]>> results = Lists.newArrayListWithCapacity(gets.size());
     for (Get get : gets) {
       List<byte[]> getColumns = get.getColumns();
-      byte[][] columns = getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
+      byte[][] columns =
+          getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
       results.add(getPersisted(get.getRow(), columns));
     }
     return results;
@@ -378,9 +388,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * NOTE: Depending on the use-case, calling this method may be much less
-   *       efficient than calling same method with columns as parameters because it may always require round trip to
-   *       persistent store
+   * NOTE: Depending on the use-case, calling this method may be much less efficient than calling
+   * same method with columns as parameters because it may always require round trip to persistent
+   * store
    */
   @ReadOnly
   @Override
@@ -390,7 +400,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     try {
       return new Result(row, getRowMap(row));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug(
+          "get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(
+              row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -403,7 +415,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     try {
       return new Result(row, getRowMap(row, columns));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug(
+          "get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(
+              row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -436,7 +450,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // applying limit
       return new Result(row, head(result, limit));
     } catch (Exception e) {
-      LOG.debug("get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug(
+          "get failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(
+              row), e);
       throw new DataSetException("get failed", e);
     }
   }
@@ -450,7 +466,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       List<Map<byte[], byte[]>> persistedRows = getPersisted(gets);
       // gets and rows lists are always of the same size
       Preconditions.checkArgument(gets.size() == persistedRows.size(),
-        "Invalid number of rows fetched when performing multi-get. There must be one row for each get.");
+          "Invalid number of rows fetched when performing multi-get. There must be one row for each get.");
 
       List<Row> result = Lists.newArrayListWithCapacity(persistedRows.size());
 
@@ -471,7 +487,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         // merge what was in the buffer and what was persisted
         if (buffCols != null) {
           List<byte[]> getColumns = get.getColumns();
-          byte[][] columns = getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
+          byte[][] columns =
+              getColumns == null ? null : getColumns.toArray(new byte[getColumns.size()][]);
           mergeToPersisted(rowColumns, buffCols, columns);
         }
 
@@ -485,7 +502,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * NOTE: if value is null corresponded column is deleted. It will not be in result set when reading.
+   * NOTE: if value is null corresponded column is deleted. It will not be in result set when
+   * reading.
    *
    * Also see {@link io.cdap.cdap.api.dataset.table.Table#put(byte[], byte[][], byte[][])}.
    */
@@ -520,8 +538,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * NOTE: Depending on the use-case, calling this method may be much less efficient than calling same method
-   *       with columns as parameters because it will require a round trip to persistent store.
+   * NOTE: Depending on the use-case, calling this method may be much less efficient than calling
+   * same method with columns as parameters because it will require a round trip to persistent
+   * store.
    */
   @WriteOnly
   @Override
@@ -534,7 +553,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       // "0" because we don't know what gets deleted
       reportWrite(1, 0);
     } catch (Exception e) {
-      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("delete failed for table: " + getTransactionAwareName() + ", row: "
+          + Bytes.toStringBinary(row), e);
       throw new DataSetException("delete failed", e);
     }
   }
@@ -580,8 +600,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       rowMap = getRowMap(row, columns);
       reportRead(1);
     } catch (Exception e) {
-      LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName() +
-          ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("incrementAndGet failed for table: " + getTransactionAwareName()
+          + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("incrementAndGet failed", e);
     }
 
@@ -597,9 +617,10 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         longVal = 0L;
       } else {
         if (val.length != Bytes.SIZEOF_LONG) {
-          throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
-                                            " row: " + Bytes.toStringBinary(row) +
-                                            " column: " + Bytes.toStringBinary(column));
+          throw new NumberFormatException(
+              "Attempted to increment a value that is not convertible to long,"
+                  + " row: " + Bytes.toStringBinary(row)
+                  + " column: " + Bytes.toStringBinary(column));
         }
         longVal = Bytes.toLong(val);
       }
@@ -625,7 +646,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         buff.put(row, colVals);
       }
       for (int i = 0; i < columns.length; i++) {
-        colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
+        colVals.put(columns[i],
+            Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
       }
       reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     } else {
@@ -652,8 +674,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
         return true;
       }
     } catch (Exception e) {
-      LOG.debug("compareAndSwap failed for table: " + getTransactionAwareName() +
-          ", row: " + Bytes.toStringBinary(row), e);
+      LOG.debug("compareAndSwap failed for table: " + getTransactionAwareName()
+          + ", row: " + Bytes.toStringBinary(row), e);
       throw new DataSetException("compareAndSwap failed", e);
     }
 
@@ -661,12 +683,13 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * Fallback implementation of getSplits, {@link SplitsUtil#primitiveGetSplits(int, byte[], byte[])}.
-   * Ideally should be overridden by subclasses.
+   * Fallback implementation of getSplits, {@link SplitsUtil#primitiveGetSplits(int, byte[],
+   * byte[])}. Ideally should be overridden by subclasses.
    *
-   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less or equal to zero, any number of splits can be returned.
-   * @param start If non-null, the returned splits will only cover keys that are greater or equal.
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits
+   *     will be returned. If less or equal to zero, any number of splits can be returned.
+   * @param start If non-null, the returned splits will only cover keys that are greater or
+   *     equal.
    * @param stop If non-null, the returned splits will only cover keys that are less.
    * @return list of {@link Split}
    */
@@ -679,7 +702,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       @Override
       public Split apply(@Nullable KeyRange input) {
         return new TableSplit(input == null ? null : input.getStart(),
-                              input == null ? null : input.getStop());
+            input == null ? null : input.getStop());
       }
     });
   }
@@ -698,8 +721,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     try {
       return new BufferingScanner(bufferMap, scanPersisted(scan));
     } catch (Exception e) {
-      LOG.debug("scan failed for table: " + getTransactionAwareName() +
-          ", scan: " + scan.toString(), e);
+      LOG.debug("scan failed for table: " + getTransactionAwareName()
+          + ", scan: " + scan.toString(), e);
       throw new DataSetException("scan failed", e);
     }
   }
@@ -722,17 +745,19 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], Update>> applyFilter(
-                                                        NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap,
-                                                        @Nullable Filter filter) {
+      NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap,
+      @Nullable Filter filter) {
     if (filter == null) {
       return bufferMap;
     }
 
     // todo: currently we support only FuzzyRowFilter as an experimental feature
     if (filter instanceof FuzzyRowFilter) {
-      NavigableMap<byte[], NavigableMap<byte[], Update>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], NavigableMap<byte[], Update>> result = Maps.newTreeMap(
+          Bytes.BYTES_COMPARATOR);
       for (Map.Entry<byte[], NavigableMap<byte[], Update>> entry : bufferMap.entrySet()) {
-        if (FuzzyRowFilter.ReturnCode.INCLUDE == ((FuzzyRowFilter) filter).filterRow(entry.getKey())) {
+        if (FuzzyRowFilter.ReturnCode.INCLUDE == ((FuzzyRowFilter) filter).filterRow(
+            entry.getKey())) {
           result.put(entry.getKey(), entry.getValue());
         }
       }
@@ -752,7 +777,6 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     }
 
     Map<byte[], byte[]> persisted = getPersisted(row, null);
-
 
     result.putAll(persisted);
     if (buffCols != null) {
@@ -792,7 +816,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
     // fetching from server those that were not found in in-mem buffer
     if (colsToFetchFromPersisted.size() > 0) {
       Map<byte[], byte[]> persistedCols =
-        getPersisted(row, colsToFetchFromPersisted.toArray(new byte[colsToFetchFromPersisted.size()][]));
+          getPersisted(row,
+              colsToFetchFromPersisted.toArray(new byte[colsToFetchFromPersisted.size()][]));
       if (persistedCols != null) {
         result.putAll(persistedCols);
       }
@@ -805,12 +830,14 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   /**
-   * Applies the buffered updates on top of the map of persisted values.  The persisted map is modified in place
-   * with the updated values.
+   * Applies the buffered updates on top of the map of persisted values.  The persisted map is
+   * modified in place with the updated values.
+   *
    * @param persisted The map to modify with the buffered values.
    * @param buffered The buffered values to overlay on the persisted map.
    */
-  private static void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
+  private static void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered,
+      byte[][] columns) {
     List<byte[]> columnKeys;
     if (columns != null) {
       columnKeys = Arrays.asList(columns);
@@ -856,8 +883,8 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   // utilities useful for underlying implementations
 
   protected static <T> NavigableMap<byte[], T> getRange(NavigableMap<byte[], T> rowMap,
-                                                         byte[] startColumn, byte[] stopColumn,
-                                                         int limit) {
+      byte[] startColumn, byte[] stopColumn,
+      int limit) {
     NavigableMap<byte[], T> result;
     if (startColumn == null && stopColumn == null) {
       result = rowMap;
@@ -874,7 +901,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   protected static <T> NavigableMap<byte[], T> head(NavigableMap<byte[], T> map, int count) {
     if (count > 0 && map.size() > count) {
       // todo: is there better way to do it?
-      byte [] lastToInclude = null;
+      byte[] lastToInclude = null;
       int i = 0;
       for (Map.Entry<byte[], T> entry : map.entrySet()) {
         lastToInclude = entry.getKey();
@@ -898,9 +925,10 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
 
   // todo: it is in-efficient to copy maps a lot, consider merging with getLatest methods
   protected static NavigableMap<byte[], NavigableMap<byte[], byte[]>> unwrapDeletesForRows(
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows) {
+      NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows) {
 
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> result = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : rows.entrySet()) {
       NavigableMap<byte[], byte[]> rowMap = unwrapDeletes(row.getValue());
       if (rowMap.size() > 0) {
@@ -967,12 +995,14 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   // they get annotated
 
   @ReadOnly
-  private Iterator<byte[]> getBufferKeyIterator(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer) {
+  private Iterator<byte[]> getBufferKeyIterator(
+      NavigableMap<byte[], NavigableMap<byte[], Update>> buffer) {
     final Iterator<byte[]> iterator = buffer.keySet().iterator();
     return new AbstractIterator<byte[]>() {
       @Override
       protected byte[] computeNext() {
-        return BufferingTable.this.hasNext(iterator) ? BufferingTable.this.next(iterator) : endOfData();
+        return BufferingTable.this.hasNext(iterator) ? BufferingTable.this.next(iterator)
+            : endOfData();
       }
     };
   }
@@ -988,8 +1018,9 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
   }
 
   @ReadOnly
-  private NavigableMap<byte[], Update> getFromBuffer(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer,
-                                                     byte[] key) {
+  private NavigableMap<byte[], Update> getFromBuffer(
+      NavigableMap<byte[], NavigableMap<byte[], Update>> buffer,
+      byte[] key) {
     return buffer.get(key);
   }
 
@@ -997,13 +1028,15 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
    * Scanner implementation that overlays buffered data on top of already persisted data.
    */
   private class BufferingScanner implements Scanner {
+
     private final NavigableMap<byte[], NavigableMap<byte[], Update>> buffer;
     private final Scanner persistedScanner;
     private final Iterator<byte[]> keyIter;
     private byte[] currentKey;
     private Row currentRow;
 
-    private BufferingScanner(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer, Scanner persistedScanner) {
+    private BufferingScanner(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer,
+        Scanner persistedScanner) {
       this.buffer = buffer;
       this.keyIter = getBufferKeyIterator(buffer);
       if (this.keyIter.hasNext()) {
@@ -1085,9 +1118,11 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       warnedCount = 0;
       warnFrequency = 2 * warnFrequency;
       additionalMessage = String.format(
-        "To reduce log verbosity, this warning will now only be logged one in %d times", warnFrequency);
+          "To reduce log verbosity, this warning will now only be logged one in %d times",
+          warnFrequency);
     }
-    LOG.warn("Attempt to write an empty value to column '{}' of table '{}'. " +
-               "This will result in deleting the column. {}", Bytes.toString(column), name, additionalMessage);
+    LOG.warn("Attempt to write an empty value to column '{}' of table '{}'. "
+            + "This will result in deleting the column. {}", Bytes.toString(column), name,
+        additionalMessage);
   }
 }

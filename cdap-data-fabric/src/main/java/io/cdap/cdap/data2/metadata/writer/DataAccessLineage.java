@@ -47,16 +47,17 @@ public class DataAccessLineage {
   private final List<String> componentIdParts;
 
   DataAccessLineage(AccessType accessType, EntityId dataEntityId,
-                    @Nullable NamespacedEntityId componentId) {
+      @Nullable NamespacedEntityId componentId) {
     this(accessType, dataEntityId, componentId, System.currentTimeMillis());
   }
 
   @VisibleForTesting
   DataAccessLineage(AccessType accessType, EntityId dataEntityId,
-                    @Nullable NamespacedEntityId componentId, long accessTime) {
+      @Nullable NamespacedEntityId componentId, long accessTime) {
     if (!(dataEntityId instanceof DatasetId)) {
       // This should never happen
-      throw new IllegalArgumentException("Only instance of DatasetId can be used as the dataEntityId");
+      throw new IllegalArgumentException(
+          "Only instance of DatasetId can be used as the dataEntityId");
     }
     this.datasetId = (DatasetId) dataEntityId;
     this.accessTime = accessTime;
@@ -66,7 +67,7 @@ public class DataAccessLineage {
     if (componentId != null) {
       componentIdClassName = componentId.getClass().getName();
       componentIdParts = StreamSupport.stream(componentId.toIdParts().spliterator(), false)
-                                      .collect(Collectors.toList());
+          .collect(Collectors.toList());
     } else {
       componentIdClassName = null;
       componentIdParts = null;
@@ -97,23 +98,23 @@ public class DataAccessLineage {
     try {
       // Use reflection to invoke the fromIdParts method, which should be available for all EntityId classes.
       componentId = (NamespacedEntityId) Class.forName(componentIdClassName)
-        .getMethod("fromIdParts", Iterable.class).invoke(null, componentIdParts);
+          .getMethod("fromIdParts", Iterable.class).invoke(null, componentIdParts);
       return componentId;
     } catch (Exception e) {
       // If there is any failure (which shouldn't), treat it as no component id.
       LOG.debug("Failed to construct component Id for class {} from id parts {}",
-                componentIdClassName, componentIdParts);
+          componentIdClassName, componentIdParts);
       return null;
     }
   }
 
   @Override
   public String toString() {
-    return "DataAccessLineage{" +
-      "accessTime=" + accessTime +
-      ", accessType=" + accessType +
-      ", datasetId=" + datasetId +
-      ", componentId=" + getComponentId() +
-      '}';
+    return "DataAccessLineage{"
+        + "accessTime=" + accessTime
+        + ", accessType=" + accessType
+        + ", datasetId=" + datasetId
+        + ", componentId=" + getComponentId()
+        + '}';
   }
 }

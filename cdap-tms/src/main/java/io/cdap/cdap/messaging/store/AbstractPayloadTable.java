@@ -47,10 +47,11 @@ public abstract class AbstractPayloadTable implements PayloadTable {
    * @param stopRow stop row prefix
    * @param limit maximum number of messages to read
    * @return {@link CloseableIterator} of {@link RawPayloadTableEntry}s
-   * @throws IOException thrown if there was an error while trying to read the entries from the table
+   * @throws IOException thrown if there was an error while trying to read the entries from the
+   *     table
    */
   protected abstract CloseableIterator<RawPayloadTableEntry> read(byte[] startRow, byte[] stopRow,
-                                                                  int limit) throws IOException;
+      int limit) throws IOException;
 
   @Override
   public void store(Iterator<? extends Entry> entries) throws IOException {
@@ -59,7 +60,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
   @Override
   public CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer,
-                                        MessageId messageId, final boolean inclusive, int limit) throws IOException {
+      MessageId messageId, final boolean inclusive, int limit) throws IOException {
     byte[] topic = MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration());
     final byte[] startRow = new byte[topic.length + (2 * Bytes.SIZEOF_LONG) + Bytes.SIZEOF_SHORT];
     byte[] stopRow = new byte[topic.length + Bytes.SIZEOF_LONG];
@@ -68,7 +69,8 @@ public abstract class AbstractPayloadTable implements PayloadTable {
     Bytes.putLong(startRow, topic.length, transactionWritePointer);
     Bytes.putLong(stopRow, topic.length, transactionWritePointer);
     Bytes.putLong(startRow, topic.length + Bytes.SIZEOF_LONG, messageId.getPayloadWriteTimestamp());
-    Bytes.putShort(startRow, topic.length + (2 * Bytes.SIZEOF_LONG), messageId.getPayloadSequenceId());
+    Bytes.putShort(startRow, topic.length + (2 * Bytes.SIZEOF_LONG),
+        messageId.getPayloadSequenceId());
     stopRow = Bytes.stopKeyForPrefix(stopRow);
 
     final CloseableIterator<RawPayloadTableEntry> scanner = read(startRow, stopRow, limit);
@@ -132,7 +134,8 @@ public abstract class AbstractPayloadTable implements PayloadTable {
       }
 
       Entry entry = entries.next();
-      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
+      if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation
+          != entry.getGeneration())) {
         topicId = entry.getTopicId();
         generation = entry.getGeneration();
         topic = MessagingUtils.toDataKeyPrefix(topicId, entry.getGeneration());

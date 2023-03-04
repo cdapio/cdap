@@ -23,8 +23,8 @@ import java.util.AbstractList;
 import java.util.List;
 
 /**
- * Abstract implementation of PartitionConsumer, which manages state persistence and serialization/deserialization
- * before delegating to the abstract methods.
+ * Abstract implementation of PartitionConsumer, which manages state persistence and
+ * serialization/deserialization before delegating to the abstract methods.
  */
 public abstract class AbstractPartitionConsumer implements PartitionConsumer {
 
@@ -33,32 +33,38 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
   private final StatePersistor statePersistor;
 
   /**
-   * This method will be called whenever a {@link PartitionConsumer} requests partitions, to consume partitions
-   * from the working set, while marking them as IN_PROGRESS
+   * This method will be called whenever a {@link PartitionConsumer} requests partitions, to consume
+   * partitions from the working set, while marking them as IN_PROGRESS
    *
-   * @param acceptor a {@link PartitionAcceptor} which defines which partitions to accept/consume
+   * @param acceptor a {@link PartitionAcceptor} which defines which partitions to
+   *     accept/consume
    * @return a {@link PartitionConsumerResult} representing the consumed partitions
    */
-  public abstract PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet, PartitionAcceptor acceptor);
+  public abstract PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet,
+      PartitionAcceptor acceptor);
 
   /**
-   * This method will be called on any partitions returned by the {@code #consumePartitions} method.
+   * This method will be called on any partitions returned by the {@code #consumePartitions}
+   * method.
    *
    * @param workingSet the working set of partitions to operate on
-   * @param partitionKeys list of partition keys to mark as either succeeded or failed processing
+   * @param partitionKeys list of partition keys to mark as either succeeded or failed
+   *     processing
    * @param succeeded whether or not processing of the specified partitions was successful
    */
-  public abstract void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys,
-                                boolean succeeded);
+  public abstract void doFinish(ConsumerWorkingSet workingSet,
+      List<? extends PartitionKey> partitionKeys,
+      boolean succeeded);
 
   /**
-   * Returns a list of partition keys to the working set, without increasing the number of retries. They are made
-   * available for future processing.
+   * Returns a list of partition keys to the working set, without increasing the number of retries.
+   * They are made available for future processing.
    *
    * @param workingSet the working set of partitions to operate on
    * @param partitionKeys the list of partition keys to return to the working set
    */
-  public abstract void untake(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys);
+  public abstract void untake(ConsumerWorkingSet workingSet,
+      List<? extends PartitionKey> partitionKeys);
 
 
   /**
@@ -67,7 +73,8 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
    * @param partitionedFileSet the PartitionedFileSet to consume from
    * @param statePersistor defines how the state of the PartitionConsumer will be maintained
    */
-  public AbstractPartitionConsumer(PartitionedFileSet partitionedFileSet, StatePersistor statePersistor) {
+  public AbstractPartitionConsumer(PartitionedFileSet partitionedFileSet,
+      StatePersistor statePersistor) {
     this(partitionedFileSet, statePersistor, ConsumerConfiguration.DEFAULT);
   }
 
@@ -76,10 +83,11 @@ public abstract class AbstractPartitionConsumer implements PartitionConsumer {
    *
    * @param partitionedFileSet the PartitionedFileSet to consume from
    * @param statePersistor defines how the state of the PartitionConsumer will be maintained
-   * @param configuration the PartitionedConsumerConfiguration, defining parameters of consumption
+   * @param configuration the PartitionedConsumerConfiguration, defining parameters of
+   *     consumption
    */
   public AbstractPartitionConsumer(PartitionedFileSet partitionedFileSet,
-                                   StatePersistor statePersistor, ConsumerConfiguration configuration) {
+      StatePersistor statePersistor, ConsumerConfiguration configuration) {
     this.partitionedFileSet = partitionedFileSet;
     this.configuration = configuration;
     this.statePersistor = statePersistor;

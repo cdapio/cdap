@@ -35,8 +35,9 @@ public class PluginPropertyField {
   private final boolean macroEscapingEnabled;
   private final Set<String> children;
 
-  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
-                             boolean macroEscapingEnabled, Set<String> children) {
+  public PluginPropertyField(String name, String description, String type, boolean required,
+      boolean macroSupported,
+      boolean macroEscapingEnabled, Set<String> children) {
     if (name == null) {
       throw new IllegalArgumentException("Plugin property name cannot be null");
     }
@@ -56,13 +57,16 @@ public class PluginPropertyField {
     this.children = children;
   }
 
-  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
+  public PluginPropertyField(String name, String description, String type, boolean required,
+      boolean macroSupported) {
     this(name, description, type, required, macroSupported, false);
   }
 
-  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
-                             boolean macroEscapingEnabled) {
-    this(name, description, type, required, macroSupported, macroEscapingEnabled, Collections.emptySet());
+  public PluginPropertyField(String name, String description, String type, boolean required,
+      boolean macroSupported,
+      boolean macroEscapingEnabled) {
+    this(name, description, type, required, macroSupported, macroEscapingEnabled,
+        Collections.emptySet());
   }
 
   /**
@@ -127,16 +131,17 @@ public class PluginPropertyField {
     PluginPropertyField that = (PluginPropertyField) o;
 
     return required == that.required
-      && name.equals(that.name)
-      && description.equals(that.description)
-      && type.equals(that.type)
-      && macroSupported == that.macroSupported
-      && macroEscapingEnabled == that.macroEscapingEnabled
-      && Objects.equals(children, that.children);
+        && name.equals(that.name)
+        && description.equals(that.description)
+        && type.equals(that.type)
+        && macroSupported == that.macroSupported
+        && macroEscapingEnabled == that.macroEscapingEnabled
+        && Objects.equals(children, that.children);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, type, required, macroSupported, macroEscapingEnabled, children);
+    return Objects.hash(name, description, type, required, macroSupported, macroEscapingEnabled,
+        children);
   }
 }

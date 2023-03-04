@@ -55,31 +55,35 @@ public class MetaClient {
 
   public void ping() throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(
-      HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
+        HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
     if (!Objects.equals(response.getResponseBodyAsString(), "OK.\n")) {
       throw new IOException("Unexpected response body");
     }
   }
 
   public Version getVersion() throws IOException, UnauthenticatedException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"), config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("version"),
+        config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, Version.class).getResponseObject();
   }
 
-  public Map<String, ConfigEntry> getCDAPConfig() throws IOException, UnauthenticatedException, UnauthorizedException {
+  public Map<String, ConfigEntry> getCDAPConfig()
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     return getConfig("config/cdap");
   }
 
   public Map<String, ConfigEntry> getHadoopConfig()
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     return getConfig("config/hadoop");
   }
 
   private Map<String, ConfigEntry> getConfig(String url)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(url), config.getAccessToken());
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(url),
+        config.getAccessToken());
     List<ConfigEntry> responseObject =
-      ObjectResponse.fromJsonBody(response, new TypeToken<List<ConfigEntry>>() { }).getResponseObject();
+        ObjectResponse.fromJsonBody(response, new TypeToken<List<ConfigEntry>>() {
+        }).getResponseObject();
     Map<String, ConfigEntry> config = Maps.newHashMap();
     for (ConfigEntry configEntry : responseObject) {
       config.put(configEntry.getName(), configEntry);

@@ -29,6 +29,7 @@ import org.iq80.leveldb.DBIterator;
  * LevelDB Table Scan Iterator that takes in optional startKey and stopKey.
  */
 final class DBScanIterator extends AbstractCloseableIterator<Map.Entry<byte[], byte[]>> {
+
   private final DBIterator iterator;
   private final byte[] stopKey;
 

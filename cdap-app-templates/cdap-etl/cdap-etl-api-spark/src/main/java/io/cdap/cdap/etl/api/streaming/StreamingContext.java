@@ -46,13 +46,16 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
    * Register dataset lineage for this Spark program using the given reference name
    *
    * @param referenceName reference name used for source
-   *
-   * @throws DatasetManagementException thrown if there was an error in creating reference dataset
-   * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
-   * @deprecated use {@link StreamingSourceContext#registerLineage(String, Schema)} to record lineage in prepare stage
+   * @throws DatasetManagementException thrown if there was an error in creating reference
+   *     dataset
+   * @throws TransactionFailureException thrown if there was an error while fetching the dataset
+   *     to register usage
+   * @deprecated use {@link StreamingSourceContext#registerLineage(String, Schema)} to record
+   *     lineage in prepare stage
    */
   @Deprecated
-  void registerLineage(String referenceName) throws DatasetManagementException, TransactionFailureException;
+  void registerLineage(String referenceName)
+      throws DatasetManagementException, TransactionFailureException;
 
   /**
    * Indicates whether the pipeline is running in preview.
@@ -63,6 +66,7 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
 
   /**
    * Indicates whether saving to the state store is enabled for this run
+   *
    * @return boolean indicating whether this pipeline run has state store enabled
    */
   boolean isStateStoreEnabled();

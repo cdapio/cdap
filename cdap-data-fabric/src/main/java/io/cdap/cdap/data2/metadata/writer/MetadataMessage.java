@@ -22,8 +22,9 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.EntityId;
 
 /**
- * A container for messages in the metadata topic configured by {@link Constants.Metadata#MESSAGING_TOPIC}.
- * It carries the message type and the payload as {@link JsonElement}.
+ * A container for messages in the metadata topic configured by {@link
+ * Constants.Metadata#MESSAGING_TOPIC}. It carries the message type and the payload as {@link
+ * JsonElement}.
  */
 public final class MetadataMessage {
 
@@ -95,10 +96,10 @@ public final class MetadataMessage {
 
   @Override
   public String toString() {
-    return "MetadataMessage{" +
-      "type=" + type +
-      ", entityId=" + entityId +
-      ", payload=" + payload +
-      '}';
+    return "MetadataMessage{"
+        + "type=" + type
+        + ", entityId=" + entityId
+        + ", payload=" + payload
+        + '}';
   }
 }

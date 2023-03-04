@@ -19,10 +19,12 @@ package io.cdap.cdap.security.impersonation;
 import org.apache.hadoop.security.UserGroupInformation;
 
 /**
- * A wrapper around kerberos principal of the user and the ugi. This is needed because when remote ugi provider needs
- * the ugi information (the credentials file location) and also the principal to be able construct the UGI remotely.
+ * A wrapper around kerberos principal of the user and the ugi. This is needed because when remote
+ * ugi provider needs the ugi information (the credentials file location) and also the principal to
+ * be able construct the UGI remotely.
  */
 public class UGIWithPrincipal {
+
   private final String principal;
   private final UserGroupInformation ugi;
 
@@ -41,9 +43,9 @@ public class UGIWithPrincipal {
 
   @Override
   public String toString() {
-    return "UGIWithPrincipal{" +
-      "principal='" + principal + '\'' +
-      ", ugi=" + ugi +
-      '}';
+    return "UGIWithPrincipal{"
+        + "principal='" + principal + '\''
+        + ", ugi=" + ugi
+        + '}';
   }
 }

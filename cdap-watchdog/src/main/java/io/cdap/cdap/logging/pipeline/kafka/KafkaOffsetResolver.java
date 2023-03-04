@@ -39,10 +39,12 @@ import org.slf4j.LoggerFactory;
  * Resolve matching Kafka offset with given checkpoint.
  */
 class KafkaOffsetResolver {
+
   private static final Logger LOG = LoggerFactory.getLogger(KafkaOffsetResolver.class);
 
   // TODO: (CDAP-8439) determine the appropriate size
-  private static final int SINGLE_MESSAGE_MAX_SIZE = 50 * 1024;        // The maximum size of a single message
+  private static final int SINGLE_MESSAGE_MAX_SIZE =
+      50 * 1024;        // The maximum size of a single message
   private static final int BUFFER_SIZE = 1000 * SINGLE_MESSAGE_MAX_SIZE;
   private static final int SO_TIMEOUT_MILLIS = 5 * 1000;           // 5 seconds.
 
@@ -57,23 +59,23 @@ class KafkaOffsetResolver {
   }
 
   /**
-   * Check whether the message fetched with the offset {@code checkpoint.getNextOffset() - 1} contains the
-   * same timestamp as in the given checkpoint. If they match, directly return {@code checkpoint.getNextOffset()}.
-   * If they don't, search for the smallest offset of the message with the same log event time
-   * as {@code checkpoint.getNextEventTime()}
+   * Check whether the message fetched with the offset {@code checkpoint.getNextOffset() - 1}
+   * contains the same timestamp as in the given checkpoint. If they match, directly return {@code
+   * checkpoint.getNextOffset()}. If they don't, search for the smallest offset of the message with
+   * the same log event time as {@code checkpoint.getNextEventTime()}
    *
    * @param nextOffset the next offset of a message. This value should be non-negative
    * @param nextEventTime the next log event timestamp. This value should be non-negative
-   * @param partition  the partition in the topic for searching matching offset
-   * @return the next offset of the message with smallest offset and log event time equal to
-   * {@code checkpoint.getNextEventTime()}.
-   * {@code -1} if no such offset can be found or {@code checkpoint.getNextOffset()} is negative.
-   *
+   * @param partition the partition in the topic for searching matching offset
+   * @return the next offset of the message with smallest offset and log event time equal to {@code
+   *     checkpoint.getNextEventTime()}. {@code -1} if no such offset can be found or {@code
+   *     checkpoint.getNextOffset()} is negative.
    * @throws LeaderNotAvailableException if there is no Kafka broker to talk to.
    * @throws OffsetOutOfRangeException if the given offset is out of range.
-   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
-   *                                        for the given topic and partition.
-   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
+   *     the leader for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the
+   *     Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
   long getStartOffset(final long nextOffset, final long nextEventTime, final int partition) {
@@ -85,12 +87,13 @@ class KafkaOffsetResolver {
     BrokerInfo brokerInfo = brokerService.getLeader(topic, partition);
     if (brokerInfo == null) {
       throw new LeaderNotAvailableException(
-        String.format("BrokerInfo from BrokerService is null for topic %s partition %d. Will retry in next run.",
-                      topic, partition));
+          String.format(
+              "BrokerInfo from BrokerService is null for topic %s partition %d. Will retry in next run.",
+              topic, partition));
     }
     SimpleConsumer consumer = new SimpleConsumer(brokerInfo.getHost(), brokerInfo.getPort(),
-                                                 SO_TIMEOUT_MILLIS, BUFFER_SIZE,
-                                                 "offset-finder-" + topic + "-" + partition);
+        SO_TIMEOUT_MILLIS, BUFFER_SIZE,
+        "offset-finder-" + topic + "-" + partition);
 
     // Check whether the message fetched with the offset in the given checkpoint has the timestamp from
     // checkpoint.getNextOffset() - 1 to get the offset corresponding to the timestamp in checkpoint
@@ -101,8 +104,9 @@ class KafkaOffsetResolver {
         return nextOffset;
       }
       // This can happen in replicated cluster
-      LOG.debug("Event timestamp in {}:{} at offset {} is {}. It doesn't match with checkpoint timestamp {}",
-                topic, partition, offset, timestamp, nextEventTime);
+      LOG.debug(
+          "Event timestamp in {}:{} at offset {} is {}. It doesn't match with checkpoint timestamp {}",
+          topic, partition, offset, timestamp, nextEventTime);
     } catch (NotFoundException | OffsetOutOfRangeException e) {
       // This means we can't find the timestamp. This can happen in replicated cluster
       LOG.debug("Cannot get valid log event in {}:{} at offset {}", topic, partition, offset);
@@ -110,28 +114,30 @@ class KafkaOffsetResolver {
 
     // Find offset that has an event that matches the timestamp
     long startOffset = findStartOffset(consumer, partition, nextEventTime);
-    LOG.debug("Found new nextOffset {} for topic {} partition {} with existing offset {} and event time {}.",
-              startOffset, topic, partition, nextOffset, nextEventTime);
+    LOG.debug(
+        "Found new nextOffset {} for topic {} partition {} with existing offset {} and event time {}.",
+        startOffset, topic, partition, nextOffset, nextEventTime);
     return startOffset;
   }
 
   /**
-   *
-   * Performs a linear search to find the next offset of the message with smallest offset and log event time
-   * equal to {@code targetTime}. Stop searching when the current message has log event time
-   * later than {@code maxTime} or offset larger than {@code maxOffset}
+   * Performs a linear search to find the next offset of the message with smallest offset and log
+   * event time equal to {@code targetTime}. Stop searching when the current message has log event
+   * time later than {@code maxTime} or offset larger than {@code maxOffset}
    *
    * @return next offset of the message with smallest offset and log event time equal to targetTime,
-   *         or next offset of the message with largest offset and timestamp smaller than
-   *         (targetTime - EVENT_DELAY_MILLIS) if no message has log event time equal to targetTime,
-   *         or startOffset if no event has log event time smaller than (targetTime - EVENT_DELAY_MILLIS)
+   *     or next offset of the message with largest offset and timestamp smaller than (targetTime
+  - *     EVENT_DELAY_MILLIS) if no message has log event time equal to targetTime, or startOffset if
+   *     no event has log event time smaller than (targetTime - EVENT_DELAY_MILLIS)
    * @throws OffsetOutOfRangeException if the given offset is out of range.
-   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
-   *                                        for the given topic and partition.
-   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
+   *     the leader for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the
+   *     Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
-  private long findStartOffset(SimpleConsumer consumer, int partition, long targetTime) throws KafkaException {
+  private long findStartOffset(SimpleConsumer consumer, int partition, long targetTime)
+      throws KafkaException {
     String topic = config.getTopic();
     long minTime = targetTime - config.getEventDelayMillis();
     // The latest event time time we encounter before bailing the search
@@ -144,7 +150,7 @@ class KafkaOffsetResolver {
     boolean done = false;
     while (!done) {
       ByteBufferMessageSet messageSet = KafkaUtil.fetchMessages(consumer, topic, partition,
-                                                              config.getKafkaFetchBufferSize(), offset);
+          config.getKafkaFetchBufferSize(), offset);
       done = true;
       for (MessageAndOffset messageAndOffset : messageSet) {
         done = false;
@@ -154,7 +160,7 @@ class KafkaOffsetResolver {
           long timestamp = serializer.decodeEventTimestamp(messageAndOffset.message().payload());
           if (timestamp == targetTime) {
             LOG.debug("Matching offset found in {}:{} at {} for timestamp {}",
-                      topic, partition, messageAndOffset.offset(), targetTime);
+                topic, partition, messageAndOffset.offset(), targetTime);
             return offset;
           }
 
@@ -169,14 +175,14 @@ class KafkaOffsetResolver {
         } catch (IOException e) {
           // This shouldn't happen. In case it happens (e.g. someone published some garbage), just skip the message.
           LOG.trace("Fail to decode logging event time {}:{} at offset {}. Skipping it.",
-                    topic, partition, messageAndOffset.offset(), e);
+              topic, partition, messageAndOffset.offset(), e);
         }
       }
     }
 
-    LOG.debug("Fail to find a log event with timestamp {} in {}:{}. " +
-              "The largest offset with event timestamp smaller than {} (target event time minus event delay {}) is {}",
-              targetTime, topic, partition, minTime, config.getEventDelayMillis(), closestOffset);
+    LOG.debug("Fail to find a log event with timestamp {} in {}:{}. "
+            + "The largest offset with event timestamp smaller than {} (target event time minus event delay {}) is {}",
+        targetTime, topic, partition, minTime, config.getEventDelayMillis(), closestOffset);
     return closestOffset;
   }
 
@@ -186,26 +192,28 @@ class KafkaOffsetResolver {
    * @return the log event time of the message with {@code requestOffset}
    * @throws NotFoundException If cannot find a valid log event message at the given offset
    * @throws OffsetOutOfRangeException if the given offset is out of range.
-   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
-   *                                        for the given topic and partition.
-   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
+   *     the leader for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the
+   *     Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
   private long getEventTimeByOffset(SimpleConsumer consumer,
-                                    int partition, long requestOffset) throws NotFoundException {
+      int partition, long requestOffset) throws NotFoundException {
     String topic = config.getTopic();
     ByteBufferMessageSet messageSet = KafkaUtil.fetchMessages(consumer, topic, partition,
-                                                              SINGLE_MESSAGE_MAX_SIZE, requestOffset);
+        SINGLE_MESSAGE_MAX_SIZE, requestOffset);
     Iterator<MessageAndOffset> iterator = messageSet.iterator();
     if (!iterator.hasNext()) {
-      throw new NotFoundException("No message found in " + topic + ":" + partition + " at offset " + requestOffset);
+      throw new NotFoundException(
+          "No message found in " + topic + ":" + partition + " at offset " + requestOffset);
     }
     try {
       return serializer.decodeEventTimestamp(iterator.next().message().payload());
     } catch (IOException e) {
       // Fail to deserialize is the same as not found because in anywhere this is not the event we are looking for
-      throw new NotFoundException("Invalid log event found in " + topic + ":" + partition +
-                                    " at offset " + requestOffset);
+      throw new NotFoundException("Invalid log event found in " + topic + ":" + partition
+          + " at offset " + requestOffset);
     }
   }
 }

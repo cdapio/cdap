@@ -26,6 +26,7 @@ public interface DatasetManager {
 
   /**
    * Check whether a dataset exists in the current namespace.
+   *
    * @param name the name of the dataset
    * @return whether a dataset of that name exists
    * @throws DatasetManagementException for any issues encountered in the dataset system
@@ -34,6 +35,7 @@ public interface DatasetManager {
 
   /**
    * Get the type of a dataset.
+   *
    * @param name the name of a dataset
    * @return the type of the dataset, if it exists; null otherwise
    * @throws InstanceNotFoundException if the dataset does not exist
@@ -43,8 +45,10 @@ public interface DatasetManager {
 
   /**
    * Get the properties with which a dataset was created or updated.
+   *
    * @param name the name of the dataset
-   * @return The properties that were used to create or update the dataset, or null if the dataset does not exist.
+   * @return The properties that were used to create or update the dataset, or null if the dataset
+   *     does not exist.
    * @throws InstanceNotFoundException if the dataset does not exist
    * @throws DatasetManagementException for any issues encountered in the dataset system
    */
@@ -52,40 +56,45 @@ public interface DatasetManager {
 
   /**
    * Create a new dataset instance.
+   *
    * @param name the name of the new dataset
    * @param type the type of the dataset to create
    * @param properties the properties for the new dataset
    * @throws InstanceConflictException if the dataset already exists
-   * @throws DatasetManagementException for any issues encountered in the dataset system,
-   *         or if the dataset type's create method fails.
+   * @throws DatasetManagementException for any issues encountered in the dataset system, or if
+   *     the dataset type's create method fails.
    */
-  void createDataset(String name, String type, DatasetProperties properties) throws DatasetManagementException;
+  void createDataset(String name, String type, DatasetProperties properties)
+      throws DatasetManagementException;
 
   /**
    * Update an existing dataset with new properties.
+   *
    * @param name the name of the dataset
    * @param properties the new properties for the dataset
    * @throws InstanceNotFoundException if the dataset does not exist
-   * @throws DatasetManagementException for any issues encountered in the dataset system,
-   *         or if the dataset type's update method fails.
+   * @throws DatasetManagementException for any issues encountered in the dataset system, or if
+   *     the dataset type's update method fails.
    */
   void updateDataset(String name, DatasetProperties properties) throws DatasetManagementException;
 
   /**
    * Delete a dataset instance.
+   *
    * @param name the name of the dataset
    * @throws InstanceNotFoundException if the dataset does not exist
-   * @throws DatasetManagementException for any issues encountered in the dataset system,
-   *         or if the dataset type's drop method fails.
+   * @throws DatasetManagementException for any issues encountered in the dataset system, or if
+   *     the dataset type's drop method fails.
    */
   void dropDataset(String name) throws DatasetManagementException;
 
   /**
    * Truncate a dataset, that is, delete all its data.
+   *
    * @param name the name of the dataset
    * @throws InstanceNotFoundException if the dataset does not exist
-   * @throws DatasetManagementException for any issues encountered in the dataset system,
-   *         or if the dataset type's truncate method fails.
+   * @throws DatasetManagementException for any issues encountered in the dataset system, or if
+   *     the dataset type's truncate method fails.
    */
   void truncateDataset(String name) throws DatasetManagementException;
 }

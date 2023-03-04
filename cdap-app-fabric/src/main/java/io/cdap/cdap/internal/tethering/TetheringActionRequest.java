@@ -20,6 +20,7 @@ package io.cdap.cdap.internal.tethering;
  * Request to perform tethering action on the server. Action can be "accept" or "reject".
  */
 public class TetheringActionRequest {
+
   private final String action;
 
   public TetheringActionRequest(String action) {

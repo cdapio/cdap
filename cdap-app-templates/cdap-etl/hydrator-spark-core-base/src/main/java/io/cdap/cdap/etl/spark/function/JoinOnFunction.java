@@ -87,8 +87,8 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
       String stageName = pluginFunctionContext.getStageName();
       if (joinDefinition == null) {
         throw new IllegalStateException(String.format(
-          "Join stage '%s' did not specify a join definition. " +
-            "Check with the plugin developer to ensure it is implemented correctly.", stageName));
+          "Join stage '%s' did not specify a join definition. "
+            + "Check with the plugin developer to ensure it is implemented correctly.", stageName));
       }
       JoinCondition condition = joinDefinition.getCondition();
       /*

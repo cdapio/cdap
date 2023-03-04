@@ -28,15 +28,14 @@ public class MetricValue {
 
   // following fields to support distribution aka histogram/event metrics
   /**
-   * Exponential rate at which bucket boundaries grow.
-   * If X is the growth facotr, bucket boundaries will 0-X^0 (i.e. 1),
-   * X^0-X, X-X^2, X^2-X^3, X^3-X^4.
+   * Exponential rate at which bucket boundaries grow. If X is the growth facotr, bucket boundaries
+   * will 0-X^0 (i.e. 1), X^0-X, X-X^2, X^2-X^3, X^3-X^4.
    */
   public static final int GROWTH_FACTOR = 2;
 
   /**
-   * Total buckets = NUM_FINITE_BUCKETS +2 which will be 64. A long number
-   * maybe used as a mask to indicate which buckets have non zero bucket counts
+   * Total buckets = NUM_FINITE_BUCKETS +2 which will be 64. A long number maybe used as a mask to
+   * indicate which buckets have non zero bucket counts
    */
   public static final int NUM_FINITE_BUCKETS = Long.SIZE - 2;
 
@@ -46,7 +45,7 @@ public class MetricValue {
 
   private final double sum;
 
-  public MetricValue (String name, MetricType type, long value) {
+  public MetricValue(String name, MetricType type, long value) {
     if (!(type == MetricType.GAUGE || type == MetricType.COUNTER)) {
       throw new IllegalArgumentException("long value allowed only for GAUGE or COUNTER metrics");
     }
@@ -59,7 +58,7 @@ public class MetricValue {
   }
 
   public MetricValue(String name, long[] bucketCounts, long bucketMask,
-                     double sum) {
+      double sum) {
     if (bucketCounts == null) {
       throw new IllegalArgumentException("bucketCounts should not be null");
     }
@@ -89,19 +88,19 @@ public class MetricValue {
   @Override
   public String toString() {
     if (type != MetricType.DISTRIBUTION) {
-      return "MetricValue{" +
-              "name='" + name + '\'' +
-              ", type=" + type +
-              ", value=" + value +
-              '}';
+      return "MetricValue{"
+          + "name='" + name + '\''
+          + ", type=" + type
+          + ", value=" + value
+          + '}';
     } else {
-      return "MetricValue{" +
-              "name='" + name + '\'' +
-              ", type=" + type +
-              ", sum=" + sum +
-              ", bucketMask=" + bucketMask +
-              ", bucketCounts=" + Arrays.toString(bucketCounts) +
-              '}';
+      return "MetricValue{"
+          + "name='" + name + '\''
+          + ", type=" + type
+          + ", sum=" + sum
+          + ", bucketMask=" + bucketMask
+          + ", bucketCounts=" + Arrays.toString(bucketCounts)
+          + '}';
     }
   }
 
@@ -116,8 +115,8 @@ public class MetricValue {
   }
 
   /**
-   * @return Counts for all buckets including buckets with zero counts.
-   * Helper function to publish the distribution metric to other systems such as Cloud Monitoring
+   * @return Counts for all buckets including buckets with zero counts. Helper function to publish
+   *     the distribution metric to other systems such as Cloud Monitoring
    */
   public long[] getAllBucketCounts() {
     if (type != MetricType.DISTRIBUTION) {
@@ -140,13 +139,14 @@ public class MetricValue {
   }
 
   /**
-   * Most of the buckets have zero counts. For efficiency, bucketCounts only
-   * stores non zero bucket count values. The bucketMask stores which
-   * buckets have non-zero bucketCounts.
+   * Most of the buckets have zero counts. For efficiency, bucketCounts only stores non zero bucket
+   * count values. The bucketMask stores which buckets have non-zero bucketCounts.
    *
-   * The right most bit i.e. least significant bit (LSB) stands for bucket 0 with range -infinity to 0.
+   * The right most bit i.e. least significant bit (LSB) stands for bucket 0 with range -infinity to
+   * 0.
    *
    * Note that, except the LSB, most of the range is for positive values.
+   *
    * @return bucketmask
    */
   public long getBucketMask() {

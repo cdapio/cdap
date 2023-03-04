@@ -20,10 +20,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Part of the etl configuration, used to choose which artifact to use for a plugin. Normally created through
- * deserialization by the CDAP framework. Programmatic creation is only used for unit tests.
+ * Part of the etl configuration, used to choose which artifact to use for a plugin. Normally
+ * created through deserialization by the CDAP framework. Programmatic creation is only used for
+ * unit tests.
  */
 public class ArtifactSelectorConfig {
+
   private final String scope;
   private final String name;
   private final String version;
@@ -35,7 +37,8 @@ public class ArtifactSelectorConfig {
   }
 
   // for unit tests
-  public ArtifactSelectorConfig(@Nullable String scope, @Nullable String name, @Nullable String version) {
+  public ArtifactSelectorConfig(@Nullable String scope, @Nullable String name,
+      @Nullable String version) {
     this.scope = scope;
     this.name = name;
     this.version = version;
@@ -67,9 +70,9 @@ public class ArtifactSelectorConfig {
 
     ArtifactSelectorConfig that = (ArtifactSelectorConfig) o;
 
-    return Objects.equals(scope, that.scope) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version);
+    return Objects.equals(scope, that.scope)
+        && Objects.equals(name, that.name)
+        && Objects.equals(version, that.version);
   }
 
   @Override
@@ -79,10 +82,10 @@ public class ArtifactSelectorConfig {
 
   @Override
   public String toString() {
-    return "ArtifactSelectorConfig{" +
-      "scope='" + scope + '\'' +
-      ", name='" + name + '\'' +
-      ", version='" + version + '\'' +
-      '}';
+    return "ArtifactSelectorConfig{"
+        + "scope='" + scope + '\''
+        + ", name='" + name + '\''
+        + ", version='" + version + '\''
+        + '}';
   }
 }

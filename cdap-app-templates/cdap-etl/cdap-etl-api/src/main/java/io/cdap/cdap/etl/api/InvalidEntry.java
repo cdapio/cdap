@@ -24,6 +24,7 @@ import java.io.Serializable;
  * @param <T> Type of the object that failed validation.
  */
 public class InvalidEntry<T> implements Serializable {
+
   private static final long serialVersionUID = -1232949057204279740L;
   private final int errorCode;
   private final String errorMsg;

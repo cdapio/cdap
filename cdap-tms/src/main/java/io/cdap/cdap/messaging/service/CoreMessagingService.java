@@ -69,8 +69,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The core implementation of {@link MessagingService}. It interacts with {@link MessageTable} and {@link PayloadTable}
- * directly to provide the messaging functionality.
+ * The core implementation of {@link MessagingService}. It interacts with {@link MessageTable} and
+ * {@link PayloadTable} directly to provide the messaging functionality.
  */
 @ThreadSafe
 public class CoreMessagingService extends AbstractIdleService implements MessagingService {
@@ -88,13 +88,13 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
 
   @Inject
   protected CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
-                                 MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService) {
     this(cConf, tableFactory, TimeProvider.SYSTEM_TIME, metricsCollectionService);
   }
 
   @VisibleForTesting
   CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
-                       TimeProvider timeProvider, MetricsCollectionService metricsCollectionService) {
+      TimeProvider timeProvider, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.tableFactory = tableFactory;
     this.topicCache = createTopicCache();
@@ -112,12 +112,14 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     //        messaging service ->
     //          "metrics collection"
     this.metricsCollectionService = metricsCollectionService;
-    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
-                                                                         TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
+    this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(
+        cConf.getLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
+            TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME));
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(TopicMetadata topicMetadata)
+      throws TopicAlreadyExistsException, IOException {
     try (MetadataTable metadataTable = createMetadataTable()) {
       Map<String, String> properties = createDefaultProperties();
       properties.putAll(topicMetadata.getProperties());
@@ -164,11 +166,12 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public MessageFetcher prepareFetch(final TopicId topicId) throws TopicNotFoundException, IOException {
+  public MessageFetcher prepareFetch(final TopicId topicId)
+      throws TopicNotFoundException, IOException {
     final TopicMetadata metadata = getTopic(topicId);
     return new CoreMessageFetcher(metadata,
-                                  () -> createMessageTable(metadata),
-                                  () -> createPayloadTable(metadata));
+        () -> createMessageTable(metadata),
+        () -> createPayloadTable(metadata));
   }
 
   @Nullable
@@ -200,7 +203,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   @Override
-  public void rollback(TopicId topicId, RollbackDetail rollbackDetail) throws TopicNotFoundException, IOException {
+  public void rollback(TopicId topicId, RollbackDetail rollbackDetail)
+      throws TopicNotFoundException, IOException {
     TopicMetadata metadata = getTopic(topicId);
     Exception failure = null;
     try (MessageTable messageTable = createMessageTable(metadata)) {
@@ -234,8 +238,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates the given topic if it is not yet created. Adds a topic to the {@code creationFailureTopics}
-   * if creation fails.
+   * Creates the given topic if it is not yet created. Adds a topic to the {@code
+   * creationFailureTopics} if creation fails.
    */
   private void createSystemTopic(TopicId topicId, Queue<TopicId> creationFailureTopics) {
     try {
@@ -261,17 +265,18 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     boolean validLifetime = (txTimestamp + txMaxLifeTimeInMillis) > System.currentTimeMillis();
     if (!validLifetime) {
       throw new IOException(String.format("Transaction %s has exceeded max lifetime %s ms",
-                                          transactionWritePointer, txMaxLifeTimeInMillis));
+          transactionWritePointer, txMaxLifeTimeInMillis));
     }
   }
 
   /**
-   * Starts a thread to create the give list of topics. The thread will keep trying the creation until
-   * all of the given topics are created.
+   * Starts a thread to create the give list of topics. The thread will keep trying the creation
+   * until all of the given topics are created.
    */
-  private void startAsyncTopicCreation(final Queue<TopicId> topics, final long delay, final TimeUnit unit) {
+  private void startAsyncTopicCreation(final Queue<TopicId> topics, final long delay,
+      final TimeUnit unit) {
     final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("async-topic-creation"));
+        Threads.createDaemonThreadFactory("async-topic-creation"));
 
     executor.schedule(new Runnable() {
       @Override
@@ -284,7 +289,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
             // Successfully created, remove it from the async list
             iterator.remove();
           } catch (Exception e) {
-            LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId, e.getMessage());
+            LOG.warn("Topic {} creation failed with exception {}. Will retry.", topicId,
+                e.getMessage());
             LOG.debug("Topic {} creation failure stacktrace", topicId, e);
           }
         }
@@ -324,51 +330,55 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   }
 
   /**
-   * Creates a {@link LoadingCache} for {@link ConcurrentMessageWriter}
-   * for writing to {@link MessageTable} or {@link PayloadTable}.
+   * Creates a {@link LoadingCache} for {@link ConcurrentMessageWriter} for writing to {@link
+   * MessageTable} or {@link PayloadTable}.
    *
-   * @param messageTable {@code true} for building a cache for the {@link MessageTable};
-   *                     {@code false} for the {@link PayloadTable}
+   * @param messageTable {@code true} for building a cache for the {@link MessageTable}; {@code
+   *     false} for the {@link PayloadTable}
    * @param cConf the system configuration
    * @return a {@link LoadingCache} for
    */
-  private LoadingCache<TopicId, ConcurrentMessageWriter> createTableWriterCache(final boolean messageTable,
-                                                                                final CConfiguration cConf) {
+  private LoadingCache<TopicId, ConcurrentMessageWriter> createTableWriterCache(
+      final boolean messageTable,
+      final CConfiguration cConf) {
     long expireSecs = cConf.getLong(Constants.MessagingSystem.TABLE_CACHE_EXPIRATION_SECONDS);
 
     return CacheBuilder.newBuilder()
-      .expireAfterAccess(expireSecs, TimeUnit.SECONDS)
-      .removalListener(new RemovalListener<TopicId, ConcurrentMessageWriter>() {
-        @Override
-        public void onRemoval(RemovalNotification<TopicId, ConcurrentMessageWriter> notification) {
-          ConcurrentMessageWriter writer = notification.getValue();
-          if (writer != null) {
-            try {
-              writer.close();
-            } catch (IOException e) {
-              LOG.warn("Exception raised when closing message writer for topic {}", notification.getKey(), e);
+        .expireAfterAccess(expireSecs, TimeUnit.SECONDS)
+        .removalListener(new RemovalListener<TopicId, ConcurrentMessageWriter>() {
+          @Override
+          public void onRemoval(
+              RemovalNotification<TopicId, ConcurrentMessageWriter> notification) {
+            ConcurrentMessageWriter writer = notification.getValue();
+            if (writer != null) {
+              try {
+                writer.close();
+              } catch (IOException e) {
+                LOG.warn("Exception raised when closing message writer for topic {}",
+                    notification.getKey(), e);
+              }
             }
           }
-        }
-      })
-      .build(new CacheLoader<TopicId, ConcurrentMessageWriter>() {
-        @Override
-        public ConcurrentMessageWriter load(TopicId topicId) throws Exception {
-          TopicMetadata metadata = getTopic(topicId);
-          StoreRequestWriter<?> messagesWriter = messageTable
-            ? new MessageTableStoreRequestWriter(createMessageTable(metadata), timeProvider)
-            : new PayloadTableStoreRequestWriter(createPayloadTable(metadata), timeProvider);
+        })
+        .build(new CacheLoader<TopicId, ConcurrentMessageWriter>() {
+          @Override
+          public ConcurrentMessageWriter load(TopicId topicId) throws Exception {
+            TopicMetadata metadata = getTopic(topicId);
+            StoreRequestWriter<?> messagesWriter = messageTable
+                ? new MessageTableStoreRequestWriter(createMessageTable(metadata), timeProvider)
+                : new PayloadTableStoreRequestWriter(createPayloadTable(metadata), timeProvider);
 
-          MetricsContext metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
-            Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
-            Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0"),
-            Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),
-            Constants.Metrics.Tag.TABLE, messageTable ? "message" : "payload"
-          ));
+            MetricsContext metricsContext = metricsCollectionService.getContext(ImmutableMap.of(
+                Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
+                Constants.Metrics.Tag.INSTANCE_ID,
+                cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0"),
+                Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),
+                Constants.Metrics.Tag.TABLE, messageTable ? "message" : "payload"
+            ));
 
-          return new ConcurrentMessageWriter(messagesWriter, metricsContext);
-        }
-      });
+            return new ConcurrentMessageWriter(messagesWriter, metricsContext);
+          }
+        });
   }
 
   /**
@@ -378,11 +388,13 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     return tableFactory.createMetadataTable();
   }
 
-  private MessageTable createMessageTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
+  private MessageTable createMessageTable(@SuppressWarnings("unused") TopicMetadata topicMetadata)
+      throws IOException {
     return tableFactory.createMessageTable(topicMetadata);
   }
 
-  private PayloadTable createPayloadTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
+  private PayloadTable createPayloadTable(@SuppressWarnings("unused") TopicMetadata topicMetadata)
+      throws IOException {
     return tableFactory.createPayloadTable(topicMetadata);
   }
 
@@ -393,7 +405,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
     Map<String, String> properties = new HashMap<>();
 
     // Default properties
-    properties.put(TopicMetadata.TTL_KEY, cConf.get(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS));
+    properties.put(TopicMetadata.TTL_KEY,
+        cConf.get(Constants.MessagingSystem.TOPIC_DEFAULT_TTL_SECONDS));
     properties.put(TopicMetadata.GENERATION_KEY, MessagingUtils.Constants.DEFAULT_GENERATION);
     return properties;
   }

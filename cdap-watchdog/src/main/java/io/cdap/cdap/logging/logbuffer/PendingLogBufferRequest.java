@@ -20,9 +20,11 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
- * Represents a pending {@link LogBufferRequest} that is yet to be processed by log processor pipelines.
+ * Represents a pending {@link LogBufferRequest} that is yet to be processed by log processor
+ * pipelines.
  */
 public class PendingLogBufferRequest {
+
   private final LogBufferRequest originalRequest;
   private boolean completed;
   private Throwable failureCause;

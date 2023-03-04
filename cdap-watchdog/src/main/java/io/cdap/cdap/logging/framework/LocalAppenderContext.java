@@ -27,8 +27,8 @@ import org.apache.twill.filesystem.LocationFactory;
 public class LocalAppenderContext extends AbstractAppenderContext {
 
   public LocalAppenderContext(TransactionRunner transactionRunner,
-                              LocationFactory locationFactory,
-                              MetricsCollectionService metricsCollectionService) {
+      LocationFactory locationFactory,
+      MetricsCollectionService metricsCollectionService) {
     super(transactionRunner, locationFactory, metricsCollectionService);
   }
 

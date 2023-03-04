@@ -25,8 +25,8 @@ import javax.annotation.Nullable;
 import org.apache.twill.api.RunId;
 
 /**
- * A straightforward implementation of the {@link ProgramRuntimeService.RuntimeInfo} interface that allows
- * setting of the twill run id.
+ * A straightforward implementation of the {@link ProgramRuntimeService.RuntimeInfo} interface that
+ * allows setting of the twill run id.
  */
 public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo, Closeable {
 
@@ -36,10 +36,12 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   private volatile RunId twillRunId;
 
   public SimpleRuntimeInfo(ProgramController controller, ProgramId programId) {
-    this(controller, programId, () -> { });
+    this(controller, programId, () -> {
+    });
   }
 
-  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId, Runnable cleanupTask) {
+  public SimpleRuntimeInfo(ProgramController controller, ProgramId programId,
+      Runnable cleanupTask) {
     this.controller = controller;
     this.programId = programId;
     this.cleanupTask = cleanupTask;

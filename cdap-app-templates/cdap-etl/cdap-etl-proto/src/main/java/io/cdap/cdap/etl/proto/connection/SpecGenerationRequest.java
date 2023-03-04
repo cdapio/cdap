@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * Spec generation request expected from a http request
  */
 public class SpecGenerationRequest {
+
   private final String path;
   private final String pluginName;
   private final String pluginType;
@@ -35,7 +36,7 @@ public class SpecGenerationRequest {
   }
 
   public SpecGenerationRequest(String path, Map<String, String> properties,
-                               @Nullable String pluginName, @Nullable String pluginType) {
+      @Nullable String pluginName, @Nullable String pluginType) {
     this.path = path;
     this.properties = properties;
     this.pluginType = pluginType;
@@ -71,10 +72,10 @@ public class SpecGenerationRequest {
     }
 
     SpecGenerationRequest that = (SpecGenerationRequest) o;
-    return Objects.equals(path, that.path) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(pluginName, that.pluginName) &&
-      Objects.equals(pluginType, that.pluginType);
+    return Objects.equals(path, that.path)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(pluginName, that.pluginName)
+        && Objects.equals(pluginType, that.pluginType);
   }
 
   @Override

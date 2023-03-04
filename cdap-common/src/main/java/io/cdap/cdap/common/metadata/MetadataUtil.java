@@ -27,9 +27,9 @@ import java.util.Set;
 public final class MetadataUtil {
 
   private static final Set<String> VERSIONED_ENTITY_TYPES = ImmutableSet.of(
-    MetadataEntity.APPLICATION,
-    MetadataEntity.PROGRAM,
-    MetadataEntity.PROGRAM_RUN);
+      MetadataEntity.APPLICATION,
+      MetadataEntity.PROGRAM,
+      MetadataEntity.PROGRAM_RUN);
 
   /**
    * @return whether an entity of the given type requires a version

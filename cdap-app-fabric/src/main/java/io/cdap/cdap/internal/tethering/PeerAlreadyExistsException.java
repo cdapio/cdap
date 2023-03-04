@@ -21,6 +21,7 @@ import io.cdap.cdap.common.BadRequestException;
  * Thrown when a tethered peer already exists.
  */
 public class PeerAlreadyExistsException extends BadRequestException {
+
   public PeerAlreadyExistsException(String peerName, TetheringStatus tetheringStatus) {
     super(String.format("Peer %s already exists in state %s", peerName, tetheringStatus));
   }

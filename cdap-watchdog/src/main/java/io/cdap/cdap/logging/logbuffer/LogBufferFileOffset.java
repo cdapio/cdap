@@ -23,8 +23,10 @@ import java.util.Objects;
  * Represents offset in log buffer file.
  */
 public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
-  private static final Comparator<LogBufferFileOffset> COMPARATOR = Comparator.comparing(LogBufferFileOffset::getFileId)
-    .thenComparing(LogBufferFileOffset::getFilePos);
+
+  private static final Comparator<LogBufferFileOffset> COMPARATOR = Comparator.comparing(
+          LogBufferFileOffset::getFileId)
+      .thenComparing(LogBufferFileOffset::getFilePos);
 
   private final long fileId;
   private final long filePos;
@@ -67,9 +69,9 @@ public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
 
   @Override
   public String toString() {
-    return "LogBufferFileOffset{" +
-      "fileId=" + fileId +
-      ", filePos=" + filePos +
-      '}';
+    return "LogBufferFileOffset{"
+        + "fileId=" + fileId
+        + ", filePos=" + filePos
+        + '}';
   }
 }

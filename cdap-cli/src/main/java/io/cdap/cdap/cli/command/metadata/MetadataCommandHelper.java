@@ -23,21 +23,22 @@ import io.cdap.cdap.proto.id.EntityId;
  * to/from {@link MetadataEntity}
  */
 public class MetadataCommandHelper {
+
   private static final String METADATA_ENTITY_KV_SEPARATOR = "=";
   private static final String METADATA_ENTITY_PARTS_SEPARATOR = ",";
   private static final String METADATA_ENTITY_TYPE = "type";
 
   /**
-   * Returns a CLI friendly representation of MetadataEntity.
-   * For a dataset ds1 in ns1 the EntityId representation will be
+   * Returns a CLI friendly representation of MetadataEntity. For a dataset ds1 in ns1 the EntityId
+   * representation will be
    * <pre>dataset:ns1.ds1</pre>
    * It's equivalent MetadataEntity representation will be
    * <pre>MetadataEntity{details={namespace=ns1, dataset=ds1}, type='dataset'}</pre>
    * The CLI friendly representation will be
    * <pre>namespace=ns1,dataset=ds1,type=dataset</pre>
    *
-   * Note: It is not necessary to give a type, if a type is not provided the
-   * last key-value pair's key in the hierarchy will be considered as the type.
+   * Note: It is not necessary to give a type, if a type is not provided the last key-value pair's
+   * key in the hierarchy will be considered as the type.
    */
   public static String toCliString(MetadataEntity metadataEntity) {
     StringBuilder builder = new StringBuilder();
@@ -54,8 +55,8 @@ public class MetadataCommandHelper {
   }
 
   /**
-   * Converts a CLI friendly string representation of MetadataEntity to MetadataEntity. For more details see
-   * documentation for {@link #toCliString(MetadataEntity)}
+   * Converts a CLI friendly string representation of MetadataEntity to MetadataEntity. For more
+   * details see documentation for {@link #toCliString(MetadataEntity)}
    *
    * @param cliString the cli friendly string representation
    * @return {@link MetadataEntity}

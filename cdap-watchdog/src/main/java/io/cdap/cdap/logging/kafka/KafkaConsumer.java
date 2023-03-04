@@ -41,7 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Kafka consumer that listens on a topic/partition and retrieves messages. This class is thread-safe.
+ * Kafka consumer that listens on a topic/partition and retrieves messages. This class is
+ * thread-safe.
  */
 public final class KafkaConsumer implements Closeable {
 
@@ -62,12 +63,14 @@ public final class KafkaConsumer implements Closeable {
 
   /**
    * Creates a KafkaConsumer with initial set of seed brokers, topic and partition.
+   *
    * @param brokerService the {@link BrokerService} for finding Kafka brokers.
    * @param topic Kafka topic to subscribe to
    * @param partition topic partition to subscribe to
    * @param fetchTimeoutMs timeout for a Kafka fetch call
    */
-  public KafkaConsumer(BrokerService brokerService, String topic, int partition, int fetchTimeoutMs) {
+  public KafkaConsumer(BrokerService brokerService, String topic, int partition,
+      int fetchTimeoutMs) {
     this.brokerService = brokerService;
     this.topic = topic;
     this.partition = partition;
@@ -77,6 +80,7 @@ public final class KafkaConsumer implements Closeable {
 
   /**
    * Fetches Kafka messages from an offset.
+   *
    * @param offset message offset to start.
    * @param callback callback to handle the messages fetched.
    * @return number of messages fetched.
@@ -107,6 +111,7 @@ public final class KafkaConsumer implements Closeable {
 
   /**
    * Fetch offset before given time.
+   *
    * @param timeMillis offset to fetch before timeMillis.
    * @return Kafka message offset
    */
@@ -128,8 +133,9 @@ public final class KafkaConsumer implements Closeable {
       if (response.hasError()) {
         closeConsumer();
         throw new RuntimeException(String.format(
-          "Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
-          consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition)));
+            "Error fetching offset data from broker %s:%d for topic %s, partition %d. Error code: %d",
+            consumer.host(), consumer.port(), topic, partition,
+            response.errorCode(topic, partition)));
       }
     }
 
@@ -145,8 +151,8 @@ public final class KafkaConsumer implements Closeable {
     }
     closeConsumer();
     throw new RuntimeException(String.format(
-      "Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partition %d",
-      timeMillis, consumer.host(), consumer.port(), topic, partition));
+        "Got zero offsets in offset response for time %s from broker %s:%d for topic %s, partition %d",
+        timeMillis, consumer.host(), consumer.port(), topic, partition));
   }
 
   private void closeConsumer() {
@@ -162,17 +168,18 @@ public final class KafkaConsumer implements Closeable {
   }
 
   private ByteBufferMessageSet fetchMessageSet(long fetchOffset) throws OffsetOutOfRangeException {
-    Preconditions.checkArgument(fetchOffset >= 0, String.format("Illegal fetch offset %d", fetchOffset));
+    Preconditions.checkArgument(fetchOffset >= 0,
+        String.format("Illegal fetch offset %d", fetchOffset));
 
     int failureCount = 0;
     while (true) {
       SimpleConsumer consumer = getConsumer();
 
       FetchRequest req = new FetchRequestBuilder()
-        .clientId(clientName)
-        .addFetch(topic, partition, fetchOffset, BUFFER_SIZE_BYTES)
-        .maxWait(fetchTimeoutMs)
-        .build();
+          .clientId(clientName)
+          .addFetch(topic, partition, fetchOffset, BUFFER_SIZE_BYTES)
+          .maxWait(fetchTimeoutMs)
+          .build();
       FetchResponse fetchResponse = consumer.fetch(req);
 
       if (!fetchResponse.hasError()) {
@@ -182,16 +189,18 @@ public final class KafkaConsumer implements Closeable {
 
       if (++failureCount >= MAX_KAFKA_FETCH_RETRIES) {
         throw new RuntimeException(
-          String.format("Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
-                        consumer.host(), consumer.port(), topic, partition, errorCode));
+            String.format(
+                "Error fetching data from broker %s:%d for topic %s, partition %d. Error code: %d",
+                consumer.host(), consumer.port(), topic, partition, errorCode));
       }
 
       LOG.warn("Error fetching data from broker {}:{} for topic {}, partition {}. Error code: {}",
-               consumer.host(), consumer.port(), topic, partition, errorCode);
+          consumer.host(), consumer.port(), topic, partition, errorCode);
 
-      if (errorCode == ErrorMapping.OffsetOutOfRangeCode())  {
+      if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
         throw new OffsetOutOfRangeException(String.format(
-          "Requested offset %d is out of range for topic %s partition %d", fetchOffset, topic, partition));
+            "Requested offset %d is out of range for topic %s partition %d", fetchOffset, topic,
+            partition));
       }
       closeConsumer();
     }
@@ -202,7 +211,8 @@ public final class KafkaConsumer implements Closeable {
       return consumer;
     }
     BrokerInfo leader = brokerService.getLeader(topic, partition);
-    consumer = new SimpleConsumer(leader.getHost(), leader.getPort(), TIMEOUT_MS, BUFFER_SIZE_BYTES, clientName);
+    consumer = new SimpleConsumer(leader.getHost(), leader.getPort(), TIMEOUT_MS, BUFFER_SIZE_BYTES,
+        clientName);
     return consumer;
   }
 }

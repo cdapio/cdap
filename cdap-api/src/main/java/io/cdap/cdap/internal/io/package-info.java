@@ -17,13 +17,14 @@
 /**
  * This package contains internal classes for supporting the CDAP API.
  * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
+ * These should not be used directly by users of the CDAP API, as they may change in a later release
+ * without warning.
  * </p>
  *
  * <h3>Schema definition</h3>
  *
- * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro Schema</a>,
- * with the following modifications:
+ * The schema definition is adopted from <a href="http://avro.apache.org/docs/1.7.3/spec.html#schemas">Avro
+ * Schema</a>, with the following modifications:
  *
  * <ol>
  *   <li>Supports any type as map key, not just string.</li>
@@ -181,7 +182,7 @@
  *     </td>
  *   </tr>
  * </table>
- * 
+ *
  * <h4>For union types</h4>
  * <table border="1" cellpadding="3">
  *   <tr>
@@ -205,7 +206,6 @@
  *     <td>Writer schema must be compatible with at least one schema in the reader union.</td>
  *   </tr>
  * </table>
- *
  */
 package io.cdap.cdap.internal.io;
 

@@ -26,9 +26,11 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * This class records information for a particular run. The timestamp in the run record has time unit SECONDS
+ * This class records information for a particular run. The timestamp in the run record has time
+ * unit SECONDS
  */
 public class RunRecord {
+
   @SerializedName("runid")
   private final String pid;
 
@@ -85,10 +87,11 @@ public class RunRecord {
    * @deprecated use {@link #builder()} instead.
    */
   @Deprecated
-  public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, @Nullable Long suspendTs,
-                   @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
-                   ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
-                   ProfileId profileId, @Nullable String peerName, @Nullable String version) {
+  public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+      @Nullable Long suspendTs,
+      @Nullable Long resumeTs, @Nullable Long stoppingTs, @Nullable Long terminateTs,
+      ProgramRunStatus status, @Nullable Map<String, String> properties, ProgramRunCluster cluster,
+      ProfileId profileId, @Nullable String peerName, @Nullable String version) {
     this.pid = pid;
     this.startTs = startTs;
     this.runTs = runTs;
@@ -99,7 +102,7 @@ public class RunRecord {
     this.terminateTs = terminateTs;
     this.status = status;
     this.properties = properties == null ? Collections.emptyMap() :
-      Collections.unmodifiableMap(new LinkedHashMap<>(properties));
+        Collections.unmodifiableMap(new LinkedHashMap<>(properties));
     this.cluster = cluster;
     this.profileId = profileId;
     this.peerName = peerName;
@@ -110,11 +113,12 @@ public class RunRecord {
    * @deprecated use {@link #builder(RunRecord)} instead.
    */
   public RunRecord(RunRecord otherRunRecord) {
-    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
-         otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
-         otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
-         otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName(),
-         otherRunRecord.getVersion());
+    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(),
+        otherRunRecord.getStopTs(),
+        otherRunRecord.getSuspendTs(), otherRunRecord.getResumeTs(), otherRunRecord.getStoppingTs(),
+        otherRunRecord.getTerminateTs(), otherRunRecord.getStatus(), otherRunRecord.getProperties(),
+        otherRunRecord.getCluster(), otherRunRecord.getProfileId(), otherRunRecord.getPeerName(),
+        otherRunRecord.getVersion());
   }
 
   public String getPid() {
@@ -165,7 +169,8 @@ public class RunRecord {
 
   public ProgramRunCluster getCluster() {
     // null check for backwards compat for run records that did not have any cluster
-    return cluster == null ? new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, null, null) : cluster;
+    return cluster == null ? new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, null,
+        null) : cluster;
   }
 
   public ProfileId getProfileId() {
@@ -194,46 +199,47 @@ public class RunRecord {
 
     RunRecord that = (RunRecord) o;
 
-    return Objects.equals(this.pid, that.pid) &&
-      Objects.equals(this.startTs, that.startTs) &&
-      Objects.equals(this.runTs, that.runTs) &&
-      Objects.equals(this.stopTs, that.stopTs) &&
-      Objects.equals(this.suspendTs, that.suspendTs) &&
-      Objects.equals(this.resumeTs, that.resumeTs) &&
-      Objects.equals(this.stoppingTs, that.stoppingTs) &&
-      Objects.equals(this.terminateTs, that.terminateTs) &&
-      Objects.equals(this.status, that.status) &&
-      Objects.equals(this.properties, that.properties) &&
-      Objects.equals(this.cluster, that.cluster) &&
-      Objects.equals(this.profileId, that.profileId) &&
-      Objects.equals(this.peerName, that.peerName) &&
-      Objects.equals(this.version, that.version);
+    return Objects.equals(this.pid, that.pid)
+        && Objects.equals(this.startTs, that.startTs)
+        && Objects.equals(this.runTs, that.runTs)
+        && Objects.equals(this.stopTs, that.stopTs)
+        && Objects.equals(this.suspendTs, that.suspendTs)
+        && Objects.equals(this.resumeTs, that.resumeTs)
+        && Objects.equals(this.stoppingTs, that.stoppingTs)
+        && Objects.equals(this.terminateTs, that.terminateTs)
+        && Objects.equals(this.status, that.status)
+        && Objects.equals(this.properties, that.properties)
+        && Objects.equals(this.cluster, that.cluster)
+        && Objects.equals(this.profileId, that.profileId)
+        && Objects.equals(this.peerName, that.peerName)
+        && Objects.equals(this.version, that.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status,
-                        properties, cluster, profileId, peerName, version);
+    return Objects.hash(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
+        status,
+        properties, cluster, profileId, peerName, version);
   }
 
   @Override
   public String toString() {
-    return "RunRecord{" +
-      "pid='" + pid + '\'' +
-      ", startTs=" + startTs +
-      ", runTs=" + runTs +
-      ", stopTs=" + stopTs +
-      ", suspendTs=" + suspendTs +
-      ", resumeTs=" + resumeTs +
-      ", stoppingTs=" + stoppingTs +
-      ", terminateTs=" + terminateTs +
-      ", status=" + status +
-      ", properties=" + properties +
-      ", cluster=" + cluster +
-      ", profile=" + profileId +
-      ", peerName=" + peerName +
-      ", version=" + version +
-      '}';
+    return "RunRecord{"
+        + "pid='" + pid + '\''
+        + ", startTs=" + startTs
+        + ", runTs=" + runTs
+        + ", stopTs=" + stopTs
+        + ", suspendTs=" + suspendTs
+        + ", resumeTs=" + resumeTs
+        + ", stoppingTs=" + stoppingTs
+        + ", terminateTs=" + terminateTs
+        + ", status=" + status
+        + ", properties=" + properties
+        + ", cluster=" + cluster
+        + ", profile=" + profileId
+        + ", peerName=" + peerName
+        + ", version=" + version
+        + '}';
   }
 
   /**
@@ -245,7 +251,8 @@ public class RunRecord {
 
   /**
    * @param runRecord existing record to copy fields from
-   * @return Builder to create a RunRecord, initialized with values from the specified existing record
+   * @return Builder to create a RunRecord, initialized with values from the specified existing
+   *     record
    */
   public static Builder builder(RunRecord runRecord) {
     return new Builder(runRecord);
@@ -258,6 +265,7 @@ public class RunRecord {
    */
   @SuppressWarnings("unchecked")
   public static class Builder<T extends Builder> {
+
     protected ProgramRunStatus status;
     protected String pid;
     protected Long startTs;
@@ -378,8 +386,9 @@ public class RunRecord {
       if (status == null) {
         throw new IllegalArgumentException("Run record status must be specified.");
       }
-      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
-                           status, properties, cluster, profileId, peerName, version);
+      return new RunRecord(pid, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs,
+          terminateTs,
+          status, properties, cluster, profileId, peerName, version);
     }
   }
 }

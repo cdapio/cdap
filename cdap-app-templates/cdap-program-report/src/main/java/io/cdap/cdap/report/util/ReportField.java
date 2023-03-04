@@ -32,9 +32,12 @@ public enum ReportField {
   NAMESPACE(Constants.NAMESPACE, String.class, Collections.singletonList(VALUE), false),
   ARTIFACT_SCOPE(Constants.ARTIFACT_SCOPE, String.class, Collections.singletonList(VALUE), false),
   ARTIFACT_NAME(Constants.ARTIFACT_NAME, String.class, Collections.singletonList(VALUE), false),
-  ARTIFACT_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE), false),
-  APPLICATION_NAME(Constants.APPLICATION_NAME, String.class, Collections.singletonList(VALUE), false),
-  APPLICATION_VERSION(Constants.APPLICATION_VERSION, String.class, Collections.singletonList(VALUE), false),
+  ARTIFACT_VERSION(Constants.ARTIFACT_VERSION, String.class, Collections.singletonList(VALUE),
+      false),
+  APPLICATION_NAME(Constants.APPLICATION_NAME, String.class, Collections.singletonList(VALUE),
+      false),
+  APPLICATION_VERSION(Constants.APPLICATION_VERSION, String.class, Collections.singletonList(VALUE),
+      false),
   PROGRAM_TYPE(Constants.PROGRAM_TYPE, String.class, Collections.singletonList(VALUE), false),
   PROGRAM(Constants.PROGRAM, String.class, Collections.singletonList(VALUE), false),
   RUN(Constants.RUN, String.class, Collections.singletonList(VALUE), false),
@@ -46,7 +49,8 @@ public enum ReportField {
   USER(Constants.USER, String.class, Collections.singletonList(VALUE), false),
   START_METHOD(Constants.START_METHOD, String.class, Collections.singletonList(VALUE), false),
   RUNTIME_ARGUMENTS(Constants.RUNTIME_ARGUMENTS, String.class, Collections.emptyList(), false),
-  NUM_LOG_WARNINGS(Constants.NUM_LOG_WARNINGS, Integer.class, Collections.singletonList(RANGE), true),
+  NUM_LOG_WARNINGS(Constants.NUM_LOG_WARNINGS, Integer.class, Collections.singletonList(RANGE),
+      true),
   NUM_LOG_ERRORS(Constants.NUM_LOG_ERRORS, Integer.class, Collections.singletonList(RANGE), true),
   NUM_RECORDS_OUT(Constants.NUM_RECORDS_OUT, Integer.class, Collections.singletonList(RANGE), true);
 
@@ -75,7 +79,8 @@ public enum ReportField {
     }
   }
 
-  ReportField(String fieldName, Class valueClass, List<FilterType> applicableFilters, boolean sortable) {
+  ReportField(String fieldName, Class valueClass, List<FilterType> applicableFilters,
+      boolean sortable) {
     this.fieldName = fieldName;
     this.valueClass = valueClass;
     this.applicableFilters = applicableFilters;

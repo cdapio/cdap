@@ -31,13 +31,15 @@ import org.slf4j.LoggerFactory;
  * {@link ProgramStateWriter}.
  */
 public class StateChangeListener extends AbstractListener {
+
   private static final Logger LOG = LoggerFactory.getLogger(StateChangeListener.class);
 
   private final ProgramRunId programRunId;
   private final ProgramController programController;
   private final ProgramStateWriter programStateWriter;
 
-  public StateChangeListener(ProgramController programController, ProgramStateWriter programStateWriter) {
+  public StateChangeListener(ProgramController programController,
+      ProgramStateWriter programStateWriter) {
     this.programRunId = programController.getProgramRunId();
     this.programController = programController;
     this.programStateWriter = programStateWriter;

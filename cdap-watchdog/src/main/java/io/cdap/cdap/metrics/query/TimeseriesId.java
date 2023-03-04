@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * class to identify a unique timeseries, which is a 4 tuple of context, metric, tag, and runid.
  */
 public final class TimeseriesId {
+
   private final String context;
   private final String metric;
   private final String tag;
@@ -40,10 +41,10 @@ public final class TimeseriesId {
       return false;
     }
     TimeseriesId other = (TimeseriesId) o;
-    return Objects.equal(context, other.context) &&
-      Objects.equal(metric, other.metric) &&
-      Objects.equal(tag, other.tag) &&
-      Objects.equal(runId, other.runId);
+    return Objects.equal(context, other.context)
+        && Objects.equal(metric, other.metric)
+        && Objects.equal(tag, other.tag)
+        && Objects.equal(runId, other.runId);
   }
 
   @Override
@@ -54,10 +55,10 @@ public final class TimeseriesId {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("context", context)
-      .add("metric", metric)
-      .add("tag", tag)
-      .add("runId", runId)
-      .toString();
+        .add("context", context)
+        .add("metric", metric)
+        .add("tag", tag)
+        .add("runId", runId)
+        .toString();
   }
 }

@@ -48,6 +48,7 @@ import javax.annotation.Nullable;
 @Plugin(type = BatchJoiner.PLUGIN_TYPE)
 @Name("MockJoiner")
 public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Map<String, Schema> inputSchemas;
@@ -59,8 +60,9 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
 
   private void validateInputStages(Map<String, Schema> inputSchemas, List<String> inputStages) {
     if (!inputStages.containsAll(inputSchemas.keySet())) {
-      throw new RuntimeException("inputStages: " + inputStages + "doesn't have all stages in inputSchemas: " +
-                                  inputSchemas.keySet());
+      throw new RuntimeException(
+          "inputStages: " + inputStages + "doesn't have all stages in inputSchemas: "
+              + inputSchemas.keySet());
     }
   }
 
@@ -92,7 +94,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     List<String> joinKeys = stageToJoinKey.get(stageName);
     int i = 1;
     for (String joinKey : joinKeys) {
-      Schema.Field joinField = Schema.Field.of(String.valueOf(i++), schema.getField(joinKey).getSchema());
+      Schema.Field joinField = Schema.Field.of(String.valueOf(i++),
+          schema.getField(joinKey).getSchema());
       fields.add(joinField);
     }
     Schema keySchema = Schema.recordOf("join.key", fields);
@@ -111,7 +114,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   }
 
   @Override
-  public StructuredRecord merge(StructuredRecord joinKey, Iterable<JoinElement<StructuredRecord>> joinRow) {
+  public StructuredRecord merge(StructuredRecord joinKey,
+      Iterable<JoinElement<StructuredRecord>> joinRow) {
     StructuredRecord.Builder outRecordBuilder;
     outRecordBuilder = StructuredRecord.builder(outputSchema);
 
@@ -140,7 +144,7 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
       } else { // mark fields as nullable
         for (Schema.Field inputField : inputSchema.getFields()) {
           outputFields.add(Schema.Field.of(inputField.getName(),
-                                           Schema.nullableOf(inputField.getSchema())));
+              Schema.nullableOf(inputField.getSchema())));
         }
       }
     }
@@ -151,6 +155,7 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
    * Config for join plugin
    */
   public static class Config extends PluginConfig {
+
     private final String joinKeys;
     private final String selectedFields;
     @Nullable
@@ -166,24 +171,25 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     private void validateConfig(Map<String, Schema> inputSchemas, FailureCollector collector) {
       if (joinKeys == null || joinKeys.isEmpty()) {
         collector.addFailure("Config property joinKeys is either null or empty",
-                             "Provide non-empty joinKeys config property").withConfigProperty("joinKeys");
+            "Provide non-empty joinKeys config property").withConfigProperty("joinKeys");
         collector.getOrThrowException();
       }
 
       List<String> multipleJoinKeys = Lists.newArrayList(Splitter.on('&').trimResults()
-                                                           .omitEmptyStrings().split(joinKeys));
+          .omitEmptyStrings().split(joinKeys));
       for (String joinKey : multipleJoinKeys) {
         Map<String, String> map = new LinkedHashMap<>();
         List<String> perStageJoinKeys = Lists.newArrayList(Splitter.on('=').trimResults()
-                                                             .omitEmptyStrings().split(joinKey));
+            .omitEmptyStrings().split(joinKey));
         for (String perStageKey : perStageJoinKeys) {
           List<String> stageKey = Lists.newArrayList(Splitter.on('.').trimResults()
-                                                       .omitEmptyStrings().split(perStageKey));
+              .omitEmptyStrings().split(perStageKey));
           if (stageKey.size() != 2) {
-            collector.addFailure(String.format("Join key is not specified in stageName.columnName " +
-                                                 "format for key %s", perStageKey),
-                                 "Make sure syntax for joinKeys config property is correct")
-              .withConfigProperty("joinKeys");
+            collector.addFailure(
+                    String.format("Join key is not specified in stageName.columnName "
+                        + "format for key %s", perStageKey),
+                    "Make sure syntax for joinKeys config property is correct")
+                .withConfigProperty("joinKeys");
           } else {
             map.putIfAbsent(stageKey.get(0), stageKey.get(1));
           }
@@ -196,17 +202,20 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
           String keyField = entry.getValue();
           Schema.Field field = inputSchemas.get(stageName).getField(keyField);
           if (field == null) {
-            collector.addFailure(String.format("Join key field %s is not present in input schema", field),
-                                 "Make sure all the join keys are present in the input schema")
-              .withConfigElement("joinKeys", joinKey);
+            collector.addFailure(
+                    String.format("Join key field %s is not present in input schema", field),
+                    "Make sure all the join keys are present in the input schema")
+                .withConfigElement("joinKeys", joinKey);
             continue;
           }
 
           if (prevSchema != null && !prevSchema.equals(field.getSchema())) {
-            collector.addFailure(String.format("Schema of joinKey field %s.%s does not match with other join keys.",
-                                               stageName, keyField), "Make sure all the join keys are of same type")
-              .withConfigElement("joinKeys", joinKey)
-              .withInputSchemaField(keyField, stageName).withInputSchemaField(keyField, prevStage);
+            collector.addFailure(
+                    String.format("Schema of joinKey field %s.%s does not match with other join keys.",
+                        stageName, keyField), "Make sure all the join keys are of same type")
+                .withConfigElement("joinKeys", joinKey)
+                .withInputSchemaField(keyField, stageName)
+                .withInputSchemaField(keyField, prevStage);
           }
           prevSchema = field.getSchema();
           prevStage = stageName;
@@ -220,15 +229,19 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
      * Converts join keys to map of per stage join keys For example,
      * customers.id=items.cust_id&customers.name=items.cust_name
      * will get converted to customers -> (id,name) and items -> (cust_id,cust_name)
+     *
      * @return map of stage to join key fields from that stage
      */
     private Map<String, List<String>> getJoinKeys() {
       Map<String, List<String>> stageToKey = new HashMap<>();
-      Iterable<String> multipleJoinKeys = Splitter.on('&').trimResults().omitEmptyStrings().split(joinKeys);
+      Iterable<String> multipleJoinKeys = Splitter.on('&').trimResults().omitEmptyStrings()
+          .split(joinKeys);
       for (String key : multipleJoinKeys) {
-        Iterable<String> perStageJoinKeys = Splitter.on('=').trimResults().omitEmptyStrings().split(key);
+        Iterable<String> perStageJoinKeys = Splitter.on('=').trimResults().omitEmptyStrings()
+            .split(key);
         for (String perStageKey : perStageJoinKeys) {
-          Iterable<String> stageKey = Splitter.on('.').trimResults().omitEmptyStrings().split(perStageKey);
+          Iterable<String> stageKey = Splitter.on('.').trimResults().omitEmptyStrings()
+              .split(perStageKey);
           String stageName = Iterables.get(stageKey, 0);
           List<String> listOfKeys = stageToKey.get(stageName);
           if (listOfKeys == null) {
@@ -258,10 +271,12 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("joinKeys", new PluginPropertyField("joinKeys", "", "string", true, false));
-    properties.put("requiredInputs", new PluginPropertyField("requiredInputs", "", "string", true, false));
-    properties.put("selectedFields", new PluginPropertyField("selectedFields", "", "string", true, false));
+    properties.put("requiredInputs",
+        new PluginPropertyField("requiredInputs", "", "string", true, false));
+    properties.put("selectedFields",
+        new PluginPropertyField("selectedFields", "", "string", true, false));
     return PluginClass.builder().setName("MockJoiner").setType(BatchJoiner.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockJoiner.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockJoiner.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

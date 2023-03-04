@@ -20,12 +20,14 @@ import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.etl.api.ToKeyValueTransform;
 
 /**
- * SQL Dataset which exposes an {@link OutputFormatProvider} and {@link ToKeyValueTransform} used to push records
- * into the SQL engine.
+ * SQL Dataset which exposes an {@link OutputFormatProvider} and {@link ToKeyValueTransform} used to
+ * push records into the SQL engine.
  *
  * @param <T> the type of the records to push to the SQL engine
  * @param <K> Type for output key when mapping records using the {@link ToKeyValueTransform}
  * @param <V> Type for output value when mapping records using the {@link ToKeyValueTransform}
  */
-public interface SQLPushDataset<T, K, V> extends SQLDataset, OutputFormatProvider, ToKeyValueTransform<T, K, V> {
+public interface SQLPushDataset<T, K, V> extends SQLDataset, OutputFormatProvider,
+    ToKeyValueTransform<T, K, V> {
+
 }

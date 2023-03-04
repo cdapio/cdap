@@ -53,7 +53,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The main class for creating store definition. It can be used as a initialization step for each container.
+ * The main class for creating store definition. It can be used as a initialization step for each
+ * container.
  */
 public class StorageMain {
 
@@ -69,28 +70,29 @@ public class StorageMain {
 
     CoreSecurityModule coreSecurityModule = CoreSecurityRuntimeModule.getDistributedModule(cConf);
     List<Module> modules = new ArrayList<>(Arrays.asList(
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // We actually only need the MetadataStore createIndex.
-      // But due to the DataSetsModules, we need to pull in more modules.
-      new DataSetsModules().getStandaloneModules(),
-      new InMemoryDiscoveryModule(),
-      new StorageModule(),
-      new DFSLocationModule(),
-      new IOModule(),
-      coreSecurityModule,
-      new AuthenticationContextModules().getMasterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(AccessEnforcer.class).to(NoOpAccessController.class);
-          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
-          // The metrics collection service might not get started at this moment,
-          // so inject a NoopMetricsCollectionService.
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        // We actually only need the MetadataStore createIndex.
+        // But due to the DataSetsModules, we need to pull in more modules.
+        new DataSetsModules().getStandaloneModules(),
+        new InMemoryDiscoveryModule(),
+        new StorageModule(),
+        new DFSLocationModule(),
+        new IOModule(),
+        coreSecurityModule,
+        new AuthenticationContextModules().getMasterModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(AccessEnforcer.class).to(NoOpAccessController.class);
+            bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+            // The metrics collection service might not get started at this moment,
+            // so inject a NoopMetricsCollectionService.
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class)
+                .in(Scopes.SINGLETON);
+          }
         }
-      }
     ));
 
     if (coreSecurityModule.requiresZKClient()) {

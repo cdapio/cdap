@@ -55,25 +55,26 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId);
 
     Table table = Table.builder()
-      .setHeader("method", "path")
-      .setRows(endpoints, new RowMaker<ServiceHttpEndpoint>() {
-        @Override
-        public List<?> makeRow(ServiceHttpEndpoint endpoint) {
-          return Lists.newArrayList(endpoint.getMethod(), endpoint.getPath());
-        }
-      }).build();
+        .setHeader("method", "path")
+        .setRows(endpoints, new RowMaker<ServiceHttpEndpoint>() {
+          @Override
+          public List<?> makeRow(ServiceHttpEndpoint endpoint) {
+            return Lists.newArrayList(endpoint.getMethod(), endpoint.getPath());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("get endpoints service <%s> [version <%s>]", ArgumentName.SERVICE, ArgumentName.APP_VERSION);
+    return String.format("get endpoints service <%s> [version <%s>]", ArgumentName.SERVICE,
+        ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
     return String.format("Lists the endpoints that %s exposes",
-                         Fragment.of(Article.A, ElementType.SERVICE.getName()));
+        Fragment.of(Article.A, ElementType.SERVICE.getName()));
   }
 
   @Override

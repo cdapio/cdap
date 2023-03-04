@@ -67,6 +67,6 @@ public class FileFetcherHttpHandlerInternal extends AbstractHttpHandler {
       throw new NotFoundException(String.format("Path %s is not found", path));
     }
     responder.sendContent(HttpResponseStatus.OK, new LocationBodyProducer(location),
-                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
+        new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM));
   }
 }

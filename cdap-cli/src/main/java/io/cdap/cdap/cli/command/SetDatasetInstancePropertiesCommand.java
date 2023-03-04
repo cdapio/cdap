@@ -47,24 +47,26 @@ public class SetDatasetInstancePropertiesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
-    Map<String, String> properties = ArgumentParser.parseMap(arguments.get(ArgumentName.DATASET_PROPERTIES.toString()),
-                                                             ArgumentName.DATASET_PROPERTIES.toString());
+    DatasetId instance = cliConfig.getCurrentNamespace()
+        .dataset(arguments.get(ArgumentName.DATASET.toString()));
+    Map<String, String> properties = ArgumentParser.parseMap(
+        arguments.get(ArgumentName.DATASET_PROPERTIES.toString()),
+        ArgumentName.DATASET_PROPERTIES.toString());
     datasetClient.updateExisting(instance, properties);
     output.printf("Successfully updated properties for dataset instance '%s' to %s",
-                  instance.getEntityName(), GSON.toJson(properties));
+        instance.getEntityName(), GSON.toJson(properties));
   }
 
   @Override
   public String getPattern() {
     return String.format("set dataset instance properties <%s> <%s>",
-                         ArgumentName.DATASET, ArgumentName.DATASET_PROPERTIES);
+        ArgumentName.DATASET, ArgumentName.DATASET_PROPERTIES);
   }
 
   @Override
   public String getDescription() {
     return String.format("Sets properties for %s. '<%s>' is in the format 'key1=val1 key2=val2'.",
-                         Fragment.of(Article.A, ElementType.DATASET.getName()),
-                         ArgumentName.DATASET_PROPERTIES);
+        Fragment.of(Article.A, ElementType.DATASET.getName()),
+        ArgumentName.DATASET_PROPERTIES);
   }
 }

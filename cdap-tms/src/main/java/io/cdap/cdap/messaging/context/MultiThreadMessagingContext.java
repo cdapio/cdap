@@ -24,14 +24,14 @@ import io.cdap.cdap.messaging.MessagingService;
 import org.apache.tephra.TransactionAware;
 
 /**
- * The basic implementation of {@link MessagingContext} for supporting message publishing/fetching in both
- * non-transactional context and short transaction context (hence not for MR and Spark).
+ * The basic implementation of {@link MessagingContext} for supporting message publishing/fetching
+ * in both non-transactional context and short transaction context (hence not for MR and Spark).
  *
- * Instance of this class can be added as an extra {@link TransactionAware} to the program context so
- * that it can tap into all transaction lifecycle events across all threads.
+ * Instance of this class can be added as an extra {@link TransactionAware} to the program context
+ * so that it can tap into all transaction lifecycle events across all threads.
  */
 public class MultiThreadMessagingContext extends MultiThreadTransactionAware<BasicMessagingContext>
-                                         implements MessagingContext {
+    implements MessagingContext {
 
   private final MessagingService messagingService;
 

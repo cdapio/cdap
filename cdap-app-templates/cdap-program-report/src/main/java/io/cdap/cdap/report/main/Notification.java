@@ -22,6 +22,7 @@ import java.util.Objects;
  * Copy of Notification, used to deserialize from message and get the program properties
  */
 public class Notification {
+
   /**
    * The type of the notification.
    */
@@ -55,7 +56,7 @@ public class Notification {
     Notification that = (Notification) o;
 
     return Objects.equals(notificationType, that.notificationType)
-      && Objects.equals(properties, that.properties);
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -65,9 +66,9 @@ public class Notification {
 
   @Override
   public String toString() {
-    return "Notification{" +
-      "notificationType=" + notificationType +
-      ", properties=" + properties +
-      '}';
+    return "Notification{"
+        + "notificationType=" + notificationType
+        + ", properties=" + properties
+        + '}';
   }
 }

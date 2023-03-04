@@ -67,41 +67,43 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new NamespaceQueryAdminModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new MessagingClientModule(),
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      new MetricsStoreModule(),
-      new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),
-      new MetricsProcessorStatusServiceModule(),
-      new MetricsHandlerModule(),
-      new DFSLocationModule(),
-      new MetricsWriterModule()
+        new NamespaceQueryAdminModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new MessagingClientModule(),
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        new MetricsStoreModule(),
+        new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),
+        new MetricsProcessorStatusServiceModule(),
+        new MetricsHandlerModule(),
+        new DFSLocationModule(),
+        new MetricsWriterModule()
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    Set<Integer> topicNumbers = IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM))
-      .boxed()
-      .collect(Collectors.toSet());
+    Set<Integer> topicNumbers = IntStream.range(0,
+            cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM))
+        .boxed()
+        .collect(Collectors.toSet());
 
     MetricsContext metricsContext = injector.getInstance(MetricsCollectionService.class)
-      .getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT);
+        .getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT);
 
     services.add(injector.getInstance(MessagingMetricsProcessorServiceFactory.class)
-                   .create(topicNumbers, metricsContext, 0));
+        .create(topicNumbers, metricsContext, 0));
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
     services.add(injector.getInstance(MetricsQueryService.class));
     services.add(injector.getInstance(MetricsAdminSubscriberService.class));
     services.add(injector.getInstance(MetricsCleanUpService.class));
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -111,7 +113,7 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.METRICS);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.METRICS);
   }
 }

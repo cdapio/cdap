@@ -22,16 +22,13 @@ import java.util.Map;
 /**
  * Macro evaluator helps to provide macro substitution at runtime.
  *
- * MacroEvaluator supports two kinds of macros 1) property lookup  2) macro functions.
- * property lookup:
- * Syntax : ${macro}
- * Description: lookup the key "macro" from properties and return the value for the key, could return null if not found.
- * Example : ${user-name}
+ * MacroEvaluator supports two kinds of macros 1) property lookup  2) macro functions. property
+ * lookup: Syntax : ${macro} Description: lookup the key "macro" from properties and return the
+ * value for the key, could return null if not found. Example : ${user-name}
  *
- * macro functions:
- * Syntax : ${macroFunction(macro)}
- * Description: call the macroFunction with "macro" as the argument to the function.
- * Example : ${secure(accessKey)} - macro function "secure" is called with argument "accessKey".
+ * macro functions: Syntax : ${macroFunction(macro)} Description: call the macroFunction with
+ * "macro" as the argument to the function. Example : ${secure(accessKey)} - macro function "secure"
+ * is called with argument "accessKey".
  */
 
 @Beta
@@ -47,8 +44,8 @@ public interface MacroEvaluator {
   String lookup(String property) throws InvalidMacroException;
 
   /**
-   * Use the macro function and call the function with provided arguments,
-   * function uses the arguments and returns the evaluated response as a string.
+   * Use the macro function and call the function with provided arguments, function uses the
+   * arguments and returns the evaluated response as a string.
    *
    * @param macroFunction macro function that has to be called
    * @param arguments arguments that will be passed to the macro function
@@ -58,23 +55,24 @@ public interface MacroEvaluator {
   String evaluate(String macroFunction, String... arguments) throws InvalidMacroException;
 
   /**
-   * Use the macro function and call the function with provided arguments,
-   * function uses the arguments and returns the evaluated response as a map.
-   * The map values can contain macros and will be evaluated. The map keys cannot contain macros.
+   * Use the macro function and call the function with provided arguments, function uses the
+   * arguments and returns the evaluated response as a map. The map values can contain macros and
+   * will be evaluated. The map keys cannot contain macros.
    *
    * @param macroFunction macro function that has to be called
    * @param arguments arguments that will be passed to the macro function
    * @return value returned by macro function
    * @throws InvalidMacroException if macroFunction is not supported
    */
-  default Map<String, String> evaluateMap(String macroFunction, String... arguments) throws InvalidMacroException {
+  default Map<String, String> evaluateMap(String macroFunction, String... arguments)
+      throws InvalidMacroException {
     throw new UnsupportedOperationException("Evaluating as map is not supported");
   }
 
   /**
-   * Get the type of the macro function evaluation result.
-   * If the type is string, {@link #evaluate(String, String...)} will be called.
-   * If the type is map, {@link #evaluateMap(String, String...)} will be called.
+   * Get the type of the macro function evaluation result. If the type is string, {@link
+   * #evaluate(String, String...)} will be called. If the type is map, {@link #evaluateMap(String,
+   * String...)} will be called.
    *
    * @param macroFunction macro function that has to be called
    * @return the object type of the macro evaluation

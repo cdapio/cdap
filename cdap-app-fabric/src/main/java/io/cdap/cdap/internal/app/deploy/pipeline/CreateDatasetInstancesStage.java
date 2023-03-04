@@ -28,16 +28,18 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 
 /**
- * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic
- * deploy of the {@link io.cdap.cdap.api.dataset.module.DatasetModule}s specified by application.
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic deploy of the {@link
+ * io.cdap.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
+
   private final DatasetInstanceCreator datasetInstanceCreator;
   private final OwnerAdmin ownerAdmin;
   private final AuthenticationContext authenticationContext;
 
-  public CreateDatasetInstancesStage(CConfiguration configuration, DatasetFramework datasetFramework,
-                                     OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
+  public CreateDatasetInstancesStage(CConfiguration configuration,
+      DatasetFramework datasetFramework,
+      OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.datasetInstanceCreator = new DatasetInstanceCreator(configuration, datasetFramework);
     this.ownerAdmin = ownerAdmin;
@@ -45,8 +47,7 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
   }
 
   /**
-   * Receives an input containing application specification and location
-   * and verifies both.
+   * Receives an input containing application specification and location and verifies both.
    *
    * @param input An instance of {@link ApplicationDeployable}
    */
@@ -58,9 +59,11 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeploy
     KerberosPrincipalId ownerPrincipal = input.getOwnerPrincipal();
     // get the authorizing user
     String authorizingUser =
-      AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
-                                              ownerPrincipal);
-    datasetInstanceCreator.createInstances(namespaceId, specification.getDatasets(), ownerPrincipal, authorizingUser);
+        AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext,
+            input.getApplicationId(),
+            ownerPrincipal);
+    datasetInstanceCreator.createInstances(namespaceId, specification.getDatasets(), ownerPrincipal,
+        authorizingUser);
 
     // Emit the input to next stage.
     emit(input);

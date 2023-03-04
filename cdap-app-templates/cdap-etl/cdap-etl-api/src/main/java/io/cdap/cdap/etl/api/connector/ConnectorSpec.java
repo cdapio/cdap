@@ -28,14 +28,15 @@ import javax.annotation.Nullable;
  * The connector spec contains all the properties based on the path and plugin config
  */
 public class ConnectorSpec {
+
   // schema is null when the connector is unable to retrieve it from the resource
   private final Schema schema;
   private final Set<PluginSpec> relatedPlugins;
   private final Set<SampleType> supportedSampleTypes;
 
   private ConnectorSpec(@Nullable Schema schema,
-                        Set<PluginSpec> relatedPlugins,
-                        Set<SampleType> supportedSampleTypes) {
+      Set<PluginSpec> relatedPlugins,
+      Set<SampleType> supportedSampleTypes) {
     this.schema = schema;
     this.relatedPlugins = relatedPlugins;
     this.supportedSampleTypes = supportedSampleTypes;
@@ -66,8 +67,8 @@ public class ConnectorSpec {
 
     ConnectorSpec that = (ConnectorSpec) o;
     return Objects.equals(schema, that.schema)
-            && Objects.equals(relatedPlugins, that.relatedPlugins)
-            && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
+        && Objects.equals(relatedPlugins, that.relatedPlugins)
+        && Objects.equals(supportedSampleTypes, that.supportedSampleTypes);
   }
 
   @Override
@@ -86,6 +87,7 @@ public class ConnectorSpec {
    * Builder for {@link ConnectorSpec}
    */
   public static class Builder {
+
     private Schema schema;
     private final Set<PluginSpec> relatedPlugins;
     private final Set<SampleType> supportedSampleTypes;

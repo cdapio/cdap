@@ -43,13 +43,16 @@ import java.lang.reflect.Type;
  * Deploys an application from an existing artifact.
  */
 public class CreateAppCommand extends AbstractAuthCommand {
-  private static final Type configType = new TypeToken<AppRequest<JsonObject>>() { }.getType();
+
+  private static final Type configType = new TypeToken<AppRequest<JsonObject>>() {
+  }.getType();
   private static final Gson GSON = new Gson();
   private final ApplicationClient applicationClient;
   private final FilePathResolver resolver;
 
   @Inject
-  public CreateAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+  public CreateAppCommand(ApplicationClient applicationClient, FilePathResolver resolver,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -61,7 +64,8 @@ public class CreateAppCommand extends AbstractAuthCommand {
 
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
-    ArtifactScope artifactScope = ArtifactScope.valueOf(arguments.get(ArgumentName.SCOPE.toString()).toUpperCase());
+    ArtifactScope artifactScope = ArtifactScope.valueOf(
+        arguments.get(ArgumentName.SCOPE.toString()).toUpperCase());
     ArtifactSummary artifact = new ArtifactSummary(artifactName, artifactVersion, artifactScope);
 
     JsonObject config = new JsonObject();
@@ -81,7 +85,7 @@ public class CreateAppCommand extends AbstractAuthCommand {
     }
 
     AppRequest<JsonObject> appRequest = new AppRequest<>(artifact, config, previewConfig,
-                                                         ownerPrincipal, updateSchedules);
+        ownerPrincipal, updateSchedules);
     applicationClient.deploy(appId, appRequest);
     output.println("Successfully created application");
   }
@@ -89,19 +93,22 @@ public class CreateAppCommand extends AbstractAuthCommand {
   @Override
   public String getPattern() {
     return String.format("create app <%s> [version <%s>] <%s> <%s> <%s> [<%s>]", ArgumentName.APP,
-                         ArgumentName.APP_VERSION, ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION,
-                         ArgumentName.SCOPE, ArgumentName.APP_CONFIG_FILE);
+        ArgumentName.APP_VERSION, ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION,
+        ArgumentName.SCOPE, ArgumentName.APP_CONFIG_FILE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Creates %s from an artifact, optionally with a version. If the version is not given, " +
-                           "a default version '%s' will be used. A configuration is also optional. If a " +
-                           "configuration is needed, it must be given as a file whose contents are a JSON object " +
-                           "containing the application config. For example, the file contents could contain: " +
-                           "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would " +
-                           "receive '{ \"stream\": \"purchases\" }' as its config object. Finally, an optional " +
-                           "principal may be given.",
-      Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
+    return String.format(
+        "Creates %s from an artifact, optionally with a version. If the version is not given, "
+            + "a default version '%s' will be used. A configuration is also optional. If a "
+            + "configuration is needed, it must be given as a file whose contents are a JSON object "
+
+            + "containing the application config. For example, the file contents could contain: "
+            + "'{ \"config\": { \"stream\": \"purchases\" } }'. In this case, the application would "
+
+            + "receive '{ \"stream\": \"purchases\" }' as its config object. Finally, an optional "
+            + "principal may be given.",
+        Fragment.of(Article.A, ElementType.APP.getName()), ApplicationId.DEFAULT_VERSION);
   }
 }

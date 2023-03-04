@@ -43,19 +43,19 @@ public class MetadataCommands extends CommandSet<Command> implements Categorized
   @Inject
   public MetadataCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(AddMetadataPropertiesCommand.class))
-        .add(injector.getInstance(AddMetadataTagsCommand.class))
-        .add(injector.getInstance(GetMetadataCommand.class))
-        .add(injector.getInstance(GetMetadataPropertiesCommand.class))
-        .add(injector.getInstance(GetMetadataTagsCommand.class))
-        .add(injector.getInstance(RemoveMetadataCommand.class))
-        .add(injector.getInstance(RemoveMetadataPropertiesCommand.class))
-        .add(injector.getInstance(RemoveMetadataPropertyCommand.class))
-        .add(injector.getInstance(RemoveMetadataTagCommand.class))
-        .add(injector.getInstance(RemoveMetadataTagsCommand.class))
-        .add(injector.getInstance(SearchMetadataCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(AddMetadataPropertiesCommand.class))
+            .add(injector.getInstance(AddMetadataTagsCommand.class))
+            .add(injector.getInstance(GetMetadataCommand.class))
+            .add(injector.getInstance(GetMetadataPropertiesCommand.class))
+            .add(injector.getInstance(GetMetadataTagsCommand.class))
+            .add(injector.getInstance(RemoveMetadataCommand.class))
+            .add(injector.getInstance(RemoveMetadataPropertiesCommand.class))
+            .add(injector.getInstance(RemoveMetadataPropertyCommand.class))
+            .add(injector.getInstance(RemoveMetadataTagCommand.class))
+            .add(injector.getInstance(RemoveMetadataTagsCommand.class))
+            .add(injector.getInstance(SearchMetadataCommand.class))
+            .build());
   }
 
   @Override

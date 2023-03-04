@@ -38,8 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages the custom_time and Temporary Holds that need to be set/unset/updated on cached program artifacts in GCS.
- * Also maintains a usage counter of each of the cached artifacts in the same GCS bucket.
+ * Manages the custom_time and Temporary Holds that need to be set/unset/updated on cached program
+ * artifacts in GCS. Also maintains a usage counter of each of the cached artifacts in the same GCS
+ * bucket.
  */
 public class ArtifactCacheManager {
 
@@ -56,8 +57,9 @@ public class ArtifactCacheManager {
   /**
    * Increases cache usage counter for all the files(cached artifacts) in the GCS bucket.
    */
-  public void recordCacheUsageForArtifacts(Storage client, String bucket, Set<String> cachedArtifacts,
-                                           String runRootPath, String cachedArtifactsPath, String runId) {
+  public void recordCacheUsageForArtifacts(Storage client, String bucket,
+      Set<String> cachedArtifacts,
+      String runRootPath, String cachedArtifactsPath, String runId) {
     try {
       String cachedArtifactsListFilePath = getPath(runRootPath, CACHED_ARTIFACTS_LIST_FOR_RUNID);
       storeCachedArtifactsForRun(client, bucket, cachedArtifacts, cachedArtifactsListFilePath);
@@ -68,22 +70,27 @@ public class ArtifactCacheManager {
   }
 
   /**
-   * Decreases cache usage counter for all the files(cached artifacts) in the GCS bucket.
-   * Also updates custom_time and removes Temporary Hold if the artifact is not being used by any program run.
+   * Decreases cache usage counter for all the files(cached artifacts) in the GCS bucket. Also
+   * updates custom_time and removes Temporary Hold if the artifact is not being used by any program
+   * run.
    */
-  public void releaseCacheUsageForArtifacts(Storage client, String bucket, String runRootPath, String runId) {
+  public void releaseCacheUsageForArtifacts(Storage client, String bucket, String runRootPath,
+      String runId) {
     try {
       String cachedArtifactsListFilePath = getPath(runRootPath, CACHED_ARTIFACTS_LIST_FOR_RUNID);
-      Set<String> cachedArtifacts = getCachedArtifactsForRun(client, bucket, cachedArtifactsListFilePath);
-      String cachedArtifactsPath = getPath(DataprocUtils.CDAP_GCS_ROOT, DataprocUtils.CDAP_CACHED_ARTIFACTS);
+      Set<String> cachedArtifacts = getCachedArtifactsForRun(client, bucket,
+          cachedArtifactsListFilePath);
+      String cachedArtifactsPath = getPath(DataprocUtils.CDAP_GCS_ROOT,
+          DataprocUtils.CDAP_CACHED_ARTIFACTS);
       changeUsageCountForArtifacts(client, bucket, cachedArtifacts, cachedArtifactsPath, -1);
     } catch (Exception e) {
       LOG.warn("Unable to release artifacts cache usage for run: {}", runId, e);
     }
   }
 
-  private void changeUsageCountForArtifacts(Storage client, String bucket, Set<String> cachedArtifacts,
-                                            String cachedArtifactsPath, int changeValue) throws InterruptedException {
+  private void changeUsageCountForArtifacts(Storage client, String bucket,
+      Set<String> cachedArtifacts,
+      String cachedArtifactsPath, int changeValue) throws InterruptedException {
     if (cachedArtifacts == null || cachedArtifacts.isEmpty()) {
       LOG.debug("No Cached Artifacts found for this run!");
       return;
@@ -94,17 +101,20 @@ public class ArtifactCacheManager {
       try {
         Blob blob = client.get(blobId);
         if (blob == null || !blob.exists()) {
-          LOG.debug("Creating ArtifactsCacheCounter {} at {}", CACHED_ARTIFACTS_USAGE_COUNT, cacheCountFilePath);
+          LOG.debug("Creating ArtifactsCacheCounter {} at {}", CACHED_ARTIFACTS_USAGE_COUNT,
+              cacheCountFilePath);
           blob = createCacheCounterFile(client, blobId);
         }
-        Map<String, Integer> artifactCount = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
-                                                           new TypeToken<Map<String, Integer>>() {
-                                                           }.getType());
+        Map<String, Integer> artifactCount = GSON.fromJson(
+            new String(blob.getContent(), StandardCharsets.UTF_8),
+            new TypeToken<Map<String, Integer>>() {
+            }.getType());
         Set<String> artifactsCached = new HashSet<>(artifactCount.keySet());
         modifyCacheCounter(cachedArtifacts, cacheCountFilePath, artifactCount, changeValue);
         if (writeCacheCounterToGCS(blob, artifactCount)) {
           if (changeValue < 0) {
-            updateCustomTimeAndHoldOnArtifacts(client, bucket, artifactCount, artifactsCached, cachedArtifactsPath);
+            updateCustomTimeAndHoldOnArtifacts(client, bucket, artifactCount, artifactsCached,
+                cachedArtifactsPath);
           }
           break;
         }
@@ -115,18 +125,20 @@ public class ArtifactCacheManager {
     }
   }
 
-  private void updateCustomTimeAndHoldOnArtifacts(Storage client, String bucket, Map<String, Integer> artifactCount,
-                                                  Set<String> artifactsCached, String cachedArtifactsPath) {
+  private void updateCustomTimeAndHoldOnArtifacts(Storage client, String bucket,
+      Map<String, Integer> artifactCount,
+      Set<String> artifactsCached, String cachedArtifactsPath) {
     artifactsCached.parallelStream().filter(artifact -> !artifactCount.containsKey(artifact))
-      .forEach(artifact -> {
-        String cachedArtifactFilePath = getPath(cachedArtifactsPath, artifact);
-        try {
-          DataprocUtils.removeTemporaryHoldOnGCSObject(client, bucket, BlobId.of(bucket, cachedArtifactFilePath),
-                                                       cachedArtifactFilePath);
-        } catch (InterruptedException e) {
-          LOG.warn("Unable to update custom time and temporary hold on cached artifacts", e);
-        }
-      });
+        .forEach(artifact -> {
+          String cachedArtifactFilePath = getPath(cachedArtifactsPath, artifact);
+          try {
+            DataprocUtils.removeTemporaryHoldOnGCSObject(client, bucket,
+                BlobId.of(bucket, cachedArtifactFilePath),
+                cachedArtifactFilePath);
+          } catch (InterruptedException e) {
+            LOG.warn("Unable to update custom time and temporary hold on cached artifacts", e);
+          }
+        });
   }
 
   private boolean writeCacheCounterToGCS(Blob blob, Map<String, Integer> artifactCount) {
@@ -141,12 +153,13 @@ public class ArtifactCacheManager {
   }
 
   private void modifyCacheCounter(Set<String> cachedArtifacts, String cacheCountFilePath,
-                                  Map<String, Integer> artifactCount, int changeValue) {
+      Map<String, Integer> artifactCount, int changeValue) {
     for (String cachedArtifact : cachedArtifacts) {
       int newCount = artifactCount.getOrDefault(cachedArtifact, 0) + changeValue;
       if (newCount <= 0) {
         if (newCount < 0) {
-          LOG.warn("Cache usage count less than 0 for {} in {}", cachedArtifact, cacheCountFilePath);
+          LOG.warn("Cache usage count less than 0 for {} in {}", cachedArtifact,
+              cacheCountFilePath);
         }
         artifactCount.remove(cachedArtifact);
       } else {
@@ -159,7 +172,7 @@ public class ArtifactCacheManager {
     try {
       BlobInfo createBlob = BlobInfo.newBuilder(blobId).setContentType(CONTENT_TYPE_JSON).build();
       client.create(createBlob, GSON.toJson(new HashMap<>()).getBytes(StandardCharsets.UTF_8),
-                    Storage.BlobTargetOption.doesNotExist());
+          Storage.BlobTargetOption.doesNotExist());
     } catch (StorageException e) {
       if (e.getCode() != HttpURLConnection.HTTP_PRECON_FAILED) {
         throw e;
@@ -168,16 +181,17 @@ public class ArtifactCacheManager {
     return client.get(blobId);
   }
 
-  private void storeCachedArtifactsForRun(Storage client, String bucket, Set<String> cachedArtifacts,
-                                          String cachedArtifactsListFilePath) {
+  private void storeCachedArtifactsForRun(Storage client, String bucket,
+      Set<String> cachedArtifacts,
+      String cachedArtifactsListFilePath) {
     BlobInfo createBlob = BlobInfo.newBuilder(bucket, cachedArtifactsListFilePath)
-      .setContentType(CONTENT_TYPE_JSON).build();
+        .setContentType(CONTENT_TYPE_JSON).build();
     client.create(createBlob, GSON.toJson(cachedArtifacts).getBytes(StandardCharsets.UTF_8),
-                  Storage.BlobTargetOption.doesNotExist());
+        Storage.BlobTargetOption.doesNotExist());
   }
 
   private Set<String> getCachedArtifactsForRun(Storage client, String bucket,
-                                               String cachedArtifactsListFilePath) throws InterruptedException {
+      String cachedArtifactsListFilePath) throws InterruptedException {
     BlobId blobId = BlobId.of(bucket, cachedArtifactsListFilePath);
     Set<String> files = null;
     for (int i = 0; i < MAX_RETRIES_TO_FETCH_CACHED_ARTIFACTS_FOR_RUN; i++) {
@@ -187,8 +201,8 @@ public class ArtifactCacheManager {
           continue;
         }
         files = GSON.fromJson(new String(blob.getContent(), StandardCharsets.UTF_8),
-                              new TypeToken<Set<String>>() {
-                              }.getType());
+            new TypeToken<Set<String>>() {
+            }.getType());
       } catch (StorageException e) {
         if (i == MAX_RETRIES_TO_FETCH_CACHED_ARTIFACTS_FOR_RUN - 1) {
           throw e;

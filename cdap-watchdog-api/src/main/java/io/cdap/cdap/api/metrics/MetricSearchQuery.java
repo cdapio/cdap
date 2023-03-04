@@ -19,11 +19,12 @@ package io.cdap.cdap.api.metrics;
 import java.util.List;
 
 /**
- * Defines a query to perform Exploration and Search on {@link MetricStore} data.
- * Given a list of {@link TagValue}s this explore query can be used
- * to find next set of tags available or the measureNames belonging to this tag list.
+ * Defines a query to perform Exploration and Search on {@link MetricStore} data. Given a list of
+ * {@link TagValue}s this explore query can be used to find next set of tags available or the
+ * measureNames belonging to this tag list.
  */
 public class MetricSearchQuery {
+
   private final long startTs;
   private final long endTs;
   private final int resolution;
@@ -31,7 +32,8 @@ public class MetricSearchQuery {
   // todo: use NavigableMap to inform that there are no same tag names?
   private final List<TagValue> tagValues;
 
-  public MetricSearchQuery(long startTs, long endTs, int resolution, int limit, List<TagValue> tagValues) {
+  public MetricSearchQuery(long startTs, long endTs, int resolution, int limit,
+      List<TagValue> tagValues) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
@@ -67,12 +69,12 @@ public class MetricSearchQuery {
 
   @Override
   public String toString() {
-    return "MetricSearchQuery{" +
-      "startTs=" + startTs +
-      ", endTs=" + endTs +
-      ", resolution=" + resolution +
-      ", limit=" + limit +
-      ", tagValues=" + tagValues +
-      '}';
+    return "MetricSearchQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", resolution=" + resolution
+        + ", limit=" + limit
+        + ", tagValues=" + tagValues
+        + '}';
   }
 }

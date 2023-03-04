@@ -22,16 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A abstract base class for bridging standard main method to method invoked through
- * apache commons-daemon jsvc.
+ * A abstract base class for bridging standard main method to method invoked through apache
+ * commons-daemon jsvc.
  */
 public abstract class DaemonMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(DaemonMain.class);
 
   /**
-   * The main method. It simply call methods in the same sequence
-   * as if the program is started by jsvc.
+   * The main method. It simply call methods in the same sequence as if the program is started by
+   * jsvc.
    */
   protected void doMain(final String[] args) throws Exception {
     try {

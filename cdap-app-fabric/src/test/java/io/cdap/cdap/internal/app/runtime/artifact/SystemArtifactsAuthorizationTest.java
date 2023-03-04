@@ -105,8 +105,9 @@ public class SystemArtifactsAuthorizationTest {
     SecurityRequestContext.setUserId(ALICE.getName());
     try {
       artifactRepository.addSystemArtifacts();
-      Assert.fail("Adding system artifacts should have failed because alice does not have admin privileges on " +
-                    "the namespace system.");
+      Assert.fail(
+          "Adding system artifacts should have failed because alice does not have admin privileges on "
+              + "the namespace system.");
     } catch (UnauthorizedException expected) {
       // expected
     }
@@ -123,8 +124,9 @@ public class SystemArtifactsAuthorizationTest {
     // deleting a system artifact should fail because bob does not have admin privileges on the artifact
     try {
       artifactRepository.deleteArtifact(Id.Artifact.fromEntityId(SYSTEM_ARTIFACT));
-      Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +
-                    "the artifact.");
+      Assert.fail(
+          "Deleting a system artifact should have failed because alice does not have admin privileges on "
+              + "the artifact.");
     } catch (UnauthorizedException expected) {
       // expected
     }

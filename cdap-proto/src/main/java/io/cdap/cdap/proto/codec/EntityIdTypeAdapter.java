@@ -28,13 +28,15 @@ import io.cdap.cdap.proto.id.EntityId;
 import java.lang.reflect.Type;
 
 /**
- * Class for serialize/deserialize EntityId object to/from json through {@link com.google.gson.Gson Gson}.
+ * Class for serialize/deserialize EntityId object to/from json through {@link com.google.gson.Gson
+ * Gson}.
  */
-public final class EntityIdTypeAdapter implements JsonSerializer<EntityId>, JsonDeserializer<EntityId> {
+public final class EntityIdTypeAdapter implements JsonSerializer<EntityId>,
+    JsonDeserializer<EntityId> {
 
   @Override
   public EntityId deserialize(JsonElement json, Type typeOfT,
-                        JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject map = json.getAsJsonObject();
     JsonElement entityTypeJson = map.get("entity");
     if (entityTypeJson == null) {

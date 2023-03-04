@@ -33,7 +33,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
  */
 public class MultiInputTaggedSplit extends TaggedInputSplit {
 
-  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type STRING_STRING_MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
   private static final Gson GSON = new Gson();
 
   private String name;
@@ -42,7 +43,8 @@ public class MultiInputTaggedSplit extends TaggedInputSplit {
 
   private Class<? extends InputFormat<?, ?>> inputFormatClass;
 
-  MultiInputTaggedSplit() { }
+  MultiInputTaggedSplit() {
+  }
 
   /**
    * Creates a new MultiInputTaggedSplit.
@@ -56,10 +58,10 @@ public class MultiInputTaggedSplit extends TaggedInputSplit {
    */
   @SuppressWarnings("unchecked")
   MultiInputTaggedSplit(InputSplit inputSplit, Configuration conf,
-                        String name,
-                        Map<String, String> inputConfigs,
-                        Class<? extends InputFormat> inputFormatClass,
-                        String mapperClassName) {
+      String name,
+      Map<String, String> inputConfigs,
+      Class<? extends InputFormat> inputFormatClass,
+      String mapperClassName) {
     super(inputSplit, conf);
     this.name = name;
     this.inputConfigs = inputConfigs;

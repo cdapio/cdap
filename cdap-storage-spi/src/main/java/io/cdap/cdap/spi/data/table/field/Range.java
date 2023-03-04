@@ -23,11 +23,12 @@ import java.util.Collections;
 import java.util.Objects;
 
 /**
- * Represents a range of fields.
- * The range has two endpoints - begin and end, to represent the beginning and the end of a range.
+ * Represents a range of fields. The range has two endpoints - begin and end, to represent the
+ * beginning and the end of a range.
  */
 @Beta
 public final class Range {
+
   /**
    * Indicates if the endpoint is part of the range (INCLUSIVE) or not (EXCLUSIVE).
    */
@@ -44,16 +45,17 @@ public final class Range {
   /**
    * Create a range with begin and end.
    *
-   * @param begin the fields forming the beginning of the range. The fields must be a prefix or complete primary keys,
-   *              empty to read from the start. If not, {@link InvalidFieldException} will be thrown
-   *              when scanning the table.
+   * @param begin the fields forming the beginning of the range. The fields must be a prefix or
+   *     complete primary keys, empty to read from the start. If not, {@link InvalidFieldException}
+   *     will be thrown when scanning the table.
    * @param beginBound the match type for the begin fields
-   * @param end the fields forming the end of the range. The fields must be a prefix or complete primary keys,
-   *            empty to read to the end. If not, {@link InvalidFieldException} will be thrown
-   *            when scanning the table.
+   * @param end the fields forming the end of the range. The fields must be a prefix or complete
+   *     primary keys, empty to read to the end. If not, {@link InvalidFieldException} will be
+   *     thrown when scanning the table.
    * @param endBound the match type for the end fields
    */
-  private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
+  private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end,
+      Bound endBound) {
     this.begin = begin == null ? Collections.emptySet() : begin;
     this.beginBound = beginBound;
     this.end = end == null ? Collections.emptySet() : end;
@@ -69,13 +71,14 @@ public final class Range {
    * @param endBound the match type for the end fields
    * @return a range object
    */
-  public static Range create(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
+  public static Range create(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end,
+      Bound endBound) {
     return new Range(begin, beginBound, end, endBound);
   }
 
   /**
-   * Create a range that starts from a begin point, but does not have an end. It will include all values that are
-   * greater than (or equal to) the begin point.
+   * Create a range that starts from a begin point, but does not have an end. It will include all
+   * values that are greater than (or equal to) the begin point.
    *
    * @param begin the fields forming the beginning of the range
    * @param beginBound the match type for the begin fields
@@ -86,7 +89,8 @@ public final class Range {
   }
 
   /**
-   * Create a range that only has an end point. It will include all values less than (or equal to) the end point.
+   * Create a range that only has an end point. It will include all values less than (or equal to)
+   * the end point.
    *
    * @param end the fields forming the end of the range
    * @param endBound the match type for the end fields
@@ -97,8 +101,8 @@ public final class Range {
   }
 
   /**
-   * Creates a range that only matches one element. This range will read all elements which is equal to the
-   * given keys.
+   * Creates a range that only matches one element. This range will read all elements which is equal
+   * to the given keys.
    *
    * @param singleton the fields forming the singleton range
    * @return a range object
@@ -113,14 +117,16 @@ public final class Range {
    * @return a range object
    */
   public static Range all() {
-    return new Range(Collections.emptySet(), Bound.INCLUSIVE, Collections.emptySet(), Bound.INCLUSIVE);
+    return new Range(Collections.emptySet(), Bound.INCLUSIVE, Collections.emptySet(),
+        Bound.INCLUSIVE);
   }
 
   /**
    * Returns {@code true} if the range is a single value range.
    */
   public boolean isSingleton() {
-    return !begin.isEmpty() && begin.equals(end) && beginBound == Bound.INCLUSIVE && endBound == Bound.INCLUSIVE;
+    return !begin.isEmpty() && begin.equals(end) && beginBound == Bound.INCLUSIVE
+        && endBound == Bound.INCLUSIVE;
   }
 
   /**
@@ -161,7 +167,7 @@ public final class Range {
     }
     Range range = (Range) other;
     return Objects.equals(begin, range.begin) && beginBound == range.beginBound
-      && Objects.equals(end, range.end) && endBound == range.endBound;
+        && Objects.equals(end, range.end) && endBound == range.endBound;
   }
 
   @Override
@@ -171,11 +177,11 @@ public final class Range {
 
   @Override
   public String toString() {
-    return "Range{" +
-      "begin=" + begin +
-      ", beginBound=" + beginBound +
-      ", end=" + end +
-      ", endBound=" + endBound +
-      '}';
+    return "Range{"
+        + "begin=" + begin
+        + ", beginBound=" + beginBound
+        + ", end=" + end
+        + ", endBound=" + endBound
+        + '}';
   }
 }

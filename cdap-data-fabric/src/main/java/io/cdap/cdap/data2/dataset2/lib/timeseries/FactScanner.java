@@ -53,7 +53,8 @@ public final class FactScanner implements Iterator<FactScanResult> {
   /**
    * Construct a FactScanner. Should only be called by FactTable.
    */
-  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs, Collection<String> measureNames) {
+  FactScanner(Scanner scanner, FactCodec codec, long startTs, long endTs,
+      Collection<String> measureNames) {
     this.scanner = scanner;
     this.codec = codec;
     this.internalIterator = createIterator();

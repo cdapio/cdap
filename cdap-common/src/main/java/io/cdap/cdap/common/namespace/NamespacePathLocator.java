@@ -39,7 +39,8 @@ public interface NamespacePathLocator {
   /**
    * Returns the base {@link Location} for the specified namespace on the filesystem
    *
-   * @param namespaceMeta the {@link NamespaceMeta metadata} of the namespace for which base location is desired
+   * @param namespaceMeta the {@link NamespaceMeta metadata} of the namespace for which base
+   *     location is desired
    * @return {@link Location} for the specified namespace on the filesystem
    */
   Location get(NamespaceMeta namespaceMeta) throws IOException;

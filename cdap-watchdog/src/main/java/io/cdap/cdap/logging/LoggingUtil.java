@@ -48,7 +48,8 @@ public final class LoggingUtil {
   }
 
   /**
-   * Returns a list of {@link URL} containing the log extension jars based on the given configuration.
+   * Returns a list of {@link URL} containing the log extension jars based on the given
+   * configuration.
    */
   public static List<File> getExtensionJars(CConfiguration cConf) {
     List<File> libJars = new ArrayList<>();
@@ -86,7 +87,8 @@ public final class LoggingUtil {
   }
 
   /**
-   * Creates a new map from the given mdc map by replacing {@code null} key with {@link #MDC_NULL_KEY}.
+   * Creates a new map from the given mdc map by replacing {@code null} key with {@link
+   * #MDC_NULL_KEY}.
    */
   public static Map<String, String> encodeMDC(Map<String, String> mdc) {
     Map<String, String> encodeMap = new HashMap<>(mdc.size());
@@ -111,7 +113,7 @@ public final class LoggingUtil {
       Object key = entry.getKey();
       Object value = entry.getValue();
       stringMap.put(key == null || MDC_NULL_KEY.equals(key.toString()) ? null : key.toString(),
-                    value == null ? null : value.toString());
+          value == null ? null : value.toString());
     }
     return stringMap;
   }

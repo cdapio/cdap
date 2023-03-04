@@ -23,6 +23,7 @@ import java.util.Map;
  * A condition must be satisfied in order to trigger a schedule.
  */
 public interface Trigger {
+
   /**
    * Represents all known trigger types.
    */
@@ -64,8 +65,9 @@ public interface Trigger {
     public static Type valueOfCategoryName(String categoryName) {
       Type type = CATEGORY_MAP.get(categoryName);
       if (type == null) {
-        throw new IllegalArgumentException(String.format("Unknown category name '%s'. Must be one of %s",
-                                                         categoryName, String.join(",", CATEGORY_MAP.keySet())));
+        throw new IllegalArgumentException(
+            String.format("Unknown category name '%s'. Must be one of %s",
+                categoryName, String.join(",", CATEGORY_MAP.keySet())));
       }
       return type;
     }

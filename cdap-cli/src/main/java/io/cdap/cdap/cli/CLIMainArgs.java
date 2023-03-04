@@ -57,14 +57,14 @@ public class CLIMainArgs {
       return false;
     }
     final CLIMainArgs other = (CLIMainArgs) obj;
-    return Arrays.equals(this.optionTokens, other.optionTokens) &&
-      Arrays.equals(this.commandTokens, other.commandTokens);
+    return Arrays.equals(this.optionTokens, other.optionTokens)
+        && Arrays.equals(this.commandTokens, other.commandTokens);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this).add("optionTokens", Arrays.toString(optionTokens))
-      .add("commandTokens", Arrays.toString(commandTokens)).toString();
+        .add("commandTokens", Arrays.toString(commandTokens)).toString();
   }
 
   public static CLIMainArgs parse(String[] args, Options options) {
@@ -99,6 +99,6 @@ public class CLIMainArgs {
       }
     }
     return new CLIMainArgs(optionsPart.toArray(new String[optionsPart.size()]),
-                           commandPart.toArray(new String[commandPart.size()]));
+        commandPart.toArray(new String[commandPart.size()]));
   }
 }

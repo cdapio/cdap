@@ -28,8 +28,8 @@ public interface UpgradeContext {
    *
    * @param pluginType the plugin type
    * @param pluginName the plugin name
-   * @return artifact information for the plugin type and name.
-   *         returns null if no artifact for the plugin could be found.
+   * @return artifact information for the plugin type and name. returns null if no artifact for the
+   *     plugin could be found.
    */
   @Nullable
   ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName);

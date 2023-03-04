@@ -31,8 +31,8 @@ import java.util.Set;
 public interface SatisfiableTrigger extends Trigger {
 
   /**
-   * Checks whether the given notifications can satisfy this trigger. Once the trigger is satisfied, it will
-   * remain satisfied no matter what new notifications it receives.
+   * Checks whether the given notifications can satisfy this trigger. Once the trigger is satisfied,
+   * it will remain satisfied no matter what new notifications it receives.
    *
    * @param schedule the schedule that this trigger belongs to
    * @param notifications the notifications used to check whether this trigger is satisfied
@@ -41,8 +41,8 @@ public interface SatisfiableTrigger extends Trigger {
   boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications);
 
   /**
-   * Get all trigger keys which will be used to index the schedule containing this trigger, so that we can
-   * do reverse lookup to get the schedule when events relevant to the trigger are received.
+   * Get all trigger keys which will be used to index the schedule containing this trigger, so that
+   * we can do reverse lookup to get the schedule when events relevant to the trigger are received.
    *
    * @return a set of trigger keys as {@link String}. The set will be never be null.
    */
@@ -51,17 +51,18 @@ public interface SatisfiableTrigger extends Trigger {
   /**
    * Get the {@link TriggerInfo} constructed from this trigger with the given context.
    *
-   * @param context the {@link TriggerInfoContext} that provides necessary information to build the {@link TriggerInfo}
+   * @param context the {@link TriggerInfoContext} that provides necessary information to build
+   *     the {@link TriggerInfo}
    * @return An immutable list of {@link TriggerInfo}'s of this trigger. If the trigger is not
-   *         composite trigger, the list only contains one trigger info for this trigger.
-   *         If the trigger is a composite trigger, the list will contain all the satisfied non-composite triggers
-   *         in the composite trigger.
+   *     composite trigger, the list only contains one trigger info for this trigger. If the trigger
+   *     is a composite trigger, the list will contain all the satisfied non-composite triggers in
+   *     the composite trigger.
    */
   List<TriggerInfo> getTriggerInfos(TriggerInfoContext context);
 
   /**
-   * Called by the {@link ScheduleTaskRunner} before launching a given program. It gives triggers control on
-   * what to pass to the user program at runtime.
+   * Called by the {@link ScheduleTaskRunner} before launching a given program. It gives triggers
+   * control on what to pass to the user program at runtime.
    *
    * @param schedule the schedule that this trigger belongs to
    * @param notifications the list of notifications that have this trigger satisfied.
@@ -69,5 +70,5 @@ public interface SatisfiableTrigger extends Trigger {
    * @param userArgs user arguments to the runtime system
    */
   void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
-                             Map<String, String> systemArgs, Map<String, String> userArgs);
+      Map<String, String> systemArgs, Map<String, String> userArgs);
 }

@@ -25,6 +25,7 @@ import org.iq80.leveldb.DB;
  * One partition of a MessageTable, backed by a LevelDB table.
  */
 public class LevelDBPartition implements Closeable {
+
   private final File file;
   private final long startTime;
   private final long endTime;
@@ -73,6 +74,7 @@ public class LevelDBPartition implements Closeable {
    * Supplies an opened LevelDB
    */
   public interface Supplier {
+
     DB get() throws IOException;
   }
 }

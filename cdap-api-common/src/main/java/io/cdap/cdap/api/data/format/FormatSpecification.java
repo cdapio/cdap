@@ -24,10 +24,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for the format.
+ * Specification for a {@link RecordFormat}, including the class, schema, and settings to use for
+ * the format.
  */
 @Beta
 public final class FormatSpecification {
+
   private final String name;
   private final Schema schema;
   private final Map<String, String> settings;
@@ -38,7 +40,8 @@ public final class FormatSpecification {
     this(null, null, Collections.<String, String>emptyMap());
   }
 
-  public FormatSpecification(String name, @Nullable Schema schema, @Nullable Map<String, String> settings) {
+  public FormatSpecification(String name, @Nullable Schema schema,
+      @Nullable Map<String, String> settings) {
     this.name = name;
     this.schema = schema;
     this.settings = settings == null ? Collections.<String, String>emptyMap() : settings;
@@ -72,9 +75,9 @@ public final class FormatSpecification {
 
     FormatSpecification that = (FormatSpecification) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(schema, that.schema) &&
-      Objects.equals(settings, that.settings);
+    return Objects.equals(name, that.name)
+        && Objects.equals(schema, that.schema)
+        && Objects.equals(settings, that.settings);
   }
 
   @Override
@@ -85,9 +88,9 @@ public final class FormatSpecification {
   @Override
   public String toString() {
     return "FormatSpecification{" +
-      "name='" + name + '\'' +
-      ", schema=" + schema +
-      ", settings=" + settings +
-      '}';
+        "name='" + name + '\'' +
+        ", schema=" + schema +
+        ", settings=" + settings +
+        '}';
   }
 }

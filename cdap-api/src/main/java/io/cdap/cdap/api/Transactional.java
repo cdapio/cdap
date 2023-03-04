@@ -26,28 +26,31 @@ import org.apache.tephra.TransactionFailureException;
 //       evolve the interface without breaking compatibility.
 
 /**
- * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed inside
- * a transaction.
+ * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed
+ * inside a transaction.
  */
 public interface Transactional {
 
   /**
-   * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
-   * The {@link TxRunnable} can gain access to a {@link Dataset} through the provided {@link DatasetContext}.
+   * Executes a set of operations via a {@link TxRunnable} that are committed as a single
+   * transaction. The {@link TxRunnable} can gain access to a {@link Dataset} through the provided
+   * {@link DatasetContext}.
    *
    * @param runnable the runnable to be executed in the transaction
-   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a transaction
+   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a
+   *     transaction
    */
   void execute(TxRunnable runnable) throws TransactionFailureException;
 
   /**
-   * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction with a given
-   * timeout. The {@link TxRunnable} can gain access to a {@link Dataset} through the provided {@link DatasetContext}.
+   * Executes a set of operations via a {@link TxRunnable} that are committed as a single
+   * transaction with a given timeout. The {@link TxRunnable} can gain access to a {@link Dataset}
+   * through the provided {@link DatasetContext}.
    *
    * @param timeoutInSeconds the transaction timeout for the transaction, in seconds
    * @param runnable the runnable to be executed in the transaction
-   *
-   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a transaction
+   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a
+   *     transaction
    */
   void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException;
 }

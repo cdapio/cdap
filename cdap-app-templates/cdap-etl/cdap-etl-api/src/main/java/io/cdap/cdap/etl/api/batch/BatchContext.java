@@ -32,18 +32,20 @@ public interface BatchContext extends DatasetContext, TransformContext {
 
   /**
    * Create a new dataset instance.
+   *
    * @param datasetName the name of the new dataset
    * @param typeName the type of the dataset to create
    * @param properties the properties for the new dataset
    * @throws InstanceConflictException if the dataset already exists
-   * @throws DatasetManagementException for any issues encountered in the dataset system,
-   *         or if the dataset type's create method fails.
+   * @throws DatasetManagementException for any issues encountered in the dataset system, or if
+   *     the dataset type's create method fails.
    */
   void createDataset(String datasetName, String typeName, DatasetProperties properties)
-    throws DatasetManagementException;
+      throws DatasetManagementException;
 
   /**
    * Check whether a dataset exists in the current namespace.
+   *
    * @param datasetName the name of the dataset
    * @return whether a dataset of that name exists
    * @throws DatasetManagementException for any issues encountered in the dataset system
@@ -51,8 +53,9 @@ public interface BatchContext extends DatasetContext, TransformContext {
   boolean datasetExists(String datasetName) throws DatasetManagementException;
 
   /**
-   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so plugins should be
-   * careful to prefix any arguments that should not be clobbered by other pipeline stages.
+   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so
+   * plugins should be careful to prefix any arguments that should not be clobbered by other
+   * pipeline stages.
    *
    * @return settable pipeline arguments
    */

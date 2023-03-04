@@ -26,7 +26,8 @@ import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
 
 /**
- * Default implementation for {@link ScanBuilder}. Specific HBase compat module can extends and override methods.
+ * Default implementation for {@link ScanBuilder}. Specific HBase compat module can extends and
+ * override methods.
  */
 public class DefaultScanBuilder implements ScanBuilder {
 

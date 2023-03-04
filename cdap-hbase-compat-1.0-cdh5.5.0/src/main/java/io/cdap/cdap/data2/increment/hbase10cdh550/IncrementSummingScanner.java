@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Transforms reads of the stored delta increments into calculated sums for each column.
  */
 class IncrementSummingScanner implements RegionScanner {
+
   private static final Log LOG = LogFactory.getLog(IncrementSummingScanner.class);
   private static final Field SCANNER_CONTEXT_LIMITS_FIELD;
   private static final Method GET_BATCH_METHOD;
@@ -72,12 +73,14 @@ class IncrementSummingScanner implements RegionScanner {
   // scan start time to use in computing TTL
   private final long oldestTsByTTL;
 
-  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner, ScanType scanType) {
+  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner,
+      ScanType scanType) {
     this(region, batchSize, internalScanner, scanType, Long.MAX_VALUE, -1);
   }
 
-  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner, ScanType scanType,
-                          long compationUpperBound, long oldestTsByTTL) {
+  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner internalScanner,
+      ScanType scanType,
+      long compationUpperBound, long oldestTsByTTL) {
     this.region = region;
     this.batchSize = batchSize;
     this.baseScanner = new WrappedScanner(internalScanner);
@@ -100,7 +103,7 @@ class IncrementSummingScanner implements RegionScanner {
       return baseRegionScanner.isFilterDone();
     }
     throw new IllegalStateException(
-      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
+        "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
@@ -109,7 +112,7 @@ class IncrementSummingScanner implements RegionScanner {
       return baseRegionScanner.reseek(bytes);
     }
     throw new IllegalStateException(
-      "RegionScanner.reseek() called when the wrapped scanner is not a RegionScanner");
+        "RegionScanner.reseek() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
@@ -118,7 +121,7 @@ class IncrementSummingScanner implements RegionScanner {
       return baseRegionScanner.getMaxResultSize();
     }
     throw new IllegalStateException(
-      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
+        "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
 
 
@@ -128,7 +131,7 @@ class IncrementSummingScanner implements RegionScanner {
       return baseRegionScanner.getMvccReadPoint();
     }
     throw new IllegalStateException(
-      "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
+        "RegionScanner.isFilterDone() called when the wrapped scanner is not a RegionScanner");
   }
 
   @Override
@@ -167,7 +170,8 @@ class IncrementSummingScanner implements RegionScanner {
     Cell cell;
     int limit = getBatchLimit(scannerContext);
 
-    while ((cell = baseScanner.peekNextCell(scannerContext)) != null && (limit <= 0 || addedCnt < limit)) {
+    while ((cell = baseScanner.peekNextCell(scannerContext)) != null && (limit <= 0
+        || addedCnt < limit)) {
       // we use the "peek" semantics so that only once cell is ever emitted per iteration
       // this makes is clearer and easier to enforce that the returned results are <= limit
       if (LOG.isTraceEnabled()) {
@@ -200,8 +204,9 @@ class IncrementSummingScanner implements RegionScanner {
       // compact any delta writes
       if (IncrementHandler.isIncrement(cell)) {
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
-                      "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+          LOG.trace(
+              "Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", "
+                  + "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
         }
         if (!sameCell(previousIncrement, cell)) {
           if (previousIncrement != null) {
@@ -221,7 +226,7 @@ class IncrementSummingScanner implements RegionScanner {
         }
         // add this increment to the tally
         runningSum += Bytes.toLong(cell.getValueArray(),
-                                   cell.getValueOffset() + IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
+            cell.getValueOffset() + IncrementHandlerState.DELTA_MAGIC_PREFIX.length);
       } else {
         // otherwise (not an increment)
         if (previousIncrement != null) {
@@ -261,9 +266,11 @@ class IncrementSummingScanner implements RegionScanner {
     // emit any left over increment, if we hit the end
     if (previousIncrement != null) {
       // in any situation where we exited due to limit, previousIncrement should already be null
-      Preconditions.checkState(getBatch() <= 0 || addedCnt < getBatch(), "addedCnt=%s, limit=%s", addedCnt, getBatch());
+      Preconditions.checkState(getBatch() <= 0 || addedCnt < getBatch(), "addedCnt=%s, limit=%s",
+          addedCnt, getBatch());
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
+        LOG.trace(
+            "Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
       }
       cells.add(newCell(previousIncrement, runningSum));
     }
@@ -299,9 +306,9 @@ class IncrementSummingScanner implements RegionScanner {
       return false;
     }
 
-    return CellUtil.matchingRow(first, second) &&
-      CellUtil.matchingFamily(first, second) &&
-      CellUtil.matchingQualifier(first, second);
+    return CellUtil.matchingRow(first, second)
+        && CellUtil.matchingFamily(first, second)
+        && CellUtil.matchingQualifier(first, second);
   }
 
   private Cell newCell(Cell toCopy, long value) {
@@ -310,8 +317,8 @@ class IncrementSummingScanner implements RegionScanner {
       newValue = Bytes.add(IncrementHandlerState.DELTA_MAGIC_PREFIX, newValue);
     }
     return CellUtil.createCell(CellUtil.cloneRow(toCopy), CellUtil.cloneFamily(toCopy),
-                               CellUtil.cloneQualifier(toCopy), toCopy.getTimestamp(),
-                               KeyValue.Type.Put.getCode(), newValue);
+        CellUtil.cloneQualifier(toCopy), toCopy.getTimestamp(),
+        KeyValue.Type.Put.getCode(), newValue);
   }
 
   @Override
@@ -320,10 +327,11 @@ class IncrementSummingScanner implements RegionScanner {
   }
 
   /**
-   * Wraps the underlying store or region scanner in an API that hides the details of calling and managing the
-   * buffered batch of results.
+   * Wraps the underlying store or region scanner in an API that hides the details of calling and
+   * managing the buffered batch of results.
    */
   private static class WrappedScanner implements Closeable {
+
     private boolean hasMore;
     private byte[] currentRow;
     private List<Cell> cellsToConsume = new ArrayList<>();
@@ -342,13 +350,12 @@ class IncrementSummingScanner implements RegionScanner {
     }
 
     /**
-     * Returns the next available cell for the current row, without advancing the pointer.  Calling this method
-     * multiple times in a row will continue to return the same cell.
+     * Returns the next available cell for the current row, without advancing the pointer.  Calling
+     * this method multiple times in a row will continue to return the same cell.
      *
-     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that should
-     * be tracked.
+     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that
+     *     should be tracked.
      * @return the next available cell or null if no more cells are available for the current row
-     * @throws IOException
      */
     public Cell peekNextCell(ScannerContext scannerContext) throws IOException {
       if (currentIdx >= cellsToConsume.size()) {
@@ -372,13 +379,13 @@ class IncrementSummingScanner implements RegionScanner {
     }
 
     /**
-     * Returns the next available cell for the current row and advances the pointer to the next cell.  This method
-     * can be called multiple times in a row to advance through all the available cells.
+     * Returns the next available cell for the current row and advances the pointer to the next
+     * cell.  This method can be called multiple times in a row to advance through all the available
+     * cells.
      *
-     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that should
-     * be tracked.
+     * @param scannerContext The {@link ScannerContext} instance encapsulating all limits that
+     *     should be tracked.
      * @return the next available cell or null if no more cells are available for the current row
-     * @throws IOException
      */
     public Cell nextCell(ScannerContext scannerContext) throws IOException {
       Cell cell = peekNextCell(scannerContext);

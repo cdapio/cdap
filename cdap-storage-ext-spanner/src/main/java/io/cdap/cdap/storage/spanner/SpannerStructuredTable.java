@@ -64,7 +64,8 @@ public class SpannerStructuredTable implements StructuredTable {
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
 
-  public SpannerStructuredTable(TransactionContext transactionContext, StructuredTableSchema schema) {
+  public SpannerStructuredTable(TransactionContext transactionContext,
+      StructuredTableSchema schema) {
     this.transactionContext = transactionContext;
     this.schema = schema;
     this.fieldValidator = new FieldValidator(schema);
@@ -72,20 +73,23 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public void upsert(Collection<Field<?>> fields) throws InvalidFieldException {
-    Map<String, Field<?>> fieldMap = fields.stream().collect(Collectors.toMap(Field::getName, Function.identity()));
+    Map<String, Field<?>> fieldMap = fields.stream()
+        .collect(Collectors.toMap(Field::getName, Function.identity()));
     List<Field<?>> primaryKeyFields = new ArrayList<>();
 
     for (String key : schema.getPrimaryKeys()) {
       Field<?> field = fieldMap.get(key);
       if (field == null) {
-        throw new InvalidFieldException(schema.getTableId(), key, "Missing primary key field " + key);
+        throw new InvalidFieldException(schema.getTableId(), key,
+            "Missing primary key field " + key);
       }
       primaryKeyFields.add(field);
     }
 
     // Cloud Spanner doesn't support upsert. The best we can do is to read the existing row and update it if it exists
     // in the same transaction.
-    Optional<StructuredRow> row = read(primaryKeyFields, Collections.singleton(primaryKeyFields.get(0).getName()));
+    Optional<StructuredRow> row = read(primaryKeyFields,
+        Collections.singleton(primaryKeyFields.get(0).getName()));
     if (row.isPresent()) {
       update(fields);
     } else {
@@ -111,21 +115,22 @@ public class SpannerStructuredTable implements StructuredTable {
 
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-                                      String.format("Given fields %s do not contain all the " +
-                                                      "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s do not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
 
     String sql = "UPDATE " + escapeName(schema.getTableId().getName())
-      + " SET " + updateFields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
-      + " WHERE " + primaryKeyFields.stream().map(this::fieldToParam).collect(Collectors.joining(" AND "));
+        + " SET " + updateFields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
+        + " WHERE " + primaryKeyFields.stream().map(this::fieldToParam)
+        .collect(Collectors.joining(" AND "));
 
     LOG.trace("Updating row: {}", sql);
 
     Statement statement = fields.stream()
-      .reduce(Statement.newBuilder(sql),
-              (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
-              (builder1, builder2) -> builder1)
-      .build();
+        .reduce(Statement.newBuilder(sql),
+            (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
+            (builder1, builder2) -> builder1)
+        .build();
 
     transactionContext.executeUpdate(statement);
   }
@@ -137,30 +142,33 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
-                                      Collection<String> columns) throws InvalidFieldException {
+      Collection<String> columns) throws InvalidFieldException {
     if (columns.isEmpty()) {
       throw new IllegalArgumentException("No column is specified to read");
     }
     fieldValidator.validatePrimaryKeys(keys, false);
 
     Set<String> missingColumns = columns.stream()
-      .filter(f -> !schema.getFieldNames().contains(f))
-      .collect(Collectors.toSet());
+        .filter(f -> !schema.getFieldNames().contains(f))
+        .collect(Collectors.toSet());
 
     if (!missingColumns.isEmpty()) {
-      throw new IllegalArgumentException("Some columns do not exists in the table schema " + missingColumns);
+      throw new IllegalArgumentException(
+          "Some columns do not exists in the table schema " + missingColumns);
     }
 
     // Adds all the keys to the result column as well. This is mirroring the PostgreSQL implementation.
     Set<String> queryColumns = keys.stream().map(Field::getName).collect(Collectors.toSet());
     queryColumns.addAll(columns);
 
-    Struct row = transactionContext.readRow(schema.getTableId().getName(), createKey(keys), queryColumns);
+    Struct row = transactionContext.readRow(schema.getTableId().getName(), createKey(keys),
+        queryColumns);
     return Optional.ofNullable(row).map(r -> new SpannerStructuredRow(schema, r));
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit)
+      throws InvalidFieldException {
     if (!isRangePrimaryKeys(keyRange)) {
       // Spanner KeySet is requiring primary keys, instead we use SQL statement
       return multiScan(Collections.singleton(keyRange), limit);
@@ -171,15 +179,15 @@ public class SpannerStructuredTable implements StructuredTable {
       keySet = KeySet.all();
     } else {
       keySet = KeySet.range(KeyRange.newBuilder()
-                              .setStart(getKey(keyRange.getBegin()))
-                              .setStartType(getEndpoint(keyRange.getBeginBound()))
-                              .setEnd(getKey(keyRange.getEnd()))
-                              .setEndType(getEndpoint(keyRange.getEndBound()))
-                              .build());
+          .setStart(getKey(keyRange.getBegin()))
+          .setStartType(getEndpoint(keyRange.getBeginBound()))
+          .setEnd(getKey(keyRange.getEnd()))
+          .setEndType(getEndpoint(keyRange.getEndBound()))
+          .build());
     }
 
     return new ResultSetIterator(schema, transactionContext.read(schema.getTableId().getName(),
-                                                                 keySet, schema.getFieldNames()));
+        keySet, schema.getFieldNames()));
   }
 
   private boolean isRangePrimaryKeys(Range range) {
@@ -197,23 +205,29 @@ public class SpannerStructuredTable implements StructuredTable {
   public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException {
     fieldValidator.validateField(index);
     if (!schema.isIndexColumn(index.getName())) {
-      throw new InvalidFieldException(schema.getTableId(), index.getName(), "is not an indexed column");
+      throw new InvalidFieldException(schema.getTableId(), index.getName(),
+          "is not an indexed column");
     }
 
     KeySet keySet = KeySet.singleKey(createKey(Collections.singleton(index)));
-    String indexName = SpannerStructuredTableAdmin.getIndexName(schema.getTableId(), index.getName());
-    ResultSet resultSet = transactionContext.readUsingIndex(schema.getTableId().getName(), indexName,
-                                                            keySet, schema.getFieldNames());
+    String indexName = SpannerStructuredTableAdmin.getIndexName(schema.getTableId(),
+        index.getName());
+    ResultSet resultSet = transactionContext.readUsingIndex(schema.getTableId().getName(),
+        indexName,
+        keySet, schema.getFieldNames());
     return new ResultSetIterator(schema, resultSet);
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
-    throws InvalidFieldException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes)
+      throws InvalidFieldException {
     fieldValidator.validateScanRange(keyRange);
     filterIndexes.forEach(fieldValidator::validateField);
-    if (!schema.isIndexColumns(filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
-      throw new InvalidFieldException(schema.getTableId(), filterIndexes, "are not all indexed columns");
+    if (!schema.isIndexColumns(
+        filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndexes,
+          "are not all indexed columns");
     }
 
     Map<String, Value> parameters = new HashMap<>();
@@ -221,37 +235,40 @@ public class SpannerStructuredTable implements StructuredTable {
     String indexClause = getIndexesFilterClause(filterIndexes, parameters);
 
     Statement.Builder builder = Statement.newBuilder(
-      "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause) + " AND " + indexClause
-        + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
-        + " LIMIT " + limit);
+        "SELECT * FROM " + escapeName(schema.getTableId().getName())
+            + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause) + " AND " + indexClause
+            + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName)
+            .collect(Collectors.joining(","))
+            + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
-    throws InvalidFieldException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField,
+      SortOrder sortOrder)
+      throws InvalidFieldException {
     fieldValidator.validateScanRange(keyRange);
     if (!schema.isIndexColumn(orderByField) && !schema.isPrimaryKeyColumn(orderByField)) {
-      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column or primary key");
+      throw new InvalidFieldException(schema.getTableId(), orderByField,
+          "is not an indexed column or primary key");
     }
 
     Map<String, Value> parameters = new HashMap<>();
     String rangeClause = getRangeWhereClause(keyRange, parameters);
 
     Statement.Builder builder = Statement.newBuilder(
-      "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause)
-        + " ORDER BY " + (sortOrder == SortOrder.ASC ? orderByField : orderByField + " DESC")
-        + " LIMIT " + limit);
+        "SELECT * FROM " + escapeName(schema.getTableId().getName())
+            + " WHERE " + (rangeClause.isEmpty() ? "true" : rangeClause)
+            + " ORDER BY " + (sortOrder == SortOrder.ASC ? orderByField : orderByField + " DESC")
+            + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
   }
 
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges,
-                                                    int limit) throws InvalidFieldException {
+      int limit) throws InvalidFieldException {
     // If nothing to scan, just return
     if (keyRanges.isEmpty()) {
       return CloseableIterator.empty();
@@ -264,26 +281,28 @@ public class SpannerStructuredTable implements StructuredTable {
     }
 
     Statement.Builder builder = Statement.newBuilder(
-      "SELECT * FROM " + escapeName(schema.getTableId().getName())
-        + " WHERE " + whereClause
-        + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName).collect(Collectors.joining(","))
-        + " LIMIT " + limit);
+        "SELECT * FROM " + escapeName(schema.getTableId().getName())
+            + " WHERE " + whereClause
+            + " ORDER BY " + schema.getPrimaryKeys().stream().map(this::escapeName)
+            .collect(Collectors.joining(","))
+            + " LIMIT " + limit);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return new ResultSetIterator(schema, transactionContext.executeQuery(builder.build()));
   }
 
   @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue,
-                                Field<?> newValue) throws InvalidFieldException, IllegalArgumentException {
+      Field<?> newValue) throws InvalidFieldException, IllegalArgumentException {
     if (oldValue.getFieldType() != newValue.getFieldType()) {
       throw new IllegalArgumentException(
-        String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
-                      oldValue.getFieldType(), newValue.getFieldType()));
+          String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
+              oldValue.getFieldType(), newValue.getFieldType()));
     }
     if (!oldValue.getName().equals(newValue.getName())) {
       throw new IllegalArgumentException(
-        String.format("Trying to compare and swap different fields. Old Value = %s, New Value = %s",
-                      oldValue, newValue));
+          String.format(
+              "Trying to compare and swap different fields. Old Value = %s, New Value = %s",
+              oldValue, newValue));
     }
     if (schema.isPrimaryKeyColumn(oldValue.getName())) {
       throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
@@ -308,25 +327,27 @@ public class SpannerStructuredTable implements StructuredTable {
 
   @Override
   public void increment(Collection<Field<?>> keys,
-                        String column, long amount) throws InvalidFieldException, IllegalArgumentException {
+      String column, long amount) throws InvalidFieldException, IllegalArgumentException {
     if (schema.isPrimaryKeyColumn(column)) {
       throw new IllegalArgumentException("Cannot use increment on a primary key field");
     }
     FieldType.Type type = schema.getType(column);
     if (type == null) {
-      throw new InvalidFieldException(schema.getTableId(), column, "Column " + column + " does not exist");
+      throw new InvalidFieldException(schema.getTableId(), column,
+          "Column " + column + " does not exist");
     }
     if (type != FieldType.Type.LONG) {
       throw new IllegalArgumentException(
-        String.format("Trying to increment a column of type %s. Only %s column type can be incremented",
-                      type, FieldType.Type.LONG));
+          String.format(
+              "Trying to increment a column of type %s. Only %s column type can be incremented",
+              type, FieldType.Type.LONG));
     }
     fieldValidator.validatePrimaryKeys(keys, false);
 
     StructuredRow existing = read(keys, Collections.singleton(column)).orElse(null);
     List<Field<?>> fields = new ArrayList<>(keys);
     fields.add(Fields.longField(column,
-                                amount + (existing == null ? 0L : Objects.requireNonNull(existing.getLong(column)))));
+        amount + (existing == null ? 0L : Objects.requireNonNull(existing.getLong(column)))));
 
     if (existing == null) {
       // Insert a new row if there is no existing row
@@ -341,13 +362,14 @@ public class SpannerStructuredTable implements StructuredTable {
   public void delete(Collection<Field<?>> keys) throws InvalidFieldException {
     fieldValidator.validatePrimaryKeys(keys, false);
     String sql = "DELETE FROM " + escapeName(schema.getTableId().getName()) + " WHERE "
-      + keys.stream().map(f -> escapeName(f.getName()) + " = @" + f.getName()).collect(Collectors.joining(" AND "));
+        + keys.stream().map(f -> escapeName(f.getName()) + " = @" + f.getName())
+        .collect(Collectors.joining(" AND "));
 
     Statement statement = keys.stream()
-      .reduce(Statement.newBuilder(sql),
-              (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
-              (builder1, builder2) -> builder1)
-      .build();
+        .reduce(Statement.newBuilder(sql),
+            (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
+            (builder1, builder2) -> builder1)
+        .build();
 
     transactionContext.executeUpdate(statement);
   }
@@ -359,8 +381,9 @@ public class SpannerStructuredTable implements StructuredTable {
     Map<String, Value> parameters = new HashMap<>();
     String condition = getRangeWhereClause(range, parameters);
 
-    Statement.Builder builder = Statement.newBuilder("DELETE FROM " + escapeName(schema.getTableId().getName())
-                                                       + " WHERE " + (condition.isEmpty() ? "true" : condition));
+    Statement.Builder builder = Statement.newBuilder(
+        "DELETE FROM " + escapeName(schema.getTableId().getName())
+            + " WHERE " + (condition.isEmpty() ? "true" : condition));
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     transactionContext.executeUpdate(builder.build());
   }
@@ -376,17 +399,16 @@ public class SpannerStructuredTable implements StructuredTable {
     Map<String, Value> parameters = new HashMap<>();
     String condition = getRangeWhereClause(keyRange, parameters);
 
-
     String sql = "UPDATE " + escapeName(schema.getTableId().getName())
-      + " SET " + fields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
-      + " WHERE " + (condition.isEmpty() ? "true" : condition);
+        + " SET " + fields.stream().map(this::fieldToParam).collect(Collectors.joining(", "))
+        + " WHERE " + (condition.isEmpty() ? "true" : condition);
 
     LOG.trace("Updating rows: {}", sql);
 
     Statement.Builder stmtBuilder = fields.stream().reduce(Statement.newBuilder(sql),
-                                                      (builder, field) -> builder.bind(field.getName())
-                                                        .to(getValue(field)),
-                                                      (builder1, builder2) -> builder1);
+        (builder, field) -> builder.bind(field.getName())
+            .to(getValue(field)),
+        (builder1, builder2) -> builder1);
     parameters.forEach((name, value) -> stmtBuilder.bind(name).to(value));
     transactionContext.executeUpdate(stmtBuilder.build());
   }
@@ -414,8 +436,9 @@ public class SpannerStructuredTable implements StructuredTable {
       return Statement.of("SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName()));
     }
 
-    Statement.Builder builder = Statement.newBuilder("SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName())
-                                                       + " WHERE " + whereClause);
+    Statement.Builder builder = Statement.newBuilder(
+        "SELECT COUNT(*) FROM " + escapeName(schema.getTableId().getName())
+            + " WHERE " + whereClause);
     parameters.forEach((name, value) -> builder.bind(name).to(value));
     return builder.build();
   }
@@ -431,7 +454,8 @@ public class SpannerStructuredTable implements StructuredTable {
       // This is for case like ([KEY: "ns1", KEY2: 123], EXCLUSIVE, [KEY: "ns1", KEY2: 250], INCLUSIVE)
       // We need to check the ending bound for KEY2, not KEY
       String symbol =
-        beginIndex == beginFieldsCount && range.getBeginBound().equals(Range.Bound.EXCLUSIVE) ? " > " : " >= ";
+          beginIndex == beginFieldsCount && range.getBeginBound().equals(Range.Bound.EXCLUSIVE)
+              ? " > " : " >= ";
       conditions.add(escapeName(field.getName()) + symbol + "@p_" + paramIndex);
       parameters.put("p_" + paramIndex, getValue(field));
       paramIndex++;
@@ -445,7 +469,8 @@ public class SpannerStructuredTable implements StructuredTable {
       // This is for case like ([KEY: "ns1", KEY2: 123], INCLUSIVE, [KEY: "ns1", KEY2: 250], EXCLUSIVE)
       // We need to check the ending bound for KEY2, not KEY
       String symbol =
-        endIndex == endFieldsCount && range.getEndBound().equals(Range.Bound.EXCLUSIVE) ? " < " : " <= ";
+          endIndex == endFieldsCount && range.getEndBound().equals(Range.Bound.EXCLUSIVE) ? " < "
+              : " <= ";
       conditions.add(escapeName(field.getName()) + symbol + "@p_" + paramIndex);
       parameters.put("p_" + paramIndex, getValue(field));
       paramIndex++;
@@ -468,7 +493,8 @@ public class SpannerStructuredTable implements StructuredTable {
     return String.join(" AND ", conditions);
   }
 
-  private String getIndexesFilterClause(Collection<Field<?>> filterIndexes, Map<String, Value> parameters) {
+  private String getIndexesFilterClause(Collection<Field<?>> filterIndexes,
+      Map<String, Value> parameters) {
     List<String> conditions = new ArrayList<>();
     int paramIndex = parameters.size();
 
@@ -488,7 +514,7 @@ public class SpannerStructuredTable implements StructuredTable {
   /**
    * Generates the WHERE clause for a set of ranges.
    *
-   * @param ranges     the set of ranges to query for
+   * @param ranges the set of ranges to query for
    * @param parameters the parameters name and value used in the WHERE clause
    * @return the WHERE clause or {@code null} if the ranges resulted in a full table query.
    */
@@ -521,9 +547,9 @@ public class SpannerStructuredTable implements StructuredTable {
     String separator = "";
     for (Range singleton : singletonScans) {
       query.append(separator)
-        .append("(")
-        .append(getFieldsWhereClause(singleton.getBegin(), parameters))
-        .append(")");
+          .append("(")
+          .append(getFieldsWhereClause(singleton.getBegin(), parameters))
+          .append(")");
       separator = " OR ";
     }
 
@@ -531,7 +557,8 @@ public class SpannerStructuredTable implements StructuredTable {
     if (!rangeScans.isEmpty()) {
       separator = singletonScans.isEmpty() ? "(" : " OR (";
       for (Range range : rangeScans) {
-        query.append(separator).append("(").append(getRangeWhereClause(range, parameters)).append(")");
+        query.append(separator).append("(").append(getRangeWhereClause(range, parameters))
+            .append(")");
         separator = " OR ";
       }
       query.append(")");
@@ -548,17 +575,18 @@ public class SpannerStructuredTable implements StructuredTable {
     }
 
     String sql = "INSERT INTO " + escapeName(schema.getTableId().getName()) + " ("
-      + insertFields.stream().map(Field::getName).map(this::escapeName).collect(Collectors.joining(",")) + ") VALUES ("
-      + insertFields.stream().map(f -> "@" + f.getName()).collect(Collectors.joining(","))
-      + ")";
+        + insertFields.stream().map(Field::getName).map(this::escapeName)
+        .collect(Collectors.joining(",")) + ") VALUES ("
+        + insertFields.stream().map(f -> "@" + f.getName()).collect(Collectors.joining(","))
+        + ")";
 
     LOG.trace("Inserting row: {}", sql);
 
     Statement statement = fields.stream()
-      .reduce(Statement.newBuilder(sql),
-              (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
-              (builder1, builder2) -> builder1)
-      .build();
+        .reduce(Statement.newBuilder(sql),
+            (builder, field) -> builder.bind(field.getName()).to(getValue(field)),
+            (builder1, builder2) -> builder1)
+        .build();
 
     transactionContext.executeUpdate(statement);
   }

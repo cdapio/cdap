@@ -47,7 +47,7 @@ final class MasterTaskExecutorService extends AbstractScheduledService {
   @Override
   protected ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory(
-      "master-env-task-" + task.getName()));
+        "master-env-task-" + task.getName()));
     return executor;
   }
 
@@ -57,8 +57,9 @@ final class MasterTaskExecutorService extends AbstractScheduledService {
       delayMillis = task.run(context);
     } catch (Throwable t) {
       delayMillis = task.failureRetryDelay(t);
-      LOG.warn("Exception raised from master environment task execution of task {}. Retrying in {} milliseconds",
-               task, delayMillis, t);
+      LOG.warn(
+          "Exception raised from master environment task execution of task {}. Retrying in {} milliseconds",
+          task, delayMillis, t);
     }
   }
 

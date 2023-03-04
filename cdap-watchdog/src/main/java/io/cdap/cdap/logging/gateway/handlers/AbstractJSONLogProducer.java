@@ -44,7 +44,7 @@ public abstract class AbstractJSONLogProducer extends AbstractChunkedLogProducer
     super(logEventIter);
     this.channelBuffer = Unpooled.buffer(BUFFER_BYTES);
     this.jsonWriter = new JsonWriter(new OutputStreamWriter(new ByteBufOutputStream(channelBuffer),
-                                                            StandardCharsets.UTF_8));
+        StandardCharsets.UTF_8));
   }
 
   @Override

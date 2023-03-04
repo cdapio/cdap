@@ -30,15 +30,18 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * An abstract base implementation of {@link OutputFormat} for writing to {@link BatchWritable} from batch job.
+ * An abstract base implementation of {@link OutputFormat} for writing to {@link BatchWritable} from
+ * batch job.
  *
  * @param <KEY> type of the key
  * @param <VALUE> type of the value
  */
-public abstract class AbstractBatchWritableOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
+public abstract class AbstractBatchWritableOutputFormat<KEY, VALUE> extends
+    OutputFormat<KEY, VALUE> {
 
   private static final Gson GSON = new Gson();
-  private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private static final String DATASET_NAMESPACE = "output.datasetoutputformat.dataset.namespace";
   private static final String DATASET_NAME = "output.datasetoutputformat.dataset.name";
@@ -47,52 +50,57 @@ public abstract class AbstractBatchWritableOutputFormat<KEY, VALUE> extends Outp
   /**
    * Sets dataset information into the given {@link Configuration}.
    *
-   * @param hConf       configuration to modify
+   * @param hConf configuration to modify
    * @param datasetName name of the dataset
    * @param datasetArgs arguments for the dataset
    */
   public static void setDataset(Configuration hConf, String namespace,
-                                String datasetName, Map<String, String> datasetArgs) {
+      String datasetName, Map<String, String> datasetArgs) {
     hConf.set(DATASET_NAMESPACE, namespace);
     hConf.set(DATASET_NAME, datasetName);
     hConf.set(DATASET_ARGS, GSON.toJson(datasetArgs, DATASET_ARGS_TYPE));
   }
 
   @Override
-  public RecordWriter<KEY, VALUE> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+  public RecordWriter<KEY, VALUE> getRecordWriter(TaskAttemptContext context)
+      throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
     String namespace = conf.get(DATASET_NAMESPACE);
     String datasetName = conf.get(DATASET_NAME);
     Map<String, String> datasetArgs = GSON.fromJson(conf.get(DATASET_ARGS), DATASET_ARGS_TYPE);
-    return new BatchWritableRecordWriter<>(createBatchWritable(context, namespace, datasetName, datasetArgs));
+    return new BatchWritableRecordWriter<>(
+        createBatchWritable(context, namespace, datasetName, datasetArgs));
   }
 
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
     Configuration hConf = context.getConfiguration();
-    if (hConf.get(DATASET_NAMESPACE) == null || hConf.get(DATASET_NAME) == null || hConf.get(DATASET_ARGS) == null) {
+    if (hConf.get(DATASET_NAMESPACE) == null || hConf.get(DATASET_NAME) == null
+        || hConf.get(DATASET_ARGS) == null) {
       throw new IOException("Dataset configurations are missing in the job configuration");
     }
   }
 
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+  public OutputCommitter getOutputCommitter(TaskAttemptContext context)
+      throws IOException, InterruptedException {
     return new NoopOutputCommitter();
   }
 
   /**
-   * Subclass needs to implementation this method to return a {@link BatchWritable} for writing records to
-   * the given dataset.
+   * Subclass needs to implementation this method to return a {@link BatchWritable} for writing
+   * records to the given dataset.
    *
    * @param context the hadoop task context
    * @param namespace namespace of the dataset to write to
    * @param datasetName name of the dataset to write to
    * @param datasetArgs arguments of the dataset to write to
    */
-  protected abstract CloseableBatchWritable<KEY, VALUE> createBatchWritable(TaskAttemptContext context,
-                                                                            String namespace,
-                                                                            String datasetName,
-                                                                            Map<String, String> datasetArgs);
+  protected abstract CloseableBatchWritable<KEY, VALUE> createBatchWritable(
+      TaskAttemptContext context,
+      String namespace,
+      String datasetName,
+      Map<String, String> datasetArgs);
 
   /**
    * Implementation of {@link RecordWriter} to write through a {@link CloseableBatchWritable}.
@@ -120,6 +128,7 @@ public abstract class AbstractBatchWritableOutputFormat<KEY, VALUE> extends Outp
    * A no-op implementation of {@link OutputCommitter}.
    */
   private static final class NoopOutputCommitter extends OutputCommitter {
+
     @Override
     public void setupJob(final JobContext jobContext) throws IOException {
       // DO NOTHING, see needsTaskCommit() comment

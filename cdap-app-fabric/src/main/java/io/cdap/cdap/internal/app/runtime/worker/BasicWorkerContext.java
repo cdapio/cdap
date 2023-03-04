@@ -50,23 +50,25 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
-                     CConfiguration cConf, int instanceId, int instanceCount,
-                     MetricsCollectionService metricsCollectionService,
-                     DatasetFramework datasetFramework,
-                     TransactionSystemClient transactionSystemClient,
-                     DiscoveryServiceClient discoveryServiceClient,
-                     @Nullable PluginInstantiator pluginInstantiator,
-                     SecureStore secureStore,
-                     SecureStoreManager secureStoreManager,
-                     MessagingService messagingService, MetadataReader metadataReader,
-                     MetadataPublisher metadataPublisher,
-                     NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                     RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
+      CConfiguration cConf, int instanceId, int instanceCount,
+      MetricsCollectionService metricsCollectionService,
+      DatasetFramework datasetFramework,
+      TransactionSystemClient transactionSystemClient,
+      DiscoveryServiceClient discoveryServiceClient,
+      @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore,
+      SecureStoreManager secureStoreManager,
+      MessagingService messagingService, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+      RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec.getDatasets(),
-          datasetFramework, transactionSystemClient, true,
-          metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+        datasetFramework, transactionSystemClient, true,
+        metricsCollectionService,
+        ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
+        secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader,
+        metadataPublisher,
+        namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.specification = spec;
     this.instanceId = instanceId;

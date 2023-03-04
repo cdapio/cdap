@@ -30,12 +30,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maintains map of namespace to output stream and handles operations to add, flush, sync to stream and closing
- * during cleanup. During adding to file, if the file has to be rotated based on either (time limit exceeded) or
- * file size exceeded, we will rotate to new file,
- * close the old one and maintain the reference to the new file in the map
+ * Maintains map of namespace to output stream and handles operations to add, flush, sync to stream
+ * and closing during cleanup. During adding to file, if the file has to be rotated based on either
+ * (time limit exceeded) or file size exceeded, we will rotate to new file, close the old one and
+ * maintain the reference to the new file in the map
  */
 public class RunMetaFileManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(RunMetaFileManager.class);
   private static final Integer DEFAULT_MAX_FILE_SIZE_BYTES = 67108864;
   private static final Integer DEFAULT_SYNC_INTERVAL_BYTES = 10485760;
@@ -57,38 +58,38 @@ public class RunMetaFileManager {
   RunMetaFileManager(Location baseLocation, Map<String, String> runtimeArguments, Metrics metrics) {
     this.namespaceToLogFileStreamMap = new HashMap<>();
     this.baseLocation = baseLocation;
-    this.syncIntervalBytes = runtimeArguments.containsKey(SYNC_INTERVAL) ?
-      Integer.parseInt(runtimeArguments.get(SYNC_INTERVAL)) : DEFAULT_SYNC_INTERVAL_BYTES;
-    this.maxFileSizeBytes = runtimeArguments.containsKey(MAX_FILE_SIZE_BYTES) ?
-      Integer.parseInt(runtimeArguments.get(MAX_FILE_SIZE_BYTES)) : DEFAULT_MAX_FILE_SIZE_BYTES;
-    this.maxFileOpenDurationMillis = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION_MILLIS) ?
-      Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION_MILLIS)) : DEFAULT_MAX_FILE_OPEN_DURATION;
+    this.syncIntervalBytes = runtimeArguments.containsKey(SYNC_INTERVAL)
+        ? Integer.parseInt(runtimeArguments.get(SYNC_INTERVAL)) : DEFAULT_SYNC_INTERVAL_BYTES;
+    this.maxFileSizeBytes = runtimeArguments.containsKey(MAX_FILE_SIZE_BYTES)
+        ? Integer.parseInt(runtimeArguments.get(MAX_FILE_SIZE_BYTES)) : DEFAULT_MAX_FILE_SIZE_BYTES;
+    this.maxFileOpenDurationMillis = runtimeArguments.containsKey(MAX_FILE_OPEN_DURATION_MILLIS)
+        ? Integer.parseInt(runtimeArguments.get(MAX_FILE_OPEN_DURATION_MILLIS))
+        : DEFAULT_MAX_FILE_OPEN_DURATION;
     this.lastSyncTime = System.currentTimeMillis();
     this.metrics = metrics;
   }
 
   /**
-   * append {@link ProgramRunInfo} and flush to file. create or rotate file if needed before appending.
-   * @param programRunInfo
-   * @throws InterruptedException
+   * append {@link ProgramRunInfo} and flush to file. create or rotate file if needed before
+   * appending.
    */
   public void append(ProgramRunInfo programRunInfo) throws InterruptedException {
     if (!namespaceToLogFileStreamMap.containsKey(programRunInfo.getNamespace())) {
       // create a output stream if file doesnt exist already for this namespace in the map
       createLogFileOutputStreamWithRetry(programRunInfo.getNamespace(),
-                                         programRunInfo.getTimestamp());
+          programRunInfo.getTimestamp());
     }
     rotateOutputStreamIfNeeded(namespaceToLogFileStreamMap.get(programRunInfo.getNamespace()),
-                               programRunInfo.getNamespace(), programRunInfo.getTimestamp());
-    RunMetaFileOutputStream outputStream = namespaceToLogFileStreamMap.get(programRunInfo.getNamespace());
+        programRunInfo.getNamespace(), programRunInfo.getTimestamp());
+    RunMetaFileOutputStream outputStream = namespaceToLogFileStreamMap.get(
+        programRunInfo.getNamespace());
     appendAndFlushWithRetry(outputStream, programRunInfo);
     syncOutputStreamsIfRequired();
   }
 
   /**
-   * sync the open output streams if the time from last sync is larger than the SYNC_INTERVAL_TIME_MILLIS,
-   * hdfs sync is called and last sync time is updated
-   * @throws InterruptedException
+   * sync the open output streams if the time from last sync is larger than the
+   * SYNC_INTERVAL_TIME_MILLIS, hdfs sync is called and last sync time is updated
    */
   public void syncOutputStreamsIfRequired() throws InterruptedException {
     long timeDifferenceMillis = System.currentTimeMillis() - lastSyncTime;
@@ -111,12 +112,15 @@ public class RunMetaFileManager {
     }
   }
 
-  private void createLogFileOutputStreamWithRetry(String namespace, Long timestamp) throws InterruptedException {
+  private void createLogFileOutputStreamWithRetry(String namespace, Long timestamp)
+      throws InterruptedException {
     while (!createLogFileOutputStream(namespace, timestamp)) {
-      LOG.warn("Failed to create log file for the namespace {} and timestamp {}", namespace, timestamp);
+      LOG.warn("Failed to create log file for the namespace {} and timestamp {}", namespace,
+          timestamp);
       TimeUnit.MILLISECONDS.sleep(10);
     }
-    LOG.info("Successfully created log file for the namespace {} and timestamp {}", namespace, timestamp);
+    LOG.info("Successfully created log file for the namespace {} and timestamp {}", namespace,
+        timestamp);
   }
 
   private boolean createLogFileOutputStream(String namespace, Long timestamp) {
@@ -128,9 +132,9 @@ public class RunMetaFileManager {
       boolean successful = fileLocation.createNew();
       if (successful) {
         namespaceToLogFileStreamMap.put(namespace,
-                                        new RunMetaFileOutputStream(fileLocation, "", syncIntervalBytes,
-                                                                    System.currentTimeMillis(), () ->
-                                                                      namespaceToLogFileStreamMap.remove(namespace)));
+            new RunMetaFileOutputStream(fileLocation, "", syncIntervalBytes,
+                System.currentTimeMillis(), () ->
+                namespaceToLogFileStreamMap.remove(namespace)));
       }
       return successful;
     } catch (IOException e) {
@@ -140,9 +144,10 @@ public class RunMetaFileManager {
   }
 
   private void rotateOutputStreamIfNeeded(RunMetaFileOutputStream runMetaFileOutputStream,
-                                          String namespace, Long timestamp) throws InterruptedException {
+      String namespace, Long timestamp) throws InterruptedException {
     boolean isExpired =
-      (System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime()) > maxFileOpenDurationMillis;
+        (System.currentTimeMillis() - runMetaFileOutputStream.getCreateTime())
+            > maxFileOpenDurationMillis;
     if (runMetaFileOutputStream.getSize() > maxFileSizeBytes || isExpired) {
       Closeables.closeQuietly(runMetaFileOutputStream);
       createLogFileOutputStreamWithRetry(namespace, timestamp);
@@ -162,7 +167,7 @@ public class RunMetaFileManager {
   }
 
   private void appendAndFlushWithRetry(RunMetaFileOutputStream outputStream,
-                                       ProgramRunInfo programRunInfo) throws InterruptedException {
+      ProgramRunInfo programRunInfo) throws InterruptedException {
     retryWithCallable(() -> outputStream.append(programRunInfo), "append");
     retryWithCallable(() -> outputStream.flush(), "flush");
   }
@@ -185,6 +190,7 @@ public class RunMetaFileManager {
    * callable throwing IOException
    */
   private interface Callable {
+
     void call() throws IOException;
   }
 }

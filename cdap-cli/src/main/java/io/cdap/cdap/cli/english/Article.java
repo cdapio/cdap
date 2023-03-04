@@ -30,6 +30,7 @@ public abstract class Article {
    * "a" or "an"
    */
   private static class A extends Article {
+
     @Override
     public String toString(Word word) {
       if (word.beginsWithVowel()) {
@@ -44,6 +45,7 @@ public abstract class Article {
    * "the"
    */
   private static class The extends Article {
+
     @Override
     public String toString(Word word) {
       return "the";

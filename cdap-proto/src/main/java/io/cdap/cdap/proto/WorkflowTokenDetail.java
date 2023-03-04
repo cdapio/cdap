@@ -40,10 +40,12 @@ public class WorkflowTokenDetail {
     return tokenData;
   }
 
-  private static Map<String, List<NodeValueDetail>> deepCopy(Map<String, List<NodeValueDetail>> tokenData) {
+  private static Map<String, List<NodeValueDetail>> deepCopy(
+      Map<String, List<NodeValueDetail>> tokenData) {
     Map<String, List<NodeValueDetail>> tokenDataCopy = new LinkedHashMap<>();
     for (Map.Entry<String, List<NodeValueDetail>> entry : tokenData.entrySet()) {
-      tokenDataCopy.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
+      tokenDataCopy.put(entry.getKey(),
+          Collections.unmodifiableList(new ArrayList<>(entry.getValue())));
     }
     return Collections.unmodifiableMap(tokenDataCopy);
   }
@@ -60,7 +62,8 @@ public class WorkflowTokenDetail {
     for (Map.Entry<String, List<NodeValue>> entry : data.entrySet()) {
       List<NodeValueDetail> convertedList = new ArrayList<>();
       for (NodeValue nodeValue : entry.getValue()) {
-        convertedList.add(new NodeValueDetail(nodeValue.getNodeName(), nodeValue.getValue().toString()));
+        convertedList.add(
+            new NodeValueDetail(nodeValue.getNodeName(), nodeValue.getValue().toString()));
       }
       converted.put(entry.getKey(), convertedList);
     }
@@ -71,6 +74,7 @@ public class WorkflowTokenDetail {
    * Class to represent node -> value mapping for a given key in a {@link WorkflowToken}.
    */
   public static class NodeValueDetail {
+
     private final String node;
     private final String value;
 

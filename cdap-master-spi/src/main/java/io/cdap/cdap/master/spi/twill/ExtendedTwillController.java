@@ -30,7 +30,8 @@ public interface ExtendedTwillController extends TwillController {
    *
    * @param runnable the name of the runnable to restart
    * @param instanceId the instance to restart
-   * @param uid an unique id to match for the restart. See also {@link ExtendedTwillContext#getUID()}
+   * @param uid an unique id to match for the restart. See also {@link
+   *     ExtendedTwillContext#getUID()}
    * @return A {@link Future} that will be completed when the restart operation is completed
    */
   Future<String> restartInstance(String runnable, int instanceId, String uid);

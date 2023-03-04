@@ -59,8 +59,8 @@ public class KafkaClientModule extends PrivateModule {
   @Override
   protected void configure() {
     bind(ZKClientService.class)
-      .annotatedWith(Names.named(KAFKA_ZK))
-      .toProvider(ZKClientServiceProvider.class).in(Scopes.SINGLETON);
+        .annotatedWith(Names.named(KAFKA_ZK))
+        .toProvider(ZKClientServiceProvider.class).in(Scopes.SINGLETON);
     bind(KafkaClientService.class).to(DefaultKafkaClientService.class).in(Scopes.SINGLETON);
     bind(BrokerService.class).to(DefaultBrokerService.class).in(Scopes.SINGLETON);
 
@@ -72,8 +72,8 @@ public class KafkaClientModule extends PrivateModule {
   }
 
   /**
-   * A {@link Provider} to provide {@link ZKClientService} used by
-   * {@link ZKKafkaClientService} and {@link ZKBrokerService}.
+   * A {@link Provider} to provide {@link ZKClientService} used by {@link ZKKafkaClientService} and
+   * {@link ZKBrokerService}.
    */
   private static final class ZKClientServiceProvider implements Provider<ZKClientService> {
 
@@ -101,7 +101,8 @@ public class KafkaClientModule extends PrivateModule {
           if (!kafkaNamespace.startsWith("/")) {
             kafkaNamespace = "/" + kafkaNamespace;
           }
-          zkClientService = ZKClientServices.delegate(ZKClients.namespace(zkClientService, kafkaNamespace));
+          zkClientService = ZKClientServices.delegate(
+              ZKClients.namespace(zkClientService, kafkaNamespace));
         }
 
         // Since it is the shared ZKClientService, we don't want the KafkaClientService or BrokerService to
@@ -110,15 +111,16 @@ public class KafkaClientModule extends PrivateModule {
       } else {
         // Otherwise create a new ZKClientService
         zkClientService = ZKClientServices.delegate(
-          ZKClients.reWatchOnExpire(
-            ZKClients.retryOnFailure(
-              ZKClientService.Builder.of(kafkaZKQuorum)
-                .setSessionTimeout(cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
-                                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
-                .build(),
-              RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+            ZKClients.reWatchOnExpire(
+                ZKClients.retryOnFailure(
+                    ZKClientService.Builder.of(kafkaZKQuorum)
+                        .setSessionTimeout(
+                            cConf.getInt(Constants.Zookeeper.CFG_SESSION_TIMEOUT_MILLIS,
+                                Constants.Zookeeper.DEFAULT_SESSION_TIMEOUT_MILLIS))
+                        .build(),
+                    RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+                )
             )
-          )
         );
       }
 
@@ -147,10 +149,11 @@ public class KafkaClientModule extends PrivateModule {
   }
 
   /**
-   * A {@link Service} wrapper that wraps a {@link Service} with a {@link ZKClientService}
-   * that will get start/stop together.
+   * A {@link Service} wrapper that wraps a {@link Service} with a {@link ZKClientService} that will
+   * get start/stop together.
    */
-  private abstract static class AbstractServiceWithZKClient<T extends Service> extends AbstractIdleService {
+  private abstract static class AbstractServiceWithZKClient<T extends Service> extends
+      AbstractIdleService {
 
     private final ZKClientService zkClientService;
     private final T delegate;
@@ -198,8 +201,9 @@ public class KafkaClientModule extends PrivateModule {
   /**
    * A {@link KafkaClientService} that bundles with a given {@link ZKClientService} for start/stop.
    */
-  private static final class DefaultKafkaClientService extends AbstractServiceWithZKClient<KafkaClientService>
-                                                       implements KafkaClientService {
+  private static final class DefaultKafkaClientService extends
+      AbstractServiceWithZKClient<KafkaClientService>
+      implements KafkaClientService {
 
     @Inject
     DefaultKafkaClientService(@Named(KAFKA_ZK) ZKClientService zkClientService) {
@@ -221,7 +225,7 @@ public class KafkaClientModule extends PrivateModule {
    * A {@link BrokerService} that bundles with a given {@link ZKClientService} for start/stop
    */
   private static final class DefaultBrokerService extends AbstractServiceWithZKClient<BrokerService>
-                                                  implements BrokerService {
+      implements BrokerService {
 
     @Inject
     DefaultBrokerService(@Named(KAFKA_ZK) ZKClientService zkClientService) {

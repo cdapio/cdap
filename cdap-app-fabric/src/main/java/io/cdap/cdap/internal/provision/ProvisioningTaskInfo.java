@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * Information about a provisioning task for a program run.
  */
 public class ProvisioningTaskInfo {
+
   private final ProvisioningOp op;
   private final ProgramRunId programRunId;
   private final ProgramDescriptor programDescriptor;
@@ -39,9 +40,9 @@ public class ProvisioningTaskInfo {
   private final Cluster cluster;
 
   public ProvisioningTaskInfo(ProgramRunId programRunId, ProgramDescriptor programDescriptor,
-                              ProgramOptions programOptions, Map<String, String> provisionerProperties,
-                              String provisionerName, String user, ProvisioningOp op,
-                              URI secureKeysDir, @Nullable Cluster cluster) {
+      ProgramOptions programOptions, Map<String, String> provisionerProperties,
+      String provisionerName, String user, ProvisioningOp op,
+      URI secureKeysDir, @Nullable Cluster cluster) {
     this.programRunId = programRunId;
     this.provisionerProperties = provisionerProperties;
     this.programDescriptor = programDescriptor;
@@ -53,10 +54,11 @@ public class ProvisioningTaskInfo {
     this.cluster = cluster;
   }
 
-  public ProvisioningTaskInfo(ProvisioningTaskInfo existing, ProvisioningOp op, @Nullable Cluster cluster) {
+  public ProvisioningTaskInfo(ProvisioningTaskInfo existing, ProvisioningOp op,
+      @Nullable Cluster cluster) {
     this(existing.getProgramRunId(), existing.getProgramDescriptor(), existing.getProgramOptions(),
-         existing.getProvisionerProperties(), existing.getProvisionerName(), existing.getUser(), op,
-         existing.getSecureKeysDir(), cluster);
+        existing.getProvisionerProperties(), existing.getProvisionerName(), existing.getUser(), op,
+        existing.getSecureKeysDir(), cluster);
   }
 
   public ProvisioningTaskKey getTaskKey() {

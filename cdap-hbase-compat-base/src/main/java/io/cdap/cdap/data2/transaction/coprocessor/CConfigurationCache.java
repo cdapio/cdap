@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.TableNotFoundException;
  * {@link Thread} that refreshes {@link CConfiguration} periodically.
  */
 public class CConfigurationCache extends AbstractIdleService {
+
   private static final Log LOG = LogFactory.getLog(CConfigurationCache.class);
 
   private static final String CCONF_UPDATE_PERIOD = "cdap.transaction.coprocessor.configuration.update.period.secs";
@@ -53,8 +54,9 @@ public class CConfigurationCache extends AbstractIdleService {
   private long cConfUpdatePeriodInMillis = DEFAULT_CCONF_UPDATE_PERIOD;
   private long lastUpdated;
 
-  public CConfigurationCache(CoprocessorEnvironment env, String tablePrefix, String maxLifetimeProperty,
-                             int defaultMaxLifetime) {
+  public CConfigurationCache(CoprocessorEnvironment env, String tablePrefix,
+      String maxLifetimeProperty,
+      int defaultMaxLifetime) {
     this.cConfReader = new CoprocessorCConfigurationReader(env, tablePrefix);
     this.maxLifetimeProperty = maxLifetimeProperty;
     this.defaultMaxLifetime = defaultMaxLifetime;
@@ -114,9 +116,11 @@ public class CConfigurationCache extends AbstractIdleService {
                 // Make the cConf properties available in both formats
                 cConf = newCConf;
                 conf = newConf;
-                txMaxLifetimeMillis = TimeUnit.SECONDS.toMillis(conf.getInt(maxLifetimeProperty, defaultMaxLifetime));
+                txMaxLifetimeMillis = TimeUnit.SECONDS.toMillis(
+                    conf.getInt(maxLifetimeProperty, defaultMaxLifetime));
                 lastUpdated = now;
-                cConfUpdatePeriodInMillis = cConf.getLong(CCONF_UPDATE_PERIOD, DEFAULT_CCONF_UPDATE_PERIOD);
+                cConfUpdatePeriodInMillis = cConf.getLong(CCONF_UPDATE_PERIOD,
+                    DEFAULT_CCONF_UPDATE_PERIOD);
               }
             } catch (TableNotFoundException ex) {
               LOG.warn("CConfiguration table not found.", ex);

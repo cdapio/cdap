@@ -38,5 +38,5 @@ public interface RuntimeRequestValidator {
    * @throws AccessException if the request doesn't have a valid Authorization header
    */
   ProgramRunInfo getProgramRunStatus(ProgramRunId programRunId, HttpRequest request)
-    throws BadRequestException, AccessException, GoneException;
+      throws BadRequestException, AccessException, GoneException;
 }

@@ -16,10 +16,10 @@
 package io.cdap.cdap.common.options;
 
 /**
- * Raised when the option specified by the type it is associated with is
- * not supported.
+ * Raised when the option specified by the type it is associated with is not supported.
  */
 public class UnsupportedOptionTypeException extends RuntimeException {
+
   public UnsupportedOptionTypeException(String name) {
     super("The @Option annotation does not support the type of field " + name);
   }

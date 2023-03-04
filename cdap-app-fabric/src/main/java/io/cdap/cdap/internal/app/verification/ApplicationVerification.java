@@ -25,8 +25,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import java.util.Arrays;
 
 /**
- * This class is responsible for verifying the Application details of
- * the {@link ApplicationSpecification}.
+ * This class is responsible for verifying the Application details of the {@link
+ * ApplicationSpecification}.
  * <p/>
  * <p>
  * Following are the checks done for Application
@@ -56,8 +56,8 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
     // Loop through all program types. For each program type, get the number of programs of that type.
     // Then sum up total number of programs.
     int numberOfPrograms = Arrays.stream(ProgramType.values())
-      .mapToInt(t -> input.getProgramsByType(t).size())
-      .reduce(0, (l, r) -> l + r);
+        .mapToInt(t -> input.getProgramsByType(t).size())
+        .reduce(0, (l, r) -> l + r);
     if (numberOfPrograms <= 0) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }

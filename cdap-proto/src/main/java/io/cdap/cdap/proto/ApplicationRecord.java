@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * Represents item in the list from /apps
  */
 public class ApplicationRecord {
+
   private final String type;
   private final String name;
   private final String version;
@@ -41,16 +42,17 @@ public class ApplicationRecord {
 
   public ApplicationRecord(ApplicationDetail detail) {
     this(detail.getArtifact(), detail.getName(),
-         detail.getAppVersion(), detail.getDescription(),
-         detail.getOwnerPrincipal(), detail.getChange(),
-         detail.getSourceControlMeta());
+        detail.getAppVersion(), detail.getDescription(),
+        detail.getOwnerPrincipal(), detail.getChange(),
+        detail.getSourceControlMeta());
   }
 
   /**
    * Constructor for backwards compatibility, please do not remove.
    */
-  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
-                           @Nullable String ownerPrincipal) {
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version,
+      String description,
+      @Nullable String ownerPrincipal) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
@@ -64,8 +66,9 @@ public class ApplicationRecord {
   /**
    * Constructor for backwards compatibility, please do not remove.
    */
-  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
-                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version,
+      String description,
+      @Nullable String ownerPrincipal, @Nullable ChangeDetail change) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
@@ -76,9 +79,10 @@ public class ApplicationRecord {
     this.sourceControlMeta = null;
   }
 
-  public ApplicationRecord(ArtifactSummary artifact, String name, String version, String description,
-                           @Nullable String ownerPrincipal, @Nullable ChangeDetail change,
-                           @Nullable SourceControlMeta sourceControlMeta) {
+  public ApplicationRecord(ArtifactSummary artifact, String name, String version,
+      String description,
+      @Nullable String ownerPrincipal, @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta) {
     this.type = "App";
     this.artifact = artifact;
     this.name = name;
@@ -135,32 +139,33 @@ public class ApplicationRecord {
 
     ApplicationRecord that = (ApplicationRecord) o;
 
-    return Objects.equals(type, that.type) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(artifact, that.artifact) &&
-      Objects.equals(ownerPrincipal, that.ownerPrincipal) &&
-      Objects.equals(change, that.change) &&
-      Objects.equals(sourceControlMeta, that.sourceControlMeta);
+    return Objects.equals(type, that.type)
+        && Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(description, that.description)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(ownerPrincipal, that.ownerPrincipal)
+        && Objects.equals(change, that.change)
+        && Objects.equals(sourceControlMeta, that.sourceControlMeta);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change, sourceControlMeta);
+    return Objects.hash(type, name, version, description, artifact, ownerPrincipal, change,
+        sourceControlMeta);
   }
 
   @Override
   public String toString() {
-    return "ApplicationRecord{" +
-      "type='" + type + '\'' +
-      ", name='" + name + '\'' +
-      ", version='" + version + '\'' +
-      ", description='" + description + '\'' +
-      ", artifact=" + artifact +
-      ", ownerPrincipal='" + ownerPrincipal + '\'' +
-      ", change=" + change +
-      ", sourceControlMeta=" + sourceControlMeta +
-      '}';
+    return "ApplicationRecord{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", version='" + version + '\''
+        + ", description='" + description + '\''
+        + ", artifact=" + artifact
+        + ", ownerPrincipal='" + ownerPrincipal + '\''
+        + ", change=" + change
+        + ", sourceControlMeta=" + sourceControlMeta
+        + '}';
   }
 }

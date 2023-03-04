@@ -21,6 +21,7 @@ import java.io.PrintStream;
  * Renders a {@link Table}.
  */
 public interface TableRenderer {
+
   /**
    * Renders the table to the output.
    *

@@ -36,7 +36,8 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
   public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.delegate.output.classname";
 
   @Override
-  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context)
+      throws IOException, InterruptedException {
     return getDelegate(context.getConfiguration()).getRecordWriter(context);
   }
 
@@ -46,7 +47,8 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
   }
 
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+  public OutputCommitter getOutputCommitter(TaskAttemptContext context)
+      throws IOException, InterruptedException {
     return getDelegate(context.getConfiguration()).getOutputCommitter(context);
   }
 
@@ -60,8 +62,9 @@ public class DelegatingOutputFormat<K, V> extends OutputFormat<K, V> {
     String delegateClassName = conf.get(DELEGATE_CLASS_NAME);
     try {
       //noinspection unchecked
-      OutputFormat<K, V> outputFormat = (OutputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName)
-        .newInstance();
+      OutputFormat<K, V> outputFormat = (OutputFormat<K, V>) conf.getClassLoader()
+          .loadClass(delegateClassName)
+          .newInstance();
       if (outputFormat instanceof Configurable) {
         ((Configurable) outputFormat).setConf(conf);
       }

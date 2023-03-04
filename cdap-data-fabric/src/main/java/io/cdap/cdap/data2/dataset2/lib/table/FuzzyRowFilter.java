@@ -25,9 +25,8 @@ import java.util.List;
 /**
  * This is inspired by HBase's FuzzyRowFilter.
  *
- * Filters data based on fuzzy row key. Performs fast-forwards during scanning.
- * It takes pairs (row key, fuzzy info) to match row keys. Where fuzzy info is
- * a byte array with 0 or 1 as its values:
+ * Filters data based on fuzzy row key. Performs fast-forwards during scanning. It takes pairs (row
+ * key, fuzzy info) to match row keys. Where fuzzy info is a byte array with 0 or 1 as its values:
  * <ul>
  *   <li>
  *     0 - means that this byte in provided row key is fixed, i.e. row key's byte at same position
@@ -50,7 +49,6 @@ import java.util.List;
  * fuzzy info = "\x01\x01\x01\x01\x00\x00\x00\x00\x01\x01\x01\x01\x00\x00\x00"
  *
  * I.e. fuzzy info tells the matching mask is "????_99_????_01", where at ? can be any value.
- *
  */
 public final class FuzzyRowFilter implements Filter {
 
@@ -87,7 +85,7 @@ public final class FuzzyRowFilter implements Filter {
     SatisfiesCode bestOption = SatisfiesCode.NO_NEXT;
     for (ImmutablePair<byte[], byte[]> fuzzyData : fuzzyKeysData) {
       SatisfiesCode satisfiesCode =
-        satisfies(rowKey, fuzzyData.getFirst(), fuzzyData.getSecond());
+          satisfies(rowKey, fuzzyData.getFirst(), fuzzyData.getSecond());
       if (satisfiesCode == SatisfiesCode.YES) {
         return ReturnCode.INCLUDE;
       }
@@ -110,7 +108,7 @@ public final class FuzzyRowFilter implements Filter {
     // Searching for the "smallest" row key that satisfies at least one fuzzy row key
     for (ImmutablePair<byte[], byte[]> fuzzyData : fuzzyKeysData) {
       byte[] nextRowKeyCandidate = getNextForFuzzyRule(rowKey,
-                                                       fuzzyData.getFirst(), fuzzyData.getSecond());
+          fuzzyData.getFirst(), fuzzyData.getSecond());
       if (nextRowKeyCandidate == null) {
         continue;
       }
@@ -122,10 +120,10 @@ public final class FuzzyRowFilter implements Filter {
     if (nextRowKey == null) {
       // SHOULD NEVER happen
       // TODO: is there a better way than throw exception? (stop the scanner?)
-      throw new IllegalStateException("No next row key that satisfies fuzzy exists when" +
-                                        " getNextKeyHint() is invoked." +
-                                        " Filter: " + this.toString() +
-                                        " RowKey: " + Bytes.toStringBinary(rowKey));
+      throw new IllegalStateException("No next row key that satisfies fuzzy exists when"
+          + " getNextKeyHint() is invoked."
+          + " Filter: " + this.toString()
+          + " RowKey: " + Bytes.toStringBinary(rowKey));
     }
     return nextRowKey;
   }
@@ -155,12 +153,12 @@ public final class FuzzyRowFilter implements Filter {
   }
 
   private static SatisfiesCode satisfies(byte[] row,
-                                         byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
+      byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
     return satisfies(row, 0, row.length, fuzzyKeyBytes, fuzzyKeyMeta);
   }
 
   private static SatisfiesCode satisfies(byte[] row, int offset, int length,
-                                         byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
+      byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
     if (row == null) {
       // do nothing, let scan to proceed
       return SatisfiesCode.YES;
@@ -182,7 +180,7 @@ public final class FuzzyRowFilter implements Filter {
         // this row and which satisfies the fuzzy rule. Otherwise there's no such byte array:
         // this row is simply bigger than any byte array that satisfies the fuzzy rule
         boolean rowByteLessThanFixed = (row[i + offset] & 0xFF) < (fuzzyKeyBytes[i] & 0xFF);
-        return  rowByteLessThanFixed ? SatisfiesCode.NEXT_EXISTS : SatisfiesCode.NO_NEXT;
+        return rowByteLessThanFixed ? SatisfiesCode.NEXT_EXISTS : SatisfiesCode.NO_NEXT;
       }
 
       // Second, checking if this position is not fixed and byte value is not the biggest. In this
@@ -208,11 +206,11 @@ public final class FuzzyRowFilter implements Filter {
   }
 
   /**
-   * @return greater byte array than given (row) which satisfies the fuzzy rule if it exists,
-   *         null otherwise
+   * @return greater byte array than given (row) which satisfies the fuzzy rule if it exists, null
+   *     otherwise
    */
   private static byte[] getNextForFuzzyRule(byte[] row, int offset, int length,
-                                            byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
+      byte[] fuzzyKeyBytes, byte[] fuzzyKeyMeta) {
     // To find out the next "smallest" byte array that satisfies fuzzy rule and "greater" than
     // the given one we do the following:
     // 1. setting values on all "fixed" positions to the values from fuzzyKeyBytes
@@ -222,7 +220,7 @@ public final class FuzzyRowFilter implements Filter {
     // It is easier to perform this by using fuzzyKeyBytes copy and setting "non-fixed" position
     // values than otherwise.
     byte[] result = Arrays.copyOf(fuzzyKeyBytes,
-                                  length > fuzzyKeyBytes.length ? length : fuzzyKeyBytes.length);
+        length > fuzzyKeyBytes.length ? length : fuzzyKeyBytes.length);
     int toInc = -1;
 
     boolean increased = false;

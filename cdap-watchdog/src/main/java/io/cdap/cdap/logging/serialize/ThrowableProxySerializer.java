@@ -28,7 +28,9 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for IThrowableProxy.
  */
 final class ThrowableProxySerializer {
-  private ThrowableProxySerializer() {}
+
+  private ThrowableProxySerializer() {
+  }
 
   static GenericRecord encode(Schema schema, IThrowableProxy throwableProxy) {
     if (throwableProxy != null) {
@@ -38,12 +40,14 @@ final class ThrowableProxySerializer {
       datum.put("message", throwableProxy.getMessage());
       datum.put("commonFramesCount", throwableProxy.getCommonFrames());
       datum.put("stackTraceElementProxyArray",
-                StackTraceElementProxyArraySerializer.encode(tpSchema.getField("stackTraceElementProxyArray").schema(),
-                                                             throwableProxy.getStackTraceElementProxyArray()));
+          StackTraceElementProxyArraySerializer.encode(
+              tpSchema.getField("stackTraceElementProxyArray").schema(),
+              throwableProxy.getStackTraceElementProxyArray()));
       datum.put("cause", ThrowableProxySerializer.encode(tpSchema.getField("cause").schema(),
-                                                         throwableProxy.getCause()));
-      datum.put("suppressed", ThrowableProxyArraySerializer.encode(tpSchema.getField("suppressed").schema(),
-                                                                   throwableProxy.getSuppressed()));
+          throwableProxy.getCause()));
+      datum.put("suppressed",
+          ThrowableProxyArraySerializer.encode(tpSchema.getField("suppressed").schema(),
+              throwableProxy.getSuppressed()));
       return datum;
     }
     return null;
@@ -55,12 +59,13 @@ final class ThrowableProxySerializer {
       String message = LoggingUtil.stringOrNull(datum.get("message"));
       int commonFramesCount = (Integer) datum.get("commonFramesCount");
       @SuppressWarnings("unchecked") StackTraceElementProxy[] steArray =
-        StackTraceElementProxyArraySerializer.decode(
-          (GenericArray<GenericRecord>) datum.get("stackTraceElementProxyArray"));
+          StackTraceElementProxyArraySerializer.decode(
+              (GenericArray<GenericRecord>) datum.get("stackTraceElementProxyArray"));
       IThrowableProxy cause = ThrowableProxySerializer.decode((GenericRecord) datum.get("cause"));
       @SuppressWarnings("unchecked") IThrowableProxy[] suppressed = ThrowableProxyArraySerializer.decode(
-        (GenericArray<GenericRecord>) datum.get("suppressed"));
-      return new ThrowableProxyImpl(cause, className, commonFramesCount, message, steArray, suppressed);
+          (GenericArray<GenericRecord>) datum.get("suppressed"));
+      return new ThrowableProxyImpl(cause, className, commonFramesCount, message, steArray,
+          suppressed);
     }
     return null;
   }

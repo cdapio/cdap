@@ -67,8 +67,9 @@ public final class Splits {
    * @throws IOException if failed to deserialize
    * @throws ClassNotFoundException if failed to load the {@link Split} class.
    */
-  public static <T extends Collection<? super Split>> T decode(String encoded, T splits, ClassLoader classLoader)
-    throws IOException, ClassNotFoundException {
+  public static <T extends Collection<? super Split>> T decode(String encoded, T splits,
+      ClassLoader classLoader)
+      throws IOException, ClassNotFoundException {
 
     InputStream is = new ByteArrayInputStream(Bytes.toBytesBinary(encoded));
     try (DataInputStream in = new DataInputStream(is)) {
@@ -111,23 +112,25 @@ public final class Splits {
   }
 
   /**
-   * Deserialize a {@link Split} that was written by the {@link #serialize(Split, DataOutput)} method
-   * using a provided {@link ClassLoader} to load the {@link Split} class.
+   * Deserialize a {@link Split} that was written by the {@link #serialize(Split, DataOutput)}
+   * method using a provided {@link ClassLoader} to load the {@link Split} class.
    *
    * @param in the {@link DataInput} for reading the serialized data
    * @param classLoader the {@link ClassLoader} for loading the actual {@link Split} class
    * @return a {@link Split} instance
    * @throws IOException if failed to deserialize
-   * @throws ClassNotFoundException if failed to load the split class as indicated by the encoded string
+   * @throws ClassNotFoundException if failed to load the split class as indicated by the
+   *     encoded string
    */
-  public static Split deserialize(DataInput in, ClassLoader classLoader) throws IOException, ClassNotFoundException {
+  public static Split deserialize(DataInput in, ClassLoader classLoader)
+      throws IOException, ClassNotFoundException {
     String className = in.readUTF();
     try {
       Split split = (Split) classLoader.loadClass(className).getConstructor().newInstance();
       split.readExternal(in);
       return split;
     } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
-             InvocationTargetException | UnsupportedOperationException e) {
+        InvocationTargetException | UnsupportedOperationException e) {
       // If failed to instantiate the class using default constructor or the readExternal
       // throws UnsupportedOperationException, deserialize with Gson
     }
@@ -136,7 +139,7 @@ public final class Splits {
     byte[] bytes = new byte[in.readInt()];
     in.readFully(bytes);
     return (Split) new Gson().fromJson(new InputStreamReader(new ByteArrayInputStream(bytes),
-                                                             StandardCharsets.UTF_8), classLoader.loadClass(className));
+        StandardCharsets.UTF_8), classLoader.loadClass(className));
   }
 
   private Splits() {

@@ -34,8 +34,8 @@ public class SortInfo {
   private static final Pattern SPACE_SPLIT_PATTERN = Pattern.compile("\\s+");
 
   /**
-   * Default sort order, when no custom sorting is desired. Sorts search results as a function of relative weights for
-   * the specified search query.
+   * Default sort order, when no custom sorting is desired. Sorts search results as a function of
+   * relative weights for the specified search query.
    */
   public static final SortInfo DEFAULT = new SortInfo(null, SortOrder.WEIGHTED);
 
@@ -57,7 +57,8 @@ public class SortInfo {
   }
 
   /**
-   * Returns the sort by column, unless the column does not matter, when the sort order is {@link SortOrder#WEIGHTED}.
+   * Returns the sort by column, unless the column does not matter, when the sort order is {@link
+   * SortOrder#WEIGHTED}.
    */
   @Nullable
   public String getSortBy() {
@@ -72,7 +73,8 @@ public class SortInfo {
    * Parses a {@link SortInfo} object from the specified string. The supported format is
    * <pre>[sortBy][whitespace][sortOrder]</pre>.
    *
-   * @param sort the string to parse into a {@link SortInfo}. If {@code null}, {@link #DEFAULT} is returned
+   * @param sort the string to parse into a {@link SortInfo}. If {@code null}, {@link #DEFAULT}
+   *     is returned
    * @return the parsed {@link SortInfo}
    * @throws BadRequestException if the string does not conform to the expected format
    */
@@ -80,25 +82,30 @@ public class SortInfo {
     if (Strings.isNullOrEmpty(sort)) {
       return SortInfo.DEFAULT;
     }
-    Iterable<String> sortSplit = Splitter.on(SPACE_SPLIT_PATTERN).trimResults().omitEmptyStrings().split(sort);
+    Iterable<String> sortSplit = Splitter.on(SPACE_SPLIT_PATTERN).trimResults().omitEmptyStrings()
+        .split(sort);
     if (Iterables.size(sortSplit) != 2) {
       throw new BadRequestException(
-        String.format("'sort' parameter should be a space separated string containing the field ('%s' or '%s') and " +
-                        "the sort order ('%s' or '%s'). Found %s.", MetadataConstants.ENTITY_NAME_KEY,
-                      MetadataConstants.CREATION_TIME_KEY, SortOrder.ASC, SortOrder.DESC, sort));
+          String.format(
+              "'sort' parameter should be a space separated string containing the field ('%s' or '%s') and "
+
+                  + "the sort order ('%s' or '%s'). Found %s.", MetadataConstants.ENTITY_NAME_KEY,
+              MetadataConstants.CREATION_TIME_KEY, SortOrder.ASC, SortOrder.DESC, sort));
     }
     Iterator<String> iterator = sortSplit.iterator();
     String sortBy = iterator.next();
     String sortOrder = iterator.next();
-    if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sortBy) &&
-      !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sortBy)) {
+    if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sortBy)
+        && !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sortBy)) {
       throw new BadRequestException(
-        String.format("Sort field must be '%s' or '%s'. Found %s.", MetadataConstants.ENTITY_NAME_KEY,
-                      MetadataConstants.CREATION_TIME_KEY, sortBy));
+          String.format("Sort field must be '%s' or '%s'. Found %s.",
+              MetadataConstants.ENTITY_NAME_KEY,
+              MetadataConstants.CREATION_TIME_KEY, sortBy));
     }
     if (!"asc".equalsIgnoreCase(sortOrder) && !"desc".equalsIgnoreCase(sortOrder)) {
       throw new BadRequestException(
-        String.format("Sort order must be one of '%s' or '%s'. Found %s.", SortOrder.ASC, SortOrder.DESC, sortOrder));
+          String.format("Sort order must be one of '%s' or '%s'. Found %s.", SortOrder.ASC,
+              SortOrder.DESC, sortOrder));
     }
 
     return new SortInfo(sortBy, SortInfo.SortOrder.valueOf(sortOrder.toUpperCase()));
@@ -115,8 +122,8 @@ public class SortInfo {
 
     SortInfo that = (SortInfo) o;
 
-    return Objects.equals(sortBy, that.sortBy) &&
-      Objects.equals(sortOrder, that.sortOrder);
+    return Objects.equals(sortBy, that.sortBy)
+        && Objects.equals(sortOrder, that.sortOrder);
   }
 
   @Override

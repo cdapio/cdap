@@ -36,7 +36,7 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(LogAppenderLogProcessor.class);
   private static final ThreadLocal<LoggingEventSerializer> LOGGING_EVENT_SERIALIZER =
-          ThreadLocal.withInitial(LoggingEventSerializer::new);
+      ThreadLocal.withInitial(LoggingEventSerializer::new);
   private final LogAppender logAppender;
 
   @Inject
@@ -50,7 +50,8 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
     loggingEventBytes.forEachRemaining(bytes -> {
       try {
         ILoggingEvent iLoggingEvent = serializer.fromBytes(ByteBuffer.wrap(bytes));
-        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
+        LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
+            iLoggingEvent.getMDCPropertyMap());
         if (loggingContext == null) {
           // This shouldn't happen
           LOG.debug("Ignore logging event due to missing logging context: {}", iLoggingEvent);

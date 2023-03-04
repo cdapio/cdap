@@ -25,6 +25,7 @@ import java.util.Set;
  * Base for master startup checks.
  */
 public abstract class AbstractMasterCheck extends Check {
+
   protected final CConfiguration cConf;
   protected final Set<ServiceResourceKeys> systemServicesResourceKeys;
 

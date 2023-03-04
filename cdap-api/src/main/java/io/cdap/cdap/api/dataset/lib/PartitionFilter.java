@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * Describes a filter over partition keys.
  */
 public class PartitionFilter {
+
   public static final PartitionFilter ALWAYS_MATCH = new PartitionFilter(new LinkedHashMap<>());
 
   private final Map<String, Condition<? extends Comparable>> conditions;
@@ -35,8 +36,8 @@ public class PartitionFilter {
   }
 
   /**
-   * This should be used for inspection or debugging only.
-   * To match this filter, use the {@link #match} method.
+   * This should be used for inspection or debugging only. To match this filter, use the {@link
+   * #match} method.
    *
    * @return the individual conditions of this filter.
    */
@@ -54,10 +55,11 @@ public class PartitionFilter {
   /**
    * Match this filter against a partition key. The key matches iff it matches all conditions.
    *
-   * @throws java.lang.IllegalArgumentException if one of the field types in the partition key are incompatible
+   * @throws java.lang.IllegalArgumentException if one of the field types in the partition key
+   *     are incompatible
    */
   public boolean match(PartitionKey partitionKey) {
-    for (Map.Entry<String, Condition<? extends Comparable>> condition : getConditions().entrySet())  {
+    for (Map.Entry<String, Condition<? extends Comparable>> condition : getConditions().entrySet()) {
       Comparable value = partitionKey.getField(condition.getKey());
       if (value == null || !condition.getValue().match(value)) {
         return false;
@@ -82,29 +84,30 @@ public class PartitionFilter {
    * A builder for partition filters.
    */
   public static class Builder {
+
     private final Map<String, Condition<? extends Comparable>> map = new LinkedHashMap<>();
 
     /**
      * Add a condition for a given field name with an inclusive lower and an exclusive upper bound.
-     * Either bound can be null, meaning unbounded in that direction. If both upper and lower bound are
-     * null, then this condition has no effect and is not added to the filter.
+     * Either bound can be null, meaning unbounded in that direction. If both upper and lower bound
+     * are null, then this condition has no effect and is not added to the filter.
      *
      * @param field The name of the partition field
      * @param lower the inclusive lower bound. If null, there is no lower bound.
      * @param upper the exclusive upper bound. If null, there is no upper bound.
      * @param <T> The type of the partition field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if both bounds are equal (meaning the condition cannot be satisfied).
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, or if both bounds are equal (meaning the condition cannot be satisfied).
      */
     public <T extends Comparable<T>> Builder addRangeCondition(String field,
-                                                               @Nullable T lower,
-                                                               @Nullable T upper) {
+        @Nullable T lower,
+        @Nullable T upper) {
       if (field == null || field.isEmpty()) {
         throw new IllegalArgumentException("field name cannot be null or empty.");
       }
       if (map.containsKey(field)) {
-        throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
+        throw new IllegalArgumentException(
+            String.format("Field '%s' already exists in partition filter.", field));
       }
       if (null == lower && null == upper) { // filter is pointless if there is no bound
         return this;
@@ -119,9 +122,8 @@ public class PartitionFilter {
      * @param field The name of the partition field
      * @param value The value that matching field values must have
      * @param <T> The type of the partition field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the value is null.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, or if the value is null.
      */
     public <T extends Comparable<T>> Builder addValueCondition(String field, T value) {
       if (field == null || field.isEmpty()) {
@@ -131,7 +133,8 @@ public class PartitionFilter {
         throw new IllegalArgumentException("condition value cannot be null.");
       }
       if (map.containsKey(field)) {
-        throw new IllegalArgumentException(String.format("Field '%s' already exists in partition filter.", field));
+        throw new IllegalArgumentException(
+            String.format("Field '%s' already exists in partition filter.", field));
       }
       map.put(field, new Condition<>(field, value));
       return this;
@@ -177,8 +180,10 @@ public class PartitionFilter {
   }
 
   /**
-   * Represents a condition on a partitioning field, by means of an inclusive lower bound and an exclusive upper bound.
-   * As a special case, if only one value is passed to the constructor, then this represents an equality filter.
+   * Represents a condition on a partitioning field, by means of an inclusive lower bound and an
+   * exclusive upper bound. As a special case, if only one value is passed to the constructor, then
+   * this represents an equality filter.
+   *
    * @param <T> The type of the partitioning field.
    */
   public static class Condition<T extends Comparable<T>> {
@@ -244,7 +249,8 @@ public class PartitionFilter {
     }
 
     /**
-     * Match the condition against a given value. The value must be of the same type as the bounds of the condition.
+     * Match the condition against a given value. The value must be of the same type as the bounds
+     * of the condition.
      *
      * @throws java.lang.IllegalArgumentException if the value has an incompatible type
      */
@@ -253,17 +259,19 @@ public class PartitionFilter {
         // if lower and upper are identical, then this represents an equality condition.
         @SuppressWarnings("unchecked")
         boolean matches = // the variable is redundant but required in order to suppress the warning
-          isSingleValue()
-            ? getValue().compareTo((T) value) == 0
-            : (lower == null || lower.compareTo((T) value) <= 0) && (upper == null || upper.compareTo((T) value) > 0);
+            isSingleValue()
+                ? getValue().compareTo((T) value) == 0
+                : (lower == null || lower.compareTo((T) value) <= 0) && (upper == null
+                    || upper.compareTo((T) value) > 0);
         return matches;
 
       } catch (ClassCastException e) {
         // this should never happen because we make sure that partition keys and filters
         // match the field types declared for the partitioning. But just to be sure:
-        throw new IllegalArgumentException("Incompatible partition filter: condition for field '" + fieldName +
-                                             "' is on " + determineClass() + " but partition key value '" + value
-                                             + "' is of " + value.getClass());
+        throw new IllegalArgumentException(
+            "Incompatible partition filter: condition for field '" + fieldName
+                + "' is on " + determineClass() + " but partition key value '" + value
+                + "' is of " + value.getClass());
       }
     }
 
@@ -278,7 +286,7 @@ public class PartitionFilter {
         return fieldName + "==" + getValue().toString();
       } else {
         return fieldName + " in [" + (getLower() == null ? "null" : getLower().toString())
-          + "..." + (getUpper() == null ? "null" : getUpper().toString()) + "]";
+            + "..." + (getUpper() == null ? "null" : getUpper().toString()) + "]";
       }
     }
 

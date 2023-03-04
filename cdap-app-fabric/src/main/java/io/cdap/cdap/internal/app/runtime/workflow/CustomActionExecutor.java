@@ -44,27 +44,31 @@ class CustomActionExecutor {
 
   /**
    * Creates instance which will be used to initialize, run, and destroy the custom action.
+   *
    * @param customActionContext an instance of context
    * @param instantiator to instantiates the custom action class
    * @param classLoader used to load the custom action class
    * @throws Exception when failed to instantiate the custom action
    */
   CustomActionExecutor(BasicCustomActionContext customActionContext,
-                       InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
+      InstantiatorFactory instantiator, ClassLoader classLoader) throws Exception {
     this.customActionContext = customActionContext;
     this.customAction = createCustomAction(customActionContext, instantiator, classLoader);
   }
 
   @SuppressWarnings("unchecked")
-  private CustomAction createCustomAction(BasicCustomActionContext context, InstantiatorFactory instantiator,
-                                          ClassLoader classLoader) throws Exception {
+  private CustomAction createCustomAction(BasicCustomActionContext context,
+      InstantiatorFactory instantiator,
+      ClassLoader classLoader) throws Exception {
     Class<?> clz = Class.forName(context.getSpecification().getClassName(), true, classLoader);
-    Preconditions.checkArgument(CustomAction.class.isAssignableFrom(clz), "%s is not a CustomAction.", clz);
-    CustomAction action = instantiator.get(TypeToken.of((Class<? extends CustomAction>) clz)).create();
+    Preconditions.checkArgument(CustomAction.class.isAssignableFrom(clz),
+        "%s is not a CustomAction.", clz);
+    CustomAction action = instantiator.get(TypeToken.of((Class<? extends CustomAction>) clz))
+        .create();
     Reflections.visit(action, action.getClass(),
-                      new PropertyFieldSetter(context.getSpecification().getProperties()),
-                      new DataSetFieldSetter(context),
-                      new MetricsFieldSetter(context.getMetrics()));
+        new PropertyFieldSetter(context.getSpecification().getProperties()),
+        new DataSetFieldSetter(context),
+        new MetricsFieldSetter(context.getMetrics()));
     return action;
   }
 
@@ -76,10 +80,10 @@ class CustomActionExecutor {
       // implement initialize(), whereas programs that directly implement CustomAction can
       // override initialize(context)
       TransactionControl txControl = customAction instanceof AbstractCustomAction
-        ? Transactions.getTransactionControl(defaultTxControl, AbstractCustomAction.class,
-                                             customAction, "initialize")
-        : Transactions.getTransactionControl(defaultTxControl, CustomAction.class,
-                                             customAction, "initialize", CustomActionContext.class);
+          ? Transactions.getTransactionControl(defaultTxControl, AbstractCustomAction.class,
+          customAction, "initialize")
+          : Transactions.getTransactionControl(defaultTxControl, CustomAction.class,
+              customAction, "initialize", CustomActionContext.class);
       customActionContext.initializeProgram(customAction, txControl, false);
 
       customActionContext.setState(new ProgramState(ProgramStatus.RUNNING, null));
@@ -87,13 +91,14 @@ class CustomActionExecutor {
       customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
 
     } catch (Throwable t) {
-      customActionContext.setState(new ProgramState(ProgramStatus.FAILED, Exceptions.condenseThrowableMessage(t)));
+      customActionContext.setState(
+          new ProgramState(ProgramStatus.FAILED, Exceptions.condenseThrowableMessage(t)));
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
 
     } finally {
       TransactionControl txControl = Transactions.getTransactionControl(defaultTxControl,
-                                                                        CustomAction.class, customAction, "destroy");
+          CustomAction.class, customAction, "destroy");
       customActionContext.destroyProgram(customAction, txControl, false);
     }
   }

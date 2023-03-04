@@ -33,13 +33,15 @@ public class RevokePermissionForPrincipalCommand extends RevokePermissionCommand
 
   @Override
   public String getPattern() {
-    return String.format("revoke permissions <permissions> on entity <%s> from <%s> <%s>", ArgumentName.ENTITY,
-                         ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
+    return String.format("revoke permissions <permissions> on entity <%s> from <%s> <%s>",
+        ArgumentName.ENTITY,
+        ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Revokes a principal's privileges to perform certain permissions on an entity. %s %s",
-      ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
+    return String.format(
+        "Revokes a principal's privileges to perform certain permissions on an entity. %s %s",
+        ArgumentName.ENTITY_DESCRIPTION_PERMISSIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }

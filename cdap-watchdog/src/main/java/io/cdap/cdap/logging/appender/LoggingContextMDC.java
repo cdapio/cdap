@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A {@link Map} representing the MDC property map of a logging event by combining
- * system tags and the user MDC. The entries in the system tags takes precedence.
+ * A {@link Map} representing the MDC property map of a logging event by combining system tags and
+ * the user MDC. The entries in the system tags takes precedence.
  */
 class LoggingContextMDC extends AbstractMap<String, String> {
 
@@ -39,12 +39,12 @@ class LoggingContextMDC extends AbstractMap<String, String> {
     this.systemTags = systemTags;
     this.eventMDC = eventMDC;
     this.entryIterable = Iterables.concat(systemTags.entrySet(),
-                                          Iterables.filter(eventMDC.entrySet(), new Predicate<Entry<String, String>>() {
-      @Override
-      public boolean apply(Entry<String, String> entry) {
-        return !LoggingContextMDC.this.systemTags.containsKey(entry.getKey());
-      }
-    }));
+        Iterables.filter(eventMDC.entrySet(), new Predicate<Entry<String, String>>() {
+          @Override
+          public boolean apply(Entry<String, String> entry) {
+            return !LoggingContextMDC.this.systemTags.containsKey(entry.getKey());
+          }
+        }));
   }
 
   @Override

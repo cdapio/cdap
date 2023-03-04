@@ -23,11 +23,12 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 
 /**
- * Provider for {@link PreferencesFetcher}.
- * Use {@link RemotePreferencesFetcherInternal} if storage implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL},
- * otherwise use {@link LocalPreferencesFetcherInternal}.
+ * Provider for {@link PreferencesFetcher}. Use {@link RemotePreferencesFetcherInternal} if storage
+ * implication is {@link Constants.Dataset#DATA_STORAGE_NOSQL}, otherwise use {@link
+ * LocalPreferencesFetcherInternal}.
  */
 public class ApplicationDetailFetcherProvider implements Provider<ApplicationDetailFetcher> {
+
   private final CConfiguration cConf;
   private final Injector injector;
 
@@ -41,7 +42,8 @@ public class ApplicationDetailFetcherProvider implements Provider<ApplicationDet
   public ApplicationDetailFetcher get() {
     String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
     if (storageImpl == null) {
-      throw new IllegalStateException("No storage implementation is specified in the configuration file");
+      throw new IllegalStateException(
+          "No storage implementation is specified in the configuration file");
     }
 
     storageImpl = storageImpl.toLowerCase();

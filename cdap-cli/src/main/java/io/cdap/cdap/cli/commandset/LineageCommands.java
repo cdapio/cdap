@@ -33,9 +33,9 @@ public class LineageCommands extends CommandSet<Command> implements Categorized 
   @Inject
   public LineageCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(GetDatasetLineageCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(GetDatasetLineageCommand.class))
+            .build());
   }
 
   @Override

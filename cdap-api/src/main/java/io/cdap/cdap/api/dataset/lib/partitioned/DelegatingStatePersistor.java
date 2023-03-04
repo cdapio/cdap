@@ -21,16 +21,18 @@ import io.cdap.cdap.api.dataset.lib.DatasetStatePersistor;
 import javax.annotation.Nullable;
 
 /**
- * An implementation of {@link StatePersistor} that uses a {@link DatasetContext} to read and persist state.
- * This is needed to make it possible that the user can define a DatasetStatePersistor, without access to an instance
- * of a DatasetContext (from a Worker, for instance).
+ * An implementation of {@link StatePersistor} that uses a {@link DatasetContext} to read and
+ * persist state. This is needed to make it possible that the user can define a
+ * DatasetStatePersistor, without access to an instance of a DatasetContext (from a Worker, for
+ * instance).
  */
 public class DelegatingStatePersistor implements StatePersistor {
 
   private final DatasetContext datasetContext;
   private final DatasetStatePersistor datasetStatePersistor;
 
-  public DelegatingStatePersistor(DatasetContext datasetContext, DatasetStatePersistor datasetStatePersistor) {
+  public DelegatingStatePersistor(DatasetContext datasetContext,
+      DatasetStatePersistor datasetStatePersistor) {
     this.datasetContext = datasetContext;
     this.datasetStatePersistor = datasetStatePersistor;
   }

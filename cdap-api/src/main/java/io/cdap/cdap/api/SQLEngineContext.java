@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.Metrics;
  * This interface represents a context for a SQL Engine
  */
 public interface SQLEngineContext extends RuntimeContext {
+
   /**
    * @return Metrics instance used to collect execution metrics
    */

@@ -83,6 +83,7 @@ import org.slf4j.LoggerFactory;
 // todo: extract separate "no delete inside tx" table?
 // todo: consider writing & reading using HTable to do in multi-threaded way
 public class HBaseTable extends BufferingTable {
+
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTable.class);
 
   private static final String CONFIG_HBASE_CLIENT_SCANNER_CACHING = HConstants.HBASE_CLIENT_SCANNER_CACHING;
@@ -114,18 +115,20 @@ public class HBaseTable extends BufferingTable {
 
   private byte[] encodedTx;
 
-  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
-                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+  public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec,
+      Map<String, String> args,
+      CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
     this(datasetContext, spec, args, cConf, hConf, tableUtil, new TransactionCodec());
   }
 
   @VisibleForTesting
   HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
-                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil, TransactionCodec txCodec)
-    throws IOException {
+      CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil, TransactionCodec txCodec)
+      throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
-          TableProperties.getReadlessIncrementSupport(spec.getProperties()), spec.getProperties());
-    TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
+        TableProperties.getReadlessIncrementSupport(spec.getProperties()), spec.getProperties());
+    TableId hBaseTableId = tableUtil.createHTableId(
+        new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
     this.table = tableUtil.createTable(hConf, hBaseTableId);
     // todo: make configurable
     this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
@@ -135,10 +138,13 @@ public class HBaseTable extends BufferingTable {
     this.txCodec = txCodec;
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
     // table name is not the same as the dataset name anymore
-    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
-    this.safeReadlessIncrements = args.containsKey(SAFE_INCREMENTS) && Boolean.valueOf(args.get(SAFE_INCREMENTS));
+    this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()},
+        Bytes.toBytes(this.hTableName));
+    this.safeReadlessIncrements =
+        args.containsKey(SAFE_INCREMENTS) && Boolean.valueOf(args.get(SAFE_INCREMENTS));
     this.txMaxLifetimeMillis = Bytes.toBytes(TimeUnit.SECONDS.toMillis(
-      cConf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME, TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME)));
+        cConf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME,
+            TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME)));
     this.arguments = args;
     this.properties = spec.getProperties();
   }
@@ -146,10 +152,10 @@ public class HBaseTable extends BufferingTable {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-                  .add("table", table)
-                  .add("hTableName", hTableName)
-                  .add("nameAsTxChangePrefix", nameAsTxChangePrefix)
-                  .toString();
+        .add("table", table)
+        .add("hTableName", hTableName)
+        .add("nameAsTxChangePrefix", nameAsTxChangePrefix)
+        .toString();
   }
 
   private byte[] getEncodedTx() throws IOException {
@@ -199,7 +205,8 @@ public class HBaseTable extends BufferingTable {
       // specify this in an HBase Get (org.apache.hadoop.hbase.client.Get). That's why we don't call createGet for
       // every get.
       if (cols == null || !cols.isEmpty()) {
-        hbaseGets.add(createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][])));
+        hbaseGets.add(
+            createGet(get.getRow(), cols == null ? null : cols.toArray(new byte[cols.size()][])));
       }
     }
 
@@ -253,13 +260,14 @@ public class HBaseTable extends BufferingTable {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> updates) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> updates)
+      throws Exception {
     if (updates.isEmpty()) {
       return;
     }
 
-    byte [] txId = tx == null ? null : Bytes.toBytes(tx.getTransactionId());
-    byte [] txWritePointer = tx == null ? null : Bytes.toBytes(tx.getWritePointer());
+    byte[] txId = tx == null ? null : Bytes.toBytes(tx.getTransactionId());
+    byte[] txWritePointer = tx == null ? null : Bytes.toBytes(tx.getWritePointer());
     List<Mutation> mutations = new ArrayList<>();
     List<Increment> increments = new ArrayList<>();
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> row : updates.entrySet()) {
@@ -277,23 +285,23 @@ public class HBaseTable extends BufferingTable {
             if (safeReadlessIncrements) {
               increment = getIncrement(increment, row.getKey(), txId, txWritePointer);
               increment.add(columnFamily, column.getKey(), tx.getWritePointer(),
-                            ((IncrementValue) val).getValue());
+                  ((IncrementValue) val).getValue());
             } else {
               incrementPut = getPutForIncrement(incrementPut, row.getKey(), txId);
               incrementPut.add(columnFamily, column.getKey(), tx.getWritePointer(),
-                               Bytes.toBytes(((IncrementValue) val).getValue()));
+                  Bytes.toBytes(((IncrementValue) val).getValue()));
             }
           } else if (val instanceof PutValue) {
             put = getPut(put, row.getKey(), txId);
             put.add(columnFamily, column.getKey(), tx.getWritePointer(),
-                    wrapDeleteIfNeeded(((PutValue) val).getValue()));
+                wrapDeleteIfNeeded(((PutValue) val).getValue()));
           }
         } else {
           Update val = column.getValue();
           if (val instanceof IncrementValue) {
             incrementPut = getPutForIncrement(incrementPut, row.getKey(), txId);
             incrementPut.add(columnFamily, column.getKey(),
-                             Bytes.toBytes(((IncrementValue) val).getValue()));
+                Bytes.toBytes(((IncrementValue) val).getValue()));
           } else if (val instanceof PutValue) {
             put = getPut(put, row.getKey(), txId);
             put.add(columnFamily, column.getKey(), ((PutValue) val).getValue());
@@ -335,9 +343,9 @@ public class HBaseTable extends BufferingTable {
     PutBuilder putBuilder = tableUtil.buildPut(row);
     if (txId != null) {
       putBuilder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis)
-        .setAttribute(TX_ID, txId);
+          .setAttribute(TX_ID, txId);
     }
-     return putBuilder;
+    return putBuilder;
   }
 
   private PutBuilder getPutForIncrement(PutBuilder existing, byte[] row, @Nullable byte[] txId) {
@@ -345,18 +353,20 @@ public class HBaseTable extends BufferingTable {
       return existing;
     }
     return tableUtil.buildPut(row)
-      .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
-      .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis)
-      .setAttribute(TX_ID, txId);
+        .setAttribute(DELTA_WRITE, Bytes.toBytes(true))
+        .setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis)
+        .setAttribute(TX_ID, txId);
   }
 
-  private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row, @Nullable byte[] txId,
-                                        @Nullable byte[] txWritePointer)
-    throws IOException {
+  private IncrementBuilder getIncrement(IncrementBuilder existing, byte[] row,
+      @Nullable byte[] txId,
+      @Nullable byte[] txWritePointer)
+      throws IOException {
     if (existing != null) {
       return existing;
     }
-    IncrementBuilder builder = tableUtil.buildIncrement(row).setAttribute(DELTA_WRITE, Bytes.toBytes(true));
+    IncrementBuilder builder = tableUtil.buildIncrement(row)
+        .setAttribute(DELTA_WRITE, Bytes.toBytes(true));
     if (txId != null) {
       builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
       builder.setAttribute(WRITE_POINTER, txWritePointer);
@@ -378,11 +388,11 @@ public class HBaseTable extends BufferingTable {
     if (tx == null) {
       byte[] txIdBytes = op.getAttribute(HBaseTable.TX_ID);
       if (txIdBytes == null) {
-        return  -1;
+        return -1;
       }
       txId = Bytes.toLong(txIdBytes);
       if (TxUtils.isPreExistingVersion(txId)) {
-        return  -1;
+        return -1;
       }
     } else {
       txId = tx.getTransactionId();
@@ -392,7 +402,8 @@ public class HBaseTable extends BufferingTable {
 
 
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted)
+      throws Exception {
     if (persisted.isEmpty()) {
       return;
     }
@@ -428,13 +439,14 @@ public class HBaseTable extends BufferingTable {
 
   @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn,
-                                                      byte[] stopColumn, int limit) throws Exception {
+      byte[] stopColumn, int limit) throws Exception {
     // todo: this is very inefficient: column range + limit should be pushed down via server-side filters
     return getRange(getInternal(row, null), startColumn, stopColumn, limit);
   }
 
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns)
+      throws Exception {
     return getInternal(row, columns);
   }
 
@@ -446,7 +458,8 @@ public class HBaseTable extends BufferingTable {
 
     // TODO (CDAP-11954): use common utility method to extract these configs
     if (scan.getProperties().containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
-      hScan.setCacheBlocks(Boolean.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
+      hScan.setCacheBlocks(
+          Boolean.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
     } else if (arguments.containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
       hScan.setCacheBlocks(Boolean.valueOf(arguments.get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
     } else if (properties.containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
@@ -457,7 +470,8 @@ public class HBaseTable extends BufferingTable {
     }
 
     if (scan.getProperties().containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
-      hScan.setCaching(Integer.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
+      hScan.setCaching(
+          Integer.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
     } else if (arguments.containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
       hScan.setCaching(Integer.valueOf(arguments.get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
     } else if (properties.containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
@@ -491,7 +505,7 @@ public class HBaseTable extends BufferingTable {
     if (filter instanceof FuzzyRowFilter) {
       FuzzyRowFilter fuzzyRowFilter = (FuzzyRowFilter) filter;
       List<Pair<byte[], byte[]>> fuzzyPairs =
-        Lists.newArrayListWithExpectedSize(fuzzyRowFilter.getFuzzyKeysData().size());
+          Lists.newArrayListWithExpectedSize(fuzzyRowFilter.getFuzzyKeysData().size());
       for (ImmutablePair<byte[], byte[]> pair : fuzzyRowFilter.getFuzzyKeysData()) {
         fuzzyPairs.add(Pair.newPair(pair.getFirst(), pair.getSecond()));
       }
@@ -535,7 +549,8 @@ public class HBaseTable extends BufferingTable {
 
   // columns being null means to get all rows; empty columns means get no rows.
   @ReadOnly
-  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns) throws IOException {
+  private NavigableMap<byte[], byte[]> getInternal(byte[] row, @Nullable byte[][] columns)
+      throws IOException {
     if (columns != null && columns.length == 0) {
       return EMPTY_ROW_MAP;
     }
@@ -559,7 +574,7 @@ public class HBaseTable extends BufferingTable {
 
     // note: server-side filters all everything apart latest visible for us, so we can flatten it here
     NavigableMap<byte[], NavigableMap<Long, byte[]>> versioned =
-      result.getMap().get(columnFamily);
+        result.getMap().get(columnFamily);
 
     NavigableMap<byte[], byte[]> rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, byte[]>> column : versioned.entrySet()) {

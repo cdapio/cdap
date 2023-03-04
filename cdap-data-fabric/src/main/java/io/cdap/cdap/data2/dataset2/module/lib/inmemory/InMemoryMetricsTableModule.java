@@ -26,6 +26,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefini
  * Registers in-memory implementations of the metrics system datasets
  */
 public class InMemoryMetricsTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new InMemoryMetricsTableDefinition(InMemoryMetricsTable.class.getName()));

@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Utility class that allows HBase coprocessors to interact with unique timestamps.
  */
 public class TimestampOracle {
+
   private AtomicLong lastTimestamp = new AtomicLong();
 
   /**
@@ -35,8 +36,9 @@ public class TimestampOracle {
 
 
   /**
-   * Returns a timestamp value unique within the scope of this {@code TimestampOracle} instance.  For usage
-   * by HBase {@code RegionObserver} coprocessors, this normally means unique within a given region.
+   * Returns a timestamp value unique within the scope of this {@code TimestampOracle} instance. For
+   * usage by HBase {@code RegionObserver} coprocessors, this normally means unique within a given
+   * region.
    */
   public long getUniqueTimestamp() {
     long lastTs;

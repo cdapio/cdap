@@ -191,9 +191,9 @@ public class MultiSinkFunction implements PairFlatMapFunction<RecordInfo<Object>
         branchExecutors.put(groupSource, executorFactory.create(branch));
       } catch (Exception e) {
         throw new IllegalStateException(
-          String.format("Unable to get subset of pipeline starting from stage %s. " +
-                          "This indicates a planning error. Please report this bug and turn off stage " +
-                          "consolidation by setting %s to false in the runtime arguments.",
+          String.format("Unable to get subset of pipeline starting from stage %s. "
+                          + "This indicates a planning error. Please report this bug and turn off stage "
+                          + "consolidation by setting %s to false in the runtime arguments.",
                         groupSource, Constants.CONSOLIDATE_STAGES), e);
       }
 
@@ -260,9 +260,9 @@ public class MultiSinkFunction implements PairFlatMapFunction<RecordInfo<Object>
         return false;
       }
       InputInfo that = (InputInfo) o;
-      return Objects.equals(stageName, that.stageName) &&
-        type == that.type &&
-        Objects.equals(port, that.port);
+      return Objects.equals(stageName, that.stageName)
+        && type == that.type
+        && Objects.equals(port, that.port);
     }
 
     @Override

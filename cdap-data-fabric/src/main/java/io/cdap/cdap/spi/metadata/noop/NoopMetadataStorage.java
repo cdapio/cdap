@@ -50,8 +50,10 @@ public class NoopMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) {
-    return mutations.stream().map(mutation -> apply(mutation, options)).collect(Collectors.toList());
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
+      MutationOptions options) {
+    return mutations.stream().map(mutation -> apply(mutation, options))
+        .collect(Collectors.toList());
   }
 
   @Override

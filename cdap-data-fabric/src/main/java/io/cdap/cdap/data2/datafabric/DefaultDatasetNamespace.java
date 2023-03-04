@@ -25,11 +25,12 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import javax.annotation.Nullable;
 
 /**
- * Default dataset namespace, which namespaces by configuration setting 
- * {@link io.cdap.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and
- * the {@link NamespaceId} in which the dataset instance was created.
+ * Default dataset namespace, which namespaces by configuration setting {@link
+ * io.cdap.cdap.common.conf.Constants.Dataset#TABLE_PREFIX} and the {@link NamespaceId} in which the
+ * dataset instance was created.
  */
 public class DefaultDatasetNamespace implements DatasetNamespace {
+
   private final String rootPrefix;
 
   public DefaultDatasetNamespace(CConfiguration conf) {
@@ -57,7 +58,8 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   public DatasetId fromNamespaced(String namespaced) {
     Preconditions.checkArgument(namespaced != null, "Dataset name should not be null");
     // Dataset name is of the format <table-prefix>.<namespace>.<dataset-name>
-    Preconditions.checkArgument(namespaced.startsWith(rootPrefix), "Dataset name should start with " + rootPrefix);
+    Preconditions.checkArgument(namespaced.startsWith(rootPrefix),
+        "Dataset name should start with " + rootPrefix);
     // rootIndex is the index of the first character after the root prefix
     int rootIndex = rootPrefix.length();
     // namespaceIndex is the index of the first dot after the rootIndex
@@ -65,13 +67,13 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
     // This check implies also that namespace is non-empty
     // Also, '.' is not permitted in namespace name. So this should return the full namespace.
     Preconditions.checkArgument(namespaceIndex > rootIndex,
-                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
-                                rootPrefix, namespaced);
+        "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+        rootPrefix, namespaced);
     NamespaceId namespace = new NamespaceId(namespaced.substring(rootIndex, namespaceIndex));
     String datasetName = namespaced.substring(namespaceIndex + 1);
     Preconditions.checkArgument(!datasetName.isEmpty(),
-                                "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
-                                rootPrefix, namespaced);
+        "Dataset name is expected to be in the format %s<namespace>.<dataset-name>. Found - %s",
+        rootPrefix, namespaced);
     return namespace.dataset(datasetName);
   }
 

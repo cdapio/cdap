@@ -24,6 +24,7 @@ import java.util.Map;
  * Internal helper class to represent an output format provider and its configuration.
  */
 public class ProvidedOutput {
+
   private final Output output;
   private final OutputFormatProvider outputFormatProvider;
   private final String outputFormatClassName;
@@ -35,19 +36,21 @@ public class ProvidedOutput {
     this.outputFormatClassName = outputFormatProvider.getOutputFormatClassName();
     this.outputFormatConfiguration = outputFormatProvider.getOutputFormatConfiguration();
     if (outputFormatClassName == null) {
-      throw new IllegalArgumentException(String.format("Output '%s' provided null as the output format",
-                                                       output.getAlias()));
+      throw new IllegalArgumentException(
+          String.format("Output '%s' provided null as the output format",
+              output.getAlias()));
     }
     if (outputFormatConfiguration == null) {
-      throw new IllegalArgumentException(String.format("Output '%s' provided null as the output format configuration",
-                                                       output.getAlias()));
+      throw new IllegalArgumentException(
+          String.format("Output '%s' provided null as the output format configuration",
+              output.getAlias()));
     }
   }
 
   public ProvidedOutput(Output output,
-                        OutputFormatProvider outputFormatProvider,
-                        String outputFormatClassName,
-                        Map<String, String> outputFormatConfiguration) {
+      OutputFormatProvider outputFormatProvider,
+      String outputFormatClassName,
+      Map<String, String> outputFormatConfiguration) {
     this.output = output;
     this.outputFormatProvider = outputFormatProvider;
     this.outputFormatClassName = outputFormatClassName;

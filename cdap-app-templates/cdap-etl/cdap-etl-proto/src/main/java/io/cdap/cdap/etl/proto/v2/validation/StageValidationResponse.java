@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * Response for validating a pipeline stage.
  */
 public class StageValidationResponse {
+
   private final List<ValidationFailure> failures;
   private final StageSpec spec;
 

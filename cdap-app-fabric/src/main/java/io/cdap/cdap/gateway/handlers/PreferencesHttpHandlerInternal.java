@@ -51,8 +51,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
 
   @Inject
   PreferencesHttpHandlerInternal(PreferencesService preferencesService,
-                                 ApplicationLifecycleService applicationLifecycleService,
-                                 NamespaceQueryAdmin namespaceQueryAdmin) {
+      ApplicationLifecycleService applicationLifecycleService,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.preferencesService = preferencesService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -74,9 +74,10 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   /**
    * Get namespace level preferences.
    *
-   * Note that if the given namespace doesn't exist, the return {@link PreferencesDetail} will be empty
-   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
-   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at instance level)
+   * Note that if the given namespace doesn't exist, the return {@link PreferencesDetail} will be
+   * empty (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of
+   * requesting resolved preferences, the returned {@link PreferencesDetail} will include
+   * preferences from ancestor (i.e. preferences at instance level)
    *
    * @param request {@link HttpRequest}
    * @param responder the responder used for sending response back to client
@@ -86,8 +87,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePreferences(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") String namespace,
-                                      @QueryParam("resolved") boolean resolved) {
+      @PathParam("namespace-id") String namespace,
+      @QueryParam("resolved") boolean resolved) {
     NamespaceId namespaceId = new NamespaceId(namespace);
     // No need to check if namespace exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
@@ -102,10 +103,10 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   /**
    * Get application level preferences
    *
-   * Note that if the given application doesn't exist, the return {@link PreferencesDetail} will be empty
-   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
-   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at namespace
-   * and instance level)
+   * Note that if the given application doesn't exist, the return {@link PreferencesDetail} will be
+   * empty (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of
+   * requesting resolved preferences, the returned {@link PreferencesDetail} will include
+   * preferences from ancestor (i.e. preferences at namespace and instance level)
    *
    * @param request {@link HttpRequest}
    * @param responder the responder used for sending response back to client
@@ -116,9 +117,9 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @GET
   public void getApplicationPreferences(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespace,
-                                        @PathParam("application-id") String appId,
-                                        @QueryParam("resolved") boolean resolved) {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("application-id") String appId,
+      @QueryParam("resolved") boolean resolved) {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     // No need to check if application exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
@@ -133,10 +134,10 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   /**
    * Get program level preferences
    *
-   * Note that if the given program doesn't exist, the return {@link PreferencesDetail} will be empty
-   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
-   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at application,
-   * namespace and instance level)
+   * Note that if the given program doesn't exist, the return {@link PreferencesDetail} will be
+   * empty (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of
+   * requesting resolved preferences, the returned {@link PreferencesDetail} will include
+   * preferences from ancestor (i.e. preferences at application, namespace and instance level)
    *
    * @param request {@link HttpRequest}
    * @param responder the responder used for sending response back to client
@@ -145,16 +146,15 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
    * @param programType the type of the program
    * @param programId id of the program to get preferences for
    * @param resolved whether to return resolved preferences or not
-   * @throws Exception
    */
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @GET
   public void getProgramPreferences(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespace,
-                                    @PathParam("application-id") String appId,
-                                    @PathParam("program-type") String programType,
-                                    @PathParam("program-id") String programId,
-                                    @QueryParam("resolved") boolean resolved) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("application-id") String appId,
+      @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId,
+      @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
     // No need to check if program exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;

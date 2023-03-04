@@ -19,6 +19,7 @@ package io.cdap.cdap.master.environment.k8s;
 import io.kubernetes.client.openapi.ApiClient;
 
 public class DefaultKubeMasterPathProvider implements KubeMasterPathProvider {
+
   private final ApiClient apiClient;
 
   public DefaultKubeMasterPathProvider(ApiClient apiClient) {

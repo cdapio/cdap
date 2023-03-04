@@ -26,14 +26,15 @@ import java.util.List;
  * Specified operations to perform to bootstrap a CDAP instance.
  */
 public class BootstrapConfig {
+
   public static final BootstrapConfig EMPTY = new BootstrapConfig(Collections.emptyList());
   public static final BootstrapConfig DEFAULT = new BootstrapConfig(ImmutableList.of(
-    new BootstrapStep("Create Native Profile", BootstrapStep.Type.CREATE_NATIVE_PROFILE,
-                      BootstrapStep.RunCondition.ONCE, new JsonObject()),
-    new BootstrapStep("Create Default Namespace", BootstrapStep.Type.CREATE_DEFAULT_NAMESPACE,
-                      BootstrapStep.RunCondition.ONCE, new JsonObject()),
-    new BootstrapStep("Load System Artifacts", BootstrapStep.Type.LOAD_SYSTEM_ARTIFACTS,
-                      BootstrapStep.RunCondition.ALWAYS, new JsonObject())));
+      new BootstrapStep("Create Native Profile", BootstrapStep.Type.CREATE_NATIVE_PROFILE,
+          BootstrapStep.RunCondition.ONCE, new JsonObject()),
+      new BootstrapStep("Create Default Namespace", BootstrapStep.Type.CREATE_DEFAULT_NAMESPACE,
+          BootstrapStep.RunCondition.ONCE, new JsonObject()),
+      new BootstrapStep("Load System Artifacts", BootstrapStep.Type.LOAD_SYSTEM_ARTIFACTS,
+          BootstrapStep.RunCondition.ALWAYS, new JsonObject())));
   private final List<BootstrapStep> steps;
 
   public BootstrapConfig(List<BootstrapStep> steps) {

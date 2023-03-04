@@ -25,13 +25,17 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings("unused")
 public final class StandardOutErrorRedirector {
+
   /**
    * Redirect standard out and error to logger
+   *
    * @param loggerName Name of the logger to which stdout
    */
   public static void redirectToLogger(String loggerName) {
     Logger logger = LoggerFactory.getLogger(loggerName);
-    System.setOut(new PrintStream(RedirectedPrintStream.createRedirectedOutStream(logger, System.out), true));
-    System.setErr(new PrintStream(RedirectedPrintStream.createRedirectedErrStream(logger, System.err), true));
+    System.setOut(
+        new PrintStream(RedirectedPrintStream.createRedirectedOutStream(logger, System.out), true));
+    System.setErr(
+        new PrintStream(RedirectedPrintStream.createRedirectedErrStream(logger, System.err), true));
   }
 }

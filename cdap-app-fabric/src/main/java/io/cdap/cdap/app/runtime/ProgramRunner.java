@@ -24,13 +24,8 @@ import io.cdap.cdap.app.program.Program;
 public interface ProgramRunner {
 
   /**
-   * Runs the {@link Program} with the given {@link ProgramOptions}.
-   * This method must returns immediately and have the {@link ProgramController} returned
-   * state management.
-   *
-   * @param program
-   * @param options
-   * @return
+   * Runs the {@link Program} with the given {@link ProgramOptions}. This method must returns
+   * immediately and have the {@link ProgramController} returned state management.
    */
   ProgramController run(Program program, ProgramOptions options);
 }

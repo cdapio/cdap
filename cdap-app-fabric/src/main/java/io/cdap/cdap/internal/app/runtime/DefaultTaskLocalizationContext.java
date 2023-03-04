@@ -24,7 +24,8 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * An implementation of {@link TaskLocalizationContext} that can be initialized with some localized resources.
+ * An implementation of {@link TaskLocalizationContext} that can be initialized with some localized
+ * resources.
  */
 public class DefaultTaskLocalizationContext implements TaskLocalizationContext, Serializable {
 
@@ -37,8 +38,9 @@ public class DefaultTaskLocalizationContext implements TaskLocalizationContext, 
   @Override
   public File getLocalFile(String name) throws FileNotFoundException {
     if (!localizedResources.containsKey(name)) {
-      throw new FileNotFoundException(String.format("The specified file %s was not found. Please make sure it was " +
-                                                      "localized using context.localize().", name));
+      throw new FileNotFoundException(
+          String.format("The specified file %s was not found. Please make sure it was "
+              + "localized using context.localize().", name));
     }
     return localizedResources.get(name);
   }

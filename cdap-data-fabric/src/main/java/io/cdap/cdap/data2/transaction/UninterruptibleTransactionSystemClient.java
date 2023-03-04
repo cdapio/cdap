@@ -34,7 +34,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
 
 /**
- * A {@link TransactionSystemClient} that executes calls that can't be interrupted by {@link Thread#interrupt()}.
+ * A {@link TransactionSystemClient} that executes calls that can't be interrupted by {@link
+ * Thread#interrupt()}.
  */
 @SuppressWarnings("deprecation")
 public final class UninterruptibleTransactionSystemClient implements TransactionSystemClient {
@@ -44,7 +45,8 @@ public final class UninterruptibleTransactionSystemClient implements Transaction
 
   public UninterruptibleTransactionSystemClient(TransactionSystemClient delegate) {
     this.delegate = delegate;
-    this.executor = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("unint-tx-client-%d"));
+    this.executor = Executors.newCachedThreadPool(
+        Threads.createDaemonThreadFactory("unint-tx-client-%d"));
   }
 
   @Override
@@ -63,12 +65,15 @@ public final class UninterruptibleTransactionSystemClient implements Transaction
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
-    return execute(() -> delegate.canCommit(tx, changeIds), TransactionNotInProgressException.class);
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionNotInProgressException {
+    return execute(() -> delegate.canCommit(tx, changeIds),
+        TransactionNotInProgressException.class);
   }
 
   @Override
-  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionFailureException {
     execute(() -> {
       delegate.canCommitOrThrow(tx, changeIds);
       return null;
@@ -105,7 +110,8 @@ public final class UninterruptibleTransactionSystemClient implements Transaction
 
   @Override
   public InputStream getSnapshotInputStream() throws TransactionCouldNotTakeSnapshotException {
-    return execute(delegate::getSnapshotInputStream, TransactionCouldNotTakeSnapshotException.class);
+    return execute(delegate::getSnapshotInputStream,
+        TransactionCouldNotTakeSnapshotException.class);
   }
 
   @Override
@@ -125,7 +131,8 @@ public final class UninterruptibleTransactionSystemClient implements Transaction
 
   @Override
   public boolean truncateInvalidTxBefore(long time) throws InvalidTruncateTimeException {
-    return execute(() -> delegate.truncateInvalidTxBefore(time), InvalidTruncateTimeException.class);
+    return execute(() -> delegate.truncateInvalidTxBefore(time),
+        InvalidTruncateTimeException.class);
   }
 
   @Override
@@ -149,7 +156,8 @@ public final class UninterruptibleTransactionSystemClient implements Transaction
     return execute(callable, RuntimeException.class);
   }
 
-  private <V, E extends Exception> V execute(Callable<V> callable, Class<? extends E> exClass) throws E {
+  private <V, E extends Exception> V execute(Callable<V> callable, Class<? extends E> exClass)
+      throws E {
     try {
       return Uninterruptibles.getUninterruptibly(executor.submit(callable));
     } catch (ExecutionException e) {

@@ -46,64 +46,69 @@ public final class ClassPathResources {
   private static final Logger LOG = LoggerFactory.getLogger(ClassPathResources.class);
 
   public static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_CLASS_NAME =
-    new Function<ClassPath.ClassInfo, String>() {
-      @Override
-      public String apply(ClassPath.ClassInfo input) {
-        return input.getName();
-      }
-    };
+      new Function<ClassPath.ClassInfo, String>() {
+        @Override
+        public String apply(ClassPath.ClassInfo input) {
+          return input.getName();
+        }
+      };
   public static final Function<ClassPath.ResourceInfo, String> RESOURCE_INFO_TO_RESOURCE_NAME =
-    new Function<ClassPath.ResourceInfo, String>() {
-      @Override
-      public String apply(ClassPath.ResourceInfo input) {
-        return input.getResourceName();
-      }
-    };
+      new Function<ClassPath.ResourceInfo, String>() {
+        @Override
+        public String apply(ClassPath.ResourceInfo input) {
+          return input.getResourceName();
+        }
+      };
 
   /**
    * Returns the base set of resources needed to load the specified {@link Class} using the
-   * specified {@link ClassLoader}. Also traces and includes the dependencies for the specified class.
+   * specified {@link ClassLoader}. Also traces and includes the dependencies for the specified
+   * class.
    *
    * @param classLoader the {@link ClassLoader} to use to generate the set of resources
    * @param classz the {@link Class} to generate the set of resources for
-   * @return the set of resources needed to load the specified {@link Class} using the specified {@link ClassLoader}
-   * @throws IOException
+   * @return the set of resources needed to load the specified {@link Class} using the specified
+   *     {@link ClassLoader}
    */
-  public static Set<String> getResourcesWithDependencies(ClassLoader classLoader, Class<?> classz) throws IOException {
+  public static Set<String> getResourcesWithDependencies(ClassLoader classLoader, Class<?> classz)
+      throws IOException {
     ClassPath classPath = getClassPath(classLoader, classz);
 
     // Add everything in the classpath as visible resources
     Set<String> result = Sets.newHashSet(Iterables.transform(classPath.getResources(),
-                                                             RESOURCE_INFO_TO_RESOURCE_NAME));
+        RESOURCE_INFO_TO_RESOURCE_NAME));
     // Trace dependencies for all classes in the classpath
     findClassDependencies(
-      classLoader, Iterables.transform(classPath.getAllClasses(), CLASS_INFO_TO_CLASS_NAME), result);
+        classLoader, Iterables.transform(classPath.getAllClasses(), CLASS_INFO_TO_CLASS_NAME),
+        result);
 
     return result;
   }
 
   /**
-   * Returns a set of {@link ResourceInfo} required for the specified {@link Class} using the specified
-   * {@link ClassLoader}. Does not trace dependencies of the specified class.
+   * Returns a set of {@link ResourceInfo} required for the specified {@link Class} using the
+   * specified {@link ClassLoader}. Does not trace dependencies of the specified class.
    *
-   * @param classLoader the {@link ClassLoader} to use to return the set of {@link ResourceInfo} for the specified
-   *                    {@link Class}
+   * @param classLoader the {@link ClassLoader} to use to return the set of {@link ResourceInfo}
+   *     for the specified {@link Class}
    * @param cls the {@link Class} for which to return the set of {@link ResourceInfo}
-   * @return the set of {@link ResourceInfo} required for the specified {@link Class} using the specified
-   * {@link ClassLoader}
+   * @return the set of {@link ResourceInfo} required for the specified {@link Class} using the
+   *     specified {@link ClassLoader}
    */
   public static Set<ClassPath.ResourceInfo> getClassPathResources(ClassLoader classLoader,
-                                                                  Class<?> cls) throws IOException {
+      Class<?> cls) throws IOException {
     return getClassPath(classLoader, cls).getResources();
   }
 
   /**
-   * Returns a Set containing all bootstrap classpaths as defined in the {@code sun.boot.class.path} property.
+   * Returns a Set containing all bootstrap classpaths as defined in the {@code sun.boot.class.path}
+   * property.
    */
   public static Set<String> getBootstrapClassPaths() {
     // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
     Set<String> bootstrapPaths = new HashSet<>();
-    for (String classpath : Splitter.on(File.pathSeparatorChar).split(System.getProperty("sun.boot.class.path"))) {
+    for (String classpath : Splitter.on(File.pathSeparatorChar)
+        .split(System.getProperty("sun.boot.class.path"))) {
       File file = new File(classpath);
       bootstrapPaths.add(file.getAbsolutePath());
       try {
@@ -116,8 +121,8 @@ public final class ClassPathResources {
   }
 
   /**
-   * Returns a {@link ClassPath} instance that represents the classpath that the given class is loaded from the given
-   * ClassLoader.
+   * Returns a {@link ClassPath} instance that represents the classpath that the given class is
+   * loaded from the given ClassLoader.
    */
   private static ClassPath getClassPath(ClassLoader classLoader, Class<?> cls) throws IOException {
     String resourceName = cls.getName().replace('.', '/') + ".class";
@@ -134,7 +139,8 @@ public final class ClassPathResources {
     }
   }
 
-  static ClassAcceptor createClassAcceptor(final ClassLoader classLoader, final Collection<String> result) {
+  static ClassAcceptor createClassAcceptor(final ClassLoader classLoader,
+      final Collection<String> result) {
     final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
     final Set<URL> classPathSeen = Sets.newHashSet();
     return new ClassAcceptor() {
@@ -156,13 +162,15 @@ public final class ClassPathResources {
         if (className.startsWith("META-INF.versions.")) {
           // Get current Java specification version
           // See https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/System.html#getProperties().
-          String javaSpecVersion = System.getProperty("java.specification.version").replaceFirst("^1[.]", "");
+          String javaSpecVersion = System.getProperty("java.specification.version")
+              .replaceFirst("^1[.]", "");
           int version = 0;
           try {
             version = Integer.parseInt(javaSpecVersion);
           } catch (NumberFormatException e) {
-            throw new IllegalStateException(String.format("Failed to parse Java specification version string %s",
-                                                          javaSpecVersion), e);
+            throw new IllegalStateException(
+                String.format("Failed to parse Java specification version string %s",
+                    javaSpecVersion), e);
           }
           if (version < 9) {
             // Per JAR spec, classes for Java 8 and below will not be versioned.
@@ -207,10 +215,12 @@ public final class ClassPathResources {
    * @param <T> type of the result collection
    * @throws IOException if fails to load class bytecode during tracing
    */
-  private static <T extends Collection<String>> T findClassDependencies(final ClassLoader classLoader,
-                                                                        Iterable<String> classes,
-                                                                        final T result) throws IOException {
-    Dependencies.findClassDependencies(classLoader, createClassAcceptor(classLoader, result), classes);
+  private static <T extends Collection<String>> T findClassDependencies(
+      final ClassLoader classLoader,
+      Iterable<String> classes,
+      final T result) throws IOException {
+    Dependencies.findClassDependencies(classLoader, createClassAcceptor(classLoader, result),
+        classes);
     return result;
   }
 

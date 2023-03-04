@@ -22,16 +22,18 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 
 /**
- * Interface for a dataset that a batch job can output to, as series of records (as apposed to key/value pairs).
- * See {@link BatchWritable}.
+ * Interface for a dataset that a batch job can output to, as series of records (as apposed to
+ * key/value pairs). See {@link BatchWritable}.
+ *
  * @param <RECORD> the type of objects that represents a single record
  */
 @Beta
 public interface RecordWritable<RECORD> extends Closeable {
 
   /**
-   * The type of records that the dataset exposes as a schema. The schema will be derived from the type
-   * using reflection.
+   * The type of records that the dataset exposes as a schema. The schema will be derived from the
+   * type using reflection.
+   *
    * @return the schema type.
    */
   Type getRecordType();

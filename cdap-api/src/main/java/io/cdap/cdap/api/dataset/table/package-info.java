@@ -15,6 +15,7 @@
  */
 
 /**
- * Provides access to the system-level table {@link io.cdap.cdap.api.dataset.Dataset}s available within CDAP.
+ * Provides access to the system-level table {@link io.cdap.cdap.api.dataset.Dataset}s available
+ * within CDAP.
  */
 package io.cdap.cdap.api.dataset.table;

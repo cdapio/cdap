@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents an aggregate of program runs by the user who starts the program run.
  */
 public class UserAggregate extends ProgramRunAggregate {
+
   private final String user;
 
   public UserAggregate(String user, long runs) {

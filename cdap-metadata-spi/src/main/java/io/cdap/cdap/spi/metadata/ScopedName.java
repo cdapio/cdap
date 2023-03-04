@@ -25,6 +25,7 @@ import java.util.Objects;
  */
 @Beta
 public class ScopedName {
+
   private final MetadataScope scope;
   private final String name;
 
@@ -50,8 +51,8 @@ public class ScopedName {
       return false;
     }
     ScopedName other = (ScopedName) o;
-    return scope == other.scope &&
-      Objects.equals(name, other.name);
+    return scope == other.scope
+        && Objects.equals(name, other.name);
   }
 
   @Override

@@ -23,6 +23,7 @@ import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
  * Environment options for preview runners.
  */
 public class PreviewRunnerOptions extends EnvironmentOptions {
+
   public static final String INSTANCE_NAME_FILE_PATH = "instanceNameFilePath";
   public static final String INSTANCE_UID_FILE_PATH = "instanceUidFilePath";
 

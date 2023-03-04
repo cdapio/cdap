@@ -25,22 +25,26 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * An {@link InputFormat} for reading data from {@link BatchReadable} for MapReduce.
+ *
  * @param <KEY> Type of key.
  * @param <VALUE> Type of value.
  */
-public final class MapReduceBatchReadableInputFormat<KEY, VALUE> extends AbstractBatchReadableInputFormat<KEY, VALUE> {
+public final class MapReduceBatchReadableInputFormat<KEY, VALUE> extends
+    AbstractBatchReadableInputFormat<KEY, VALUE> {
 
   @Override
   protected BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
-                                                          String datasetName, Map<String, String> datasetArgs) {
+      String datasetName, Map<String, String> datasetArgs) {
 
     return createBatchReadable(context, null, datasetName, datasetArgs);
   }
 
   @Override
-  protected BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context, @Nullable String datasetNamespace,
-                                                          String datasetName, Map<String, String> datasetArgs) {
-    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+  protected BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
+      @Nullable String datasetNamespace,
+      String datasetName, Map<String, String> datasetArgs) {
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(
+        context.getConfiguration());
     BasicMapReduceTaskContext<?, ?> taskContext = classLoader.getTaskContextProvider().get(context);
     return taskContext.getBatchReadable(datasetNamespace, datasetName, datasetArgs);
   }

@@ -25,7 +25,8 @@ import java.util.Collections;
  */
 class RuntimeMonitorDataprocClient extends DataprocClient {
 
-  RuntimeMonitorDataprocClient(DataprocConf conf, ClusterControllerClient client, ComputeFactory computeFactory) {
+  RuntimeMonitorDataprocClient(DataprocConf conf, ClusterControllerClient client,
+      ComputeFactory computeFactory) {
     super(conf, client, computeFactory);
   }
 

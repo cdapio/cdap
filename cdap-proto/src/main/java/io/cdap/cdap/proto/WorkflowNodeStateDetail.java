@@ -45,11 +45,12 @@ public final class WorkflowNodeStateDetail {
    *
    * @param nodeId id of the node inside a Workflow
    * @param nodeStatus status of the node
-   * @param runId run id assigned to the node, {code null} if current node represents custom action or predicate
+   * @param runId run id assigned to the node, {code null} if current node represents custom
+   *     action or predicate
    * @param failureCause cause of failure, {code null} if execution of the node succeeded
    */
   public WorkflowNodeStateDetail(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                                 @Nullable BasicThrowable failureCause) {
+      @Nullable BasicThrowable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
     this.runId = runId;
@@ -71,8 +72,8 @@ public final class WorkflowNodeStateDetail {
   }
 
   /**
-   * Return the run id if node represents programs, such as MapReduce or Spark.
-   * For custom actions and predicates we do not currently have run id, so method returns {@code null}.
+   * Return the run id if node represents programs, such as MapReduce or Spark. For custom actions
+   * and predicates we do not currently have run id, so method returns {@code null}.
    */
   @Nullable
   public String getRunId() {
@@ -80,7 +81,8 @@ public final class WorkflowNodeStateDetail {
   }
 
   /**
-   * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
+   * Return the detail message string for failure if node execution failed, otherwise {@code null}
+   * is returned.
    */
   @Nullable
   public BasicThrowable getFailureCause() {

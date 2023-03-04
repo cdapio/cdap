@@ -19,7 +19,8 @@ package io.cdap.cdap.app.deploy;
 import io.cdap.cdap.app.runtime.ProgramController;
 
 /**
- * This interface is used for providing the abstraction for executing program-run logic either In-memory or remotely.
+ * This interface is used for providing the abstraction for executing program-run logic either
+ * In-memory or remotely.
  */
 public interface ProgramRunDispatcher {
 

@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * An error with the distribution skewed staged
  */
 public class DistributionStageError extends JoinError {
+
   public DistributionStageError(String message) {
     super(Type.DISTRIBUTION_STAGE, message, null);
   }

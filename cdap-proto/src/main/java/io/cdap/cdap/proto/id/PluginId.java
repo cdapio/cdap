@@ -28,6 +28,7 @@ import java.util.Objects;
  * Uniquely identifies a plugin.
  */
 public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactId> {
+
   private final String artifact;
   private final String version;
   private final String plugin;
@@ -50,15 +51,18 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
 
   public PluginId(String appNamespace, Plugin plugin) {
     super(resolveNamespace(appNamespace, plugin), EntityType.PLUGIN);
-    this.artifact = Objects.requireNonNull(plugin.getArtifactId().getName(), "Artifact ID cannot be null.");
-    this.version = Objects.requireNonNull(plugin.getArtifactId().getVersion().getVersion(), "Version cannot be null.");
-    this.plugin = Objects.requireNonNull(plugin.getPluginClass().getName(), "Plugin cannot be null.");
+    this.artifact = Objects.requireNonNull(plugin.getArtifactId().getName(),
+        "Artifact ID cannot be null.");
+    this.version = Objects.requireNonNull(plugin.getArtifactId().getVersion().getVersion(),
+        "Version cannot be null.");
+    this.plugin = Objects.requireNonNull(plugin.getPluginClass().getName(),
+        "Plugin cannot be null.");
     this.type = Objects.requireNonNull(plugin.getPluginClass().getType(), "Type cannot be null.");
   }
 
   private static String resolveNamespace(String namespace, Plugin plugin) {
     return plugin.getArtifactId().getScope() == ArtifactScope.SYSTEM ? ArtifactScope.SYSTEM
-      .toString().toLowerCase() : namespace;
+        .toString().toLowerCase() : namespace;
   }
 
   public String getArtifact() {
@@ -81,12 +85,12 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder()
-      .append(MetadataEntity.NAMESPACE, namespace)
-      .append(MetadataEntity.ARTIFACT, artifact)
-      .append(MetadataEntity.VERSION, version)
-      .append(MetadataEntity.TYPE, type)
-      .appendAsType(MetadataEntity.PLUGIN, plugin)
-      .build();
+        .append(MetadataEntity.NAMESPACE, namespace)
+        .append(MetadataEntity.ARTIFACT, artifact)
+        .append(MetadataEntity.VERSION, version)
+        .append(MetadataEntity.TYPE, type)
+        .appendAsType(MetadataEntity.PLUGIN, plugin)
+        .build();
   }
 
   public String getVersion() {
@@ -104,18 +108,19 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
       return false;
     }
     PluginId that = (PluginId) o;
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(artifact, that.artifact) &&
-      Objects.equals(version, that.version) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(plugin, that.plugin);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(version, that.version)
+        && Objects.equals(type, that.type)
+        && Objects.equals(plugin, that.plugin);
   }
 
   @Override
   public int hashCode() {
     Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, artifact, version, type, plugin);
+      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, artifact, version, type,
+          plugin);
     }
     return hashCode;
   }
@@ -124,8 +129,8 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
   public static PluginId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new PluginId(
-      next(iterator, "namespace"), next(iterator, "artifact"),
-      next(iterator, "version"), next(iterator, "type"), remaining(iterator, "plugin"));
+        next(iterator, "namespace"), next(iterator, "artifact"),
+        next(iterator, "version"), next(iterator, "type"), remaining(iterator, "plugin"));
   }
 
   @Override

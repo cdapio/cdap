@@ -25,14 +25,17 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 
 /**
- * A local-mode only run record corrector that corrects run records once upon app fabric server startup.
+ * A local-mode only run record corrector that corrects run records once upon app fabric server
+ * startup.
  */
 public class LocalRunRecordCorrectorService extends ScheduledRunRecordCorrectorService {
 
   @Inject
-  LocalRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                 ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                                 DatasetFramework datasetFramework) {
-    super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 1L, 3L, true);
+  LocalRunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework) {
+    super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 1L,
+        3L, true);
   }
 }

@@ -34,7 +34,8 @@ import javax.annotation.Nullable;
  * A default specification for {@link Spark} programs
  */
 @Beta
-public final class SparkSpecification extends AbstractProgramSpecification implements PropertyProvider {
+public final class SparkSpecification extends AbstractProgramSpecification implements
+    PropertyProvider {
 
   private final String mainClassName;
   private final Set<String> datasets;
@@ -45,13 +46,13 @@ public final class SparkSpecification extends AbstractProgramSpecification imple
   private final List<SparkHttpServiceHandlerSpecification> handlers;
 
   public SparkSpecification(String className, String name, String description,
-                            @Nullable String mainClassName,
-                            Set<String> datasets,
-                            Map<String, String> properties,
-                            @Nullable Resources clientResources,
-                            @Nullable Resources driverResources,
-                            @Nullable Resources executorResources,
-                            List<SparkHttpServiceHandlerSpecification> handlers, Map<String, Plugin> plugins) {
+      @Nullable String mainClassName,
+      Set<String> datasets,
+      Map<String, String> properties,
+      @Nullable Resources clientResources,
+      @Nullable Resources driverResources,
+      @Nullable Resources executorResources,
+      List<SparkHttpServiceHandlerSpecification> handlers, Map<String, Plugin> plugins) {
     super(className, name, description, plugins);
     this.mainClassName = mainClassName;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
@@ -106,7 +107,8 @@ public final class SparkSpecification extends AbstractProgramSpecification imple
   }
 
   /**
-   * @return Resources requirement for the Spark executor processes or {@code null} if not specified.
+   * @return Resources requirement for the Spark executor processes or {@code null} if not
+   *     specified.
    */
   @Nullable
   public Resources getExecutorResources() {
@@ -114,7 +116,8 @@ public final class SparkSpecification extends AbstractProgramSpecification imple
   }
 
   /**
-   * @return a {@link List} of {@link SparkHttpServiceHandlerSpecification} defined for the Spark program.
+   * @return a {@link List} of {@link SparkHttpServiceHandlerSpecification} defined for the Spark
+   *     program.
    */
   public List<SparkHttpServiceHandlerSpecification> getHandlers() {
     return handlers;

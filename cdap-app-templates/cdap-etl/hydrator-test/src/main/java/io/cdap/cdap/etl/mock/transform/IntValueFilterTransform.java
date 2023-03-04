@@ -32,12 +32,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Transform that filters out records whose configured field is a configured value.
- * For example, can filter all records whose 'x' field is equal to 5. Assumes the field is of type int.
+ * Transform that filters out records whose configured field is a configured value. For example, can
+ * filter all records whose 'x' field is equal to 5. Assumes the field is of type int.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("IntValueFilter")
 public class IntValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String ERROR_MESSAGE = "bad int value";
   public static final int ERROR_CODE = 2;
@@ -54,7 +55,8 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     Integer value = input.get(config.field);
     if (value != config.value) {
       emitter.emit(input);
@@ -67,6 +69,7 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
    * Config for the transform.
    */
   public static class Config extends PluginConfig {
+
     private String field;
     private int value;
   }
@@ -83,7 +86,8 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "int", true, false));
     return PluginClass.builder().setName("IntValueFilter").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(IntValueFilterTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(IntValueFilterTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

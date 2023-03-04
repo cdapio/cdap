@@ -48,11 +48,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link io.cdap.cdap.api.metrics.MetricValues}.
+ * An {@link AggregatedMetricsCollectionService} that uses TMS to publish {@link
+ * io.cdap.cdap.api.metrics.MetricValues}.
  */
 @Singleton
 public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionService.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(
+      MessagingMetricsCollectionService.class);
   private static final Joiner.MapJoiner MAP_JOINER = Joiner.on(',').withKeyValueSeparator("=");
 
   private final MessagingService messagingService;
@@ -63,14 +66,16 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
 
   @Inject
   MessagingMetricsCollectionService(CConfiguration cConf,
-                                    MessagingService messagingService,
-                                    DatumWriter<MetricValues> recordWriter) {
-    super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
+      MessagingService messagingService,
+      DatumWriter<MetricValues> recordWriter) {
+    super(TimeUnit.SECONDS.toMillis(
+        cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
 
     String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     int totalTopicNum = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
 
-    Preconditions.checkArgument(totalTopicNum > 0, "Constants.Metrics.MESSAGING_TOPIC_NUM must be a positive integer");
+    Preconditions.checkArgument(totalTopicNum > 0,
+        "Constants.Metrics.MESSAGING_TOPIC_NUM must be a positive integer");
     this.messagingService = messagingService;
     this.recordWriter = recordWriter;
 
@@ -81,7 +86,8 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
     RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.metrics.");
     this.topicPayloads = new LinkedHashMap<>(totalTopicNum);
     for (int i = 0; i < totalTopicNum; i++) {
-      topicPayloads.put(i, new TopicPayload(NamespaceId.SYSTEM.topic(topicPrefix + i), retryStrategy));
+      topicPayloads.put(i,
+          new TopicPayload(NamespaceId.SYSTEM.topic(topicPrefix + i), retryStrategy));
     }
   }
 
@@ -93,16 +99,18 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       MetricValues metricValues = metrics.next();
       // Encode MetricValues into bytes
       recordWriter.encode(metricValues, encoder);
-      TopicPayload topicPayload = topicPayloads.get(Math.abs(metricValues.getTags().hashCode() % size));
+      TopicPayload topicPayload = topicPayloads.get(
+          Math.abs(metricValues.getTags().hashCode() % size));
       // Calculate the topic number with the hashcode of MetricValues' tags and store the encoded payload in the
       // corresponding list of the topic number
       topicPayload.addPayload(encoderOutputStream.toByteArray(), metricValues.getTags(),
-                              metricValues.getMetrics().size());
+          metricValues.getMetrics().size());
     }
     publishMetric(topicPayloads.values());
   }
 
-  private void publishMetric(Iterable<TopicPayload> topicPayloads) throws IOException, UnauthorizedException {
+  private void publishMetric(Iterable<TopicPayload> topicPayloads)
+      throws IOException, UnauthorizedException {
     for (TopicPayload topicPayload : topicPayloads) {
       topicPayload.publish(messagingService);
     }
@@ -112,6 +120,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
    * Private to carry payloads to be published to a topic.
    */
   private final class TopicPayload {
+
     private final TopicId topicId;
     private final List<byte[]> payloads;
     private final RetryStrategy retryStrategy;
@@ -164,7 +173,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
             throw new IOException("Failed to publish metrics to TMS and exceeded retry limit.", e);
           }
           LOG.debug("Failed to publish metrics to TMS due to {}. Will be retried in {} ms.",
-                    e.getMessage(), retryMillis);
+              e.getMessage(), retryMillis);
           if (interrupted) {
             LOG.warn("Retry of publish metrics interrupted. There will be loss of metrics.");
             done = true;
@@ -179,10 +188,10 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
           }
         } catch (IOException ioe) {
           String exceptionMessage =
-            String.format("Exception while publishing metrics for tags: [%s] to topic '%s' " +
-                            "with %s metrics and %s bytes payload",
-                          MAP_JOINER.join(metricsTags == null ? Collections.emptyMap() : metricsTags),
-                          topicId.getTopic(), metricsCount, payloadSize);
+              String.format("Exception while publishing metrics for tags: [%s] to topic '%s' "
+                      + "with %s metrics and %s bytes payload",
+                  MAP_JOINER.join(metricsTags == null ? Collections.emptyMap() : metricsTags),
+                  topicId.getTopic(), metricsCount, payloadSize);
           throw new IOException(exceptionMessage, ioe);
         }
       }
@@ -205,7 +214,8 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
         return retryStrategy;
       }
       // If failure happen during shutdown, use a retry strategy that only retry fixed number of times
-      return RetryStrategies.timeLimit(5, TimeUnit.SECONDS, RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
+      return RetryStrategies.timeLimit(5, TimeUnit.SECONDS,
+          RetryStrategies.fixDelay(200, TimeUnit.MILLISECONDS));
     }
   }
 }

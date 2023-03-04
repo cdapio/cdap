@@ -21,9 +21,11 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
- * Implementation of the {@link StageStatisticsCollector} for the pipeline which executes as a MapReduce program.
+ * Implementation of the {@link StageStatisticsCollector} for the pipeline which executes as a
+ * MapReduce program.
  */
 public class MapReduceStageStatisticsCollector implements StageStatisticsCollector {
+
   private final String inputRecordCountKey;
   private final String outputRecordCountKey;
   private final String errorRecordCountKey;

@@ -46,6 +46,7 @@ import java.util.Map;
  * Command to get the workflow token for a specified workflow run
  */
 public class GetWorkflowTokenCommand extends AbstractCommand {
+
   private static final Gson GSON = new Gson();
 
   private final ElementType elementType;
@@ -79,7 +80,8 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
 
     Table table;
     if (arguments.hasArgument(ArgumentName.WORKFLOW_NODE.toString())) {
-      table = getWorkflowToken(runId, workflowTokenScope, key, arguments.get(ArgumentName.WORKFLOW_NODE.toString()));
+      table = getWorkflowToken(runId, workflowTokenScope, key,
+          arguments.get(ArgumentName.WORKFLOW_NODE.toString()));
     } else {
       table = getWorkflowToken(runId, workflowTokenScope, key);
     }
@@ -90,48 +92,51 @@ public class GetWorkflowTokenCommand extends AbstractCommand {
   @Override
   public String getPattern() {
     return String.format("get workflow token <%s> <%s> [at node <%s>] [scope <%s>] [key <%s>]",
-                         elementType.getArgumentName(), ArgumentName.RUN_ID, ArgumentName.WORKFLOW_NODE,
-                         ArgumentName.WORKFLOW_TOKEN_SCOPE, ArgumentName.WORKFLOW_TOKEN_KEY);
+        elementType.getArgumentName(), ArgumentName.RUN_ID, ArgumentName.WORKFLOW_NODE,
+        ArgumentName.WORKFLOW_TOKEN_SCOPE, ArgumentName.WORKFLOW_TOKEN_KEY);
   }
 
   @Override
   public String getDescription() {
     return String.format("Gets the workflow token of a workflow for a given '<%s>'",
-                         ArgumentName.RUN_ID);
-  }
-
-  private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope, String key)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
-    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId, workflowTokenScope, key);
-    List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
-    tokenKeys.addAll(workflowToken.getTokenData().entrySet());
-    return Table.builder()
-      .setHeader("token key", "token value")
-      .setRows(tokenKeys,
-               new RowMaker<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>>() {
-                 @Override
-                 public List<?> makeRow(Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> object) {
-                   return Lists.newArrayList(object.getKey(), GSON.toJson(object.getValue()));
-                 }
-               })
-      .build();
+        ArgumentName.RUN_ID);
   }
 
   private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope,
-                                 String key, String nodeName)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      String key)
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+    WorkflowTokenDetail workflowToken = workflowClient.getWorkflowToken(runId, workflowTokenScope,
+        key);
+    List<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>> tokenKeys = new ArrayList<>();
+    tokenKeys.addAll(workflowToken.getTokenData().entrySet());
+    return Table.builder()
+        .setHeader("token key", "token value")
+        .setRows(tokenKeys,
+            new RowMaker<Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>>>() {
+              @Override
+              public List<?> makeRow(
+                  Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> object) {
+                return Lists.newArrayList(object.getKey(), GSON.toJson(object.getValue()));
+              }
+            })
+        .build();
+  }
+
+  private Table getWorkflowToken(ProgramRunId runId, WorkflowToken.Scope workflowTokenScope,
+      String key, String nodeName)
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     WorkflowTokenNodeDetail workflowToken = workflowClient.getWorkflowTokenAtNode(runId, nodeName,
-                                                                                  workflowTokenScope, key);
+        workflowTokenScope, key);
     List<Map.Entry<String, String>> tokenKeys = new ArrayList<>();
     tokenKeys.addAll(workflowToken.getTokenDataAtNode().entrySet());
     return Table.builder()
-      .setHeader("token key", "token value")
-      .setRows(tokenKeys, new RowMaker<Map.Entry<String, String>>() {
-        @Override
-        public List<?> makeRow(Map.Entry<String, String> object) {
-          return Lists.newArrayList(object.getKey(), object.getValue());
-        }
-      })
-      .build();
+        .setHeader("token key", "token value")
+        .setRows(tokenKeys, new RowMaker<Map.Entry<String, String>>() {
+          @Override
+          public List<?> makeRow(Map.Entry<String, String> object) {
+            return Lists.newArrayList(object.getKey(), object.getValue());
+          }
+        })
+        .build();
   }
 }

@@ -42,13 +42,14 @@ import io.cdap.cdap.security.store.secretmanager.SecretManagerSecureStoreService
  * Server side guice bindings for secure store service related classes.
  */
 public class SecureStoreServerModule extends PrivateModule {
+
   public static final String DELEGATE_SECURE_STORE_SERVICE = "delegateSecureStoreService";
 
   @Override
   protected void configure() {
     bind(SecureStoreService.class)
-      .annotatedWith(Names.named(DELEGATE_SECURE_STORE_SERVICE))
-      .toProvider(SecureStoreServiceProvider.class);
+        .annotatedWith(Names.named(DELEGATE_SECURE_STORE_SERVICE))
+        .toProvider(SecureStoreServiceProvider.class);
     bind(FileSecureStoreCodec.class).to(SecureStoreDataCodecV2.class);
     expose(FileSecureStoreCodec.class);
 
@@ -64,21 +65,21 @@ public class SecureStoreServerModule extends PrivateModule {
   /**
    * Secure store service provider.
    *
-   * file binds to FileSecureStoreService
-   * kms  binds to KMSSecureStoreService
-   * ext  binds to SecretManagerSecureStoreService
-   * none binds to DummySecureStoreService
+   * file binds to FileSecureStoreService kms  binds to KMSSecureStoreService ext  binds to
+   * SecretManagerSecureStoreService none binds to DummySecureStoreService
    *
    * TODO: simplify these bindings after CDAP-14668 is fixed.
    */
   @Singleton
   private static final class SecureStoreServiceProvider implements Provider<SecureStoreService> {
+
     private final CConfiguration cConf;
     private final SConfiguration sConf;
     private final Injector injector;
 
     @Inject
-    private SecureStoreServiceProvider(final CConfiguration cConf, SConfiguration sConf, Injector injector) {
+    private SecureStoreServiceProvider(final CConfiguration cConf, SConfiguration sConf,
+        Injector injector) {
       this.cConf = cConf;
       this.sConf = sConf;
       this.injector = injector;
@@ -89,17 +90,18 @@ public class SecureStoreServerModule extends PrivateModule {
     public SecureStoreService get() {
       if (SecureStoreUtils.isFileBacked(cConf)) {
         if (Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD))) {
-          throw new IllegalArgumentException("File secure store password is not set. Please set the " +
-                                               "\"security.store.file.password\" property in cdap-security.xml.");
+          throw new IllegalArgumentException(
+              "File secure store password is not set. Please set the "
+                  + "\"security.store.file.password\" property in cdap-security.xml.");
         }
         return injector.getInstance(FileSecureStoreService.class);
       }
 
       if (SecureStoreUtils.isKMSBacked(cConf)) {
         if (!SecureStoreUtils.isKMSCapable()) {
-          throw new IllegalArgumentException("Could not find classes such as " +
-                                               "org.apache.hadoop.crypto.key.kms.KMSClientProvider. KMS based secure " +
-                                               "store is only supported in Apache Hadoop 2.6.0 and above.");
+          throw new IllegalArgumentException("Could not find classes such as "
+              + "org.apache.hadoop.crypto.key.kms.KMSClientProvider. KMS based secure "
+              + "store is only supported in Apache Hadoop 2.6.0 and above.");
         }
         return injector.getInstance(SecureStoreUtils.getKMSSecureStore());
       }

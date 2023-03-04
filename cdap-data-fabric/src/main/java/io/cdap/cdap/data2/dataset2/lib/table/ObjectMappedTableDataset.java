@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  */
 @Beta
 public class ObjectMappedTableDataset<T> extends AbstractDataset implements ObjectMappedTable<T> {
+
   private static final Logger LOG = LoggerFactory.getLogger(ObjectMappedTableDataset.class);
 
   private final Table table;
@@ -69,7 +70,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   // the ObjectMappedTableDefinition will always have it. We could always derive the schema from the type,
   // but it is simpler to just pass it in.
   public ObjectMappedTableDataset(String name, Table table, TypeRepresentation typeRep,
-                                  Schema objectSchema, @Nullable ClassLoader classLoader) {
+      Schema objectSchema, @Nullable ClassLoader classLoader) {
     super(name, table);
     this.table = table;
     this.objectSchema = objectSchema;
@@ -88,9 +89,12 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
       } catch (RuntimeException e) {
         String missingClass = isClassNotFoundException(e);
         if (missingClass != null) {
-          LOG.error("Cannot load dataset because class {} could not be found. This is probably because the " +
-                      "type parameter of the dataset is not present in the dataset's jar file. See the developer " +
-                      "guide for more information.", missingClass);
+          LOG.error(
+              "Cannot load dataset because class {} could not be found. This is probably because the "
+
+                  + "type parameter of the dataset is not present in the dataset's jar file. See the developer "
+
+                  + "guide for more information.", missingClass);
         }
         throw e;
       }
@@ -141,8 +145,10 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
 
   @ReadOnly
   @Override
-  public CloseableIterator<KeyValue<byte[], T>> scan(@Nullable String startRow, @Nullable String stopRow) {
-    return scan(startRow == null ? null : Bytes.toBytes(startRow), stopRow == null ? null : Bytes.toBytes(stopRow));
+  public CloseableIterator<KeyValue<byte[], T>> scan(@Nullable String startRow,
+      @Nullable String stopRow) {
+    return scan(startRow == null ? null : Bytes.toBytes(startRow),
+        stopRow == null ? null : Bytes.toBytes(stopRow));
   }
 
   @ReadOnly
@@ -202,6 +208,7 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   }
 
   private class ObjectIterator extends AbstractCloseableIterator<KeyValue<byte[], T>> {
+
     private final Scanner scanner;
     private boolean closed;
 
@@ -229,7 +236,8 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   }
 
   /**
-   * The split reader for objects is reading a table split using the underlying Table's split reader.
+   * The split reader for objects is reading a table split using the underlying Table's split
+   * reader.
    */
   private class ObjectSplitReader extends SplitReader<byte[], T> {
 

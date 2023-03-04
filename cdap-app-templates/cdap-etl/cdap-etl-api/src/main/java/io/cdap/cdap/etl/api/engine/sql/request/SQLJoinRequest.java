@@ -27,12 +27,13 @@ import java.util.Collection;
  */
 @Beta
 public class SQLJoinRequest extends SQLJoinDefinition implements Serializable {
+
   private static final long serialVersionUID = -5049631486914347507L;
   private final Collection<SQLDataset> inputDatasets;
 
   public SQLJoinRequest(String datasetName,
-                        JoinDefinition joinDefinition,
-                        Collection<SQLDataset> inputDatasets) {
+      JoinDefinition joinDefinition,
+      Collection<SQLDataset> inputDatasets) {
     super(datasetName, joinDefinition);
     this.inputDatasets = inputDatasets;
   }

@@ -79,9 +79,10 @@ class KubeTwillController implements ExtendedTwillController {
   private volatile V1JobStatus jobStatus;
   private volatile boolean jobTimedOut;
 
-  KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
-                      ApiClient apiClient, Type resourceType, V1ObjectMeta meta,
-                      CompletableFuture<Void> startupTaskCompletion) {
+  KubeTwillController(String kubeNamespace, RunId runId,
+      DiscoveryServiceClient discoveryServiceClient,
+      ApiClient apiClient, Type resourceType, V1ObjectMeta meta,
+      CompletableFuture<Void> startupTaskCompletion) {
     this.kubeNamespace = kubeNamespace;
     this.runId = runId;
     this.completion = new CompletableFuture<>();
@@ -107,7 +108,8 @@ class KubeTwillController implements ExtendedTwillController {
   public Future<Integer> changeInstances(String runnable, int newCount) {
     // TODO: implement with AppsV1Api.patchNamespacedDeploymentAsync()
     CompletableFuture<Integer> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("Change instances is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("Change instances is currently not supported"));
     return f;
   }
 
@@ -123,9 +125,10 @@ class KubeTwillController implements ExtendedTwillController {
     CoreV1Api api = new CoreV1Api(apiClient);
 
     try {
-      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null, getLabelSelector(),
-                                             null, null, null, null, null, null, null,
-                                             createCallbackFutureAdapter(resultFuture, r -> runnable));
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,
+          getLabelSelector(),
+          null, null, null, null, null, null, null,
+          createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -134,7 +137,8 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   @Override
-  public Future<Set<String>> restartInstances(Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
+  public Future<Set<String>> restartInstances(
+      Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
     CompletableFuture<Set<String>> future = new CompletableFuture<>();
 
     // Since we only support one TwillRunnable, the runnable name is ignored
@@ -143,18 +147,21 @@ class KubeTwillController implements ExtendedTwillController {
       return future;
     }
     if (runnableToInstanceIds.size() != 1) {
-      future.completeExceptionally(new UnsupportedOperationException("Only one runnable is supported"));
+      future.completeExceptionally(
+          new UnsupportedOperationException("Only one runnable is supported"));
       return future;
     }
-    Map.Entry<String, ? extends Set<Integer>> entry = runnableToInstanceIds.entrySet().iterator().next();
-    return doRestartInstances(entry.getKey(), entry.getValue()).thenApply(s -> Collections.singleton(entry.getKey()));
+    Map.Entry<String, ? extends Set<Integer>> entry = runnableToInstanceIds.entrySet().iterator()
+        .next();
+    return doRestartInstances(entry.getKey(), entry.getValue()).thenApply(
+        s -> Collections.singleton(entry.getKey()));
   }
 
   @Override
   public Future<String> restartInstances(String runnable, int instanceId, int... moreInstanceIds) {
     return restartInstances(runnable,
-                            IntStream.concat(IntStream.of(instanceId),
-                                             IntStream.of(moreInstanceIds)).boxed().collect(Collectors.toSet()));
+        IntStream.concat(IntStream.of(instanceId),
+            IntStream.of(moreInstanceIds)).boxed().collect(Collectors.toSet()));
   }
 
   @Override
@@ -170,16 +177,19 @@ class KubeTwillController implements ExtendedTwillController {
     // Only support for stateful set for now
     if (!V1StatefulSet.class.equals(resourceType)) {
       resultFuture.completeExceptionally(
-        new UnsupportedOperationException("Instance restart by instance id is only supported for statefulsets"));
+          new UnsupportedOperationException(
+              "Instance restart by instance id is only supported for statefulsets"));
       return resultFuture;
     }
 
-    V1DeleteOptions deleteOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(uid));
+    V1DeleteOptions deleteOptions = new V1DeleteOptions().preconditions(
+        new V1Preconditions().uid(uid));
     String podName = String.format("%s-%d", meta.getName(), instanceId);
 
     try {
-      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, null, null, null, null, deleteOptions,
-                                   createCallbackFutureAdapter(resultFuture, r -> runnable));
+      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, null, null, null, null,
+          deleteOptions,
+          createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -187,31 +197,36 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   @Override
-  public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(
+      Map<String, LogEntry.Level> logLevels) {
     CompletableFuture<Map<String, LogEntry.Level>> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("updateLogLevels is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("updateLogLevels is currently not supported"));
     return f;
   }
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-                                                             Map<String, LogEntry.Level> logLevelsForRunnable) {
+      Map<String, LogEntry.Level> logLevelsForRunnable) {
     CompletableFuture<Map<String, LogEntry.Level>> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("updateLogLevels is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("updateLogLevels is currently not supported"));
     return f;
   }
 
   @Override
   public Future<String[]> resetLogLevels(String... loggerNames) {
     CompletableFuture<String[]> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("resetLogLevels is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("resetLogLevels is currently not supported"));
     return f;
   }
 
   @Override
   public Future<String[]> resetRunnableLogLevels(String runnableName, String... loggerNames) {
     CompletableFuture<String[]> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("resetLogLevels is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("resetLogLevels is currently not supported"));
     return f;
   }
 
@@ -223,14 +238,16 @@ class KubeTwillController implements ExtendedTwillController {
   @Override
   public Future<Command> sendCommand(Command command) {
     CompletableFuture<Command> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("sendCommand is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("sendCommand is currently not supported"));
     return f;
   }
 
   @Override
   public Future<Command> sendCommand(String runnableName, Command command) {
     CompletableFuture<Command> f = new CompletableFuture<>();
-    f.completeExceptionally(new UnsupportedOperationException("sendCommand is currently not supported"));
+    f.completeExceptionally(
+        new UnsupportedOperationException("sendCommand is currently not supported"));
     return f;
   }
 
@@ -287,7 +304,8 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   @Override
-  public void awaitTerminated(long timeout, TimeUnit timeoutUnit) throws TimeoutException, ExecutionException {
+  public void awaitTerminated(long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException, ExecutionException {
     boolean interrupted = false;
     try {
       long remainingNanos = timeoutUnit.toNanos(timeout);
@@ -341,6 +359,7 @@ class KubeTwillController implements ExtendedTwillController {
 
   /**
    * Sets job status before job is terminated.
+   *
    * @param jobStatus status of the job
    */
   public void setJobStatus(V1JobStatus jobStatus) {
@@ -349,6 +368,7 @@ class KubeTwillController implements ExtendedTwillController {
 
   /**
    * Requests to terminate the job when it times out
+   *
    * @return a {@link Future} that represents the termination of the service.
    */
   public Future<? extends ServiceController> terminateOnTimeout() {
@@ -361,12 +381,13 @@ class KubeTwillController implements ExtendedTwillController {
    */
   private String getLabelSelector() {
     return meta.getLabels().entrySet().stream()
-      .map(e -> String.format("%s=%s", e.getKey(), e.getValue()))
-      .collect(Collectors.joining(","));
+        .map(e -> String.format("%s=%s", e.getKey(), e.getValue()))
+        .collect(Collectors.joining(","));
   }
 
   /**
-   * Restarts the given set of instances. This method currently only supports restart of stateful set.
+   * Restarts the given set of instances. This method currently only supports restart of stateful
+   * set.
    *
    * @param runnable name of the runnable to restart. This is currently unused
    * @param instanceIds the set of instance ids to restart
@@ -379,20 +400,21 @@ class KubeTwillController implements ExtendedTwillController {
     // Only support for stateful set for now
     if (!V1StatefulSet.class.equals(resourceType)) {
       resultFuture.completeExceptionally(
-        new UnsupportedOperationException("Instance restart by instance id is only supported for deployment"));
+          new UnsupportedOperationException(
+              "Instance restart by instance id is only supported for deployment"));
       return resultFuture;
     }
 
     // For stateful set, it can be done by deleting pods by the selected names formed by the instance ids.
-    String labelSelector = "statefulset.kubernetes.io/pod-name in " +
-      instanceIds.stream()
+    String labelSelector = "statefulset.kubernetes.io/pod-name in "
+        + instanceIds.stream()
         .map(i -> String.format("%s-%d", meta.getName(), i))
         .collect(Collectors.joining(",", "(", ")"));
 
     try {
       api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, null, null,
-                                             labelSelector, null, null, null, null, null, null,
-                                             null, createCallbackFutureAdapter(resultFuture, r -> runnable));
+          labelSelector, null, null, null, null, null, null,
+          null, createCallbackFutureAdapter(resultFuture, r -> runnable));
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -400,12 +422,14 @@ class KubeTwillController implements ExtendedTwillController {
   }
 
   /**
-   * Creates a {@link ApiCallback} with the callback result adapted back to the provided {@link CompletableFuture}.
+   * Creates a {@link ApiCallback} with the callback result adapted back to the provided {@link
+   * CompletableFuture}.
    *
    * @param <T> type of the result
    * @param <R> type of the result for the future
    */
-  private <T, R> ApiCallback<T> createCallbackFutureAdapter(CompletableFuture<R> future, Function<T, R> func) {
+  private <T, R> ApiCallback<T> createCallbackFutureAdapter(CompletableFuture<R> future,
+      Function<T, R> func) {
     return new ApiCallbackAdapter<T>() {
       @Override
       public void onFailure(ApiException e, int statusCode, Map responseHeaders) {
@@ -452,23 +476,26 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null,
-                                              new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
-          @Override
-          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-            // Ignore the failure if the deployment is already deleted
-            if (statusCode == 404) {
-              resultFuture.complete(name);
-            } else {
-              completeExceptionally(resultFuture, e);
+      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, null, gracePeriodSeconds,
+          null, null,
+          new V1DeleteOptions(), new ApiCallbackAdapter<V1Status>() {
+            @Override
+            public void onFailure(ApiException e, int statusCode,
+                Map<String, List<String>> responseHeaders) {
+              // Ignore the failure if the deployment is already deleted
+              if (statusCode == 404) {
+                resultFuture.complete(name);
+              } else {
+                completeExceptionally(resultFuture, e);
+              }
             }
-          }
 
-          @Override
-          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
-            resultFuture.complete(name);
-          }
-        });
+            @Override
+            public void onSuccess(V1Status v1Status, int statusCode,
+                Map<String, List<String>> responseHeaders) {
+              resultFuture.complete(name);
+            }
+          });
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
     }
@@ -477,7 +504,7 @@ class KubeTwillController implements ExtendedTwillController {
 
   /**
    * Deletes the stateful set controlled by this controller asynchronously.
-
+   *
    * @return a {@link CompletionStage} that will complete when the delete operation completed
    */
   private CompletionStage<String> deleteStatefulSet(int gracePeriodSeconds) {
@@ -490,36 +517,39 @@ class KubeTwillController implements ExtendedTwillController {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     try {
       String name = meta.getName();
-      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null, null,
-                                               new ApiCallbackAdapter<V1Status>() {
-          @Override
-          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-            // Ignore if the stateful set is already deleted
-            if (statusCode == 404) {
+      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, null, gracePeriodSeconds,
+          null, null, null,
+          new ApiCallbackAdapter<V1Status>() {
+            @Override
+            public void onFailure(ApiException e, int statusCode,
+                Map<String, List<String>> responseHeaders) {
+              // Ignore if the stateful set is already deleted
+              if (statusCode == 404) {
+                deletePVCs();
+              } else {
+                completeExceptionally(resultFuture, e);
+              }
+            }
+
+            @Override
+            public void onSuccess(V1Status v1Status, int statusCode,
+                Map<String, List<String>> responseHeaders) {
               deletePVCs();
-            } else {
-              completeExceptionally(resultFuture, e);
             }
-          }
 
-          @Override
-          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
-            deletePVCs();
-          }
-
-          // Delete the PVCs used by the stateful set
-          private void deletePVCs() {
-            LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
-            try {
-              coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
-                kubeNamespace, null, null, null, null, null, getLabelSelector(),
-                null, null, null, null, null, null, null,
-                createCallbackFutureAdapter(resultFuture, r -> name));
-            } catch (ApiException e) {
-              completeExceptionally(resultFuture, e);
+            // Delete the PVCs used by the stateful set
+            private void deletePVCs() {
+              LOG.debug("Deleting PVCs for StatefulSet {}", meta.getName());
+              try {
+                coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
+                    kubeNamespace, null, null, null, null, null, getLabelSelector(),
+                    null, null, null, null, null, null, null,
+                    createCallbackFutureAdapter(resultFuture, r -> name));
+              } catch (ApiException e) {
+                completeExceptionally(resultFuture, e);
+              }
             }
-          }
-        });
+          });
 
     } catch (ApiException e) {
       completeExceptionally(resultFuture, e);
@@ -575,9 +605,10 @@ class KubeTwillController implements ExtendedTwillController {
       resultFuture.complete(name);
     } else if (jobStatus.getFailed() != null) {
       // If job has failed, mark future as failed. Else mark it as succeeded.
-      resultFuture.completeExceptionally(new RuntimeException(String.format("Job %s has a failed status.", name)));
+      resultFuture.completeExceptionally(
+          new RuntimeException(String.format("Job %s has a failed status.", name)));
       if (meta.getAnnotations() != null && Boolean.parseBoolean(
-        meta.getAnnotations().get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED))) {
+          meta.getAnnotations().get(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED))) {
         return resultFuture;
       }
     } else {
@@ -599,26 +630,30 @@ class KubeTwillController implements ExtendedTwillController {
   /**
    * Deletes the job.
    */
-  private CompletionStage<String> deleteJob(V1ObjectMeta meta, @Nullable Integer gracePeriodSeconds) {
+  private CompletionStage<String> deleteJob(V1ObjectMeta meta,
+      @Nullable Integer gracePeriodSeconds) {
     CompletableFuture<String> resultFuture = new CompletableFuture<>();
     String name = meta.getName();
     try {
       V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
       v1DeleteOptions.setPropagationPolicy("Background");
       // Make async call to attempt to delete job. If it fails, KubeJobCleaner should clean it up.
-      batchV1Api.deleteNamespacedJobAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null, null,
-                                          v1DeleteOptions, new ApiCallbackAdapter<V1Status>() {
-          @Override
-          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
-            // If job deletion fails, KubeJobCleaner will keep attempting to delete the job.
-            resultFuture.complete(name);
-          }
+      batchV1Api.deleteNamespacedJobAsync(name, kubeNamespace, null, null, gracePeriodSeconds, null,
+          null,
+          v1DeleteOptions, new ApiCallbackAdapter<V1Status>() {
+            @Override
+            public void onFailure(ApiException e, int statusCode,
+                Map<String, List<String>> responseHeaders) {
+              // If job deletion fails, KubeJobCleaner will keep attempting to delete the job.
+              resultFuture.complete(name);
+            }
 
-          @Override
-          public void onSuccess(V1Status result, int statusCode, Map<String, List<String>> responseHeaders) {
-            resultFuture.complete(name);
-          }
-        });
+            @Override
+            public void onSuccess(V1Status result, int statusCode,
+                Map<String, List<String>> responseHeaders) {
+              resultFuture.complete(name);
+            }
+          });
     } catch (ApiException e) {
       resultFuture.completeExceptionally(e);
     }

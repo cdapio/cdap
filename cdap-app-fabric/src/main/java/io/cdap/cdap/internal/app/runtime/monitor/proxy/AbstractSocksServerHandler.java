@@ -101,7 +101,7 @@ abstract class AbstractSocksServerHandler extends SimpleChannelInboundHandler<So
           Socks5PasswordAuthRequest authRequest = (Socks5PasswordAuthRequest) msg;
           if (!authenticate(authRequest.username(), authRequest.password())) {
             ctx.write(new DefaultSocks5PasswordAuthResponse(Socks5PasswordAuthStatus.FAILURE))
-              .addListener(ChannelFutureListener.CLOSE);
+                .addListener(ChannelFutureListener.CLOSE);
           } else {
             ctx.pipeline().remove("auth");
             ctx.pipeline().remove(this);
@@ -130,7 +130,8 @@ abstract class AbstractSocksServerHandler extends SimpleChannelInboundHandler<So
     if (LOG.isTraceEnabled()) {
       LOG.trace("Exception raised while handling socks request for {}", ctx.channel(), cause);
     } else {
-      LOG.debug("Exception raised while handling socks request for {} due to {}", ctx.channel(), cause);
+      LOG.debug("Exception raised while handling socks request for {} due to {}", ctx.channel(),
+          cause);
     }
 
     // Just close the channel if there is exception

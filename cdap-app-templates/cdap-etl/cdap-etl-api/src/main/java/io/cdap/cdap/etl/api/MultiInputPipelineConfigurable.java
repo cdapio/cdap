@@ -23,11 +23,14 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public interface MultiInputPipelineConfigurable {
+
   /**
    * Configure an ETL pipeline, adding datasets and streams that the stage needs.
    *
-   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and
+   *     streams
    * @throws IllegalArgumentException if the given config is invalid
    */
-  void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) throws IllegalArgumentException;
+  void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer)
+      throws IllegalArgumentException;
 }

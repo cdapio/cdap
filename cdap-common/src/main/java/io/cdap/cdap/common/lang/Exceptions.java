@@ -20,10 +20,13 @@ package io.cdap.cdap.common.lang;
  * Utility class which provides helper methods concerning exception handling.
  */
 public class Exceptions {
+
   public static final String CONDENSE_COMBINER_STRING = System.lineSeparator() + "Caused by: ";
 
   /**
-   * Condenses Throwable messages across an exception chain to a single message string. Ignores null and empty messages.
+   * Condenses Throwable messages across an exception chain to a single message string. Ignores null
+   * and empty messages.
+   *
    * @return The condensed exception string
    */
   public static String condenseThrowableMessage(Throwable t) {

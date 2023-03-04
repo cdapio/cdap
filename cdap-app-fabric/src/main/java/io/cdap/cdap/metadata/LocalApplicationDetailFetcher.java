@@ -34,12 +34,13 @@ import java.util.function.Consumer;
  * Fetch {@link ApplicationDetail} from local store via {@link ApplicationLifecycleService}
  */
 public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
+
   private final ApplicationLifecycleService applicationLifecycleService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   public LocalApplicationDetailFetcher(ApplicationLifecycleService applicationLifecycleService,
-                                       NamespaceQueryAdmin namespaceQueryAdmin) {
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.applicationLifecycleService = applicationLifecycleService;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -49,7 +50,8 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
    *
    * @param appRef the versionless id of the application
    * @return {@link ApplicationDetail} for the given application
-   * @throws IOException if failed to get {@link ApplicationDetail} for the given {@link ApplicationId}
+   * @throws IOException if failed to get {@link ApplicationDetail} for the given {@link
+   *     ApplicationId}
    * @throws NotFoundException if the given the given application doesn't exist
    */
   @Override
@@ -67,7 +69,7 @@ public class LocalApplicationDetailFetcher implements ApplicationDetailFetcher {
    */
   @Override
   public void scan(String namespace, Consumer<ApplicationDetail> consumer, Integer batchSize)
-    throws IOException, NamespaceNotFoundException {
+      throws IOException, NamespaceNotFoundException {
     NamespaceId namespaceId = new NamespaceId(namespace);
     try {
       // Check if the namespace exists before calling ApplicationLifecycleService, since it doesn't check

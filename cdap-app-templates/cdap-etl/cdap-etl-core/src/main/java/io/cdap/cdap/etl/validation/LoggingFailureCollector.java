@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * Failure collector that logs the failures.
  */
 public class LoggingFailureCollector extends DefaultFailureCollector {
+
   private static final Logger LOG = LoggerFactory.getLogger(LoggingFailureCollector.class);
 
   /**
@@ -57,9 +58,10 @@ public class LoggingFailureCollector extends DefaultFailureCollector {
 
     List<ValidationFailure> failures = validationException.getFailures();
     LOG.error("Encountered '{}' validation failures: {}{}", failures.size(), System.lineSeparator(),
-              IntStream.range(0, failures.size())
-                .mapToObj(index -> String.format("%d. %s", index + 1, failures.get(index).getFullMessage()))
-                .collect(Collectors.joining(System.lineSeparator())));
+        IntStream.range(0, failures.size())
+            .mapToObj(
+                index -> String.format("%d. %s", index + 1, failures.get(index).getFullMessage()))
+            .collect(Collectors.joining(System.lineSeparator())));
 
     throw validationException;
   }

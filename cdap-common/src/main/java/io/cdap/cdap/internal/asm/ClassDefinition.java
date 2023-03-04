@@ -24,6 +24,7 @@ import org.objectweb.asm.Type;
  * Class for carrying information of the generated class.
  */
 public final class ClassDefinition {
+
   private final byte[] bytecode;
   private final String internalName;
   private final List<Class<?>> preservedClasses;
@@ -32,7 +33,8 @@ public final class ClassDefinition {
     this(bytecode, internalName, ImmutableList.<Class<?>>of());
   }
 
-  public ClassDefinition(byte[] bytecode, String internalName, Iterable<? extends Class<?>> preservedClasses) {
+  public ClassDefinition(byte[] bytecode, String internalName,
+      Iterable<? extends Class<?>> preservedClasses) {
     this.bytecode = bytecode;
     this.internalName = internalName;
     this.preservedClasses = ImmutableList.copyOf(preservedClasses);

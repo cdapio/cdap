@@ -37,13 +37,13 @@ public class NamespaceCommands extends CommandSet<Command> implements Categorize
   @Inject
   public NamespaceCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(UseNamespaceCommand.class))
-        .add(injector.getInstance(CreateNamespaceCommand.class))
-        .add(injector.getInstance(ListNamespacesCommand.class))
-        .add(injector.getInstance(DescribeNamespaceCommand.class))
-        .add(injector.getInstance(DeleteNamespaceCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(UseNamespaceCommand.class))
+            .add(injector.getInstance(CreateNamespaceCommand.class))
+            .add(injector.getInstance(ListNamespacesCommand.class))
+            .add(injector.getInstance(DescribeNamespaceCommand.class))
+            .add(injector.getInstance(DeleteNamespaceCommand.class))
+            .build());
   }
 
   @Override

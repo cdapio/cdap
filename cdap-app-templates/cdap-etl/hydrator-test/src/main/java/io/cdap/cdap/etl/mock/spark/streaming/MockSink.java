@@ -41,6 +41,7 @@ import scala.Tuple2;
  * Mock Sink for Spark streaming test.
  */
 public class MockSink extends SparkSink<StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 
@@ -51,18 +52,22 @@ public class MockSink extends SparkSink<StructuredRecord> {
   @Override
   public void prepareRun(SparkPluginContext context) throws Exception {
     if (!context.datasetExists(config.tableName)) {
-      context.createDataset(config.tableName, KeyValueTable.class.getName(), DatasetProperties.EMPTY);
+      context.createDataset(config.tableName, KeyValueTable.class.getName(),
+          DatasetProperties.EMPTY);
     }
   }
 
   @Override
-  public void run(final SparkExecutionPluginContext context, JavaRDD<StructuredRecord> input) throws Exception {
-    JavaPairRDD<byte[], byte[]> tableData = input.mapToPair(new PairFunction<StructuredRecord, byte[], byte[]>() {
-      @Override
-      public Tuple2<byte[], byte[]> call(StructuredRecord record) throws Exception {
-        return new Tuple2<>(Bytes.toBytes((String) record.get("id")), Bytes.toBytes((String) record.get("name")));
-      }
-    });
+  public void run(final SparkExecutionPluginContext context, JavaRDD<StructuredRecord> input)
+      throws Exception {
+    JavaPairRDD<byte[], byte[]> tableData = input.mapToPair(
+        new PairFunction<StructuredRecord, byte[], byte[]>() {
+          @Override
+          public Tuple2<byte[], byte[]> call(StructuredRecord record) throws Exception {
+            return new Tuple2<>(Bytes.toBytes((String) record.get("id")),
+                Bytes.toBytes((String) record.get("name")));
+          }
+        });
 
     context.saveAsDataset(tableData, config.tableName);
   }
@@ -72,12 +77,14 @@ public class MockSink extends SparkSink<StructuredRecord> {
    * Config for the sink.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private String tableName;
   }
 
   /**
    * Get ETL plugin
+   *
    * @param tableName name of the table provided for the configuration
    * @return an instance of the ETLPlugin
    */
@@ -91,19 +98,20 @@ public class MockSink extends SparkSink<StructuredRecord> {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
     return PluginClass.builder().setName("Mock").setType(SparkSink.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 
   /**
    * Get the values associated with the specified keys.
+   *
    * @param keys keys for which value to be determined
    * @param tableManager manager for the table
    * @return the key value map
-   * @throws Exception
    */
-  public static Map<String, String> getValues(Set<String> keys, DataSetManager<KeyValueTable> tableManager)
-    throws Exception {
+  public static Map<String, String> getValues(Set<String> keys,
+      DataSetManager<KeyValueTable> tableManager)
+      throws Exception {
     tableManager.flush();
     KeyValueTable table = tableManager.get();
 

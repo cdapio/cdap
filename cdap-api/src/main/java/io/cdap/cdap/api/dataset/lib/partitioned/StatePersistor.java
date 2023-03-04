@@ -24,15 +24,16 @@ import javax.annotation.Nullable;
 public interface StatePersistor {
 
   /**
-   * @return the serialized bytes of the state of the partition consuming process; return null to indicate a fresh
-   *         state of consuming (defaults to starting from the beginning).
+   * @return the serialized bytes of the state of the partition consuming process; return null to
+   *     indicate a fresh state of consuming (defaults to starting from the beginning).
    */
   @Nullable
   byte[] readState();
 
   /**
-   * Writes the serialized bytes of the state of the partition consuming process. The bytes written in this method
-   * should be available in the following call to readBytes(DatasetContext).
+   * Writes the serialized bytes of the state of the partition consuming process. The bytes written
+   * in this method should be available in the following call to readBytes(DatasetContext).
+   *
    * @param state the bytes to persist
    */
   void persistState(byte[] state);

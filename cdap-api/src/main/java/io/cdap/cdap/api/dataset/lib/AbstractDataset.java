@@ -31,10 +31,11 @@ import org.apache.tephra.TransactionAwares;
 
 /**
  * Handy abstract implementation of {@link Dataset} that acts on a list of underlying datasets and
- * implements {@link TransactionAware} and {@link MeteredDataset} interfaces by propagating corresponded
- * logic to each dataset in a list when possible.
+ * implements {@link TransactionAware} and {@link MeteredDataset} interfaces by propagating
+ * corresponded logic to each dataset in a list when possible.
  */
 public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware {
+
   private final String instanceName;
   private final Collection<Dataset> underlying;
   private final TransactionAware txAwares;
@@ -46,9 +47,9 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
     Collections.addAll(this.underlying, otherEmbedded);
 
     List<TransactionAware> txAwares = underlying.stream()
-      .filter(dataset -> dataset instanceof TransactionAware)
-      .map(dataset -> (TransactionAware) dataset)
-      .collect(Collectors.toList());
+        .filter(dataset -> dataset instanceof TransactionAware)
+        .map(dataset -> (TransactionAware) dataset)
+        .collect(Collectors.toList());
     this.txAwares = TransactionAwares.of(txAwares);
   }
 

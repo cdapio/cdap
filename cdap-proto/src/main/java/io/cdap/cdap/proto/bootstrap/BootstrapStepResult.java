@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Result of executing a bootstrap step.
  */
 public class BootstrapStepResult {
+
   private final String label;
   private final Status status;
   private final String message;
@@ -60,9 +61,9 @@ public class BootstrapStepResult {
       return false;
     }
     BootstrapStepResult that = (BootstrapStepResult) o;
-    return Objects.equals(label, that.label) &&
-      status == that.status &&
-      Objects.equals(message, that.message);
+    return Objects.equals(label, that.label)
+        && status == that.status
+        && Objects.equals(message, that.message);
   }
 
   @Override
@@ -72,11 +73,11 @@ public class BootstrapStepResult {
 
   @Override
   public String toString() {
-    return "BootstrapStepResult{" +
-      "label='" + label + '\'' +
-      ", status=" + status +
-      ", message='" + message + '\'' +
-      '}';
+    return "BootstrapStepResult{"
+        + "label='" + label + '\''
+        + ", status=" + status
+        + ", message='" + message + '\''
+        + '}';
   }
 
   /**

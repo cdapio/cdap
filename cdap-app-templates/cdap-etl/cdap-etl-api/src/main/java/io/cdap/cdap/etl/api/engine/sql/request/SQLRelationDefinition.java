@@ -24,6 +24,7 @@ import java.io.Serializable;
  * This class defines a SQL Engine relation during relationalial transform calls
  */
 public class SQLRelationDefinition implements SQLDatasetDescription, Serializable {
+
   private static final long serialVersionUID = 2528081290251538913L;
   protected final String datasetName;
   protected final Schema datasetSchema;
@@ -34,7 +35,6 @@ public class SQLRelationDefinition implements SQLDatasetDescription, Serializabl
   }
 
   /**
-   *
    * @return SQL Engine dataset name for a relation
    */
   public String getDatasetName() {
@@ -42,7 +42,6 @@ public class SQLRelationDefinition implements SQLDatasetDescription, Serializabl
   }
 
   /**
-   *
    * @return schema for the relation
    */
   public Schema getSchema() {

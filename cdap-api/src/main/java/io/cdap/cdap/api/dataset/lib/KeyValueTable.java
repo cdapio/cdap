@@ -43,11 +43,12 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * A key/value map implementation on top of {@link Table} supporting read, write and delete operations.
+ * A key/value map implementation on top of {@link Table} supporting read, write and delete
+ * operations.
  */
 public class KeyValueTable extends AbstractDataset implements
-  BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
-  RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
+    BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
+    RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
 
   /**
    * Type name
@@ -55,7 +56,7 @@ public class KeyValueTable extends AbstractDataset implements
   public static final String TYPE = "keyValueTable";
 
   // the fixed single column to use for the key
-  static final byte[] KEY_COLUMN = { 'c' };
+  static final byte[] KEY_COLUMN = {'c'};
 
   private final Table table;
 
@@ -96,11 +97,12 @@ public class KeyValueTable extends AbstractDataset implements
    */
   @ReadOnly
   public Map<byte[], byte[]> readAll(byte[][] keys) {
-    List<Get> gets = Arrays.stream(keys).map(key -> new Get(key).add(KEY_COLUMN)).collect(Collectors.toList());
+    List<Get> gets = Arrays.stream(keys).map(key -> new Get(key).add(KEY_COLUMN))
+        .collect(Collectors.toList());
     return table.get(gets).stream()
-      .filter(row -> row.get(KEY_COLUMN) != null)
-      .collect(Collectors.toMap(Row::getRow, row -> row.get(KEY_COLUMN), (v1, v2) -> v2,
-                                () -> new TreeMap<>(Bytes.BYTES_COMPARATOR)));
+        .filter(row -> row.get(KEY_COLUMN) != null)
+        .collect(Collectors.toMap(Row::getRow, row -> row.get(KEY_COLUMN), (v1, v2) -> v2,
+            () -> new TreeMap<>(Bytes.BYTES_COMPARATOR)));
   }
 
   /**
@@ -149,8 +151,8 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * Increment the value of a key by amount; the key must either not exist yet, or the
-   * current value at the key must be 8 bytes long to be interpretable as a long.
+   * Increment the value of a key by amount; the key must either not exist yet, or the current value
+   * at the key must be 8 bytes long to be interpretable as a long.
    *
    * @param key the key
    * @param amount the amount to increment by
@@ -181,14 +183,14 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * Compares-and-swaps (atomically) the value of the specified row and column
-   * by looking for the specified expected value and, if found, replacing with
-   * the specified new value.
+   * Compares-and-swaps (atomically) the value of the specified row and column by looking for the
+   * specified expected value and, if found, replacing with the specified new value.
    *
    * @param key key to modify
    * @param oldValue expected value before change
    * @param newValue value to set
-   * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
+   * @return true if compare and swap succeeded, false otherwise (stored value is different from
+   *     expected)
    */
   @ReadWrite
   public boolean compareAndSwap(byte[] key, byte[] oldValue, byte[] newValue) {
@@ -197,7 +199,8 @@ public class KeyValueTable extends AbstractDataset implements
 
   @Override
   public Type getRecordType() {
-    return new TypeToken<KeyValue<byte[], byte[]>>() { }.getType();
+    return new TypeToken<KeyValue<byte[], byte[]>>() {
+    }.getType();
   }
 
   @Override
@@ -212,14 +215,15 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-  * Returns splits for a range of keys in the table.
-  *
-  * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-  *                  If less than or equal to zero, any number of splits can be returned.
-  * @param start if non-null, the returned splits will only cover keys that are greater or equal
-  * @param stop if non-null, the returned splits will only cover keys that are less
-  * @return list of {@link Split}
-  */
+   * Returns splits for a range of keys in the table.
+   *
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits
+   *     will be returned. If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or
+   *     equal
+   * @param stop if non-null, the returned splits will only cover keys that are less
+   * @return list of {@link Split}
+   */
   public List<Split> getSplits(int numSplits, @Nullable byte[] start, @Nullable byte[] stop) {
     return table.getSplits(numSplits, start, stop);
   }
@@ -238,16 +242,19 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Scans table.
+   *
    * @param startRow start row inclusive. {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} of
-   * {@link KeyValue KeyValue&lt;byte[], byte[]&gt;}
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the
+   *     table
+   * @return {@link io.cdap.cdap.api.dataset.lib.CloseableIterator} of {@link KeyValue
+   *     KeyValue&lt;byte[], byte[]&gt;}
    */
   public CloseableIterator<KeyValue<byte[], byte[]>> scan(byte[] startRow, byte[] stopRow) {
     final Scanner scanner = table.scan(startRow, stopRow);
 
     return new AbstractCloseableIterator<KeyValue<byte[], byte[]>>() {
       private boolean closed;
+
       @Override
       protected KeyValue<byte[], byte[]> computeNext() {
         if (closed) {
@@ -271,9 +278,12 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * {@link io.cdap.cdap.api.data.batch.Scannables.RecordMaker} for {@link #createSplitReader(Split)}.
+   * {@link io.cdap.cdap.api.data.batch.Scannables.RecordMaker} for {@link
+   * #createSplitReader(Split)}.
    */
-  public class KeyValueRecordMaker implements Scannables.RecordMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
+  public class KeyValueRecordMaker implements
+      Scannables.RecordMaker<byte[], byte[], KeyValue<byte[], byte[]>> {
+
     @Override
     public KeyValue<byte[], byte[]> makeRecord(byte[] key, byte[] value) {
       return new KeyValue<>(key, value);

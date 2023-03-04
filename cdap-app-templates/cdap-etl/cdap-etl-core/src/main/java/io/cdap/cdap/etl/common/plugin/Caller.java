@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
  * Calls a callable. Used to perform some extra logic around a callable.
  */
 public abstract class Caller {
+
   public static final Caller DEFAULT = new Caller() {
     @Override
     public <T> T call(Callable<T> callable) throws Exception {
@@ -41,8 +42,9 @@ public abstract class Caller {
   public abstract <T> T call(Callable<T> callable) throws Exception;
 
   /**
-   * Call a Callable that does not throw checked exceptions. It is up to you to ensure that it does not throw checked
-   * exceptions. Otherwise, any checked exceptions will be wrapped in a RuntimeException and propagated.
+   * Call a Callable that does not throw checked exceptions. It is up to you to ensure that it does
+   * not throw checked exceptions. Otherwise, any checked exceptions will be wrapped in a
+   * RuntimeException and propagated.
    *
    * @param callable the callable to call
    * @param <T> the return type

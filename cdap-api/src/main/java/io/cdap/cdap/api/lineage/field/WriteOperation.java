@@ -26,6 +26,7 @@ import java.util.Objects;
  * Represents a write operation from a collection of input fields into a destination of data.
  */
 public class WriteOperation extends Operation {
+
   private final List<InputField> inputs;
   private final EndPoint destination;
 
@@ -37,7 +38,8 @@ public class WriteOperation extends Operation {
    * @param destination the destination for the operation
    * @param inputs the array of inputs to be written
    */
-  public WriteOperation(String name, String description, EndPoint destination, InputField... inputs) {
+  public WriteOperation(String name, String description, EndPoint destination,
+      InputField... inputs) {
     this(name, description, destination, Arrays.asList(inputs));
   }
 
@@ -49,7 +51,8 @@ public class WriteOperation extends Operation {
    * @param destination the destination for the operation
    * @param inputs the list of inputs to be written
    */
-  public WriteOperation(String name, String description, EndPoint destination, List<InputField> inputs) {
+  public WriteOperation(String name, String description, EndPoint destination,
+      List<InputField> inputs) {
     super(name, OperationType.WRITE, description);
     this.destination = destination;
     this.inputs = Collections.unmodifiableList(new ArrayList<>(inputs));
@@ -78,8 +81,8 @@ public class WriteOperation extends Operation {
       return false;
     }
     WriteOperation that = (WriteOperation) o;
-    return Objects.equals(inputs, that.inputs) &&
-            Objects.equals(destination, that.destination);
+    return Objects.equals(inputs, that.inputs)
+        && Objects.equals(destination, that.destination);
   }
 
   @Override

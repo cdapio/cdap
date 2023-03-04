@@ -20,7 +20,7 @@ package io.cdap.cdap.api.schedule;
  * The dataset partition trigger information to be passed to the triggered program.
  */
 public interface PartitionTriggerInfo extends TriggerInfo {
-  
+
   /**
    * @return The namespace of the dataset specified in the trigger.
    */

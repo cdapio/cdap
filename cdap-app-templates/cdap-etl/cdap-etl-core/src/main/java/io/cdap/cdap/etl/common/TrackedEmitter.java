@@ -28,14 +28,16 @@ import java.util.Map;
  * @param <T> the type of object to emit
  */
 public class TrackedEmitter<T> implements Emitter<T> {
+
   private final Emitter<T> delegate;
   private final StageMetrics stageMetrics;
   private final String emitMetricName;
   private final DataTracer dataTracer;
   private final StageStatisticsCollector collector;
 
-  public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName, DataTracer dataTracer,
-                        StageStatisticsCollector collector) {
+  public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName,
+      DataTracer dataTracer,
+      StageStatisticsCollector collector) {
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
     this.emitMetricName = emitMetricName;

@@ -23,6 +23,7 @@ import java.util.Properties;
  * Utility to get etl app version.
  */
 public final class ETLVersion {
+
   private static String version;
 
   private ETLVersion() {
@@ -41,7 +42,8 @@ public final class ETLVersion {
       version = prop.getProperty("version");
       return version;
     } catch (Exception e) {
-      throw new RuntimeException("Error determining version. Please check that the jar was built correctly.", e);
+      throw new RuntimeException(
+          "Error determining version. Please check that the jar was built correctly.", e);
     }
   }
 

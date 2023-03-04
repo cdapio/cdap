@@ -27,22 +27,26 @@ public interface RollbackDetail {
   long getTransactionWritePointer();
 
   /**
-   * Returns the timestamp being used for the first payload published with the given transaction write pointer.
+   * Returns the timestamp being used for the first payload published with the given transaction
+   * write pointer.
    */
   long getStartTimestamp();
 
   /**
-   * Returns the sequence id being used for the first payload published with the given transaction write pointer.
+   * Returns the sequence id being used for the first payload published with the given transaction
+   * write pointer.
    */
   int getStartSequenceId();
 
   /**
-   * Returns the timestamp being used for the last payload published with the given transaction write pointer.
+   * Returns the timestamp being used for the last payload published with the given transaction
+   * write pointer.
    */
   long getEndTimestamp();
 
   /**
-   * Returns the sequence id being used for the last payload published with the given transaction write pointer.
+   * Returns the sequence id being used for the last payload published with the given transaction
+   * write pointer.
    */
   int getEndSequenceId();
 }

@@ -58,24 +58,25 @@ public final class InstantiatorFactory {
   }
 
   public InstantiatorFactory(final boolean useKnownType) {
-    instantiatorCache = CacheBuilder.newBuilder().build(new CacheLoader<TypeToken<?>, Instantiator<?>>() {
-      @Override
-      public Instantiator<?> load(TypeToken<?> type) throws Exception {
-        Instantiator<?> creator = getByDefaultConstructor(type);
-        if (creator != null) {
-          return creator;
-        }
+    instantiatorCache = CacheBuilder.newBuilder()
+        .build(new CacheLoader<TypeToken<?>, Instantiator<?>>() {
+          @Override
+          public Instantiator<?> load(TypeToken<?> type) throws Exception {
+            Instantiator<?> creator = getByDefaultConstructor(type);
+            if (creator != null) {
+              return creator;
+            }
 
-        if (useKnownType) {
-          creator = getByKnownType(type);
-          if (creator != null) {
-            return creator;
+            if (useKnownType) {
+              creator = getByKnownType(type);
+              if (creator != null) {
+                return creator;
+              }
+            }
+
+            return getByUnsafe(type);
           }
-        }
-
-        return getByUnsafe(type);
-      }
-    });
+        });
   }
 
   public <T> Instantiator<T> get(TypeToken<T> type) {
@@ -83,10 +84,8 @@ public final class InstantiatorFactory {
   }
 
   /**
-   * Returns an {@link Instantiator} that uses default constructor to instantiate an object of the given type.
-   *
-   * @param type
-   * @param <T>
+   * Returns an {@link Instantiator} that uses default constructor to instantiate an object of the
+   * given type.
    */
   private <T> Instantiator<T> getByDefaultConstructor(TypeToken<T> type) {
     try {

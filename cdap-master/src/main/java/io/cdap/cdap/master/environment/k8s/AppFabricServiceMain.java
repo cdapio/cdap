@@ -85,50 +85,53 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new DataSetServiceModules().getStandaloneModules(),
-      // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(),
-      new MetricsStoreModule(),
-      new MessagingClientModule(),
-      new AuditModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
-      Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-        }
-      }),
-      new ProgramRunnerRuntimeModule().getDistributedModules(true),
-      new MonitorHandlerModule(false),
-      new SecureStoreServerModule(),
-      new OperationalStatsModule(),
-      getDataFabricModule(),
-      new DFSLocationModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(TwillRunnerService.class).toProvider(
-            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
-          bind(TwillRunner.class).to(TwillRunnerService.class);
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new DataSetServiceModules().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new MetricsStoreModule(),
+        new MessagingClientModule(),
+        new AuditModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getMasterModule(),
+        Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(StorageProviderNamespaceAdmin.class).to(
+                    LocalStorageProviderNamespaceAdmin.class);
+              }
+            }),
+        new ProgramRunnerRuntimeModule().getDistributedModules(true),
+        new MonitorHandlerModule(false),
+        new SecureStoreServerModule(),
+        new OperationalStatsModule(),
+        getDataFabricModule(),
+        new DFSLocationModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(TwillRunnerService.class).toProvider(
+                    new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+                .in(Scopes.SINGLETON);
+            bind(TwillRunner.class).to(TwillRunnerService.class);
 
-          // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
-          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
+          }
         }
-      }
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
@@ -136,22 +139,23 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
 
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
 
-
     // Start both the remote TwillRunnerService and regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
-                                                                        Constants.AppFabric.RemoteExecution.class));
+        Constants.AppFabric.RemoteExecution.class));
     services.add(new TwillRunnerServiceWrapper(remoteTwillRunner));
     services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
-                                                RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
+        RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
-    services.add(new RetryOnStartFailureService(() -> injector.getInstance(NamespaceInitializerService.class),
-                                                RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
+    services.add(new RetryOnStartFailureService(
+        () -> injector.getInstance(NamespaceInitializerService.class),
+        RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
 
     if (cConf.getBoolean(Constants.TaskWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(TaskWorkerServiceLauncher.class));
@@ -162,15 +166,16 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     }
 
     // Adds the master environment tasks
-    masterEnv.getTasks().forEach(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
+    masterEnv.getTasks()
+        .forEach(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
   }
 
   @Nullable
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.APP_FABRIC_HTTP);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.APP_FABRIC_HTTP);
   }
 
 }

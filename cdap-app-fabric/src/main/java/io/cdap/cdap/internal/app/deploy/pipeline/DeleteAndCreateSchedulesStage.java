@@ -68,7 +68,8 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     emit(input);
   }
 
-  private Set<ProgramSchedule> getProgramScheduleSet(ApplicationId appId, ApplicationSpecification appSpec) {
+  private Set<ProgramSchedule> getProgramScheduleSet(ApplicationId appId,
+      ApplicationSpecification appSpec) {
     Set<ProgramSchedule> schedules = new HashSet<>();
     for (ScheduleCreationSpec scheduleCreationSpec : appSpec.getProgramSchedules().values()) {
       schedules.add(toProgramSchedule(appId, scheduleCreationSpec));
@@ -76,11 +77,13 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     return schedules;
   }
 
-  private ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleCreationSpec scheduleCreationSpec) {
+  private ProgramSchedule toProgramSchedule(ApplicationId appId,
+      ScheduleCreationSpec scheduleCreationSpec) {
     ProgramId programId = appId.workflow(scheduleCreationSpec.getProgramName());
     Trigger trigger = scheduleCreationSpec.getTrigger();
-    return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
-                               scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints(),
-                               scheduleCreationSpec.getTimeoutMillis());
+    return new ProgramSchedule(scheduleCreationSpec.getName(),
+        scheduleCreationSpec.getDescription(), programId,
+        scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints(),
+        scheduleCreationSpec.getTimeoutMillis());
   }
 }

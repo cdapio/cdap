@@ -50,8 +50,8 @@ public class MetadataSearchClient {
 
   MetadataSearchClient(RemoteClientFactory remoteClientFactory) {
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.METADATA_SERVICE,
-      new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+        Constants.Service.METADATA_SERVICE,
+        new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
   }
 
   /**
@@ -59,11 +59,11 @@ public class MetadataSearchClient {
    *
    * @param request {@link SearchRequest}
    * @return {@link MetadataSearchResponse}
-   * @throws IOException
    */
-  public MetadataSearchResponse search(SearchRequest request) throws IOException, UnauthorizedException {
+  public MetadataSearchResponse search(SearchRequest request)
+      throws IOException, UnauthorizedException {
     HttpRequest httpRequest = remoteClient
-      .requestBuilder(HttpMethod.GET, buildRequestURL(request)).build();
+        .requestBuilder(HttpMethod.GET, buildRequestURL(request)).build();
     HttpResponse response = remoteClient.execute(httpRequest);
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);
   }
@@ -73,13 +73,13 @@ public class MetadataSearchClient {
     builder.append(METADATA_SEARCH_BASE);
     builder.append(PARAM_SEPARATOR);
     String simpleParamString = getSimpleParams(request).entrySet().stream()
-      .filter(this::isPresent)
-      .map(this::getFormattedParam)
-      .collect(Collectors.joining(PARAM_DELIMITER));
+        .filter(this::isPresent)
+        .map(this::getFormattedParam)
+        .collect(Collectors.joining(PARAM_DELIMITER));
     String multiParamsString = getMultiParams(request).entrySet().stream()
-      .filter(this::isSetPresent)
-      .map(this::getFormattedParamSet)
-      .collect(Collectors.joining(PARAM_DELIMITER));
+        .filter(this::isSetPresent)
+        .map(this::getFormattedParamSet)
+        .collect(Collectors.joining(PARAM_DELIMITER));
     builder.append(simpleParamString);
     builder.append(PARAM_DELIMITER);
     builder.append(multiParamsString);
@@ -101,7 +101,7 @@ public class MetadataSearchClient {
   private String getFormattedParam(String key, String value) {
     try {
       return String
-        .format(QUERY_PARAM_FORMAT, key, URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
+          .format(QUERY_PARAM_FORMAT, key, URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException(e);
     }
@@ -109,8 +109,8 @@ public class MetadataSearchClient {
 
   private String getFormattedParamSet(Map.Entry<String, Set<String>> paramEntry) {
     return paramEntry.getValue().stream()
-      .map(value -> getFormattedParam(paramEntry.getKey(), value))
-      .collect(Collectors.joining(PARAM_DELIMITER));
+        .map(value -> getFormattedParam(paramEntry.getKey(), value))
+        .collect(Collectors.joining(PARAM_DELIMITER));
   }
 
   private Map<String, String> getSimpleParams(SearchRequest request) {

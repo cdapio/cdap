@@ -21,15 +21,15 @@ package io.cdap.cdap.test;
  *
  * <p>
  * <b>Note:</b>
- * Changes made with the instance of the dataset acquired via {@link #get()} are not visible to other components
- * unless {@link #flush()} is called.
+ * Changes made with the instance of the dataset acquired via {@link #get()} are not visible to
+ * other components unless {@link #flush()} is called.
  * </p>
  *
  * <p>
  * Typical usage for read:
  * </p>
  *
- * <pre><code> 
+ * <pre><code>
  *   DataSetManager{@literal <}Table> myTableManager = getDataset("my_table");
  *   String value = myTableManager.get().get(new Get("key1", "column1")).getString("column1");
  * </code></pre>
@@ -38,27 +38,27 @@ package io.cdap.cdap.test;
  * Typical usage for write:
  * </p>
  *
- * <pre><code> 
+ * <pre><code>
  *   DataSetManager{@literal <}Table> myTableManager = getDataset("my_table");
  *   myTableManager.get().put(new Put("key1", "column1", "value1"));
  *   myTableManager.flush();
  * </code></pre>
  *
  * @param <T> actual type of the dataset
- *
  */
 public interface DataSetManager<T> {
+
   /**
-   * The returned instance of the dataset will see only changes made before the manager was acquired, or before
-   * the latest call to {@link #flush()}.
+   * The returned instance of the dataset will see only changes made before the manager was
+   * acquired, or before the latest call to {@link #flush()}.
    *
    * @return the dataset instance
    */
   T get();
 
   /**
-   * Makes changes performed using the dataset instance acquired via {@link #get()} visible to all other components.
-   * Can be called multiple times on the same instance of the dataset.
+   * Makes changes performed using the dataset instance acquired via {@link #get()} visible to all
+   * other components. Can be called multiple times on the same instance of the dataset.
    */
   void flush();
 }

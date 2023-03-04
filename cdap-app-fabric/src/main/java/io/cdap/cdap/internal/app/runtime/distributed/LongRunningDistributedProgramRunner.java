@@ -17,7 +17,8 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 /**
- * Just a tagging interface for {@link DistributedProgramRunner} that represents long running program.
+ * Just a tagging interface for {@link DistributedProgramRunner} that represents long running
+ * program.
  */
 public interface LongRunningDistributedProgramRunner {
 

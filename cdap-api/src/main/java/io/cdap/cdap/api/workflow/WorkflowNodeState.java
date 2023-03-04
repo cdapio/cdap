@@ -41,28 +41,32 @@ public class WorkflowNodeState {
    *
    * @param nodeId id of the node inside the Workflow
    * @param nodeStatus status of the node
-   * @param runId run id assigned to the node, null if current node represents custom action or predicate
+   * @param runId run id assigned to the node, null if current node represents custom action or
+   *     predicate
    * @param failureCause cause of failure, null if execution of the node succeeded
    */
   public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, @Nullable String runId,
-                           @Nullable Throwable failureCause) {
+      @Nullable Throwable failureCause) {
     this(nodeId, nodeStatus, new HashSet<>(), runId, failureCause);
   }
 
   /**
    * Create a new instance.
    *
-   * @param nodeId  id of the node inside the Workflow
+   * @param nodeId id of the node inside the Workflow
    * @param nodeStatus status of the node
    * @param fieldLineageOperations the set of field operations emitted from this node
-   * @param runId run id assigned to the node, null if current node represents custom action or predicate
+   * @param runId run id assigned to the node, null if current node represents custom action or
+   *     predicate
    * @param failureCause cause of failure, null if execution of the node succeeded
    */
-  public WorkflowNodeState(String nodeId, NodeStatus nodeStatus, Set<Operation> fieldLineageOperations,
-                           @Nullable String runId, @Nullable Throwable failureCause) {
+  public WorkflowNodeState(String nodeId, NodeStatus nodeStatus,
+      Set<Operation> fieldLineageOperations,
+      @Nullable String runId, @Nullable Throwable failureCause) {
     this.nodeId = nodeId;
     this.nodeStatus = nodeStatus;
-    this.fieldLineageOperations = Collections.unmodifiableSet(new HashSet<>(fieldLineageOperations));
+    this.fieldLineageOperations = Collections.unmodifiableSet(
+        new HashSet<>(fieldLineageOperations));
     this.runId = runId;
     this.failureCause = failureCause;
   }
@@ -82,16 +86,16 @@ public class WorkflowNodeState {
   }
 
   /**
-   * Return the field operations recorded by this node. Field operations will only be available
-   * for the node if it was {@link ProgramStatus#COMPLETED} successfully.
+   * Return the field operations recorded by this node. Field operations will only be available for
+   * the node if it was {@link ProgramStatus#COMPLETED} successfully.
    */
   public Set<Operation> getFieldLineageOperations() {
     return fieldLineageOperations;
   }
 
   /**
-   * Return the run id if node represents programs, such as MapReduce or Spark.
-   * For custom actions and predicates we do not currently have run id, so method returns {@code null}.
+   * Return the run id if node represents programs, such as MapReduce or Spark. For custom actions
+   * and predicates we do not currently have run id, so method returns {@code null}.
    */
   @Nullable
   public String getRunId() {
@@ -99,7 +103,8 @@ public class WorkflowNodeState {
   }
 
   /**
-   * Return the detail message string for failure if node execution failed, otherwise {@code null} is returned.
+   * Return the detail message string for failure if node execution failed, otherwise {@code null}
+   * is returned.
    */
   @Nullable
   public Throwable getFailureCause() {

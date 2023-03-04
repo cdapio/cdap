@@ -27,9 +27,8 @@ import java.util.Map;
 public interface MetricsSystemClient {
 
   /**
-   * Deletes metrics based on the given {@link MetricDeleteQuery}.
-   * Depending on the implementation, this method may return before metrics are actually
-   * deleted.
+   * Deletes metrics based on the given {@link MetricDeleteQuery}. Depending on the implementation,
+   * this method may return before metrics are actually deleted.
    *
    * @param deleteQuery a {@link MetricDeleteQuery} to specific what metrics to delete
    * @throws IOException if failed to issue the delete request
@@ -43,7 +42,8 @@ public interface MetricsSystemClient {
    * @param metrics list of metrics name to query
    * @return a {@link Collection} of {@link MetricTimeSeries} for the query result
    */
-  default Collection<MetricTimeSeries> query(Map<String, String> tags, Collection<String> metrics) throws IOException {
+  default Collection<MetricTimeSeries> query(Map<String, String> tags, Collection<String> metrics)
+      throws IOException {
     return query(tags, metrics, Collections.emptySet());
   }
 
@@ -56,7 +56,7 @@ public interface MetricsSystemClient {
    * @return a {@link Collection} of {@link MetricTimeSeries} for the query result
    */
   default Collection<MetricTimeSeries> query(Map<String, String> tags, Collection<String> metrics,
-                                             Collection<String> groupByTags) throws IOException {
+      Collection<String> groupByTags) throws IOException {
     return query(0, Integer.MAX_VALUE, tags, metrics, groupByTags);
   }
 
@@ -70,7 +70,7 @@ public interface MetricsSystemClient {
    * @return a {@link Collection} of {@link MetricTimeSeries} for the query result
    */
   default Collection<MetricTimeSeries> query(int start, int end,
-                                             Map<String, String> tags, Collection<String> metrics) throws IOException {
+      Map<String, String> tags, Collection<String> metrics) throws IOException {
     return query(start, end, tags, metrics, Collections.emptySet());
   }
 
@@ -85,8 +85,8 @@ public interface MetricsSystemClient {
    * @return a {@link Collection} of {@link MetricTimeSeries} for the query result
    */
   default Collection<MetricTimeSeries> query(int start, int end, Map<String, String> tags,
-                                             Collection<String> metrics,
-                                             Collection<String> groupByTags) throws IOException {
+      Collection<String> metrics,
+      Collection<String> groupByTags) throws IOException {
     return query(start, end, Integer.MAX_VALUE, tags, metrics, groupByTags);
   }
 
@@ -102,7 +102,7 @@ public interface MetricsSystemClient {
    * @return a {@link Collection} of {@link MetricTimeSeries} for the query result
    */
   Collection<MetricTimeSeries> query(int start, int end, int resolution, Map<String, String> tags,
-                                     Collection<String> metrics, Collection<String> groupByTags) throws IOException;
+      Collection<String> metrics, Collection<String> groupByTags) throws IOException;
 
   /**
    * Searches for metrics names matching the given tags.

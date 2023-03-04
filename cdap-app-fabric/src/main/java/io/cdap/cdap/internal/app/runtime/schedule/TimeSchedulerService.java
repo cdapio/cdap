@@ -28,6 +28,7 @@ import java.util.List;
  * TimeSchedulerService interface to define start/stop and scheduling of jobs.
  */
 public interface TimeSchedulerService extends Service {
+
   /**
    * Add a new schedule converted from the given {@link ProgramSchedule}.
    *
@@ -35,84 +36,89 @@ public interface TimeSchedulerService extends Service {
    * @throws AlreadyExistsException if the schedule already exists
    * @throws SchedulerException on unforeseen error
    */
-  void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException;
+  void addProgramSchedule(ProgramSchedule schedule)
+      throws AlreadyExistsException, SchedulerException;
 
   /**
-   * Deletes the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
-   * If the schedule does not exist, this is a no-op.
+   * Deletes the schedule with the same schedule name and {@link ProgramId} as the given {@link
+   * ProgramSchedule}. If the schedule does not exist, this is a no-op.
    *
-   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to delete
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the
+   *     schedule to delete
    * @throws SchedulerException on unforeseen error
    */
   void deleteProgramSchedule(ProgramSchedule schedule) throws SchedulerException;
 
   /**
-   * Suspends the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
-   * Sub-sequent schedules will not trigger for the job. If the schedule is already suspended,
-   * this method will not do anything.
+   * Suspends the schedule with the same schedule name and {@link ProgramId} as the given {@link
+   * ProgramSchedule}. Sub-sequent schedules will not trigger for the job. If the schedule is
+   * already suspended, this method will not do anything.
    *
-   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the
+   *     schedule to suspend
    * @throws NotFoundException if the schedule could not be found
    * @throws SchedulerException on unforeseen error
    */
-  void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+  void suspendProgramSchedule(ProgramSchedule schedule)
+      throws NotFoundException, SchedulerException;
 
   /**
-   * Resume the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
-   * If the schedule is already active, this method will not do anything.
-   * The time schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
-   * from the next possible runtime. For data schedules based on size, the execution will be triggered only once,
-   * even if the data requirement has been met multiple times.
+   * Resume the schedule with the same schedule name and {@link ProgramId} as the given {@link
+   * ProgramSchedule}. If the schedule is already active, this method will not do anything. The time
+   * schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
+   * from the next possible runtime. For data schedules based on size, the execution will be
+   * triggered only once, even if the data requirement has been met multiple times.
    *
-   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the
+   *     schedule to suspend
    * @throws NotFoundException if the schedule could not be found
    * @throws SchedulerException on unforeseen error.
    */
   void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
-   * Get the previous run time for the program. A program may contain one or more schedules
-   * the method returns the previous runtimes for all the schedules. This method only takes
-   + into account schedules based on time. For schedules based on data, an empty list will
-   + be returned.
+   * Get the previous run time for the program. A program may contain one or more schedules the
+   * method returns the previous runtimes for all the schedules. This method only takes + into
+   * account schedules based on time. For schedules based on data, an empty list will + be
+   * returned.
    *
    * @param program program to fetch the previous runtime.
-   * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
-   *         or if the program is not found
+   * @return list of Scheduled runtimes for the program. Empty list if there are no schedules or if
+   *     the program is not found
    * @throws SchedulerException on unforeseen error.
    */
   List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException;
 
   /**
-   * Get the next scheduled run time of the program. A program may contain multiple schedules.
-   * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account schedules based on time. For schedules based on data, an empty list will
-   + be returned.
+   * Get the next scheduled run time of the program. A program may contain multiple schedules. This
+   * method returns the next scheduled runtimes for all the schedules. This method only takes + into
+   * account schedules based on time. For schedules based on data, an empty list will + be
+   * returned.
    *
    * @param program program to fetch the next runtime.
-   * @return list of scheduled runtimes for the program. Empty list if there are no schedules
-   *         or if the program is not found
+   * @return list of scheduled runtimes for the program. Empty list if there are no schedules or if
+   *     the program is not found
    * @throws SchedulerException on unforeseen error.
    */
   List<ScheduledRuntime> nextScheduledRuntime(ProgramId program) throws SchedulerException;
 
   /**
-   * Get all the scheduled run time of the program within the given time range in the future.
-   * A program may contain multiple schedules. This method returns the scheduled runtimes for all the schedules
-   * within the given time range. This method only takes
-   + into account schedules based on time. For schedules based on data, an empty list will
-   + be returned.
+   * Get all the scheduled run time of the program within the given time range in the future. A
+   * program may contain multiple schedules. This method returns the scheduled runtimes for all the
+   * schedules within the given time range. This method only takes + into account schedules based on
+   * time. For schedules based on data, an empty list will + be returned.
    *
    * @param program program to fetch the next runtime.
    * @param programType type of program.
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
-   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
-   *                    will be returned)
-   * @return list of scheduled runtimes for the program. Empty list if there are no schedules
-   *         or if the program is not found
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time
+   *     larger or equal to the start will be returned)
+   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time
+   *     smaller than the end will be returned)
+   * @return list of scheduled runtimes for the program. Empty list if there are no schedules or if
+   *     the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
-                                                 long startTimeSecs, long endTimeSecs) throws SchedulerException;
+  List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program,
+      SchedulableProgramType programType,
+      long startTimeSecs, long endTimeSecs) throws SchedulerException;
 }

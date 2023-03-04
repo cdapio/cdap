@@ -37,13 +37,15 @@ import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 import java.net.URI;
 
 /**
- * A context for a {@link Spark} program to interact with CDAP. This context object will be provided to
- * {@link Spark} program in the {@link ProgramLifecycle#initialize} call.
+ * A context for a {@link Spark} program to interact with CDAP. This context object will be provided
+ * to {@link Spark} program in the {@link ProgramLifecycle#initialize} call.
  */
 @Beta
-public interface SparkClientContext extends SchedulableProgramContext, RuntimeContext, DatasetContext,
-  ClientLocalizationContext, Transactional, ServiceDiscoverer, PluginContext, WorkflowInfoProvider,
-  SecureStore, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter {
+public interface SparkClientContext extends SchedulableProgramContext, RuntimeContext,
+    DatasetContext,
+    ClientLocalizationContext, Transactional, ServiceDiscoverer, PluginContext,
+    WorkflowInfoProvider,
+    SecureStore, MessagingContext, LineageRecorder, MetadataReader, MetadataWriter {
 
   /**
    * @return The specification used to configure this {@link Spark} job instance.
@@ -51,9 +53,9 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
   SparkSpecification getSpecification();
 
   /**
-   * Returns the logical start time of this Spark job. Logical start time is the time when this Spark
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
+   * Returns the logical start time of this Spark job. Logical start time is the time when this
+   * Spark job is supposed to start if this job is started by the scheduler. Otherwise it would be
+   * the current time when the job runs.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
@@ -74,7 +76,8 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
   void setDriverResources(Resources resources);
 
   /**
-   * Sets the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
+   * Sets the resources, such as memory and virtual cores, to use for each executor process for the
+   * Spark program.
    *
    * @param resources Resources that each executor should use
    */
@@ -83,8 +86,8 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
   /**
    * Sets a
    * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkConf">SparkConf</a>
-   * to be used for the Spark execution. Only configurations set inside the
-   * {@link ProgramLifecycle#initialize} call will affect the Spark execution.
+   * to be used for the Spark execution. Only configurations set inside the {@link
+   * ProgramLifecycle#initialize} call will affect the Spark execution.
    *
    * @param <T> the SparkConf type
    */
@@ -95,21 +98,21 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
    *
    * @see #setPySparkScript(String, Iterable)
    */
-  void setPySparkScript(String script, URI...additionalPythonFiles);
+  void setPySparkScript(String script, URI... additionalPythonFiles);
 
   /**
    * Sets a python script to run using PySpark. If this is set, it overrides whatever being set via
-   * the {@link SparkConfigurer#setMainClassName(String)} and the python script is the one always get executed.
+   * the {@link SparkConfigurer#setMainClassName(String)} and the python script is the one always
+   * get executed.
    *
    * @param script the python script to run using PySpark
-   * @param additionalPythonFiles a list of addition python files to be included in the {@code PYTHONPATH}.
-   *                              Each can be local by having {@code file} scheme or remote,
-   *                              for example, by having {@code hdfs} or {@code http} scheme.
-   *                              If the {@link URI} has no scheme, it will be default based on the execution
-   *                              environment, which would be local file in local sandbox, and remote if running
-   *                              in distributed mode. Note that in distributed mode, using {@code file} scheme
-   *                              means the file has to be present on every node on the cluster, since the
-   *                              spark program can be submitted from any node.
+   * @param additionalPythonFiles a list of addition python files to be included in the {@code
+   *     PYTHONPATH}. Each can be local by having {@code file} scheme or remote, for example, by
+   *     having {@code hdfs} or {@code http} scheme. If the {@link URI} has no scheme, it will be
+   *     default based on the execution environment, which would be local file in local sandbox, and
+   *     remote if running in distributed mode. Note that in distributed mode, using {@code file}
+   *     scheme means the file has to be present on every node on the cluster, since the spark
+   *     program can be submitted from any node.
    */
   void setPySparkScript(String script, Iterable<URI> additionalPythonFiles);
 
@@ -118,23 +121,22 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
    *
    * @see #setPySparkScript(URI, Iterable)
    */
-  void setPySparkScript(URI scriptLocation, URI...additionalPythonFiles);
+  void setPySparkScript(URI scriptLocation, URI... additionalPythonFiles);
 
   /**
-   * Sets a location that points to a python script to run using PySpark.
-   * If this is set, it overrides whatever being set via the {@link SparkConfigurer#setMainClassName(String)}
-   * and the python script is the one always get executed.
+   * Sets a location that points to a python script to run using PySpark. If this is set, it
+   * overrides whatever being set via the {@link SparkConfigurer#setMainClassName(String)} and the
+   * python script is the one always get executed.
    *
-   * @param scriptLocation location to the python script. It can be local by having {@code file} scheme or remote,
-   *                       for example, by having {@code hdfs} or {@code http} scheme.
-   *                       If the {@link URI} has no scheme, it will be default based on the execution
-   *                       environment, which would be local file in local sandbox, and remote if running
-   *                       in distributed mode. Note that in distributed mode, using {@code file} scheme
-   *                       means the file has to be present on every node on the cluster, since the
-   *                       spark program can be submitted from any node.
-   * @param additionalPythonFiles a list of addition python files to be included in the {@code PYTHONPATH}.
-   *                              Each location can be local or remote,
-   *                              with the same definition as the {@code scriptLocation} parameter.
+   * @param scriptLocation location to the python script. It can be local by having {@code file}
+   *     scheme or remote, for example, by having {@code hdfs} or {@code http} scheme. If the {@link
+   *     URI} has no scheme, it will be default based on the execution environment, which would be
+   *     local file in local sandbox, and remote if running in distributed mode. Note that in
+   *     distributed mode, using {@code file} scheme means the file has to be present on every node
+   *     on the cluster, since the spark program can be submitted from any node.
+   * @param additionalPythonFiles a list of addition python files to be included in the {@code
+   *     PYTHONPATH}. Each location can be local or remote, with the same definition as the {@code
+   *     scriptLocation} parameter.
    */
   void setPySparkScript(URI scriptLocation, Iterable<URI> additionalPythonFiles);
 

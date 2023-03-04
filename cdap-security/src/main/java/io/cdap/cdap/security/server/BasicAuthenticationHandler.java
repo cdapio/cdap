@@ -33,14 +33,17 @@ import org.eclipse.jetty.security.authentication.BasicAuthenticator;
  * Handler for basic authentication of users.
  */
 public class BasicAuthenticationHandler extends AbstractAuthenticationHandler {
+
   private IdentityService identityService;
 
   @Override
   protected LoginService getHandlerLoginService() {
     String realmFile = handlerProps.get(Constants.Security.BASIC_REALM_FILE);
     Path realmFilePath = Paths.get(realmFile);
-    Preconditions.checkArgument(Files.exists(realmFilePath), "File does not exist: %s", realmFilePath);
-    Preconditions.checkArgument(Files.isReadable(realmFilePath), "File is not readable: %s", realmFilePath);
+    Preconditions.checkArgument(Files.exists(realmFilePath), "File does not exist: %s",
+        realmFilePath);
+    Preconditions.checkArgument(Files.isReadable(realmFilePath), "File is not readable: %s",
+        realmFilePath);
     HashLoginService loginService = new HashLoginService();
     loginService.setConfig(realmFile);
     loginService.setIdentityService(getHandlerIdentityService());

@@ -26,7 +26,8 @@ import org.apache.twill.api.logging.LogEntry;
 import org.slf4j.Marker;
 
 /**
- * Adapter from {@link org.apache.twill.api.logging.LogEntry} to {@link ch.qos.logback.classic.spi.ILoggingEvent}.
+ * Adapter from {@link org.apache.twill.api.logging.LogEntry} to {@link
+ * ch.qos.logback.classic.spi.ILoggingEvent}.
  */
 final class TwillLogEntryAdapter implements ILoggingEvent {
 
@@ -44,13 +45,20 @@ final class TwillLogEntryAdapter implements ILoggingEvent {
   @Override
   public Level getLevel() {
     switch (entry.getLogLevel()) {
-      case FATAL: return Level.ERROR;
-      case ERROR: return Level.ERROR;
-      case WARN: return Level.WARN;
-      case INFO: return Level.INFO;
-      case DEBUG: return Level.DEBUG;
-      case TRACE: return Level.TRACE;
-      default: return Level.INFO;
+      case FATAL:
+        return Level.ERROR;
+      case ERROR:
+        return Level.ERROR;
+      case WARN:
+        return Level.WARN;
+      case INFO:
+        return Level.INFO;
+      case DEBUG:
+        return Level.DEBUG;
+      case TRACE:
+        return Level.TRACE;
+      default:
+        return Level.INFO;
     }
   }
 
@@ -94,8 +102,8 @@ final class TwillLogEntryAdapter implements ILoggingEvent {
     if (stackTraceElements.length == 0) {
       stackTraceElements = new StackTraceElement[1];
       StackTraceElement stackTraceElement =
-        new StackTraceElement(entry.getSourceClassName(), entry.getSourceMethodName(),
-                              entry.getFileName(), entry.getLineNumber());
+          new StackTraceElement(entry.getSourceClassName(), entry.getSourceMethodName(),
+              entry.getFileName(), entry.getLineNumber());
       stackTraceElements[0] = stackTraceElement;
 
     }

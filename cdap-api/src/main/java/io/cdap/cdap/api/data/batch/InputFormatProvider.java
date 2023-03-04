@@ -29,7 +29,8 @@ public interface InputFormatProvider {
   String getInputFormatClassName();
 
   /**
-   * @return the configuration properties that the input format expects to find in the Hadoop configuration.
+   * @return the configuration properties that the input format expects to find in the Hadoop
+   *     configuration.
    */
   Map<String, String> getInputFormatConfiguration();
 

@@ -36,13 +36,16 @@ import java.util.Map;
  * will be removed during serialization since it is not persisted in storage and will always be the
  * default value "-SNAPSHOT".
  */
-public class MetadataEntityCodec implements JsonSerializer<MetadataEntity>, JsonDeserializer<MetadataEntity> {
+public class MetadataEntityCodec implements JsonSerializer<MetadataEntity>,
+    JsonDeserializer<MetadataEntity> {
 
-  private static final Type MAP_DETAILS_TYPE = new TypeToken<LinkedHashMap<String, String>>() { }.getType();
+  private static final Type MAP_DETAILS_TYPE = new TypeToken<LinkedHashMap<String, String>>() {
+  }.getType();
 
   @Override
-  public MetadataEntity deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public MetadataEntity deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     if (!typeOfT.equals(MetadataEntity.class)) {
       return context.deserialize(json, typeOfT);
     }
@@ -61,7 +64,8 @@ public class MetadataEntityCodec implements JsonSerializer<MetadataEntity>, Json
       }
       index++;
       // add back default version that's removed during serialization
-      if (index == 2 && MetadataUtil.isVersionedEntityType(type) && !details.containsKey(MetadataEntity.VERSION)) {
+      if (index == 2 && MetadataUtil.isVersionedEntityType(type) && !details.containsKey(
+          MetadataEntity.VERSION)) {
         builder.append(MetadataEntity.VERSION, ApplicationId.DEFAULT_VERSION);
       }
     }
@@ -69,12 +73,14 @@ public class MetadataEntityCodec implements JsonSerializer<MetadataEntity>, Json
   }
 
   @Override
-  public JsonElement serialize(MetadataEntity src, Type typeOfSec, JsonSerializationContext context) {
+  public JsonElement serialize(MetadataEntity src, Type typeOfSec,
+      JsonSerializationContext context) {
     JsonObject entityObject = new JsonObject();
     JsonObject details = new JsonObject();
     for (KeyValue keyValue : src) {
       // skip version if serializing a versionless entity
-      if (!(keyValue.getKey().equals(MetadataEntity.VERSION) && MetadataUtil.isVersionedEntityType(src.getType()))) {
+      if (!(keyValue.getKey().equals(MetadataEntity.VERSION) && MetadataUtil.isVersionedEntityType(
+          src.getType()))) {
         details.add(keyValue.getKey(), context.serialize(keyValue.getValue()));
       }
     }

@@ -22,6 +22,7 @@ import java.util.List;
  * Represents a list of information about the reports owned by a user in an HTTP response.
  */
 public class ReportList {
+
   private final int offset;
   private final int limit;
   private final int total;
@@ -35,8 +36,8 @@ public class ReportList {
   }
 
   /**
-   * @return the offset in the whole list of reports where the report information's
-   *         start to be added to this {@link ReportList}
+   * @return the offset in the whole list of reports where the report information's start to be
+   *     added to this {@link ReportList}
    */
   public int getOffset() {
     return offset;

@@ -17,9 +17,10 @@
 package io.cdap.cdap.common.startup;
 
 /**
- * Checks something at start up, throwing an exception if the check failed. Run by a {@link CheckRunner}.
- * Checks are instantiated by the {@link CheckRunner} using an {@link com.google.inject.Injector} to give them access
- * to objects they may need, such as a LocationFactory or CConfiguration.
+ * Checks something at start up, throwing an exception if the check failed. Run by a {@link
+ * CheckRunner}. Checks are instantiated by the {@link CheckRunner} using an {@link
+ * com.google.inject.Injector} to give them access to objects they may need, such as a
+ * LocationFactory or CConfiguration.
  */
 public abstract class Check {
 

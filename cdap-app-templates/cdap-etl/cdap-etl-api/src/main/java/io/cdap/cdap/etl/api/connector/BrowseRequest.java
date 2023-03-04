@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Request used for browse operations
  */
 public class BrowseRequest {
+
   private final String path;
   private final Integer limit;
 
@@ -37,8 +38,8 @@ public class BrowseRequest {
   }
 
   /**
-   * Return the max number of results to retrieve, if null or less than or equal to 0,
-   * the connector will fetch all the results
+   * Return the max number of results to retrieve, if null or less than or equal to 0, the connector
+   * will fetch all the results
    */
   @Nullable
   public Integer getLimit() {
@@ -56,8 +57,8 @@ public class BrowseRequest {
     }
 
     BrowseRequest that = (BrowseRequest) o;
-    return Objects.equals(path, that.path) &&
-             Objects.equals(limit, that.limit);
+    return Objects.equals(path, that.path)
+        && Objects.equals(limit, that.limit);
   }
 
   @Override
@@ -76,6 +77,7 @@ public class BrowseRequest {
    * Builder for {@link BrowseRequest}
    */
   public static class Builder {
+
     private String path;
     private Integer limit;
 

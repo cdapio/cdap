@@ -22,6 +22,7 @@ import io.cdap.cdap.api.schedule.TriggerInfo;
  * A simple trigger information that only contains the type of the trigger.
  */
 public class SimpleTriggerInfo implements TriggerInfo {
+
   private final Type type;
 
   public SimpleTriggerInfo(Type type) {

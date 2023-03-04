@@ -31,11 +31,13 @@ import org.apache.tephra.TransactionFailureException;
 /**
  * Represents the context available to the action plugin during runtime.
  */
-public interface ActionContext extends StageContext, Transactional, SecureStore, SecureStoreManager, LineageRecorder {
+public interface ActionContext extends StageContext, Transactional, SecureStore, SecureStoreManager,
+    LineageRecorder {
 
   /**
-   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so plugins should be
-   * careful to prefix any arguments that should not be clobbered by other pipeline stages.
+   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so
+   * plugins should be careful to prefix any arguments that should not be clobbered by other
+   * pipeline stages.
    *
    * @return settable pipeline arguments
    */
@@ -43,14 +45,14 @@ public interface ActionContext extends StageContext, Transactional, SecureStore,
   SettableArguments getArguments();
 
   /**
-   * This method is based on the assumption that the plugin has an input schema or output schema and the DAG of the
-   * operations are known. Actions do not have input and output schema, and the DAG is unknown to us. Therefore,
-   * this method cannot be used to emit field lineage information.
+   * This method is based on the assumption that the plugin has an input schema or output schema and
+   * the DAG of the operations are known. Actions do not have input and output schema, and the DAG
+   * is unknown to us. Therefore, this method cannot be used to emit field lineage information.
    *
    * @param fieldOperations the operations to be recorded
-   * @deprecated use {@link #record(Collection)} to emit field operations for actions, that method requires the input
-   *             field to contain the previous originated operation name. Using that DAG can be computed so the field
-   *             linage can be computed.
+   * @deprecated use {@link #record(Collection)} to emit field operations for actions, that method
+   *     requires the input field to contain the previous originated operation name. Using that DAG
+   *     can be computed so the field linage can be computed.
    */
   @Override
   @Deprecated
@@ -63,11 +65,13 @@ public interface ActionContext extends StageContext, Transactional, SecureStore,
    *
    * @param referenceName reference name used for source
    * @param accessType the access type of the lineage
-   * @throws DatasetManagementException thrown if there was an error in creating reference dataset
-   * @throws TransactionFailureException thrown if there was an error while fetching the dataset to register usage
+   * @throws DatasetManagementException thrown if there was an error in creating reference
+   *     dataset
+   * @throws TransactionFailureException thrown if there was an error while fetching the dataset
+   *     to register usage
    */
- default void registerLineage(String referenceName,
-                              AccessType accessType) throws DatasetManagementException, TransactionFailureException {
-   // no-op
- }
+  default void registerLineage(String referenceName,
+      AccessType accessType) throws DatasetManagementException, TransactionFailureException {
+    // no-op
+  }
 }

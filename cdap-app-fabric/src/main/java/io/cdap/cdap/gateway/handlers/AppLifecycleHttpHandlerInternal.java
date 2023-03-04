@@ -64,7 +64,7 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
 
   @Inject
   AppLifecycleHttpHandlerInternal(NamespaceQueryAdmin namespaceQueryAdmin,
-                                  ApplicationLifecycleService applicationLifecycleService) {
+      ApplicationLifecycleService applicationLifecycleService) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.applicationLifecycleService = applicationLifecycleService;
   }
@@ -72,25 +72,28 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   /**
    * Get a list of {@link ApplicationDetail} for all applications in the given namespace
    *
-   * @param request   {@link HttpRequest}
+   * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}
    * @param namespace the namespace to get all application details
-   * @param pageToken the token identifier for the current page requested in a paginated request
-   * @param pageSize  the number of application details returned in a paginated request
-   * @param orderBy the sorting order in which results are returned, ASC for ascending, DESC for descending
-   * @param nameFilter the filters that must be satisfied  by ApplicationDetail in order to be returned
+   * @param pageToken the token identifier for the current page requested in a paginated
+   *     request
+   * @param pageSize the number of application details returned in a paginated request
+   * @param orderBy the sorting order in which results are returned, ASC for ascending, DESC for
+   *     descending
+   * @param nameFilter the filters that must be satisfied  by ApplicationDetail in order to be
+   *     returned
    * @throws Exception if namespace doesn't exists or failed to get all application details
-   * TODO: CDAP-18224 - the below code is common with AppLifeCycleHttpHandler
-   * TODO: both these classes will be refactored in a separate PR
+   *         TODO: CDAP-18224 - the below code is common with AppLifeCycleHttpHandler
+   *         TODO: both these classes will be refactored in a separate PR
    */
   @GET
   @Path("/apps")
   public void getAllAppDetails(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespace,
-                               @QueryParam("pageToken") String pageToken,
-                               @QueryParam("pageSize") Integer pageSize,
-                               @QueryParam("orderBy") SortOrder orderBy,
-                               @QueryParam("nameFilter") String nameFilter) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @QueryParam("pageToken") String pageToken,
+      @QueryParam("pageSize") Integer pageSize,
+      @QueryParam("orderBy") SortOrder orderBy,
+      @QueryParam("nameFilter") String nameFilter) throws Exception {
 
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
@@ -98,30 +101,33 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
     }
 
     if (Optional.ofNullable(pageSize).orElse(0) != 0) {
-      JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY, jsonListResponder -> {
-        AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
-        ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, pageSize,
-            orderBy, nameFilter);
-        boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest, appDetail -> {
-          ApplicationRecord record = new ApplicationRecord(appDetail);
-          jsonListResponder.send(appDetail);
-          lastRecord.set(record);
-        });
-        ApplicationRecord record = lastRecord.get();
-        return !pageLimitReached  || record == null ? null :
-            record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
-      });
+      JsonPaginatedListResponder.respond(GSON, responder, APP_LIST_PAGINATED_KEY,
+          jsonListResponder -> {
+            AtomicReference<ApplicationRecord> lastRecord = new AtomicReference<>(null);
+            ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, pageSize,
+                orderBy, nameFilter);
+            boolean pageLimitReached = applicationLifecycleService.scanApplications(scanRequest,
+                appDetail -> {
+                  ApplicationRecord record = new ApplicationRecord(appDetail);
+                  jsonListResponder.send(appDetail);
+                  lastRecord.set(record);
+                });
+            ApplicationRecord record = lastRecord.get();
+            return !pageLimitReached || record == null ? null :
+                record.getName() + EntityId.IDSTRING_PART_SEPARATOR + record.getAppVersion();
+          });
     } else {
       ScanApplicationsRequest scanRequest = getScanRequest(namespace, pageToken, null,
-         orderBy, nameFilter);
+          orderBy, nameFilter);
       JsonWholeListResponder.respond(GSON, responder,
-          jsonListResponder ->  applicationLifecycleService.scanApplications(scanRequest, jsonListResponder::send)
+          jsonListResponder -> applicationLifecycleService.scanApplications(scanRequest,
+              jsonListResponder::send)
       );
     }
   }
 
   private ScanApplicationsRequest getScanRequest(String namespaceId, String pageToken,
-                                                 Integer pageSize, SortOrder orderBy, String nameFilter) {
+      Integer pageSize, SortOrder orderBy, String nameFilter) {
     ScanApplicationsRequest.Builder builder = ScanApplicationsRequest.builder();
     builder.setNamespaceId(new NamespaceId(namespaceId));
     if (pageSize != null) {
@@ -145,49 +151,51 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   /**
    * Get {@link ApplicationDetail} for a given application
    *
-   * @param request     {@link HttpRequest}
-   * @param responder   {@link HttpResponse}
-   * @param namespace   the namespace to get all application details   *
+   * @param request {@link HttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace to get all application details   *
    * @param application the id of the application to get its {@link ApplicationDetail}
-   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link
+   *     ApplicationDetail}
    */
   @GET
   @Path("/app/{app-id}")
   public void getAppDetail(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespace,
-                           @PathParam("app-id") String application) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("app-id") String application) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getLatestAppDetail(
-                         new ApplicationReference(namespaceId, application))));
+        GSON.toJson(applicationLifecycleService.getLatestAppDetail(
+            new ApplicationReference(namespaceId, application))));
   }
 
   /**
    * Get {@link ApplicationDetail} for a given application
    *
-   * @param request     {@link HttpRequest}
-   * @param responder   {@link HttpResponse}
-   * @param namespace   the namespace to get all application details
+   * @param request {@link HttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace to get all application details
    * @param application the id of the application to get its {@link ApplicationDetail}
-   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link
+   *     ApplicationDetail}
    */
   @GET
   @Path("/app/{app-id}/versions/{version-id}")
   public void getAppDetailForVersion(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") final String namespace,
-                                     @PathParam("app-id") final String application,
-                                     @PathParam("version-id") final String version) throws Exception {
+      @PathParam("namespace-id") final String namespace,
+      @PathParam("app-id") final String application,
+      @PathParam("version-id") final String version) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
     ApplicationId appId = new ApplicationId(namespace, application, version);
     ApplicationDetail appDetail = ApplicationId.DEFAULT_VERSION.equals(version)
-      ? applicationLifecycleService.getLatestAppDetail(appId.getAppReference())
-      : applicationLifecycleService.getAppDetail(appId);
+        ? applicationLifecycleService.getLatestAppDetail(appId.getAppReference())
+        : applicationLifecycleService.getAppDetail(appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appDetail));
   }
 }

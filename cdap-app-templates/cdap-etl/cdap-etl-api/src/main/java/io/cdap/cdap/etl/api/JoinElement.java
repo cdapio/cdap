@@ -20,6 +20,7 @@ import java.io.Serializable;
 
 /**
  * Join element to hold join record per stage
+ *
  * @param <INPUT_RECORD> type of input record from each stage
  */
 public final class JoinElement<INPUT_RECORD> implements Serializable {
@@ -36,6 +37,7 @@ public final class JoinElement<INPUT_RECORD> implements Serializable {
 
   /**
    * Returns stage name to which input record belongs to
+   *
    * @return stage name for input record
    */
   public String getStageName() {
@@ -44,6 +46,7 @@ public final class JoinElement<INPUT_RECORD> implements Serializable {
 
   /**
    * Returns input record which is part of join result
+   *
    * @return input record to be merged
    */
   public INPUT_RECORD getInputRecord() {

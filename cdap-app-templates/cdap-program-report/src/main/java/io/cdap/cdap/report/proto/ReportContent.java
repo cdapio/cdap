@@ -22,6 +22,7 @@ import java.util.List;
  * Represents report content details in an HTTP response.
  */
 public class ReportContent {
+
   private final long offset;
   private final int limit;
   private final long total;
@@ -35,7 +36,8 @@ public class ReportContent {
   }
 
   /**
-   * @return the offset in the whole report from which the report records are added to this {@link ReportContent}
+   * @return the offset in the whole report from which the report records are added to this {@link
+   *     ReportContent}
    */
   public long getOffset() {
     return offset;
@@ -63,11 +65,12 @@ public class ReportContent {
   }
 
   public String toJson() {
-    return "{" +
-      "\"offset\":" + offset +
-      ", \"limit\":" + limit +
-      ", \"total\":" + total +
-      ", \"details\":" + details + // directly return details as JSON objects without stringifying them
-      '}';
+    return "{"
+        + "\"offset\":" + offset
+        + ", \"limit\":" + limit
+        + ", \"total\":" + total
+        + ", \"details\":" + details
+        + // directly return details as JSON objects without stringifying them
+        '}';
   }
 }

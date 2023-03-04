@@ -22,6 +22,7 @@ import io.cdap.cdap.api.schedule.TriggerInfo;
  * Base class for the trigger information to be passed to the triggered program.
  */
 public abstract class AbstractTriggerInfo implements TriggerInfo {
+
   private final Type type;
 
   public AbstractTriggerInfo(Type type) {

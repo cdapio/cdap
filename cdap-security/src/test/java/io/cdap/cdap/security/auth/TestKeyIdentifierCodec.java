@@ -84,11 +84,12 @@ public class TestKeyIdentifierCodec {
     SecretKeySpec keySpec = new SecretKeySpec(secretKeyBytes, algorithm);
     KeyIdentifier expectedKeyIdentifier = new KeyIdentifier(keySpec, keyId, expiration);
 
-    String jsonKeyIdentifier = String.format("{\"encodedKey\": \"%s\", \"algorithm\": \"%s\", " +
-                                               "\"keyId\": %d, \"expiration\": %d}",
-                                             Base64.getEncoder().encodeToString(secretKeyBytes), algorithm, keyId,
-                                             expiration);
-    KeyIdentifier decodedKeyIdentifier = keyIdentifierCodec.decode(jsonKeyIdentifier.getBytes(StandardCharsets.UTF_8));
+    String jsonKeyIdentifier = String.format("{\"encodedKey\": \"%s\", \"algorithm\": \"%s\", "
+            + "\"keyId\": %d, \"expiration\": %d}",
+        Base64.getEncoder().encodeToString(secretKeyBytes), algorithm, keyId,
+        expiration);
+    KeyIdentifier decodedKeyIdentifier = keyIdentifierCodec.decode(
+        jsonKeyIdentifier.getBytes(StandardCharsets.UTF_8));
     assertEquals(expectedKeyIdentifier, decodedKeyIdentifier);
   }
 

@@ -24,33 +24,34 @@ import io.cdap.cdap.etl.api.MultiInputPipelineConfigurer;
 import io.cdap.cdap.etl.api.StageLifecycle;
 
 /**
- * A {@link Joiner} used for batch programs.
- * As it is used in batch programs, a BatchJoiner must be parameterized
- * with supported join key and input record classes. Join keys and input records can be a
- * byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord.
- * If the join key is not one of those types and is being used in mapreduce,
- * it must implement Hadoop's org.apache.hadoop.io.WritableComparable interface.
- * If the input record is not one of those types and is being used in mapreduce,
- * it must implement Hadoop's org.apache.hadoop.io.Writable interface.
- * If the joiner is being used in spark, both the join key and input record must implement the
- * {@link java.io.Serializable} interface.
+ * A {@link Joiner} used for batch programs. As it is used in batch programs, a BatchJoiner must be
+ * parameterized with supported join key and input record classes. Join keys and input records can
+ * be a byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord. If the join key
+ * is not one of those types and is being used in mapreduce, it must implement Hadoop's
+ * org.apache.hadoop.io.WritableComparable interface. If the input record is not one of those types
+ * and is being used in mapreduce, it must implement Hadoop's org.apache.hadoop.io.Writable
+ * interface. If the joiner is being used in spark, both the join key and input record must
+ * implement the {@link java.io.Serializable} interface.
  *
  * @param <JOIN_KEY> type of join key. Must be a supported type
  * @param <INPUT_RECORD> type of input record. Must be a supported type
  * @param <OUT> type of output object
  */
 @Beta
-public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends MultiInputBatchConfigurable<BatchJoinerContext>
-  implements Joiner<JOIN_KEY, INPUT_RECORD, OUT>, MultiInputPipelineConfigurable,
-  StageLifecycle<BatchJoinerRuntimeContext> {
+public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends
+    MultiInputBatchConfigurable<BatchJoinerContext>
+    implements Joiner<JOIN_KEY, INPUT_RECORD, OUT>, MultiInputPipelineConfigurable,
+    StageLifecycle<BatchJoinerRuntimeContext> {
+
   public static final String PLUGIN_TYPE = "batchjoiner";
 
   /**
-   * Configure the pipeline. This is run once when the pipeline is being published.
-   * This is where you perform any static logic, like creating required datasets, performing schema validation,
+   * Configure the pipeline. This is run once when the pipeline is being published. This is where
+   * you perform any static logic, like creating required datasets, performing schema validation,
    * setting output schema, and things of that nature.
    *
-   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and
+   *     streams
    */
   @Override
   public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
@@ -58,12 +59,11 @@ public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends MultiInpu
   }
 
   /**
-   * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up the run.
-   * This is where you would set things like the number of partitions to use when joining, and setting the
-   * join key class if they are not known at compile time.
+   * Prepare a pipeline run. This is run every time before a pipeline runs in order to help set up
+   * the run. This is where you would set things like the number of partitions to use when joining,
+   * and setting the join key class if they are not known at compile time.
    *
    * @param context batch execution context
-   * @throws Exception
    */
   @Override
   public void prepareRun(BatchJoinerContext context) throws Exception {
@@ -71,10 +71,12 @@ public abstract class BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends MultiInpu
   }
 
   /**
-   * Initialize the Batch Joiner. Executed inside the Batch Run. This method is guaranteed to be invoked
-   * before any calls to {@link #joinOn(String, Object)} and {@link #merge(Object, Iterable)} are made.
+   * Initialize the Batch Joiner. Executed inside the Batch Run. This method is guaranteed to be
+   * invoked before any calls to {@link #joinOn(String, Object)} and {@link #merge(Object,
+   * Iterable)} are made.
    *
-   * @param context runtime context for joiner which exposes input schemas and output schema for joiner
+   * @param context runtime context for joiner which exposes input schemas and output schema for
+   *     joiner
    * @throws Exception if there is any error during initialization
    */
   @Override

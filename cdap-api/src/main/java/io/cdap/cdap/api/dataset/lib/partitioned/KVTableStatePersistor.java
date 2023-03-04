@@ -21,7 +21,8 @@ import io.cdap.cdap.api.dataset.lib.DatasetStatePersistor;
 import io.cdap.cdap.api.dataset.lib.KeyValueTable;
 
 /**
- * An implementation of {@link DatasetStatePersistor} that uses a row of a {@link KeyValueTable} for persistence.
+ * An implementation of {@link DatasetStatePersistor} that uses a row of a {@link KeyValueTable} for
+ * persistence.
  */
 public class KVTableStatePersistor implements DatasetStatePersistor {
 

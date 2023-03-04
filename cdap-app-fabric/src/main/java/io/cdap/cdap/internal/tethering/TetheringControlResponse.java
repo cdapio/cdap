@@ -22,13 +22,15 @@ import javax.annotation.Nullable;
  * Heartbeat response sent to tether agent.
  */
 public class TetheringControlResponse {
+
   // id of the last control message sent by the server.
   @Nullable
   private final String lastMessageId;
   // control message sent by server.
   private final TetheringControlMessage controlMessage;
 
-  public TetheringControlResponse(@Nullable String lastMessageId, TetheringControlMessage controlMessage) {
+  public TetheringControlResponse(@Nullable String lastMessageId,
+      TetheringControlMessage controlMessage) {
     this.lastMessageId = lastMessageId;
     this.controlMessage = controlMessage;
   }

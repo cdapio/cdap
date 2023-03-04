@@ -36,12 +36,14 @@ import java.util.Set;
  * A {@link AbstractSystemMetadataWriter} for a {@link ProgramId program}.
  */
 public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
+
   private final ProgramId programId;
   private final ProgramSpecification programSpec;
   private final String creationTime;
 
-  public ProgramSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ProgramId programId,
-                                     ProgramSpecification programSpec, String creationTime) {
+  public ProgramSystemMetadataWriter(MetadataServiceClient metadataServiceClient,
+      ProgramId programId,
+      ProgramSpecification programSpec, String creationTime) {
     super(metadataServiceClient, programId);
     this.programId = programId;
     this.programSpec = programSpec;
@@ -64,10 +66,10 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   public Set<String> getSystemTagsToAdd() {
     return ImmutableSet.<String>builder()
-      .add(programId.getType().getPrettyName())
-      .add(getMode())
-      .addAll(getWorkflowNodes())
-      .build();
+        .add(programId.getType().getPrettyName())
+        .add(getMode())
+        .addAll(getWorkflowNodes())
+        .build();
   }
 
   private String getMode() {
@@ -90,7 +92,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
       return ImmutableSet.of();
     }
     Preconditions.checkArgument(programSpec instanceof WorkflowSpecification,
-                                "Expected programSpec %s to be of type WorkflowSpecification", programSpec);
+        "Expected programSpec %s to be of type WorkflowSpecification", programSpec);
     WorkflowSpecification workflowSpec = (WorkflowSpecification) this.programSpec;
     Set<String> workflowNodeNames = new HashSet<>();
     for (Map.Entry<String, WorkflowNode> entry : workflowSpec.getNodeIdMap().entrySet()) {

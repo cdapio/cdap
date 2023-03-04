@@ -35,7 +35,8 @@ public class LogBufferCheckpointManager extends AbstractCheckpointManager<LogBuf
   }
 
   @Override
-  protected byte[] serializeCheckpoint(Checkpoint<LogBufferFileOffset> checkpoint) throws IOException {
+  protected byte[] serializeCheckpoint(Checkpoint<LogBufferFileOffset> checkpoint)
+      throws IOException {
     LogBufferFileOffset offset = checkpoint.getOffset();
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bos)) {
@@ -47,7 +48,8 @@ public class LogBufferCheckpointManager extends AbstractCheckpointManager<LogBuf
   }
 
   @Override
-  protected Checkpoint<LogBufferFileOffset> deserializeCheckpoint(byte[] checkpoint) throws IOException {
+  protected Checkpoint<LogBufferFileOffset> deserializeCheckpoint(byte[] checkpoint)
+      throws IOException {
     if (checkpoint == null) {
       return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
     }

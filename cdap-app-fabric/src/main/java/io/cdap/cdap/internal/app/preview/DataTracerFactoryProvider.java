@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * A class which provides {@link DataTracerFactory} based on the {@link ApplicationId}
  */
 public final class DataTracerFactoryProvider {
+
   private static final DataTracerFactory DEFAULT_FACTORY = new NoopDataTracerFactory();
   private static final Map<ApplicationId, DataTracerFactory> FACTORY_MAP = new ConcurrentHashMap<>();
 
@@ -33,7 +34,8 @@ public final class DataTracerFactoryProvider {
   /**
    * Set the {@link DataTracerFactory} for a {@link ApplicationId} in a map.
    */
-  public static void setDataTracerFactory(ApplicationId applicationId, DataTracerFactory dataTracerFactory) {
+  public static void setDataTracerFactory(ApplicationId applicationId,
+      DataTracerFactory dataTracerFactory) {
     FACTORY_MAP.put(applicationId, dataTracerFactory);
   }
 

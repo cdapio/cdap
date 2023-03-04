@@ -24,6 +24,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
  * Key used to store metadata history.
  */
 class MetadataHistoryKey {
+
   private static final byte[] ROW_PREFIX = {'h'};
 
   static MDSKey getMDSKey(MetadataEntity targetId, long time) {

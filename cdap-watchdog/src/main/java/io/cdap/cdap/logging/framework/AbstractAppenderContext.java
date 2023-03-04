@@ -33,8 +33,8 @@ public abstract class AbstractAppenderContext extends AppenderContext {
   private final MetricsContext metricsContext;
 
   protected AbstractAppenderContext(TransactionRunner transactionRunner,
-                                    LocationFactory locationFactory,
-                                    MetricsCollectionService metricsCollectionService) {
+      LocationFactory locationFactory,
+      MetricsCollectionService metricsCollectionService) {
     this.locationFactory = locationFactory;
     this.transactionRunner = transactionRunner;
     this.metricsContext = metricsCollectionService.getContext(Collections.emptyMap());

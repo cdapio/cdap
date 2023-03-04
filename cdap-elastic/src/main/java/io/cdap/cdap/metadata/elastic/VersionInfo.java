@@ -25,16 +25,16 @@ import io.cdap.cdap.common.utils.ProjectInfo;
  * This information is stored as metadata in the index mappings, to be abe to decide whether the
  * index needs to be migrated after an upgrade. Strictly speaking, the {@link #METADATA_VERSION}
  * should be sufficient to make this determination, but we record a checksum of the index mappings
- * as an additional safeguard, as it will allow detecting a change that neglected to bump the
- * {@link #METADATA_VERSION}.
+ * as an additional safeguard, as it will allow detecting a change that neglected to bump the {@link
+ * #METADATA_VERSION}.
  */
 public class VersionInfo {
 
   /**
-   * The current version of the Elasticsearch metadata provider. This must be changed any time
-   * the indexing schema, index settings, or index mappings are changed in a way that requires
-   * an index migration (reindexing of all metadata). This is information is stored in the
-   * index metadata, and at upgrade time, it is used to determine whether migration is needed.
+   * The current version of the Elasticsearch metadata provider. This must be changed any time the
+   * indexing schema, index settings, or index mappings are changed in a way that requires an index
+   * migration (reindexing of all metadata). This is information is stored in the index metadata,
+   * and at upgrade time, it is used to determine whether migration is needed.
    */
   public static final int METADATA_VERSION = 1;
 

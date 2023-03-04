@@ -24,7 +24,8 @@ import io.cdap.cdap.api.data.schema.Schema;
 public interface SQLDatasetDescription {
 
   /**
-   * Get the name of this dataset. This can be used to link datasets in the SQL engine with Datasets stored in Spark.
+   * Get the name of this dataset. This can be used to link datasets in the SQL engine with Datasets
+   * stored in Spark.
    */
   String getDatasetName();
 

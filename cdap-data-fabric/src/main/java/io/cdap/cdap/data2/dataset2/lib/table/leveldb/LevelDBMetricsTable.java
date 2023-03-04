@@ -41,15 +41,17 @@ public class LevelDBMetricsTable implements MetricsTable {
   private final LevelDBTableCore core;
 
   public LevelDBMetricsTable(String namespace, String tableName,
-                             LevelDBTableService service, CConfiguration cConf) {
-    this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, namespace, tableName), service);
+      LevelDBTableService service, CConfiguration cConf) {
+    this.core = new LevelDBTableCore(PrefixedNamespaces.namespace(cConf, namespace, tableName),
+        service);
     this.tableName = tableName;
   }
 
   @Override
   public byte[] get(byte[] row, byte[] column) {
     try {
-      NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][]{column}, null, null, -1, null);
+      NavigableMap<byte[], byte[]> result = core.getRow(row, new byte[][]{column}, null, null, -1,
+          null);
       if (!result.isEmpty()) {
         return result.get(column);
       }
@@ -62,7 +64,7 @@ public class LevelDBMetricsTable implements MetricsTable {
   @Override
   public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
     SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> convertedUpdates =
-      Maps.transformValues(updates, input -> Maps.transformValues(input, Bytes::toBytes));
+        Maps.transformValues(updates, input -> Maps.transformValues(input, Bytes::toBytes));
     try {
       core.persist(convertedUpdates, Long.MAX_VALUE);
     } catch (IOException e) {
@@ -141,7 +143,7 @@ public class LevelDBMetricsTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-                      @Nullable FuzzyRowFilter filter) {
+      @Nullable FuzzyRowFilter filter) {
     try {
       return core.scan(start, stop, filter, null, null);
     } catch (IOException e) {

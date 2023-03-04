@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
  * @param <T> Type of object produced by this pipeline.
  */
 public abstract class AbstractPipeline<T> implements Pipeline<T> {
+
   /**
    * List of stages in the pipeline.
    */

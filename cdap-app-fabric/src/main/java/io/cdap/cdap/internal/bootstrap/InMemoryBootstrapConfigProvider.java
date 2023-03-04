@@ -21,6 +21,7 @@ package io.cdap.cdap.internal.bootstrap;
  * Stores a {@link BootstrapConfig} in memory and returns it every time.
  */
 public class InMemoryBootstrapConfigProvider implements BootstrapConfigProvider {
+
   private final BootstrapConfig bootstrapConfig;
 
   public InMemoryBootstrapConfigProvider(BootstrapConfig bootstrapConfig) {

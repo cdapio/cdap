@@ -49,17 +49,18 @@ public class IncapableSource extends BatchSource<byte[], Row, StructuredRecord> 
    * @return {@link IncapableSource} as the ETLPlugin
    */
   public static ETLPlugin getPlugin() {
-    return new ETLPlugin(IncapableSource.NAME, BatchSource.PLUGIN_TYPE, Collections.emptyMap(), null);
+    return new ETLPlugin(IncapableSource.NAME, BatchSource.PLUGIN_TYPE, Collections.emptyMap(),
+        null);
   }
 
   private static PluginClass getPluginClass() {
     return PluginClass.builder()
-      .setName(IncapableSource.NAME)
-      .setType(BatchSource.PLUGIN_TYPE)
-      .setDescription("")
-      .setClassName(IncapableSource.class.getName())
-      .setRequirements(new io.cdap.cdap.api.plugin.Requirements(ImmutableSet.of(Table.TYPE)))
-      .build();
+        .setName(IncapableSource.NAME)
+        .setType(BatchSource.PLUGIN_TYPE)
+        .setDescription("")
+        .setClassName(IncapableSource.class.getName())
+        .setRequirements(new io.cdap.cdap.api.plugin.Requirements(ImmutableSet.of(Table.TYPE)))
+        .build();
   }
 }
 

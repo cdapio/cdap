@@ -66,7 +66,8 @@ public final class ProgramRunners {
    * @param user user to impersonate
    * @param service guava service start start
    */
-  public static void startAsUser(String user, final Service service) throws IOException, InterruptedException {
+  public static void startAsUser(String user, final Service service)
+      throws IOException, InterruptedException {
     runAsUser(user, new Callable<ListenableFuture<Service.State>>() {
       @Override
       public ListenableFuture<Service.State> call() throws Exception {
@@ -81,14 +82,15 @@ public final class ProgramRunners {
    * @param user user to impersonate
    * @param callable action to perform
    */
-  public static <T> T runAsUser(String user, final Callable<T> callable) throws IOException, InterruptedException {
+  public static <T> T runAsUser(String user, final Callable<T> callable)
+      throws IOException, InterruptedException {
     return UserGroupInformation.createRemoteUser(user)
-      .doAs(new PrivilegedExceptionAction<T>() {
-        @Override
-        public T run() throws Exception {
-          return callable.call();
-        }
-      });
+        .doAs(new PrivilegedExceptionAction<T>() {
+          @Override
+          public T run() throws Exception {
+            return callable.call();
+          }
+        });
   }
 
   /**
@@ -101,13 +103,14 @@ public final class ProgramRunners {
     String value = arguments.get(ProgramOptionConstants.LOGICAL_START_TIME);
     try {
       // value is only empty/null in in some unit tests
-      long logicalStartTime = Strings.isNullOrEmpty(value) ? System.currentTimeMillis() : Long.parseLong(value);
+      long logicalStartTime =
+          Strings.isNullOrEmpty(value) ? System.currentTimeMillis() : Long.parseLong(value);
       arguments.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(logicalStartTime));
       return logicalStartTime;
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(String.format(
-        "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
-        ProgramOptionConstants.LOGICAL_START_TIME, value));
+          "%s is set to an invalid value %s. Please ensure it is a timestamp in milliseconds.",
+          ProgramOptionConstants.LOGICAL_START_TIME, value));
     }
   }
 
@@ -118,7 +121,8 @@ public final class ProgramRunners {
    */
   public static RunId getRunId(ProgramOptions programOptions) {
     String id = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
-    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.RUN_ID + " in program options");
+    Preconditions.checkArgument(id != null,
+        "Missing " + ProgramOptionConstants.RUN_ID + " in program options");
     return RunIds.fromString(id);
   }
 
@@ -131,12 +135,15 @@ public final class ProgramRunners {
   @Nullable
   public static KerberosPrincipalId getApplicationPrincipal(ProgramOptions programOptions) {
     Arguments systemArgs = programOptions.getArguments();
-    boolean hasAppPrincipal = Boolean.parseBoolean(systemArgs.getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS));
-    return hasAppPrincipal ? new KerberosPrincipalId(systemArgs.getOption(ProgramOptionConstants.PRINCIPAL)) : null;
+    boolean hasAppPrincipal = Boolean.parseBoolean(
+        systemArgs.getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS));
+    return hasAppPrincipal ? new KerberosPrincipalId(
+        systemArgs.getOption(ProgramOptionConstants.PRINCIPAL)) : null;
   }
 
   /**
-   * Same as {@link #createLogbackJar(Location)} except this method uses local {@link File} instead.
+   * Same as {@link #createLogbackJar(Location)} except this method uses local {@link File}
+   * instead.
    */
   @Nullable
   public static File createLogbackJar(File targetFile) throws IOException {
@@ -148,8 +155,8 @@ public final class ProgramRunners {
    * Creates a jar that contains a logback.xml configured for the current process
    *
    * @param targetLocation the jar location
-   * @return the {@link Location} where the jar was created to or {@code null} if "logback.xml" is not found
-   *         in the current ClassLoader.
+   * @return the {@link Location} where the jar was created to or {@code null} if "logback.xml" is
+   *     not found in the current ClassLoader.
    * @throws IOException if failed in reading the logback xml or writing out the jar
    */
   @Nullable
@@ -178,7 +185,8 @@ public final class ProgramRunners {
    */
   public static ArtifactId getArtifactId(ProgramOptions programOptions) {
     String id = programOptions.getArguments().getOption(ProgramOptionConstants.ARTIFACT_ID);
-    Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
+    Preconditions.checkArgument(id != null,
+        "Missing " + ProgramOptionConstants.ARTIFACT_ID + " in program options");
     return ArtifactId.fromIdParts(Splitter.on(':').split(id));
   }
 
@@ -186,7 +194,8 @@ public final class ProgramRunners {
    * Returns the {@link ClusterMode} stored inside the given {@link ProgramOptions#getArguments()}.
    */
   public static ClusterMode getClusterMode(ProgramOptions programOptions) {
-    String clusterMode = programOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER_MODE);
+    String clusterMode = programOptions.getArguments()
+        .getOption(ProgramOptionConstants.CLUSTER_MODE);
 
     // Default to ON_PREMISE for backward compatibility.
     return clusterMode == null ? ClusterMode.ON_PREMISE : ClusterMode.valueOf(clusterMode);
@@ -194,22 +203,24 @@ public final class ProgramRunners {
 
   /**
    * Create a {@link MetricsContext} for emitting program metrics.
+   *
    * @param programRunId the {@link ProgramRunId} of the current execution
    * @param metricsTags a set of extra tags to be used for creating the {@link MetricsContext}
-   * @param metricsCollectionService the underlying service for metrics publishing or {@code null} to suppress metrics
-   *                                 publishing
+   * @param metricsCollectionService the underlying service for metrics publishing or {@code
+   *     null} to suppress metrics publishing
    * @return a {@link MetricsContext} for emitting metrics for the current program context.
    */
   public static MetricsContext createProgramMetricsContext(ProgramRunId programRunId,
-                                                            Map<String, String> metricsTags,
-                                                            @Nullable MetricsCollectionService
-                                                             metricsCollectionService) {
+      Map<String, String> metricsTags,
+      @Nullable MetricsCollectionService
+          metricsCollectionService) {
     Map<String, String> tags = Maps.newHashMap(metricsTags);
     tags.put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace());
     tags.put(Constants.Metrics.Tag.APP, programRunId.getApplication());
     tags.put(ProgramTypeMetricTag.getTagName(programRunId.getType()), programRunId.getProgram());
     tags.put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun());
-    return metricsCollectionService == null ? new NoopMetricsContext(tags) : metricsCollectionService.getContext(tags);
+    return metricsCollectionService == null ? new NoopMetricsContext(tags)
+        : metricsCollectionService.getContext(tags);
   }
 
   private ProgramRunners() {

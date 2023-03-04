@@ -84,8 +84,8 @@ public class SystemAppStep {
 
     Arguments(AppRequest<JsonObject> appRequest, String namespace, String name, boolean overwrite) {
       super(appRequest.getArtifact(), appRequest.getConfig(), appRequest.getPreview(),
-            appRequest.getOwnerPrincipal(),
-            appRequest.canUpdateSchedules());
+          appRequest.getOwnerPrincipal(),
+          appRequest.canUpdateSchedules());
       this.namespace = namespace;
       this.name = name;
       this.overwrite = overwrite;

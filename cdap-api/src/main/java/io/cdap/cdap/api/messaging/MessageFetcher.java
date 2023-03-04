@@ -33,34 +33,34 @@ public interface MessageFetcher {
    * @param namespace namespace of the topic
    * @param topic name of the topic
    * @param limit maximum number of messages to fetch
-   * @param timestamp timestamp in milliseconds; the publish timestamp of the first {@link Message}
-   *                  returned by the resulting {@link CloseableIterator} will be on or after the given timestamp.
-   *                  Use {@code timestamp = 0} to poll from the first available message.
+   * @param timestamp timestamp in milliseconds; the publish timestamp of the first {@link
+   *     Message} returned by the resulting {@link CloseableIterator} will be on or after the given
+   *     timestamp. Use {@code timestamp = 0} to poll from the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
   CloseableIterator<Message> fetch(String namespace, String topic,
-                                   int limit, long timestamp) throws TopicNotFoundException, IOException;
+      int limit, long timestamp) throws TopicNotFoundException, IOException;
 
   /**
-   * Fetches messages from the given topic that were published after a message, identified by the given
-   * message id.
+   * Fetches messages from the given topic that were published after a message, identified by the
+   * given message id.
    *
    * @param namespace namespace of the topic
    * @param topic name of the topic
    * @param limit maximum number of messages to fetch
-   * @param afterMessageId message id returned from the {@link Message#getId()} method from a prior call to
-   *                       one of the {@code pollMessages} methods. If it is {@code null}, it will fetch from
-   *                       the first available message.
+   * @param afterMessageId message id returned from the {@link Message#getId()} method from a
+   *     prior call to one of the {@code pollMessages} methods. If it is {@code null}, it will fetch
+   *     from the first available message.
    * @return a {@link CloseableIterator} of {@link Message}
-   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only contain alphanumeric
-   *                                  characters, {@code _}, or {@code -}.
+   * @throws IllegalArgumentException if the topic name is invalid. A valid id should only
+   *     contain alphanumeric characters, {@code _}, or {@code -}.
    * @throws IOException if there was a failure to communicate with the messaging system
    * @throws TopicNotFoundException if the give topic doesn't exist
    */
   CloseableIterator<Message> fetch(String namespace, String topic, int limit,
-                                   @Nullable String afterMessageId) throws TopicNotFoundException, IOException;
+      @Nullable String afterMessageId) throws TopicNotFoundException, IOException;
 }

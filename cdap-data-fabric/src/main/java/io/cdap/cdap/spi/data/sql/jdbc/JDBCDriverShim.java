@@ -25,17 +25,18 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 /**
- * Shim for JDBC driver as a better alternative to mere Class.forName to load the JDBC Driver class.
+ * Shim for JDBC driver as a better alternative to mere Class.forName to load the JDBC Driver
+ * class.
  *
- * From http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
- * One problem with using <pre>{@code Class.forName()}</pre> to find and load the JDBC Driver class is that it
- * presumes that your driver is in the classpath. This means either packaging the driver in your jar, or having to
- * stick the driver somewhere (probably unpacking it too), or modifying your classpath.
- * But why not use something like URLClassLoader and the overload of Class.forName() that lets you specify the
- * ClassLoader?" Because the DriverManager will refuse to use a driver not loaded by the system ClassLoader.
- * The workaround for this is to create a shim class that implements java.sql.Driver.
- * This shim class will do nothing but call the methods of an instance of a JDBC driver that we loaded dynamically.
- *
+ * From http://www.kfu.com/~nsayer/Java/dyn-jdbc.html One problem with using <pre>{@code
+ * Class.forName()}</pre> to find and load the JDBC Driver class is that it presumes that your
+ * driver is in the classpath. This means either packaging the driver in your jar, or having to
+ * stick the driver somewhere (probably unpacking it too), or modifying your classpath. But why not
+ * use something like URLClassLoader and the overload of Class.forName() that lets you specify the
+ * ClassLoader?" Because the DriverManager will refuse to use a driver not loaded by the system
+ * ClassLoader. The workaround for this is to create a shim class that implements java.sql.Driver.
+ * This shim class will do nothing but call the methods of an instance of a JDBC driver that we
+ * loaded dynamically.
  */
 public class JDBCDriverShim implements Driver {
 

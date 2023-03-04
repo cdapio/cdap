@@ -47,10 +47,10 @@ public class LevelDBTable extends BufferingTable {
   private long persistedVersion;
 
   public LevelDBTable(DatasetContext datasetContext, String tableName,
-                      LevelDBTableService service, CConfiguration cConf,
-                      DatasetSpecification spec) throws IOException {
+      LevelDBTableService service, CConfiguration cConf,
+      DatasetSpecification spec) throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName),
-          false, spec.getProperties());
+        false, spec.getProperties());
     this.core = new LevelDBTableCore(getTableName(), service);
   }
 
@@ -62,11 +62,14 @@ public class LevelDBTable extends BufferingTable {
   }
 
   @Override
-  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> changes) throws Exception {
+  protected void persist(NavigableMap<byte[], NavigableMap<byte[], Update>> changes)
+      throws Exception {
     persistedVersion = tx == null ? System.currentTimeMillis() : tx.getWritePointer();
 
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    NavigableMap<byte[], NavigableMap<byte[], Long>> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> increments = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> rowEntry : changes.entrySet()) {
       for (Map.Entry<byte[], Update> colEntry : rowEntry.getValue().entrySet()) {
         Update val = colEntry.getValue();
@@ -94,13 +97,14 @@ public class LevelDBTable extends BufferingTable {
 
   @WriteOnly
   private void persist(NavigableMap<byte[], NavigableMap<byte[], Long>> increments,
-                       NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts) throws IOException {
+      NavigableMap<byte[], NavigableMap<byte[], byte[]>> puts) throws IOException {
     core.increment(increments);
     core.persist(puts, persistedVersion);
   }
 
   @Override
-  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws Exception {
+  protected void undo(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted)
+      throws Exception {
     if (persisted.isEmpty()) {
       return;
     }
@@ -108,20 +112,23 @@ public class LevelDBTable extends BufferingTable {
   }
 
   @WriteOnly
-  private void undoPersisted(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted) throws IOException {
+  private void undoPersisted(NavigableMap<byte[], NavigableMap<byte[], Update>> persisted)
+      throws IOException {
     core.undo(persisted, persistedVersion);
   }
 
   @ReadOnly
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns)
+      throws Exception {
     return core.getRow(row, columns, null, null, -1, tx);
   }
 
   @ReadOnly
   @Override
-  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn, byte[] stopColumn, int limit)
-    throws Exception {
+  protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, byte[] startColumn,
+      byte[] stopColumn, int limit)
+      throws Exception {
     return core.getRow(row, null, startColumn, stopColumn, limit, tx);
   }
 

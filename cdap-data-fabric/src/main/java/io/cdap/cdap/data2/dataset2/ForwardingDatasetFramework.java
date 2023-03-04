@@ -51,13 +51,14 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(DatasetModuleId moduleId, DatasetModule module) throws DatasetManagementException {
+  public void addModule(DatasetModuleId moduleId, DatasetModule module)
+      throws DatasetManagementException {
     delegate.addModule(moduleId, module);
   }
 
   @Override
   public void addModule(DatasetModuleId moduleId, DatasetModule module, Location jarLocation)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     delegate.addModule(moduleId, module, jarLocation);
   }
 
@@ -72,33 +73,36 @@ public class ForwardingDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal)
-    throws DatasetManagementException, IOException {
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
+      DatasetProperties props,
+      @Nullable KerberosPrincipalId ownerPrincipal)
+      throws DatasetManagementException, IOException {
     delegate.addInstance(datasetTypeName, datasetInstanceId, props, ownerPrincipal);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
+      throws DatasetManagementException, IOException {
     delegate.updateInstance(datasetInstanceId, props);
   }
 
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId)
-    throws DatasetManagementException {
+      throws DatasetManagementException {
     return delegate.getInstances(namespaceId);
   }
 
   @Override
-  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
-    throws DatasetManagementException {
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId,
+      Map<String, String> properties)
+      throws DatasetManagementException {
     return delegate.getInstances(namespaceId, properties);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
+      throws DatasetManagementException {
     return delegate.getDatasetSpec(datasetInstanceId);
   }
 
@@ -114,48 +118,56 @@ public class ForwardingDatasetFramework implements DatasetFramework {
 
   @Nullable
   @Override
-  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId) throws DatasetManagementException {
+  public DatasetTypeMeta getTypeInfo(DatasetTypeId datasetTypeId)
+      throws DatasetManagementException {
     return delegate.getTypeInfo(datasetTypeId);
   }
 
   @Override
-  public void truncateInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void truncateInstance(DatasetId datasetInstanceId)
+      throws DatasetManagementException, IOException {
     delegate.truncateInstance(datasetInstanceId);
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void deleteInstance(DatasetId datasetInstanceId)
+      throws DatasetManagementException, IOException {
     delegate.deleteInstance(datasetInstanceId);
   }
 
   @Override
-  public void deleteAllInstances(NamespaceId namespaceId) throws DatasetManagementException, IOException {
+  public void deleteAllInstances(NamespaceId namespaceId)
+      throws DatasetManagementException, IOException {
     delegate.deleteAllInstances(namespaceId);
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader)
+      throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader);
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
-                                             DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader,
+      DatasetClassLoaderProvider classLoaderProvider)
+      throws DatasetManagementException, IOException {
     return delegate.getAdmin(datasetInstanceId, classLoader, classLoaderProvider);
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, @Nullable Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader,
-                                          DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException {
-    return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners, accessType);
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId,
+      @Nullable Map<String, String> arguments,
+      @Nullable ClassLoader classLoader,
+      DatasetClassLoaderProvider classLoaderProvider,
+      @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
+      throws DatasetManagementException, IOException {
+    return delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider,
+        owners, accessType);
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents an aggregate of program runs.
  */
 abstract class ProgramRunAggregate {
+
   private final long runs;
 
   ProgramRunAggregate(long runs) {

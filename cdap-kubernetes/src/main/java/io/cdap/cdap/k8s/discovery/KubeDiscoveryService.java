@@ -54,16 +54,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link DiscoveryService} and {@link DiscoveryServiceClient} that uses Kubernetes API to
- * announce and discover service locations.
- * This service assumes kubernetes services are created with label, "cdap.service=[service-name]",
- * where [service-name] is the CDAP service name.
- * On registering service via the {@link #register(Discoverable)} method, a new k8s Service with name
- * "cdap-[transformed-service-name]" will be created with label "cdap.service=[service-name]".
- * The [transformed-service-name] is the CDAP service name with "." replaced with "-" to conform to the naming
- * requirement in K8s. The service selector will be set to include the current pod labels.
+ * Implementation of {@link DiscoveryService} and {@link DiscoveryServiceClient} that uses
+ * Kubernetes API to announce and discover service locations. This service assumes kubernetes
+ * services are created with label, "cdap.service=[service-name]", where [service-name] is the CDAP
+ * service name. On registering service via the {@link #register(Discoverable)} method, a new k8s
+ * Service with name "cdap-[transformed-service-name]" will be created with label
+ * "cdap.service=[service-name]". The [transformed-service-name] is the CDAP service name with "."
+ * replaced with "-" to conform to the naming requirement in K8s. The service selector will be set
+ * to include the current pod labels.
  */
-public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceClient, AutoCloseable {
+public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceClient,
+    AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeDiscoveryService.class);
 
@@ -90,7 +91,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param podLabels the set of labels for the current pod
    */
   public KubeDiscoveryService(String namespace, String namePrefix, Map<String, String> podLabels,
-                              List<V1OwnerReference> ownerReferences, ApiClientFactory apiClientFactory) {
+      List<V1OwnerReference> ownerReferences, ApiClientFactory apiClientFactory) {
     this.namespace = namespace;
     this.namePrefix = namePrefix;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
@@ -124,20 +125,22 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       }
     } catch (ApiException e) {
       throw new RuntimeException("Failure response from API service, code="
-                                   + e.getCode() + ", body=" + e.getResponseBody(), e);
+          + e.getCode() + ", body=" + e.getResponseBody(), e);
     } catch (IOException e) {
       throw new RuntimeException("Failed to connect to API server", e);
     }
 
     // We don't delete the service on cancelling since the service should stay when on restarting of one instance
     // It is the CDAP K8s operator task to remove services on CRD instance deletion by the label selector.
-    return () -> { };
+    return () -> {
+    };
   }
 
   @Override
   public ServiceDiscovered discover(String name) {
     // Get/Create the ServiceDiscovered to return.
-    ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(name, DefaultServiceDiscovered::new);
+    ServiceDiscovered serviceDiscovered = serviceDiscovereds.computeIfAbsent(name,
+        DefaultServiceDiscovered::new);
 
     // Start the watcher thread if it is not yet started
     WatcherThread watcherThread = this.watcherThread;
@@ -216,14 +219,14 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @throws ApiException if failed to fetch service information from the master
    */
   private Optional<V1Service> getV1Service(CoreV1Api api,
-                                           String serviceName, String discoveryName) throws ApiException {
+      String serviceName, String discoveryName) throws ApiException {
     V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
-                                                          "cdap.service=" + namePrefix + discoveryName, 1,
-                                                          null, null, null, null);
+        "cdap.service=" + namePrefix + discoveryName, 1,
+        null, null, null, null);
     // Find the service with the given name
     return serviceList.getItems().stream()
-      .filter(service -> serviceName.equals(service.getMetadata().getName()))
-      .findFirst();
+        .filter(service -> serviceName.equals(service.getMetadata().getName()))
+        .findFirst();
   }
 
   /**
@@ -233,9 +236,11 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param serviceName name of the kubernetes service to create
    * @param discoverable the {@link Discoverable} for creating the service
    * @return {@code true} if the creation was succeeded. {@code false} if the service already exists
-   * @throws ApiException if failed to create service that doens't due to service already exists
+   * @throws ApiException if failed to create service that doens't due to service already
+   *     exists
    */
-  private boolean createV1Service(CoreV1Api api, String serviceName, Discoverable discoverable) throws ApiException {
+  private boolean createV1Service(CoreV1Api api, String serviceName, Discoverable discoverable)
+      throws ApiException {
     // Try to create the service
     V1Service service = new V1Service();
     V1ObjectMeta meta = new V1ObjectMeta();
@@ -244,7 +249,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     byte[] payload = discoverable.getPayload();
     if (payload != null && payload.length > 0) {
-      meta.setAnnotations(Collections.singletonMap(PAYLOAD_NAME, Base64.getEncoder().encodeToString(payload)));
+      meta.setAnnotations(
+          Collections.singletonMap(PAYLOAD_NAME, Base64.getEncoder().encodeToString(payload)));
     }
 
     // Set the owner reference for GC
@@ -264,7 +270,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     try {
       api.createNamespacedService(namespace, service, null, null, null, null);
-      LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
+      LOG.info("Service created in kubernetes with name {} and port {}", serviceName,
+          port.getPort());
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -283,13 +290,14 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param api the {@link CoreV1Api} for talking to the master
    * @param currentService the current version of {@link V1Service} to be updated
    * @param discoverable the {@link Discoverable} for updating the service
-   * @return {@code true} if the update was successful
-   *         {@code false} if the current service version doesn't match with the server, and there is no
-   *         change to the service; or if the service does not exist
-   * @throws ApiException if the update failed for reasons other than mismatch of current version or service not found
+   * @return {@code true} if the update was successful {@code false} if the current service version
+   *     doesn't match with the server, and there is no change to the service; or if the service
+   *     does not exist
+   * @throws ApiException if the update failed for reasons other than mismatch of current
+   *     version or service not found
    */
   private boolean updateV1Service(CoreV1Api api, V1Service currentService,
-                                  Discoverable discoverable) throws ApiException {
+      Discoverable discoverable) throws ApiException {
     // Find if the service is already setup to use the given discoverable port.
     // The assumption here is that the cdap operator will
     // setup the cConf in a way that pods of the same service should be binded to the same port inside a pod
@@ -329,9 +337,10 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     try {
       api.replaceNamespacedService(meta.getName(), namespace, service, null, null, null, null);
       LOG.info("Service updated in kubernetes with name {} and port {}",
-               currentService.getMetadata().getName(), port.getPort());
+          currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
-      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT || e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT
+          || e.getCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         return false;
       }
       throw e;
@@ -342,7 +351,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   /**
    * Closes a {@link AutoCloseable} and swallow any exception.
    *
-   * @param closeable if not null, the {@link AutoCloseable#close()} of the given closeable will be called
+   * @param closeable if not null, the {@link AutoCloseable#close()} of the given closeable will
+   *     be called
    */
   private void closeQuietly(@Nullable AutoCloseable closeable) {
     if (closeable == null) {
@@ -377,13 +387,14 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     @Override
     protected void updateListOptions(ListOptions options) {
-      options.setLabelSelector(String.format("%s in (%s)", SERVICE_LABEL, String.join(",", services)));
+      options.setLabelSelector(
+          String.format("%s in (%s)", SERVICE_LABEL, String.join(",", services)));
     }
 
     @Override
     public void resourceAdded(V1Service service) {
       getServiceDiscovered(service)
-        .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(), service)));
+          .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(), service)));
     }
 
     @Override
@@ -422,17 +433,17 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
       // Decode the payload from annotation. If absent, default to empty payload
       byte[] payload = Optional.ofNullable(meta.getAnnotations())
-        .map(m -> m.get(PAYLOAD_NAME))
-        .map(Base64.getDecoder()::decode)
-        .orElse(EMPTY_PAYLOAD);
+          .map(m -> m.get(PAYLOAD_NAME))
+          .map(Base64.getDecoder()::decode)
+          .orElse(EMPTY_PAYLOAD);
 
       // We don't expect there is more than one service port, hence only pick the first one
       return servicePorts.stream()
-        .map(port -> createDiscoverable(name, hostname, port, payload))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .map(Collections::singleton)
-        .orElse(Collections.emptySet());
+          .map(port -> createDiscoverable(name, hostname, port, payload))
+          .filter(Objects::nonNull)
+          .findFirst()
+          .map(Collections::singleton)
+          .orElse(Collections.emptySet());
     }
 
     /**
@@ -444,13 +455,15 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
      * @return a {@link Discoverable}
      */
     @Nullable
-    private Discoverable createDiscoverable(String name, String hostname, V1ServicePort servicePort, byte[] payload) {
+    private Discoverable createDiscoverable(String name, String hostname, V1ServicePort servicePort,
+        byte[] payload) {
       Integer port = servicePort.getPort();
       if (port == null) {
         return null;
       }
       String namespacedHostName = String.format("%s.%s", hostname, namespace);
-      return new Discoverable(name, InetSocketAddress.createUnresolved(namespacedHostName, port), payload);
+      return new Discoverable(name, InetSocketAddress.createUnresolved(namespacedHostName, port),
+          payload);
     }
   }
 }

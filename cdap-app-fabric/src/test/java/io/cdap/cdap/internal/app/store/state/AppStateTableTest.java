@@ -43,9 +43,9 @@ public class AppStateTableTest extends AppFabricTestBase {
   public static final String APP_NAME = "testapp";
   public static final String STATE_KEY = "kafka";
   public static final String STATE_KEY_2 = "pubSub";
-  public static final byte[] STATE_VALUE = ("{\n" +
-                                            "\"offset\" : 12345\n" +
-                                            "}").getBytes(StandardCharsets.UTF_8);
+  public static final byte[] STATE_VALUE = ("{\n"
+      + "\"offset\" : 12345\n"
+      + "}").getBytes(StandardCharsets.UTF_8);
 
   private static NamespaceId namespaceId1;
   private static AppStateKey request;

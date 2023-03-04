@@ -20,15 +20,15 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 
 /**
- * Wrapper around writing to a mapreduce context.
- * This abstraction is required because if there is just one output for a mapreduce,
- * we must do context.write(key, value) instead of context.write(name, key, value).
- * See CDAP-3628 for more detail
+ * Wrapper around writing to a mapreduce context. This abstraction is required because if there is
+ * just one output for a mapreduce, we must do context.write(key, value) instead of
+ * context.write(name, key, value). See CDAP-3628 for more detail
  *
  * @param <KEY_OUT> the output key type
  * @param <VAL_OUT> the output value type
  */
 public abstract class OutputWriter<KEY_OUT, VAL_OUT> {
+
   public final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
   public OutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {

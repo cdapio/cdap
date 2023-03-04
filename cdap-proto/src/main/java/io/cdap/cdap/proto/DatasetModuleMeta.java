@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * Dataset module meta data
  */
 public class DatasetModuleMeta {
+
   private final String name;
   private final String className;
   // TODO: change type to Location
@@ -41,33 +42,37 @@ public class DatasetModuleMeta {
 
   /**
    * Creates instance of {@link DatasetModuleMeta}
+   *
    * @param name name of the dataset module
    * @param className class name of the dataset module
-   * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
-   *                    always present in classpath. This helps to minimize redundant copying of jars.
+   * @param jarLocation location of the dataset module jar. {@code null} means this is "system
+   *     module" which classes always present in classpath. This helps to minimize redundant copying
+   *     of jars.
    * @param types list of types announced by this module in the order they are announced
-   * @param usesModules list of modules that this module depends on, ordered in a way they must be
-   *                    loaded and initialized
+   * @param usesModules list of modules that this module depends on, ordered in a way they must
+   *     be loaded and initialized
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           Collection<String> types, Collection<String> usesModules) {
+      Collection<String> types, Collection<String> usesModules) {
     this(name, className, jarLocation, types, usesModules, new ArrayList<String>());
   }
 
   /**
    * Creates instance of {@link DatasetModuleMeta}
+   *
    * @param name name of the dataset module
    * @param className class name of the dataset module
-   * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
-   *                    always present in classpath. This helps to minimize redundant copying of jars.
+   * @param jarLocation location of the dataset module jar. {@code null} means this is "system
+   *     module" which classes always present in classpath. This helps to minimize redundant copying
+   *     of jars.
    * @param types list of types announced by this module in the order they are announced
-   * @param usesModules list of modules that this module depends on, ordered in a way they must be
-   *                    loaded and initialized
+   * @param usesModules list of modules that this module depends on, ordered in a way they must
+   *     be loaded and initialized
    * @param usedByModules list of modules that depend on this module
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           Collection<String> types, Collection<String> usesModules,
-                           Collection<String> usedByModules) {
+      Collection<String> types, Collection<String> usesModules,
+      Collection<String> usedByModules) {
     this.name = name;
     this.className = className;
     this.jarLocation = null;
@@ -92,10 +97,10 @@ public class DatasetModuleMeta {
   }
 
   /**
-   * @return location of the dataset module jar, {@code null} means this is "system module" which classes always present
-   *         in classpath. This helps to minimize redundant copying of jars
-   *         For Backward Compatibility, if DatasetModuleMeta was read from the table and only has jarLocation URI,
-   *         get the Path from URI and return.
+   * @return location of the dataset module jar, {@code null} means this is "system module" which
+   *     classes always present in classpath. This helps to minimize redundant copying of jars For
+   *     Backward Compatibility, if DatasetModuleMeta was read from the table and only has
+   *     jarLocation URI, get the Path from URI and return.
    */
   @Nullable
   public String getJarLocationPath() {
@@ -114,7 +119,8 @@ public class DatasetModuleMeta {
   }
 
   /**
-   * @return list of modules this module depends on, ordered in a way they must be loaded and initialized
+   * @return list of modules this module depends on, ordered in a way they must be loaded and
+   *     initialized
    */
   public List<String> getUsesModules() {
     return Collections.unmodifiableList(usesModules);
@@ -129,6 +135,7 @@ public class DatasetModuleMeta {
 
   /**
    * Adds module to the list of dependant modules
+   *
    * @param name name of the dependant module to add
    */
   public void addUsedByModule(String name) {
@@ -137,6 +144,7 @@ public class DatasetModuleMeta {
 
   /**
    * Removes module from the list of dependant modules
+   *
    * @param name name of the dependant module to remove
    */
   public void removeUsedByModule(String name) {
@@ -145,15 +153,15 @@ public class DatasetModuleMeta {
 
   @Override
   public String toString() {
-    return "DatasetModuleMeta{" +
-      "name='" + name + '\'' +
-      ", className='" + className + '\'' +
-      ", jarLocation=" + jarLocation +
-      ", jarLocationPath=" + jarLocationPath +
-      ", types=" + types +
-      ", usesModules=" + usesModules +
-      ", usedByModules=" + usedByModules +
-      '}';
+    return "DatasetModuleMeta{"
+        + "name='" + name + '\''
+        + ", className='" + className + '\''
+        + ", jarLocation=" + jarLocation
+        + ", jarLocationPath=" + jarLocationPath
+        + ", types=" + types
+        + ", usesModules=" + usesModules
+        + ", usedByModules=" + usedByModules
+        + '}';
   }
 
   @Override
@@ -165,11 +173,11 @@ public class DatasetModuleMeta {
       return false;
     }
     DatasetModuleMeta that = (DatasetModuleMeta) o;
-    return Objects.equals(name, that.name) &&
-      Objects.equals(className, that.className) &&
-      Objects.equals(types, that.types) &&
-      Objects.equals(usesModules, that.usesModules) &&
-      Objects.equals(usedByModules, that.usedByModules);
+    return Objects.equals(name, that.name)
+        && Objects.equals(className, that.className)
+        && Objects.equals(types, that.types)
+        && Objects.equals(usesModules, that.usesModules)
+        && Objects.equals(usedByModules, that.usedByModules);
   }
 
   @Override

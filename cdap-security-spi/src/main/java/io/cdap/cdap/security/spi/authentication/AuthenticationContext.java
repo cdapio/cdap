@@ -21,9 +21,9 @@ import io.cdap.cdap.security.spi.authorization.AccessController;
 import io.cdap.cdap.security.spi.authorization.AuthorizationContext;
 
 /**
- * A context that determines authentication details. {@link AccessController} extensions can obtain authentication
- * details from the {@link AuthorizationContext} available in their
- * {@link AccessController#initialize(AuthorizationContext)} method.
+ * A context that determines authentication details. {@link AccessController} extensions can obtain
+ * authentication details from the {@link AuthorizationContext} available in their {@link
+ * AccessController#initialize(AuthorizationContext)} method.
  */
 public interface AuthenticationContext {
 

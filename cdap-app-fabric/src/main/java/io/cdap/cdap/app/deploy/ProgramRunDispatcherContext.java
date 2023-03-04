@@ -45,8 +45,9 @@ public class ProgramRunDispatcherContext {
     this(other.programDescriptor, other.programOptions, other.runId, other.distributed);
   }
 
-  public ProgramRunDispatcherContext(ProgramDescriptor programDescriptor, ProgramOptions programOptions,
-                                     RunId runId, boolean distributed) {
+  public ProgramRunDispatcherContext(ProgramDescriptor programDescriptor,
+      ProgramOptions programOptions,
+      RunId runId, boolean distributed) {
     this.programDescriptor = programDescriptor;
     this.programOptions = programOptions;
     this.runId = runId;

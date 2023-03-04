@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  * Console Settings Store Management.
  */
 public class ConsoleSettingsStore {
+
   private static final Logger LOG = LoggerFactory.getLogger(ConsoleSettingsStore.class);
   private static final String CONSOLE_NAMESPACE = "";
   private static final String CONFIG_TYPE = "usersettings";

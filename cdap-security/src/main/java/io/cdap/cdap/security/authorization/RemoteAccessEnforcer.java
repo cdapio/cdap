@@ -65,39 +65,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement and
- * then caches the results if caching is enabled.
+ * Remote implementation of the AuthorizationEnforcer. Contacts master for authorization enforcement
+ * and then caches the results if caching is enabled.
  */
 public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteAccessEnforcer.class);
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapterFactory(new PermissionAdapterFactory())
-    .create();
-  private static final Type SET_ENTITY_TYPE = new TypeToken<Set<EntityId>>() { }.getType();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapterFactory(new PermissionAdapterFactory())
+      .create();
+  private static final Type SET_ENTITY_TYPE = new TypeToken<Set<EntityId>>() {
+  }.getType();
 
   private static final Function<VisibilityKey, EntityId> VISIBILITY_KEY_ENTITY_ID_FUNCTION =
-    new Function<VisibilityKey, EntityId>() {
-      @Override
-      public EntityId apply(VisibilityKey input) {
-        return input.getEntityId();
-      }
-    };
+      new Function<VisibilityKey, EntityId>() {
+        @Override
+        public EntityId apply(VisibilityKey input) {
+          return input.getEntityId();
+        }
+      };
 
   private static final Predicate<Map.Entry<VisibilityKey, Boolean>> VISIBILITY_KEYS_FILTER =
-    new Predicate<Map.Entry<VisibilityKey, Boolean>>() {
-      @Override
-      public boolean apply(Map.Entry<VisibilityKey, Boolean> input) {
-        return input.getValue();
-      }
-    };
+      new Predicate<Map.Entry<VisibilityKey, Boolean>>() {
+        @Override
+        public boolean apply(Map.Entry<VisibilityKey, Boolean> input) {
+          return input.getValue();
+        }
+      };
 
   private final RemoteClient remoteClient;
   private final boolean cacheEnabled;
 
   private class EnforcementResponse {
+
     private boolean success;
     private Exception exception;
 
@@ -108,6 +110,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
     /**
      * Returns whether the enforcement was successful or not.
+     *
      * @return Whether authorization succeeded
      */
     public boolean isSuccess() {
@@ -116,12 +119,14 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
     /**
      * If the response failed due to some non-authorization reason, this will return the exception.
+     *
      * @return The failure exception
      */
     public Exception getException() {
       return exception;
     }
   }
+
   private final LoadingCache<AuthorizationPrivilege, EnforcementResponse> authPolicyCache;
   private final LoadingCache<VisibilityKey, Boolean> visibilityCache;
 
@@ -129,8 +134,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   public RemoteAccessEnforcer(CConfiguration cConf, RemoteClientFactory remoteClientFactory) {
     super(cConf);
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
-                                                               new DefaultHttpRequestConfig(false),
-                                                               "/v1/execute/");
+        new DefaultHttpRequestConfig(false),
+        "/v1/execute/");
     int cacheTTLSecs = cConf.getInt(Constants.Security.Authorization.CACHE_TTL_SECS);
     int cacheMaxEntries = cConf.getInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES);
     // Cache can be disabled by setting the number of entries to <= 0
@@ -138,47 +143,50 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
     int perCacheSize = cacheMaxEntries / 3 + 1;
     authPolicyCache = CacheBuilder.newBuilder()
-      .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
-      .maximumSize(perCacheSize)
-      .build(new CacheLoader<AuthorizationPrivilege, EnforcementResponse>() {
-        @Override
-        @ParametersAreNonnullByDefault
-        public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
-          LOG.trace("Cache miss for {}", authorizationPrivilege);
-          return doEnforce(authorizationPrivilege);
-        }
-      });
+        .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
+        .maximumSize(perCacheSize)
+        .build(new CacheLoader<AuthorizationPrivilege, EnforcementResponse>() {
+          @Override
+          @ParametersAreNonnullByDefault
+          public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege)
+              throws Exception {
+            LOG.trace("Cache miss for {}", authorizationPrivilege);
+            return doEnforce(authorizationPrivilege);
+          }
+        });
 
     visibilityCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(cacheTTLSecs, TimeUnit.SECONDS)
-      .maximumSize(perCacheSize)
-      .build(new CacheLoader<VisibilityKey, Boolean>() {
-        @Override
-        @ParametersAreNonnullByDefault
-        public Boolean load(VisibilityKey key) throws Exception {
-          LOG.trace("Cache miss for {}", key);
-          return !loadVisibility(Collections.singleton(key)).isEmpty();
-        }
+        .expireAfterAccess(cacheTTLSecs, TimeUnit.SECONDS)
+        .maximumSize(perCacheSize)
+        .build(new CacheLoader<VisibilityKey, Boolean>() {
+          @Override
+          @ParametersAreNonnullByDefault
+          public Boolean load(VisibilityKey key) throws Exception {
+            LOG.trace("Cache miss for {}", key);
+            return !loadVisibility(Collections.singleton(key)).isEmpty();
+          }
 
-        @Override
-        public Map<VisibilityKey, Boolean> loadAll(Iterable<? extends VisibilityKey> keys) throws Exception {
-          LOG.trace("Cache miss for {}", keys);
-          return loadVisibility(keys);
-        }
-      });
+          @Override
+          public Map<VisibilityKey, Boolean> loadAll(Iterable<? extends VisibilityKey> keys)
+              throws Exception {
+            LOG.trace("Cache miss for {}", keys);
+            return loadVisibility(keys);
+          }
+        });
   }
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+      throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, permissions, null);
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity,
+        permissions, null);
 
     try {
-      EnforcementResponse res = cacheEnabled ?
-        authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
+      EnforcementResponse res = cacheEnabled
+          ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
       if (!res.isSuccess()) {
         throw res.getException();
       }
@@ -188,18 +196,19 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   @Override
-  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission)
-    throws AccessException {
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+      Permission permission)
+      throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
     AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, parentId,
-                                                                               Collections.singleton(permission),
-                                                                               entityType);
+        Collections.singleton(permission),
+        entityType);
 
     try {
-      EnforcementResponse res = cacheEnabled ?
-        authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
+      EnforcementResponse res = cacheEnabled
+          ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
       if (!res.isSuccess()) {
         throw res.getException();
       }
@@ -210,7 +219,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal)
-    throws AccessException {
+      throws AccessException {
     if (!isSecurityAuthorizationEnabled()) {
       return entityIds;
     }
@@ -236,42 +245,45 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     visibilityCache.invalidateAll();
   }
 
-  private EnforcementResponse doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
+  private EnforcementResponse doEnforce(AuthorizationPrivilege authorizationPrivilege)
+      throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
-      .withBody(GSON.toJson(authorizationPrivilege))
-      .build();
+        .withBody(GSON.toJson(authorizationPrivilege))
+        .build();
     LOG.trace("Remotely enforcing on authorization privilege {}", authorizationPrivilege);
     try {
       HttpResponse response = remoteClient.execute(request);
       if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
         return new EnforcementResponse(true, null);
       }
-      return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
-                                                                   response.getResponseCode(),
-                                                                   response.getResponseBodyAsString())));
+      return new EnforcementResponse(false,
+          new IOException(String.format("Failed to enforce with code %d: %s",
+              response.getResponseCode(),
+              response.getResponseBodyAsString())));
     } catch (UnauthorizedException e) {
       return new EnforcementResponse(false, e);
     }
   }
 
   private Set<? extends EntityId> visibilityCheckCall(VisibilityRequest visibilityRequest)
-    throws IOException, UnauthorizedException {
+      throws IOException, UnauthorizedException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isVisible")
-      .withBody(GSON.toJson(visibilityRequest))
-      .build();
+        .withBody(GSON.toJson(visibilityRequest))
+        .build();
     LOG.trace("Remotely checking visibility on authorization privilege {}", visibilityRequest);
     return GSON.fromJson(remoteClient.execute(request).getResponseBodyAsString(), SET_ENTITY_TYPE);
   }
 
   private Map<VisibilityKey, Boolean> loadVisibility(Iterable<? extends VisibilityKey> keys)
-    throws IOException, UnauthorizedException {
+      throws IOException, UnauthorizedException {
     if (!keys.iterator().hasNext()) {
       return Collections.emptyMap();
     }
 
     // It is okay to use the first principal here, since isVisible request will always come for a single principal
     Principal principal = keys.iterator().next().getPrincipal();
-    Set<? extends EntityId> visibleEntities = visibilityCheckCall(new VisibilityRequest(principal, toEntityIds(keys)));
+    Set<? extends EntityId> visibleEntities = visibilityCheckCall(
+        new VisibilityRequest(principal, toEntityIds(keys)));
 
     Map<VisibilityKey, Boolean> keyMap = new HashMap<>();
     for (VisibilityKey key : keys) {
@@ -284,7 +296,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
     return ImmutableSet.copyOf(Iterables.transform(keys, VISIBILITY_KEY_ENTITY_ID_FUNCTION));
   }
 
-  private Iterable<VisibilityKey> toVisibilityKeys(final Principal principal, Set<? extends EntityId> entityIds) {
+  private Iterable<VisibilityKey> toVisibilityKeys(final Principal principal,
+      Set<? extends EntityId> entityIds) {
     return Iterables.transform(entityIds, new Function<EntityId, VisibilityKey>() {
       @Override
       public VisibilityKey apply(EntityId entityId) {
@@ -294,6 +307,7 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
   }
 
   private static class VisibilityKey {
+
     private final Principal principal;
     private final EntityId entityId;
 
@@ -319,8 +333,8 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
         return false;
       }
       VisibilityKey that = (VisibilityKey) o;
-      return Objects.equals(principal, that.principal) &&
-        Objects.equals(entityId, that.entityId);
+      return Objects.equals(principal, that.principal)
+          && Objects.equals(entityId, that.entityId);
     }
 
     @Override
@@ -330,10 +344,10 @@ public class RemoteAccessEnforcer extends AbstractAccessEnforcer {
 
     @Override
     public String toString() {
-      return "VisibilityKey {" +
-        "principal=" + principal +
-        ", entityId=" + entityId +
-        '}';
+      return "VisibilityKey {"
+          + "principal=" + principal
+          + ", entityId=" + entityId
+          + '}';
     }
   }
 }

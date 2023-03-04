@@ -145,14 +145,16 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   @SuppressWarnings("unchecked")
-  public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                              @Nullable Config configObject, File... bundleEmbeddedJars) {
+  public ApplicationManager deployApplication(NamespaceId namespace,
+      Class<? extends Application> applicationClz,
+      @Nullable Config configObject, File... bundleEmbeddedJars) {
     // See if the application class comes from file or jar.
     // If it's from JAR, no need to trace dependency since it should already be in an application jar.
     URL appClassURL = applicationClz.getClassLoader()
-      .getResource(applicationClz.getName().replace('.', '/') + ".class");
+        .getResource(applicationClz.getName().replace('.', '/') + ".class");
     // Should never happen, otherwise the ClassLoader is broken
-    Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader", applicationClz);
+    Preconditions.checkNotNull(appClassURL, "Cannot find class %s from the classloader",
+        applicationClz);
 
     String appConfig = "";
     Type configType = Artifacts.getConfigType(applicationClz);
@@ -165,7 +167,8 @@ public class IntegrationTestManager extends AbstractTestManager {
       }
 
       // Create and deploy application jar
-      File appJarFile = new File(tmpFolder, String.format("%s-%s.jar", applicationClz.getSimpleName(), VERSION));
+      File appJarFile = new File(tmpFolder,
+          String.format("%s-%s.jar", applicationClz.getSimpleName(), VERSION));
       try {
 
         Manifest manifest = new Manifest();
@@ -176,8 +179,9 @@ public class IntegrationTestManager extends AbstractTestManager {
           // so ensure the manifest has the right MAIN_CLASS set
           copyJarFile(appClassURL, appJarFile, manifest);
         } else {
-          Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, manifest,
-                                                             CLASS_ACCEPTOR, bundleEmbeddedJars);
+          Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz,
+              manifest,
+              CLASS_ACCEPTOR, bundleEmbeddedJars);
 
           try (InputStream input = appJar.getInputStream()) {
             Files.copy(input, appJarFile.toPath());
@@ -191,7 +195,8 @@ public class IntegrationTestManager extends AbstractTestManager {
         String applicationId = configurer.getName();
 
         // Upload artifact for application
-        ContentProvider<InputStream> artifactStream = locationFactory.create(appJarFile.toURI())::getInputStream;
+        ContentProvider<InputStream> artifactStream = locationFactory.create(
+            appJarFile.toURI())::getInputStream;
         artifactClient.add(namespace, applicationClz.getSimpleName(), artifactStream, VERSION);
 
         List<ArtifactSummary> deployedArtifacts = artifactClient.list(namespace);
@@ -202,7 +207,8 @@ public class IntegrationTestManager extends AbstractTestManager {
         ApplicationId id = namespace.app(applicationId);
         applicationClient.deploy(id, request);
 
-        manager = new RemoteApplicationManager(namespace.app(applicationId), clientConfig, restClient);
+        manager = new RemoteApplicationManager(namespace.app(applicationId), clientConfig,
+            restClient);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
@@ -215,7 +221,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   @Override
-  public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest) throws Exception {
+  public ApplicationManager deployApplication(ApplicationId appId, AppRequest appRequest)
+      throws Exception {
     applicationClient.deploy(appId, appRequest);
     return new RemoteApplicationManager(appId, clientConfig, restClient);
   }
@@ -226,7 +233,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   @Override
-  public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile) throws Exception {
+  public ArtifactManager addArtifact(ArtifactId artifactId, final File artifactFile)
+      throws Exception {
     artifactClient.add(artifactId, null, () -> new FileInputStream(artifactFile));
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
@@ -239,24 +247,26 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
-                                        String... exportPackages) throws Exception {
+      String... exportPackages) throws Exception {
     Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    manifest.getMainAttributes()
+        .put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     addAppArtifact(artifactId, appClass, manifest);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
-                                        Manifest manifest) throws Exception {
+      Manifest manifest) throws Exception {
     return addAppArtifact(artifactId, appClass, manifest, new File[0]);
   }
 
   @Override
   public ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
-                                        Manifest manifest, File... bundleEmbeddedJars) throws Exception {
-    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest, CLASS_ACCEPTOR,
-                                                             bundleEmbeddedJars);
+      Manifest manifest, File... bundleEmbeddedJars) throws Exception {
+    final Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appClass, manifest,
+        CLASS_ACCEPTOR,
+        bundleEmbeddedJars);
 
     artifactClient.add(artifactId, null, appJar::getInputStream);
     appJar.delete();
@@ -265,20 +275,22 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
-                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getParent().getNamespace(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
-      true, new ArtifactVersion(parent.getVersion()), true));
+        parent.getParent().getNamespace(), parent.getArtifact(),
+        new ArtifactVersion(parent.getVersion()),
+        true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
-                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
-    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass,
+        pluginClasses);
     artifactClient.add(artifactId, parents, appJar::getInputStream);
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
@@ -286,29 +298,31 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
-                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
-                                           Class<?>... pluginClasses) throws Exception {
+      @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(
-      parent.getParent().getNamespace(), parent.getArtifact(), new ArtifactVersion(parent.getVersion()),
-      true, new ArtifactVersion(parent.getVersion()), true));
+        parent.getParent().getNamespace(), parent.getArtifact(),
+        new ArtifactVersion(parent.getVersion()),
+        true, new ArtifactVersion(parent.getVersion()), true));
     addPluginArtifact(artifactId, parents, additionalPlugins, pluginClass, pluginClasses);
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
   }
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
-                                           @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
-                                           Class<?>... pluginClasses) throws Exception {
+      @Nullable Set<PluginClass> additionalPlugins, Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
     Manifest manifest = createManifest(pluginClass, pluginClasses);
-    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
+    final Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass,
+        pluginClasses);
     artifactClient.add(
-      Ids.namespace(artifactId.getNamespace()),
-      artifactId.getArtifact(),
-      appJar::getInputStream,
-      artifactId.getVersion(),
-      parents,
-      additionalPlugins
+        Ids.namespace(artifactId.getNamespace()),
+        artifactId.getArtifact(),
+        appJar::getInputStream,
+        artifactId.getVersion(),
+        parents,
+        additionalPlugins
     );
     appJar.delete();
     return new RemoteArtifactManager(clientConfig, restClient, artifactId);
@@ -324,16 +338,18 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public void deployDatasetModule(DatasetModuleId datasetModuleId,
-                                  Class<? extends DatasetModule> datasetModule) throws Exception {
+      Class<? extends DatasetModule> datasetModule) throws Exception {
     datasetModuleClient.add(datasetModuleId,
-                            datasetModule.getName(),
-                            createModuleJarFile(datasetModule));
+        datasetModule.getName(),
+        createModuleJarFile(datasetModule));
   }
 
   private File createModuleJarFile(Class<?> cls) throws IOException {
     String version = String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis());
-    File moduleJarFile = new File(tmpFolder, String.format("%s-%s.jar", cls.getSimpleName(), version));
-    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest(), CLASS_ACCEPTOR);
+    File moduleJarFile = new File(tmpFolder,
+        String.format("%s-%s.jar", cls.getSimpleName(), version));
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest(),
+        CLASS_ACCEPTOR);
     try (InputStream input = deploymentJar.getInputStream()) {
       Files.copy(input, moduleJarFile.toPath());
     }
@@ -342,9 +358,10 @@ public class IntegrationTestManager extends AbstractTestManager {
 
   @Override
   public <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId,
-                                                       DatasetProperties props) throws Exception {
-    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetType, props.getProperties(),
-                                                                           props.getDescription(), null);
+      DatasetProperties props) throws Exception {
+    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetType,
+        props.getProperties(),
+        props.getDescription(), null);
 
     datasetClient.create(datasetId, dsConf);
     return (T) new RemoteDatasetAdmin(datasetClient, datasetId, dsConf);
@@ -376,7 +393,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   }
 
   @Override
-  public void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+  public void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail)
+      throws Exception {
     scheduleClient.update(scheduleId, scheduleDetail);
   }
 
@@ -388,8 +406,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   /**
    * Copies the jar content to a local file, optionally adding entries into the Manifest.
    *
-   * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has format of {@code
-   *   jar:[jarURL]!/path/to/entry}
+   * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has
+   *     format of {@code jar:[jarURL]!/path/to/entry}
    * @param file the local file to copy to
    */
   private void copyJarFile(URL jarURL, File file, Manifest manifest) {
@@ -401,7 +419,8 @@ public class IntegrationTestManager extends AbstractTestManager {
 
       Set<String> seenEntries = new HashSet<>();
       try (JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(file), man);
-           JarInputStream jarInputStream = new JarInputStream(jarConn.getJarFileURL().openStream())) {
+          JarInputStream jarInputStream = new JarInputStream(
+              jarConn.getJarFileURL().openStream())) {
         JarEntry jarEntry = jarInputStream.getNextJarEntry();
         while (jarEntry != null) {
 
@@ -429,7 +448,8 @@ public class IntegrationTestManager extends AbstractTestManager {
       exportPackages.add(clz.getPackage().getName());
     }
 
-    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
+    manifest.getMainAttributes()
+        .put(ManifestFields.EXPORT_PACKAGE, Joiner.on(',').join(exportPackages));
     return manifest;
   }
 }

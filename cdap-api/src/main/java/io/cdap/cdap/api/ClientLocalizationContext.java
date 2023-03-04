@@ -26,21 +26,21 @@ import java.net.URI;
 public interface ClientLocalizationContext {
 
   /**
-   * Localizes a file with the given name. The localized file can be retrieved at program runtime using
-   * {@link TaskLocalizationContext#getLocalFile(String)}.
+   * Localizes a file with the given name. The localized file can be retrieved at program runtime
+   * using {@link TaskLocalizationContext#getLocalFile(String)}.
    *
-   * @param name the name for the localized file. The localized file can be retrieved using this name at program
-   *             runtime using {@link TaskLocalizationContext#getLocalFile(String)}
+   * @param name the name for the localized file. The localized file can be retrieved using this
+   *     name at program runtime using {@link TaskLocalizationContext#getLocalFile(String)}
    * @param uri the {@link URI} of the file to localize
    */
   void localize(String name, URI uri);
 
   /**
-   * Localizes a file with the given name. The localized file can be retrieved at program runtime using
-   * {@link TaskLocalizationContext#getLocalFile(String)}.
+   * Localizes a file with the given name. The localized file can be retrieved at program runtime
+   * using {@link TaskLocalizationContext#getLocalFile(String)}.
    *
-   * @param name the name for the localized file. The localized file can be retrieved using this name at program
-   *             runtime using {@link TaskLocalizationContext#getLocalFile(String)}
+   * @param name the name for the localized file. The localized file can be retrieved using this
+   *     name at program runtime using {@link TaskLocalizationContext#getLocalFile(String)}
    * @param uri the {@link URI} of the file to localize
    * @param archive indicates if the file is an archive
    */

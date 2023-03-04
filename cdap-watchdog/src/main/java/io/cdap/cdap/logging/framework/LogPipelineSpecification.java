@@ -40,7 +40,8 @@ public final class LogPipelineSpecification<T extends LoggerContext> {
   }
 
   /**
-   * Returns the source URL of the log pipeline configuration that this specification was created from.
+   * Returns the source URL of the log pipeline configuration that this specification was created
+   * from.
    */
   public URL getSource() {
     return source;

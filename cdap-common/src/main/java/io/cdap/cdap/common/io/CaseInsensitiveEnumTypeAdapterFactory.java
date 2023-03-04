@@ -32,8 +32,8 @@ import javax.annotation.Nullable;
 
 /**
  * Type adapter that serializes enums in lowercase and deserializes enums in a case insensitive way.
- * Taken straight from the example in TypeAdapterFactory javadocs except deserializes in a case insenstivie way
- * instead of deserializing lowercase only.
+ * Taken straight from the example in TypeAdapterFactory javadocs except deserializes in a case
+ * insenstivie way instead of deserializing lowercase only.
  */
 public class CaseInsensitiveEnumTypeAdapterFactory implements TypeAdapterFactory {
 

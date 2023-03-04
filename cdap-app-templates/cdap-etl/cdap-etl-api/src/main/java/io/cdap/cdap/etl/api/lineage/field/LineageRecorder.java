@@ -22,11 +22,12 @@ import java.util.List;
  * Interface for recording field lineage information from plugins.
  */
 public interface LineageRecorder {
+
   /**
-   * Record specified operations for the lineage purpose. This method can be called multiple
-   * times from plugins. Operations provided during each call will be accumulated in a collection
-   * for the lineage. This collection of all operations provided across multiple calls must have
-   * unique names.
+   * Record specified operations for the lineage purpose. This method can be called multiple times
+   * from plugins. Operations provided during each call will be accumulated in a collection for the
+   * lineage. This collection of all operations provided across multiple calls must have unique
+   * names.
    *
    * @param fieldOperations the operations to be recorded
    */

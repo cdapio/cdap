@@ -25,15 +25,16 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 
 /**
- * A run record corrector that does not correct run records at all.
- * Note that this still runs the local dataset deleter that is started by its base class.
+ * A run record corrector that does not correct run records at all. Note that this still runs the
+ * local dataset deleter that is started by its base class.
  */
 public class NoopRunRecordCorrectorService extends RunRecordCorrectorService {
 
   @Inject
-  NoopRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                                DatasetFramework datasetFramework) {
+  NoopRunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework) {
     super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework);
   }
 }

@@ -22,11 +22,12 @@ import javax.annotation.Nullable;
 
 /**
  * A {@link SecurityManager} used by the program container. Currently it specifically disabling
- * Spark classes to call {@link System#exit(int)}, {@link Runtime#halt(int)}
- * and {@link System#setSecurityManager(SecurityManager)}.
- * This is to workaround modification done in HDP Spark (CDAP-3014).
+ * Spark classes to call {@link System#exit(int)}, {@link Runtime#halt(int)} and {@link
+ * System#setSecurityManager(SecurityManager)}. This is to workaround modification done in HDP Spark
+ * (CDAP-3014).
  *
- * In general, we can use the security manager to restrict what system actions can be performed by program as well.
+ * In general, we can use the security manager to restrict what system actions can be performed by
+ * program as well.
  */
 final class ProgramContainerSecurityManager extends SecurityManager {
 
@@ -40,7 +41,7 @@ final class ProgramContainerSecurityManager extends SecurityManager {
   public void checkPermission(Permission perm) {
     if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
       throw new SecurityException("Set SecurityManager not allowed from Spark class: "
-                                    + Arrays.toString(getClassContext()));
+          + Arrays.toString(getClassContext()));
     }
     if (delegate != null) {
       delegate.checkPermission(perm);
@@ -51,7 +52,7 @@ final class ProgramContainerSecurityManager extends SecurityManager {
   public void checkPermission(Permission perm, Object context) {
     if ("setSecurityManager".equals(perm.getName()) && isFromSpark()) {
       throw new SecurityException("Set SecurityManager not allowed from Spark class: "
-                                    + Arrays.toString(getClassContext()));
+          + Arrays.toString(getClassContext()));
     }
     if (delegate != null) {
       delegate.checkPermission(perm, context);
@@ -61,7 +62,8 @@ final class ProgramContainerSecurityManager extends SecurityManager {
   @Override
   public void checkExit(int status) {
     if (isFromSpark()) {
-      throw new SecurityException("Exit not allowed from Spark class: " + Arrays.toString(getClassContext()));
+      throw new SecurityException(
+          "Exit not allowed from Spark class: " + Arrays.toString(getClassContext()));
     }
     if (delegate != null) {
       delegate.checkExit(status);

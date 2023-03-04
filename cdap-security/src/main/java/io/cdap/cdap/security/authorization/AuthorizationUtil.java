@@ -65,11 +65,12 @@ public final class AuthorizationUtil {
    * @return an unmodified list of visible entities
    */
   public static <EntityInfo> List<EntityInfo> isVisible(
-    Collection<EntityInfo> entityInfo, AccessEnforcer accessEnforcer, Principal principal,
-    Function<EntityInfo, EntityId> transformer, @Nullable Predicate<EntityInfo> byPassFilter) throws Exception {
+      Collection<EntityInfo> entityInfo, AccessEnforcer accessEnforcer, Principal principal,
+      Function<EntityInfo, EntityId> transformer, @Nullable Predicate<EntityInfo> byPassFilter)
+      throws Exception {
     List<EntityInfo> visibleEntities = new ArrayList<>(entityInfo.size());
     for (List<EntityInfo> split : Iterables.partition(entityInfo,
-                                                      Constants.Security.Authorization.VISIBLE_BATCH_SIZE)) {
+        Constants.Security.Authorization.VISIBLE_BATCH_SIZE)) {
       Map<EntityId, EntityInfo> datasetTypesMapping = new LinkedHashMap<>(split.size());
       for (EntityInfo info : split) {
         if (byPassFilter != null && byPassFilter.apply(info)) {
@@ -78,7 +79,8 @@ public final class AuthorizationUtil {
           datasetTypesMapping.put(transformer.apply(info), info);
         }
       }
-      datasetTypesMapping.keySet().retainAll(accessEnforcer.isVisible(datasetTypesMapping.keySet(), principal));
+      datasetTypesMapping.keySet()
+          .retainAll(accessEnforcer.isVisible(datasetTypesMapping.keySet(), principal));
       visibleEntities.addAll(datasetTypesMapping.values());
     }
     return Collections.unmodifiableList(visibleEntities);
@@ -88,11 +90,13 @@ public final class AuthorizationUtil {
    * Checks if authorization is enabled
    */
   public static boolean isSecurityAuthorizationEnabled(CConfiguration cConf) {
-    return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(
+        Constants.Security.Authorization.ENABLED);
   }
 
   /**
-   * Helper function, to run the callable as the principal provided and reset back when the call is done
+   * Helper function, to run the callable as the principal provided and reset back when the call is
+   * done
    */
   public static <T> T authorizeAs(String userName, Callable<T> callable) throws Exception {
     String oldUserName = SecurityRequestContext.getUserId();
@@ -105,16 +109,17 @@ public final class AuthorizationUtil {
   }
 
   /**
-   * Helper function to get the authorizing user for app deployment, the authorzing user will be the app owner if it
-   * is present. If not, it will be the namespace owner. If that is also not present, it will be the user who is making
-   * the request
+   * Helper function to get the authorizing user for app deployment, the authorzing user will be the
+   * app owner if it is present. If not, it will be the namespace owner. If that is also not
+   * present, it will be the user who is making the request
    */
-  public static String getAppAuthorizingUser(OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext,
-                                             ApplicationId applicationId,
-                                             @Nullable KerberosPrincipalId appOwner) throws IOException {
+  public static String getAppAuthorizingUser(OwnerAdmin ownerAdmin,
+      AuthenticationContext authenticationContext,
+      ApplicationId applicationId,
+      @Nullable KerberosPrincipalId appOwner) throws IOException {
     KerberosPrincipalId effectiveOwner =
-      SecurityUtil.getEffectiveOwner(ownerAdmin, applicationId.getNamespaceId(),
-                                     appOwner == null ? null : appOwner.getPrincipal());
+        SecurityUtil.getEffectiveOwner(ownerAdmin, applicationId.getNamespaceId(),
+            appOwner == null ? null : appOwner.getPrincipal());
 
     // CDAP-13154 If impersonation is configured for either the application or namespace the effective owner will be
     // a kerberos principal which can have different form
@@ -122,29 +127,32 @@ public final class AuthorizationUtil {
     // a complete principal name (alice/somehost.net@someREALM). For authorization we need the enforcement to happen
     // on the username and not the complete principal. The user name is the shortname of the principal so return the
     // shortname as authorizing user.
-    String appAuthorizingUser = effectiveOwner != null ?
-      new KerberosName(effectiveOwner.getPrincipal()).getShortName() : authenticationContext.getPrincipal().getName();
+    String appAuthorizingUser = effectiveOwner != null
+        ? new KerberosName(effectiveOwner.getPrincipal()).getShortName()
+        : authenticationContext.getPrincipal().getName();
     LOG.trace("Returning {} as authorizing app user for {}", appAuthorizingUser, applicationId);
     return appAuthorizingUser;
   }
 
   /**
-   * Get the effective master user, if it is specified in the {@link CConfiguration}, use it. Otherwise, use the
-   * current login user. If security is not enabled, null is returned.
+   * Get the effective master user, if it is specified in the {@link CConfiguration}, use it.
+   * Otherwise, use the current login user. If security is not enabled, null is returned.
    */
   @Nullable
   public static String getEffectiveMasterUser(CConfiguration cConf) {
     String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     try {
       if (isSecurityAuthorizationEnabled(cConf)) {
-        masterPrincipal = masterPrincipal == null ? UserGroupInformation.getLoginUser().getShortUserName() :
-          new KerberosName(masterPrincipal).getShortName();
+        masterPrincipal =
+            masterPrincipal == null ? UserGroupInformation.getLoginUser().getShortUserName() :
+                new KerberosName(masterPrincipal).getShortName();
       } else {
         masterPrincipal = null;
       }
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to translate the principal name %s to an operating system " +
-                                                 "user name.", masterPrincipal), e);
+      throw new RuntimeException(
+          String.format("Failed to translate the principal name %s to an operating system "
+              + "user name.", masterPrincipal), e);
     }
     return masterPrincipal;
   }

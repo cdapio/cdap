@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal;
 
 /**
- * Collections of user errors key. 
+ * Collections of user errors key.
  */
 public final class UserErrors {
 

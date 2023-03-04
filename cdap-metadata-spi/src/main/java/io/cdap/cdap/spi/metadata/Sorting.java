@@ -28,7 +28,7 @@ public class Sorting {
   /**
    * Whether to sort in ascending or descending order.
    */
-  public enum Order { ASC, DESC }
+  public enum Order {ASC, DESC}
 
   private final String key;
   private final Order order;
@@ -59,8 +59,8 @@ public class Sorting {
       return false;
     }
     Sorting sorting = (Sorting) o;
-    return Objects.equals(key, sorting.key) &&
-      order == sorting.order;
+    return Objects.equals(key, sorting.key)
+        && order == sorting.order;
   }
 
   @Override
@@ -81,7 +81,9 @@ public class Sorting {
       return new Sorting(parts[0], Order.valueOf(parts[1].toUpperCase()));
     } else {
       throw new IllegalArgumentException(
-        String.format("Invalid value '%s' for Sorting. It must be of the form '<fieldname> [ ASC | DESC ]'", str));
+          String.format(
+              "Invalid value '%s' for Sorting. It must be of the form '<fieldname> [ ASC | DESC ]'",
+              str));
     }
   }
 

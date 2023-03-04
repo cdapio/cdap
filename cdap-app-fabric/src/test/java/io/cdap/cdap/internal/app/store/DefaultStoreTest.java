@@ -696,8 +696,8 @@ public abstract class DefaultStoreTest {
     for (RunCountResult runCountResult : result) {
       ProgramReference programReference = runCountResult.getProgramReference();
       Long count = runCountResult.getCount();
-      if (programReference.equals(nonExistingAppProgramId.getProgramReference()) ||
-        programReference.equals(nonExistingProgramId.getProgramReference())) {
+      if (programReference.equals(nonExistingAppProgramId.getProgramReference())
+          || programReference.equals(nonExistingProgramId.getProgramReference())) {
         Assert.assertNull(count);
         Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
       } else {
@@ -1162,16 +1162,16 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveApplication() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n" +
-                         "\"offset\" : 12345\n" +
-                         "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n"
+        + "\"offset\" : 12345\n"
+        + "}").getBytes(StandardCharsets.UTF_8);
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
-                                                  new ChangeDetail(null, null, null,
-                                                                   System.currentTimeMillis()));
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()));
     store.addApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, spec.getName(), stateKey, stateValue));
 
@@ -1188,17 +1188,17 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveAll() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n" +
-                         "\"offset\" : 12345\n" +
-                         "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n"
+        + "\"offset\" : 12345\n"
+        + "}").getBytes(StandardCharsets.UTF_8);
     String appName = "application1";
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(appName);
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
-                                                  new ChangeDetail(null, null, null,
-                                                                   System.currentTimeMillis()));
+        new ChangeDetail(null, null, null,
+            System.currentTimeMillis()));
     store.addApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, appName, stateKey, stateValue));
 

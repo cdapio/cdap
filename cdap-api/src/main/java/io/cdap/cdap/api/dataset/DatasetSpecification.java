@@ -25,20 +25,17 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
- * A {@link DatasetSpecification} is a hierarchical meta data object that contains all
- * meta data needed to instantiate a dataset at runtime. It is hierarchical
- * because it also contains the specification for any underlying datasets that
- * are used in the implementation of the dataset. {@link DatasetSpecification}
- * consists of:
+ * A {@link DatasetSpecification} is a hierarchical meta data object that contains all meta data
+ * needed to instantiate a dataset at runtime. It is hierarchical because it also contains the
+ * specification for any underlying datasets that are used in the implementation of the dataset.
+ * {@link DatasetSpecification} consists of:
  * <li>fixed fields such as the dataset instance name and the dataset type name</li>
  * <li>custom string properties that vary from dataset to dataset,
- *   and that the dataset implementation depends on</li>
+ * and that the dataset implementation depends on</li>
  * <li>a {@link DatasetSpecification} for each underlying dataset. For instance,
- *   if a dataset implements an indexed table using two base Tables,
- *   one for the data and one for the index, then these two tables have
- *   their own spec, which must be carried along with the spec for the
- *   indexed table.</li>
- * {@link DatasetSpecification} uses a builder pattern for construction.
+ * if a dataset implements an indexed table using two base Tables, one for the data and one for the
+ * index, then these two tables have their own spec, which must be carried along with the spec for
+ * the indexed table.</li> {@link DatasetSpecification} uses a builder pattern for construction.
  */
 public final class DatasetSpecification {
 
@@ -63,21 +60,23 @@ public final class DatasetSpecification {
 
   /**
    * Private constructor, only to be used by the builder.
+   *
    * @param name the name of the dataset
    * @param type the type of the dataset
    * @param properties the custom properties
    * @param datasetSpecs the specs of embedded datasets
    */
   private DatasetSpecification(String name,
-                               String type,
-                               @Nullable String description,
-                               SortedMap<String, String> properties,
-                               SortedMap<String, DatasetSpecification> datasetSpecs) {
+      String type,
+      @Nullable String description,
+      SortedMap<String, String> properties,
+      SortedMap<String, DatasetSpecification> datasetSpecs) {
     this(name, type, description, null, properties, datasetSpecs);
   }
 
   /**
    * Private constructor, only to be used by static method setOriginalProperties.
+   *
    * @param name the name of the dataset
    * @param type the type of the dataset
    * @param description the description of dataset
@@ -85,22 +84,23 @@ public final class DatasetSpecification {
    * @param datasetSpecs the specs of embedded datasets
    */
   private DatasetSpecification(String name,
-                               String type,
-                               @Nullable String description,
-                               @Nullable Map<String, String> originalProperties,
-                               SortedMap<String, String> properties,
-                               SortedMap<String, DatasetSpecification> datasetSpecs) {
+      String type,
+      @Nullable String description,
+      @Nullable Map<String, String> originalProperties,
+      SortedMap<String, String> properties,
+      SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
     this.description = description;
     this.properties = Collections.unmodifiableSortedMap(new TreeMap<>(properties));
     this.originalProperties = originalProperties == null ? null :
-      Collections.unmodifiableMap(new TreeMap<>(originalProperties));
+        Collections.unmodifiableMap(new TreeMap<>(originalProperties));
     this.datasetSpecs = Collections.unmodifiableSortedMap(new TreeMap<>(datasetSpecs));
   }
 
   /**
    * Returns the name of the dataset.
+   *
    * @return the name of the dataset
    */
   public String getName() {
@@ -109,6 +109,7 @@ public final class DatasetSpecification {
 
   /**
    * Returns the type of the dataset.
+   *
    * @return the type of the dataset
    */
   public String getType() {
@@ -117,6 +118,7 @@ public final class DatasetSpecification {
 
   /**
    * Returns the description of dataset.
+   *
    * @return the description of dataset
    */
   @Nullable
@@ -126,6 +128,7 @@ public final class DatasetSpecification {
 
   /**
    * Lookup a custom property of the dataset.
+   *
    * @param key the name of the property
    * @return the value of the property or {@code null} if the property does not exist
    */
@@ -136,6 +139,7 @@ public final class DatasetSpecification {
 
   /**
    * Lookup a custom property of the dataset.
+   *
    * @param key the name of the property
    * @param defaultValue the value to return if property does not exist
    * @return the value of the property or defaultValue if the property does not exist
@@ -146,6 +150,7 @@ public final class DatasetSpecification {
 
   /**
    * Lookup a custom property of the dataset.
+   *
    * @param key the name of the property
    * @param defaultValue the value to return if property does not exist
    * @return the value of the property or defaultValue if the property does not exist
@@ -156,6 +161,7 @@ public final class DatasetSpecification {
 
   /**
    * Lookup a custom property of the dataset.
+   *
    * @param key the name of the property
    * @param defaultValue the value to return if property does not exist
    * @return the value of the property or defaultValue if the property does not exist
@@ -166,6 +172,7 @@ public final class DatasetSpecification {
 
   /**
    * Return the original properties with which the dataset was created/reconfigured.
+   *
    * @return an immutable map. For embedded datasets, this will always return null.
    */
   @Nullable
@@ -175,6 +182,7 @@ public final class DatasetSpecification {
 
   /**
    * Return map of all properties set in this specification.
+   *
    * @return an immutable map.
    */
   public Map<String, String> getProperties() {
@@ -183,9 +191,9 @@ public final class DatasetSpecification {
 
   /**
    * Get the specification for an embedded dataset.
+   *
    * @param dsName the name of the embedded dataset
-   * @return the specification for the named embedded dataset,
-   *    or null if not found.
+   * @return the specification for the named embedded dataset, or null if not found.
    */
   public DatasetSpecification getSpecification(String dsName) {
     return datasetSpecs.get(dsName);
@@ -193,6 +201,7 @@ public final class DatasetSpecification {
 
   /**
    * Get the map of embedded dataset name to {@link io.cdap.cdap.api.dataset.DatasetSpecification}
+   *
    * @return the map of dataset name to {@link io.cdap.cdap.api.dataset.DatasetSpecification}
    */
   public SortedMap<String, DatasetSpecification> getSpecifications() {
@@ -200,21 +209,25 @@ public final class DatasetSpecification {
   }
 
   /**
-   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   * @return a new spec that is the same as this one, with the original properties set to the
+   *     provided properties.
    */
   public DatasetSpecification setOriginalProperties(DatasetProperties originalProps) {
     return setOriginalProperties(originalProps.getProperties());
   }
 
   /**
-   * @return a new spec that is the same as this one, with the original properties set to the provided properties.
+   * @return a new spec that is the same as this one, with the original properties set to the
+   *     provided properties.
    */
   public DatasetSpecification setOriginalProperties(Map<String, String> originalProps) {
-    return new DatasetSpecification(name, type, description, originalProps, properties, datasetSpecs);
+    return new DatasetSpecification(name, type, description, originalProps, properties,
+        datasetSpecs);
   }
 
   public DatasetSpecification setDescription(String description) {
-    return new DatasetSpecification(name, type, description, originalProperties, properties, datasetSpecs);
+    return new DatasetSpecification(name, type, description, originalProperties, properties,
+        datasetSpecs);
   }
 
   @Override
@@ -226,12 +239,12 @@ public final class DatasetSpecification {
       return false;
     }
     DatasetSpecification that = (DatasetSpecification) o;
-    return Objects.equals(name, that.name) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(originalProperties, that.originalProperties) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(datasetSpecs, that.datasetSpecs);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(description, that.description)
+        && Objects.equals(originalProperties, that.originalProperties)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(datasetSpecs, that.datasetSpecs);
   }
 
   @Override
@@ -240,11 +253,12 @@ public final class DatasetSpecification {
   }
 
   /**
-   * Returns true if the datasetName is the name of a non-composite dataset represented by this spec.
-   * That is, it is represented by one of the leaf-nodes of this dataset spec.
+   * Returns true if the datasetName is the name of a non-composite dataset represented by this
+   * spec. That is, it is represented by one of the leaf-nodes of this dataset spec.
+   *
    * @param datasetName the name of a dataset
    * @return <code>true</code> if the datasetName is represented by the dataset spec;
-   *         <code>false</code> otherwise
+   *     <code>false</code> otherwise
    */
   public boolean isParent(String datasetName) {
     return isParent(datasetName, this);
@@ -254,31 +268,34 @@ public final class DatasetSpecification {
     if (datasetName == null) {
       return false;
     }
-    if (specification.getSpecifications().size() == 0 && specification.getName().equals(datasetName)) {
+    if (specification.getSpecifications().size() == 0 && specification.getName()
+        .equals(datasetName)) {
       return true;
     }
     if (datasetName.startsWith(specification.getName())) {
-      return specification.getSpecifications().values().stream().anyMatch(spec -> isParent(datasetName, spec));
+      return specification.getSpecifications().values().stream()
+          .anyMatch(spec -> isParent(datasetName, spec));
     }
-    return  false;
+    return false;
   }
 
   @Override
   public String toString() {
-    return "DatasetSpecification{" +
-      "name='" + name + '\'' +
-      ", type='" + type + '\'' +
-      ", description='" + description + '\'' +
-      ", originalProperties=" + originalProperties +
-      ", properties=" + properties +
-      ", datasetSpecs=" + datasetSpecs +
-      '}';
+    return "DatasetSpecification{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", description='" + description + '\''
+        + ", originalProperties=" + originalProperties
+        + ", properties=" + properties
+        + ", datasetSpecs=" + datasetSpecs
+        + '}';
   }
 
   /**
    * A Builder to construct DatasetSpecification instances.
    */
   public static final class Builder {
+
     // private fields
     private final String name;
     private final String type;
@@ -294,8 +311,8 @@ public final class DatasetSpecification {
     }
 
     /**
-     * Set the dataset description.
-     * This description will be overridden by the description set during dataset instance creation.
+     * Set the dataset description. This description will be overridden by the description set
+     * during dataset instance creation.
      *
      * @param description dataset description
      * @return this builder object to allow chaining
@@ -307,6 +324,7 @@ public final class DatasetSpecification {
 
     /**
      * Add underlying dataset specs.
+     *
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
@@ -316,6 +334,7 @@ public final class DatasetSpecification {
 
     /**
      * Add underlying dataset specs.
+     *
      * @param specs specs to add
      * @return this builder object to allow chaining
      */
@@ -328,6 +347,7 @@ public final class DatasetSpecification {
 
     /**
      * Add a custom property.
+     *
      * @param key the name of the custom property
      * @param value the value of the custom property
      * @return this builder object to allow chaining
@@ -339,6 +359,7 @@ public final class DatasetSpecification {
 
     /**
      * Add properties.
+     *
      * @param props properties to add
      * @return this builder object to allow chaining
      */
@@ -350,6 +371,7 @@ public final class DatasetSpecification {
     /**
      * Create a DataSetSpecification from this builder, using the private DataSetSpecification
      * constructor.
+     *
      * @return a complete DataSetSpecification
      */
     public DatasetSpecification build() {
@@ -357,8 +379,8 @@ public final class DatasetSpecification {
     }
 
     /**
-     * Prefixes all DataSets embedded inside the given {@link DatasetSpecification} with the name of the enclosing
-     * Dataset.
+     * Prefixes all DataSets embedded inside the given {@link DatasetSpecification} with the name of
+     * the enclosing Dataset.
      */
     private DatasetSpecification namespace(DatasetSpecification spec) {
       return namespace(null, spec);
@@ -387,7 +409,8 @@ public final class DatasetSpecification {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetSpecification(name, spec.type, spec.description, spec.properties, specifications);
+      return new DatasetSpecification(name, spec.type, spec.description, spec.properties,
+          specifications);
     }
   }
 }

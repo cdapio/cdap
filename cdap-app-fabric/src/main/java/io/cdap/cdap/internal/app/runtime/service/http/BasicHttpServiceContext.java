@@ -65,10 +65,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of HttpServiceContext which simply stores and retrieves the
- * spec provided when this class is instantiated
+ * Default implementation of HttpServiceContext which simply stores and retrieves the spec provided
+ * when this class is instantiated
  */
 public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
+
   private static final Logger LOG = LoggerFactory.getLogger(BasicHttpServiceContext.class);
 
   private final CConfiguration cConf;
@@ -82,11 +83,12 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
+   *
    * @param program program of the context.
    * @param programOptions program options for the program execution context
    * @param cConf the CDAP configuration
-   * @param spec spec of the service handler of this context. If {@code null} is provided, this context
-*             is not associated with any service handler (e.g. for the http server itself).
+   * @param spec spec of the service handler of this context. If {@code null} is provided, this
+   *     context is not associated with any service handler (e.g. for the http server itself).
    * @param instanceId instanceId of the component.
    * @param instanceCount total number of instances of the component.
    * @param metricsCollectionService metricsCollectionService to use for emitting metrics.
@@ -100,30 +102,34 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
    * @param artifactManager the {@link ArtifactManager} for getting artifacts information
    * @param metadataReader the {@link MetadataReader} for reading metadata
    * @param metadataPublisher the {@link MetadataPublisher} for writing out metadata
-   * @param namespaceQueryAdmin the {@link NamespaceQueryAdmin} for querying namespace information
+   * @param namespaceQueryAdmin the {@link NamespaceQueryAdmin} for querying namespace
+   *     information
    * @param pluginFinder the {@link PluginFinder} for plugin discovery
-   * @param fieldLineageWriter the {@link FieldLineageWriter} for writing out field level lineage
-   * @param remoteClientFactory
+   * @param fieldLineageWriter the {@link FieldLineageWriter} for writing out field level
+   *     lineage
    */
-  public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
-                                 @Nullable HttpServiceHandlerSpecification spec,
-                                 int instanceId, AtomicInteger instanceCount,
-                                 MetricsCollectionService metricsCollectionService,
-                                 DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
-                                 TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
-                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
-                                 MessagingService messagingService,
-                                 ArtifactManager artifactManager, MetadataReader metadataReader,
-                                 MetadataPublisher metadataPublisher,
-                                 NamespaceQueryAdmin namespaceQueryAdmin,
-                                 PluginFinder pluginFinder,
-                                 FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
-                                 AppStateStoreProvider appStateStoreProvider) {
-    super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
-          dsFramework, txClient, false,
-          metricsCollectionService, createMetricsTags(spec, instanceId),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+  public BasicHttpServiceContext(Program program, ProgramOptions programOptions,
+      CConfiguration cConf,
+      @Nullable HttpServiceHandlerSpecification spec,
+      int instanceId, AtomicInteger instanceCount,
+      MetricsCollectionService metricsCollectionService,
+      DatasetFramework dsFramework, DiscoveryServiceClient discoveryServiceClient,
+      TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore, SecureStoreManager secureStoreManager,
+      MessagingService messagingService,
+      ArtifactManager artifactManager, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      PluginFinder pluginFinder,
+      FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+      AppStateStoreProvider appStateStoreProvider) {
+    super(program, programOptions, cConf,
+        spec == null ? Collections.emptySet() : spec.getDatasets(),
+        dsFramework, txClient, false,
+        metricsCollectionService, createMetricsTags(spec, instanceId),
+        secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader,
+        metadataPublisher,
+        namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.cConf = cConf;
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;
@@ -134,7 +140,8 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     this.closeables = new ArrayList<>();
   }
 
-  public static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec, int instanceId) {
+  public static Map<String, String> createMetricsTags(
+      @Nullable HttpServiceHandlerSpecification spec, int instanceId) {
     Map<String, String> tags = new HashMap<>();
     tags.put(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId));
     if (spec != null) {
@@ -144,8 +151,8 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   }
 
   /**
-   * @return the {@link HttpServiceHandlerSpecification} for this context or {@code null} if there is no service
-   *         handler associated with this context.
+   * @return the {@link HttpServiceHandlerSpecification} for this context or {@code null} if there
+   *     is no service handler associated with this context.
    */
   @Nullable
   @Override
@@ -181,10 +188,11 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   @Override
   public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     try {
       File pluginsDir = Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
-      PluginInstantiator instantiator = new PluginInstantiator(cConf, getProgram().getClassLoader(), pluginsDir);
+      PluginInstantiator instantiator = new PluginInstantiator(cConf, getProgram().getClassLoader(),
+          pluginsDir);
       // this closeables will be closed after each execution of a handler event
       closeables.add(() -> {
         try {
@@ -193,8 +201,9 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
           DirUtils.deleteDirectoryContents(pluginsDir, true);
         }
       });
-      return new DefaultServicePluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder,
-                                                getProgram().getClassLoader());
+      return new DefaultServicePluginConfigurer(artifactId, new NamespaceId(namespace),
+          instantiator, pluginFinder,
+          getProgram().getClassLoader());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -212,20 +221,21 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
 
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, AccessException {
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
     return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, AccessException {
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 
   /**
-   * Releases resources that were created for an endpoint call but are no longer needed for future calls.
+   * Releases resources that were created for an endpoint call but are no longer needed for future
+   * calls.
    */
   public void releaseCallResources() {
     for (Closeable closeable : closeables) {

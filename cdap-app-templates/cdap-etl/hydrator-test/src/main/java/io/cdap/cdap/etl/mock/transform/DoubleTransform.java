@@ -35,6 +35,7 @@ import java.util.Map;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Double")
 public class DoubleTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
@@ -44,7 +45,8 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     emitter.emit(input);
     emitter.emit(input);
   }
@@ -56,6 +58,7 @@ public class DoubleTransform extends Transform<StructuredRecord, StructuredRecor
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     return PluginClass.builder().setName("Double").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(DoubleTransform.class.getName()).setProperties(properties).build();
+        .setDescription("").setClassName(DoubleTransform.class.getName()).setProperties(properties)
+        .build();
   }
 }

@@ -26,12 +26,13 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
  * Batch Joiner context
  */
 public class DefaultJoinerContext extends AbstractBatchContext implements BatchJoinerContext {
+
   private Integer numPartitions;
   private Class<?> joinKeyClass;
   private Class<?> joinInputRecordClass;
 
   public DefaultJoinerContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
-                              DatasetContext datasetContext, Admin admin) {
+      DatasetContext datasetContext, Admin admin) {
     super(pipelineRuntime, stageSpec, datasetContext, admin);
   }
 
@@ -39,7 +40,7 @@ public class DefaultJoinerContext extends AbstractBatchContext implements BatchJ
   public void setNumPartitions(int numPartitions) {
     if (numPartitions < 1) {
       throw new IllegalArgumentException(String.format(
-        "Invalid value for numPartitions %d. It must be a positive integer.", numPartitions));
+          "Invalid value for numPartitions %d. It must be a positive integer.", numPartitions));
     }
     this.numPartitions = numPartitions;
   }

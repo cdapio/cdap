@@ -26,18 +26,21 @@ import java.io.IOException;
 import org.apache.twill.filesystem.Location;
 
 /**
- * {@link RemoteArtifactRepositoryWithLocalization} is an extension of {@link RemoteArtifactRepository}
- * that localizes artifacts and use their local locations in returned values.
+ * {@link RemoteArtifactRepositoryWithLocalization} is an extension of {@link
+ * RemoteArtifactRepository} that localizes artifacts and use their local locations in returned
+ * values.
  *
- * This implementation uses {@link ArtifactLocalizerClient} to download and cache artifacts on the local
- * file system.
+ * This implementation uses {@link ArtifactLocalizerClient} to download and cache artifacts on the
+ * local file system.
  */
 public class RemoteArtifactRepositoryWithLocalization extends RemoteArtifactRepository {
+
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
-  RemoteArtifactRepositoryWithLocalization(CConfiguration cConf, ArtifactRepositoryReader artifactRepositoryReader,
-                                           ArtifactLocalizerClient artifactLocalizerClient) {
+  RemoteArtifactRepositoryWithLocalization(CConfiguration cConf,
+      ArtifactRepositoryReader artifactRepositoryReader,
+      ArtifactLocalizerClient artifactLocalizerClient) {
     super(cConf, artifactRepositoryReader);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
@@ -45,8 +48,8 @@ public class RemoteArtifactRepositoryWithLocalization extends RemoteArtifactRepo
   @Override
   protected Location getArtifactLocation(ArtifactDescriptor descriptor) throws IOException {
     ArtifactId artifactId = new ArtifactId(descriptor.getNamespace(),
-                       descriptor.getArtifactId().getName(),
-                       descriptor.getArtifactId().getVersion().getVersion());
+        descriptor.getArtifactId().getName(),
+        descriptor.getArtifactId().getVersion().getVersion());
     try {
       return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
     } catch (ArtifactNotFoundException e) {

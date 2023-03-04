@@ -25,12 +25,13 @@ import java.util.concurrent.atomic.AtomicLong;
  * Support Bundle task state to record the task status.
  */
 public class RunningTaskState {
+
   private final Future<SupportBundleTaskStatus> future;
   private final AtomicLong startTime;
   private final SupportBundleTaskStatus taskStatus;
 
   public RunningTaskState(Future<SupportBundleTaskStatus> future, AtomicLong startTime,
-                          SupportBundleTaskStatus taskStatus) {
+      SupportBundleTaskStatus taskStatus) {
     this.future = future;
     this.startTime = startTime;
     this.taskStatus = taskStatus;

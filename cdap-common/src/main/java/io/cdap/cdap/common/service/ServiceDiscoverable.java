@@ -33,33 +33,40 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utility class to generate the service discoverable name (used for registering and discovering service endpoints in
- * ZooKeeper)
+ * Utility class to generate the service discoverable name (used for registering and discovering
+ * service endpoints in ZooKeeper)
  */
 public final class ServiceDiscoverable {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceDiscoverable.class);
 
-  private static final Set<ProgramType> USER_SERVICE_TYPES = Collections.unmodifiableSet(EnumSet.of(ProgramType.SERVICE,
-                                                                                                    ProgramType.SPARK));
+  private static final Set<ProgramType> USER_SERVICE_TYPES = Collections.unmodifiableSet(
+      EnumSet.of(ProgramType.SERVICE,
+          ProgramType.SPARK));
 
   // mapping from the short discoverable component name to the program type
   private static final Map<String, ProgramType> SHORT_NAME_TO_PROGRAM_TYPE_MAPPING = new HashMap<>();
+
   static {
     for (ProgramType userServiceType : USER_SERVICE_TYPES) {
-      SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.put(userServiceType.getDiscoverableTypeName(), userServiceType);
+      SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.put(userServiceType.getDiscoverableTypeName(),
+          userServiceType);
     }
   }
 
   public static String getName(ProgramId programId) {
-    return getName(programId.getNamespace(), programId.getApplication(), programId.getType(), programId.getProgram());
+    return getName(programId.getNamespace(), programId.getApplication(), programId.getType(),
+        programId.getProgram());
   }
 
-  public static String getName(String namespaceId, String appId, ProgramType programType, String programName) {
+  public static String getName(String namespaceId, String appId, ProgramType programType,
+      String programName) {
     if (!USER_SERVICE_TYPES.contains(programType)) {
-      throw new IllegalArgumentException("Program type should be one of " + SHORT_NAME_TO_PROGRAM_TYPE_MAPPING);
+      throw new IllegalArgumentException(
+          "Program type should be one of " + SHORT_NAME_TO_PROGRAM_TYPE_MAPPING);
     }
-    return String.format("%s.%s.%s.%s", programType.getDiscoverableTypeName(), namespaceId, appId, programName);
+    return String.format("%s.%s.%s.%s", programType.getDiscoverableTypeName(), namespaceId, appId,
+        programName);
   }
 
   public static ProgramId getId(String name) {
@@ -71,8 +78,9 @@ public final class ServiceDiscoverable {
     String appId = name.substring(secondIndex + 1, thirdIndex);
     String programName = name.substring(thirdIndex + 1);
 
-    return new ProgramId(namespaceId, appId, SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.get(programTypeShortForm),
-                         programName);
+    return new ProgramId(namespaceId, appId,
+        SHORT_NAME_TO_PROGRAM_TYPE_MAPPING.get(programTypeShortForm),
+        programName);
   }
 
   public static boolean isUserService(String discoverableName) {
@@ -94,7 +102,8 @@ public final class ServiceDiscoverable {
   /**
    * Creates a base {@link URL} for calling user service based on the given {@link Discoverable}.
    *
-   * @return a {@link URL} or {@code null} if the discoverable is {@code null} or failed to construct a URL.
+   * @return a {@link URL} or {@code null} if the discoverable is {@code null} or failed to
+   *     construct a URL.
    */
   @Nullable
   public static URL createServiceBaseURL(@Nullable Discoverable discoverable, ProgramId programId) {
@@ -104,9 +113,9 @@ public final class ServiceDiscoverable {
 
     try {
       return URIScheme.createURI(discoverable, "%s/namespaces/%s/apps/%s/%s/%s/methods/",
-                                 Constants.Gateway.API_VERSION_3_TOKEN, programId.getNamespace(),
-                                 programId.getApplication(), programId.getType().getCategoryName(),
-                                 programId.getProgram()).toURL();
+          Constants.Gateway.API_VERSION_3_TOKEN, programId.getNamespace(),
+          programId.getApplication(), programId.getType().getCategoryName(),
+          programId.getProgram()).toURL();
     } catch (MalformedURLException e) {
       // This shouldn't happen
       LOG.error("Got exception while creating serviceURL", e);

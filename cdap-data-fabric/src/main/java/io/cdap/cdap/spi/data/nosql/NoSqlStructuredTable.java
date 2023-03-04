@@ -64,12 +64,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Nosql structured table implementation. This table will prepend the table name as the prefix for each row key.
+ * Nosql structured table implementation. This table will prepend the table name as the prefix for
+ * each row key.
  */
 public final class NoSqlStructuredTable implements StructuredTable {
+
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTable.class);
   private static final Logger LOG_RATE_LIMITED =
-    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(10L)));
+      Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(10L)));
   private final IndexedTable table;
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
@@ -108,38 +110,40 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
-                                      Collection<String> columns) throws InvalidFieldException {
+      Collection<String> columns) throws InvalidFieldException {
     LOG.trace("Table {}: Read with keys {} and columns {}", schema.getTableId(), keys, columns);
     if (columns == null || columns.isEmpty()) {
       throw new IllegalArgumentException("No columns are specified to read");
     }
     Row row = table.get(convertKeyToBytes(keys, false),
-                        convertColumnsToBytes(columns));
+        convertColumnsToBytes(columns));
     return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
   @Override
   public Collection<StructuredRow> multiRead(Collection<? extends Collection<Field<?>>> multiKeys)
-    throws InvalidFieldException {
+      throws InvalidFieldException {
     List<Get> gets = multiKeys.stream()
-      .map(k -> convertKeyToBytes(k, false))
-      .map(Get::new)
-      .collect(Collectors.toList());
+        .map(k -> convertKeyToBytes(k, false))
+        .map(Get::new)
+        .collect(Collectors.toList());
     return table.get(gets).stream()
-      .filter(r -> !r.isEmpty())
-      .map(r -> new NoSqlStructuredRow(r, schema))
-      .collect(Collectors.toList());
+        .filter(r -> !r.isEmpty())
+        .map(r -> new NoSqlStructuredRow(r, schema))
+        .collect(Collectors.toList());
   }
 
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit)
+      throws InvalidFieldException {
     LOG.trace("Table {}: Scan range {} with limit {}", schema.getTableId(), keyRange, limit);
-    return new LimitIterator(Collections.singleton(getFilterByRangeIterator(keyRange)).iterator(), limit);
+    return new LimitIterator(Collections.singleton(getFilterByRangeIterator(keyRange)).iterator(),
+        limit);
   }
 
   /**
-   * Scan the nosql db with a key range. It gets the longest prefix keys,
-   * scan the DB and do a post filtering on the result.
+   * Scan the nosql db with a key range. It gets the longest prefix keys, scan the DB and do a post
+   * filtering on the result.
    *
    * @param keyRange prefix key range to scan
    * @return the iterator after filtering
@@ -156,11 +160,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     // TODO: remove this warning after CDAP-20177
-    LOG_RATE_LIMITED.warn("Potential performance impact while scanning table {} with range {} " +
-                            "which does in-memory filtering with filterRange {}",
-                          schema.getTableId(), keyRange, filterRange);
+    LOG_RATE_LIMITED.warn("Potential performance impact while scanning table {} with range {} "
+            + "which does in-memory filtering with filterRange {}",
+        schema.getTableId(), keyRange, filterRange);
     return new FilterByRangeIterator(Collections.singleton(scannerIterator).iterator(),
-                                     Collections.singleton(filterRange));
+        Collections.singleton(filterRange));
   }
 
   private Range getLongestPrefixRange(Range range) {
@@ -174,14 +178,14 @@ public final class NoSqlStructuredTable implements StructuredTable {
     // KEY: "ns1" should be INCLUSIVE while scanning
     // The longest prefix range should only be EXCLUSIVE when there's no keyholes and bound is EXCLUSIVE
     Range.Bound beginBound =
-      beginPrefixKeys.size() == range.getBegin().size()
-        && range.getBeginBound() == Range.Bound.EXCLUSIVE
-        ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
+        beginPrefixKeys.size() == range.getBegin().size()
+            && range.getBeginBound() == Range.Bound.EXCLUSIVE
+            ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
 
     Range.Bound endBound =
-      endPrefixKeys.size() == range.getEnd().size()
-        && range.getEndBound() == Range.Bound.EXCLUSIVE
-        ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
+        endPrefixKeys.size() == range.getEnd().size()
+            && range.getEndBound() == Range.Bound.EXCLUSIVE
+            ? Range.Bound.EXCLUSIVE : Range.Bound.INCLUSIVE;
 
     return Range.create(beginPrefixKeys, beginBound, endPrefixKeys, endBound);
   }
@@ -190,15 +194,16 @@ public final class NoSqlStructuredTable implements StructuredTable {
     List<Field<?>> beginFilterKeys = getFilterKeys(keyRange.getBegin(), prefixRange.getBegin());
     List<Field<?>> endFilterKeys = getFilterKeys(keyRange.getEnd(), prefixRange.getEnd());
 
-    return Range.create(beginFilterKeys, keyRange.getBeginBound(), endFilterKeys, keyRange.getEndBound());
+    return Range.create(beginFilterKeys, keyRange.getBeginBound(), endFilterKeys,
+        keyRange.getEndBound());
   }
 
   private List<Field<?>> getFilterKeys(Collection<Field<?>> keys, Collection<Field<?>> prefixKeys) {
     Set<String> prefixKeysSet = prefixKeys.stream().map(Field::getName).collect(Collectors.toSet());
 
     return keys.stream()
-      .filter(key -> !prefixKeysSet.contains(key.getName()))
-      .collect(Collectors.toList());
+        .filter(key -> !prefixKeysSet.contains(key.getName()))
+        .collect(Collectors.toList());
   }
 
   private List<Field<?>> getPrefixPrimaryKeys(Collection<Field<?>> partialKeys) {
@@ -219,15 +224,19 @@ public final class NoSqlStructuredTable implements StructuredTable {
    *  Sorting in memory for the no-sql implementation. We sort post table scan.
    * */
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField, SortOrder sortOrder)
-    throws InvalidFieldException, IOException {
-    LOG.trace("Table {}: Scan range {} with limit {}, sort field {} and sort order {}", schema.getTableId(),
-              keyRange, limit, orderByField, sortOrder);
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, String orderByField,
+      SortOrder sortOrder)
+      throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Scan range {} with limit {}, sort field {} and sort order {}",
+        schema.getTableId(),
+        keyRange, limit, orderByField, sortOrder);
     if (!schema.isIndexColumn(orderByField) && !schema.isPrimaryKeyColumn(orderByField)) {
-      throw new InvalidFieldException(schema.getTableId(), orderByField, "is not an indexed column or primary key");
+      throw new InvalidFieldException(schema.getTableId(), orderByField,
+          "is not an indexed column or primary key");
     }
-    Comparator<StructuredRow> comparator = sortOrder.equals(SortOrder.ASC) ? getComparator(orderByField) :
-      getComparator(orderByField).reversed();
+    Comparator<StructuredRow> comparator =
+        sortOrder.equals(SortOrder.ASC) ? getComparator(orderByField) :
+            getComparator(orderByField).reversed();
     PriorityQueue<StructuredRow> rows = new PriorityQueue<>(comparator);
 
     try (CloseableIterator<StructuredRow> filterIterator = getFilterByRangeIterator(keyRange)) {
@@ -254,28 +263,34 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   private Comparator<StructuredRow> getComparator(String orderByField)
-    throws InvalidFieldException {
+      throws InvalidFieldException {
     switch (schema.getType(orderByField)) {
       case INTEGER:
-        return (row1, row2) -> Objects.compare(row1.getInteger(orderByField), row2.getInteger(orderByField),
-                                               Integer::compare);
+        return (row1, row2) -> Objects.compare(row1.getInteger(orderByField),
+            row2.getInteger(orderByField),
+            Integer::compare);
       case LONG:
-        return (row1, row2) -> Objects.compare(row1.getLong(orderByField), row2.getLong(orderByField), Long::compare);
+        return (row1, row2) -> Objects.compare(row1.getLong(orderByField),
+            row2.getLong(orderByField), Long::compare);
       case FLOAT:
-        return (row1, row2) -> Objects.compare(row1.getFloat(orderByField), row2.getFloat(orderByField),
-                                               Float::compare);
+        return (row1, row2) -> Objects.compare(row1.getFloat(orderByField),
+            row2.getFloat(orderByField),
+            Float::compare);
       case DOUBLE:
-        return (row1, row2) -> Objects.compare(row1.getDouble(orderByField), row2.getDouble(orderByField),
-                                               Double::compare);
+        return (row1, row2) -> Objects.compare(row1.getDouble(orderByField),
+            row2.getDouble(orderByField),
+            Double::compare);
       case STRING:
-        return (row1, row2) -> Objects.compare(row1.getString(orderByField), row2.getString(orderByField),
-                                               String::compareTo);
+        return (row1, row2) -> Objects.compare(row1.getString(orderByField),
+            row2.getString(orderByField),
+            String::compareTo);
       case BYTES:
         return (row1, row2) -> new Bytes.ByteArrayComparator().compare(row1.getBytes(orderByField),
-                                                                       row2.getBytes(orderByField));
+            row2.getBytes(orderByField));
       case BOOLEAN:
-        return (row1, row2) -> Objects.compare(row1.getBoolean(orderByField), row2.getBoolean(orderByField),
-                                               Boolean::compareTo);
+        return (row1, row2) -> Objects.compare(row1.getBoolean(orderByField),
+            row2.getBoolean(orderByField),
+            Boolean::compareTo);
       default:
         throw new InvalidFieldException(schema.getTableId(), orderByField);
     }
@@ -285,16 +300,19 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * Filtering post table scan.
    * */
   @Override
-  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit, Collection<Field<?>> filterIndexes)
-    throws InvalidFieldException, IOException {
+  public CloseableIterator<StructuredRow> scan(Range keyRange, int limit,
+      Collection<Field<?>> filterIndexes)
+      throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Scan range {} with limit {} and index {}", schema.getTableId(),
-              keyRange, limit, filterIndexes);
+        keyRange, limit, filterIndexes);
     filterIndexes.forEach(fieldValidator::validateField);
-    if (!schema.isIndexColumns(filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
-      throw new InvalidFieldException(schema.getTableId(), filterIndexes, "are not all indexed columns");
+    if (!schema.isIndexColumns(
+        filterIndexes.stream().map(Field::getName).collect(Collectors.toList()))) {
+      throw new InvalidFieldException(schema.getTableId(), filterIndexes,
+          "are not all indexed columns");
     }
     FilterByFieldIterator filterByIndexIterator =
-      new FilterByFieldIterator(getFilterByRangeIterator(keyRange), filterIndexes, schema);
+        new FilterByFieldIterator(getFilterByRangeIterator(keyRange), filterIndexes, schema);
     return new LimitIterator(Collections.singleton(filterByIndexIterator).iterator(), limit);
   }
 
@@ -305,7 +323,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * */
   @Override
   public CloseableIterator<StructuredRow> multiScan(Collection<Range> keyRanges, int limit)
-    throws InvalidFieldException, IOException {
+      throws InvalidFieldException, IOException {
 
     if (keyRanges.isEmpty()) {
       return CloseableIterator.empty();
@@ -317,37 +335,38 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     FilterByRangeIterator filterIterator =
-      new FilterByRangeIterator(getPrefixRangeScannerIterator(keyRanges), keyRanges);
+        new FilterByRangeIterator(getPrefixRangeScannerIterator(keyRanges), keyRanges);
     return new LimitIterator(filterIterator, limit);
   }
 
   /*
    * Merge the longest prefix ranges and scan one by one
    * */
-  private AbstractIterator<ScannerIterator> getPrefixRangeScannerIterator(Collection<Range> keyRanges) {
+  private AbstractIterator<ScannerIterator> getPrefixRangeScannerIterator(
+      Collection<Range> keyRanges) {
     Deque<ImmutablePair<byte[], byte[]>> scanKeys = new LinkedList<>();
     // Sort the scan keys by the start key and merge overlapping ranges.
     keyRanges.stream()
-      .map(this::getLongestPrefixRange)
-      .map(this::createScanKeys)
-      .sorted((o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst()))
-      .forEach(range -> {
-        if (scanKeys.isEmpty()) {
-          scanKeys.add(range);
-        } else {
-          ImmutablePair<byte[], byte[]> last = scanKeys.getLast();
-          if (Bytes.compareTo(last.getSecond(), range.getFirst()) < 0) {
-            // No overlap
+        .map(this::getLongestPrefixRange)
+        .map(this::createScanKeys)
+        .sorted((o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst()))
+        .forEach(range -> {
+          if (scanKeys.isEmpty()) {
             scanKeys.add(range);
           } else {
-            // Combine overlapping ranges
-            scanKeys.pollLast();
-            byte[] end = Bytes.compareTo(last.getSecond(), range.getSecond()) > 0
-              ? last.getSecond() : range.getSecond();
-            scanKeys.addLast(ImmutablePair.of(last.getFirst(), end));
+            ImmutablePair<byte[], byte[]> last = scanKeys.getLast();
+            if (Bytes.compareTo(last.getSecond(), range.getFirst()) < 0) {
+              // No overlap
+              scanKeys.add(range);
+            } else {
+              // Combine overlapping ranges
+              scanKeys.pollLast();
+              byte[] end = Bytes.compareTo(last.getSecond(), range.getSecond()) > 0
+                  ? last.getSecond() : range.getSecond();
+              scanKeys.addLast(ImmutablePair.of(last.getFirst(), end));
+            }
           }
-        }
-      });
+        });
 
     Iterator<ImmutablePair<byte[], byte[]>> rangeIterator = scanKeys.iterator();
     return new AbstractIterator<ScannerIterator>() {
@@ -367,46 +386,52 @@ public final class NoSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Scan index {}", schema.getTableId(), index);
     fieldValidator.validateField(index);
     if (!schema.isIndexColumn(index.getName())) {
-      throw new InvalidFieldException(schema.getTableId(), index.getName(), "is not an indexed column");
+      throw new InvalidFieldException(schema.getTableId(), index.getName(),
+          "is not an indexed column");
     }
-    Scanner scanner = table.readByIndex(convertColumnsToBytes(Collections.singleton(index.getName()))[0],
-                                        fieldToBytes(index));
+    Scanner scanner = table.readByIndex(
+        convertColumnsToBytes(Collections.singleton(index.getName()))[0],
+        fieldToBytes(index));
     return new ScannerIterator(scanner, schema);
   }
 
   @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue) {
-    LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}", schema.getTableId(), keys,
-              oldValue, newValue);
+    LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}",
+        schema.getTableId(), keys,
+        oldValue, newValue);
     fieldValidator.validateField(oldValue);
     if (oldValue.getFieldType() != newValue.getFieldType()) {
       throw new IllegalArgumentException(
-        String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
-                      oldValue.getFieldType(), newValue.getFieldType()));
+          String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
+              oldValue.getFieldType(), newValue.getFieldType()));
     }
     if (!oldValue.getName().equals(newValue.getName())) {
       throw new IllegalArgumentException(
-        String.format("Trying to compare and swap different fields. Old Value = %s, New Value = %s",
-                      oldValue, newValue));
+          String.format(
+              "Trying to compare and swap different fields. Old Value = %s, New Value = %s",
+              oldValue, newValue));
     }
     if (schema.isPrimaryKeyColumn(oldValue.getName())) {
       throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
     }
 
     return table.compareAndSwap(convertKeyToBytes(keys, false), Bytes.toBytes(oldValue.getName()),
-                                fieldToBytes(oldValue), fieldToBytes(newValue));
+        fieldToBytes(oldValue), fieldToBytes(newValue));
   }
 
   @Override
   public void increment(Collection<Field<?>> keys, String column, long amount) {
-    LOG.trace("Table {}: Increment with keys {}, column {}, amount {}", schema.getTableId(), keys, column, amount);
+    LOG.trace("Table {}: Increment with keys {}, column {}, amount {}", schema.getTableId(), keys,
+        column, amount);
     FieldType.Type colType = schema.getType(column);
     if (colType == null) {
       throw new InvalidFieldException(schema.getTableId(), column);
     } else if (colType != FieldType.Type.LONG) {
       throw new IllegalArgumentException(
-        String.format("Trying to increment a column of type %s. Only %s column type can be incremented",
-                      colType, FieldType.Type.LONG));
+          String.format(
+              "Trying to increment a column of type %s. Only %s column type can be incremented",
+              colType, FieldType.Type.LONG));
     }
     if (schema.isPrimaryKeyColumn(column)) {
       throw new IllegalArgumentException("Cannot use increment on a primary key field");
@@ -443,7 +468,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
       while (iterator.hasNext()) {
         Collection<Field<?>> primaryKeys = iterator.next().getPrimaryKeys();
         List<Field<?>> fieldsToUpdate = Stream.concat(primaryKeys.stream(), fields.stream())
-          .collect(Collectors.toList());
+            .collect(Collectors.toList());
         table.put(convertFieldsToBytes(fieldsToUpdate));
       }
     }
@@ -470,15 +495,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Convert the keys to corresponding byte array. The keys can either be a prefix or complete primary keys depending
-   * on the value of allowPrefix. The method will always prepend the table name as a prefix for the row keys.
+   * Convert the keys to corresponding byte array. The keys can either be a prefix or complete
+   * primary keys depending on the value of allowPrefix. The method will always prepend the table
+   * name as a prefix for the row keys.
    *
-   * @param keys        keys to convert
-   * @param allowPrefix true if the keys can be prefixed false if the keys have to contain all the primary keys.
+   * @param keys keys to convert
+   * @param allowPrefix true if the keys can be prefixed false if the keys have to contain all
+   *     the primary keys.
    * @return the byte array converted
    * @throws InvalidFieldException if the key are not prefix or complete primary keys
    */
-  private byte[] convertKeyToBytes(Collection<Field<?>> keys, boolean allowPrefix) throws InvalidFieldException {
+  private byte[] convertKeyToBytes(Collection<Field<?>> keys, boolean allowPrefix)
+      throws InvalidFieldException {
     fieldValidator.validatePrimaryKeys(keys, allowPrefix);
     MDSKey.Builder mdsKey = new MDSKey.Builder(keyPrefix);
     for (Field<?> key : keys) {
@@ -508,8 +536,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Convert the fields to a {@link Put} to write to table. The primary key must all be provided. The method will
-   * add the table name as prefix to the row key.
+   * Convert the fields to a {@link Put} to write to table. The primary key must all be provided.
+   * The method will add the table name as prefix to the row key.
    *
    * @param fields the fields to write
    * @return a PUT object
@@ -519,8 +547,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-                                      String.format("Given fields %s does not contain all the " +
-                                                      "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s does not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
     int numColumns = fields.size() - schema.getPrimaryKeys().size();
 
@@ -552,7 +580,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   /**
-   * Updates fields in the row and converts to a {@link Put} to write to table. The primary key must be provided.
+   * Updates fields in the row and converts to a {@link Put} to write to table. The primary key must
+   * be provided.
    *
    * @param fields the fields to update
    * @return a PUT object
@@ -562,17 +591,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
       throw new InvalidFieldException(schema.getTableId(), fields,
-                                      String.format("Given fields %s does not contain all the " +
-                                                      "primary keys %s", fieldNames, schema.getPrimaryKeys()));
+          String.format("Given fields %s does not contain all the "
+              + "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }
     Set<String> primaryKeys = new HashSet<>(schema.getPrimaryKeys());
     Collection<Field<?>> keyFields = fields.stream()
-      .filter(field -> primaryKeys.contains(field.getName())).collect(Collectors.toList());
+        .filter(field -> primaryKeys.contains(field.getName())).collect(Collectors.toList());
     byte[] primaryKey = convertKeyToBytes(keyFields, false);
     Put put = new Put(primaryKey);
     Row row = table.get(primaryKey);
 
-    Map<String, Field<?>> fieldMap = fields.stream().collect(Collectors.toMap(Field::getName, Function.identity()));
+    Map<String, Field<?>> fieldMap = fields.stream()
+        .collect(Collectors.toMap(Field::getName, Function.identity()));
     for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
       String columnName = Bytes.toString(entry.getKey());
       if (!fieldMap.containsKey(columnName) || primaryKeys.contains(columnName)) {
@@ -584,9 +614,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
     return put;
   }
 
-  private void addKey(MDSKey.Builder key, Field<?> field, FieldType.Type type) throws InvalidFieldException {
+  private void addKey(MDSKey.Builder key, Field<?> field, FieldType.Type type)
+      throws InvalidFieldException {
     if (field.getValue() == null) {
-      throw new InvalidFieldException(schema.getTableId(), field.getName(), "is a primary key and value is null");
+      throw new InvalidFieldException(schema.getTableId(), field.getName(),
+          "is a primary key and value is null");
     }
 
     switch (type) {
@@ -665,6 +697,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
    */
   @VisibleForTesting
   static final class LimitIterator extends AbstractCloseableIterator<StructuredRow> {
+
     private final Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator;
     private final int limit;
     private CloseableIterator<StructuredRow> currentScanner;
@@ -673,7 +706,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     LimitIterator(Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator, int limit) {
       this.scannerIterator = scannerIterator;
       this.limit = limit;
-      this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
+      this.currentScanner =
+          scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
     }
 
     LimitIterator(CloseableIterator<StructuredRow> scannerIterator, int limit) {
@@ -718,33 +752,41 @@ public final class NoSqlStructuredTable implements StructuredTable {
    */
   @VisibleForTesting
   static final class FilterByFieldIterator extends AbstractCloseableIterator<StructuredRow> {
+
     private final CloseableIterator<StructuredRow> scannerIterator;
     private final StructuredTableSchema schema;
     private final Collection<Predicate<StructuredRow>> predicates;
 
-    FilterByFieldIterator(CloseableIterator<StructuredRow> scannerIterator, Collection<Field<?>> filterFields,
-                          StructuredTableSchema schema) {
+    FilterByFieldIterator(CloseableIterator<StructuredRow> scannerIterator,
+        Collection<Field<?>> filterFields,
+        StructuredTableSchema schema) {
       this.scannerIterator = scannerIterator;
-      this.predicates = filterFields.stream().map(this::buildPredicate).collect(Collectors.toList());
+      this.predicates = filterFields.stream().map(this::buildPredicate)
+          .collect(Collectors.toList());
       this.schema = schema;
     }
 
     private Predicate<StructuredRow> buildPredicate(Field<?> filterField) {
       switch (filterField.getFieldType()) {
         case INTEGER:
-          return row -> Objects.equals(row.getInteger(filterField.getName()), filterField.getValue());
+          return row -> Objects.equals(row.getInteger(filterField.getName()),
+              filterField.getValue());
         case LONG:
           return row -> Objects.equals(row.getLong(filterField.getName()), filterField.getValue());
         case FLOAT:
           return row -> Objects.equals(row.getFloat(filterField.getName()), filterField.getValue());
         case DOUBLE:
-          return row -> Objects.equals(row.getDouble(filterField.getName()), filterField.getValue());
+          return row -> Objects.equals(row.getDouble(filterField.getName()),
+              filterField.getValue());
         case STRING:
-          return row -> Objects.equals(row.getString(filterField.getName()), filterField.getValue());
+          return row -> Objects.equals(row.getString(filterField.getName()),
+              filterField.getValue());
         case BYTES:
-          return row -> Arrays.equals(row.getBytes(filterField.getName()), (byte[]) filterField.getValue());
+          return row -> Arrays.equals(row.getBytes(filterField.getName()),
+              (byte[]) filterField.getValue());
         case BOOLEAN:
-          return row -> Objects.equals(row.getBoolean(filterField.getName()), filterField.getValue());
+          return row -> Objects.equals(row.getBoolean(filterField.getName()),
+              filterField.getValue());
         default:
           throw new InvalidFieldException(schema.getTableId(), filterField.getName());
       }
@@ -775,15 +817,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
    */
   @VisibleForTesting
   static final class FilterByRangeIterator extends AbstractCloseableIterator<StructuredRow> {
+
     private final Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator;
     private CloseableIterator<StructuredRow> currentScanner;
     private final Collection<Predicate<StructuredRow>> predicates;
 
     FilterByRangeIterator(Iterator<? extends CloseableIterator<StructuredRow>> scannerIterator,
-                          Collection<Range> filterRanges) {
+        Collection<Range> filterRanges) {
       this.scannerIterator = scannerIterator;
-      this.currentScanner = scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
-      this.predicates = filterRanges.stream().map(this::buildPredicate).collect(Collectors.toList());
+      this.currentScanner =
+          scannerIterator.hasNext() ? scannerIterator.next() : CloseableIterator.empty();
+      this.predicates = filterRanges.stream().map(this::buildPredicate)
+          .collect(Collectors.toList());
     }
 
     private Predicate<StructuredRow> buildPredicate(Range filterRange) {
@@ -800,8 +845,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
           // This is for case like ([KEY: "ns1", KEY2: 123], EXCLUSIVE, [KEY: "ns1", KEY2: 250], INCLUSIVE)
           // We need to check the ending bound for KEY2, not KEY
           if (beginIndex == beginFieldsCount
-            && filterRange.getBeginBound().equals(Range.Bound.EXCLUSIVE)
-            && comp == 0) {
+              && filterRange.getBeginBound().equals(Range.Bound.EXCLUSIVE)
+              && comp == 0) {
             return false;
           }
           beginIndex++;
@@ -819,8 +864,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
           // This is for case like ([KEY: "ns1", KEY2: 123], INCLUSIVE, [KEY: "ns1", KEY2: 250], EXCLUSIVE)
           // We need to check the ending bound for KEY2, not KEY
           if (endIndex == endFieldsCount
-            && filterRange.getEndBound().equals(Range.Bound.EXCLUSIVE)
-            && comp == 0) {
+              && filterRange.getEndBound().equals(Range.Bound.EXCLUSIVE)
+              && comp == 0) {
             return false;
           }
           endIndex++;
@@ -834,21 +879,28 @@ public final class NoSqlStructuredTable implements StructuredTable {
       String fieldName = field.getName();
       switch (field.getFieldType()) {
         case INTEGER:
-          return Objects.compare(row.getInteger(fieldName), (Integer) field.getValue(), Integer::compare);
+          return Objects.compare(row.getInteger(fieldName), (Integer) field.getValue(),
+              Integer::compare);
         case LONG:
           return Objects.compare(row.getLong(fieldName), (Long) (field.getValue()), Long::compare);
         case FLOAT:
-          return Objects.compare(row.getFloat(fieldName), (Float) (field.getValue()), Float::compare);
+          return Objects.compare(row.getFloat(fieldName), (Float) (field.getValue()),
+              Float::compare);
         case DOUBLE:
-          return Objects.compare(row.getDouble(fieldName), (Double) (field.getValue()), Double::compare);
+          return Objects.compare(row.getDouble(fieldName), (Double) (field.getValue()),
+              Double::compare);
         case STRING:
-          return Objects.compare(row.getString(fieldName), (String) (field.getValue()), String::compareTo);
+          return Objects.compare(row.getString(fieldName), (String) (field.getValue()),
+              String::compareTo);
         case BYTES:
-          return new Bytes.ByteArrayComparator().compare(row.getBytes(fieldName), (byte[]) field.getValue());
+          return new Bytes.ByteArrayComparator().compare(row.getBytes(fieldName),
+              (byte[]) field.getValue());
         case BOOLEAN:
-          return Objects.compare(row.getBoolean(fieldName), (Boolean) (field.getValue()), Boolean::compareTo);
+          return Objects.compare(row.getBoolean(fieldName), (Boolean) (field.getValue()),
+              Boolean::compareTo);
         default:
-          throw new RuntimeException(String.format("Exception while comparing row: %s and field: %s", row, field));
+          throw new RuntimeException(
+              String.format("Exception while comparing row: %s and field: %s", row, field));
       }
     }
 
@@ -898,6 +950,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
    */
   @VisibleForTesting
   static final class ScannerIterator extends AbstractCloseableIterator<StructuredRow> {
+
     private final Scanner scanner;
     private final StructuredTableSchema schema;
 

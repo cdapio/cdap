@@ -25,6 +25,7 @@ import java.util.Objects;
  * An alert emitted by a stage in the pipeline.
  */
 public class Alert implements Serializable {
+
   private static final long serialVersionUID = -3280276088177879979L;
   private final String stageName;
   private final Map<String, String> payload;
@@ -69,9 +70,9 @@ public class Alert implements Serializable {
 
   @Override
   public String toString() {
-    return "Alert{" +
-      "stageName='" + stageName + '\'' +
-      ", payload=" + payload +
-      '}';
+    return "Alert{"
+        + "stageName='" + stageName + '\''
+        + ", payload=" + payload
+        + '}';
   }
 }

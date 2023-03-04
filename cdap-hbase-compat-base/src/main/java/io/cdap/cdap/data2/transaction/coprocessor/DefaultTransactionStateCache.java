@@ -30,12 +30,12 @@ import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.snapshot.SnapshotCodecV3;
 
 /**
- * Extends the {@link TransactionStateCache} implementation for
- * transaction coprocessors with a version that reads transaction configuration properties from
- * {@link ConfigurationReader}.  This allows the coprocessors to pick up configuration changes without requiring
- * a restart.
+ * Extends the {@link TransactionStateCache} implementation for transaction coprocessors with a
+ * version that reads transaction configuration properties from {@link ConfigurationReader}.  This
+ * allows the coprocessors to pick up configuration changes without requiring a restart.
  */
 public class DefaultTransactionStateCache extends TransactionStateCache {
+
   // CDAP versions of coprocessors must reference snapshot classes so they get included in generated jar file
   // DO NOT REMOVE
   @SuppressWarnings("unused")

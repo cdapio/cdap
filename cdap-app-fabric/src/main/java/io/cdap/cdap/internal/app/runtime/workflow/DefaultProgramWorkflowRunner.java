@@ -58,8 +58,8 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
 /**
- * A class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of
- * the program to run in a workflow.
+ * A class implementing {@link ProgramWorkflowRunner}, providing a {@link Runnable} of the program
+ * to run in a workflow.
  */
 final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
@@ -76,10 +76,11 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private final ProgramType programType;
   private final ProgramStateWriter programStateWriter;
 
-  DefaultProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
-                               ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                               WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
-                               ProgramType programType, ProgramStateWriter programStateWriter) {
+  DefaultProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram,
+      ProgramOptions workflowProgramOptions,
+      ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
+      WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
+      ProgramType programType, ProgramStateWriter programStateWriter) {
     this.cConf = cConf;
     this.workflowProgram = workflowProgram;
     this.workflowProgramOptions = workflowProgramOptions;
@@ -108,12 +109,14 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   /**
    * Gets a {@link Runnable} for the {@link Program}.
    *
-   * @param name    name of the {@link Program}
+   * @param name name of the {@link Program}
    * @param program the {@link Program}
    * @return a {@link Runnable} for this {@link Program}
    */
-  private Runnable getProgramRunnable(String name, final ProgramRunner programRunner, final Program program) {
-    Map<String, String> systemArgumentsMap = new HashMap<>(workflowProgramOptions.getArguments().asMap());
+  private Runnable getProgramRunnable(String name, final ProgramRunner programRunner,
+      final Program program) {
+    Map<String, String> systemArgumentsMap = new HashMap<>(
+        workflowProgramOptions.getArguments().asMap());
 
     // Generate the new RunId here for the program running under Workflow
     systemArgumentsMap.put(ProgramOptionConstants.RUN_ID, RunIds.generate().getId());
@@ -121,16 +124,16 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     // Add Workflow specific system arguments to be passed to the underlying program
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NAME, workflowSpec.getName());
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID,
-                           ProgramRunners.getRunId(workflowProgramOptions).getId());
+        ProgramRunners.getRunId(workflowProgramOptions).getId());
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_NODE_ID, nodeId);
     systemArgumentsMap.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, name);
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
-      program.getId(),
-      new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
-      new BasicArguments(RuntimeArguments.extractScope(program.getType().getScope(), name,
-                                                       workflowProgramOptions.getUserArguments().asMap()))
+        program.getId(),
+        new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
+        new BasicArguments(RuntimeArguments.extractScope(program.getType().getScope(), name,
+            workflowProgramOptions.getUserArguments().asMap()))
     );
 
     return new Runnable() {
@@ -145,13 +148,15 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     };
   }
 
-  private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {
+  private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options)
+      throws Exception {
     Closeable closeable = createCloseable(programRunner, program);
 
     // Publish the program's starting state
     RunId runId = ProgramRunners.getRunId(options);
     String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    ProgramDescriptor programDescriptor = new ProgramDescriptor(program.getId(), program.getApplicationSpecification());
+    ProgramDescriptor programDescriptor = new ProgramDescriptor(program.getId(),
+        program.getApplicationSpecification());
     programStateWriter.start(program.getId().run(runId), options, twillRunId, programDescriptor);
 
     ProgramController controller;
@@ -170,7 +175,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       updateWorkflowToken(((WorkflowDataProvider) controller).getWorkflowToken());
     } else {
       // This shouldn't happen
-      throw new IllegalStateException("No WorkflowToken available after program completed: " + program.getId());
+      throw new IllegalStateException(
+          "No WorkflowToken available after program completed: " + program.getId());
     }
   }
 
@@ -181,7 +187,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
    * @param controller the {@link ProgramController} for the program
    * @throws Exception if the execution failed
    */
-  private void blockForCompletion(final Closeable closeable, final ProgramController controller) throws Exception {
+  private void blockForCompletion(final Closeable closeable, final ProgramController controller)
+      throws Exception {
     // Execute the program.
     final SettableFuture<Void> completion = SettableFuture.create();
     controller.addListener(new AbstractListener() {
@@ -191,13 +198,13 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         switch (currentState) {
           case COMPLETED:
             completed();
-          break;
+            break;
           case KILLED:
             killed();
-          break;
+            break;
           case ERROR:
             error(cause);
-          break;
+            break;
         }
       }
 
@@ -206,24 +213,28 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
         Closeables.closeQuietly(closeable);
         Set<Operation> fieldLineageOperations = new HashSet<>();
         if (controller instanceof WorkflowDataProvider) {
-          fieldLineageOperations.addAll(((WorkflowDataProvider) controller).getFieldLineageOperations());
+          fieldLineageOperations.addAll(
+              ((WorkflowDataProvider) controller).getFieldLineageOperations());
         }
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, fieldLineageOperations,
-                                                     controller.getRunId().getId(), null));
+        nodeStates.put(nodeId,
+            new WorkflowNodeState(nodeId, NodeStatus.COMPLETED, fieldLineageOperations,
+                controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void killed() {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
+        nodeStates.put(nodeId,
+            new WorkflowNodeState(nodeId, NodeStatus.KILLED, controller.getRunId().getId(), null));
         completion.set(null);
       }
 
       @Override
       public void error(Throwable cause) {
         Closeables.closeQuietly(closeable);
-        nodeStates.put(nodeId, new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
+        nodeStates.put(nodeId,
+            new WorkflowNodeState(nodeId, NodeStatus.FAILED, controller.getRunId().getId(), cause));
         completion.setException(cause);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -253,7 +264,8 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   }
 
   /**
-   * Creates a {@link Closeable} that will close the given {@link ProgramRunner} and {@link Program}.
+   * Creates a {@link Closeable} that will close the given {@link ProgramRunner} and {@link
+   * Program}.
    */
   private Closeable createCloseable(final ProgramRunner programRunner, final Program program) {
     return new Closeable() {

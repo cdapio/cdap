@@ -32,47 +32,51 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Class that delegates deprecated methods to their non-deprecated counterparts, and delegates methods with
- * fewer arguments to the one with more arguments.
+ * Class that delegates deprecated methods to their non-deprecated counterparts, and delegates
+ * methods with fewer arguments to the one with more arguments.
  */
 public abstract class AbstractTestManager implements TestManager {
 
   @Override
-  public ApplicationManager deployApplication(NamespaceId namespace, Class<? extends Application> applicationClz,
-                                              File... bundleEmbeddedJars) throws AccessException {
+  public ApplicationManager deployApplication(NamespaceId namespace,
+      Class<? extends Application> applicationClz,
+      File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
   @Override
-  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent, Class<?> pluginClass,
-                                           Class<?>... pluginClasses) throws Exception {
+  public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
+      Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
     return addPluginArtifact(artifactId, toRange(parent), pluginClass, pluginClasses);
   }
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
-                                           Class<?> pluginClass,
-                                           Class<?>... pluginClasses) throws Exception {
+      Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
     return addPluginArtifact(artifactId, parents, null, pluginClass, pluginClasses);
   }
 
   @Override
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
-                                           @Nullable Set<PluginClass> additionalPlugins,
-                                           Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    return addPluginArtifact(artifactId, toRange(parent), additionalPlugins, pluginClass, pluginClasses);
+      @Nullable Set<PluginClass> additionalPlugins,
+      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    return addPluginArtifact(artifactId, toRange(parent), additionalPlugins, pluginClass,
+        pluginClasses);
   }
 
   @Override
-  public <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId) throws Exception {
+  public <T extends DatasetAdmin> T addDatasetInstance(String datasetType, DatasetId datasetId)
+      throws Exception {
     return addDatasetInstance(datasetType, datasetId, DatasetProperties.EMPTY);
   }
 
   private Set<ArtifactRange> toRange(ArtifactId parent) {
     Set<ArtifactRange> parents = new HashSet<>();
     parents.add(new ArtifactRange(parent.getParent().getNamespace(), parent.getArtifact(),
-                                  new ArtifactVersion(parent.getVersion()), true,
-                                  new ArtifactVersion(parent.getVersion()), true));
+        new ArtifactVersion(parent.getVersion()), true,
+        new ArtifactVersion(parent.getVersion()), true));
     return parents;
   }
 }

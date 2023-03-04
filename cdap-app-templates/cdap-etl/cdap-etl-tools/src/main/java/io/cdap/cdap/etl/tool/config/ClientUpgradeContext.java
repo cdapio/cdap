@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * Uses an ArtifactClient to get the artifact for a specific plugin.
  */
 public class ClientUpgradeContext implements UpgradeContext {
+
   private static final Logger LOG = LoggerFactory.getLogger(ClientUpgradeContext.class);
   private final NamespaceClient namespaceClient;
   private final ArtifactClient artifactClient;
@@ -42,8 +43,9 @@ public class ClientUpgradeContext implements UpgradeContext {
   private final String artifactVersion;
   private ArtifactId artifactId;
 
-  public ClientUpgradeContext(NamespaceClient namespaceClient, ArtifactClient artifactClient, String artifactName,
-                              String artifactVersion) {
+  public ClientUpgradeContext(NamespaceClient namespaceClient, ArtifactClient artifactClient,
+      String artifactName,
+      String artifactVersion) {
     this.namespaceClient = namespaceClient;
     this.artifactClient = artifactClient;
     this.artifactName = artifactName;
@@ -55,7 +57,8 @@ public class ClientUpgradeContext implements UpgradeContext {
   public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
     try {
       List<PluginInfo> plugins =
-        artifactClient.getPluginInfo(getArtifactId(), pluginType, pluginName, ArtifactScope.SYSTEM);
+          artifactClient.getPluginInfo(getArtifactId(), pluginType, pluginName,
+              ArtifactScope.SYSTEM);
 
       if (plugins.isEmpty()) {
         return null;
@@ -66,11 +69,11 @@ public class ClientUpgradeContext implements UpgradeContext {
       // order is not guaranteed though.
       ArtifactSummary chosenArtifact = plugins.get(plugins.size() - 1).getArtifact();
       return new ArtifactSelectorConfig(chosenArtifact.getScope().name(),
-                                        chosenArtifact.getName(),
-                                        chosenArtifact.getVersion());
+          chosenArtifact.getName(),
+          chosenArtifact.getVersion());
     } catch (Exception e) {
-      LOG.warn("Unable to find an artifact for plugin of type {} and name {}. " +
-                 "Plugin artifact section will be left empty.", pluginType, pluginName);
+      LOG.warn("Unable to find an artifact for plugin of type {} and name {}. "
+          + "Plugin artifact section will be left empty.", pluginType, pluginName);
       return null;
     }
   }
@@ -85,7 +88,8 @@ public class ClientUpgradeContext implements UpgradeContext {
           namespaceId = namespaceClient.list().get(0).getNamespaceId();
         }
       } catch (Exception e) {
-        LOG.warn("Unable to list namespaces. Plugin artifact sections will likely be left empty.", e);
+        LOG.warn("Unable to list namespaces. Plugin artifact sections will likely be left empty.",
+            e);
       }
       artifactId = namespaceId.artifact(artifactName, artifactVersion);
     }

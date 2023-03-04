@@ -31,7 +31,7 @@ public class SystemWorkerTwillApplication implements TwillApplication {
   private final ResourceSpecification systemWorkerResourceSpec;
 
   public SystemWorkerTwillApplication(URI cConfFileURI, URI hConfFileURI, URI sConfFileURI,
-                                      ResourceSpecification systemWorkerResourceSpec) {
+      ResourceSpecification systemWorkerResourceSpec) {
     this.cConfFileURI = cConfFileURI;
     this.hConfFileURI = hConfFileURI;
     this.sConfFileURI = sConfFileURI;
@@ -41,15 +41,16 @@ public class SystemWorkerTwillApplication implements TwillApplication {
   @Override
   public TwillSpecification configure() {
     return TwillSpecification.Builder.with()
-      .setName(NAME)
-      .withRunnable()
-      .add(new SystemWorkerTwillRunnable("cConf.xml", "hConf.xml", "sConf.xml"), systemWorkerResourceSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFileURI)
-      .add("hConf.xml", hConfFileURI)
-      .add("sConf.xml", sConfFileURI)
-      .apply()
-      .anyOrder()
-      .build();
+        .setName(NAME)
+        .withRunnable()
+        .add(new SystemWorkerTwillRunnable("cConf.xml", "hConf.xml", "sConf.xml"),
+            systemWorkerResourceSpec)
+        .withLocalFiles()
+        .add("cConf.xml", cConfFileURI)
+        .add("hConf.xml", hConfFileURI)
+        .add("sConf.xml", sConfFileURI)
+        .apply()
+        .anyOrder()
+        .build();
   }
 }

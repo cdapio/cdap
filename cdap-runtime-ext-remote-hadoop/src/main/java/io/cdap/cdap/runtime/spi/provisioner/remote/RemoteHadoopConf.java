@@ -27,14 +27,16 @@ import javax.annotation.Nullable;
  * Configuration for the Remote Hadoop provisioner.
  */
 public class RemoteHadoopConf {
+
   private final SSHKeyPair sshKeyPair;
   private final String host;
   private final String initializationAction;
   private final String kerberosKeytabPath;
   private final String kerberosPrincipal;
 
-  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host, @Nullable String initializationAction,
-                           @Nullable String kerberosPrincipal, @Nullable String kerberosKeytabPath) {
+  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host,
+      @Nullable String initializationAction,
+      @Nullable String kerberosPrincipal, @Nullable String kerberosKeytabPath) {
     this.sshKeyPair = sshKeyPair;
     this.host = host;
     this.initializationAction = initializationAction;
@@ -74,17 +76,18 @@ public class RemoteHadoopConf {
     String privateKey = getString(properties, "sshKey");
 
     SSHKeyPair keyPair = new SSHKeyPair(new SSHPublicKey(user, ""),
-                                        () -> privateKey.getBytes(StandardCharsets.UTF_8));
+        () -> privateKey.getBytes(StandardCharsets.UTF_8));
     return new RemoteHadoopConf(keyPair, host, properties.get("initializationAction"),
-                                properties.get("kerberosPrincipal"),
-                                properties.get("kerberosKeytabPath")
+        properties.get("kerberosPrincipal"),
+        properties.get("kerberosKeytabPath")
     );
   }
 
   private static String getString(Map<String, String> properties, String key) {
     String val = properties.get(key);
     if (val == null) {
-      throw new IllegalArgumentException(String.format("Invalid config. '%s' must be specified.", key));
+      throw new IllegalArgumentException(
+          String.format("Invalid config. '%s' must be specified.", key));
     }
     return val;
   }

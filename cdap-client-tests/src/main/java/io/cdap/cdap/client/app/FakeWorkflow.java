@@ -48,6 +48,7 @@ public class FakeWorkflow implements Workflow {
    * DummyAction
    */
   public static class FakeAction extends AbstractCustomAction {
+
     public static final String TOKEN_KEY = "tokenKey";
     public static final String TOKEN_VALUE = "tokenValue";
     public static final String ANOTHER_FAKE_NAME = "NotQuiteFakeActionName";
@@ -64,7 +65,8 @@ public class FakeWorkflow implements Workflow {
     @SuppressWarnings("ConstantConditions")
     public void initialize() throws Exception {
       WorkflowToken token = getContext().getWorkflowToken();
-      Preconditions.checkArgument(token != null, "Workflow actions should always have a workflow token available");
+      Preconditions.checkArgument(token != null,
+          "Workflow actions should always have a workflow token available");
       token.put(TOKEN_KEY, TOKEN_VALUE);
     }
 

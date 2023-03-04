@@ -44,8 +44,8 @@ public final class KafkaUtil {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaUtil.class);
 
   /**
-   * Fetch the starting offset of the last segment whose latest message is published before the given timestamp.
-   * The timestamp can also be special value {@link OffsetRequest$#EarliestTime()}
+   * Fetch the starting offset of the last segment whose latest message is published before the
+   * given timestamp. The timestamp can also be special value {@link OffsetRequest$#EarliestTime()}
    * or {@link OffsetRequest$#LatestTime()}.
    *
    * @param consumer the consumer to send request to and receive response from
@@ -53,18 +53,18 @@ public final class KafkaUtil {
    * @param partition the partition for fetching the offset from
    * @param timestamp the timestamp to use for fetching last offset before it
    * @return the latest offset
-   *
-   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
-   *                                        for the given topic and partition.
-   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
+   *     the leader for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the
+   *     Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
   public static long getOffsetByTimestamp(SimpleConsumer consumer, String topic,
-                                          int partition, long timestamp) throws KafkaException {
+      int partition, long timestamp) throws KafkaException {
     // Fire offset request
     OffsetRequest request = new OffsetRequest(ImmutableMap.of(
-      new TopicAndPartition(topic, partition),
-      new PartitionOffsetRequestInfo(timestamp, 1)
+        new TopicAndPartition(topic, partition),
+        new PartitionOffsetRequestInfo(timestamp, 1)
     ), kafka.api.OffsetRequest.CurrentVersion(), consumer.clientId());
 
     OffsetResponse response = consumer.getOffsetsBefore(request);
@@ -79,35 +79,39 @@ public final class KafkaUtil {
       if (timestamp != kafka.api.OffsetRequest.EarliestTime()) {
         // If offsets length is 0, that means the timestamp we are looking for is in the first Kafka segment
         // Hence, use the earliest time to find out the offset
-        return getOffsetByTimestamp(consumer, topic, partition, kafka.api.OffsetRequest.EarliestTime());
+        return getOffsetByTimestamp(consumer, topic, partition,
+            kafka.api.OffsetRequest.EarliestTime());
       }
       // This shouldn't happen. The find earliest offset response should return at least one offset.
-      throw new UnknownServerException("Empty offsets received from offsets request on " + topic + ":" + partition +
-                                         " from broker " + consumer.host() + ":" + consumer.port());
+      throw new UnknownServerException(
+          "Empty offsets received from offsets request on " + topic + ":" + partition
+              + " from broker " + consumer.host() + ":" + consumer.port());
     }
 
-    LOG.debug("Offset {} fetched for {}:{} with timestamp {}.", offsets[0], topic, partition, timestamp);
+    LOG.debug("Offset {} fetched for {}:{} with timestamp {}.", offsets[0], topic, partition,
+        timestamp);
     return offsets[0];
   }
 
   /**
-   * Fetches messages from the given topic, partition and offset using the provided {@link SimpleConsumer}.
+   * Fetches messages from the given topic, partition and offset using the provided {@link
+   * SimpleConsumer}.
    *
    * @return A {@link ByteBufferMessageSet} of the given topic, partition for messages fetched
-   *
    * @throws OffsetOutOfRangeException if the given offset is out of range.
-   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not the leader
-   *                                        for the given topic and partition.
-   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
+   * @throws NotLeaderForPartitionException if the broker that the consumer is talking to is not
+   *     the leader for the given topic and partition.
+   * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the
+   *     Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
   public static ByteBufferMessageSet fetchMessages(SimpleConsumer consumer, String topic,
-                                                   int partition, int fetchSize,
-                                                   long requestOffset) throws KafkaException {
+      int partition, int fetchSize,
+      long requestOffset) throws KafkaException {
     FetchRequest req = new FetchRequestBuilder()
-      .clientId(consumer.clientId())
-      .addFetch(topic, partition, requestOffset, fetchSize)
-      .build();
+        .clientId(consumer.clientId())
+        .addFetch(topic, partition, requestOffset, fetchSize)
+        .build();
     FetchResponse fetchResponse = consumer.fetch(req);
 
     if (fetchResponse.hasError()) {

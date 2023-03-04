@@ -40,7 +40,9 @@ import org.iq80.leveldb.DB;
 /**
  * Simple implementation of leveldb non-tx {@link NoTxKeyValueTable}.
  */
-public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
+public class LevelDBKVTableDefinition extends
+    AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
+
   @Inject
   private LevelDBTableService service;
   @Inject
@@ -53,29 +55,32 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new DatasetAdminImpl(datasetContext, spec.getName(), service, cConf);
   }
 
   @Override
   public NoTxKeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     return new KVTableImpl(datasetContext, spec.getName(), service, cConf);
   }
 
   private static final class DatasetAdminImpl implements DatasetAdmin {
+
     private final String tableName;
     protected final LevelDBTableService service;
 
-    private DatasetAdminImpl(DatasetContext datasetContext, String tableName, LevelDBTableService service,
-                             CConfiguration cConf) throws IOException {
-      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName);
+    private DatasetAdminImpl(DatasetContext datasetContext, String tableName,
+        LevelDBTableService service,
+        CConfiguration cConf) throws IOException {
+      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(),
+          tableName);
       this.service = service;
     }
 
@@ -117,6 +122,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   }
 
   private static final class KVTableImpl implements NoTxKeyValueTable {
+
     private static final byte[] DATA_COLFAM = Bytes.toBytes("d");
     private static final byte[] DEFAULT_COLUMN = Bytes.toBytes("c");
 
@@ -124,8 +130,9 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
     private final LevelDBTableService service;
 
     KVTableImpl(DatasetContext datasetContext, String tableName,
-                LevelDBTableService service, CConfiguration cConf) throws IOException {
-      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), tableName);
+        LevelDBTableService service, CConfiguration cConf) throws IOException {
+      this.tableName = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(),
+          tableName);
       this.service = service;
     }
 
@@ -168,6 +175,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
    * Registers this type as implementation for {@link NoTxKeyValueTable} using class name.
    */
   public static final class Module implements DatasetModule {
+
     @Override
     public void register(DatasetDefinitionRegistry registry) {
       registry.add(new LevelDBKVTableDefinition(NoTxKeyValueTable.class.getName()));

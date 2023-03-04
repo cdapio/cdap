@@ -39,7 +39,8 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public GetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public GetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -55,11 +56,12 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
   @Override
   public String getPattern() {
     return String.format("get %s runtimeargs <%s> [version <%s>]", elementType.getShortName(),
-                         elementType.getArgumentName(), ArgumentName.APP_VERSION);
+        elementType.getArgumentName(), ArgumentName.APP_VERSION);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the runtime arguments of %s", Fragment.of(Article.A, elementType.getName()));
+    return String.format("Gets the runtime arguments of %s",
+        Fragment.of(Article.A, elementType.getName()));
   }
 }

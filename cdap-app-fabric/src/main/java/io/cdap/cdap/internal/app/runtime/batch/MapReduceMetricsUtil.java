@@ -27,12 +27,14 @@ import org.slf4j.LoggerFactory;
  * Utility class to get metrics report interval.
  */
 public final class MapReduceMetricsUtil {
+
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceMetricsUtil.class);
 
   private MapReduceMetricsUtil() {
   }
 
-  public static long getReportIntervalMillis(CConfiguration cConf, Map<String, String> runtimeArgs) {
+  public static long getReportIntervalMillis(CConfiguration cConf,
+      Map<String, String> runtimeArgs) {
     int reportInterval = cConf.getInt(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);
     String val = runtimeArgs.get(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);
     if (val != null) {
@@ -44,8 +46,10 @@ public final class MapReduceMetricsUtil {
         }
         reportInterval = interval;
       } catch (NumberFormatException e) {
-        LOG.warn("Invalid value '{}' for '{}' given in runtime arguments: {}. Using default of {} seconds.",
-                 val, Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS, e.getMessage(), reportInterval);
+        LOG.warn(
+            "Invalid value '{}' for '{}' given in runtime arguments: {}. Using default of {} seconds.",
+            val, Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS, e.getMessage(),
+            reportInterval);
       }
     }
     return TimeUnit.SECONDS.toMillis(reportInterval);

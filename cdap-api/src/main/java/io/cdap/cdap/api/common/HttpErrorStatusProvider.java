@@ -22,8 +22,8 @@ package io.cdap.cdap.api.common;
 public interface HttpErrorStatusProvider {
 
   /**
-   * Gives the HTTP status code for this error. All classes which needs to return a HTTP status code for an error
-   * should override this.
+   * Gives the HTTP status code for this error. All classes which needs to return a HTTP status code
+   * for an error should override this.
    *
    * @return int which is the HTTP status code of this error
    */

@@ -37,9 +37,11 @@ import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, ServiceDiscoverer,
-  Transactional, PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore, MessagingContext,
-  LineageRecorder, MetadataReader, MetadataWriter {
+public interface MapReduceContext extends SchedulableProgramContext, RuntimeContext, DatasetContext,
+    ServiceDiscoverer,
+    Transactional, PluginContext, ClientLocalizationContext, WorkflowInfoProvider, SecureStore,
+    MessagingContext,
+    LineageRecorder, MetadataReader, MetadataWriter {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
@@ -47,9 +49,9 @@ public interface MapReduceContext extends SchedulableProgramContext, RuntimeCont
   MapReduceSpecification getSpecification();
 
   /**
-   * Returns the logical start time of this MapReduce job. Logical start time is the time when this MapReduce
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
+   * Returns the logical start time of this MapReduce job. Logical start time is the time when this
+   * MapReduce job is supposed to start if this job is started by the scheduler. Otherwise it would
+   * be the current time when the job runs.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
@@ -62,6 +64,7 @@ public interface MapReduceContext extends SchedulableProgramContext, RuntimeCont
 
   /**
    * Updates the input configuration of this MapReduce job to use the specified {@link Input}.
+   *
    * @param input the input to be used
    * @throws IllegalStateException if called after any setInput methods.
    */
@@ -69,6 +72,7 @@ public interface MapReduceContext extends SchedulableProgramContext, RuntimeCont
 
   /**
    * Updates the input configuration of this MapReduce job to use the specified {@link Input}.
+   *
    * @param input the input to be used
    * @param mapperCls the mapper class to be used for the input
    * @throws IllegalStateException if called after any setInput methods.
@@ -77,19 +81,22 @@ public interface MapReduceContext extends SchedulableProgramContext, RuntimeCont
 
   /**
    * Updates the output configuration of this MapReduce job to use the specified {@link Output}.
+   *
    * @param output the output to be used
    */
   void addOutput(Output output);
 
   /**
-   * Overrides the resources, such as memory and virtual cores, to use for each mapper of this MapReduce job.
+   * Overrides the resources, such as memory and virtual cores, to use for each mapper of this
+   * MapReduce job.
    *
    * @param resources Resources that each mapper should use.
    */
   void setMapperResources(Resources resources);
 
   /**
-   * Override the resources, such as memory and virtual cores, to use for each reducer of this MapReduce job.
+   * Override the resources, such as memory and virtual cores, to use for each reducer of this
+   * MapReduce job.
    *
    * @param resources Resources that each reducer should use.
    */

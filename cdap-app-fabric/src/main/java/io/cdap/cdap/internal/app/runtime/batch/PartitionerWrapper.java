@@ -23,7 +23,8 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Partitioner;
 
 /**
- * Wraps user-defined implementation of {@link Partitioner} class which allows to perform extra configuration.
+ * Wraps user-defined implementation of {@link Partitioner} class which allows to perform extra
+ * configuration.
  */
 public class PartitionerWrapper extends Partitioner implements Configurable {
 
@@ -33,7 +34,9 @@ public class PartitionerWrapper extends Partitioner implements Configurable {
   private Configuration conf;
 
   /**
-   * Wraps the partitioner defined in the job with this {@link PartitionerWrapper} if it is defined.
+   * Wraps the partitioner defined in the job with this {@link PartitionerWrapper} if it is
+   * defined.
+   *
    * @param job The MapReduce job
    */
   public static void wrap(Job job) {

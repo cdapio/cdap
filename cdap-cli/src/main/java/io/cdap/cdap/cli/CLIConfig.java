@@ -86,6 +86,7 @@ public class CLIConfig implements TableRendererConfig {
    * Wrapper class for reading/writing of username + accessToken
    */
   private class UserAccessToken {
+
     private final AccessToken accessToken;
     private final String username;
 
@@ -145,38 +146,42 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   public void tryConnect(CLIConnectionConfig connectionConfig, boolean verifySSLCert,
-                         PrintStream output, boolean debug) throws Exception {
+      PrintStream output, boolean debug) throws Exception {
     try {
       clientConfig.setVerifySSLCert(verifySSLCert);
       UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
       AccessToken accessToken = null;
       if (userToken != null) {
         accessToken = userToken.getAccessToken();
-        connectionConfig = new CLIConnectionConfig(connectionConfig, connectionConfig.getNamespace(),
-                                                   userToken.getUsername());
+        connectionConfig = new CLIConnectionConfig(connectionConfig,
+            connectionConfig.getNamespace(),
+            userToken.getUsername());
       }
       checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
       clientConfig.setAccessToken(accessToken);
-      output.printf("Successfully connected to CDAP instance at %s", connectionConfig.getURI().toString());
+      output.printf("Successfully connected to CDAP instance at %s",
+          connectionConfig.getURI().toString());
       output.println();
     } catch (IOException e) {
       throw new IOException(String.format("CDAP instance at '%s' could not be reached: %s",
-                                          connectionConfig.getURI().toString(), e.getMessage()), e);
+          connectionConfig.getURI().toString(), e.getMessage()), e);
     }
   }
 
   public void updateAccessToken(PrintStream output) throws IOException {
-    UserAccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output, false);
+    UserAccessToken newAccessToken = getNewAccessToken(clientConfig.getConnectionConfig(), output,
+        false);
     clientConfig.setAccessToken(newAccessToken.getAccessToken());
   }
 
-  private void checkConnection(ClientConfig baseClientConfig, ConnectionConfig connectionInfo, AccessToken accessToken)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  private void checkConnection(ClientConfig baseClientConfig, ConnectionConfig connectionInfo,
+      AccessToken accessToken)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
-      .setConnectionConfig(connectionInfo)
-      .setAccessToken(accessToken)
-      .build();
+        .setConnectionConfig(connectionInfo)
+        .setAccessToken(accessToken)
+        .build();
     MetaClient metaClient = new MetaClient(clientConfig);
 
     try {
@@ -192,8 +197,8 @@ public class CLIConfig implements TableRendererConfig {
 
   @Nullable
   private UserAccessToken acquireAccessToken(
-    ClientConfig clientConfig, ConnectionConfig connectionInfo, PrintStream output,
-    boolean debug) throws IOException, UnauthorizedException {
+      ClientConfig clientConfig, ConnectionConfig connectionInfo, PrintStream output,
+      boolean debug) throws IOException, UnauthorizedException {
 
     //Check for a saved token that works
     UserAccessToken savedToken = getSavedAccessToken(connectionInfo);
@@ -209,17 +214,18 @@ public class CLIConfig implements TableRendererConfig {
   }
 
   private UserAccessToken getNewAccessToken(ConnectionConfig connectionInfo,
-                                            PrintStream output, boolean debug) throws IOException {
+      PrintStream output, boolean debug) throws IOException {
     AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
 
     Properties properties = new Properties();
     properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME,
-                   String.valueOf(clientConfig.isVerifySSLCert()));
+        String.valueOf(clientConfig.isVerifySSLCert()));
 
     String username = "";
 
     // obtain new access token via manual user input
-    output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
+    output.printf("Authentication is enabled in the CDAP instance: %s.\n",
+        connectionInfo.getHostname());
     ConsoleReader reader = new ConsoleReader();
     for (Credential credential : authenticationClient.getRequiredCredentials()) {
       String prompt = "Please, specify " + credential.getDescription() + "> ";
@@ -240,7 +246,8 @@ public class CLIConfig implements TableRendererConfig {
     UserAccessToken userToken = new UserAccessToken(accessToken, username);
     if (accessToken != null) {
       if (saveAccessToken(userToken, connectionInfo.getHostname()) && debug) {
-        output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
+        output.printf("Saved access token to %s\n",
+            getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
       }
     }
 
@@ -250,8 +257,8 @@ public class CLIConfig implements TableRendererConfig {
   private AuthenticationClient getAuthenticationClient(ConnectionConfig connectionInfo) {
     AuthenticationClient authenticationClient = new BasicAuthenticationClient();
     authenticationClient.setConnectionInfo(connectionInfo.getHostname(),
-                                           connectionInfo.getPort() == null ? -1 : connectionInfo.getPort(),
-                                           connectionInfo.isSSLEnabled());
+        connectionInfo.getPort() == null ? -1 : connectionInfo.getPort(),
+        connectionInfo.isSSLEnabled());
     return authenticationClient;
   }
 
@@ -345,6 +352,7 @@ public class CLIConfig implements TableRendererConfig {
    * Listener for hostname changes.
    */
   public interface ConnectionChangeListener {
+
     void onConnectionChanged(CLIConnectionConfig config);
   }
 }

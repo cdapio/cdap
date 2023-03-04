@@ -23,6 +23,7 @@ import io.cdap.cdap.report.proto.ProgramRunStartMethod;
  * Represents an aggregate of program runs by the start method.
  */
 public class StartMethodAggregate extends ProgramRunAggregate {
+
   private final ProgramRunStartMethod method;
 
   public StartMethodAggregate(ProgramRunStartMethod method, long runs) {

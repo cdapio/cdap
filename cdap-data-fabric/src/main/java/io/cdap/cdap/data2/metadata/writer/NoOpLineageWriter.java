@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * No-op {@link LineageWriter}.
  */
 public class NoOpLineageWriter implements LineageWriter, FieldLineageWriter {
+
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType) {
     // no-op
@@ -34,7 +35,7 @@ public class NoOpLineageWriter implements LineageWriter, FieldLineageWriter {
 
   @Override
   public void addAccess(ProgramRunId run, DatasetId datasetInstance, AccessType accessType,
-                        @Nullable NamespacedEntityId component) {
+      @Nullable NamespacedEntityId component) {
     // no-op
   }
 

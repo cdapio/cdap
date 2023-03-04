@@ -27,9 +27,8 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.SourceControlMeta;
-import org.apache.twill.filesystem.Location;
-
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Information required by application deployment pipeline {@link LocalApplicationManager}.
@@ -69,32 +68,34 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Creates a new {@link Builder} by copying all fields from the another {@link AppDeploymentInfo}.
+   * Creates a new {@link Builder} by copying all fields from the another {@link
+   * AppDeploymentInfo}.
    */
   public static Builder copyFrom(AppDeploymentInfo other) {
     return new Builder()
-      .setArtifactId(other.artifactId)
-      .setArtifactLocation(other.artifactLocation)
-      .setApplicationClass(other.applicationClass)
-      .setNamespaceId(other.namespaceId)
-      .setAppName(other.appName)
-      .setAppVersion(other.appVersion)
-      .setConfigString(other.configString)
-      .setOwnerPrincipal(other.ownerPrincipal)
-      .setUpdateSchedules(other.updateSchedules)
-      .setRuntimeInfo(other.runtimeInfo)
-      .setChangeDetail(other.changeDetail)
-      .setSourceControlMeta(other.sourceControlMeta)
-      .setIsUpgrade(other.isUpgrade)
-      .setDeployedApplicationSpec(other.deployedApplicationSpec);
+        .setArtifactId(other.artifactId)
+        .setArtifactLocation(other.artifactLocation)
+        .setApplicationClass(other.applicationClass)
+        .setNamespaceId(other.namespaceId)
+        .setAppName(other.appName)
+        .setAppVersion(other.appVersion)
+        .setConfigString(other.configString)
+        .setOwnerPrincipal(other.ownerPrincipal)
+        .setUpdateSchedules(other.updateSchedules)
+        .setRuntimeInfo(other.runtimeInfo)
+        .setChangeDetail(other.changeDetail)
+        .setSourceControlMeta(other.sourceControlMeta)
+        .setIsUpgrade(other.isUpgrade)
+        .setDeployedApplicationSpec(other.deployedApplicationSpec);
   }
 
-  private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation, NamespaceId namespaceId,
-                            ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
-                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
-                            boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                            @Nullable ChangeDetail changeDetail, @Nullable SourceControlMeta sourceControlMeta,
-                            boolean isUpgrade, @Nullable ApplicationSpecification deployedApplicationSpec) {
+  private AppDeploymentInfo(ArtifactId artifactId, Location artifactLocation,
+      NamespaceId namespaceId,
+      ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
+      @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
+      boolean updateSchedules, @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      @Nullable ChangeDetail changeDetail, @Nullable SourceControlMeta sourceControlMeta,
+      boolean isUpgrade, @Nullable ApplicationSpecification deployedApplicationSpec) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.namespaceId = namespaceId;
@@ -160,7 +161,8 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the configuration string provided for the application deployment or {@code null} if it is not provided.
+   * Returns the configuration string provided for the application deployment or {@code null} if it
+   * is not provided.
    */
   @Nullable
   public String getConfigString() {
@@ -318,7 +320,8 @@ public class AppDeploymentInfo {
       return this;
     }
 
-    public Builder setDeployedApplicationSpec(@Nullable ApplicationSpecification deployedApplicationSpec) {
+    public Builder setDeployedApplicationSpec(
+        @Nullable ApplicationSpecification deployedApplicationSpec) {
       this.deployedApplicationSpec = deployedApplicationSpec;
       return this;
     }
@@ -337,8 +340,8 @@ public class AppDeploymentInfo {
         throw new IllegalStateException("Missing application class");
       }
       return new AppDeploymentInfo(artifactId, artifactLocation, namespaceId, applicationClass,
-                                   appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
-                                   changeDetail, sourceControlMeta, isUpgrade, deployedApplicationSpec);
+          appName, appVersion, configString, ownerPrincipal, updateSchedules, runtimeInfo,
+          changeDetail, sourceControlMeta, isUpgrade, deployedApplicationSpec);
     }
   }
 }

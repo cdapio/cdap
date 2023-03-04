@@ -25,13 +25,15 @@ import java.util.Set;
  * Class to serialize Relation.
  */
 public class RelationRecord {
+
   private final String data;
   private final String program;
   private final Set<String> accesses;
   private final Set<String> runs;
   private final Set<String> components;
 
-  public RelationRecord(String data, String program, Set<String> accesses, Set<String> runs, Set<String> components) {
+  public RelationRecord(String data, String program, Set<String> accesses, Set<String> runs,
+      Set<String> components) {
     this.data = data;
     this.program = program;
     this.accesses = Collections.unmodifiableSet(new LinkedHashSet<>(accesses));
@@ -68,11 +70,11 @@ public class RelationRecord {
       return false;
     }
     RelationRecord that = (RelationRecord) o;
-    return Objects.equals(data, that.data) &&
-      Objects.equals(program, that.program) &&
-      Objects.equals(accesses, that.accesses) &&
-      Objects.equals(runs, that.runs) &&
-      Objects.equals(components, that.components);
+    return Objects.equals(data, that.data)
+        && Objects.equals(program, that.program)
+        && Objects.equals(accesses, that.accesses)
+        && Objects.equals(runs, that.runs)
+        && Objects.equals(components, that.components);
   }
 
   @Override
@@ -82,12 +84,12 @@ public class RelationRecord {
 
   @Override
   public String toString() {
-    return "RelationRecord{" +
-      "data='" + data + '\'' +
-      ", program='" + program + '\'' +
-      ", accesses=" + accesses +
-      ", runs=" + runs +
-      ", components=" + components +
-      '}';
+    return "RelationRecord{"
+        + "data='" + data + '\''
+        + ", program='" + program + '\''
+        + ", accesses=" + accesses
+        + ", runs=" + runs
+        + ", components=" + components
+        + '}';
   }
 }

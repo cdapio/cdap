@@ -27,6 +27,7 @@ interface WorkflowForkJoiner {
 
   /**
    * Adds a {@link WorkflowForkNode}
+   *
    * @param branches {@link List} of branches to be added to the {@link WorkflowForkNode}
    */
   void addWorkflowForkNode(List<List<WorkflowNode>> branches);

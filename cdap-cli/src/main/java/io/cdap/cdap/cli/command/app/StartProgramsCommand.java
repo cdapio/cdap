@@ -34,38 +34,43 @@ import java.util.List;
  * Starts one or more programs in an application.
  */
 public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
+
   private final ProgramClient programClient;
 
   @Inject
-  public StartProgramsCommand(ApplicationClient appClient, ProgramClient programClient, CLIConfig cliConfig) {
+  public StartProgramsCommand(ApplicationClient appClient, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(appClient, cliConfig);
     this.programClient = programClient;
   }
 
   @Override
   protected BatchProgramStart createProgram(ProgramRecord programRecord) {
-    return new BatchProgramStart(programRecord.getApp(), programRecord.getType(), programRecord.getName());
+    return new BatchProgramStart(programRecord.getApp(), programRecord.getType(),
+        programRecord.getName());
   }
 
   @Override
-  protected void runBatchCommand(PrintStream printStream, Args<BatchProgramStart> args) throws Exception {
+  protected void runBatchCommand(PrintStream printStream, Args<BatchProgramStart> args)
+      throws Exception {
     List<BatchProgramResult> results = programClient.start(args.appId.getParent(), args.programs);
 
     Table table = Table.builder()
-      .setHeader("name", "type", "error")
-      .setRows(results, new RowMaker<BatchProgramResult>() {
-        @Override
-        public List<?> makeRow(BatchProgramResult result) {
-          return Lists.newArrayList(
-            result.getProgramId(), result.getProgramType(), result.getError());
-        }
-      }).build();
+        .setHeader("name", "type", "error")
+        .setRows(results, new RowMaker<BatchProgramResult>() {
+          @Override
+          public List<?> makeRow(BatchProgramResult result) {
+            return Lists.newArrayList(
+                result.getProgramId(), result.getProgramType(), result.getError());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("start app <%s> programs [of type <%s>]", ArgumentName.APP, ArgumentName.PROGRAM_TYPES);
+    return String.format("start app <%s> programs [of type <%s>]", ArgumentName.APP,
+        ArgumentName.PROGRAM_TYPES);
   }
 
   @Override

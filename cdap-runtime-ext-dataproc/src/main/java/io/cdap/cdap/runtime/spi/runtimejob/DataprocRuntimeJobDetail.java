@@ -26,7 +26,8 @@ public class DataprocRuntimeJobDetail extends RuntimeJobDetail {
 
   private final String jobStatusDetails;
 
-  public DataprocRuntimeJobDetail(ProgramRunInfo runInfo, RuntimeJobStatus status, String jobStatusDetails) {
+  public DataprocRuntimeJobDetail(ProgramRunInfo runInfo, RuntimeJobStatus status,
+      String jobStatusDetails) {
     super(runInfo, status);
     this.jobStatusDetails = jobStatusDetails;
   }

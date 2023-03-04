@@ -21,12 +21,13 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.filter.FilterBase;
 
 /**
- * Simple filter for increment columns that includes all cell values in a column with a "delta" prefix up to and
- * including the first cell it finds that is not an increment.  This allows the {@link IncrementHandler}
- * coprocessor to return the correct value for an increment column by summing the last total sum plus all newer
- * delta values.
+ * Simple filter for increment columns that includes all cell values in a column with a "delta"
+ * prefix up to and including the first cell it finds that is not an increment.  This allows the
+ * {@link IncrementHandler} coprocessor to return the correct value for an increment column by
+ * summing the last total sum plus all newer delta values.
  */
 public class IncrementFilter extends FilterBase {
+
   @Override
   public ReturnCode filterKeyValue(Cell cell) throws IOException {
     if (IncrementHandler.isIncrement(cell)) {

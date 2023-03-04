@@ -31,6 +31,7 @@ import java.util.Set;
  * Runs a collection of {@link Check Checks}.
  */
 public class CheckRunner {
+
   private final Set<Check> checks;
 
   private CheckRunner(Set<Check> checks) {
@@ -70,6 +71,7 @@ public class CheckRunner {
    * Builds a {@link CheckRunner}.
    */
   public static class Builder {
+
     private final Set<Check> checks;
     private final ClassLoader classLoader;
     private final Injector injector;
@@ -92,9 +94,9 @@ public class CheckRunner {
       ClassPath classPath = getClassPath();
       for (ClassPath.ClassInfo classInfo : classPath.getAllClassesRecursive(pkg)) {
         Class<?> cls = classInfo.load();
-        if (!Modifier.isInterface(cls.getModifiers()) &&
-          !Modifier.isAbstract(cls.getModifiers()) &&
-          Check.class.isAssignableFrom(cls)) {
+        if (!Modifier.isInterface(cls.getModifiers())
+            && !Modifier.isAbstract(cls.getModifiers())
+            && Check.class.isAssignableFrom(cls)) {
           checks.add((Check) injector.getInstance(cls));
         }
       }
@@ -112,7 +114,8 @@ public class CheckRunner {
     public Builder addClass(String className) throws ClassNotFoundException {
       Class<?> cls = classLoader.loadClass(className);
       if (!Check.class.isAssignableFrom(cls)) {
-        throw new IllegalArgumentException(className + " does not implement " + Check.class.getName());
+        throw new IllegalArgumentException(
+            className + " does not implement " + Check.class.getName());
       }
       checks.add((Check) injector.getInstance(cls));
       return this;
@@ -148,6 +151,7 @@ public class CheckRunner {
    * Contains the name of a failed check and the exception that caused the failure.
    */
   public static class Failure {
+
     private final String name;
     private final Exception exception;
 

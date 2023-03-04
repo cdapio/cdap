@@ -17,10 +17,12 @@
 package io.cdap.cdap.etl.api.engine.sql.dataset;
 
 /**
- * SQL Dataset which exposes a method to get a producer that can be used to extract
- * records from the SQL engine.
+ * SQL Dataset which exposes a method to get a producer that can be used to extract records from the
+ * SQL engine.
  */
 public interface SQLDatasetProducer {
+
   SQLDatasetDescription getDescription();
+
   RecordCollection produce(SQLDataset dataset);
 }

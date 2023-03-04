@@ -40,14 +40,15 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
 
   private static final String SERVICE_ID = "app-id.service-id";
   private static final String APP_VERSION = "app-version";
-  private static final String PATTERN = String.format("call service <%s> [version <%s>]", SERVICE_ID, APP_VERSION);
+  private static final String PATTERN = String.format("call service <%s> [version <%s>]",
+      SERVICE_ID, APP_VERSION);
 
   private final ServiceClient serviceClient;
   private final EndpointCompleter completer;
   private final CLIConfig cliConfig;
 
   public HttpMethodPrefixCompleter(final ServiceClient serviceClient, final CLIConfig cliConfig,
-                                   String prefix, EndpointCompleter completer) {
+      String prefix, EndpointCompleter completer) {
     super(prefix, completer);
     this.cliConfig = cliConfig;
     this.serviceClient = serviceClient;
@@ -62,10 +63,11 @@ public class HttpMethodPrefixCompleter extends PrefixCompleter {
       ServiceId service;
       if (arguments.get(APP_VERSION) == null) {
         service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId()).service(
-          programIdArgument.getProgramId());
+            programIdArgument.getProgramId());
       } else {
-        service = cliConfig.getCurrentNamespace().app(programIdArgument.getAppId(), arguments.get(APP_VERSION)).service(
-          programIdArgument.getProgramId());
+        service = cliConfig.getCurrentNamespace()
+            .app(programIdArgument.getAppId(), arguments.get(APP_VERSION)).service(
+                programIdArgument.getProgramId());
       }
       completer.setEndpoints(getMethods(service));
     } else {

@@ -40,6 +40,7 @@ import java.util.Map;
  * Command to get the local datasets associated with the Workflow run.
  */
 public class GetWorkflowLocalDatasetsCommand extends AbstractCommand {
+
   private final ElementType elementType;
   private final WorkflowClient workflowClient;
 
@@ -57,8 +58,9 @@ public class GetWorkflowLocalDatasetsCommand extends AbstractCommand {
       throw new CommandInputError(this);
     }
 
-    ProgramRunId programRunId = cliConfig.getCurrentNamespace().app(programIdParts[0]).workflow(programIdParts[1])
-      .run(arguments.get(ArgumentName.RUN_ID.toString()));
+    ProgramRunId programRunId = cliConfig.getCurrentNamespace().app(programIdParts[0])
+        .workflow(programIdParts[1])
+        .run(arguments.get(ArgumentName.RUN_ID.toString()));
 
     Table table = getWorkflowLocalDatasets(programRunId);
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);
@@ -66,28 +68,31 @@ public class GetWorkflowLocalDatasetsCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get workflow local datasets <%s> <%s>", elementType.getArgumentName(), ArgumentName.RUN_ID);
+    return String.format("get workflow local datasets <%s> <%s>", elementType.getArgumentName(),
+        ArgumentName.RUN_ID);
   }
 
   @Override
   public String getDescription() {
     return String.format("Gets the local datasets associated with the workflow for a given '<%s>'",
-                         ArgumentName.RUN_ID);
+        ArgumentName.RUN_ID);
   }
 
   private Table getWorkflowLocalDatasets(ProgramRunId programRunId)
-    throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
+      throws UnauthenticatedException, IOException, NotFoundException, UnauthorizedException {
     Map<String, DatasetSpecificationSummary> workflowLocalDatasets
-      = workflowClient.getWorkflowLocalDatasets(programRunId);
+        = workflowClient.getWorkflowLocalDatasets(programRunId);
     List<Map.Entry<String, DatasetSpecificationSummary>> localDatasetSummaries = new ArrayList<>();
     localDatasetSummaries.addAll(workflowLocalDatasets.entrySet());
     return Table.builder()
-      .setHeader("name", "workflow local name", "type")
-      .setRows(localDatasetSummaries, new RowMaker<Map.Entry<String, DatasetSpecificationSummary>>() {
-        @Override
-        public List<?> makeRow(Map.Entry<String, DatasetSpecificationSummary> object) {
-          return Lists.newArrayList(object.getKey(), object.getValue().getName(), object.getValue().getType());
-        }
-      }).build();
+        .setHeader("name", "workflow local name", "type")
+        .setRows(localDatasetSummaries,
+            new RowMaker<Map.Entry<String, DatasetSpecificationSummary>>() {
+              @Override
+              public List<?> makeRow(Map.Entry<String, DatasetSpecificationSummary> object) {
+                return Lists.newArrayList(object.getKey(), object.getValue().getName(),
+                    object.getValue().getType());
+              }
+            }).build();
   }
 }

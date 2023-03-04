@@ -15,6 +15,7 @@
  */
 
 package io.cdap.cdap.api.macro;
+
 /**
  * Indicates that there is an invalid macro.
  */

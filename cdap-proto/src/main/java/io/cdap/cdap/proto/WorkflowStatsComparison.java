@@ -24,10 +24,12 @@ import java.util.Map;
  * which are further divided into run that the action took in a specific workflow.
  */
 public final class WorkflowStatsComparison {
+
   private final Map<String, Long> startTimes;
   private final Collection<ProgramNodes> programNodesList;
 
-  public WorkflowStatsComparison(Map<String, Long> startTimes, Collection<ProgramNodes> programNodesList) {
+  public WorkflowStatsComparison(Map<String, Long> startTimes,
+      Collection<ProgramNodes> programNodesList) {
     this.startTimes = startTimes;
     this.programNodesList = programNodesList;
   }
@@ -41,25 +43,26 @@ public final class WorkflowStatsComparison {
   }
 
   /**
-   * Contains information about a Program and the statistics that correspond to it
-   * divided per run of the workflow that the program ran in.
+   * Contains information about a Program and the statistics that correspond to it divided per run
+   * of the workflow that the program ran in.
    */
   public static final class ProgramNodes {
+
     private final String programName;
     private final List<WorkflowProgramDetails> workflowProgramDetailsList;
     private final ProgramType programType;
 
     public ProgramNodes(String programName, ProgramType programType,
-                        List<WorkflowProgramDetails> workflowProgramDetailsList) {
+        List<WorkflowProgramDetails> workflowProgramDetailsList) {
       this.programName = programName;
       this.programType = programType;
       this.workflowProgramDetailsList = workflowProgramDetailsList;
     }
 
     public void addWorkflowDetails(String workflowRunId, String programRunId, long programStartTime,
-                                   Map<String, Long> metrics) {
+        Map<String, Long> metrics) {
       workflowProgramDetailsList.add(new WorkflowProgramDetails(workflowRunId, programRunId,
-                                                                programStartTime, metrics));
+          programStartTime, metrics));
     }
 
     public String getProgramName() {
@@ -78,13 +81,14 @@ public final class WorkflowStatsComparison {
      * Contains information of Workflow Runs and the metrics of the program associated with it.
      */
     public static final class WorkflowProgramDetails {
+
       private final String workflowRunId;
       private final String programRunId;
       private final long programRunStart;
       private final Map<String, Long> metrics;
 
       public WorkflowProgramDetails(String workflowRunId, String programRunId,
-                                    long programRunStart, Map<String, Long> metrics) {
+          long programRunStart, Map<String, Long> metrics) {
         this.workflowRunId = workflowRunId;
         this.metrics = metrics;
         this.programRunId = programRunId;

@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> Resource type to watch
  */
 public abstract class AbstractWatcherThread<T extends KubernetesObject>
-  extends Thread implements AutoCloseable, ResourceChangeListener<T> {
+    extends Thread implements AutoCloseable, ResourceChangeListener<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractWatcherThread.class);
 
@@ -78,8 +78,9 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   private Watchable<DynamicKubernetesObject> watch;
 
   @VisibleForTesting
-  protected AbstractWatcherThread(String threadName, String namespace, String group, String version, String plural,
-                                  ApiClientFactory apiClientFactory) {
+  protected AbstractWatcherThread(String threadName, String namespace, String group, String version,
+      String plural,
+      ApiClientFactory apiClientFactory) {
     super(threadName);
     setDaemon(true);
     this.namespace = namespace;
@@ -90,22 +91,23 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
 
     // Resolve <T> to form the concrete type for Watch.Response<T>
     this.resourceType = TypeToken.of(getClass()).resolveType(
-      AbstractWatcherThread.class.getTypeParameters()[0]).getType();
+        AbstractWatcherThread.class.getTypeParameters()[0]).getType();
     this.changeListener = new CachingResourceChangeListener();
     this.apiClientFactory = apiClientFactory;
   }
 
 
   /**
-   * Updates the given {@link ListOptions} for the resource listing call.
-   * Typically, sub-class can set override to set field and label selectors.
+   * Updates the given {@link ListOptions} for the resource listing call. Typically, sub-class can
+   * set override to set field and label selectors.
    */
   protected void updateListOptions(ListOptions options) {
     // no-op
   }
 
   /**
-   * Close the existing watch. Children class can call this method to force closing the existing watch.
+   * Close the existing watch. Children class can call this method to force closing the existing
+   * watch.
    */
   @VisibleForTesting
   protected final synchronized void closeWatch() {
@@ -150,7 +152,7 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
               break;
             case ERROR:
               LOG.warn("Encountered error while watching for '{}/{}/{}' with status {}",
-                       group, version, plural, response.status);
+                  group, version, plural, response.status);
               // If the resourceVersion we provided was out-of-date when the watch was created,
               // the server will respond with ERROR. We close the watch to start with a fresh fetch.
               closeWatch();
@@ -170,9 +172,11 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
         if (cause instanceof IOException || e instanceof IllegalStateException) {
           // Log at lower level if it is caused by IOException or IllegalStateException, which will happen
           // if connection to the API server is lost or the watch is closed
-          LOG.trace("Exception raised when watching for changes in resource of type {}", resourceType, e);
+          LOG.trace("Exception raised when watching for changes in resource of type {}",
+              resourceType, e);
         } else {
-          LOG.warn("Exception raised when watching for changes in resource of type {}", resourceType, e);
+          LOG.warn("Exception raised when watching for changes in resource of type {}",
+              resourceType, e);
         }
 
         try {
@@ -181,7 +185,8 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
           // is being added, the watch would get closed, hence throwing exception.
           if (!stopped && failureCount++ > 0) {
             // Sleep for some random milliseconds before retrying
-            int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint()) + FAILURE_RETRY_RANGE.lowerEndpoint();
+            int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint())
+                + FAILURE_RETRY_RANGE.lowerEndpoint();
             TimeUnit.MILLISECONDS.sleep(sleepMs);
           }
         } catch (InterruptedException ex) {
@@ -248,7 +253,8 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
       listObject = listResult.getObject();
       String resourceVersion = listObject.getMetadata().getResourceVersion();
 
-      LOG.trace("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural, resourceVersion);
+      LOG.trace("Start watching '{}/{}/{}' starting at resource version {}", group, version, plural,
+          resourceVersion);
 
       // Create the new watch
       // It is important to use the same ListOptions (for selector) as the one used in the list call above
@@ -269,9 +275,11 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
   }
 
   /**
-   * Wraps the {@link Watchable} such that the {@link Watchable#close()} method would just log exception.
+   * Wraps the {@link Watchable} such that the {@link Watchable#close()} method would just log
+   * exception.
    */
-  private Watchable<DynamicKubernetesObject> wrapWatchableClose(Watchable<DynamicKubernetesObject> watchable) {
+  private Watchable<DynamicKubernetesObject> wrapWatchableClose(
+      Watchable<DynamicKubernetesObject> watchable) {
     return new Watchable<DynamicKubernetesObject>() {
       @Override
       public void close() {
@@ -332,8 +340,8 @@ public abstract class AbstractWatcherThread<T extends KubernetesObject>
     }
 
     /**
-     * Updates the resources and fire events based on the difference between the cached resources and the given
-     * list of resources.
+     * Updates the resources and fire events based on the difference between the cached resources
+     * and the given list of resources.
      *
      * @param listObject the list of resources to compare against the cache
      * @throws IOException if failed to decode the resource object

@@ -45,10 +45,12 @@ final class SimpleKafkaProducer {
     props.setProperty("partitioner.class", "io.cdap.cdap.logging.appender.kafka.StringPartitioner");
     props.setProperty("request.required.acks", "1");
     props.setProperty("producer.type", cConf.get(LoggingConfiguration.KAFKA_PRODUCER_TYPE,
-                       LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
-    props.setProperty("queue.buffering.max.ms", cConf.get(LoggingConfiguration.KAFKA_PRODUCER_BUFFER_MS,
-                      Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_BUFFER_MS)));
-    props.setProperty(Constants.Logging.NUM_PARTITIONS, cConf.get(Constants.Logging.NUM_PARTITIONS));
+        LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_TYPE));
+    props.setProperty("queue.buffering.max.ms",
+        cConf.get(LoggingConfiguration.KAFKA_PRODUCER_BUFFER_MS,
+            Long.toString(LoggingConfiguration.DEFAULT_KAFKA_PRODUCER_BUFFER_MS)));
+    props.setProperty(Constants.Logging.NUM_PARTITIONS,
+        cConf.get(Constants.Logging.NUM_PARTITIONS));
 
     ProducerConfig config = new ProducerConfig(props);
     producer = createProducer(config);
@@ -72,11 +74,13 @@ final class SimpleKafkaProducer {
   }
 
   /**
-   * Creates a {@link Producer} using the given configuration. The producer instance will be created from a
-   * daemon thread to make sure the async thread created inside Kafka is also a daemon thread.
+   * Creates a {@link Producer} using the given configuration. The producer instance will be created
+   * from a daemon thread to make sure the async thread created inside Kafka is also a daemon
+   * thread.
    */
   private <K, V> Producer<K, V> createProducer(final ProducerConfig config) {
-    ExecutorService executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("create-producer"));
+    ExecutorService executor = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("create-producer"));
     try {
       return Futures.getUnchecked(executor.submit(() -> new Producer<>(config)));
     } finally {

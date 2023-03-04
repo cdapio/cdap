@@ -26,6 +26,7 @@ import java.util.Objects;
  */
 @Beta
 public class AccessPayload extends AuditPayload {
+
   private final AccessType accessType;
   private final EntityId accessor;
 
@@ -51,8 +52,8 @@ public class AccessPayload extends AuditPayload {
       return false;
     }
     AccessPayload that = (AccessPayload) o;
-    return Objects.equals(accessType, that.accessType) &&
-      Objects.equals(accessor, that.accessor);
+    return Objects.equals(accessType, that.accessType)
+        && Objects.equals(accessor, that.accessor);
   }
 
   @Override
@@ -62,9 +63,9 @@ public class AccessPayload extends AuditPayload {
 
   @Override
   public String toString() {
-    return "AccessPayload{" +
-      "accessType=" + accessType +
-      ", accessor=" + accessor +
-      "} " + super.toString();
+    return "AccessPayload{"
+        + "accessType=" + accessType
+        + ", accessor=" + accessor
+        + "} " + super.toString();
   }
 }

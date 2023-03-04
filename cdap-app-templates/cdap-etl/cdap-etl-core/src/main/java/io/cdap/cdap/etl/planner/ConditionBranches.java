@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * Simple class to hold the condition branch information.
  */
 public class ConditionBranches {
+
   private final String trueOutput;
   private final String falseOutput;
 
@@ -51,8 +52,8 @@ public class ConditionBranches {
 
     ConditionBranches that = (ConditionBranches) o;
 
-    return Objects.equals(trueOutput, that.trueOutput) &&
-      Objects.equals(falseOutput, that.falseOutput);
+    return Objects.equals(trueOutput, that.trueOutput)
+        && Objects.equals(falseOutput, that.falseOutput);
   }
 
   @Override

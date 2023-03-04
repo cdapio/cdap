@@ -63,22 +63,26 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Creates a {@link ProgramRunner} that start the type of program that this program runner supports.
+   * Creates a {@link ProgramRunner} that start the type of program that this program runner
+   * supports.
    */
   protected abstract ProgramRunner createProgramRunner();
 
   /**
    * Starts all instances of a Program component.
+   *
    * @param program The program to run
    * @param options options for the program
    * @param numInstances number of component instances to start
    */
-  protected final ProgramController startAll(Program program, ProgramOptions options, int numInstances) {
+  protected final ProgramController startAll(Program program, ProgramOptions options,
+      int numInstances) {
     RunId runId = ProgramRunners.getRunId(options);
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
     try {
       for (int instanceId = 0; instanceId < numInstances; instanceId++) {
-        ProgramOptions componentOptions = createComponentOptions(instanceId, numInstances, runId, options);
+        ProgramOptions componentOptions = createComponentOptions(instanceId, numInstances, runId,
+            options);
         ProgramController controller = createProgramRunner().run(program, componentOptions);
         components.put(program.getName(), instanceId, controller);
       }
@@ -89,12 +93,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       try {
         // Need to stop all started components
         Futures.successfulAsList(
-          Iterables.transform(components.values(), new Function<ProgramController, ListenableFuture<?>>() {
-            @Override
-            public ListenableFuture<?> apply(ProgramController controller) {
-              return controller.stop();
-            }
-          })).get();
+            Iterables.transform(components.values(),
+                new Function<ProgramController, ListenableFuture<?>>() {
+                  @Override
+                  public ListenableFuture<?> apply(ProgramController controller) {
+                    return controller.stop();
+                  }
+                })).get();
 
         throw Throwables.propagate(t);
       } catch (Exception e) {
@@ -105,7 +110,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   }
 
   private ProgramOptions createComponentOptions(int instanceId, int instances, RunId runId,
-                                                ProgramOptions options) {
+      ProgramOptions options) {
     Map<String, String> systemOptions = Maps.newHashMap();
     systemOptions.putAll(options.getArguments().asMap());
     systemOptions.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
@@ -114,13 +119,14 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     systemOptions.put(ProgramOptionConstants.HOST, host);
 
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemOptions),
-                                    options.getUserArguments());
+        options.getUserArguments());
   }
 
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
    */
   private final class InMemoryProgramController extends AbstractProgramController {
+
     private final Table<String, Integer, ProgramController> components;
     private final Program program;
     private final ProgramOptions options;
@@ -129,7 +135,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, ProgramOptions options) {
+        Program program, ProgramOptions options) {
       super(program.getId().run(ProgramRunners.getRunId(options)));
       this.program = program;
       this.components = components;
@@ -189,12 +195,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       lock.lock();
       try {
         Futures.successfulAsList(
-          Iterables.transform(components.values(), new Function<ProgramController, ListenableFuture<?>>() {
-            @Override
-            public ListenableFuture<?> apply(ProgramController input) {
-              return input.stop();
-            }
-          })).get();
+            Iterables.transform(components.values(),
+                new Function<ProgramController, ListenableFuture<?>>() {
+                  @Override
+                  public ListenableFuture<?> apply(ProgramController input) {
+                    return input.stop();
+                  }
+                })).get();
       } finally {
         lock.unlock();
       }
@@ -211,8 +218,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       lock.lock();
       try {
         changeInstances(command.get("runnable"),
-                        Integer.parseInt(command.get("newInstances")),
-                        Integer.parseInt(command.get("oldInstances")));
+            Integer.parseInt(command.get("newInstances")),
+            Integer.parseInt(command.get("oldInstances")));
       } catch (Throwable t) {
         LOG.error(String.format("Fail to change instances: %s", command), t);
         throw t;
@@ -223,15 +230,14 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
     /**
      * Change the number of instances of the running runnable.
+     *
      * @param runnableName Name of the runnable
      * @param newCount New instance count
      * @param oldCount Old instance count
-     * @throws java.util.concurrent.ExecutionException
-     * @throws InterruptedException
      */
     private void changeInstances(String runnableName, final int newCount,
-                                 // unused but makes the in-memory controller expect the same command as twill
-                                 @SuppressWarnings("unused") final int oldCount) throws Exception {
+        // unused but makes the in-memory controller expect the same command as twill
+        @SuppressWarnings("unused") final int oldCount) throws Exception {
       Map<Integer, ProgramController> liveRunnables = components.row(runnableName);
       int liveCount = liveRunnables.size();
       if (liveCount == newCount) {
@@ -240,7 +246,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // stop any extra runnables
       if (liveCount > newCount) {
-        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
+        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(
+            liveCount - newCount);
         for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
           futures.add(components.remove(runnableName, instanceId).stop());
         }
@@ -249,7 +256,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
-        ProgramOptions programOptions = createComponentOptions(instanceId, newCount, getRunId(), options);
+        ProgramOptions programOptions = createComponentOptions(instanceId, newCount, getRunId(),
+            options);
         ProgramController controller = createProgramRunner().run(program, programOptions);
         components.put(runnableName, instanceId, controller);
       }

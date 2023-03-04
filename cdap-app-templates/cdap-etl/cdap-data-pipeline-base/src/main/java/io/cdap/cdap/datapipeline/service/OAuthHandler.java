@@ -147,12 +147,12 @@ public class OAuthHandler extends AbstractSystemHttpServiceHandler {
       try {
         putOAuthCredentialRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                 PutOAuthCredentialRequest.class);
-        if (putOAuthCredentialRequest.getOneTimeCode() == null ||
-            putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
+        if (putOAuthCredentialRequest.getOneTimeCode() == null
+            || putOAuthCredentialRequest.getOneTimeCode().isEmpty()) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing one-time code");
         }
-        if (putOAuthCredentialRequest.getRedirectURI() == null ||
-            putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
+        if (putOAuthCredentialRequest.getRedirectURI() == null
+            || putOAuthCredentialRequest.getRedirectURI().isEmpty()) {
           throw new OAuthServiceException(HttpURLConnection.HTTP_BAD_REQUEST, "Invalid request: missing redirect URI");
         }
       } catch (JsonSyntaxException e) {

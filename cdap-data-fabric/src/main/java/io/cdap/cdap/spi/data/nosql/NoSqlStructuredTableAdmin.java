@@ -43,7 +43,8 @@ import org.slf4j.LoggerFactory;
 public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTableAdmin.class);
-  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(
+      NamespaceId.SYSTEM.getNamespace());
 
   static final String ENTITY_TABLE_NAME = "entity.store";
 
@@ -54,15 +55,17 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   NoSqlStructuredTableAdmin(DatasetDefinition tableDefinition, StructuredTableRegistry registry) {
     //noinspection unchecked - due to the guice binding we know that the tableDefinition is of the right type
     this.indexTableDefinition =
-      new NoSqlStructuredTableDatasetDefinition(new IndexedTableDefinition("indexedTable", tableDefinition));
+        new NoSqlStructuredTableDatasetDefinition(
+            new IndexedTableDefinition("indexedTable", tableDefinition));
     this.indexTableSpec =
-      indexTableDefinition.configure(ENTITY_TABLE_NAME,
-                                     DatasetProperties.builder().add(IndexedTable.DYNAMIC_INDEXING, "true").build());
+        indexTableDefinition.configure(ENTITY_TABLE_NAME,
+            DatasetProperties.builder().add(IndexedTable.DYNAMIC_INDEXING, "true").build());
     this.registry = registry;
   }
 
   @Override
-  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+  public void create(StructuredTableSpecification spec)
+      throws IOException, TableAlreadyExistsException {
     if (exists(spec.getTableId())) {
       throw new TableAlreadyExistsException(spec.getTableId());
     }
@@ -71,7 +74,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void createOrUpdate(StructuredTableSpecification spec)
-    throws IOException, TableSchemaIncompatibleException {
+      throws IOException, TableSchemaIncompatibleException {
     if (exists(spec.getTableId())) {
       updateTable(spec);
       return;
@@ -81,9 +84,11 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   private void createTable(StructuredTableSpecification spec) throws IOException {
     LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
-    DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
+    DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec,
+        null);
     if (!indexTableAdmin.exists()) {
-      LOG.info("Creating dataset indexed table {} in namespace {}", indexTableSpec.getName(), NamespaceId.SYSTEM);
+      LOG.info("Creating dataset indexed table {} in namespace {}", indexTableSpec.getName(),
+          NamespaceId.SYSTEM);
       indexTableAdmin.create();
     }
     registry.registerSpecification(spec);
@@ -104,7 +109,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   private void updateTable(StructuredTableSpecification spec)
-    throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
+      throws IOException, TableNotFoundException, TableSchemaIncompatibleException {
     StructuredTableId tableId = spec.getTableId();
     StructuredTableSpecification existingSpec = registry.getSpecification(tableId);
     if (existingSpec == null) {
@@ -127,7 +132,8 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
     registry.removeSpecification(tableId);
     if (registry.isEmpty()) {
       DatasetAdmin admin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
-      LOG.info("Dropping dataset indexed table {} in namespace {}", indexTableSpec.getName(), NamespaceId.SYSTEM);
+      LOG.info("Dropping dataset indexed table {} in namespace {}", indexTableSpec.getName(),
+          NamespaceId.SYSTEM);
       admin.drop();
     }
   }

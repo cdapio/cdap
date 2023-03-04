@@ -20,9 +20,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**
  * Processor event containing event, eventSize and offset.
+ *
  * @param <Offset> type of the offset
  */
 public class ProcessorEvent<Offset> {
+
   private final ILoggingEvent event;
   private final int eventSize;
   private final Offset offset;

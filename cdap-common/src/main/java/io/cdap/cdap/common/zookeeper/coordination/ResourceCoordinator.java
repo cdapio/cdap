@@ -53,8 +53,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Allocate resources to registered handler. It is expected to have single instance of this class
- * running per ZK namespace (determined by the ZKClient passed to constructor). User can use
- * {@link org.apache.twill.internal.zookeeper.LeaderElection} class to help archiving requirement.
+ * running per ZK namespace (determined by the ZKClient passed to constructor). User can use {@link
+ * org.apache.twill.internal.zookeeper.LeaderElection} class to help archiving requirement.
  *
  * ZK structure.
  *
@@ -66,7 +66,6 @@ import org.slf4j.LoggerFactory;
  *     /[resource_name] - Contains ResourceAssignment encoded in json
  * }
  * </pre>
- *
  */
 public final class ResourceCoordinator extends AbstractService {
 
@@ -84,8 +83,8 @@ public final class ResourceCoordinator extends AbstractService {
   private ExecutorService executor;
 
   public ResourceCoordinator(ZKClient zkClient,
-                             DiscoveryServiceClient discoveryService,
-                             AssignmentStrategy assignmentStrategy) {
+      DiscoveryServiceClient discoveryService,
+      AssignmentStrategy assignmentStrategy) {
     this.zkClient = zkClient;
     this.discoveryService = discoveryService;
     this.assignmentStrategy = assignmentStrategy;
@@ -100,7 +99,8 @@ public final class ResourceCoordinator extends AbstractService {
 
   @Override
   protected void doStart() {
-    executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("resource-coordinator"));
+    executor = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("resource-coordinator"));
     beginWatch(wrapWatcher(new ResourceWatcher()));
     notifyStarted();
   }
@@ -152,130 +152,136 @@ public final class ResourceCoordinator extends AbstractService {
    */
   private void beginWatch(final Watcher watcher) {
     Futures.addCallback(zkClient.exists(CoordinationConstants.REQUIREMENTS_PATH, watcher),
-                        wrapCallback(new FutureCallback<Stat>() {
-      @Override
-      public void onSuccess(Stat result) {
-        if (result != null) {
-          fetchAndProcessAllResources(watcher);
-        }
-        // If the node doesn't exists yet, that's ok, the watcher would handle it once it's created.
-      }
+        wrapCallback(new FutureCallback<Stat>() {
+          @Override
+          public void onSuccess(Stat result) {
+            if (result != null) {
+              fetchAndProcessAllResources(watcher);
+            }
+            // If the node doesn't exists yet, that's ok, the watcher would handle it once it's created.
+          }
 
-      @Override
-      public void onFailure(Throwable t) {
-        // Something very wrong to have exists call failed.
-        LOG.error("Failed to call exists on ZK node {}{}",
-                  zkClient.getConnectString(), CoordinationConstants.REQUIREMENTS_PATH, t);
-        doNotifyFailed(t);
-      }
-    }), executor);
+          @Override
+          public void onFailure(Throwable t) {
+            // Something very wrong to have exists call failed.
+            LOG.error("Failed to call exists on ZK node {}{}",
+                zkClient.getConnectString(), CoordinationConstants.REQUIREMENTS_PATH, t);
+            doNotifyFailed(t);
+          }
+        }), executor);
   }
 
   /**
-   * Fetches all {@link ResourceRequirement} and perform assignment for the one that changed. Also, it will
-   * remove assignments for the resource requirements that are removed.
+   * Fetches all {@link ResourceRequirement} and perform assignment for the one that changed. Also,
+   * it will remove assignments for the resource requirements that are removed.
    */
   private void fetchAndProcessAllResources(final Watcher watcher) {
     Futures.addCallback(
-      zkClient.getChildren(CoordinationConstants.REQUIREMENTS_PATH, watcher),
-      wrapCallback(new FutureCallback<NodeChildren>() {
-        @Override
-        public void onSuccess(NodeChildren result) {
-          Set<String> children = ImmutableSet.copyOf(result.getChildren());
+        zkClient.getChildren(CoordinationConstants.REQUIREMENTS_PATH, watcher),
+        wrapCallback(new FutureCallback<NodeChildren>() {
+          @Override
+          public void onSuccess(NodeChildren result) {
+            Set<String> children = ImmutableSet.copyOf(result.getChildren());
 
-          // Handle new resources
-          for (String child : children) {
-            String path = CoordinationConstants.REQUIREMENTS_PATH + "/" + child;
-            Watcher requirementWatcher = wrapWatcher(new ResourceRequirementWatcher(path));
-            fetchAndProcessRequirement(path, requirementWatcher);
+            // Handle new resources
+            for (String child : children) {
+              String path = CoordinationConstants.REQUIREMENTS_PATH + "/" + child;
+              Watcher requirementWatcher = wrapWatcher(new ResourceRequirementWatcher(path));
+              fetchAndProcessRequirement(path, requirementWatcher);
+            }
+
+            // Handle removed resources
+            for (String removed : ImmutableSet.copyOf(
+                Sets.difference(requirements.keySet(), children))) {
+              ResourceRequirement requirement = requirements.remove(removed);
+              LOG.info("Requirement deleted {}", requirement);
+              // Delete the assignment node.
+              removeAssignment(removed);
+            }
           }
 
-          // Handle removed resources
-          for (String removed: ImmutableSet.copyOf(Sets.difference(requirements.keySet(), children))) {
-            ResourceRequirement requirement = requirements.remove(removed);
-            LOG.info("Requirement deleted {}", requirement);
-            // Delete the assignment node.
-            removeAssignment(removed);
+          @Override
+          public void onFailure(Throwable t) {
+            // If the resource path node doesn't exists, resort to watch for exists.
+            if (t instanceof KeeperException.NoNodeException) {
+              beginWatch(watcher);
+            }
+            // Otherwise, it's a unexpected failure.
+            LOG.error("Failed to getChildren on ZK node {}{}",
+                zkClient.getConnectString(), CoordinationConstants.REQUIREMENTS_PATH, t);
+            doNotifyFailed(t);
           }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-          // If the resource path node doesn't exists, resort to watch for exists.
-          if (t instanceof KeeperException.NoNodeException) {
-            beginWatch(watcher);
-          }
-          // Otherwise, it's a unexpected failure.
-          LOG.error("Failed to getChildren on ZK node {}{}",
-                    zkClient.getConnectString(), CoordinationConstants.REQUIREMENTS_PATH, t);
-          doNotifyFailed(t);
-        }
-      }), executor);
+        }), executor);
   }
 
   /**
-   * Gets the data from a resource node, decode it to {@link ResourceRequirement} and performs resource assignment
-   * if the requirement changed.
+   * Gets the data from a resource node, decode it to {@link ResourceRequirement} and performs
+   * resource assignment if the requirement changed.
    */
   private void fetchAndProcessRequirement(final String path, Watcher watcher) {
-    Futures.addCallback(zkClient.getData(path, watcher), wrapCallback(new FutureCallback<NodeData>() {
-      @Override
-      public void onSuccess(NodeData result) {
-        byte[] nodeData = result.getData();
-        if (nodeData == null) {
-          LOG.warn("Ignore empty data in ZK node {}{}", zkClient.getConnectString(), path);
-          return;
-        }
+    Futures.addCallback(zkClient.getData(path, watcher),
+        wrapCallback(new FutureCallback<NodeData>() {
+          @Override
+          public void onSuccess(NodeData result) {
+            byte[] nodeData = result.getData();
+            if (nodeData == null) {
+              LOG.warn("Ignore empty data in ZK node {}{}", zkClient.getConnectString(), path);
+              return;
+            }
 
-        try {
-          ResourceRequirement requirement = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(nodeData);
-          LOG.debug("Get requirement {}", requirement);
+            try {
+              ResourceRequirement requirement = CoordinationConstants.RESOURCE_REQUIREMENT_CODEC.decode(
+                  nodeData);
+              LOG.debug("Get requirement {}", requirement);
 
-          // See if the requirement changed.
-          ResourceRequirement oldRequirement = requirements.get(requirement.getName());
-          if (requirement.equals(oldRequirement)) {
-            LOG.info("Requirement for {} is not changed. No assignment is needed. {} = {}",
-                     requirement.getName(), oldRequirement, requirement);
-            return;
+              // See if the requirement changed.
+              ResourceRequirement oldRequirement = requirements.get(requirement.getName());
+              if (requirement.equals(oldRequirement)) {
+                LOG.info("Requirement for {} is not changed. No assignment is needed. {} = {}",
+                    requirement.getName(), oldRequirement, requirement);
+                return;
+              }
+
+              // Requirement change, perform assignment, optional subscribe to service discovery if not yet did.
+              requirements.put(requirement.getName(), requirement);
+
+              CancellableServiceDiscovered discovered = serviceDiscovered.get(
+                  requirement.getName());
+              if (discovered == null) {
+                discovered = new CancellableServiceDiscovered(
+                    discoveryService.discover(requirement.getName()),
+                    discoverableListener, executor);
+                serviceDiscovered.put(requirement.getName(), discovered);
+
+                // If it is the first time it subscribes, no need to trigger assignment logic here as the first call
+                // to listener.onChange would do so.
+              } else {
+                performAssignment(requirement, discovered.serviceDiscovered);
+              }
+
+            } catch (Exception e) {
+              LOG.warn("Failed to process requirement ZK node {}{}: {}",
+                  zkClient.getConnectString(), path, Bytes.toStringBinary(nodeData), e);
+            }
           }
 
-          // Requirement change, perform assignment, optional subscribe to service discovery if not yet did.
-          requirements.put(requirement.getName(), requirement);
-
-          CancellableServiceDiscovered discovered = serviceDiscovered.get(requirement.getName());
-          if (discovered == null) {
-            discovered = new CancellableServiceDiscovered(discoveryService.discover(requirement.getName()),
-                                                          discoverableListener, executor);
-            serviceDiscovered.put(requirement.getName(), discovered);
-
-            // If it is the first time it subscribes, no need to trigger assignment logic here as the first call
-            // to listener.onChange would do so.
-          } else {
-            performAssignment(requirement, discovered.serviceDiscovered);
+          @Override
+          public void onFailure(Throwable t) {
+            // Just log
+            LOG.error("Failed to getData on ZK node {}{}", zkClient.getConnectString(), path, t);
           }
-
-        } catch (Exception e) {
-          LOG.warn("Failed to process requirement ZK node {}{}: {}",
-                   zkClient.getConnectString(), path, Bytes.toStringBinary(nodeData), e);
-        }
-      }
-
-      @Override
-      public void onFailure(Throwable t) {
-        // Just log
-        LOG.error("Failed to getData on ZK node {}{}", zkClient.getConnectString(), path, t);
-      }
-    }), executor);
+        }), executor);
   }
 
   /**
-   * Performs resource assignment based on the resource requirement.
-   * This method should only be called from the single thread executor owned by this class.
-   * 
+   * Performs resource assignment based on the resource requirement. This method should only be
+   * called from the single thread executor owned by this class.
+   *
    * @param requirement The resource requirement that needs to be fulfilled.
    * @param serviceDiscovered The set of handlers available.
    */
-  private void performAssignment(ResourceRequirement requirement, ServiceDiscovered serviceDiscovered) {
+  private void performAssignment(ResourceRequirement requirement,
+      ServiceDiscovered serviceDiscovered) {
     ResourceAssignment oldAssignment = assignments.get(requirement.getName());
 
     if (oldAssignment == null) {
@@ -285,8 +291,10 @@ public final class ResourceCoordinator extends AbstractService {
       return;
     }
 
-    Set<Discoverable> handlers = ImmutableSortedSet.copyOf(DiscoverableComparator.COMPARATOR, serviceDiscovered);
-    LOG.info("Perform assign for requirement {}. Number of handlers is {}", requirement, handlers.size());
+    Set<Discoverable> handlers = ImmutableSortedSet.copyOf(DiscoverableComparator.COMPARATOR,
+        serviceDiscovered);
+    LOG.info("Perform assign for requirement {}. Number of handlers is {}", requirement,
+        handlers.size());
 
     // Build a map from partition name to number of replicas
     Map<String, Integer> partitions = Maps.newHashMap();
@@ -296,12 +304,14 @@ public final class ResourceCoordinator extends AbstractService {
 
     // Copy all valid partition replicas assignments and drops the invalid one.
     Multimap<Discoverable, PartitionReplica> assignmentMap =
-      TreeMultimap.create(DiscoverableComparator.COMPARATOR, PartitionReplica.COMPARATOR);
+        TreeMultimap.create(DiscoverableComparator.COMPARATOR, PartitionReplica.COMPARATOR);
 
-    for (Map.Entry<Discoverable, PartitionReplica> entry : oldAssignment.getAssignments().entries()) {
+    for (Map.Entry<Discoverable, PartitionReplica> entry : oldAssignment.getAssignments()
+        .entries()) {
       Integer replicas = partitions.get(entry.getValue().getName());
       // Check if the partition replica is still valid and if the handler being assigned still exists.
-      if (replicas != null && entry.getValue().getReplicaId() < replicas && handlers.contains(entry.getKey())) {
+      if (replicas != null && entry.getValue().getReplicaId() < replicas && handlers.contains(
+          entry.getKey())) {
         assignmentMap.put(entry.getKey(), entry.getValue());
       }
     }
@@ -319,16 +329,16 @@ public final class ResourceCoordinator extends AbstractService {
   }
 
   /**
-   * Fetch the {@link ResourceAssignment} from ZK and then perform resource assignment logic. This is done with best
-   * effort to let the {@link AssignmentStrategy} has access to existing assignment. If failed to get existing
-   * {@link ResourceAssignment} or if it's simply not exists, assignment will still be triggered as if there is no
-   * existing assignment.
+   * Fetch the {@link ResourceAssignment} from ZK and then perform resource assignment logic. This
+   * is done with best effort to let the {@link AssignmentStrategy} has access to existing
+   * assignment. If failed to get existing {@link ResourceAssignment} or if it's simply not exists,
+   * assignment will still be triggered as if there is no existing assignment.
    *
    * @param requirement The resource requirement that needs to be fulfilled.
    * @param serviceDiscovered The set of handlers available.
    */
   private void fetchAndPerformAssignment(final ResourceRequirement requirement,
-                                         final ServiceDiscovered serviceDiscovered) {
+      final ServiceDiscovered serviceDiscovered) {
     final String name = requirement.getName();
     String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + name;
     Futures.addCallback(zkClient.getData(zkPath), new FutureCallback<NodeData>() {
@@ -346,7 +356,9 @@ public final class ResourceCoordinator extends AbstractService {
             resourceAssignment = CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC.decode(data);
           }
         } catch (Throwable t) {
-          LOG.warn("Failed to decode resource assignment. Perform assignment as if no assignment existed.", t);
+          LOG.warn(
+              "Failed to decode resource assignment. Perform assignment as if no assignment existed.",
+              t);
         }
 
         assignments.put(name, resourceAssignment);
@@ -357,7 +369,9 @@ public final class ResourceCoordinator extends AbstractService {
       public void onFailure(Throwable t) {
         if (!(t instanceof KeeperException.NoNodeException)) {
           // If failure is not because node doesn't exists, log a warning
-          LOG.warn("Failed to fetch current assignment. Perform assignment as if no assignment existed.", t);
+          LOG.warn(
+              "Failed to fetch current assignment. Perform assignment as if no assignment existed.",
+              t);
         }
         assignments.put(name, new ResourceAssignment(name));
         performAssignment(requirement, serviceDiscovered);
@@ -367,6 +381,7 @@ public final class ResourceCoordinator extends AbstractService {
 
   /**
    * Save a {@link ResourceAssignment} to local cache as well as ZK ZK.
+   *
    * @param assignment The assignment to be persisted.
    */
   private void saveAssignment(ResourceAssignment assignment) {
@@ -378,24 +393,26 @@ public final class ResourceCoordinator extends AbstractService {
       String zkPath = CoordinationConstants.ASSIGNMENTS_PATH + "/" + assignmentName;
 
       Supplier<ResourceAssignment> dataSupplier = Suppliers.compose(Functions.forMap(assignments),
-                                                                    Suppliers.ofInstance(assignmentName));
+          Suppliers.ofInstance(assignmentName));
       Futures.addCallback(
-        ZKExtOperations.setOrCreate(zkClient, zkPath, dataSupplier, CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC,
-                                    CoordinationConstants.MAX_ZK_FAILURE_RETRY),
-        new FutureCallback<ResourceAssignment>() {
+          ZKExtOperations.setOrCreate(zkClient, zkPath, dataSupplier,
+              CoordinationConstants.RESOURCE_ASSIGNMENT_CODEC,
+              CoordinationConstants.MAX_ZK_FAILURE_RETRY),
+          new FutureCallback<ResourceAssignment>() {
 
-          @Override
-          public void onSuccess(ResourceAssignment result) {
-            // Done. Just log for debugging.
-            LOG.info("Resource assignment updated for {}. {}", result.getName(), Bytes.toString(data));
-          }
+            @Override
+            public void onSuccess(ResourceAssignment result) {
+              // Done. Just log for debugging.
+              LOG.info("Resource assignment updated for {}. {}", result.getName(),
+                  Bytes.toString(data));
+            }
 
-          @Override
-          public void onFailure(Throwable t) {
-            LOG.error("Failed to save assignment {}", Bytes.toStringBinary(data), t);
-            doNotifyFailed(t);
-          }
-        }, executor
+            @Override
+            public void onFailure(Throwable t) {
+              LOG.error("Failed to save assignment {}", Bytes.toStringBinary(data), t);
+              doNotifyFailed(t);
+            }
+          }, executor
       );
     } catch (Exception e) {
       // Something very wrong
@@ -405,6 +422,7 @@ public final class ResourceCoordinator extends AbstractService {
 
   /**
    * Removes the {@link ResourceAssignment} with the given name from local cache as well as ZK.
+   *
    * @param name Name of the resource.
    */
   private void removeAssignment(String name) {
@@ -419,7 +437,8 @@ public final class ResourceCoordinator extends AbstractService {
   }
 
   /**
-   * Returns true if this service is up and running, hence should process any events that it received.
+   * Returns true if this service is up and running, hence should process any events that it
+   * received.
    */
   private boolean shouldProcess() {
     State state = state();
@@ -463,8 +482,8 @@ public final class ResourceCoordinator extends AbstractService {
   }
 
   /**
-   * Watcher to handle children nodes changes in the resource requirement. Child node will be added / removed
-   * when requirement is added or removed.
+   * Watcher to handle children nodes changes in the resource requirement. Child node will be added
+   * / removed when requirement is added or removed.
    */
   private final class ResourceWatcher implements Watcher {
 
@@ -529,7 +548,7 @@ public final class ResourceCoordinator extends AbstractService {
     private final ServiceDiscovered serviceDiscovered;
 
     private CancellableServiceDiscovered(ServiceDiscovered serviceDiscovered,
-                                         ServiceDiscovered.ChangeListener listener, Executor executor) {
+        ServiceDiscovered.ChangeListener listener, Executor executor) {
       this.cancellable = serviceDiscovered.watchChanges(listener, executor);
       this.serviceDiscovered = serviceDiscovered;
     }

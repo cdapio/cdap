@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import java.net.URI;
 
 /**
+ *
  */
 public class InstanceURIParser {
 
@@ -43,23 +44,23 @@ public class InstanceURIParser {
 
     URI uri = URI.create(uriString);
     NamespaceId namespace =
-      (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath())) ?
-      NamespaceId.DEFAULT : new NamespaceId(uri.getPath().substring(1));
+        (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath()))
+            ? NamespaceId.DEFAULT : new NamespaceId(uri.getPath().substring(1));
     String hostname = uri.getHost();
     boolean sslEnabled = "https".equals(uri.getScheme());
     int port = uri.getPort();
 
     if (port == -1) {
-      port = sslEnabled ?
-        cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
-        cConf.getInt(Constants.Router.ROUTER_PORT);
+      port = sslEnabled
+          ? cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
+          cConf.getInt(Constants.Router.ROUTER_PORT);
     }
 
     ConnectionConfig config = ConnectionConfig.builder()
-      .setHostname(hostname)
-      .setPort(port)
-      .setSSLEnabled(sslEnabled)
-      .build();
+        .setHostname(hostname)
+        .setPort(port)
+        .setSSLEnabled(sslEnabled)
+        .build();
     return new CLIConnectionConfig(config, namespace, null);
   }
 
@@ -78,17 +79,18 @@ public class InstanceURIParser {
     }
     URI uri = URI.create(uriString);
     NamespaceId namespace =
-      (namespaceString == null || namespaceString.isEmpty()) ? NamespaceId.DEFAULT : new NamespaceId(namespaceString);
+        (namespaceString == null || namespaceString.isEmpty()) ? NamespaceId.DEFAULT
+            : new NamespaceId(namespaceString);
     String apiPath = uri.getPath();
     if (apiPath != null && apiPath.startsWith("/")) {
       apiPath = apiPath.substring(1);
     }
     ConnectionConfig config = ConnectionConfig.builder()
-      .setHostname(uri.getHost())
-      .setPort(uri.getPort() == -1 ? null : uri.getPort())
-      .setSSLEnabled("https".equals(uri.getScheme()))
-      .setApiPath(apiPath)
-      .build();
+        .setHostname(uri.getHost())
+        .setPort(uri.getPort() == -1 ? null : uri.getPort())
+        .setSSLEnabled("https".equals(uri.getScheme()))
+        .setApiPath(apiPath)
+        .build();
     return new CLIConnectionConfig(config, namespace, null);
   }
 

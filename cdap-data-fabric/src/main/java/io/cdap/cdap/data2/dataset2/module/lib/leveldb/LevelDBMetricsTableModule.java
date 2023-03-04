@@ -26,6 +26,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefiniti
  * Registers LevelDB-based implementations of the metrics system datasets
  */
 public class LevelDBMetricsTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new LevelDBMetricsTableDefinition(LevelDBMetricsTable.class.getName()));

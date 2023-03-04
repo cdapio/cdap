@@ -42,12 +42,13 @@ import org.apache.twill.filesystem.Location;
  * Remote plugin configurer when the program is run in ISOLATED mode
  */
 public class RemotePluginConfigurer extends DefaultPluginConfigurer {
+
   private final Map<String, Plugin> localPlugins;
   private final File localPluginDir;
 
   public RemotePluginConfigurer(ArtifactId artifactId, NamespaceId pluginNamespaceId,
-                                PluginInstantiator pluginInstantiator, PluginFinder pluginFinder,
-                                Map<String, Plugin> localPlugins, String localPluginDir) {
+      PluginInstantiator pluginInstantiator, PluginFinder pluginFinder,
+      Map<String, Plugin> localPlugins, String localPluginDir) {
     super(artifactId, pluginNamespaceId, pluginInstantiator, pluginFinder);
     this.localPlugins = localPlugins;
     this.localPluginDir = new File(localPluginDir);
@@ -55,7 +56,7 @@ public class RemotePluginConfigurer extends DefaultPluginConfigurer {
 
   @Override
   protected Plugin addPlugin(String pluginType, String pluginName, String pluginId,
-                             PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
+      PluginProperties properties, PluginSelector selector) throws PluginNotExistsException {
     validateExistingPlugin(pluginId);
     // this means this plugin is not registered when the app is initially deployed, use the normal way to find the
     // plugin
@@ -64,13 +65,15 @@ public class RemotePluginConfigurer extends DefaultPluginConfigurer {
     }
 
     Plugin existingPlugin = localPlugins.get(pluginId);
-    File existingPluginLocation = new File(localPluginDir, Artifacts.getFileName(existingPlugin.getArtifactId()));
+    File existingPluginLocation = new File(localPluginDir,
+        Artifacts.getFileName(existingPlugin.getArtifactId()));
 
     // need to regenerate this plugin to ensure the plugin has updated properties with macro resolved, also
     // register it to plugin instantiator
     io.cdap.cdap.api.artifact.ArtifactId artifactId = existingPlugin.getArtifactId();
-    String namespace = artifactId.getScope().equals(ArtifactScope.SYSTEM) ? NamespaceId.SYSTEM.getNamespace() :
-                         pluginNamespaceId.getNamespace();
+    String namespace =
+        artifactId.getScope().equals(ArtifactScope.SYSTEM) ? NamespaceId.SYSTEM.getNamespace() :
+            pluginNamespaceId.getNamespace();
     Location pluginLocation = Locations.toLocation(existingPluginLocation);
 
     SortedMap<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> selectedPlugin = new TreeMap<>();
@@ -78,9 +81,9 @@ public class RemotePluginConfigurer extends DefaultPluginConfigurer {
     selector.select(selectedPlugin);
 
     Plugin plugin = FindPluginHelper.getPlugin(
-      existingPlugin.getParents(),
-      Maps.immutableEntry(new ArtifactDescriptor(namespace, artifactId, pluginLocation),
-                          existingPlugin.getPluginClass()), properties, pluginInstantiator);
+        existingPlugin.getParents(),
+        Maps.immutableEntry(new ArtifactDescriptor(namespace, artifactId, pluginLocation),
+            existingPlugin.getPluginClass()), properties, pluginInstantiator);
     plugins.put(pluginId, new PluginWithLocation(plugin, pluginLocation));
     return plugin;
   }

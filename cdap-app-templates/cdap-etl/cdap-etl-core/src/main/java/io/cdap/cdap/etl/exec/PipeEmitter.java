@@ -36,12 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An Emitter that emits records to the next stages without buffering anything in memory. This means that within
- * the transform method of one stage, another stage's transform method can be called.
+ * An Emitter that emits records to the next stages without buffering anything in memory. This means
+ * that within the transform method of one stage, another stage's transform method can be called.
  *
  * This class always emits RecordInfo for output.
  */
 public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> {
+
   private static final Logger LOG = LoggerFactory.getLogger(PipeEmitter.class);
   protected final String stageName;
   private final Set<PipeStage<RecordInfo>> outputConsumers;
@@ -52,10 +53,10 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
   private boolean logWarning;
 
   public PipeEmitter(String stageName,
-                     Set<PipeStage<RecordInfo>> outputConsumers,
-                     Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
-                     Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
-                     Set<PipeStage<RecordInfo<Alert>>> alertConsumers) {
+      Set<PipeStage<RecordInfo>> outputConsumers,
+      Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
+      Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
+      Set<PipeStage<RecordInfo<Alert>>> alertConsumers) {
     this.stageName = stageName;
     this.outputConsumers = ImmutableSet.copyOf(outputConsumers);
     this.outputPortConsumers = ImmutableMultimap.copyOf(outputPortConsumers);
@@ -87,14 +88,17 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
   public void emitError(InvalidEntry<Object> invalidEntry) {
     if (logWarning && errorConsumers.isEmpty()) {
       logWarning = false;
-      LOG.warn("Stage {} emits error records, but has no error consumer. Error records will be dropped.", stageName);
+      LOG.warn(
+          "Stage {} emits error records, but has no error consumer. Error records will be dropped.",
+          stageName);
       return;
     }
 
-    ErrorRecord<Object> errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(), stageName,
-                                                             invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
+    ErrorRecord<Object> errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(),
+        stageName,
+        invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
     RecordInfo<ErrorRecord<Object>> errorRecordInfo =
-      RecordInfo.builder(errorRecord, stageName, RecordType.ERROR).build();
+        RecordInfo.builder(errorRecord, stageName, RecordType.ERROR).build();
     for (PipeStage<RecordInfo<ErrorRecord<Object>>> pipeTransform : errorConsumers) {
       pipeTransform.consume(errorRecordInfo);
     }
@@ -127,6 +131,7 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
    * Base implementation of a Builder for a PipeEmitter.
    */
   public static class Builder {
+
     protected final String stageName;
     protected final Multimap<String, PipeStage<RecordInfo>> outputPortConsumers;
     protected final Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers;
@@ -162,7 +167,8 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
     }
 
     public PipeEmitter build() {
-      return new PipeEmitter(stageName, outputConsumers, outputPortConsumers, errorConsumers, alertConsumers);
+      return new PipeEmitter(stageName, outputConsumers, outputPortConsumers, errorConsumers,
+          alertConsumers);
     }
   }
 }

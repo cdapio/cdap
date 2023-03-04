@@ -34,8 +34,8 @@ import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import java.util.Map;
 
 /**
- * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic
- * deploy of the {@link DatasetModule}s specified by application.
+ * This {@link io.cdap.cdap.pipeline.Stage} is responsible for automatic deploy of the {@link
+ * DatasetModule}s specified by application.
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {
 
@@ -47,9 +47,9 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
   private final boolean allowCustomModule;
 
   public DeployDatasetModulesStage(CConfiguration cConf,
-                                   DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework,
-                                   OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext,
-                                   ArtifactRepository artifactRepository, Impersonator impersonator) {
+      DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework,
+      OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext,
+      ArtifactRepository artifactRepository, Impersonator impersonator) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.deployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework, cConf);
     this.ownerAdmin = ownerAdmin;
@@ -72,24 +72,26 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
       KerberosPrincipalId ownerPrincipal = input.getOwnerPrincipal();
       // get the authorizing user
       String authorizingUser =
-        AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
-                                                ownerPrincipal);
+          AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext,
+              input.getApplicationId(),
+              ownerPrincipal);
 
-      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(input.getArtifactId(), impersonator);
+      EntityImpersonator classLoaderImpersonator = new EntityImpersonator(input.getArtifactId(),
+          impersonator);
       try (CloseableClassLoader classLoader =
-             artifactRepository.createArtifactClassLoader(
-               new ArtifactDescriptor(input.getArtifactId().getNamespace(),
-                                      input.getArtifactId().toApiArtifactId(),
-                                      input.getArtifactLocation()),
-               classLoaderImpersonator)) {
+          artifactRepository.createArtifactClassLoader(
+              new ArtifactDescriptor(input.getArtifactId().getNamespace(),
+                  input.getArtifactId().toApiArtifactId(),
+                  input.getArtifactLocation()),
+              classLoaderImpersonator)) {
         deployer.deployModules(input.getApplicationId().getParent(),
-                               datasetModules,
-                               input.getArtifactLocation(),
-                               classLoader, authorizingUser);
+            datasetModules,
+            input.getArtifactLocation(),
+            classLoader, authorizingUser);
       }
     } else if (deployer.hasNonSystemDatasetModules(datasetModules)) {
-      throw new IllegalStateException("Custom dataset module is not supported. " +
-                                        "One of the dataset module is a custom module: " + datasetModules);
+      throw new IllegalStateException("Custom dataset module is not supported. "
+          + "One of the dataset module is a custom module: " + datasetModules);
     }
 
     // Emit the input to next stage.

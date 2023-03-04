@@ -38,13 +38,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Field lineage processor to validate the stage operations and convert the pipeline level operations to platform
- * level operations
+ * Field lineage processor to validate the stage operations and convert the pipeline level
+ * operations to platform level operations
  */
 public class FieldLineageProcessor {
+
   private static final Logger LOG = LoggerFactory.getLogger(FieldLineageProcessor.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
+      .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter()).create();
 
   private final PipelineSpec pipelineSpec;
 
@@ -83,8 +84,8 @@ public class FieldLineageProcessor {
           Schema schema = entry.getValue();
           if (schema != null && schema.getFields() != null) {
             stageInputs.addAll(schema.getFields()
-                                 .stream().map(field -> entry.getKey() + "." + field.getName())
-                                 .collect(Collectors.toList()));
+                .stream().map(field -> entry.getKey() + "." + field.getName())
+                .collect(Collectors.toList()));
           }
         }
       } else {
@@ -92,7 +93,7 @@ public class FieldLineageProcessor {
           Schema schema = entry.getValue();
           if (schema != null && schema.getFields() != null) {
             stageInputs.addAll(schema.getFields().stream().map(Schema.Field::getName)
-                                 .collect(Collectors.toList()));
+                .collect(Collectors.toList()));
           }
         }
       }
@@ -100,7 +101,7 @@ public class FieldLineageProcessor {
       Schema outputSchema = stageSpec.getOutputSchema();
       if (outputSchema != null && outputSchema.getFields() != null) {
         stageOutputs.addAll(outputSchema.getFields().stream().map(Schema.Field::getName)
-                              .collect(Collectors.toList()));
+            .collect(Collectors.toList()));
       }
 
       String stageName = stageSpec.getName();
@@ -111,14 +112,16 @@ public class FieldLineageProcessor {
           // output schema
           if (fieldOperations == null || fieldOperations.isEmpty()) {
             return Collections.singletonList(new FieldTransformOperation("Transform", "",
-                                                                         stageInputs, stageOutputs));
+                stageInputs, stageOutputs));
           }
           return fieldOperations;
         });
       }
 
-      List<FieldOperation> fieldOperations = allOperations.computeIfAbsent(stageName, stage -> Collections.emptyList());
-      StageOperationsValidator.Builder builder = new StageOperationsValidator.Builder(fieldOperations);
+      List<FieldOperation> fieldOperations = allOperations.computeIfAbsent(stageName,
+          stage -> Collections.emptyList());
+      StageOperationsValidator.Builder builder = new StageOperationsValidator.Builder(
+          fieldOperations);
       builder.addStageInputs(stageInputs);
       builder.addStageOutputs(stageOutputs);
       StageOperationsValidator stageOperationsValidator = builder.build();
@@ -138,7 +141,8 @@ public class FieldLineageProcessor {
     }
 
     if (!stageRedundants.isEmpty()) {
-      LOG.debug("The pipeline has redundant operations {} and they will be ignored", stageRedundants);
+      LOG.debug("The pipeline has redundant operations {} and they will be ignored",
+          stageRedundants);
     }
 
     if (!stageInvalids.isEmpty()) {
@@ -147,8 +151,9 @@ public class FieldLineageProcessor {
       LOG.debug(new InvalidLineageException(stageInvalids).getMessage());
     }
 
-    LineageOperationsProcessor processor = new LineageOperationsProcessor(pipelineSpec.getConnections(),
-                                                                          allOperations, noMergeRequiredStages);
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(
+        pipelineSpec.getConnections(),
+        allOperations, noMergeRequiredStages);
 
     return processor.process();
   }

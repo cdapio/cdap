@@ -26,9 +26,9 @@ public class AppStateKeyValue extends AppStateKey {
   private final byte[] stateValue;
 
   public AppStateKeyValue(NamespaceId namespaceId,
-                          String appName,
-                          String stateKey,
-                          byte[] stateValue) {
+      String appName,
+      String stateKey,
+      byte[] stateValue) {
     super(namespaceId, appName, stateKey);
     this.stateValue = stateValue;
   }

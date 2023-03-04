@@ -25,15 +25,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Base implementation of {@link TransformContext} for common functionality.
- * This context scopes plugin ids by the id of the stage. This allows multiple transforms to use plugins with
- * the same id without clobbering each other.
+ * Base implementation of {@link TransformContext} for common functionality. This context scopes
+ * plugin ids by the id of the stage. This allows multiple transforms to use plugins with the same
+ * id without clobbering each other.
  */
-public abstract class AbstractTransformContext extends AbstractStageContext implements TransformContext {
+public abstract class AbstractTransformContext extends AbstractStageContext implements
+    TransformContext {
 
   private final LookupProvider lookup;
 
-  protected AbstractTransformContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec, LookupProvider lookup) {
+  protected AbstractTransformContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
+      LookupProvider lookup) {
     super(pipelineRuntime, stageSpec);
     this.lookup = lookup;
   }

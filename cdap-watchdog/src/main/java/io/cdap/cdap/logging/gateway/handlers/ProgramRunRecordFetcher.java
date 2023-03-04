@@ -27,17 +27,21 @@ import java.io.IOException;
  * Interface for fetching {@link RunRecordDetail}
  */
 public interface ProgramRunRecordFetcher {
+
   /**
    * Return {@link RunRecordDetail} for the given {@link ProgramRunId}
+   *
    * @param runId for which to fetch {@link RunRecordDetail}
    * @return {@link RunRecordDetail}
    * @throws IOException if failed to fetch the {@link RunRecordDetail}
    * @throws NotFoundException if the program or runid is not found
    */
-  RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException, UnauthorizedException;
+  RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+      throws IOException, NotFoundException, UnauthorizedException;
 
   /**
    * Return {@link RunRecordDetail} for the given {@link ProgramReference} and run id
+   *
    * @param programRef for which to fetch {@link RunRecordDetail}
    * @param runId for which to fetch {@link RunRecordDetail}
    * @return {@link RunRecordDetail}
@@ -45,5 +49,5 @@ public interface ProgramRunRecordFetcher {
    * @throws NotFoundException if the program or runid is not found
    */
   RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId)
-    throws IOException, NotFoundException, UnauthorizedException;
+      throws IOException, NotFoundException, UnauthorizedException;
 }

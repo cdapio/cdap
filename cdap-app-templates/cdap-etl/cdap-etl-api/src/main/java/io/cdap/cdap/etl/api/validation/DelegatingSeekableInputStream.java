@@ -20,10 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * A helper for implementing a {@link SeekableInputStream} where subclasses only need to implement the
- * methods not present in java's InputStream.
+ * A helper for implementing a {@link SeekableInputStream} where subclasses only need to implement
+ * the methods not present in java's InputStream.
  */
 public abstract class DelegatingSeekableInputStream extends SeekableInputStream {
+
   private final InputStream inputStream;
 
   public DelegatingSeekableInputStream(InputStream inputStream) {

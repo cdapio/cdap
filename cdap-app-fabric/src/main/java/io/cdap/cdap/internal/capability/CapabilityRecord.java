@@ -34,7 +34,7 @@ public class CapabilityRecord {
   private final CapabilityOperationRecord capabilityOperationRecord;
 
   public CapabilityRecord(@Nullable CapabilityStatusRecord capabilityStatusRecord,
-                          @Nullable CapabilityOperationRecord capabilityOperationRecord) {
+      @Nullable CapabilityOperationRecord capabilityOperationRecord) {
     this.capabilityStatusRecord = capabilityStatusRecord;
     this.capabilityOperationRecord = capabilityOperationRecord;
   }

@@ -1,19 +1,16 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements.  See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership.  The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with the License.  You may obtain
+ * a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.apache.hadoop.fs.sftp;
 
@@ -41,9 +38,9 @@ class SFTPConnectionPool {
   private int maxConnection;
   private int liveConnectionCount;
   private HashMap<ConnectionInfo, HashSet<ChannelSftp>> idleConnections =
-    new HashMap<ConnectionInfo, HashSet<ChannelSftp>>();
+      new HashMap<ConnectionInfo, HashSet<ChannelSftp>>();
   private HashMap<ChannelSftp, ConnectionInfo> con2infoMap =
-    new HashMap<ChannelSftp, ConnectionInfo>();
+      new HashMap<ChannelSftp, ConnectionInfo>();
 
   SFTPConnectionPool(int maxConnection) {
     this.maxConnection = maxConnection;
@@ -99,8 +96,8 @@ class SFTPConnectionPool {
         } catch (IOException ioe) {
           ConnectionInfo info = con2infoMap.get(con);
           LOG.error(
-            "Error encountered while closing connection to " + info.getHost(),
-            ioe);
+              "Error encountered while closing connection to " + info.getHost(),
+              ioe);
         }
       }
     }
@@ -118,7 +115,7 @@ class SFTPConnectionPool {
   }
 
   public ChannelSftp connect(String host, int port, String user,
-                             String password, String keyFile) throws IOException {
+      String password, String keyFile) throws IOException {
     // get connection from pool
     ConnectionInfo info = new ConnectionInfo(host, port, user);
     ChannelSftp channel = getFromPool(info);
@@ -224,6 +221,7 @@ class SFTPConnectionPool {
    * between different connections.
    */
   static class ConnectionInfo {
+
     private String host = "";
     private int port;
     private String user = "";

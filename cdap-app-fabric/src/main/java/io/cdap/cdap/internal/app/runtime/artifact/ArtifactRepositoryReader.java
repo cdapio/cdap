@@ -26,12 +26,13 @@ import java.io.InputStream;
 import java.util.List;
 
 /**
- *  Interface to fetch artifact metadata
+ * Interface to fetch artifact metadata
  */
 public interface ArtifactRepositoryReader {
+
   /**
-   * Get details about the given artifact. Will never return null.
-   * If no such artifact exist, an exception is thrown. Namespace existence is not checked.
+   * Get details about the given artifact. Will never return null. If no such artifact exist, an
+   * exception is thrown. Namespace existence is not checked.
    *
    * @param artifactId the id of the artifact to get
    * @return details about the given artifact
@@ -41,8 +42,8 @@ public interface ArtifactRepositoryReader {
   ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception;
 
   /**
-   * Returns an input stream for reading the artifact bytes.
-   * If no such artifact exists, or an error occurs during reading, an exception is thrown.
+   * Returns an input stream for reading the artifact bytes. If no such artifact exists, or an error
+   * occurs during reading, an exception is thrown.
    *
    * @param artifactId the id of the artifact to get
    * @return an InputStream for the artifact bytes
@@ -57,7 +58,9 @@ public interface ArtifactRepositoryReader {
    * @param range the range to match artifacts in
    * @param limit the limit number of the result
    * @param order the order of the result
-   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an
+   *     empty list is returned
    */
-  List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order) throws Exception;
+  List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order)
+      throws Exception;
 }

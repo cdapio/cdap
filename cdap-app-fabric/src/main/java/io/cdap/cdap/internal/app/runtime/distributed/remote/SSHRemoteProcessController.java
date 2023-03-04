@@ -37,7 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link RemoteProcessController} that SSH into the remote machine and look for the running process.
+ * Implementation of {@link RemoteProcessController} that SSH into the remote machine and look for
+ * the running process.
  */
 final class SSHRemoteProcessController implements RemoteProcessController {
 
@@ -50,7 +51,7 @@ final class SSHRemoteProcessController implements RemoteProcessController {
   private final ProvisioningService provisioningService;
 
   SSHRemoteProcessController(ProgramRunId programRunId, ProgramOptions programOpts,
-                             SSHConfig sshConfig, ProvisioningService provisioningService) {
+      SSHConfig sshConfig, ProvisioningService provisioningService) {
     this.programRunId = programRunId;
     this.programOpts = programOpts;
     this.sshConfig = sshConfig;
@@ -70,18 +71,22 @@ final class SSHRemoteProcessController implements RemoteProcessController {
 
       int exitCode = process.waitFor();
       if (exitCode != 0) {
-        LOG.info("Received exit code {} when checking for remote process for program run {}.", exitCode, programRunId);
+        LOG.info("Received exit code {} when checking for remote process for program run {}.",
+            exitCode, programRunId);
       }
       return exitCode == 0;
     } catch (IOException e) {
       // If there is error performing SSH, check if the cluster still exist and running
-      LOG.debug("Failed to use SSH to determine if the remote process is running for {}. Check cluster status instead.",
-                programRunId, e);
+      LOG.debug(
+          "Failed to use SSH to determine if the remote process is running for {}. Check cluster status instead.",
+          programRunId, e);
 
-      Cluster cluster = GSON.fromJson(programOpts.getArguments().getOption(ProgramOptionConstants.CLUSTER),
-                                      Cluster.class);
+      Cluster cluster = GSON.fromJson(
+          programOpts.getArguments().getOption(ProgramOptionConstants.CLUSTER),
+          Cluster.class);
       String userId = programOpts.getArguments().getOption(ProgramOptionConstants.USER_ID);
-      ClusterStatus clusterStatus = provisioningService.getClusterStatus(programRunId, programOpts, cluster, userId);
+      ClusterStatus clusterStatus = provisioningService.getClusterStatus(programRunId, programOpts,
+          cluster, userId);
 
       // The cluster status has to be RUNNING in order for the remote process still has a chance that is running
       return clusterStatus == ClusterStatus.RUNNING;
@@ -111,11 +116,12 @@ final class SSHRemoteProcessController implements RemoteProcessController {
     // SSH and kill the process
     try (SSHSession session = new DefaultSSHSession(sshConfig)) {
       SSHProcess process = session.execute(String.format("pkill -%d -f -- -Dcdap.runid=%s",
-                                                         signal, programRunId.getRun()));
+          signal, programRunId.getRun()));
 
       // Reading will be blocked until the process finished
       ByteStreams.toByteArray(process.getInputStream());
-      String err = CharStreams.toString(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+      String err = CharStreams.toString(
+          new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
 
       int exitCode = process.waitFor();
       // If the exit code is 1, it means there is no such process, which is fine from the termination perspective
@@ -123,8 +129,9 @@ final class SSHRemoteProcessController implements RemoteProcessController {
         return;
       }
 
-      throw new IllegalStateException("Failed to kill remote process for program run " + programRunId
-                                        + " due to error " + err);
+      throw new IllegalStateException(
+          "Failed to kill remote process for program run " + programRunId
+              + " due to error " + err);
     }
   }
 }

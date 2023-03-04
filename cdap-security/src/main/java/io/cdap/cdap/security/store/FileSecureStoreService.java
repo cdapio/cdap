@@ -67,25 +67,25 @@ import org.slf4j.LoggerFactory;
 /**
  * File based implementation of secure store. Uses Java PKCS12 based keystore.
  *
- * When the client calls a put, the key is put in the keystore. The system then flushes
- * the keystore to the file system.
- * During the flush, the current file is first written to temporary file (_NEW).
- * If that is successful then the temporary file is renamed atomically to the secure store file.
- * If anything fails during this process then the keystore reverts to the last successfully written file.
- * The keystore is flushed to the filesystem after every put and delete.
+ * When the client calls a put, the key is put in the keystore. The system then flushes the keystore
+ * to the file system. During the flush, the current file is first written to temporary file (_NEW).
+ * If that is successful then the temporary file is renamed atomically to the secure store file. If
+ * anything fails during this process then the keystore reverts to the last successfully written
+ * file. The keystore is flushed to the filesystem after every put and delete.
  *
- * This class is marked as Singleton because it won't work if this class is not a Singleton.
- * Setting in(Scopes.Singleton) in the bindings doesn't work because we are binding this
- * class to two interfaces and we need the instance to be shared between them.
+ * This class is marked as Singleton because it won't work if this class is not a Singleton. Setting
+ * in(Scopes.Singleton) in the bindings doesn't work because we are binding this class to two
+ * interfaces and we need the instance to be shared between them.
  */
 @Singleton
 public class FileSecureStoreService extends AbstractIdleService implements SecureStoreService {
+
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreService.class);
   static final String SECRET_KEY_FACTORY_ALGORITHM = "PBE";
 
   /**
-   * The current codec for file-based secure store in use. This codec class must be updated upon backwards-incompatible
-   * changes to the serialization methods.
+   * The current codec for file-based secure store in use. This codec class must be updated upon
+   * backwards-incompatible changes to the serialization methods.
    */
   public static final Class<? extends FileSecureStoreCodec> CURRENT_CODEC = SecureStoreDataCodecV2.class;
 
@@ -98,8 +98,9 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   private final FileSecureStoreCodec fileSecureStoreCodec;
 
   @Inject
-  public FileSecureStoreService(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin,
-                                FileSecureStoreCodec fileSecureStoreCodec) throws IOException {
+  public FileSecureStoreService(CConfiguration cConf, SConfiguration sConf,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      FileSecureStoreCodec fileSecureStoreCodec) throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);
@@ -116,8 +117,9 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   }
 
   @VisibleForTesting
-  FileSecureStoreService(NamespaceQueryAdmin namespaceQueryAdmin, char[] password, Path path, KeyStore keyStore,
-                         FileSecureStoreCodec fileSecureStoreCodec) {
+  FileSecureStoreService(NamespaceQueryAdmin namespaceQueryAdmin, char[] password, Path path,
+      KeyStore keyStore,
+      FileSecureStoreCodec fileSecureStoreCodec) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.password = password;
     this.path = path;
@@ -130,31 +132,34 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
 
   /**
    * Stores an element in the secure store. If the element already exists, it will get overwritten.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to store.
    * @param data The data that needs to be securely stored.
    * @param description User provided description of the entry.
    * @param properties Metadata associated with the data.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
-   * @throws IOException If there was a problem storing the key to the in memory keystore
-   * or if there was problem persisting the keystore.
+   * @throws IOException If there was a problem storing the key to the in memory keystore or if
+   *     there was problem persisting the keystore.
    */
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = fileSecureStoreCodec.getKeyAliasFromInfo(new KeyInfo(namespace, name));
-    SecureStoreMetadata meta = new SecureStoreMetadata(name, description, System.currentTimeMillis(), properties);
+    SecureStoreMetadata meta = new SecureStoreMetadata(name, description,
+        System.currentTimeMillis(), properties);
     byte[] dataBytes = data.getBytes(Charsets.UTF_8);
     SecureStoreData secureStoreData = new SecureStoreData(meta, dataBytes);
     writeLock.lock();
     try {
-      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(SECRET_KEY_FACTORY_ALGORITHM);
+      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance(
+          SECRET_KEY_FACTORY_ALGORITHM);
       // Convert byte[] directly to char[] and avoid using String due
       // to it being stored in memory until garbage collected.
       PBEKeySpec pbeKeySpec = new PBEKeySpec(StandardCharsets.UTF_8
-                                               .decode(ByteBuffer.wrap(fileSecureStoreCodec.encode(secureStoreData)))
-                                               .array());
+          .decode(ByteBuffer.wrap(fileSecureStoreCodec.encode(secureStoreData)))
+          .array());
       keyStore.setKeyEntry(keyName, secretKeyFactory.generateSecret(pbeKeySpec), password, null);
       // Attempt to persist the store.
       flush();
@@ -168,18 +173,20 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   }
 
   /**
-   * Deletes the element with the given name. Flushes the keystore after deleting the key from the in memory keystore.
-   * If the flush fails, we attempt to insert to key back to the in memory store and notify the user that delete failed.
-   * If the insertion in the key store fails after a flush failure then there would be a discrepancy between the
-   * in memory store and the file on the disk. This will be remedied the next time a flush happens.
-   * If another flush does not happen and the system is restarted, the only time that file is read,
-   * then we will have an extra key in the keystore.
+   * Deletes the element with the given name. Flushes the keystore after deleting the key from the
+   * in memory keystore. If the flush fails, we attempt to insert to key back to the in memory store
+   * and notify the user that delete failed. If the insertion in the key store fails after a flush
+   * failure then there would be a discrepancy between the in memory store and the file on the disk.
+   * This will be remedied the next time a flush happens. If another flush does not happen and the
+   * system is restarted, the only time that file is read, then we will have an extra key in the
+   * keystore.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the element to be deleted.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws NotFoundException If the key to be deleted is not found.
    * @throws IOException If their was a problem during deleting the key from the in memory store
-   * or if there was a problem persisting the keystore after deleting the element.
+   *     or if there was a problem persisting the keystore after deleting the element.
    */
   @Override
   public void delete(String namespace, String name) throws Exception {
@@ -209,10 +216,12 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   }
 
   /**
-   * List of all the entries in the secure store belonging to the specified namespace. No filtering or authentication
-   * is done here.
-   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * List of all the entries in the secure store belonging to the specified namespace. No filtering
+   * or authentication is done here.
+   *
    * @param namespace The namespace this key belongs to.
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the
+   *     store.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
    * @throws IOException If there was a problem reading from the keystore.
    */
@@ -241,6 +250,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
 
   /**
    * Returns the data stored in the secure store.
+   *
    * @param namespace The namespace this key belongs to.
    * @param name Name of the data element.
    * @return An object representing the securely stored data associated with the name.
@@ -274,7 +284,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   }
 
   private Key deleteFromStore(String name, char[] password) throws KeyStoreException,
-    UnrecoverableKeyException, NoSuchAlgorithmException {
+      UnrecoverableKeyException, NoSuchAlgorithmException {
     writeLock.lock();
     try {
       // TODO CDAP-18903: Delete sensitive data after usage for SecureStoreData.
@@ -287,8 +297,9 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   }
 
   /**
-   * Returns the metadata for the element identified by the given name.
-   * The name must be of the format namespace + NAME_SEPARATOR + key name.
+   * Returns the metadata for the element identified by the given name. The name must be of the
+   * format namespace + NAME_SEPARATOR + key name.
+   *
    * @param keyName Name of the element
    * @return An object representing the metadata associated with the element
    * @throws NotFoundException If the key was not found in the store.
@@ -307,7 +318,8 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
       // TODO CDAP-18903: Delete sensitive data after usage for SecureStoreData.
       return fileSecureStoreCodec.decode(key.getEncoded()).getMetadata();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
-      throw new IOException("Unable to retrieve the metadata for " + name + " in namespace " + namespace, e);
+      throw new IOException(
+          "Unable to retrieve the metadata for " + name + " in namespace " + namespace, e);
     } finally {
       readLock.unlock();
     }
@@ -349,12 +361,10 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
   /**
    * Persist the keystore on the file system.
    *
-   * During the flush the steps are
-   *  1. Delete the _NEW file if it exists, it will exist only if something had failed in the last run.
-   *  2. Try to write the current keystore in a _NEW file.
-   *  3. If something fails then revert the key store to the old state and throw IOException.
-   *  4. If everything is OK then rename the _NEW to the main file.
-   *
+   * During the flush the steps are 1. Delete the _NEW file if it exists, it will exist only if
+   * something had failed in the last run. 2. Try to write the current keystore in a _NEW file. 3.
+   * If something fails then revert the key store to the old state and throw IOException. 4. If
+   * everything is OK then rename the _NEW to the main file.
    */
   private void flush() throws IOException {
     Path newPath = constructNewPath(path);
@@ -378,8 +388,9 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     } catch (KeyStoreException e) {
       throw new IOException("The underlying java key store has not been initialized.", e);
     } catch (NoSuchAlgorithmException e) {
-      throw new IOException("The appropriate data integrity algorithm for the underlying java key store could not " +
-                              "be found", e);
+      throw new IOException(
+          "The appropriate data integrity algorithm for the underlying java key store could not "
+              + "be found", e);
     } catch (CertificateException e) {
       // Should not happen as we are not storing certificates in the keystore.
       throw new IOException("Failed to store the certificates included in the keystore data.", e);

@@ -38,8 +38,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of the {@link DatasetFramework} that supports renaming datasets before forwarding calls to
- * the underlying dataset framework.
+ * Implementation of the {@link DatasetFramework} that supports renaming datasets before forwarding
+ * calls to the underlying dataset framework.
  */
 public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDatasetFramework {
 
@@ -48,17 +48,21 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   /**
    * Creates a new instance based on the given {@link WorkflowProgramInfo}.
    */
-  public static NameMappedDatasetFramework createFromWorkflowProgramInfo(DatasetFramework datasetFramework,
-                                                                         WorkflowProgramInfo info,
-                                                                         ApplicationSpecification appSpec) {
-    Set<String> localDatasets = appSpec.getWorkflows().get(info.getName()).getLocalDatasetSpecs().keySet();
+  public static NameMappedDatasetFramework createFromWorkflowProgramInfo(
+      DatasetFramework datasetFramework,
+      WorkflowProgramInfo info,
+      ApplicationSpecification appSpec) {
+    Set<String> localDatasets = appSpec.getWorkflows().get(info.getName()).getLocalDatasetSpecs()
+        .keySet();
     return new NameMappedDatasetFramework(datasetFramework, localDatasets, info.getRunId().getId());
   }
 
   /**
-   * Creates a new instance which maps the given set of dataset names by appending ("." + nameSuffix).
+   * Creates a new instance which maps the given set of dataset names by appending ("." + *
+   * nameSuffix).
    */
-  public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets, final String nameSuffix) {
+  public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets,
+      final String nameSuffix) {
     this(delegate, datasets, new Function<String, String>() {
       @Override
       public String apply(String dataset) {
@@ -68,10 +72,11 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   /**
-   * Creates a new instance which maps the given set of dataset names by applying the transform function.
+   * Creates a new instance which maps the given set of dataset names by applying the transform
+   * function.
    */
   public NameMappedDatasetFramework(DatasetFramework delegate, Set<String> datasets,
-                                    Function<String, String> nameTransformer) {
+      Function<String, String> nameTransformer) {
     super(delegate);
     Map<String, String> nameMapping = new HashMap<>();
     for (String dataset : datasets) {
@@ -88,21 +93,24 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   @Override
-  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId, DatasetProperties props,
-                          @Nullable KerberosPrincipalId ownerPrincipal)
-    throws IOException, DatasetManagementException {
-    super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props, ownerPrincipal);
+  public void addInstance(String datasetTypeName, DatasetId datasetInstanceId,
+      DatasetProperties props,
+      @Nullable KerberosPrincipalId ownerPrincipal)
+      throws IOException, DatasetManagementException {
+    super.addInstance(datasetTypeName, getMappedDatasetInstance(datasetInstanceId), props,
+        ownerPrincipal);
   }
 
   @Override
   public void updateInstance(DatasetId datasetInstanceId, DatasetProperties props)
-    throws DatasetManagementException, IOException {
+      throws DatasetManagementException, IOException {
     super.updateInstance(getMappedDatasetInstance(datasetInstanceId), props);
   }
 
   @Nullable
   @Override
-  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
+  public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId)
+      throws DatasetManagementException {
     return super.getDatasetSpec(getMappedDatasetInstance(datasetInstanceId));
   }
 
@@ -112,34 +120,39 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
   }
 
   @Override
-  public void deleteInstance(DatasetId datasetInstanceId) throws DatasetManagementException, IOException {
+  public void deleteInstance(DatasetId datasetInstanceId)
+      throws DatasetManagementException, IOException {
     super.deleteInstance(getMappedDatasetInstance(datasetInstanceId));
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader)
-    throws DatasetManagementException, IOException {
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader)
+      throws DatasetManagementException, IOException {
     return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader);
   }
 
   @Nullable
   @Override
-  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId, @Nullable ClassLoader classLoader,
-                                             DatasetClassLoaderProvider classLoaderProvider)
-    throws DatasetManagementException, IOException {
-    return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader, classLoaderProvider);
+  public <T extends DatasetAdmin> T getAdmin(DatasetId datasetInstanceId,
+      @Nullable ClassLoader classLoader,
+      DatasetClassLoaderProvider classLoaderProvider)
+      throws DatasetManagementException, IOException {
+    return super.getAdmin(getMappedDatasetInstance(datasetInstanceId), classLoader,
+        classLoaderProvider);
   }
 
   @Nullable
   @Override
-  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId, Map<String, String> arguments,
-                                          @Nullable ClassLoader classLoader,
-                                          DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
-    throws DatasetManagementException, IOException {
+  public <T extends Dataset> T getDataset(DatasetId datasetInstanceId,
+      Map<String, String> arguments,
+      @Nullable ClassLoader classLoader,
+      DatasetClassLoaderProvider classLoaderProvider,
+      @Nullable Iterable<? extends EntityId> owners, AccessType accessType)
+      throws DatasetManagementException, IOException {
     return super.getDataset(getMappedDatasetInstance(datasetInstanceId),
-                            arguments, classLoader, classLoaderProvider, owners, accessType);
+        arguments, classLoader, classLoaderProvider, owners, accessType);
   }
 
   @Override
@@ -149,7 +162,8 @@ public class NameMappedDatasetFramework extends ForwardingProgramContextAwareDat
 
   private DatasetId getMappedDatasetInstance(DatasetId datasetInstanceId) {
     if (datasetNameMapping.containsKey(datasetInstanceId.getEntityName())) {
-      return datasetInstanceId.getParent().dataset(datasetNameMapping.get(datasetInstanceId.getEntityName()));
+      return datasetInstanceId.getParent()
+          .dataset(datasetNameMapping.get(datasetInstanceId.getEntityName()));
     }
     return datasetInstanceId;
   }

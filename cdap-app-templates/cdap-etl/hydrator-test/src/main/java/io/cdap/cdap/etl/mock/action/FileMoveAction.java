@@ -40,6 +40,7 @@ import org.apache.twill.filesystem.Location;
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name(FileMoveAction.NAME)
 public class FileMoveAction extends Action {
+
   public static final String NAME = "FileMove";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf conf;
@@ -56,12 +57,12 @@ public class FileMoveAction extends Action {
       Pattern.compile(conf.filterRegex);
     } catch (Exception e) {
       collector.addFailure("Error encountered while compiling filter regex: " + e.getMessage(),
-                           "Make sure filter regex is valid.").withConfigProperty("filterRegex");
+          "Make sure filter regex is valid.").withConfigProperty("filterRegex");
     }
     if (conf.sourceFileset.equals(conf.destinationFileset)) {
       collector.addFailure("Source and destination filesets must be different",
-                           "Make sure source and destination filesets are different")
-        .withConfigProperty("sourceFileset").withConfigProperty("destinationFileset");
+              "Make sure source and destination filesets are different")
+          .withConfigProperty("sourceFileset").withConfigProperty("destinationFileset");
     }
   }
 
@@ -89,6 +90,7 @@ public class FileMoveAction extends Action {
    * Conf for the token writer.
    */
   public static class Conf extends PluginConfig {
+
     private String sourceFileset;
 
     private String destinationFileset;
@@ -104,11 +106,14 @@ public class FileMoveAction extends Action {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("sourceFileset", new PluginPropertyField("sourceFileset", "", "string", true, false));
-    properties.put("destinationFileset", new PluginPropertyField("destinationFileset", "", "string", true, false));
-    properties.put("filterRegex", new PluginPropertyField("filterRegex", "", "string", false, false));
+    properties.put("sourceFileset",
+        new PluginPropertyField("sourceFileset", "", "string", true, false));
+    properties.put("destinationFileset",
+        new PluginPropertyField("destinationFileset", "", "string", true, false));
+    properties.put("filterRegex",
+        new PluginPropertyField("filterRegex", "", "string", false, false));
     return PluginClass.builder().setName(NAME).setType(Action.PLUGIN_TYPE)
-             .setDescription("").setClassName(FileMoveAction.class.getName()).setProperties(properties)
-             .setConfigFieldName("conf").build();
+        .setDescription("").setClassName(FileMoveAction.class.getName()).setProperties(properties)
+        .setConfigFieldName("conf").build();
   }
 }

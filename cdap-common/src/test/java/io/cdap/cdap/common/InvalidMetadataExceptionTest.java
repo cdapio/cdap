@@ -31,22 +31,25 @@ public class InvalidMetadataExceptionTest {
   public void testMesssages() {
     // test dataset
     InvalidMetadataException invalidMetadataException =
-      new InvalidMetadataException(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity(), "error");
-    String expectedMessage = "Unable to set metadata for dataset: ds " +
-      "which exists in namespace: default. error";
+        new InvalidMetadataException(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity(), "error");
+    String expectedMessage = "Unable to set metadata for dataset: ds "
+        + "which exists in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test program
     invalidMetadataException =
-      new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.WORKER, "wk")
-                                     .toMetadataEntity(), "error");
-    expectedMessage = "Unable to set metadata for worker: wk in application: app of version: -SNAPSHOT deployed in " +
-      "namespace: default. error";
+        new InvalidMetadataException(
+            NamespaceId.DEFAULT.app("app").program(ProgramType.WORKER, "wk")
+                .toMetadataEntity(), "error");
+    expectedMessage =
+        "Unable to set metadata for worker: wk in application: app of version: -SNAPSHOT deployed in "
+            + "namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test custom entity
-    MetadataEntity customEntity = MetadataEntity.builder(NamespaceId.DEFAULT.dataset("ds").toMetadataEntity())
-      .appendAsType("field", "empName").build();
+    MetadataEntity customEntity = MetadataEntity.builder(
+            NamespaceId.DEFAULT.dataset("ds").toMetadataEntity())
+        .appendAsType("field", "empName").build();
     invalidMetadataException = new InvalidMetadataException(customEntity, "error");
     expectedMessage = "Unable to set metadata for namespace=default,dataset=ds,field=empName of type 'field'. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());

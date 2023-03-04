@@ -23,13 +23,12 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Base class for writing configuration class for template plugin.
- * This class can also be used inside the plugin configuration class to represent a collection of configs.
- * If it is used to represent a collection of configs:
- * When the plugin is deployed, the configs inside this class will be inspected and represented in the same way as
- * {@link PluginPropertyField}.
- * The {@link PluginPropertyField} for this field will contain a collection of property names about configs inside
- * this class.
+ * Base class for writing configuration class for template plugin. This class can also be used
+ * inside the plugin configuration class to represent a collection of configs. If it is used to
+ * represent a collection of configs: When the plugin is deployed, the configs inside this class
+ * will be inspected and represented in the same way as {@link PluginPropertyField}. The {@link
+ * PluginPropertyField} for this field will contain a collection of property names about configs
+ * inside this class.
  */
 @Beta
 public abstract class PluginConfig extends Config implements Serializable {
@@ -50,35 +49,29 @@ public abstract class PluginConfig extends Config implements Serializable {
   /**
    * Returns the {@link PluginProperties}.
    *
-   * All plugin properties that are macro-enabled and were configured with macro syntax present will be substituted
-   * with Java's default values based on the property's type at configuration time. The default values are:
-   *  - boolean: false
-   *  - byte: 0
-   *  - char: '\u0000'
-   *  - double: 0.0d
-   *  - float: 0.0f
-   *  - int: 0
-   *  - long: 0L
-   *  - short: 0
-   *  - String: null
-   *
+   * All plugin properties that are macro-enabled and were configured with macro syntax present will
+   * be substituted with Java's default values based on the property's type at configuration time.
+   * The default values are: - boolean: false - byte: 0 - char: '\u0000' - double: 0.0d - float:
+   * 0.0f - int: 0 - long: 0L - short: 0 - String: null
    */
   public final PluginProperties getProperties() {
     return properties;
   }
 
   /**
-   * Contains the {@link PluginProperties} as they were before macro evaluation. For example, at configure time, if the
-   * 'schema' property is a macro '${schema}', the value will be the raw string '${schema}' instead of null. This is
-   * primarily useful when one plugin is passing macro enabled properties to another plugin.
+   * Contains the {@link PluginProperties} as they were before macro evaluation. For example, at
+   * configure time, if the 'schema' property is a macro '${schema}', the value will be the raw
+   * string '${schema}' instead of null. This is primarily useful when one plugin is passing macro
+   * enabled properties to another plugin.
    */
   public final PluginProperties getRawProperties() {
     return rawProperties;
   }
 
   /**
-   * Returns true if property value contains a macro; false otherwise. This method should only be called at
-   * configure time. At runtime this will always return false, as macro substitution will have already occurred.
+   * Returns true if property value contains a macro; false otherwise. This method should only be
+   * called at configure time. At runtime this will always return false, as macro substitution will
+   * have already occurred.
    *
    * @param fieldName name of the field
    * @return whether the field contains a macro or not

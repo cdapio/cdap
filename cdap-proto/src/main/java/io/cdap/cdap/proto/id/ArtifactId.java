@@ -28,6 +28,7 @@ import java.util.Objects;
  * Uniquely identifies an artifact.
  */
 public class ArtifactId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   private final String artifact;
   private final String version;
   private transient Integer hashCode;
@@ -60,7 +61,8 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   public ArtifactId(String namespace, String fileName) {
     super(namespace, EntityType.ARTIFACT);
     if (!fileName.endsWith(".jar")) {
-      throw new IllegalArgumentException(String.format("Artifact name '%s' does not end in .jar", fileName));
+      throw new IllegalArgumentException(
+          String.format("Artifact name '%s' does not end in .jar", fileName));
     }
 
     // strip '.jar' from the filename
@@ -72,7 +74,7 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
     // this happens if it could not parse the version
     if (rawVersion == null) {
       throw new IllegalArgumentException(
-        String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
+          String.format("Artifact name '%s' is not of the form {name}-{version}.jar", fileName));
     }
 
     // filename should be {name}-{version}.  Strip -{version} from it to get artifact name
@@ -92,9 +94,9 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   @Override
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
-      .appendAsType(MetadataEntity.ARTIFACT, artifact)
-      .append(MetadataEntity.VERSION, version)
-      .build();
+        .appendAsType(MetadataEntity.ARTIFACT, artifact)
+        .append(MetadataEntity.VERSION, version)
+        .build();
   }
 
   public String getVersion() {
@@ -112,9 +114,9 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
       return false;
     }
     ArtifactId that = (ArtifactId) o;
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(artifact, that.artifact) &&
-      Objects.equals(version, that.version);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(artifact, that.artifact)
+        && Objects.equals(version, that.version);
   }
 
   @Override
@@ -130,8 +132,8 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
   public static ArtifactId fromIdParts(Iterable<String> idString) {
     Iterator<String> iterator = idString.iterator();
     return new ArtifactId(
-      next(iterator, "namespace"), next(iterator, "artifact"),
-      remaining(iterator, "version"));
+        next(iterator, "namespace"), next(iterator, "artifact"),
+        remaining(iterator, "version"));
   }
 
   @Override
@@ -148,7 +150,7 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
    */
   public io.cdap.cdap.api.artifact.ArtifactId toApiArtifactId() {
     return new io.cdap.cdap.api.artifact.ArtifactId(artifact, new ArtifactVersion(version),
-                                                    NamespaceId.SYSTEM.getNamespace().equals(namespace)
-                                                      ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+        NamespaceId.SYSTEM.getNamespace().equals(namespace)
+            ? ArtifactScope.SYSTEM : ArtifactScope.USER);
   }
 }

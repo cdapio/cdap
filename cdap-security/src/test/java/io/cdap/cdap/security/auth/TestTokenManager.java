@@ -61,8 +61,8 @@ public abstract class TestTokenManager {
     AccessToken expiredToken = tokenManager.signIdentifier(expiredIdent);
     try {
       tokenManager.validateSecret(expiredToken);
-      fail("Token should have been expired but passed validation: " +
-             Bytes.toStringBinary(tokenCodec.encode(expiredToken)));
+      fail("Token should have been expired but passed validation: "
+          + Bytes.toStringBinary(tokenCodec.encode(expiredToken)));
     } catch (InvalidTokenException expected) {
       // expected
     }
@@ -74,8 +74,8 @@ public abstract class TestTokenManager {
     AccessToken invalidToken = new AccessToken(token1.getIdentifier(), token1.getKeyId(), invalidDigest);
     try {
       tokenManager.validateSecret(invalidToken);
-      fail("Token should have been rejected for invalid digest but passed: " +
-             Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
+      fail("Token should have been rejected for invalid digest but passed: "
+          + Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) {
       // expected
     }
@@ -85,8 +85,8 @@ public abstract class TestTokenManager {
                                                   token1.getDigestBytes());
     try {
       tokenManager.validateSecret(invalidKeyToken);
-      fail("Token should have been rejected for invalid key ID but passed: " +
-             Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
+      fail("Token should have been rejected for invalid key ID but passed: "
+          + Bytes.toStringBinary(tokenCodec.encode(invalidToken)));
     } catch (InvalidTokenException expected) {
       // expected
     }

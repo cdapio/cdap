@@ -22,6 +22,7 @@ import javax.annotation.Nullable;
  * An error with the distribution size
  */
 public class DistributionSizeError extends JoinError {
+
   public DistributionSizeError(String message) {
     super(JoinError.Type.DISTRIBUTION_SIZE, message, null);
   }

@@ -23,6 +23,7 @@ import java.util.Objects;
  * The property field to represent additional config required for sampling
  */
 public class SamplePropertyField {
+
   private final String name;
   private final String description;
 
@@ -50,8 +51,8 @@ public class SamplePropertyField {
     }
 
     SamplePropertyField that = (SamplePropertyField) o;
-    return Objects.equals(name, that.name) &&
-             Objects.equals(description, that.description);
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description);
   }
 
   @Override

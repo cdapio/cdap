@@ -27,30 +27,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link PartitionConsumer} that supports multiple instances consuming the same set of partitions by using a
- * working set of partitions, and keeping track of their progress state during processing of those partitions.
+ * A {@link PartitionConsumer} that supports multiple instances consuming the same set of partitions
+ * by using a working set of partitions, and keeping track of their progress state during processing
+ * of those partitions.
  */
 public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
+
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentPartitionConsumer.class);
 
-  public ConcurrentPartitionConsumer(PartitionedFileSet partitionedFileSet, StatePersistor statePersistor) {
+  public ConcurrentPartitionConsumer(PartitionedFileSet partitionedFileSet,
+      StatePersistor statePersistor) {
     super(partitionedFileSet, statePersistor);
   }
 
-  public ConcurrentPartitionConsumer(PartitionedFileSet partitionedFileSet, StatePersistor statePersistor,
-                                     ConsumerConfiguration configuration) {
+  public ConcurrentPartitionConsumer(PartitionedFileSet partitionedFileSet,
+      StatePersistor statePersistor,
+      ConsumerConfiguration configuration) {
     super(partitionedFileSet, statePersistor, configuration);
   }
 
   @Override
-  public PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet, PartitionAcceptor acceptor) {
+  public PartitionConsumerResult doConsume(ConsumerWorkingSet workingSet,
+      PartitionAcceptor acceptor) {
     doExpiry(workingSet);
     workingSet.populate(getPartitionedFileSet(), getConfiguration());
     List<PartitionDetail> toConsume = selectPartitions(acceptor, workingSet);
     return new PartitionConsumerResult(toConsume, removeDiscardedPartitions(workingSet));
   }
 
-  private List<PartitionDetail> selectPartitions(PartitionAcceptor acceptor, ConsumerWorkingSet workingSet) {
+  private List<PartitionDetail> selectPartitions(PartitionAcceptor acceptor,
+      ConsumerWorkingSet workingSet) {
     long now = System.currentTimeMillis();
     List<PartitionDetail> toConsume = new ArrayList<>();
 
@@ -60,7 +66,8 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
       if (ProcessState.AVAILABLE != consumablePartition.getProcessState()) {
         continue;
       }
-      PartitionDetail partition = getPartitionedFileSet().getPartition(consumablePartition.getPartitionKey());
+      PartitionDetail partition = getPartitionedFileSet().getPartition(
+          consumablePartition.getPartitionKey());
       if (partition == null) {
         // no longer exists, so skip it and remove it from the working set
         iter.remove();
@@ -83,7 +90,8 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   @Override
-  public void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys, boolean succeeded) {
+  public void doFinish(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys,
+      boolean succeeded) {
     doExpiry(workingSet);
     if (succeeded) {
       commit(workingSet, partitionKeys);
@@ -103,7 +111,8 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   /**
-   * Removes the given partition keys from the working set, as they have been successfully processed.
+   * Removes the given partition keys from the working set, as they have been successfully
+   * processed.
    */
   protected void commit(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     for (PartitionKey key : partitionKeys) {
@@ -114,8 +123,8 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   /**
-   * Resets the process state of the given partition keys, as they were not successfully processed, or discards the
-   * partition if it has already been attempted the configured number of attempts.
+   * Resets the process state of the given partition keys, as they were not successfully processed,
+   * or discards the partition if it has already been attempted the configured number of attempts.
    */
   protected void abort(ConsumerWorkingSet workingSet, List<? extends PartitionKey> partitionKeys) {
     List<PartitionKey> discardedPartitions = new ArrayList<>();
@@ -132,24 +141,25 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
     }
     if (!discardedPartitions.isEmpty()) {
       LOG.warn("Discarded keys due to being retried {} times: {}",
-               getConfiguration().getMaxRetries(), discardedPartitions);
+          getConfiguration().getMaxRetries(), discardedPartitions);
     }
   }
 
   /**
    * ensure that caller doesn't try to commit/abort a partition that isn't in progress
+   *
    * @throws IllegalArgumentException if the given partition is in progress
    */
   protected void assertInProgress(ConsumablePartition consumablePartition) {
     if (!(consumablePartition.getProcessState() == ProcessState.IN_PROGRESS)) {
       throw new IllegalStateException(String.format("Partition not in progress: %s",
-                                                    consumablePartition.getPartitionKey()));
+          consumablePartition.getPartitionKey()));
     }
   }
 
   /**
-   * Removes the list of partitions that have failed processing the configured number of times from the working set and
-   * returns them.
+   * Removes the list of partitions that have failed processing the configured number of times from
+   * the working set and returns them.
    */
   protected List<PartitionDetail> removeDiscardedPartitions(ConsumerWorkingSet workingSet) {
     List<PartitionDetail> failedPartitions = new ArrayList<>();
@@ -165,8 +175,8 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   /**
-   * @return a timestamp which determines partition expiry. Partitions with a timestamp smaller (older) than this value
-   * are considered 'expired'.
+   * @return a timestamp which determines partition expiry. Partitions with a timestamp smaller
+   *     (older) than this value are considered 'expired'.
    */
   protected long getExpiryBorder() {
     long now = System.currentTimeMillis();
@@ -175,15 +185,17 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
   }
 
   /**
-   * Goes through all partitions. If any IN_PROGRESS partition is older than the configured timeout, reset its state
-   * to AVAILABLE, unless it has already been retried the configured number of times, in which case it is discarded.
+   * Goes through all partitions. If any IN_PROGRESS partition is older than the configured timeout,
+   * reset its state to AVAILABLE, unless it has already been retried the configured number of
+   * times, in which case it is discarded.
    */
   protected void doExpiry(ConsumerWorkingSet workingSet) {
     long expiryTime = getExpiryBorder();
     List<PartitionKey> expiredPartitions = new ArrayList<>();
     List<PartitionKey> discardedPartitions = new ArrayList<>();
     for (ConsumablePartition partition : workingSet.getPartitions()) {
-      if (partition.getProcessState() == ProcessState.IN_PROGRESS && partition.getTimestamp() < expiryTime) {
+      if (partition.getProcessState() == ProcessState.IN_PROGRESS
+          && partition.getTimestamp() < expiryTime) {
         // either reset its processState, or remove it from the workingSet, depending on how many tries it already has
         if (partition.getNumFailures() < getConfiguration().getMaxRetries()) {
           partition.retry();
@@ -197,7 +209,7 @@ public class ConcurrentPartitionConsumer extends AbstractPartitionConsumer {
       LOG.warn("Expiring in progress partitions: {}", expiredPartitions);
       if (!discardedPartitions.isEmpty()) {
         LOG.warn("Discarded keys due to being retried {} times: {}",
-                 getConfiguration().getMaxRetries(), discardedPartitions);
+            getConfiguration().getMaxRetries(), discardedPartitions);
       }
     }
   }

@@ -63,18 +63,19 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) throws Exception {
     // return keytab URI without version
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(namespaceAdmin.list().stream()
-                                     .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
-                                     .collect(Collectors.toList())));
+        GSON.toJson(namespaceAdmin.list().stream()
+            .map(meta -> new NamespaceMeta.Builder(meta).buildWithoutKeytabURIVersion())
+            .collect(Collectors.toList())));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}")
   public void getNamespace(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws Exception {
+      @PathParam("namespace-id") String namespaceId) throws Exception {
     // return keytab URI without version
     NamespaceMeta ns =
-      new NamespaceMeta.Builder(namespaceAdmin.get(new NamespaceId(namespaceId))).buildWithoutKeytabURIVersion();
+        new NamespaceMeta.Builder(
+            namespaceAdmin.get(new NamespaceId(namespaceId))).buildWithoutKeytabURIVersion();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(ns));
   }
 
@@ -82,33 +83,36 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace-id}/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateNamespaceProperties(FullHttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId) throws Exception {
+      @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceMeta meta = getNamespaceMeta(request);
     namespaceAdmin.updateProperties(new NamespaceId(namespaceId), meta);
-    responder.sendString(HttpResponseStatus.OK, String.format("Updated properties for namespace '%s'.", namespaceId));
+    responder.sendString(HttpResponseStatus.OK,
+        String.format("Updated properties for namespace '%s'.", namespaceId));
   }
 
   @PUT
   @Path("/namespaces/{namespace-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void create(FullHttpRequest request, HttpResponder responder,
-                     @PathParam("namespace-id") String namespaceId) throws Exception {
+      @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace;
     try {
       namespace = new NamespaceId(namespaceId);
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException("Namespace id can contain only alphanumeric characters or '_'.");
+      throw new BadRequestException(
+          "Namespace id can contain only alphanumeric characters or '_'.");
     }
 
     NamespaceMeta metadata = getNamespaceMeta(request);
 
     if (NamespaceId.isReserved(namespaceId)) {
-      throw new BadRequestException(String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
-                                                  namespaceId, namespaceId));
+      throw new BadRequestException(
+          String.format("Cannot create the namespace '%s'. '%s' is a reserved namespace.",
+              namespaceId, namespaceId));
     }
 
     NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :
-      new NamespaceMeta.Builder(metadata);
+        new NamespaceMeta.Builder(metadata);
     builder.setName(namespace);
     builder.setGeneration(System.currentTimeMillis());
 
@@ -117,21 +121,24 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       namespaceAdmin.create(finalMetadata);
       responder.sendString(HttpResponseStatus.OK,
-                           String.format("Namespace '%s' created successfully.", namespaceId));
+          String.format("Namespace '%s' created successfully.", namespaceId));
     } catch (AlreadyExistsException e) {
-      responder.sendString(HttpResponseStatus.OK, String.format("Namespace '%s' already exists.", namespaceId));
+      responder.sendString(HttpResponseStatus.OK,
+          String.format("Namespace '%s' already exists.", namespaceId));
     }
   }
 
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}")
-  public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespace)
-    throws Exception {
-    if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+  public void delete(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace)
+      throws Exception {
+    if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+        Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. " +
-                                           "Please enable it and restart CDAP Master.",
-                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
+          String.format("Namespace '%s' cannot be deleted because '%s' is not enabled. "
+                  + "Please enable it and restart CDAP Master.",
+              namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     NamespaceId namespaceId = new NamespaceId(namespace);
@@ -142,12 +149,14 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/unrecoverable/namespaces/{namespace-id}/datasets")
   public void deleteDatasets(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespace) throws Exception {
-    if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+      @PathParam("namespace-id") String namespace) throws Exception {
+    if (!cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+        Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
       responder.sendString(HttpResponseStatus.FORBIDDEN,
-                           String.format("All datasets in namespace %s cannot be deleted because '%s' is not enabled." +
-                                           " Please enable it and restart CDAP Master.",
-                                         namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
+          String.format(
+              "All datasets in namespace %s cannot be deleted because '%s' is not enabled."
+                  + " Please enable it and restart CDAP Master.",
+              namespace, Constants.Dangerous.UNRECOVERABLE_RESET));
       return;
     }
     NamespaceId namespaceId = new NamespaceId(namespace);

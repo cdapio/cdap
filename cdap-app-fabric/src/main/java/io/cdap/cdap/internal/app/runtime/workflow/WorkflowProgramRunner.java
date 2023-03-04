@@ -79,14 +79,14 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   @Inject
   public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory,
-                               MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                               WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
-                               SecureStoreManager secureStoreManager, MessagingService messagingService,
-                               ProgramStateWriter programStateWriter, MetadataReader metadataReader,
-                               MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
-                               NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory,
-                               AppStateStoreProvider appStateStoreProvider) {
+      MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
+      DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
+      WorkflowStateWriter workflowStateWriter, CConfiguration cConf, SecureStore secureStore,
+      SecureStoreManager secureStoreManager, MessagingService messagingService,
+      ProgramStateWriter programStateWriter, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
+      NamespaceQueryAdmin namespaceQueryAdmin, RemoteClientFactory remoteClientFactory,
+      AppStateStoreProvider appStateStoreProvider) {
     super(cConf);
     this.programRunnerFactory = programRunnerFactory;
     this.metricsCollectionService = metricsCollectionService;
@@ -115,38 +115,44 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     ProgramType processorType = program.getType();
     Preconditions.checkNotNull(processorType, "Missing processor type.");
-    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW, "Only WORKFLOW process type is supported.");
+    Preconditions.checkArgument(processorType == ProgramType.WORKFLOW,
+        "Only WORKFLOW process type is supported.");
 
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
-    Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
+    Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s",
+        program.getName());
 
     final RunId runId = ProgramRunners.getRunId(options);
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
       ProgramId programId = program.getId();
-      ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
+      ((ProgramContextAware) datasetFramework).setContext(
+          new BasicProgramContext(programId.run(runId)));
     }
 
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
     try {
-      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options,
+          program.getClassLoader());
       if (pluginInstantiator != null) {
         closeables.add(pluginInstantiator);
       }
 
-      WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec, programRunnerFactory,
-                                                 metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                                 txClient, workflowStateWriter, cConf, pluginInstantiator,
-                                                 secureStore, secureStoreManager, messagingService,
-                                                 programStateWriter, metadataReader, metadataPublisher,
-                                                 fieldLineageWriter, namespaceQueryAdmin, remoteClientFactory,
-                                                 appStateStoreProvider);
+      WorkflowDriver driver = new WorkflowDriver(program, options, workflowSpec,
+          programRunnerFactory,
+          metricsCollectionService, datasetFramework, discoveryServiceClient,
+          txClient, workflowStateWriter, cConf, pluginInstantiator,
+          secureStore, secureStoreManager, messagingService,
+          programStateWriter, metadataReader, metadataPublisher,
+          fieldLineageWriter, namespaceQueryAdmin, remoteClientFactory,
+          appStateStoreProvider);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
-      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), driver);
+      ProgramController controller = new WorkflowProgramController(program.getId().run(runId),
+          driver);
       driver.start();
       return controller;
     } catch (Exception e) {

@@ -17,7 +17,8 @@
 package io.cdap.cdap.common.lang;
 
 /**
- * Represents a supplier of result. It allows exception to be thrown if failed to supply the result.
+ * Represents a supplier of result. It allows exception to be thrown if failed to supply the
+ * result.
  *
  * @param <T> type of the result
  * @param <E> type of the exception

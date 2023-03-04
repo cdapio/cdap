@@ -17,11 +17,14 @@
 package io.cdap.cdap.security.zookeeper;
 
 /**
- * Simple {@link ResourceListener} implementation with no-op implementations.  Implementers interested only
- * in handling specific events can subclass this class and override the handler methods that they care about.
+ * Simple {@link ResourceListener} implementation with no-op implementations.  Implementers
+ * interested only in handling specific events can subclass this class and override the handler
+ * methods that they care about.
+ *
  * @param <T> The resource type being managed by {@code SharedResourceCache}.
  */
 public class BaseResourceListener<T> implements ResourceListener<T> {
+
   @Override
   public void onUpdate() {
     // no-op

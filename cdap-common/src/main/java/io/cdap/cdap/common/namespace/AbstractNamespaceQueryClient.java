@@ -31,7 +31,8 @@ import java.net.URL;
 import java.util.List;
 
 /**
- * Implementation of {@link NamespaceQueryAdmin} that fetchs {@link NamespaceMeta} through REST API.
+ * Implementation of {@link NamespaceQueryAdmin} that fetchs {@link NamespaceMeta} through REST
+ * API.
  */
 public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmin {
 
@@ -39,7 +40,7 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
    * Executes an HTTP request.
    */
   protected abstract HttpResponse execute(HttpRequest request)
-    throws IOException, UnauthenticatedException, UnauthorizedException;
+      throws IOException, UnauthenticatedException, UnauthorizedException;
 
   /**
    * Resolves the specified URL.
@@ -51,22 +52,25 @@ public abstract class AbstractNamespaceQueryClient implements NamespaceQueryAdmi
     HttpRequest request = HttpRequest.get(resolve("namespaces")).build();
     HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() { }).getResponseObject();
+      return ObjectResponse.fromJsonBody(response, new TypeToken<List<NamespaceMeta>>() {
+      }).getResponseObject();
     }
-    throw new IOException(String.format("Cannot list namespaces. Reason: %s", response.getResponseBodyAsString()));
+    throw new IOException(
+        String.format("Cannot list namespaces. Reason: %s", response.getResponseBodyAsString()));
   }
 
   @Override
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     HttpResponse response =
-      execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getNamespace()))).build());
+        execute(HttpRequest.get(resolve(String.format("namespaces/%s", namespaceId.getNamespace())))
+            .build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NamespaceNotFoundException(namespaceId);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, NamespaceMeta.class).getResponseObject();
     }
     throw new IOException(String.format("Cannot get namespace %s. Reason: %s",
-                                        namespaceId, response.getResponseBodyAsString()));
+        namespaceId, response.getResponseBodyAsString()));
   }
 
   @Override

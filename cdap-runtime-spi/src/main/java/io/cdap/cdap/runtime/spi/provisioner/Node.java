@@ -25,13 +25,15 @@ import javax.annotation.Nullable;
  * Information about a cluster node.
  */
 public class Node {
+
   private final String id;
   private final Type type;
   private final String ipAddress;
   private final long createTime;
   private final Map<String, String> properties;
 
-  public Node(String id, Type type, @Nullable String ipAddress, long createTime, Map<String, String> properties) {
+  public Node(String id, Type type, @Nullable String ipAddress, long createTime,
+      Map<String, String> properties) {
     this.id = id;
     this.type = type;
     this.ipAddress = ipAddress;
@@ -69,11 +71,11 @@ public class Node {
       return false;
     }
     Node node = (Node) o;
-    return createTime == node.createTime &&
-      Objects.equals(id, node.id) &&
-      type == node.type &&
-      Objects.equals(ipAddress, node.ipAddress) &&
-      Objects.equals(properties, node.properties);
+    return createTime == node.createTime
+        && Objects.equals(id, node.id)
+        && type == node.type
+        && Objects.equals(ipAddress, node.ipAddress)
+        && Objects.equals(properties, node.properties);
   }
 
   @Override
@@ -83,13 +85,13 @@ public class Node {
 
   @Override
   public String toString() {
-    return "Node{" +
-      "id='" + id + '\'' +
-      ", type='" + type + '\'' +
-      ", ipAddress='" + ipAddress + '\'' +
-      ", createTime=" + createTime +
-      ", properties=" + properties +
-      '}';
+    return "Node{"
+        + "id='" + id + '\''
+        + ", type='" + type + '\''
+        + ", ipAddress='" + ipAddress + '\''
+        + ", createTime=" + createTime
+        + ", properties=" + properties
+        + '}';
   }
 
   /**

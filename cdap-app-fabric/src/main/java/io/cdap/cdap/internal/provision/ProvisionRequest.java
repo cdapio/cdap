@@ -24,13 +24,14 @@ import io.cdap.cdap.proto.id.ProgramRunId;
  * Information needed to provision a cluster.
  */
 public class ProvisionRequest {
+
   private final ProgramRunId programRunId;
   private final ProgramOptions programOptions;
   private final ProgramDescriptor programDescriptor;
   private final String user;
 
   public ProvisionRequest(ProgramRunId programRunId, ProgramOptions programOptions,
-                          ProgramDescriptor programDescriptor, String user) {
+      ProgramDescriptor programDescriptor, String user) {
     this.programRunId = programRunId;
     this.programOptions = programOptions;
     this.programDescriptor = programDescriptor;

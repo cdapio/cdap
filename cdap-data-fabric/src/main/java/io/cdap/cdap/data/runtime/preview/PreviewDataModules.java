@@ -51,10 +51,11 @@ import org.apache.tephra.TransactionSystemClient;
  * Data fabric modules for preview
  */
 public class PreviewDataModules {
+
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
   public Module getDataFabricModule(final TransactionSystemClient transactionSystemClient,
-                                    final LevelDBTableService levelDBTableService) {
+      final LevelDBTableService levelDBTableService) {
     return Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
@@ -71,24 +72,24 @@ public class PreviewDataModules {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
-          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
         expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named("localDatasetFramework"))
-          .to(RemoteDatasetFramework.class);
+            .annotatedWith(Names.named("localDatasetFramework"))
+            .to(RemoteDatasetFramework.class);
 
         bind(DatasetFramework.class).annotatedWith(Names.named("actualDatasetFramework")).
-          toInstance(remoteDatasetFramework);
+            toInstance(remoteDatasetFramework);
 
         bind(DatasetFramework.class).
-          annotatedWith(Names.named(BASE_DATASET_FRAMEWORK)).
-          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
+            annotatedWith(Names.named(BASE_DATASET_FRAMEWORK)).
+            toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
 
         bind(DatasetFramework.class).
-          toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
+            toProvider(PreviewDatasetFrameworkProvider.class).in(Scopes.SINGLETON);
         expose(DatasetFramework.class);
 
         bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
@@ -114,16 +115,18 @@ public class PreviewDataModules {
   }
 
   private static final class PreviewDatasetFrameworkProvider implements Provider<DatasetFramework> {
+
     private final DatasetFramework inMemoryDatasetFramework;
     private final DatasetFramework remoteDatasetFramework;
     private final AuthenticationContext authenticationContext;
     private final AccessEnforcer accessEnforcer;
 
     @Inject
-    PreviewDatasetFrameworkProvider(@Named("localDatasetFramework")DatasetFramework inMemoryDatasetFramework,
-                                    @Named("actualDatasetFramework")DatasetFramework remoteDatasetFramework,
-                                    AuthenticationContext authenticationContext,
-                                    AccessEnforcer accessEnforcer) {
+    PreviewDatasetFrameworkProvider(
+        @Named("localDatasetFramework") DatasetFramework inMemoryDatasetFramework,
+        @Named("actualDatasetFramework") DatasetFramework remoteDatasetFramework,
+        AuthenticationContext authenticationContext,
+        AccessEnforcer accessEnforcer) {
       this.inMemoryDatasetFramework = inMemoryDatasetFramework;
       this.remoteDatasetFramework = remoteDatasetFramework;
       this.authenticationContext = authenticationContext;
@@ -133,7 +136,7 @@ public class PreviewDataModules {
     @Override
     public DatasetFramework get() {
       return new PreviewDatasetFramework(inMemoryDatasetFramework, remoteDatasetFramework,
-                                         authenticationContext, accessEnforcer);
+          authenticationContext, accessEnforcer);
     }
   }
 }

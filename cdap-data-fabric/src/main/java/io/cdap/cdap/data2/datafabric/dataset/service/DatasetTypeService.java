@@ -36,9 +36,10 @@ import java.util.List;
 public interface DatasetTypeService extends Service {
 
   /**
-   * Returns all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
+   * Returns all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId
+   * namespace}.
    *
-   * @param namespaceId  the namespace to list dataset modules for
+   * @param namespaceId the namespace to list dataset modules for
    * @return the list of dataset modules in the namespace
    */
   List<DatasetModuleMeta> listModules(NamespaceId namespaceId) throws Exception;
@@ -56,15 +57,17 @@ public interface DatasetTypeService extends Service {
    *
    * @param datasetModuleId the {@link DatasetModuleId} for the module to be added
    * @param className the module class name specified in the HTTP header
-   * @param forceUpdate if true, an update will be allowed even if there are conflicts with other modules, or if
-   *                     removal of a type would break other modules' dependencies
+   * @param forceUpdate if true, an update will be allowed even if there are conflicts with
+   *     other modules, or if removal of a type would break other modules' dependencies
    * @return a {@link BodyConsumer} to upload the module jar in chunks
    * @throws NotFoundException if the namespace in which the module is being added is not found
-   * @throws IOException if there are issues while performing I/O like creating temporary directories, moving/unpacking
-   *                      module jar files
-   * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are conflicts with other modules
+   * @throws IOException if there are issues while performing I/O like creating temporary
+   *     directories, moving/unpacking module jar files
+   * @throws DatasetModuleConflictException if #forceUpdate is {@code false}, and there are
+   *     conflicts with other modules
    */
-  BodyConsumer addModule(DatasetModuleId datasetModuleId, String className, boolean forceUpdate) throws Exception;
+  BodyConsumer addModule(DatasetModuleId datasetModuleId, String className, boolean forceUpdate)
+      throws Exception;
 
   /**
    * Deletes the specified {@link DatasetModuleId}
@@ -72,7 +75,8 @@ public interface DatasetTypeService extends Service {
   void delete(DatasetModuleId datasetModuleId) throws Exception;
 
   /**
-   * Deletes all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId namespace}.
+   * Deletes all {@link DatasetModuleMeta dataset modules} in the specified {@link NamespaceId
+   * namespace}.
    */
   void deleteAll(NamespaceId namespaceId) throws Exception;
 

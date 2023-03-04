@@ -25,6 +25,7 @@ import java.util.Objects;
  * Result of executing bootstrap steps.
  */
 public class BootstrapResult {
+
   private final List<BootstrapStepResult> steps;
 
   public BootstrapResult(List<BootstrapStepResult> steps) {
@@ -54,8 +55,8 @@ public class BootstrapResult {
 
   @Override
   public String toString() {
-    return "BootstrapResult{" +
-      "steps=" + steps +
-      '}';
+    return "BootstrapResult{"
+        + "steps=" + steps
+        + '}';
   }
 }

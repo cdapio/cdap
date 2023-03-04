@@ -31,6 +31,7 @@ import java.util.List;
  * {@link OperationalStats} for reporting CDAP entities.
  */
 public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBean {
+
   private NamespaceQueryAdmin nsQueryAdmin;
   private ApplicationLifecycleService appLifecycleService;
   private ArtifactRepository artifactRepository;
@@ -92,10 +93,10 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
 
       appLifecycleService.scanApplications(scanApplicationsRequest,
           d -> {
-              this.apps++;
-              programs += d.getPrograms().size();
-            }
-          );
+            this.apps++;
+            programs += d.getPrograms().size();
+          }
+      );
 
       artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), false).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();

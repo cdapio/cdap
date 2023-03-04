@@ -21,11 +21,12 @@ import java.util.concurrent.Callable;
 import org.slf4j.MDC;
 
 /**
- * Clears the stage name from the Logging MDC before calling a callable and resets it when finished. This is useful
- * when a plugin is calling a CDAP method, as we don't want the log messages from CDAP to have the stage name
- * in its log messages.
+ * Clears the stage name from the Logging MDC before calling a callable and resets it when finished.
+ * This is useful when a plugin is calling a CDAP method, as we don't want the log messages from
+ * CDAP to have the stage name in its log messages.
  */
 public class NoStageLoggingCaller extends Caller {
+
   private final Caller delegate;
 
   private NoStageLoggingCaller(Caller delegate) {

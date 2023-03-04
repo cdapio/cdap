@@ -26,8 +26,8 @@ import io.cdap.cdap.support.SupportBundleTaskConfiguration;
 import io.cdap.cdap.support.task.SupportBundlePipelineInfoTask;
 
 /**
- * Support bundle pipeline info task factory to create pipeline info task which collect pipeline info and
- * generate them into files.
+ * Support bundle pipeline info task factory to create pipeline info task which collect pipeline
+ * info and generate them into files.
  */
 public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFactory {
 
@@ -38,11 +38,12 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
   private final RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher;
 
   @Inject
-  SupportBundlePipelineInfoTaskFactory(RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                       RemoteLogsFetcher remoteLogsFetcher,
-                                       RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
-                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
+  SupportBundlePipelineInfoTaskFactory(
+      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+      RemoteLogsFetcher remoteLogsFetcher,
+      RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+      RemoteMetricsSystemClient remoteMetricsSystemClient,
+      RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
     this.remoteProgramRunRecordsFetcher = remoteProgramRunRecordsFetcher;
     this.remoteLogsFetcher = remoteLogsFetcher;
     this.remoteApplicationDetailFetcher = remoteApplicationDetailFetcher;
@@ -52,12 +53,13 @@ public class SupportBundlePipelineInfoTaskFactory implements SupportBundleTaskFa
 
   @Override
   public SupportBundlePipelineInfoTask create(SupportBundleTaskConfiguration taskConfiguration) {
-    return new SupportBundlePipelineInfoTask(taskConfiguration.getUuid(), taskConfiguration.getNamespaces(),
-                                             taskConfiguration.getApp(), taskConfiguration.getRun(),
-                                             taskConfiguration.getBasePath(), remoteApplicationDetailFetcher,
-                                             remoteProgramRunRecordsFetcher, remoteLogsFetcher,
-                                             taskConfiguration.getProgramType(), taskConfiguration.getProgramName(),
-                                             remoteMetricsSystemClient, taskConfiguration.getSupportBundleJob(),
-                                             taskConfiguration.getMaxRunsPerProgram(), remoteProgramRunRecordFetcher);
+    return new SupportBundlePipelineInfoTask(taskConfiguration.getUuid(),
+        taskConfiguration.getNamespaces(),
+        taskConfiguration.getApp(), taskConfiguration.getRun(),
+        taskConfiguration.getBasePath(), remoteApplicationDetailFetcher,
+        remoteProgramRunRecordsFetcher, remoteLogsFetcher,
+        taskConfiguration.getProgramType(), taskConfiguration.getProgramName(),
+        remoteMetricsSystemClient, taskConfiguration.getSupportBundleJob(),
+        taskConfiguration.getMaxRunsPerProgram(), remoteProgramRunRecordFetcher);
   }
 }

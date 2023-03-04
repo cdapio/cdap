@@ -27,13 +27,14 @@ public interface SparkManager extends ProgramManager<SparkManager> {
 
   /**
    * Used to discover the endpoint of that exposed by `SparkHttpServiceHandler`.
+   *
    * @return URL of the endpoint or {@code null} if the service is not available
    */
   URL getServiceURL();
 
   /**
-   * Used to discover the endpoint of that exposed by `SparkHttpServiceHandler` which allows a custom timeout
-   * value to wait for the service to be available.
+   * Used to discover the endpoint of that exposed by `SparkHttpServiceHandler` which allows a
+   * custom timeout value to wait for the service to be available.
    *
    * @param timeout how long to wait before giving up, in unit of {@code timeoutUnit}
    * @param timeoutUnit a {@link TimeUnit} to interpret the value of {@code timeout}

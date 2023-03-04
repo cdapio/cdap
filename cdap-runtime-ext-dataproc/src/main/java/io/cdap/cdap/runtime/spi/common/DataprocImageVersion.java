@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * Class used to compare versions from Dataproc cluster images
  */
 public class DataprocImageVersion implements Comparable<Object> {
+
   private static final Pattern IS_NUMBER_PATTERN = Pattern.compile("^\\d+$");
   private final List<Integer> versionSegments;
 
@@ -83,7 +84,8 @@ public class DataprocImageVersion implements Comparable<Object> {
 
   @Override
   public String toString() {
-    String output = this.versionSegments.stream().map(Object::toString).collect(Collectors.joining("."));
+    String output = this.versionSegments.stream().map(Object::toString)
+        .collect(Collectors.joining("."));
 
     if (output.isEmpty()) {
       return "0";

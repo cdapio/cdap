@@ -41,7 +41,7 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
 
   @Override
   public NamespacedEntityId deserialize(JsonElement json, Type typeOfT,
-                                        JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String entity = jsonObj.get("entity").getAsString();
@@ -67,18 +67,20 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
         return deserializeArtifactId(jsonObj);
       default:
         throw new UnsupportedOperationException(
-          String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s is supported.",
-                        entity,
-                        ApplicationId.class.getSimpleName(),
-                        ProgramId.class.getSimpleName(),
-                        ServiceId.class.getSimpleName(),
-                        ScheduleId.class.getSimpleName(),
-                        WorkerId.class.getSimpleName(),
-                        WorkflowId.class.getSimpleName(),
-                        DatasetId.class.getSimpleName(),
-                        ArtifactId.class.getSimpleName()
-          )
+            String.format(
+                "Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, "
+
+                    + "%s, %s is supported.",
+                entity,
+                ApplicationId.class.getSimpleName(),
+                ProgramId.class.getSimpleName(),
+                ServiceId.class.getSimpleName(),
+                ScheduleId.class.getSimpleName(),
+                WorkerId.class.getSimpleName(),
+                WorkflowId.class.getSimpleName(),
+                DatasetId.class.getSimpleName(),
+                ArtifactId.class.getSimpleName()
+            )
         );
     }
   }
@@ -137,7 +139,8 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
   }
 
   @Override
-  public JsonElement serialize(NamespacedEntityId src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(NamespacedEntityId src, Type typeOfSrc,
+      JsonSerializationContext context) {
     return context.serialize(src);
   }
 }

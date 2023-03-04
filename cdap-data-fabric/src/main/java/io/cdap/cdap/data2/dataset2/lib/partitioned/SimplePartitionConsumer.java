@@ -26,9 +26,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A simple, consumer for {@link Partition}s of a {@link PartitionedFileSet} which maintains state in memory.
+ * A simple, consumer for {@link Partition}s of a {@link PartitionedFileSet} which maintains state
+ * in memory.
  */
 public class SimplePartitionConsumer {
+
   private final PartitionedFileSet partitionedFileSet;
   private PartitionConsumerState partitionConsumerState;
 
@@ -43,9 +45,9 @@ public class SimplePartitionConsumer {
   }
 
   /**
-   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last call
-   *         to this method. This excludes partitions created in in-progress transactions including the one in which the
-   *         call to this method is made.
+   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since
+   *     the last call to this method. This excludes partitions created in in-progress transactions
+   *     including the one in which the call to this method is made.
    */
   public List<PartitionDetail> consumePartitions() {
     return consumePartitions(Integer.MAX_VALUE);
@@ -53,9 +55,9 @@ public class SimplePartitionConsumer {
 
   /**
    * @param limit limit to be applied while consuming partitions
-   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last call
-   *         to this method. This excludes partitions created in in-progress transactions including the one in which the
-   *         call to this method is made.
+   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since
+   *     the last call to this method. This excludes partitions created in in-progress transactions
+   *     including the one in which the call to this method is made.
    */
   public List<PartitionDetail> consumePartitions(int limit) {
     return consumePartitions(limit, new Predicate<PartitionDetail>() {
@@ -69,13 +71,13 @@ public class SimplePartitionConsumer {
   /**
    * @param limit limit to be applied while consuming partitions
    * @param predicate predicate to be applied while consuming partitions
-   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last call
-   *         to this method. This excludes partitions created in in-progress transactions including the one in which the
-   *         call to this method is made.
+   * @return a list of {@link Partition}s of the underlying {@link PartitionedFileSet} created since
+   *     the last call to this method. This excludes partitions created in in-progress transactions
+   *     including the one in which the call to this method is made.
    */
   public List<PartitionDetail> consumePartitions(int limit, Predicate<PartitionDetail> predicate) {
     PartitionConsumerResult partitionConsumerResult =
-      partitionedFileSet.consumePartitions(partitionConsumerState, limit, predicate);
+        partitionedFileSet.consumePartitions(partitionConsumerState, limit, predicate);
     partitionConsumerState = partitionConsumerResult.getPartitionConsumerState();
     return partitionConsumerResult.getPartitions();
   }

@@ -17,8 +17,8 @@
 package io.cdap.cdap.api.data;
 
 /**
- * This exception is thrown if - for whatever reason - a data set cannot be
- * instantiated at runtime.
+ * This exception is thrown if - for whatever reason - a data set cannot be instantiated at
+ * runtime.
  */
 public class DatasetInstantiationException extends RuntimeException {
 

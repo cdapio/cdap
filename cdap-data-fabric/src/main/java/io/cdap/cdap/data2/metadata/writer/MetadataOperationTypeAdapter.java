@@ -27,12 +27,15 @@ import java.lang.reflect.Type;
  * Gson type adapter for {@link MetadataOperation}.
  */
 public class MetadataOperationTypeAdapter implements JsonDeserializer<MetadataOperation> {
+
   @Override
-  public MetadataOperation deserialize(JsonElement json, Type type, JsonDeserializationContext context)
-    throws JsonParseException {
+  public MetadataOperation deserialize(JsonElement json, Type type,
+      JsonDeserializationContext context)
+      throws JsonParseException {
 
     JsonObject jsonObj = json.getAsJsonObject();
-    MetadataOperation.Type opType = context.deserialize(jsonObj.get("type"), MetadataOperation.Type.class);
+    MetadataOperation.Type opType = context.deserialize(jsonObj.get("type"),
+        MetadataOperation.Type.class);
     switch (opType) {
       case CREATE:
         return context.deserialize(json, MetadataOperation.Create.class);

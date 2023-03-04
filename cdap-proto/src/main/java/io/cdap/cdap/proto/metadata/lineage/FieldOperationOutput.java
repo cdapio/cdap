@@ -26,11 +26,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents an output of a field operation: in case of a {@link WriteOperation},
- * a a dataset ({@link EndPoint}); otherwise a list of field names.
+ * Represents an output of a field operation: in case of a {@link WriteOperation}, a a dataset
+ * ({@link EndPoint}); otherwise a list of field names.
  */
 @Beta
 public class FieldOperationOutput {
+
   private final EndPoint endPoint;
   private final List<String> fields;
 
@@ -78,8 +79,8 @@ public class FieldOperationOutput {
       return false;
     }
     FieldOperationOutput output = (FieldOperationOutput) o;
-    return Objects.equals(endPoint, output.endPoint) &&
-            Objects.equals(fields, output.fields);
+    return Objects.equals(endPoint, output.endPoint)
+        && Objects.equals(fields, output.fields);
   }
 
   @Override

@@ -19,7 +19,8 @@ import io.cdap.cdap.api.plugin.Plugin;
 import java.util.Map;
 
 /**
- * This interface provides for getting the name, class name, and description specifications of any type of program.
+ * This interface provides for getting the name, class name, and description specifications of any
+ * type of program.
  */
 public interface ProgramSpecification {
 
@@ -39,7 +40,8 @@ public interface ProgramSpecification {
   String getDescription();
 
   /**
-   * @return {@link Plugin} informations if there are any plugins associated with this program else returns an empty map
+   * @return {@link Plugin} informations if there are any plugins associated with this program else
+   *     returns an empty map
    */
   Map<String, Plugin> getPlugins();
 }

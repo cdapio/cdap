@@ -33,20 +33,23 @@ public final class ArtifactRanges {
 
   /**
    * Parses the string representation of an artifact range, which is of the form:
-   * {namespace}:{name}[{lower-version},{upper-version}]. This is what is returned by {@link #toString()}.
-   * For example, default:my-functions[1.0.0,2.0.0) will correspond to an artifact name of my-functions with a
-   * lower version of 1.0.0 and an upper version of 2.0.0 in the default namespace.
+   * {namespace}:{name}[{lower-version},{upper-version}]. This is what is returned by {@link
+   * #toString()}. For example, default:my-functions[1.0.0,2.0.0) will correspond to an artifact
+   * name of my-functions with a lower version of 1.0.0 and an upper version of 2.0.0 in the default
+   * namespace.
    *
    * @param artifactRangeStr the string representation to parse
    * @return the ArtifactRange corresponding to the given string
    */
-  public static ArtifactRange parseArtifactRange(String artifactRangeStr) throws InvalidArtifactRangeException {
+  public static ArtifactRange parseArtifactRange(String artifactRangeStr)
+      throws InvalidArtifactRangeException {
     // get the namespace
     int nameStartIndex = artifactRangeStr.indexOf(':');
     if (nameStartIndex < 0) {
       throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Could not find ':' separating namespace from artifact name.",
-                      artifactRangeStr));
+          String.format(
+              "Invalid artifact range %s. Could not find ':' separating namespace from artifact name.",
+              artifactRangeStr));
     }
     String namespaceStr = artifactRangeStr.substring(0, nameStartIndex);
 
@@ -54,46 +57,49 @@ public final class ArtifactRanges {
       NamespaceId namespace = new NamespaceId(namespaceStr);
     } catch (Exception e) {
       throw new InvalidArtifactRangeException(String.format("Invalid namespace %s: %s",
-                                                            namespaceStr, e.getMessage()));
+          namespaceStr, e.getMessage()));
     }
 
     // check not at the end of the string
     if (nameStartIndex == artifactRangeStr.length()) {
       throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Nothing found after namespace.", artifactRangeStr));
+          String.format("Invalid artifact range %s. Nothing found after namespace.",
+              artifactRangeStr));
     }
 
     return parseArtifactRange(namespaceStr, artifactRangeStr.substring(nameStartIndex + 1));
   }
 
   /**
-   * Parses an unnamespaced string representation of an artifact range. It is expected to be of the form:
-   * {name}[{lower-version},{upper-version}]. Square brackets are inclusive, and parentheses are exclusive.
-   * For example, my-functions[1.0.0,2.0.0) will correspond to an artifact name of my-functions with a
-   * lower version of 1.0.0 and an upper version of 2.0.0.
+   * Parses an unnamespaced string representation of an artifact range. It is expected to be of the
+   * form: {name}[{lower-version},{upper-version}]. Square brackets are inclusive, and parentheses
+   * are exclusive. For example, my-functions[1.0.0,2.0.0) will correspond to an artifact name of
+   * my-functions with a lower version of 1.0.0 and an upper version of 2.0.0.
    *
    * @param namespace the namespace of the artifact range
    * @param artifactRangeStr the string representation to parse
    * @return the ArtifactRange corresponding to the given string
    */
   public static ArtifactRange parseArtifactRange(String namespace,
-                                                 String artifactRangeStr) throws InvalidArtifactRangeException {
+      String artifactRangeStr) throws InvalidArtifactRangeException {
     // search for the '[' or '(' between the artifact name and lower version
     int versionStartIndex = indexOf(artifactRangeStr, '[', '(', 0);
     if (versionStartIndex < 0) {
       throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. " +
-                        "Could not find '[' or '(' indicating start of artifact lower version.", artifactRangeStr));
+          String.format("Invalid artifact range %s. "
+                  + "Could not find '[' or '(' indicating start of artifact lower version.",
+              artifactRangeStr));
     }
     String name = artifactRangeStr.substring(0, versionStartIndex);
 
     if (!ArtifactId.isValidArtifactId(name)) {
       throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Artifact name '%s' is invalid.", artifactRangeStr, name));
+          String.format("Invalid artifact range %s. Artifact name '%s' is invalid.",
+              artifactRangeStr, name));
     }
 
     return new ArtifactRange(namespace, name,
-                             ArtifactVersionRange.parse(artifactRangeStr.substring(versionStartIndex)));
+        ArtifactVersionRange.parse(artifactRangeStr.substring(versionStartIndex)));
   }
 
   // like String's indexOf(char, int), except it looks for either one of 2 characters

@@ -26,16 +26,18 @@ import java.util.Map;
 /**
  * Codec to serialize/deserialize {@link WorkflowTokenNodeDetail}.
  */
-public class WorkflowTokenNodeDetailCodec extends AbstractSpecificationCodec<WorkflowTokenNodeDetail> {
+public class WorkflowTokenNodeDetailCodec extends
+    AbstractSpecificationCodec<WorkflowTokenNodeDetail> {
 
   @Override
-  public JsonElement serialize(WorkflowTokenNodeDetail src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(WorkflowTokenNodeDetail src, Type typeOfSrc,
+      JsonSerializationContext context) {
     return context.serialize(src.getTokenDataAtNode());
   }
 
   @Override
   public WorkflowTokenNodeDetail deserialize(JsonElement json, Type typeOfT,
-                                             JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     Map<String, String> tokenDataAtNode = deserializeMap(json, context, String.class);
     return new WorkflowTokenNodeDetail(tokenDataAtNode);
   }

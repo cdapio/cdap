@@ -21,9 +21,11 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.ProgramId;
 
 /**
- * Key used to keep track of whether a particular usage has been recorded already or not (for UsageRegistry).
+ * Key used to keep track of whether a particular usage has been recorded already or not (for
+ * UsageRegistry).
  */
 public class DatasetUsageKey {
+
   private final DatasetId dataset;
   private final ProgramId owner;
 
@@ -49,8 +51,8 @@ public class DatasetUsageKey {
       return false;
     }
     DatasetUsageKey that = (DatasetUsageKey) o;
-    return Objects.equal(dataset, that.dataset) &&
-      Objects.equal(owner, that.owner);
+    return Objects.equal(dataset, that.dataset)
+        && Objects.equal(owner, that.owner);
   }
 
   @Override

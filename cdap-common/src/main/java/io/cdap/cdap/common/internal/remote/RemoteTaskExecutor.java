@@ -72,20 +72,22 @@ public class RemoteTaskExecutor {
   private final String workerUrl;
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                            RemoteClientFactory remoteClientFactory, Type workerType) {
-    this(cConf, metricsCollectionService, remoteClientFactory, workerType, new DefaultHttpRequestConfig(false));
+      RemoteClientFactory remoteClientFactory, Type workerType) {
+    this(cConf, metricsCollectionService, remoteClientFactory, workerType,
+        new DefaultHttpRequestConfig(false));
   }
 
   public RemoteTaskExecutor(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                            RemoteClientFactory remoteClientFactory, Type workerType,
-                            HttpRequestConfig httpRequestConfig) {
+      RemoteClientFactory remoteClientFactory, Type workerType,
+      HttpRequestConfig httpRequestConfig) {
     this.compression = cConf.getBoolean(Constants.TaskWorker.COMPRESSION_ENABLED);
-    String serviceName = workerType == Type.TASK_WORKER ?
-      Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
+    String serviceName = workerType == Type.TASK_WORKER
+        ? Constants.Service.TASK_WORKER : Constants.Service.SYSTEM_WORKER;
     this.remoteClient = remoteClientFactory.createRemoteClient(serviceName,
-                                                               httpRequestConfig,
-                                                               Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + ".");
+        httpRequestConfig,
+        Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+        Constants.Service.TASK_WORKER + ".");
     this.metricsCollectionService = metricsCollectionService;
     if (workerType == Type.TASK_WORKER) {
       this.workerUrl = TASK_WORKER_URL;
@@ -95,8 +97,8 @@ public class RemoteTaskExecutor {
   }
 
   /**
-   * Sends the {@link RunnableTaskRequest} to a remote worker and returns the result.
-   * Retries sending the request if the workers are busy.
+   * Sends the {@link RunnableTaskRequest} to a remote worker and returns the result. Retries
+   * sending the request if the workers are busy.
    *
    * @param runnableTaskRequest {@link RunnableTaskRequest} with details of task
    * @return byte[] response from remote task
@@ -111,8 +113,8 @@ public class RemoteTaskExecutor {
       return Retries.callWithRetries((retryContext) -> {
         try {
           HttpRequest.Builder requestBuilder = remoteClient
-            .requestBuilder(HttpMethod.POST, workerUrl)
-            .withBody(requestBody.duplicate());
+              .requestBuilder(HttpMethod.POST, workerUrl)
+              .withBody(requestBody.duplicate());
           if (compression) {
             requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
             requestBuilder.addHeader(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
@@ -122,12 +124,12 @@ public class RemoteTaskExecutor {
           HttpResponse httpResponse = remoteClient.execute(httpRequest);
           if (httpResponse.getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
             throw new RetryableException(
-              String.format("Received response code %s for %s", httpResponse.getResponseCode(),
-                            runnableTaskRequest.getClassName()));
+                String.format("Received response code %s for %s", httpResponse.getResponseCode(),
+                    runnableTaskRequest.getClassName()));
           }
           if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
             BasicThrowable basicThrowable = GSON
-              .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
+                .fromJson(httpResponse.getResponseBodyAsString(), BasicThrowable.class);
             throw RemoteExecutionException.fromBasicThrowable(basicThrowable);
           }
           byte[] result = httpResponse.getUncompressedResponseBody();
@@ -136,7 +138,8 @@ public class RemoteTaskExecutor {
           return result;
         } catch (NoRouteToHostException e) {
           throw new RetryableException(
-            String.format("Received exception %s for %s", e.getMessage(), runnableTaskRequest.getClassName()));
+              String.format("Received exception %s for %s", e.getMessage(),
+                  runnableTaskRequest.getClassName()));
         }
       }, retryStrategy, Retries.DEFAULT_PREDICATE);
     } catch (ServiceException se) {
@@ -181,19 +184,23 @@ public class RemoteTaskExecutor {
     return 0;
   }
 
-  private void emitMetrics(long startTime, boolean success, RunnableTaskRequest runnableTaskRequest, int attempts) {
+  private void emitMetrics(long startTime, boolean success, RunnableTaskRequest runnableTaskRequest,
+      int attempts) {
     String taskClass = getTaskClassName(runnableTaskRequest);
     Map<String, String> metricTags = new HashMap<>();
     metricTags.put(Constants.Metrics.Tag.CLASS, taskClass);
     metricTags.put(Constants.Metrics.Tag.STATUS, success ? "success" : "failure");
     metricTags.put(Constants.Metrics.Tag.TRIES, String.valueOf(attempts));
-    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT, 1L);
     metricsCollectionService.getContext(metricTags)
-      .gauge(Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS, System.currentTimeMillis() - startTime);
+        .increment(Constants.Metrics.TaskWorker.CLIENT_REQUEST_COUNT, 1L);
+    metricsCollectionService.getContext(metricTags)
+        .gauge(Constants.Metrics.TaskWorker.CLIENT_REQUEST_LATENCY_MS,
+            System.currentTimeMillis() - startTime);
   }
 
   private String getTaskClassName(RunnableTaskRequest runnableTaskRequest) {
-    if (runnableTaskRequest.getParam() == null || runnableTaskRequest.getParam().getEmbeddedTaskRequest() == null) {
+    if (runnableTaskRequest.getParam() == null
+        || runnableTaskRequest.getParam().getEmbeddedTaskRequest() == null) {
       return runnableTaskRequest.getClassName();
     }
     return runnableTaskRequest.getParam().getEmbeddedTaskRequest().getClassName();
@@ -202,7 +209,7 @@ public class RemoteTaskExecutor {
   private ByteBuffer encodeTaskRequest(RunnableTaskRequest request) throws IOException {
     ExposedByteArrayOutputStream bos = new ExposedByteArrayOutputStream();
     try (Writer writer = new OutputStreamWriter(compression ? new GZIPOutputStream(bos) : bos,
-                                                StandardCharsets.UTF_8)) {
+        StandardCharsets.UTF_8)) {
       GSON.toJson(request, writer);
     }
     return bos.toByteBuffer();
@@ -213,22 +220,24 @@ public class RemoteTaskExecutor {
    */
   private byte[] getResponseBody(HttpResponse response) throws IOException {
     String encoding = response.getHeaders().entries().stream()
-      .filter(e -> HttpHeaders.CONTENT_ENCODING.equalsIgnoreCase(e.getKey()))
-      .map(Map.Entry::getValue)
-      .findFirst()
-      .orElse(null);
+        .filter(e -> HttpHeaders.CONTENT_ENCODING.equalsIgnoreCase(e.getKey()))
+        .map(Map.Entry::getValue)
+        .findFirst()
+        .orElse(null);
 
     if (encoding == null) {
       return response.getResponseBody();
     }
 
     if ("gzip".equalsIgnoreCase(encoding)) {
-      try (InputStream is = new GZIPInputStream(new ByteArrayInputStream(response.getResponseBody()))) {
+      try (InputStream is = new GZIPInputStream(
+          new ByteArrayInputStream(response.getResponseBody()))) {
         return ByteStreams.toByteArray(is);
       }
     }
     if ("deflate".equalsIgnoreCase(encoding)) {
-      try (InputStream is = new DeflaterInputStream(new ByteArrayInputStream(response.getResponseBody()))) {
+      try (InputStream is = new DeflaterInputStream(
+          new ByteArrayInputStream(response.getResponseBody()))) {
         return ByteStreams.toByteArray(is);
       }
     }

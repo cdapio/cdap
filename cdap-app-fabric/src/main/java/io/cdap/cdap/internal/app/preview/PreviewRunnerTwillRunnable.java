@@ -171,12 +171,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
     PreviewRequestPollerInfo pollerInfo;
     if (context instanceof ExtendedTwillContext) {
-      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), ((ExtendedTwillContext) context).getUID());
+      pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(),
+          ((ExtendedTwillContext) context).getUID());
     } else {
       pollerInfo = new PreviewRequestPollerInfo(context.getInstanceId(), null);
     }
     LOG.debug("Initializing preview runner with poller info {} in total {} runners",
-              pollerInfo, context.getInstanceCount());
+        pollerInfo, context.getInstanceCount());
 
     Injector injector = createInjector(cConf, hConf, pollerInfo);
 
@@ -185,12 +186,13 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     logAppenderInitializer.initialize();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                              Constants.Logging.COMPONENT_NAME,
-                                                              PreviewRunnerTwillApplication.NAME);
+        Constants.Logging.COMPONENT_NAME,
+        PreviewRunnerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     // Optionally get the storage provider. It is for destroy() method to close it on shutdown.
-    Binding<StorageProvider> storageBinding = injector.getExistingBinding(Key.get(StorageProvider.class));
+    Binding<StorageProvider> storageBinding = injector.getExistingBinding(
+        Key.get(StorageProvider.class));
     if (storageBinding != null) {
       storageProvider = storageBinding.getProvider().get();
     }
@@ -199,7 +201,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createInjector(CConfiguration cConf, Configuration hConf, PreviewRequestPollerInfo pollerInfo) {
+  static Injector createInjector(CConfiguration cConf, Configuration hConf,
+      PreviewRequestPollerInfo pollerInfo) {
     List<Module> modules = new ArrayList<>();
 
     byte[] pollerInfoBytes = Bytes.toBytes(new Gson().toJson(pollerInfo));
@@ -223,9 +226,10 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -239,7 +243,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new DFSLocationModule());
     // Configurator tasks should be executed in-memory since it is in the preview runner pod.
     modules.add(new FactoryModuleBuilder().implement(Configurator.class, InMemoryConfigurator.class)
-                  .build(ConfiguratorFactory.class));
+        .build(ConfiguratorFactory.class));
 
     modules.add(new AuthenticationContextModules().getMasterWorkerModule());
     modules.add(new AuthorizationEnforcementModule().getNoOpModules());
@@ -253,7 +257,8 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
         // Artifact Repository should use RemoteArtifactRepository.
         // TODO(CDAP-19041): Consider adding a remote artifact respository handler to the preview manager so that
         //  preview runners do not have to talk directly to app-fabric for artifacts to prevent hot-spotting.
-        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+        bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class)
+            .in(Scopes.SINGLETON);
         bind(ArtifactRepository.class).to(RemoteArtifactRepository.class);
         // Use artifact localizer client for preview.
         bind(PluginFinder.class).to(PreviewPluginFinder.class);

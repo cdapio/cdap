@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public final class CubeQuery {
+
   // null value means auto-choose aggregation based on query todo: auto-choosing may be error prone, remove it?
   @Nullable
   private final String aggregation;
@@ -58,24 +59,26 @@ public final class CubeQuery {
 
   /**
    * Creates {@link CubeQuery} with given parameters.
-   * @param aggregation (optional) aggregation name to query in; if {@code null}, the aggregation will be auto-selected
-   *                    based on rest of query parameters
+   *
+   * @param aggregation (optional) aggregation name to query in; if {@code null}, the
+   *     aggregation will be auto-selected based on rest of query parameters
    * @param startTs start (inclusive) of the time range to query
    * @param endTs end (exclusive) of the time range to query
    * @param resolution resolution of the aggregation to query in
    * @param limit max number of returned data points
-   * @param measurements map of measure name, measure type to query for, empty map means "all measures"
+   * @param measurements map of measure name, measure type to query for, empty map means "all
+   *     measures"
    * @param dimensionValues dimension values to filter by
    * @param groupByDimensions dimensions to group by
    * @param aggregationOption the aggregation option for the
    * @param interpolator {@link Interpolator} to use
    */
   public CubeQuery(@Nullable String aggregation,
-                   long startTs, long endTs, int resolution, int limit,
-                   Map<String, AggregationFunction> measurements,
-                   Map<String, String> dimensionValues, List<String> groupByDimensions,
-                   AggregationOption aggregationOption,
-                   @Nullable Interpolator interpolator) {
+      long startTs, long endTs, int resolution, int limit,
+      Map<String, AggregationFunction> measurements,
+      Map<String, String> dimensionValues, List<String> groupByDimensions,
+      AggregationOption aggregationOption,
+      @Nullable Interpolator interpolator) {
     this.aggregation = aggregation;
     this.startTs = startTs;
     this.endTs = endTs;
@@ -158,6 +161,7 @@ public final class CubeQuery {
    * Builds {@link CubeQuery}.
    */
   public static final class Builder {
+
     private String aggregation;
     private long startTs;
     private long endTs;
@@ -180,17 +184,20 @@ public final class CubeQuery {
      */
     private CubeQuery build() {
       return new CubeQuery(aggregation, startTs, endTs, resolution, limit,
-                           measurements, dimensionValues, groupByDimensions, null, interpolator);
+          measurements, dimensionValues, groupByDimensions, null, interpolator);
     }
 
     /**
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Select {
-      private Select() {}
+
+      private Select() {
+      }
 
       /**
        * Adds measurement to be included in selection of {@link CubeQuery}.
+       *
        * @param name name of the measurement
        * @param aggFunc function to be used if aggregation of measurement value is needed
        * @return builder for configuring {@link CubeQuery}
@@ -202,6 +209,7 @@ public final class CubeQuery {
 
       /**
        * Adds measurements to be included in selection of {@link CubeQuery}.
+       *
        * @param measurements map of measurement name, agg function to include
        * @return builder for configuring {@link CubeQuery}
        */
@@ -215,10 +223,13 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Measurement {
-      private Measurement() {}
+
+      private Measurement() {
+      }
 
       /**
        * Adds measurement to be included in selection of {@link CubeQuery}.
+       *
        * @param name name of the measurement
        * @param aggFunc function to be used if aggregation of measurement value is needed
        * @return builder for configuring {@link CubeQuery}
@@ -230,6 +241,7 @@ public final class CubeQuery {
 
       /**
        * Adds measurements to be included in selection of {@link CubeQuery}.
+       *
        * @param measurements map of measurement name, agg function to include
        * @return builder for configuring {@link CubeQuery}
        */
@@ -240,6 +252,7 @@ public final class CubeQuery {
 
       /**
        * Defines aggregation view to query from.
+       *
        * @param aggregation name of the aggregation view
        * @return builder for configuring {@link CubeQuery}
        */
@@ -249,7 +262,9 @@ public final class CubeQuery {
       }
 
       /**
-       * Sets aggregation view to query from to be auto-selected based on other parameters of the query.
+       * Sets aggregation view to query from to be auto-selected based on other parameters of the
+       * query.
+       *
        * @return builder for configuring {@link CubeQuery}
        */
       public From from() {
@@ -262,10 +277,13 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class From {
-      private From() {}
+
+      private From() {
+      }
 
       /**
        * Sets resolution for {@link CubeQuery}.
+       *
        * @param amount amount of units
        * @param timeUnit unit type
        * @return builder for configuring {@link CubeQuery}
@@ -280,7 +298,9 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Where {
-      private Where() {}
+
+      private Where() {
+      }
 
       /**
        * @return builder for configuring {@link CubeQuery}
@@ -294,10 +314,13 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Dimension {
-      private Dimension() {}
+
+      private Dimension() {
+      }
 
       /**
        * Adds dimension value to filter by.
+       *
        * @param name name of dimension
        * @param value value of dimension
        * @return builder for configuring {@link CubeQuery}
@@ -309,6 +332,7 @@ public final class CubeQuery {
 
       /**
        * Adds dimension values to filter by.
+       *
        * @param dimValues dimension name, dimension value pairs to filter by
        * @return builder for configuring {@link CubeQuery}
        */
@@ -319,6 +343,7 @@ public final class CubeQuery {
 
       /**
        * Defines time range for {@link CubeQuery}.
+       *
        * @param startTsInSec start time inclusive (epoch in seconds)
        * @param endTsInSec end time exclusive (epoch in seconds)
        * @return builder for configuring {@link CubeQuery}
@@ -334,7 +359,9 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class GroupBy {
-      private GroupBy() {}
+
+      private GroupBy() {
+      }
 
       /**
        * @return builder for configuring {@link CubeQuery}
@@ -345,6 +372,7 @@ public final class CubeQuery {
 
       /**
        * Sets a limit on returned data points per time series
+       *
        * @param limit limit value
        * @return builder for configuring {@link CubeQuery}
        */
@@ -358,10 +386,13 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class GroupByDimension {
-      private GroupByDimension() {}
+
+      private GroupByDimension() {
+      }
 
       /**
        * Adds dimension to use for grouping results into time series.
+       *
        * @param name name of the dimension
        * @return builder for configuring {@link CubeQuery}
        */
@@ -372,6 +403,7 @@ public final class CubeQuery {
 
       /**
        * Adds dimensions to use for grouping results into time series.
+       *
        * @param names names of the dimensions
        * @return builder for configuring {@link CubeQuery}
        */
@@ -382,6 +414,7 @@ public final class CubeQuery {
 
       /**
        * Sets a limit on returned data points per time series
+       *
        * @param limit limit value
        * @return builder for configuring {@link CubeQuery}
        */
@@ -395,10 +428,13 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Limit {
-      private Limit() {}
+
+      private Limit() {
+      }
 
       /**
        * Sets {@link Interpolator} to use for {@link CubeQuery}.
+       *
        * @param interpolator interpolator to use
        * @return builder for configuring {@link CubeQuery}
        */
@@ -419,7 +455,9 @@ public final class CubeQuery {
      * Builder for configuring {@link CubeQuery}.
      */
     public final class Build {
-      private Build() {}
+
+      private Build() {
+      }
 
       /**
        * @return {@link CubeQuery}

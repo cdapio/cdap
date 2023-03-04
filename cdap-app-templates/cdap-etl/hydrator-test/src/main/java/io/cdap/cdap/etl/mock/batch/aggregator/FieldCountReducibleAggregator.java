@@ -35,18 +35,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Groups on a specific field and adds count field. Used to test that the right values are going to the
- * right groups, to test multiple group keys for the same value, and to test setting the group key class
- * at runtime, and to test setting a supported non-writable class.
+ * Groups on a specific field and adds count field. Used to test that the right values are going to
+ * the right groups, to test multiple group keys for the same value, and to test setting the group
+ * key class at runtime, and to test setting a supported non-writable class.
  */
 @Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
 @Name(FieldCountReducibleAggregator.NAME)
 public class FieldCountReducibleAggregator
-  extends BatchReducibleAggregator<Object, StructuredRecord, StructuredRecord, StructuredRecord> {
+    extends BatchReducibleAggregator<Object, StructuredRecord, StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "FieldCountReducibleAggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Schema REDUCE_SCHEMA =
-    Schema.recordOf("record", Schema.Field.of("fc", Schema.of(Schema.Type.LONG)));
+      Schema.recordOf("record", Schema.Field.of("fc", Schema.of(Schema.Type.LONG)));
   private final Config config;
   private Schema schema;
 
@@ -88,22 +89,24 @@ public class FieldCountReducibleAggregator
   }
 
   @Override
-  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) throws Exception {
+  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue)
+      throws Exception {
     return combine(aggValue, groupValue);
   }
 
   @Override
-  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) throws Exception {
+  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2)
+      throws Exception {
     return combine(value1, value2);
   }
 
   @Override
   public void finalize(Object groupKey, StructuredRecord groupValue,
-                       Emitter<StructuredRecord> emitter) throws Exception {
+      Emitter<StructuredRecord> emitter) throws Exception {
     emitter.emit(StructuredRecord.builder(schema)
-                   .set(config.fieldName, groupKey)
-                   .set("ct", groupValue.get("fc") == null ? 1L : groupValue.get("fc"))
-                   .build());
+        .set(config.fieldName, groupKey)
+        .set("ct", groupValue.get("fc") == null ? 1L : groupValue.get("fc"))
+        .build());
   }
 
   @Override
@@ -125,6 +128,7 @@ public class FieldCountReducibleAggregator
    * Conf for the aggregator.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private final String fieldName;
 
@@ -147,9 +151,9 @@ public class FieldCountReducibleAggregator
       }
 
       return Schema.recordOf(
-        fieldName + ".count",
-        fieldSchema,
-        Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
+          fieldName + ".count",
+          fieldSchema,
+          Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
     }
   }
 
@@ -165,7 +169,8 @@ public class FieldCountReducibleAggregator
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
     return PluginClass.builder().setName(NAME).setType(BatchReducibleAggregator.PLUGIN_TYPE)
-             .setDescription("").setClassName(FieldCountReducibleAggregator.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(FieldCountReducibleAggregator.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

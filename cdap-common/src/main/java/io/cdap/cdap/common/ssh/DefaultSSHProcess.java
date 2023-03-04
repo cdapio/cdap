@@ -38,7 +38,7 @@ final class DefaultSSHProcess implements SSHProcess {
   private final InputStream errorStream;
 
   DefaultSSHProcess(ChannelExec channelExec, OutputStream outputStream,
-                    InputStream inputStream, InputStream errorStream) {
+      InputStream inputStream, InputStream errorStream) {
     this.channelExec = channelExec;
     this.outputStream = outputStream;
     this.inputStream = inputStream;
@@ -63,15 +63,17 @@ final class DefaultSSHProcess implements SSHProcess {
   @Override
   public int waitFor() throws InterruptedException {
     RetryStrategy retry = RetryStrategies.fixDelay(100, TimeUnit.MILLISECONDS);
-    return Retries.supplyWithRetries(this::exitValue, retry, IllegalThreadStateException.class::isInstance);
+    return Retries.supplyWithRetries(this::exitValue, retry,
+        IllegalThreadStateException.class::isInstance);
   }
 
   @Override
   public int waitFor(long timeout, TimeUnit unit) throws TimeoutException, InterruptedException {
     RetryStrategy retry = RetryStrategies.timeLimit(timeout, unit,
-                                                    RetryStrategies.fixDelay(100, TimeUnit.MILLISECONDS));
+        RetryStrategies.fixDelay(100, TimeUnit.MILLISECONDS));
     try {
-      return Retries.supplyWithRetries(this::exitValue, retry, IllegalThreadStateException.class::isInstance);
+      return Retries.supplyWithRetries(this::exitValue, retry,
+          IllegalThreadStateException.class::isInstance);
     } catch (IllegalThreadStateException e) {
       throw new TimeoutException("Process is still running");
     }

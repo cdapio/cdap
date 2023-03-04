@@ -50,28 +50,31 @@ public class RemoteAppStateStore implements AppStateStore {
   private final String appName;
   private final String namespace;
 
-  RemoteAppStateStore(CConfiguration cConf, RemoteClientFactory remoteClientFactory, String namespace,
-                      String appName) {
+  RemoteAppStateStore(CConfiguration cConf, RemoteClientFactory remoteClientFactory,
+      String namespace,
+      String appName) {
     this.namespace = namespace;
     this.appName = appName;
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
-                                                               new DefaultHttpRequestConfig(false),
-                                                               Constants.Gateway.INTERNAL_API_VERSION_3);
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, Constants.AppFabric.APP_STATE + ".");
+        new DefaultHttpRequestConfig(false),
+        Constants.Gateway.INTERNAL_API_VERSION_3);
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf,
+        Constants.AppFabric.APP_STATE + ".");
   }
 
   @Override
   public Optional<byte[]> getState(String key) throws IOException {
     if (key == null || key.isEmpty()) {
-      throw new IllegalArgumentException("Received null or empty value for required argument 'key'");
+      throw new IllegalArgumentException(
+          "Received null or empty value for required argument 'key'");
     }
     try {
       //Encode the key
       String encodedKey = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
       return Retries.callWithRetries(() -> {
         HttpRequest.Builder requestBuilder =
-          remoteClient.requestBuilder(HttpMethod.GET,
-                                      String.format(REMOTE_END_POINT, namespace, appName, encodedKey));
+            remoteClient.requestBuilder(HttpMethod.GET,
+                String.format(REMOTE_END_POINT, namespace, appName, encodedKey));
         HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
         int responseCode = httpResponse.getResponseCode();
         if (responseCode == 200) {
@@ -82,8 +85,9 @@ public class RemoteAppStateStore implements AppStateStore {
           return Optional.of(responseBody);
         }
         String notFoundExceptionMessage = String.format("Namespace %s or application %s not found.",
-                                                        namespace, appName, key);
-        handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(), notFoundExceptionMessage);
+            namespace, appName, key);
+        handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(),
+            notFoundExceptionMessage);
         return null;
       }, retryStrategy);
     } catch (Exception e) {
@@ -94,24 +98,29 @@ public class RemoteAppStateStore implements AppStateStore {
   @Override
   public void saveState(String key, byte[] value) throws IOException {
     if (key == null || key.isEmpty()) {
-      throw new IllegalArgumentException("Received null or empty value for required argument 'key'");
+      throw new IllegalArgumentException(
+          "Received null or empty value for required argument 'key'");
     }
     if (value == null || value.length == 0) {
-      throw new IllegalArgumentException("Received null or empty value for required argument 'value'");
+      throw new IllegalArgumentException(
+          "Received null or empty value for required argument 'value'");
     }
     try {
       String encodedKey = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
       //Retries are ok since this is a PUT request
       Retries.runWithRetries(() -> {
         HttpRequest.Builder requestBuilder =
-          remoteClient.requestBuilder(HttpMethod.PUT, String.format(REMOTE_END_POINT, namespace, appName, encodedKey))
-            .withBody(ByteBuffer.wrap(value));
+            remoteClient.requestBuilder(HttpMethod.PUT,
+                    String.format(REMOTE_END_POINT, namespace, appName, encodedKey))
+                .withBody(ByteBuffer.wrap(value));
         HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
         int responseCode = httpResponse.getResponseCode();
         if (responseCode != 200) {
-          String notFoundExceptionMessage = String.format("Namespace %s or application %s not found.", namespace,
-                                                          appName);
-          handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(), notFoundExceptionMessage);
+          String notFoundExceptionMessage = String.format(
+              "Namespace %s or application %s not found.", namespace,
+              appName);
+          handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(),
+              notFoundExceptionMessage);
         }
       }, retryStrategy);
     } catch (Exception e) {
@@ -120,18 +129,19 @@ public class RemoteAppStateStore implements AppStateStore {
   }
 
   private void handleErrorResponse(int responseCode, String responseBody,
-                                   String notFoundExceptionMessage) throws NotFoundException, IOException {
+      String notFoundExceptionMessage) throws NotFoundException, IOException {
     switch (responseCode) {
       // throw retryable error if service is not available, might be temporary
       case HttpURLConnection.HTTP_BAD_GATEWAY:
       case HttpURLConnection.HTTP_UNAVAILABLE:
       case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
         throw new ServiceUnavailableException(Constants.Service.APP_FABRIC_HTTP,
-                                              Constants.Service.APP_FABRIC_HTTP +
-                                                " service is not available with status " + responseCode);
+            Constants.Service.APP_FABRIC_HTTP
+                + " service is not available with status " + responseCode);
       case HttpURLConnection.HTTP_NOT_FOUND:
         throw new NotFoundException(notFoundExceptionMessage);
     }
-    throw new IOException("Remote call failed with error response: " + responseCode + ": " + responseBody);
+    throw new IOException(
+        "Remote call failed with error response: " + responseCode + ": " + responseBody);
   }
 }

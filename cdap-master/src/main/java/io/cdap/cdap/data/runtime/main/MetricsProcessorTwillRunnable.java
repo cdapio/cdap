@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
  * Twill Runnable to run MetricsProcessor in YARN.
  */
 public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
   private Injector injector;
@@ -79,20 +80,22 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
   @Override
   protected Injector doInit(TwillContext context) {
-    getCConfiguration().set(Constants.MetricsProcessor.BIND_ADDRESS, context.getHost().getCanonicalHostName());
+    getCConfiguration().set(Constants.MetricsProcessor.BIND_ADDRESS,
+        context.getHost().getCanonicalHostName());
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
     instanceId = context.getInstanceId();
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS_PROCESSOR,
-                                      context.getInstanceId());
+        context.getInstanceId());
     injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId, context);
 
     injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.METRICS_PROCESSOR));
+    LoggingContextAccessor.setLoggingContext(
+        new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+            Constants.Logging.COMPONENT_NAME,
+            Constants.Service.METRICS_PROCESSOR));
     return injector;
   }
 
@@ -109,39 +112,40 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
   @VisibleForTesting
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId,
-                                      TwillContext twillContext) {
+      TwillContext twillContext) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MessagingClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new MetricsStoreModule(),
-      new KafkaLogAppenderModule(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new MetricsProcessorModule(twillContext),
-      new MetricsProcessorStatusServiceModule(),
-      new AuditModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new MetricsWriterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MessagingClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new MetricsStoreModule(),
+        new KafkaLogAppenderModule(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new DataFabricModules(txClientId).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new MetricsProcessorModule(twillContext),
+        new MetricsProcessorStatusServiceModule(),
+        new AuditModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new MetricsWriterModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
         }
-      }
     );
   }
 
   static final class MetricsProcessorModule extends PrivateModule {
+
     final Integer instanceId;
 
     MetricsProcessorModule(TwillContext twillContext) {
@@ -150,7 +154,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
     @Override
     protected void configure() {
-      bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(instanceId);
+      bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID))
+          .toInstance(instanceId);
       install(new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class));
 
       bind(MessagingMetricsProcessorRuntimeService.class);

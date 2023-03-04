@@ -45,12 +45,14 @@ public abstract class AbstractPropertyStore<T> implements PropertyStore<T> {
   protected AbstractPropertyStore() {
     this.listeners = LinkedHashMultimap.create();
     this.propertyCache = Maps.newHashMap();
-    this.listenerExecutor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("property-store-%d"));
+    this.listenerExecutor = Executors.newSingleThreadExecutor(
+        Threads.createDaemonThreadFactory("property-store-%d"));
     this.closed = new AtomicBoolean();
   }
 
   @Override
-  public final synchronized Cancellable addChangeListener(String name, PropertyChangeListener<T> listener) {
+  public final synchronized Cancellable addChangeListener(String name,
+      PropertyChangeListener<T> listener) {
     ListenerCaller caller = new ListenerCaller(name, listener);
     listeners.put(name, caller);
     if (listenerAdded(name)) {
@@ -77,7 +79,8 @@ public abstract class AbstractPropertyStore<T> implements PropertyStore<T> {
    * Invoked when a new listener is added.
    *
    * @param name Name of the property with listener added
-   * @return {@code true} if notify the newly added listener with the cached value, {@code false} otherwise
+   * @return {@code true} if notify the newly added listener with the cached value, {@code false}
+   *     otherwise
    */
   protected abstract boolean listenerAdded(String name);
 

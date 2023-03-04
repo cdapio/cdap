@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @Beta
 public class KeyValueTableDefinition
-  extends CompositeDatasetDefinition<KeyValueTable> {
+    extends CompositeDatasetDefinition<KeyValueTable> {
 
   public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, "kv", tableDef);
@@ -37,7 +37,7 @@ public class KeyValueTableDefinition
 
   @Override
   public KeyValueTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     Table table = getDataset(datasetContext, "kv", spec, arguments, classLoader);
     return new KeyValueTable(spec.getName(), table);
   }

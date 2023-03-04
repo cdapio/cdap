@@ -26,7 +26,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Trigger that schedules a ProgramSchedule, when at least one of the internal triggers are satisfied.
+ * A Trigger that schedules a ProgramSchedule, when at least one of the internal triggers are
+ * satisfied.
  */
 public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
 
@@ -58,14 +59,15 @@ public class OrTrigger extends AbstractSatisfiableCompositeTrigger {
   public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId) {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (SatisfiableTrigger trigger : getTriggers()) {
-      if (trigger instanceof ProgramStatusTrigger &&
-        programId.isSameProgramExceptVersion(((ProgramStatusTrigger) trigger).getProgramId())) {
+      if (trigger instanceof ProgramStatusTrigger
+          && programId.isSameProgramExceptVersion(
+          ((ProgramStatusTrigger) trigger).getProgramId())) {
         // this program status trigger will never be satisfied, skip adding it to updatedTriggers
         continue;
       }
       if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
         SatisfiableTrigger updatedTrigger =
-          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
+            ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
         if (updatedTrigger != null) {
           // add the updated composite trigger into updatedTriggers
           updatedTriggers.add(updatedTrigger);

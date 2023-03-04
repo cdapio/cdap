@@ -84,18 +84,18 @@ public class RollingLocationLogAppenderTest {
     Configuration hConf = HBaseConfiguration.create();
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
-    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/" +
-      RollingLocationLogAppender.class.getSimpleName();
+    String logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR) + "/"
+        + RollingLocationLogAppender.class.getSimpleName();
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     injector = Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      new NonCustomLocationUnitTestModule(),
-      new TransactionModules().getInMemoryModules(),
-      new LocalLogAppenderModule(),
-      new DataSetsModules().getInMemoryModules(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new AuthorizationTestModule(),
+        new ConfigModule(cConf, hConf),
+        new NonCustomLocationUnitTestModule(),
+        new TransactionModules().getInMemoryModules(),
+        new LocalLogAppenderModule(),
+        new DataSetsModules().getInMemoryModules(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
       new StorageModule(),

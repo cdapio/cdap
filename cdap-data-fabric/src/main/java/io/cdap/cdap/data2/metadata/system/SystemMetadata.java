@@ -26,7 +26,8 @@ import javax.annotation.Nullable;
  */
 public final class SystemMetadata implements SystemMetadataProvider {
 
-  public static final SystemMetadata EMPTY = new SystemMetadata(Collections.emptyMap(), Collections.emptySet(), null);
+  public static final SystemMetadata EMPTY = new SystemMetadata(Collections.emptyMap(),
+      Collections.emptySet(), null);
 
   private final Map<String, String> properties;
   private final Set<String> tags;

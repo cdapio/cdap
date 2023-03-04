@@ -43,8 +43,9 @@ import javax.ws.rs.QueryParam;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
+
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-                                                                         new BasicThrowableCodec()).create();
+      new BasicThrowableCodec()).create();
   private final ArtifactLocalizer artifactLocalizer;
 
   @VisibleForTesting
@@ -55,19 +56,20 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/artifact/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
   public void artifact(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace-id") String namespaceId,
-                       @PathParam("artifact-name") String artifactName,
-                       @PathParam("artifact-version") String artifactVersion,
-                       @QueryParam("unpack") @DefaultValue("true") boolean unpack) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion,
+      @QueryParam("unpack") @DefaultValue("true") boolean unpack) throws Exception {
     ArtifactId artifactId = new ArtifactId(namespaceId, artifactName, artifactVersion);
     try {
       File artifactPath = unpack
-        ? artifactLocalizer.getAndUnpackArtifact(artifactId)
-        : artifactLocalizer.getArtifact(artifactId);
+          ? artifactLocalizer.getAndUnpackArtifact(artifactId)
+          : artifactLocalizer.getArtifact(artifactId);
       responder.sendString(HttpResponseStatus.OK, artifactPath.toString());
     } catch (Exception ex) {
       if (ex instanceof HttpErrorStatusProvider) {
-        HttpResponseStatus status = HttpResponseStatus.valueOf(((HttpErrorStatusProvider) ex).getStatusCode());
+        HttpResponseStatus status = HttpResponseStatus.valueOf(
+            ((HttpErrorStatusProvider) ex).getStatusCode());
         responder.sendString(status, exceptionToJson(ex));
       } else {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex));
@@ -76,8 +78,8 @@ public class ArtifactLocalizerHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Return json representation of an exception. Used to propagate exception across network for
+   * better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);

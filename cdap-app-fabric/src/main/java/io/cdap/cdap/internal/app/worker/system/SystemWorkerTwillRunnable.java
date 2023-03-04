@@ -121,7 +121,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private MetricsCollectionService metricsCollectionService;
 
-  public SystemWorkerTwillRunnable(String cConfFileName, String hConfFileName, String sConfFileName) {
+  public SystemWorkerTwillRunnable(String cConfFileName, String hConfFileName,
+      String sConfFileName) {
     super(ImmutableMap.of("cConf", cConfFileName, "hConf", hConfFileName, "sConf", sConfFileName));
   }
 
@@ -145,49 +146,51 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
 
     modules.addAll(Arrays.asList(
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new DataSetServiceModules().getStandaloneModules(),
-      // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(),
-      new MessagingClientModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getMasterModule(),
-      Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
-        .with(new AbstractModule() {
-          // To enable localisation of artifacts
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new DataSetServiceModules().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new MessagingClientModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getMasterModule(),
+        Modules.override(new AppFabricServiceRuntimeModule(cConf).getDistributedModules())
+            .with(new AbstractModule() {
+              // To enable localisation of artifacts
+              @Override
+              protected void configure() {
+                bind(StorageProviderNamespaceAdmin.class).to(
+                    LocalStorageProviderNamespaceAdmin.class);
+              }
+            }, getArtifactManagerModules(cConf)),
+        Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
+            .with(new AbstractModule() {
+              @Override
+              protected void configure() {
+                bind(RemoteExecutionTwillRunnerService.class)
+                    .to(FireAndForgetTwillRunnerService.class)
+                    .in(Scopes.SINGLETON);
+              }
+            }),
+        new SecureStoreClientModule(),
+        new AbstractModule() {
           @Override
           protected void configure() {
-            bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+            install(new StorageModule());
+            install(new TransactionExecutorModule());
+            bind(TransactionSystemClientService.class).to(
+                DelegatingTransactionSystemClientService.class);
+            bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
           }
-        }, getArtifactManagerModules(cConf)),
-      Modules.override(new ProgramRunnerRuntimeModule().getDistributedModules(true))
-        .with(new AbstractModule() {
+        },
+        new DFSLocationModule(),
+        new AbstractModule() {
           @Override
           protected void configure() {
-            bind(RemoteExecutionTwillRunnerService.class)
-              .to(FireAndForgetTwillRunnerService.class)
-              .in(Scopes.SINGLETON);
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
           }
-        }),
-      new SecureStoreClientModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          install(new StorageModule());
-          install(new TransactionExecutorModule());
-          bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
         }
-      },
-      new DFSLocationModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
-          bind(MetadataServiceClient.class).to(DefaultMetadataServiceClient.class);
-        }
-      }
     ));
 
     // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
@@ -203,9 +206,10 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -213,7 +217,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(TwillRunnerService.class).toProvider(
-            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+                  new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier()))
+              .in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
         }
       });
@@ -232,12 +237,14 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(PluginFinder.class).to(RemoteWorkerPluginFinder.class);
-          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReaderWithLocalization.class)
-            .in(Scopes.SINGLETON);
+          bind(ArtifactRepositoryReader.class).to(
+                  RemoteArtifactRepositoryReaderWithLocalization.class)
+              .in(Scopes.SINGLETON);
           bind(ArtifactLocalizerClient.class).in(Scopes.SINGLETON);
           OptionalBinder.newOptionalBinder(binder(), ArtifactLocalizerClient.class);
-          install(new FactoryModuleBuilder().implement(ArtifactManager.class, RemoteArtifactManager.class)
-                    .build(ArtifactManagerFactory.class));
+          install(new FactoryModuleBuilder().implement(ArtifactManager.class,
+                  RemoteArtifactManager.class)
+              .build(ArtifactManagerFactory.class));
         }
       };
     } else {
@@ -315,7 +322,7 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
 
     // We replace TWILL_CONTROLLER_START_SECONDS value with the one specific for system worker
     cConf.set(Constants.AppFabric.TWILL_CONTROLLER_START_SECONDS,
-              cConf.get(Constants.SystemWorker.TWILL_CONTROLLER_START_SECONDS));
+        cConf.get(Constants.SystemWorker.TWILL_CONTROLLER_START_SECONDS));
 
     Configuration hConf = new Configuration();
     hConf.clear();
@@ -333,8 +340,8 @@ public class SystemWorkerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                              Constants.Logging.COMPONENT_NAME,
-                                                              SystemWorkerTwillApplication.NAME);
+        Constants.Logging.COMPONENT_NAME,
+        SystemWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     systemWorker = injector.getInstance(SystemWorkerService.class);
     if (cConf.getBoolean(Constants.SystemWorker.ARTIFACT_LOCALIZER_ENABLED)) {

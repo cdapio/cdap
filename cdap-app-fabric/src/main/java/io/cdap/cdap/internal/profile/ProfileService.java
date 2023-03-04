@@ -56,10 +56,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is to manage profile related functions. It will wrap the {@link ProfileStore} operation
- * in transaction in each method
+ * This class is to manage profile related functions. It will wrap the {@link ProfileStore}
+ * operation in transaction in each method
  */
 public class ProfileService {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);
   private final CConfiguration cConf;
   private final MetricsSystemClient metricsSystemClient;
@@ -68,8 +69,8 @@ public class ProfileService {
 
   @Inject
   public ProfileService(CConfiguration cConf,
-                        MetricsSystemClient metricsSystemClient,
-                        TransactionRunner transactionRunner) {
+      MetricsSystemClient metricsSystemClient,
+      TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.metricsSystemClient = metricsSystemClient;
     this.transactionRunner = transactionRunner;
@@ -93,28 +94,30 @@ public class ProfileService {
    *
    * @param provisioner the name of the provisioner
    * @param propertyValue the property value
-   * @return the profiles with the given provisioner name and containing the specified property value
+   * @return the profiles with the given provisioner name and containing the specified property
+   *     value
    */
   public List<Profile> getProfiles(String provisioner,
-                                   ProvisionerPropertyValue propertyValue) {
+      ProvisionerPropertyValue propertyValue) {
     return TransactionRunners.run(transactionRunner, context -> {
       return ProfileStore.get(context).getProfiles().stream()
-        .filter(p -> p.getProvisioner().getName().equals(provisioner))
-        .filter(p -> p.getProvisioner().getProperties().contains(propertyValue))
-        .collect(Collectors.toList());
+          .filter(p -> p.getProvisioner().getName().equals(provisioner))
+          .filter(p -> p.getProvisioner().getProperties().contains(propertyValue))
+          .collect(Collectors.toList());
     });
   }
 
   /**
-   * Get the profile information about the given profile with property overrides. If a non-editable property is
-   * in the overrides, it will be ignored, but a message will be logged.
+   * Get the profile information about the given profile with property overrides. If a non-editable
+   * property is in the overrides, it will be ignored, but a message will be logged.
    *
    * @param profileId the id of the profile to look up
    * @param overrides overrides to the profile properties
    * @return the profile information about the given profile
    * @throws NotFoundException if the profile is not found
    */
-  public Profile getProfile(ProfileId profileId, Map<String, String> overrides) throws NotFoundException {
+  public Profile getProfile(ProfileId profileId, Map<String, String> overrides)
+      throws NotFoundException {
     Profile storedProfile = getProfile(profileId);
 
     List<ProvisionerPropertyValue> properties = new ArrayList<>();
@@ -126,7 +129,8 @@ public class ProfileService {
       String storedVal = storedProperty.getValue();
       if (!storedProperty.isEditable()) {
         if (overrides.containsKey(propertyName)) {
-          LOG.info("Profile property {} cannot be edited. The original value will be used.", propertyName);
+          LOG.info("Profile property {} cannot be edited. The original value will be used.",
+              propertyName);
         }
         properties.add(storedProperty);
       } else {
@@ -140,10 +144,12 @@ public class ProfileService {
     for (String propertyName : remainingOverrides) {
       properties.add(new ProvisionerPropertyValue(propertyName, overrides.get(propertyName), true));
     }
-    ProvisionerInfo provisionerInfo = new ProvisionerInfo(storedProfile.getProvisioner().getName(), properties);
-    return new Profile(storedProfile.getName(), storedProfile.getLabel(), storedProfile.getDescription(),
-                       storedProfile.getScope(), storedProfile.getStatus(), provisionerInfo,
-                       storedProfile.getCreatedTsSeconds());
+    ProvisionerInfo provisionerInfo = new ProvisionerInfo(storedProfile.getProvisioner().getName(),
+        properties);
+    return new Profile(storedProfile.getName(), storedProfile.getLabel(),
+        storedProfile.getDescription(),
+        storedProfile.getScope(), storedProfile.getStatus(), provisionerInfo,
+        storedProfile.getCreatedTsSeconds());
   }
 
   /**
@@ -164,7 +170,8 @@ public class ProfileService {
    *
    * @param profileId the id of the profile to save
    * @param profile the information of the profile
-   * @throws MethodNotAllowedException if trying to update the Native profile or creating a new profile when disallowed.
+   * @throws MethodNotAllowedException if trying to update the Native profile or creating a new
+   *     profile when disallowed.
    */
   public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
     TransactionRunners.run(transactionRunner, context -> {
@@ -175,8 +182,9 @@ public class ProfileService {
       if (profileId.equals(ProfileId.NATIVE)) {
         try {
           dataset.getProfile(profileId);
-          throw new MethodNotAllowedException(String.format("Profile Native %s already exists. It cannot be updated",
-                                                            profileId.getScopedName()));
+          throw new MethodNotAllowedException(
+              String.format("Profile Native %s already exists. It cannot be updated",
+                  profileId.getScopedName()));
         } catch (NotFoundException e) {
           // if native profile is not found, we can add it to the dataset
         }
@@ -198,12 +206,10 @@ public class ProfileService {
   }
 
   /**
-   * Deletes the profile from the profile store. Native profile cannot be deleted.
-   * Other profile deletion must satisfy the following:
-   * 1. Profile must exist and must be DISABLED
-   * 2. Profile must not be assigned to any entities. Profiles can be assigned to an entity by setting a preference
-   *    or a schedule property.
-   * 3. There must be no active program runs using this profile
+   * Deletes the profile from the profile store. Native profile cannot be deleted. Other profile
+   * deletion must satisfy the following: 1. Profile must exist and must be DISABLED 2. Profile must
+   * not be assigned to any entities. Profiles can be assigned to an entity by setting a preference
+   * or a schedule property. 3. There must be no active program runs using this profile
    *
    * @param profileId the id of the profile to delete
    * @throws NotFoundException if the profile is not found
@@ -211,10 +217,10 @@ public class ProfileService {
    * @throws MethodNotAllowedException if trying to delete the Native profile
    */
   public void deleteProfile(ProfileId profileId)
-    throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
+      throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
     if (profileId.equals(ProfileId.NATIVE)) {
       throw new MethodNotAllowedException(String.format("Profile Native %s cannot be deleted.",
-                                                        profileId.getScopedName()));
+          profileId.getScopedName()));
     }
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
@@ -227,12 +233,13 @@ public class ProfileService {
   }
 
   /**
-   * Delete all profiles in a given namespace. Deleting all profiles in SYSTEM namespace is not allowed.
+   * Delete all profiles in a given namespace. Deleting all profiles in SYSTEM namespace is not
+   * allowed.
    *
    * @param namespaceId the id of the namespace
    */
   public void deleteAllProfiles(NamespaceId namespaceId)
-    throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
+      throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
     if (namespaceId.equals(NamespaceId.SYSTEM)) {
       throw new MethodNotAllowedException("Deleting all system profiles is not allowed.");
     }
@@ -264,20 +271,23 @@ public class ProfileService {
   }
 
   /**
-   * Enable the profile. After the profile is enabled, any program/schedule can be associated with this profile.
+   * Enable the profile. After the profile is enabled, any program/schedule can be associated with
+   * this profile.
    *
    * @param profileId the id of the profile to enable
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is already enabled
    */
-  public void enableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
+  public void enableProfile(ProfileId profileId)
+      throws NotFoundException, ProfileConflictException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).enableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
   /**
-   * Disable the profile. After the profile is disabled, any program/schedule cannot be associated with this profile.
+   * Disable the profile. After the profile is disabled, any program/schedule cannot be associated
+   * with this profile.
    *
    * @param profileId the id of the profile to disable
    * @throws NotFoundException if the profile is not found
@@ -285,10 +295,11 @@ public class ProfileService {
    * @throws MethodNotAllowedException if trying to disable the native profile
    */
   public void disableProfile(ProfileId profileId)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
+      throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     if (profileId.equals(ProfileId.NATIVE)) {
-      throw new MethodNotAllowedException(String.format("Cannot change status for Profile Native %s, " +
-                                                          "it should always be ENABLED", profileId.getScopedName()));
+      throw new MethodNotAllowedException(
+          String.format("Cannot change status for Profile Native %s, "
+              + "it should always be ENABLED", profileId.getScopedName()));
     }
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).disableProfile(profileId);
@@ -317,7 +328,7 @@ public class ProfileService {
    * @throws ProfileConflictException if the profile is disabled
    */
   public void addProfileAssignment(ProfileId profileId,
-                                   EntityId entityId) throws NotFoundException, ProfileConflictException {
+      EntityId entityId) throws NotFoundException, ProfileConflictException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).addProfileAssignment(profileId, entityId);
     }, NotFoundException.class, ProfileConflictException.class);
@@ -330,20 +341,23 @@ public class ProfileService {
    * @param entityId the entity to remove from the assignments
    * @throws NotFoundException if the profile is not found
    */
-  public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException {
+  public void removeProfileAssignment(ProfileId profileId, EntityId entityId)
+      throws NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).removeProfileAssignment(profileId, entityId);
     }, NotFoundException.class);
   }
 
-  private void deleteProfile(ProfileStore profileStore, AppMetadataStore appMetadataStore, ProfileId profileId,
-                             Profile profile) throws ProfileConflictException, NotFoundException, IOException {
+  private void deleteProfile(ProfileStore profileStore, AppMetadataStore appMetadataStore,
+      ProfileId profileId,
+      Profile profile) throws ProfileConflictException, NotFoundException, IOException {
     // The profile status must be DISABLED
     if (profile.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
-        String.format("Profile %s in namespace %s is currently enabled. A profile can " +
-                        "only be deleted if it is disabled", profileId.getProfile(), profileId.getNamespace()),
-        profileId);
+          String.format("Profile %s in namespace %s is currently enabled. A profile can "
+                  + "only be deleted if it is disabled", profileId.getProfile(),
+              profileId.getNamespace()),
+          profileId);
     }
 
     // There must be no assignments to this profile
@@ -353,10 +367,10 @@ public class ProfileService {
       String firstEntity = getUserFriendlyEntityStr(assignments.iterator().next());
       String countStr = getCountStr(numAssignments, "entity", "entities");
       throw new ProfileConflictException(
-        String.format("Profile '%s' is still assigned to %s%s. " +
-                        "Please delete all assignments before deleting the profile.",
-                      profileId.getProfile(), firstEntity, countStr),
-        profileId);
+          String.format("Profile '%s' is still assigned to %s%s. "
+                  + "Please delete all assignments before deleting the profile.",
+              profileId.getProfile(), firstEntity, countStr),
+          profileId);
     }
 
     // There must be no running programs using the profile
@@ -370,17 +384,17 @@ public class ProfileService {
       activeRuns = appMetadataStore.getActiveRuns(runRecordMetaPredicate);
     } else {
       activeRuns = appMetadataStore.getActiveRuns(Collections.singleton(profileId.getNamespaceId()),
-                                                  runRecordMetaPredicate);
+          runRecordMetaPredicate);
     }
     int numRuns = activeRuns.size();
     if (numRuns > 0) {
       String firstRun = activeRuns.keySet().iterator().next().toString();
       String countStr = getCountStr(numRuns, "run", "runs");
       throw new ProfileConflictException(
-        String.format("Profile '%s' is in use by run %s%s. Please stop all active runs " +
-                        "before deleting the profile.",
-                      profileId.toString(), firstRun, countStr),
-        profileId);
+          String.format("Profile '%s' is in use by run %s%s. Please stop all active runs "
+                  + "before deleting the profile.",
+              profileId.toString(), firstRun, countStr),
+          profileId);
     }
 
     // delete the profile
@@ -396,11 +410,11 @@ public class ProfileService {
       case APPLICATION:
         ApplicationId applicationId = (ApplicationId) entityId;
         return String.format("application '%s' in namespace '%s'", applicationId.getApplication(),
-                             applicationId.getNamespace());
+            applicationId.getNamespace());
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         return String.format("%s '%s' in namespace '%s'", programId.getType().name().toLowerCase(),
-                             programId.getProgram(), programId.getNamespace());
+            programId.getProgram(), programId.getNamespace());
     }
     return entityId.toString();
   }
@@ -429,7 +443,7 @@ public class ProfileService {
       tags.put(Constants.Metrics.Tag.NAMESPACE, profileId.getNamespace());
     }
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
-                                                          new ArrayList<>(tags.keySet()));
+        new ArrayList<>(tags.keySet()));
     try {
       metricsSystemClient.delete(deleteQuery);
     } catch (IOException e) {

@@ -23,13 +23,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Contains the state necessary to keep track of which partitions are processed and which partitions would need to be
- * processed as they are created.
+ * Contains the state necessary to keep track of which partitions are processed and which partitions
+ * would need to be processed as they are created.
  */
 public class PartitionConsumerState {
+
   // useful on initial query of partitions
   public static final PartitionConsumerState FROM_BEGINNING =
-    new PartitionConsumerState(0, Collections.<Long>emptyList());
+      new PartitionConsumerState(0, Collections.<Long>emptyList());
 
   // Write pointer of a transaction, to be used as the start of the next scan for partitions.
   private final long startVersion;
@@ -59,13 +60,15 @@ public class PartitionConsumerState {
 
   public static PartitionConsumerState fromBytes(byte[] bytes) {
     if (((bytes.length - 1) % Bytes.SIZEOF_LONG) != 0) {
-      throw new IllegalArgumentException("bytes does not have length divisible by " + Bytes.SIZEOF_LONG);
+      throw new IllegalArgumentException(
+          "bytes does not have length divisible by " + Bytes.SIZEOF_LONG);
     }
 
     ByteBuffer bb = ByteBuffer.wrap(bytes);
     byte serializationFormatVersion = bb.get();
     if (serializationFormatVersion != 0) {
-      throw new IllegalArgumentException("Unsupported serialization format: " + serializationFormatVersion);
+      throw new IllegalArgumentException(
+          "Unsupported serialization format: " + serializationFormatVersion);
     }
     long startVersion = bb.getLong();
     List<Long> versionsToCheck = new ArrayList<>();

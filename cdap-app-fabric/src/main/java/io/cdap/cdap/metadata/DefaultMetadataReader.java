@@ -28,14 +28,16 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * <p>{@link MetadataReader} which should be used in local/in-memory mode where {@link MetadataAdmin} can be accessed
- * directly i.e. the process is running as cdap system user and it can access the {@link MetadataStorage} which belongs
- * to cdap user.</p>
+ * <p>{@link MetadataReader} which should be used in local/in-memory mode where {@link
+ * MetadataAdmin} can be accessed directly i.e. the process is running as cdap system user and it
+ * can access the {@link MetadataStorage} which belongs to cdap user.</p>
  *
- * <p>This implementation should not be used in distributed program container or any process which is not running as
- * cdap system user because the dataset operation will fail due to lack of privileges.</p>
+ * <p>This implementation should not be used in distributed program container or any process which
+ * is not running as cdap system user because the dataset operation will fail due to lack of
+ * privileges.</p>
  */
 public class DefaultMetadataReader implements MetadataReader {
+
   private final MetadataAdmin metadataAdmin;
 
   @Inject
@@ -44,7 +46,8 @@ public class DefaultMetadataReader implements MetadataReader {
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity)
+      throws MetadataException {
     try {
       return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity));
     } catch (IOException e) {
@@ -53,9 +56,11 @@ public class DefaultMetadataReader implements MetadataReader {
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity)
+      throws MetadataException {
     try {
-      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity, scope), scope);
+      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity, scope),
+          scope);
     } catch (IOException e) {
       throw new MetadataException(e);
     }

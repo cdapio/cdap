@@ -22,14 +22,15 @@ import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * A {@link LocationFactory} in distributed mode that is only used in insecure cluster.
- * It uses the same {@link FileContext} for every location.
+ * A {@link LocationFactory} in distributed mode that is only used in insecure cluster. It uses the
+ * same {@link FileContext} for every location.
  */
 public class InsecureFileContextLocationFactory extends FileContextLocationFactory {
 
   private final FileContext fileContext;
 
-  public InsecureFileContextLocationFactory(Configuration configuration, String pathBase, FileContext fileContext) {
+  public InsecureFileContextLocationFactory(Configuration configuration, String pathBase,
+      FileContext fileContext) {
     super(configuration, pathBase);
     this.fileContext = fileContext;
   }

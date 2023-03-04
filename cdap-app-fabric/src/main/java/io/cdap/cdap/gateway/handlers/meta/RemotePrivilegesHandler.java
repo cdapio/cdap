@@ -45,17 +45,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An HTTP Handler that runs inside the master and communicates directly with an authorization backend to list and
- * manage privileges.
+ * An HTTP Handler that runs inside the master and communicates directly with an authorization
+ * backend to list and manage privileges.
  */
 @Path(AbstractRemoteSystemOpsHandler.VERSION + "/execute")
 public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(RemotePrivilegesHandler.class);
-  private static final Type SET_OF_PERMISSIONS = new TypeLiteral<Set<? extends Permission>>() { }.getType();
+  private static final Type SET_OF_PERMISSIONS = new TypeLiteral<Set<? extends Permission>>() {
+  }.getType();
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapterFactory(new PermissionAdapterFactory())
-    .create();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapterFactory(new PermissionAdapterFactory())
+      .create();
 
   private final PermissionManager permissionManager;
   private final AccessEnforcer accessEnforcer;
@@ -69,19 +71,22 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   @POST
   @Path("/enforce")
   public void enforce(FullHttpRequest request, HttpResponder responder) throws Exception {
-    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                                                                  AuthorizationPrivilege.class);
+    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(
+        request.content().toString(StandardCharsets.UTF_8),
+        AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
     Set<Permission> permissions = authorizationPrivilege.getPermissions();
     if (authorizationPrivilege.getChildEntityType() != null) {
       //It's expected that we'll always have one, but let's handle generic case
-      for (Permission permission: permissions) {
-        accessEnforcer.enforceOnParent(authorizationPrivilege.getChildEntityType(), authorizationPrivilege.getEntity(),
-                                       authorizationPrivilege.getPrincipal(), permission);
+      for (Permission permission : permissions) {
+        accessEnforcer.enforceOnParent(authorizationPrivilege.getChildEntityType(),
+            authorizationPrivilege.getEntity(),
+            authorizationPrivilege.getPrincipal(), permission);
       }
     } else {
-      accessEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
-                             permissions);
+      accessEnforcer.enforce(authorizationPrivilege.getEntity(),
+          authorizationPrivilege.getPrincipal(),
+          permissions);
     }
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -89,8 +94,9 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
   @POST
   @Path("/isVisible")
   public void isVisible(FullHttpRequest request, HttpResponder responder) throws Exception {
-    VisibilityRequest visibilityRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                                                        VisibilityRequest.class);
+    VisibilityRequest visibilityRequest = GSON.fromJson(
+        request.content().toString(StandardCharsets.UTF_8),
+        VisibilityRequest.class);
     Principal principal = visibilityRequest.getPrincipal();
     Set<EntityId> entityIds = visibilityRequest.getEntityIds();
     LOG.trace("Checking visibility for principal {} on entities {}", principal, entityIds);

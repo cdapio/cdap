@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents an aggregate of program runs by the parent artifact.
  */
 public class ArtifactAggregate extends ProgramRunAggregate {
+
   private final String name;
   private final String version;
   private final String scope;
@@ -67,9 +68,9 @@ public class ArtifactAggregate extends ProgramRunAggregate {
     }
 
     ArtifactAggregate that = (ArtifactAggregate) o;
-    return Objects.equal(name, that.name) &&
-      Objects.equal(version, that.version) &&
-      Objects.equal(scope, that.scope);
+    return Objects.equal(name, that.name)
+        && Objects.equal(version, that.version)
+        && Objects.equal(scope, that.scope);
   }
 
   @Override

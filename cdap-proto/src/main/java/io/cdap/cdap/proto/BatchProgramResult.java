@@ -20,9 +20,11 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Describes the results returned by the batch stop/start endpoints POST /namespaces/{namespace}/stop|start.
+ * Describes the results returned by the batch stop/start endpoints POST
+ * /namespaces/{namespace}/stop|start.
  */
 public class BatchProgramResult extends BatchProgram {
+
   private final int statusCode;
   private final String error;
   private final String runId;
@@ -32,14 +34,15 @@ public class BatchProgramResult extends BatchProgram {
   }
 
   public BatchProgramResult(String appId, ProgramType programType, String programId,
-                            int statusCode, @Nullable String error, @Nullable String runId) {
+      int statusCode, @Nullable String error, @Nullable String runId) {
     super(appId, programType, programId);
     this.statusCode = statusCode;
     this.error = error;
     this.runId = runId;
   }
 
-  public BatchProgramResult(BatchProgram program, int statusCode, @Nullable String error, @Nullable String runId) {
+  public BatchProgramResult(BatchProgram program, int statusCode, @Nullable String error,
+      @Nullable String runId) {
     this(program.appId, program.programType, program.programId, statusCode, error, runId);
   }
 
@@ -77,8 +80,8 @@ public class BatchProgramResult extends BatchProgram {
 
     BatchProgramResult that = (BatchProgramResult) o;
 
-    return Objects.equals(statusCode, that.statusCode) &&
-      Objects.equals(error, that.error);
+    return Objects.equals(statusCode, that.statusCode)
+        && Objects.equals(error, that.error);
   }
 
   @Override

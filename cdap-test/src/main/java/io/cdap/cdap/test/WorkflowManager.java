@@ -56,19 +56,23 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return the {@link WorkflowTokenDetail} for the specified workflow run
    */
   WorkflowTokenDetail getToken(String runId, @Nullable WorkflowToken.Scope scope,
-                               @Nullable String key) throws NotFoundException, UnauthorizedException;
+      @Nullable String key) throws NotFoundException, UnauthorizedException;
 
   /**
-   * Returns the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
+   * Returns the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified
+   * node.
    *
    * @param runId the specified workflow run id
    * @param nodeName the specified node name
    * @param scope the {@link WorkflowToken.Scope}. Defaults to {@link WorkflowToken.Scope#USER}
-   * @param key the specified key. If null, returns all key-value pairs emitted by the specified node
-   * @return the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified node.
+   * @param key the specified key. If null, returns all key-value pairs emitted by the specified
+   *     node
+   * @return the {@link WorkflowTokenNodeDetail} for the specified workflow run at the specified
+   *     node.
    */
-  WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName, @Nullable WorkflowToken.Scope scope,
-                                         @Nullable String key) throws NotFoundException, UnauthorizedException;
+  WorkflowTokenNodeDetail getTokenAtNode(String runId, String nodeName,
+      @Nullable WorkflowToken.Scope scope,
+      @Nullable String key) throws NotFoundException, UnauthorizedException;
 
   /**
    * Get node stated for the specified Workflow run.
@@ -78,5 +82,5 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @throws NotFoundException when the specified Workflow run is not found
    */
   Map<String, WorkflowNodeStateDetail> getWorkflowNodeStates(String workflowRunId)
-    throws NotFoundException, UnauthorizedException;
+      throws NotFoundException, UnauthorizedException;
 }

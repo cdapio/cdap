@@ -48,16 +48,16 @@ import javax.annotation.Nullable;
  */
 public abstract class OwnerStore {
 
-  private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Sets.immutableEnumSet(EntityType.NAMESPACE,
-                                                                                      EntityType.APPLICATION,
-                                                                                      EntityType.DATASET,
-                                                                                      EntityType.ARTIFACT);
+  private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Sets.immutableEnumSet(
+      EntityType.NAMESPACE,
+      EntityType.APPLICATION,
+      EntityType.DATASET,
+      EntityType.ARTIFACT);
 
   /**
-   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore}
-   * i.e. the entity can be associated with an owner.
-   * Validated the given {@link KerberosPrincipalId} to be valid i.e. it can be used to create a
-   * {@link org.apache.hadoop.security.authentication.util.KerberosName}.
+   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore} i.e.
+   * the entity can be associated with an owner. Validated the given {@link KerberosPrincipalId} to
+   * be valid i.e. it can be used to create a {@link org.apache.hadoop.security.authentication.util.KerberosName}.
    * See {@link SecurityUtil#validateKerberosPrincipal(KerberosPrincipalId)}
    *
    * @param entityId {@link NamespacedEntityId} to be validated
@@ -69,17 +69,18 @@ public abstract class OwnerStore {
   }
 
   /**
-   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore}
-   * i.e. the entity can be associated with an owner.
+   * Validates the given {@link NamespacedEntityId} to be supported by the {@link OwnerStore} i.e.
+   * the entity can be associated with an owner.
    *
    * @param entityId {@link NamespacedEntityId} to be validated
    */
   protected final void validate(NamespacedEntityId entityId) {
     if (!SUPPORTED_ENTITY_TYPES.contains(entityId.getEntityType())) {
-      throw new IllegalArgumentException(String.format("The given entity '%s' is of unsupported types '%s'. " +
-                                                         "Entity ownership is only supported for '%s'.",
-                                                       entityId.getEntityName(), entityId.getEntityType(),
-                                                       SUPPORTED_ENTITY_TYPES));
+      throw new IllegalArgumentException(
+          String.format("The given entity '%s' is of unsupported types '%s'. "
+                  + "Entity ownership is only supported for '%s'.",
+              entityId.getEntityName(), entityId.getEntityType(),
+              SUPPORTED_ENTITY_TYPES));
     }
   }
 
@@ -90,16 +91,17 @@ public abstract class OwnerStore {
    * @param kerberosPrincipalId the {@link KerberosPrincipalId} of the {@link EntityId} owner
    * @throws IOException if failed to get the store
    * @throws AlreadyExistsException if the given entity already has an owner
-   * @throws IllegalArgumentException if the given KerberosPrincipalId is not valid or the entity is not of
-   * supported type.
+   * @throws IllegalArgumentException if the given KerberosPrincipalId is not valid or the
+   *     entity is not of supported type.
    */
   public abstract void add(NamespacedEntityId entityId,
-                           KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException;
+      KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException;
 
   /**
    * Retrieves the owner information for the given {@link EntityId}
    *
-   * @param entityId the {@link EntityId} whose owner principal information needs to be retrieved
+   * @param entityId the {@link EntityId} whose owner principal information needs to be
+   *     retrieved
    * @return {@link KerberosPrincipalId} of the {@link EntityId} owner
    * @throws IOException if failed to get the store
    * @throws IllegalArgumentException if the given entity is not of supported type.
@@ -108,17 +110,18 @@ public abstract class OwnerStore {
   public abstract KerberosPrincipalId getOwner(NamespacedEntityId entityId) throws IOException;
 
   /**
-   * Batch version of {@link #getOwner(NamespacedEntityId)} for retrieving multiple owners information for a given
-   * set of entity id.
+   * Batch version of {@link #getOwner(NamespacedEntityId)} for retrieving multiple owners
+   * information for a given set of entity id.
    *
    * @param ids the set of entity id
    * @param <T> type of the entity id
-   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for entity id that
-   *         doesn't have an owner principal.
+   * @return A {@link Map} from the request id to the Kerberos principal. There will be no entry for
+   *     entity id that doesn't have an owner principal.
    * @throws IOException if failed to get the information
    * @throws IllegalArgumentException if any of the given entities is not of supported type.
    */
-  public abstract <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids) throws IOException;
+  public abstract <T extends NamespacedEntityId> Map<T, KerberosPrincipalId> getOwners(Set<T> ids)
+      throws IOException;
 
   /**
    * Checks if owner information exists or not

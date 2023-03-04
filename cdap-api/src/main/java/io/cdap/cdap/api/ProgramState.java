@@ -21,11 +21,13 @@ import javax.annotation.Nullable;
  * Class to represent the state of the program.
  */
 public class ProgramState {
+
   private final ProgramStatus status;
   private final String failureInfo;
 
   /**
    * Creates a new instance.
+   *
    * @param status status of the program
    * @param failureInfo cause of failure, null if the program execution is succeeded
    */

@@ -47,8 +47,9 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
   @Inject
   public RemoteProgramRunRecordsFetcher(RemoteClientFactory remoteClientFactory) {
     this.remoteClient =
-      remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP, new DefaultHttpRequestConfig(false),
-                                             Gateway.API_VERSION_3);
+        remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
+            new DefaultHttpRequestConfig(false),
+            Gateway.API_VERSION_3);
   }
 
   /**
@@ -56,23 +57,28 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
    *
    * @param program the program
    * @return the run records of the program
-   * @throws IOException              if a network error occurred
-   * @throws NotFoundException        if the application or program could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   @Override
-  public Iterable<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime, int limit)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+  public Iterable<RunRecord> getProgramRuns(ProgramId program, long startTime, long endTime,
+      int limit)
+      throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
 
     String queryParams =
-      String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, ProgramRunStatus.ALL.name(),
-                    Constants.AppFabric.QUERY_PARAM_START_TIME, startTime, Constants.AppFabric.QUERY_PARAM_END_TIME,
-                    endTime, Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+        String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS,
+            ProgramRunStatus.ALL.name(),
+            Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
+            Constants.AppFabric.QUERY_PARAM_END_TIME,
+            endTime, Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
 
     String url =
-      String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs?%s", program.getNamespaceId().getNamespace(),
-                    program.getApplication(), program.getVersion(), program.getType().getCategoryName(),
-                    program.getProgram(), queryParams);
+        String.format("namespaces/%s/apps/%s/versions/%s/%s/%s/runs?%s",
+            program.getNamespaceId().getNamespace(),
+            program.getApplication(), program.getVersion(), program.getType().getCategoryName(),
+            program.getProgram(), queryParams);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse response;
     response = execute(requestBuilder.build());
@@ -80,16 +86,19 @@ public class RemoteProgramRunRecordsFetcher implements ProgramRunRecordsFetcher 
       throw new NotFoundException(program);
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() {
+    }).getResponseObject();
   }
 
-  private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException, UnauthorizedException {
+  private HttpResponse execute(HttpRequest request)
+      throws IOException, NotFoundException, UnauthorizedException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
-      throw new IOException(String.format("Request failed %s", httpResponse.getResponseBodyAsString()));
+      throw new IOException(
+          String.format("Request failed %s", httpResponse.getResponseBodyAsString()));
     }
     return httpResponse;
   }

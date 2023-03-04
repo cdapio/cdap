@@ -33,7 +33,8 @@ import io.cdap.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import io.cdap.cdap.metrics.store.MetricsCleanUpService;
 
 /**
- * A {@link RuntimeModule} that defines Guice modules for metrics collection in different runtime mode.
+ * A {@link RuntimeModule} that defines Guice modules for metrics collection in different runtime
+ * mode.
  */
 public final class MetricsClientRuntimeModule extends RuntimeModule {
 
@@ -55,11 +56,12 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
         addLocalBindings(binder());
 
         // Bind a processor for consuming metrics from TMS and write to MetricsStore
-        bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(0);
+        bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID))
+            .toInstance(0);
         install(new FactoryModuleBuilder()
-                  .implement(MessagingMetricsProcessorManagerService.class,
-                             MessagingMetricsProcessorManagerService.class)
-                  .build(MessagingMetricsProcessorServiceFactory.class));
+            .implement(MessagingMetricsProcessorManagerService.class,
+                MessagingMetricsProcessorManagerService.class)
+            .build(MessagingMetricsProcessorServiceFactory.class));
 
         // We have to expose the factory in order for the optional injection in the LocalMetricsCollectionService
         // works. This is because FactoryModuleBuilder uses child injector and see
@@ -84,7 +86,8 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     binder.expose(MetricStore.class);
     binder.expose(MetricsCleanUpService.class);
 
-    binder.bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
+    binder.bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class)
+        .in(Scopes.SINGLETON);
     binder.expose(MetricsCollectionService.class);
 
     // In local mode, we operates on the MetricsStore directly

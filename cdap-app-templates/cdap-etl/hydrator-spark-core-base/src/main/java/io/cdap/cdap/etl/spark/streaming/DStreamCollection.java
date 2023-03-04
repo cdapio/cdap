@@ -150,8 +150,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     JavaPairDStream<Object, T> keyedCollection = stream.transformToPair(
       new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext, functionCacheFactory.newCache()));
 
-    JavaPairDStream<Object, Iterable<T>> groupedCollection = partitions == null ?
-      keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
+    JavaPairDStream<Object, Iterable<T>> groupedCollection = partitions == null
+      ? keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
 
     return wrap(groupedCollection.transform(new DynamicAggregatorAggregate<Object, T, Object>(
       dynamicDriverContext, functionCacheFactory.newCache())));

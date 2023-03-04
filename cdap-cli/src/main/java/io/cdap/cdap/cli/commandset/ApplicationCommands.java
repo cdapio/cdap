@@ -44,20 +44,20 @@ public class ApplicationCommands extends CommandSet<Command> implements Categori
   @Inject
   public ApplicationCommands(Injector injector) {
     super(
-      ImmutableList.<Command>builder()
-        .add(injector.getInstance(CreateAppCommand.class))
-        .add(injector.getInstance(DeleteAppCommand.class))
-        .add(injector.getInstance(DeployAppWithConfigFileCommand.class))
-        .add(injector.getInstance(DeployAppCommand.class))
-        .add(injector.getInstance(DescribeAppCommand.class))
-        .add(injector.getInstance(ListAppsCommand.class))
-        .add(injector.getInstance(ListAppVersionsCommand.class))
-        .add(injector.getInstance(RestartProgramsCommand.class))
-        .add(injector.getInstance(StartProgramsCommand.class))
-        .add(injector.getInstance(StatusProgramsCommand.class))
-        .add(injector.getInstance(StopProgramsCommand.class))
-        .add(injector.getInstance(UpdateAppCommand.class))
-        .build());
+        ImmutableList.<Command>builder()
+            .add(injector.getInstance(CreateAppCommand.class))
+            .add(injector.getInstance(DeleteAppCommand.class))
+            .add(injector.getInstance(DeployAppWithConfigFileCommand.class))
+            .add(injector.getInstance(DeployAppCommand.class))
+            .add(injector.getInstance(DescribeAppCommand.class))
+            .add(injector.getInstance(ListAppsCommand.class))
+            .add(injector.getInstance(ListAppVersionsCommand.class))
+            .add(injector.getInstance(RestartProgramsCommand.class))
+            .add(injector.getInstance(StartProgramsCommand.class))
+            .add(injector.getInstance(StatusProgramsCommand.class))
+            .add(injector.getInstance(StopProgramsCommand.class))
+            .add(injector.getInstance(UpdateAppCommand.class))
+            .build());
   }
 
   @Override

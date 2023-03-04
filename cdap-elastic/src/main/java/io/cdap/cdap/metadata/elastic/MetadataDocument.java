@@ -38,10 +38,9 @@ import org.slf4j.LoggerFactory;
 /**
  * The document format that is indexed in Elastic.
  *
- * Note that the mapping for creating the ElasticSearch index corresponds directly
- * to the fields of this document class. Any changes made here need to be reflected
- * there, too: index.mapping.json. See {@link ElasticsearchMetadataStorage#createMappings()}
- * for how it is obtained.
+ * Note that the mapping for creating the ElasticSearch index corresponds directly to the fields of
+ * this document class. Any changes made here need to be reflected there, too: index.mapping.json.
+ * See {@link ElasticsearchMetadataStorage#createMappings()} for how it is obtained.
  */
 public class MetadataDocument {
 
@@ -60,12 +59,12 @@ public class MetadataDocument {
   private final Set<Property> props;
 
   private MetadataDocument(MetadataEntity entity, Metadata metadata,
-                           @Nullable String namespace,
-                           String type, String name,
-                           @Nullable Long created,
-                           @Nullable Long ttl,
-                           String user, String system,
-                           Set<Property> props) {
+      @Nullable String namespace,
+      String type, String name,
+      @Nullable Long created,
+      @Nullable Long ttl,
+      String user, String system,
+      Set<Property> props) {
     this.entity = entity;
     this.metadata = metadata;
     this.namespace = namespace;
@@ -99,45 +98,47 @@ public class MetadataDocument {
       return false;
     }
     MetadataDocument that = (MetadataDocument) o;
-    return hidden == that.hidden &&
-      Objects.equals(entity, that.entity) &&
-      Objects.equals(metadata, that.metadata) &&
-      Objects.equals(namespace, that.namespace) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(created, that.created) &&
-      Objects.equals(ttl, that.ttl) &&
-      Objects.equals(user, that.user) &&
-      Objects.equals(system, that.system) &&
-      Objects.equals(props, that.props);
+    return hidden == that.hidden
+        && Objects.equals(entity, that.entity)
+        && Objects.equals(metadata, that.metadata)
+        && Objects.equals(namespace, that.namespace)
+        && Objects.equals(type, that.type)
+        && Objects.equals(name, that.name)
+        && Objects.equals(created, that.created)
+        && Objects.equals(ttl, that.ttl)
+        && Objects.equals(user, that.user)
+        && Objects.equals(system, that.system)
+        && Objects.equals(props, that.props);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity, metadata, namespace, type, name, created, ttl, hidden, user, system, props);
+    return Objects.hash(entity, metadata, namespace, type, name, created, ttl, hidden, user, system,
+        props);
   }
 
   @Override
   public String toString() {
-    return "MetadataDocument{" +
-      "entity=" + entity +
-      ", metadata=" + metadata +
-      ", namespace='" + namespace + '\'' +
-      ", type='" + type + '\'' +
-      ", name='" + name + '\'' +
-      ", created=" + created +
-      ", ttl=" + ttl +
-      ", hidden=" + hidden +
-      ", user='" + user + '\'' +
-      ", system='" + system + '\'' +
-      ", props=" + props +
-      '}';
+    return "MetadataDocument{"
+        + "entity=" + entity
+        + ", metadata=" + metadata
+        + ", namespace='" + namespace + '\''
+        + ", type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", created=" + created
+        + ", ttl=" + ttl
+        + ", hidden=" + hidden
+        + ", user='" + user + '\''
+        + ", system='" + system + '\''
+        + ", props=" + props
+        + '}';
   }
 
   /**
    * Represents a property.
    */
   public static final class Property {
+
     private final String scope;
     private final String name;
     private final String value;
@@ -157,9 +158,9 @@ public class MetadataDocument {
         return false;
       }
       Property property = (Property) o;
-      return Objects.equals(scope, property.scope) &&
-        Objects.equals(name, property.name) &&
-        Objects.equals(value, property.value);
+      return Objects.equals(scope, property.scope)
+          && Objects.equals(name, property.name)
+          && Objects.equals(value, property.value);
     }
 
     @Override
@@ -178,10 +179,12 @@ public class MetadataDocument {
    */
   public static class Builder {
 
-    private static final ScopedName SCHEMA_KEY = new ScopedName(MetadataScope.SYSTEM, MetadataConstants.SCHEMA_KEY);
-    private static final ScopedName TTL_KEY = new ScopedName(MetadataScope.SYSTEM, MetadataConstants.TTL_KEY);
+    private static final ScopedName SCHEMA_KEY = new ScopedName(MetadataScope.SYSTEM,
+        MetadataConstants.SCHEMA_KEY);
+    private static final ScopedName TTL_KEY = new ScopedName(MetadataScope.SYSTEM,
+        MetadataConstants.TTL_KEY);
     private static final ScopedName CREATION_TIME_KEY = new ScopedName(MetadataScope.SYSTEM,
-                                                                       MetadataConstants.CREATION_TIME_KEY);
+        MetadataConstants.CREATION_TIME_KEY);
 
     private final MetadataEntity entity;
     private Metadata metadata = Metadata.EMPTY;
@@ -201,7 +204,8 @@ public class MetadataDocument {
     private Builder(MetadataEntity entity) {
       this.entity = entity;
       //noinspection ConstantConditions
-      this.namespace = entity.containsKey("namespace") ? entity.getValue("namespace").toLowerCase() : null;
+      this.namespace =
+          entity.containsKey("namespace") ? entity.getValue("namespace").toLowerCase() : null;
       this.type = entity.getType().toLowerCase();
       //noinspection ConstantConditions
       this.name = entity.getValue(entity.getType()).toLowerCase();
@@ -241,14 +245,17 @@ public class MetadataDocument {
         StringBuilder builder = new StringBuilder();
         SchemaWalker.walk(schema, (field, subSchema) -> {
           if (field != null) {
-            String type = (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).getType().toString();
+            String type = (subSchema.isNullable() ? subSchema.getNonNullable()
+                : subSchema).getType().toString();
             builder.append(field).append(' ')
-              .append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).append(type).append(' ');
+                .append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).append(type)
+                .append(' ');
           }
         });
         return builder.toString();
       } catch (Exception e) {
-        LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr, entity);
+        LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr,
+            entity);
         return schemaStr;
       }
     }
@@ -259,7 +266,7 @@ public class MetadataDocument {
           return Optional.of(Long.parseLong(value));
         } catch (NumberFormatException e) {
           LOG.warn("Unable to parse property {} as long. Skipping indexing of {} for entity {}.",
-                   builtIn, builtIn.getName(), entity, e);
+              builtIn, builtIn.getName(), entity, e);
         }
       }
       return Optional.empty();
@@ -274,20 +281,20 @@ public class MetadataDocument {
 
     MetadataDocument build() {
       properties.add(
-        new Property(MetadataScope.USER.name(), MetadataConstants.TAGS_KEY,
-                     Strings.collectionToDelimitedString(userTags, " ")));
+          new Property(MetadataScope.USER.name(), MetadataConstants.TAGS_KEY,
+              Strings.collectionToDelimitedString(userTags, " ")));
       properties.add(
-        new Property(MetadataScope.SYSTEM.name(), MetadataConstants.TAGS_KEY,
-                     Strings.collectionToDelimitedString(systemTags, " ")));
+          new Property(MetadataScope.SYSTEM.name(), MetadataConstants.TAGS_KEY,
+              Strings.collectionToDelimitedString(systemTags, " ")));
       properties.add(
-        new Property(MetadataScope.USER.name(), MetadataConstants.PROPERTIES_KEY,
-                     Strings.collectionToDelimitedString(userPropertyNames, " ")));
+          new Property(MetadataScope.USER.name(), MetadataConstants.PROPERTIES_KEY,
+              Strings.collectionToDelimitedString(userPropertyNames, " ")));
       properties.add(
-        new Property(MetadataScope.SYSTEM.name(), MetadataConstants.PROPERTIES_KEY,
-                     Strings.collectionToDelimitedString(systemPropertyNames, " ")));
+          new Property(MetadataScope.SYSTEM.name(), MetadataConstants.PROPERTIES_KEY,
+              Strings.collectionToDelimitedString(systemPropertyNames, " ")));
       return
-        new MetadataDocument(entity, metadata, namespace, type, name, created, ttl,
-                             userText.toString(), systemText.toString(), properties);
+          new MetadataDocument(entity, metadata, namespace, type, name, created, ttl,
+              userText.toString(), systemText.toString(), properties);
     }
   }
 }

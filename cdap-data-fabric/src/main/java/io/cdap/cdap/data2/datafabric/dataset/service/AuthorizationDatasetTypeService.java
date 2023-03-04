@@ -34,9 +34,11 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * A class which has a delegation {@link DatasetTypeService} which has authorization enforce on the methods.
+ * A class which has a delegation {@link DatasetTypeService} which has authorization enforce on the
+ * methods.
  */
-public class AuthorizationDatasetTypeService extends AbstractIdleService implements DatasetTypeService {
+public class AuthorizationDatasetTypeService extends AbstractIdleService implements
+    DatasetTypeService {
 
   private final DatasetTypeService delegate;
   private final AccessEnforcer accessEnforcer;
@@ -44,9 +46,9 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Inject
   public AuthorizationDatasetTypeService(
-    @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE) DatasetTypeService datasetTypeService,
-    AccessEnforcer accessEnforcer,
-    AuthenticationContext authenticationContext) {
+      @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE) DatasetTypeService datasetTypeService,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     this.delegate = datasetTypeService;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -64,8 +66,9 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Override
   public List<DatasetModuleMeta> listModules(final NamespaceId namespaceId) throws Exception {
-    accessEnforcer.enforceOnParent(EntityType.DATASET_MODULE, namespaceId, authenticationContext.getPrincipal(),
-                                   StandardPermission.LIST);
+    accessEnforcer.enforceOnParent(EntityType.DATASET_MODULE, namespaceId,
+        authenticationContext.getPrincipal(),
+        StandardPermission.LIST);
     return delegate.listModules(namespaceId);
   }
 
@@ -73,14 +76,15 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
   public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     // No authorization for system modules
     if (!NamespaceId.SYSTEM.equals(datasetModuleId.getNamespaceId())) {
-      accessEnforcer.enforce(datasetModuleId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      accessEnforcer.enforce(datasetModuleId, authenticationContext.getPrincipal(),
+          StandardPermission.GET);
     }
     return delegate.getModule(datasetModuleId);
   }
 
   @Override
   public BodyConsumer addModule(DatasetModuleId datasetModuleId, String className,
-                                boolean forceUpdate) throws Exception {
+      boolean forceUpdate) throws Exception {
     final Principal principal = authenticationContext.getPrincipal();
     // enforce that the principal has CREATE access on the dataset module
     accessEnforcer.enforce(datasetModuleId, principal, StandardPermission.CREATE);
@@ -106,8 +110,9 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
 
   @Override
   public List<DatasetTypeMeta> listTypes(final NamespaceId namespaceId) throws Exception {
-    accessEnforcer.enforceOnParent(EntityType.DATASET, namespaceId, authenticationContext.getPrincipal(),
-                                   StandardPermission.LIST);
+    accessEnforcer.enforceOnParent(EntityType.DATASET, namespaceId,
+        authenticationContext.getPrincipal(),
+        StandardPermission.LIST);
     return delegate.listTypes(namespaceId);
   }
 
@@ -115,7 +120,8 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
   public DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     // No authorization for system dataset types
     if (!NamespaceId.SYSTEM.equals(datasetTypeId.getNamespaceId())) {
-      accessEnforcer.enforce(datasetTypeId, authenticationContext.getPrincipal(), StandardPermission.GET);
+      accessEnforcer.enforce(datasetTypeId, authenticationContext.getPrincipal(),
+          StandardPermission.GET);
     }
     return delegate.getType(datasetTypeId);
   }

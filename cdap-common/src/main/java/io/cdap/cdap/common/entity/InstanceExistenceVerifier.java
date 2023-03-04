@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.id.InstanceId;
  * {@link EntityExistenceVerifier} for {@link InstanceId}.
  */
 public class InstanceExistenceVerifier implements EntityExistenceVerifier<InstanceId> {
+
   private final String instanceName;
 
   @Inject

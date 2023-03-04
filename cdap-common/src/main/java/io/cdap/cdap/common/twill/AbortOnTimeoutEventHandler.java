@@ -25,8 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A Twill {@link EventHandler} that abort the application if for some runnable it cannot provision container for
- * too long.
+ * A Twill {@link EventHandler} that abort the application if for some runnable it cannot provision
+ * container for too long.
  */
 public class AbortOnTimeoutEventHandler extends EventHandler {
 
@@ -38,24 +38,25 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
   private RunId runId;
 
   /**
-   * Constructs an instance of AbortOnTimeoutEventHandler that abort the application if some runnable has no
-   * containers, same as calling {@link #AbortOnTimeoutEventHandler(long, boolean)} with second parameter as
-   * {@code false}.
+   * Constructs an instance of AbortOnTimeoutEventHandler that abort the application if some
+   * runnable has no containers, same as calling {@link #AbortOnTimeoutEventHandler(long, boolean)}
+   * with second parameter as {@code false}.
    *
-   * @param abortTime Time in milliseconds to pass before aborting the application if no container is given to
-   *                  a runnable.
+   * @param abortTime Time in milliseconds to pass before aborting the application if no
+   *     container is given to a runnable.
    */
   public AbortOnTimeoutEventHandler(long abortTime) {
     this(abortTime, false);
   }
 
   /**
-   * Constructs an instance of AbortOnTimeoutEventHandler that abort the application if some runnable has not enough
-   * containers.
-   * @param abortTime Time in milliseconds to pass before aborting the application if no container is given to
-   *                  a runnable.
-   * @param abortIfNotFull If {@code true}, it will abort the application if any runnable doesn't meet the expected
-   *                       number of instances.
+   * Constructs an instance of AbortOnTimeoutEventHandler that abort the application if some
+   * runnable has not enough containers.
+   *
+   * @param abortTime Time in milliseconds to pass before aborting the application if no
+   *     container is given to a runnable.
+   * @param abortIfNotFull If {@code true}, it will abort the application if any runnable
+   *     doesn't meet the expected number of instances.
    */
   public AbortOnTimeoutEventHandler(long abortTime, boolean abortIfNotFull) {
     this.abortTime = abortTime;
@@ -65,14 +66,15 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
   @Override
   protected Map<String, String> getConfigs() {
     return ImmutableMap.of("abortTime", Long.toString(abortTime),
-                           "abortIfNotFull", Boolean.toString(abortIfNotFull));
+        "abortIfNotFull", Boolean.toString(abortIfNotFull));
   }
 
   @Override
   public void initialize(EventHandlerContext context) {
     super.initialize(context);
     this.abortTime = Long.parseLong(context.getSpecification().getConfigs().get("abortTime"));
-    this.abortIfNotFull = Boolean.parseBoolean(context.getSpecification().getConfigs().get("abortIfNotFull"));
+    this.abortIfNotFull = Boolean.parseBoolean(
+        context.getSpecification().getConfigs().get("abortIfNotFull"));
     this.applicationName = context.getApplicationName();
     this.runId = context.getRunId();
   }
@@ -82,16 +84,18 @@ public class AbortOnTimeoutEventHandler extends EventHandler {
   public TimeoutAction launchTimeout(Iterable<TimeoutEvent> timeoutEvents) {
     long now = System.currentTimeMillis();
     for (TimeoutEvent event : timeoutEvents) {
-      LOG.warn("Requested {} containers for runnable {} when running application {} with run id {}," +
-                 " only got {} after {} ms.",
-               event.getExpectedInstances(), event.getRunnableName(), applicationName, runId,
-               event.getActualInstances(), System.currentTimeMillis() - event.getRequestTime());
+      LOG.warn(
+          "Requested {} containers for runnable {} when running application {} with run id {},"
+              + " only got {} after {} ms.",
+          event.getExpectedInstances(), event.getRunnableName(), applicationName, runId,
+          event.getActualInstances(), System.currentTimeMillis() - event.getRequestTime());
 
       boolean pass = abortIfNotFull ? event.getActualInstances() == event.getExpectedInstances()
-                                    : event.getActualInstances() != 0;
+          : event.getActualInstances() != 0;
       if (!pass && (now - event.getRequestTime()) > abortTime) {
-        LOG.error("No containers for runnable {} when running application {} with run id {}. Abort the application.",
-                  event.getRunnableName(), applicationName, runId);
+        LOG.error(
+            "No containers for runnable {} when running application {} with run id {}. Abort the application.",
+            event.getRunnableName(), applicationName, runId);
         return TimeoutAction.abort();
       }
     }

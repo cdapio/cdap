@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
  * Represents an application returned for /apps/{app-id}.
  */
 public class ApplicationDetail {
+
   private final String name;
   private final String appVersion;
   private final String description;
@@ -49,16 +50,16 @@ public class ApplicationDetail {
   private final String ownerPrincipal;
 
   public ApplicationDetail(String name,
-                           String appVersion,
-                           String description,
-                           @Nullable ChangeDetail change,
-                           @Nullable SourceControlMeta sourceControlMeta,
-                           String configuration,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact,
-                           @Nullable String ownerPrincipal) {
+      String appVersion,
+      String description,
+      @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta,
+      String configuration,
+      List<DatasetDetail> datasets,
+      List<ProgramRecord> programs,
+      List<PluginDetail> plugins,
+      ArtifactSummary artifact,
+      @Nullable String ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
     this.description = description;
@@ -77,38 +78,39 @@ public class ApplicationDetail {
    * Constructor for backwards compatibility, please do not remove.
    */
   public ApplicationDetail(String name,
-                           String appVersion,
-                           String description,
-                           String configuration,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact,
-                           @Nullable String ownerPrincipal) {
+      String appVersion,
+      String description,
+      String configuration,
+      List<DatasetDetail> datasets,
+      List<ProgramRecord> programs,
+      List<PluginDetail> plugins,
+      ArtifactSummary artifact,
+      @Nullable String ownerPrincipal) {
     this(name, appVersion, description, null, null,
-         configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+        configuration, datasets, programs, plugins, artifact, ownerPrincipal);
   }
 
   /**
    * Constructor for backwards compatibility, please do not remove.
    */
   public ApplicationDetail(String name,
-                           String appVersion,
-                           String description,
-                           @Nullable ChangeDetail change,
-                           String configuration,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact,
-                           @Nullable String ownerPrincipal) {
+      String appVersion,
+      String description,
+      @Nullable ChangeDetail change,
+      String configuration,
+      List<DatasetDetail> datasets,
+      List<ProgramRecord> programs,
+      List<PluginDetail> plugins,
+      ArtifactSummary artifact,
+      @Nullable String ownerPrincipal) {
     this(name, appVersion, description, change, null,
-         configuration, datasets, programs, plugins, artifact, ownerPrincipal);
+        configuration, datasets, programs, plugins, artifact, ownerPrincipal);
   }
 
   public String getName() {
     return name;
   }
+
   public String getAppVersion() {
     return appVersion;
   }
@@ -152,31 +154,32 @@ public class ApplicationDetail {
     return ownerPrincipal;
   }
 
-  public static ApplicationDetail fromSpec(ApplicationSpecification spec, @Nullable String ownerPrincipal,
-                                           @Nullable ChangeDetail change,
-                                           @Nullable SourceControlMeta sourceControlMeta) {
+  public static ApplicationDetail fromSpec(ApplicationSpecification spec,
+      @Nullable String ownerPrincipal,
+      @Nullable ChangeDetail change,
+      @Nullable SourceControlMeta sourceControlMeta) {
     // Adding owner, creation time and change summary description fields to the app detail
 
     List<ProgramRecord> programs = new ArrayList<>();
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+          programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getServices().values()) {
       programs.add(new ProgramRecord(ProgramType.SERVICE, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+          programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getSpark().values()) {
       programs.add(new ProgramRecord(ProgramType.SPARK, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+          programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkers().values()) {
       programs.add(new ProgramRecord(ProgramType.WORKER, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+          programSpec.getName(), programSpec.getDescription()));
     }
     for (ProgramSpecification programSpec : spec.getWorkflows().values()) {
       programs.add(new ProgramRecord(ProgramType.WORKFLOW, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
+          programSpec.getName(), programSpec.getDescription()));
     }
 
     List<DatasetDetail> datasets = new ArrayList<>();
@@ -187,15 +190,16 @@ public class ApplicationDetail {
     List<PluginDetail> plugins = new ArrayList<>();
     for (Map.Entry<String, Plugin> pluginEntry : spec.getPlugins().entrySet()) {
       plugins.add(new PluginDetail(pluginEntry.getKey(),
-                                   pluginEntry.getValue().getPluginClass().getName(),
-                                   pluginEntry.getValue().getPluginClass().getType()));
+          pluginEntry.getValue().getPluginClass().getName(),
+          pluginEntry.getValue().getPluginClass().getType()));
     }
     // this is only required if there are old apps lying around that failed to get upgrading during
     // the upgrade to v3.2 for some reason. In those cases artifact id will be null until they re-deploy the app.
     // in the meantime, we don't want this api call to null pointer exception.
-    ArtifactSummary summary = spec.getArtifactId() == null ?
-      new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
-    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), change, sourceControlMeta,
-                                 spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
+    ArtifactSummary summary = spec.getArtifactId() == null
+        ? new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
+    return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(),
+        change, sourceControlMeta,
+        spec.getConfiguration(), datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

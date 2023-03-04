@@ -18,9 +18,11 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 
 /**
  * Represents a write to the datastore for in-memory buffering.
+ *
  * @param <T> The type of value for the update.
  */
 public interface Update<T> {
+
   T getValue();
 
   byte[] getBytes();

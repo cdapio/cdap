@@ -33,16 +33,17 @@ public class ConfigServiceTest {
   @Test
   public void testConfig() {
     String confStr =
-      "<configuration>\n" +
-        "\n" +
-        "  <property>\n" +
-        "    <name>stream.zz.threshold</name>\n" +
-        "    <value>1</value>\n" +
-        "    <description>Some description</description>\n" +
-        "  </property>\n" +
-        "\n" +
-        "</configuration>";
-    ByteArrayInputStream source = new ByteArrayInputStream(confStr.getBytes(StandardCharsets.UTF_8));
+        "<configuration>\n"
+            + "\n"
+            + "  <property>\n"
+            + "    <name>stream.zz.threshold</name>\n"
+            + "    <value>1</value>\n"
+            + "    <description>Some description</description>\n"
+            + "  </property>\n"
+            + "\n"
+            + "</configuration>";
+    ByteArrayInputStream source = new ByteArrayInputStream(
+        confStr.getBytes(StandardCharsets.UTF_8));
     CConfiguration cConf = CConfiguration.create(source);
 
     ConfigEntry cConfEntry = new ConfigEntry("stream.zz.threshold", "1", source.toString());
@@ -50,15 +51,15 @@ public class ConfigServiceTest {
     // hConf
     Configuration hConf = new Configuration();
     String hConfResourceString =
-      "<configuration>\n" +
-      "\n" +
-      "  <property>\n" +
-      "    <name>stream.notification.threshold</name>\n" +
-      "    <value>3</value>\n" +
-      "    <description>Some description</description>\n" +
-      "  </property>\n" +
-      "\n" +
-      "</configuration>";
+        "<configuration>\n"
+            + "\n"
+            + "  <property>\n"
+            + "    <name>stream.notification.threshold</name>\n"
+            + "    <value>3</value>\n"
+            + "    <description>Some description</description>\n"
+            + "  </property>\n"
+            + "\n"
+            + "</configuration>";
     source = new ByteArrayInputStream(hConfResourceString.getBytes(StandardCharsets.UTF_8));
     hConf.addResource(source);
 

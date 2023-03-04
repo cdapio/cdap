@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 public class RevokeRequest extends AuthorizationRequest {
 
   public RevokeRequest(Authorizable authorizable, @Nullable Principal principal,
-                       @Nullable Set<? extends Permission> permissions) {
+      @Nullable Set<? extends Permission> permissions) {
     super(authorizable, principal, permissions);
     if (permissions != null && principal == null) {
       throw new IllegalArgumentException("Principal is required when permissions are provided");
@@ -36,7 +36,7 @@ public class RevokeRequest extends AuthorizationRequest {
   }
 
   public RevokeRequest(EntityId entityId, @Nullable Principal principal,
-                       @Nullable Set<? extends Permission> permissions) {
+      @Nullable Set<? extends Permission> permissions) {
     this(Authorizable.fromEntityId(entityId), principal, permissions);
   }
 }

@@ -64,14 +64,14 @@ public class DataSetsModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
-          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
         expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
-          .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+            .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
+            .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
 
         bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
         // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
@@ -117,16 +117,16 @@ public class DataSetsModules extends RuntimeModule {
       @Override
       protected void configure() {
         bind(DatasetDefinitionRegistryFactory.class)
-          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+            .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).annotatedWith(Names.named(SPI_BASE_IMPL))
-          .toProvider(MetadataStorageProvider.class).in(Scopes.SINGLETON);
+            .toProvider(MetadataStorageProvider.class).in(Scopes.SINGLETON);
         bind(MetadataStorage.class).to(AuditMetadataStorage.class).in(Scopes.SINGLETON);
         expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
-          .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
-          .to(RemoteDatasetFramework.class);
+            .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
+            .to(RemoteDatasetFramework.class);
 
         bind(LineageStoreReader.class).to(DefaultLineageStoreReader.class);
         // Need to expose LineageStoreReader as it's being used by the LineageHandler (through LineageAdmin)
@@ -174,15 +174,15 @@ class MetadataStorageProvider implements Provider<MetadataStorage> {
   @Override
   public MetadataStorage get() {
     String config = cConf.get(Constants.Metadata.STORAGE_PROVIDER_IMPLEMENTATION,
-                              Constants.Metadata.STORAGE_PROVIDER_NOSQL);
+        Constants.Metadata.STORAGE_PROVIDER_NOSQL);
     if (Constants.Metadata.STORAGE_PROVIDER_NOSQL.equalsIgnoreCase(config)) {
       return injector.getInstance(DatasetMetadataStorage.class);
     }
     if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
       return injector.getInstance(ElasticsearchMetadataStorage.class);
     }
-    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '" +
-                                         Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '" +
-                                         Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
+    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '"
+        + Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '"
+        + Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
   }
 }

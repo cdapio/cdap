@@ -19,10 +19,11 @@ package io.cdap.cdap.data2.dataset2.lib.partitioned;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
 
 /**
- * Represents an operation on a particular path. Must be used in context of a base location, because the path is a
- * relative path.
+ * Represents an operation on a particular path. Must be used in context of a base location, because
+ * the path is a relative path.
  */
 class PartitionOperation {
+
   private final String relativePath;
   private final PartitionKey partitionKey;
 

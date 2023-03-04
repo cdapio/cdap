@@ -23,10 +23,8 @@ package io.cdap.cdap.pipeline;
 public interface Stage {
 
   /**
-   * Implementation of this method should atomically process a single data
-   * object and transfer any objects generated to downstream for processing.
-   *
-   * @param ctx
+   * Implementation of this method should atomically process a single data object and transfer any
+   * objects generated to downstream for processing.
    */
   void process(Context ctx) throws Exception;
 }

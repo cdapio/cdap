@@ -79,14 +79,16 @@ public abstract class AbstractAuthCommand implements Command {
 
     String appName = argumentParts[0];
     String appVersion = arguments.hasArgument(ArgumentName.APP_VERSION.getName())
-      ? arguments.get(ArgumentName.APP_VERSION.getName()) : ApplicationId.DEFAULT_VERSION;
+        ? arguments.get(ArgumentName.APP_VERSION.getName()) : ApplicationId.DEFAULT_VERSION;
     String programName = argumentParts[1];
-    return cliConfig.getCurrentNamespace().app(appName, appVersion).program(elementType.getProgramType(), programName);
+    return cliConfig.getCurrentNamespace().app(appName, appVersion)
+        .program(elementType.getProgramType(), programName);
   }
 
   protected ApplicationId parseApplicationId(Arguments arguments) {
-    String appVersion = arguments.hasArgument(ArgumentName.APP_VERSION.toString()) ?
-      arguments.get(ArgumentName.APP_VERSION.toString()) : ApplicationId.DEFAULT_VERSION;
-    return cliConfig.getCurrentNamespace().app(arguments.get(ArgumentName.APP.toString()), appVersion);
+    String appVersion = arguments.hasArgument(ArgumentName.APP_VERSION.toString())
+        ? arguments.get(ArgumentName.APP_VERSION.toString()) : ApplicationId.DEFAULT_VERSION;
+    return cliConfig.getCurrentNamespace()
+        .app(arguments.get(ArgumentName.APP.toString()), appVersion);
   }
 }

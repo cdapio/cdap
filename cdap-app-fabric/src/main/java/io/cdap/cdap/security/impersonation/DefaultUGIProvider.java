@@ -65,11 +65,11 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
-                     NamespaceQueryAdmin namespaceQueryAdmin, Store store) {
+      NamespaceQueryAdmin namespaceQueryAdmin, Store store) {
     super(cConf, ownerAdmin);
     this.locationFactory = locationFactory;
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.store = store;
   }
@@ -78,9 +78,10 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
    * On master side, we can cache the explore request
    */
   @Override
-  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws AccessException {
-    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
-      impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
+  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest)
+      throws AccessException {
+    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE)
+        && impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
       // specifies that it can be impersonated with the namespace owner.
       // This is done here rather than in the get getConfiguredUGI because the getConfiguredUGI will be called at
@@ -91,7 +92,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       // more prominent calls.
       try {
         NamespaceConfig nsConfig =
-          namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId()).getConfig();
+            namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId())
+                .getConfig();
 
       } catch (Exception e) {
         throw AuthEnforceUtil.propagateAccessException(e);
@@ -101,43 +103,52 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   }
 
   /**
-   * Resolves the {@link UserGroupInformation} for a given user, performing any keytab localization, if necessary.
+   * Resolves the {@link UserGroupInformation} for a given user, performing any keytab localization,
+   * if necessary.
    *
-   * @return a {@link UserGroupInformation}, based upon the information configured for a particular user
+   * @return a {@link UserGroupInformation}, based upon the information configured for a particular
+   *     user
    * @throws IOException if there was any IOException during localization of the keytab
    */
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws AccessException {
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest)
+      throws AccessException {
 
     try {
       // Get impersonation keytab and principal from runtime arguments if present
       Map<String, String> properties = getRuntimeProperties(impersonationRequest.getEntityId());
       if ((properties != null) && (properties.containsKey(SystemArguments.RUNTIME_KEYTAB_PATH))
-            && (properties.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))) {
+          && (properties.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))) {
         String keytab = properties.get(SystemArguments.RUNTIME_KEYTAB_PATH);
         String principal = properties.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
         LOG.debug("Using runtime config principal: {}, keytab: {}", principal, keytab);
-        UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytab);
+        UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal,
+            keytab);
         return new UGIWithPrincipal(principal, ugi);
       }
 
       // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-      String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
-      if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-        return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
+      String configuredPrincipalShortName = new KerberosName(
+          impersonationRequest.getPrincipal()).getShortName();
+      if (UserGroupInformation.getCurrentUser().getShortUserName()
+          .equals(configuredPrincipalShortName)) {
+        return new UGIWithPrincipal(impersonationRequest.getPrincipal(),
+            UserGroupInformation.getCurrentUser());
       }
 
       String keytab = impersonationRequest.getKeytabURI();
       if (keytab == null) {
-        throw new AccessIOException("Missing keytab file from the impersonation request " + impersonationRequest);
+        throw new AccessIOException(
+            "Missing keytab file from the impersonation request " + impersonationRequest);
       }
       URI keytabURI = URI.create(keytab);
       boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
-      File localKeytabFile = isKeytabLocal ?
-        new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
+      File localKeytabFile = isKeytabLocal
+          ? new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
       try {
-        String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationRequest.getPrincipal());
+        String expandedPrincipal = SecurityUtil.expandPrincipal(
+            impersonationRequest.getPrincipal());
         LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
 
         // Note: if the keytab file is not local then then localizeKeytab function call above which tries to localize
@@ -145,20 +156,23 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
         // the file is local then the localizeKeytab function is not called so its important that we throw IOException
         // if the local keytab file is not readable to ensure that the client gets the same exception in both the modes.
         if (!Files.isReadable(localKeytabFile.toPath())) {
-          throw new AccessIOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
+          throw new AccessIOException(
+              String.format("Keytab file is not a readable file: %s", localKeytabFile));
         }
 
         UserGroupInformation loggedInUGI;
         try {
           loggedInUGI =
-            UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+              UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal,
+                  localKeytabFile.getAbsolutePath());
         } catch (Exception e) {
           // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
           // not working
-          throw new AccessException(String.format("Failed to login for principal=%s, keytab=%s. Check that " +
-                                                    "the principal was not deleted and that the keytab is still valid.",
-                                              expandedPrincipal, keytabURI),
-                                e);
+          throw new AccessException(
+              String.format("Failed to login for principal=%s, keytab=%s. Check that "
+                      + "the principal was not deleted and that the keytab is still valid.",
+                  expandedPrincipal, keytabURI),
+              e);
         }
 
         return new UGIWithPrincipal(impersonationRequest.getPrincipal(), loggedInUGI);
@@ -182,12 +196,13 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     // ensure temp dir exists
     if (!DirUtils.mkdirs(tempDir)) {
       throw new IOException(String.format(
-        "Could not create temporary directory at %s, while localizing keytab", tempDir));
+          "Could not create temporary directory at %s, while localizing keytab", tempDir));
     }
 
     // create a local file with restricted permissions
     // only allow the owner to read/write, since it contains credentials
-    Path localKeytabFile = Files.createTempFile(tempDir.toPath(), null, "keytab.localized", FileUtils.OWNER_ONLY_RW);
+    Path localKeytabFile = Files.createTempFile(tempDir.toPath(), null, "keytab.localized",
+        FileUtils.OWNER_ONLY_RW);
     // copy to this local file
     LOG.debug("Copying keytab file from {} to {}", keytabLocation, localKeytabFile);
     try (InputStream is = keytabLocation.getInputStream()) {
@@ -216,14 +231,14 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
     try {
       RunRecordDetail runRecord = Retries.callWithRetries(() -> {
-        RunRecordDetail rec = store.getRun(runId);
-        if (rec != null) {
-          return rec;
-        }
-        throw new Exception("Retrying again to fetch run record");
-      }, RetryStrategies.timeLimit(timeoutMs, TimeUnit.MILLISECONDS,
-                  RetryStrategies.fixDelay(sleepDelayMs, TimeUnit.MILLISECONDS)),
-                  Exception.class::isInstance);
+            RunRecordDetail rec = store.getRun(runId);
+            if (rec != null) {
+              return rec;
+            }
+            throw new Exception("Retrying again to fetch run record");
+          }, RetryStrategies.timeLimit(timeoutMs, TimeUnit.MILLISECONDS,
+              RetryStrategies.fixDelay(sleepDelayMs, TimeUnit.MILLISECONDS)),
+          Exception.class::isInstance);
       return runRecord.getUserArgs();
     } catch (Exception e) {
       LOG.warn("Failed to fetch run record for {} due to {}", runId, e.getMessage(), e);

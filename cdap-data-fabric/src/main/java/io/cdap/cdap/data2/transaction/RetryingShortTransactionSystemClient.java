@@ -25,7 +25,8 @@ import org.apache.tephra.TransactionSystemClient;
  */
 public class RetryingShortTransactionSystemClient extends RetryingTransactionSystemClient {
 
-  public RetryingShortTransactionSystemClient(TransactionSystemClient delegate, RetryStrategy retryStrategy) {
+  public RetryingShortTransactionSystemClient(TransactionSystemClient delegate,
+      RetryStrategy retryStrategy) {
     super(delegate, retryStrategy);
   }
 

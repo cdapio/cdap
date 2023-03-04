@@ -21,7 +21,9 @@ import java.util.Iterator;
 /**
  * A pipeline stage that can publish any alerts emitted by the previous stage.
  */
-public abstract class AlertPublisher implements PipelineConfigurable, StageLifecycle<AlertPublisherContext> {
+public abstract class AlertPublisher implements PipelineConfigurable,
+    StageLifecycle<AlertPublisherContext> {
+
   public static final String PLUGIN_TYPE = "alertpublisher";
   private AlertPublisherContext context;
 

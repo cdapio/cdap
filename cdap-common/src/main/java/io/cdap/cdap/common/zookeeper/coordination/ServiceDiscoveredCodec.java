@@ -31,7 +31,8 @@ import org.apache.twill.discovery.ServiceDiscovered;
 public class ServiceDiscoveredCodec implements JsonSerializer<ServiceDiscovered> {
 
   @Override
-  public JsonElement serialize(ServiceDiscovered serviceDiscovered, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ServiceDiscovered serviceDiscovered, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonArray object = new JsonArray();
     for (Discoverable discoverable : serviceDiscovered) {
       JsonObject discoverableJson = new JsonObject();

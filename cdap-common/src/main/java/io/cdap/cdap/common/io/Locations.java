@@ -72,22 +72,22 @@ public final class Locations {
   private static final LocalLocationFactory LOCAL_LOCATION_FACTORY = new LocalLocationFactory();
   // For converting FileStatus to LocationStatus
   private static final FunctionWithException<FileStatus, LocationStatus, IOException> FILE_STATUS_TO_LOCATION_STATUS =
-    new FunctionWithException<FileStatus, LocationStatus, IOException>() {
-      @Override
-      public LocationStatus apply(FileStatus status) throws IOException {
-        return new LocationStatus(status.getPath().toUri(), status.getLen(),
-                                  status.isDirectory(), status.getModificationTime());
-      }
-    };
+      new FunctionWithException<FileStatus, LocationStatus, IOException>() {
+        @Override
+        public LocationStatus apply(FileStatus status) throws IOException {
+          return new LocationStatus(status.getPath().toUri(), status.getLen(),
+              status.isDirectory(), status.getModificationTime());
+        }
+      };
   // For converting Location to LocationStatus
   private static final FunctionWithException<Location, LocationStatus, IOException> LOCATION_TO_LOCATION_STATUS =
-    new FunctionWithException<Location, LocationStatus, IOException>() {
-      @Override
-      public LocationStatus apply(Location location) throws IOException {
-        return new LocationStatus(location.toURI(), location.length(), location.isDirectory(),
-                                  location.lastModified());
-      }
-    };
+      new FunctionWithException<Location, LocationStatus, IOException>() {
+        @Override
+        public LocationStatus apply(Location location) throws IOException {
+          return new LocationStatus(location.toURI(), location.length(), location.isDirectory(),
+              location.lastModified());
+        }
+      };
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
@@ -97,19 +97,23 @@ public final class Locations {
   };
 
   /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given path.
+   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} of the given
+   * path.
    *
    * @param fs The {@link org.apache.hadoop.fs.FileSystem} for the given path.
-   * @param path The path to create {@link io.cdap.cdap.common.io.SeekableInputStream} when requested.
+   * @param path The path to create {@link io.cdap.cdap.common.io.SeekableInputStream} when
+   *     requested.
    * @return A {@link InputSupplier}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs, final Path path) {
+  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final FileSystem fs,
+      final Path path) {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
         FSDataInputStream input = fs.open(path);
         try {
-          return new DFSSeekableInputStream(input, createDFSStreamSizeProvider(fs, false, path, input));
+          return new DFSSeekableInputStream(input,
+              createDFSStreamSizeProvider(fs, false, path, input));
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
           Throwables.propagateIfInstanceOf(t, IOException.class);
@@ -120,12 +124,14 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the given location.
+   * Creates a new {@link InputSupplier} that can provides {@link SeekableInputStream} from the
+   * given location.
    *
    * @param location Location for the input stream.
    * @return A {@link InputSupplier}.
    */
-  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(final Location location) {
+  public static InputSupplier<? extends SeekableInputStream> newInputSupplier(
+      final Location location) {
     return new InputSupplier<SeekableInputStream>() {
       @Override
       public SeekableInputStream getInput() throws IOException {
@@ -140,19 +146,20 @@ public final class Locations {
 
             if (locationFactory instanceof FileContextLocationFactory) {
               final FileContextLocationFactory lf = (FileContextLocationFactory) locationFactory;
-              return lf.getFileContext().getUgi().doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
-                @Override
-                public SeekableInputStream run() throws IOException {
-                  // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
-                  String scheme = lf.getHomeLocation().toURI().getScheme();
-                  Configuration hConf = new Configuration(lf.getConfiguration());
-                  hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
-                  FileSystem fs = FileSystem.get(hConf);
-                  return new DFSSeekableInputStream(dataInput,
-                                                    createDFSStreamSizeProvider(fs, true,
-                                                                                new Path(location.toURI()), dataInput));
-                }
-              });
+              return lf.getFileContext().getUgi()
+                  .doAs(new PrivilegedExceptionAction<SeekableInputStream>() {
+                    @Override
+                    public SeekableInputStream run() throws IOException {
+                      // Disable the FileSystem cache. The FileSystem will be closed when the InputStream is closed
+                      String scheme = lf.getHomeLocation().toURI().getScheme();
+                      Configuration hConf = new Configuration(lf.getConfiguration());
+                      hConf.set(String.format("fs.%s.impl.disable.cache", scheme), "true");
+                      FileSystem fs = FileSystem.get(hConf);
+                      return new DFSSeekableInputStream(dataInput,
+                          createDFSStreamSizeProvider(fs, true,
+                              new Path(location.toURI()), dataInput));
+                    }
+                  });
             }
 
             // This shouldn't happen
@@ -171,22 +178,24 @@ public final class Locations {
   }
 
   /**
-   * Do some processing on the locations contained in the {@code startLocation}, using the {@code processor}. If this
-   * location is a directory, all the locations contained in it will also be processed. If the {@code recursive} tag
-   * is set to true, those locations that are directories will also be processed recursively. If the
-   * {@code startLocation} is not a directory, this method will return the result of the processing of that location.
+   * Do some processing on the locations contained in the {@code startLocation}, using the {@code
+   * processor}. If this location is a directory, all the locations contained in it will also be
+   * processed. If the {@code recursive} tag is set to true, those locations that are directories
+   * will also be processed recursively. If the {@code startLocation} is not a directory, this
+   * method will return the result of the processing of that location.
    *
    * @param startLocation location to start the processing from
-   * @param recursive {@code true} if this method should be called on the directory {@link Location}s found from
-   *                  {@code startLocation}. If the {@code startLocation} is a directory, all the locations under it
-   *                  will be processed, regardless of the value of {@code recursive}
-   * @param processor used to process locations. If the {@link Processor#process} method returns false on any
-   *                  {@link Location} object processed, this method will return the current result of the processor.
+   * @param recursive {@code true} if this method should be called on the directory {@link
+   *     Location}s found from {@code startLocation}. If the {@code startLocation} is a directory,
+   *     all the locations under it will be processed, regardless of the value of {@code recursive}
+   * @param processor used to process locations. If the {@link Processor#process} method returns
+   *     false on any {@link Location} object processed, this method will return the current result
+   *     of the processor.
    * @param <R> Type of the return value
    * @throws IOException if the locations could not be read
    */
   public static <R> R processLocations(Location startLocation, boolean recursive,
-                                       Processor<LocationStatus, R> processor) throws IOException {
+      Processor<LocationStatus, R> processor) throws IOException {
     boolean topLevel = true;
     LocationFactory lf = startLocation.getLocationFactory();
     LinkedList<LocationStatus> statusStack = new LinkedList<>();
@@ -208,9 +217,10 @@ public final class Locations {
   }
 
   /**
-   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
-   * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
-   * Unlike {@link #linkOrCopy(Location, File)} will try to overwrite target file if it already exists.
+   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If
+   * creation of the hardlink failed or if the Location is not local, it will copy the the location
+   * to the given target path. Unlike {@link #linkOrCopy(Location, File)} will try to overwrite
+   * target file if it already exists.
    *
    * @param location location to hardlink or copy from
    * @param targetPath the target file path
@@ -223,8 +233,9 @@ public final class Locations {
   }
 
   /**
-   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If creation
-   * of the hardlink failed or if the Location is not local, it will copy the the location to the given target path.
+   * Tries to create a hardlink to the given {@link Location} if it is on the local file system. If
+   * creation of the hardlink failed or if the Location is not local, it will copy the the location
+   * to the given target path.
    *
    * @param location location to hardlink or copy from
    * @param targetPath the target file path
@@ -277,8 +288,9 @@ public final class Locations {
         break;
       case "gz":
         // gz is not recommended for archiving multiple files together. So we only support .tar.gz
-        Preconditions.checkArgument(archive.getName().endsWith(".tar.gz"), "'.gz' format is not supported for " +
-          "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
+        Preconditions.checkArgument(archive.getName().endsWith(".tar.gz"),
+            "'.gz' format is not supported for "
+                + "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
         try (InputStream is = archive.getInputStream()) {
           expandTgz(is, targetDir);
         }
@@ -294,8 +306,9 @@ public final class Locations {
         }
         break;
       default:
-        throw new IOException(String.format("Unsupported compression type '%s'. Only 'zip', 'jar', " +
-                                              "'tar.gz', 'tgz' and 'tar'  are supported.", extension));
+        throw new IOException(
+            String.format("Unsupported compression type '%s'. Only 'zip', 'jar', "
+                + "'tar.gz', 'tgz' and 'tar'  are supported.", extension));
     }
   }
 
@@ -312,7 +325,8 @@ public final class Locations {
    * Unpacks a tar gz input stream to the given target directory.
    */
   private static void expandTgz(InputStream archiveStream, File targetDir) throws IOException {
-    try (TarArchiveInputStream tis = new TarArchiveInputStream(new GZIPInputStream(archiveStream))) {
+    try (TarArchiveInputStream tis = new TarArchiveInputStream(
+        new GZIPInputStream(archiveStream))) {
       expandTarStream(tis, targetDir);
     }
   }
@@ -320,7 +334,8 @@ public final class Locations {
   /**
    * Unpacks a tar input stream to the given target directory.
    */
-  private static void expandTarStream(TarArchiveInputStream tis, File targetDir) throws IOException {
+  private static void expandTarStream(TarArchiveInputStream tis, File targetDir)
+      throws IOException {
     TarArchiveEntry entry = tis.getNextTarEntry();
     while (entry != null) {
       File output = new File(targetDir, new File(entry.getName()).getName());
@@ -341,16 +356,18 @@ public final class Locations {
     LocationFactory lf = location.getLocationFactory();
     if (lf instanceof FileContextLocationFactory) {
       return FILE_STATUS_TO_LOCATION_STATUS.apply(
-        ((FileContextLocationFactory) lf).getFileContext().getFileLinkStatus(new Path(location.toURI())));
+          ((FileContextLocationFactory) lf).getFileContext()
+              .getFileLinkStatus(new Path(location.toURI())));
     }
     return LOCATION_TO_LOCATION_STATUS.apply(location);
   }
 
   /**
-   * Returns {@link RemoteIterator} of {@link LocationStatus} under a directory
-   * represented by the given {@link Location}.
+   * Returns {@link RemoteIterator} of {@link LocationStatus} under a directory represented by the
+   * given {@link Location}.
    */
-  private static RemoteIterator<LocationStatus> listLocationStatus(Location location) throws IOException {
+  private static RemoteIterator<LocationStatus> listLocationStatus(Location location)
+      throws IOException {
     LocationFactory lf = location.getLocationFactory();
     if (lf instanceof FileContextLocationFactory) {
       FileContext fc = ((FileContextLocationFactory) lf).getFileContext();
@@ -380,7 +397,7 @@ public final class Locations {
    * Transform a {@link RemoteIterator} using a {@link FunctionWithException}.
    */
   private static <F, T> RemoteIterator<T> transform(final RemoteIterator<F> itor,
-                                                    final FunctionWithException<F, T, IOException> transform) {
+      final FunctionWithException<F, T, IOException> transform) {
     return new RemoteIterator<T>() {
       @Override
       public boolean hasNext() throws IOException {
@@ -395,7 +412,8 @@ public final class Locations {
   }
 
   /**
-   * Creates a new {@link OutputSupplier} that can provides {@link OutputStream} for the given location.
+   * Creates a new {@link OutputSupplier} that can provides {@link OutputStream} for the given
+   * location.
    *
    * @param location Location for the output.
    * @return A {@link OutputSupplier}.
@@ -416,10 +434,10 @@ public final class Locations {
   }
 
   /**
-   * Creates a {@link Location} instance which represents the parent of the given location.
-   * Note: CDAP-13765 this method can return an invalid location if the parent is the root directory depending
-   * on the implementation of the input Location. Consider calling {@link #isRoot(Location)} before
-   * calling this.
+   * Creates a {@link Location} instance which represents the parent of the given location. Note:
+   * CDAP-13765 this method can return an invalid location if the parent is the root directory
+   * depending on the implementation of the input Location. Consider calling {@link
+   * #isRoot(Location)} before calling this.
    *
    * @param location location to extra parent from.
    * @return an instance representing the parent location or {@code null} if there is no parent.
@@ -448,17 +466,20 @@ public final class Locations {
 
   /**
    * Get a Location using a specified location factory and absolute path
+   *
    * @param locationFactory locationFactory to create Location from given Path
    * @param absolutePath Path to be used for Location
    * @return Location resulting from absolute locationPath
    */
-  public static Location getLocationFromAbsolutePath(LocationFactory locationFactory, String absolutePath) {
+  public static Location getLocationFromAbsolutePath(LocationFactory locationFactory,
+      String absolutePath) {
     URI homeURI = locationFactory.getHomeLocation().toURI();
     try {
       // Make the path absolute and normalize it so that it follows URI spec RFC-2396 before passing to location factory
       // Also replace multiple "/" with one "/" since URI spec actually doesn't allow multiples and it can messes
       // up the URI parsing
-      String path = URI.create("/").resolve(absolutePath.replaceAll("/+", "/")).normalize().getPath();
+      String path = URI.create("/").resolve(absolutePath.replaceAll("/+", "/")).normalize()
+          .getPath();
       URI uri = new URI(homeURI.getScheme(), homeURI.getAuthority(), path, null, null);
       return locationFactory.create(uri);
     } catch (URISyntaxException e) {
@@ -520,10 +541,12 @@ public final class Locations {
   }
 
   /**
-   * Creates a {@link StreamSizeProvider} for determining the size of the given {@link FSDataInputStream}.
+   * Creates a {@link StreamSizeProvider} for determining the size of the given {@link
+   * FSDataInputStream}.
    */
-  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs, final boolean ownFileSystem,
-                                                                final Path path, FSDataInputStream input) {
+  private static StreamSizeProvider createDFSStreamSizeProvider(final FileSystem fs,
+      final boolean ownFileSystem,
+      final Path path, FSDataInputStream input) {
 
     // This supplier is to abstract out the logic for getting the DFSInputStream#getFileLength method using reflection
     // Reflection is used to avoid ClassLoading error if the DFSInputStream class is moved or method get renamed
@@ -537,7 +560,8 @@ public final class Locations {
           Class<? extends InputStream> cls = wrappedStream.getClass();
           String expectedName = "org.apache.hadoop.hdfs.DFSInputStream";
           if (!cls.getName().equals(expectedName)) {
-            throw new Exception("Expected wrapper class be " + expectedName + ", but got " + cls.getName());
+            throw new Exception(
+                "Expected wrapper class be " + expectedName + ", but got " + cls.getName());
           }
 
           Method getFileLengthMethod = cls.getMethod("getFileLength");

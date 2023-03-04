@@ -24,6 +24,7 @@ import java.util.Objects;
  */
 @Beta
 public final class ArtifactId implements Comparable<ArtifactId> {
+
   private final String name;
   private final ArtifactVersion version;
   private final ArtifactScope scope;
@@ -36,6 +37,7 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   /**
    * get name of the artifact
+   *
    * @return name of the artifact
    */
   public String getName() {
@@ -44,6 +46,7 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   /**
    * get the version of artifact
+   *
    * @return {@link ArtifactVersion}
    */
   public ArtifactVersion getVersion() {
@@ -52,6 +55,7 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   /**
    * get the scope of artifact
+   *
    * @return {@link ArtifactScope}
    */
   public ArtifactScope getScope() {
@@ -60,11 +64,11 @@ public final class ArtifactId implements Comparable<ArtifactId> {
 
   @Override
   public String toString() {
-    return "ArtifactId{" +
-      "name='" + name + '\'' +
-      ", version=" + version +
-      ", scope='" + scope + '\'' +
-      '}';
+    return "ArtifactId{"
+        + "name='" + name + '\''
+        + ", version=" + version
+        + ", scope='" + scope + '\''
+        + '}';
   }
 
   @Override
@@ -77,9 +81,9 @@ public final class ArtifactId implements Comparable<ArtifactId> {
     }
 
     ArtifactId that = (ArtifactId) o;
-    return Objects.equals(name, that.name) &&
-      Objects.equals(version, that.version) &&
-      Objects.equals(scope, that.scope);
+    return Objects.equals(name, that.name)
+        && Objects.equals(version, that.version)
+        && Objects.equals(scope, that.scope);
   }
 
   @Override

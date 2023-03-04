@@ -23,11 +23,13 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Thrown when a {@link PluginConfig} cannot be created from provided {@link PluginProperties}.
- * This can happen if properties required by the PluginConfig are not in the PluginProperties, or when
- * the property type specified by the PluginConfig is incompatible with the value provided in the PluginProperties.
+ * Thrown when a {@link PluginConfig} cannot be created from provided {@link PluginProperties}. This
+ * can happen if properties required by the PluginConfig are not in the PluginProperties, or when
+ * the property type specified by the PluginConfig is incompatible with the value provided in the
+ * PluginProperties.
  */
 public class InvalidPluginConfigException extends RuntimeException {
+
   private final Set<String> missingProperties;
   private final Set<InvalidPluginProperty> invalidProperties;
 
@@ -38,14 +40,14 @@ public class InvalidPluginConfigException extends RuntimeException {
   }
 
   public InvalidPluginConfigException(PluginClass pluginClass, Set<String> missingProperties,
-                                      Set<InvalidPluginProperty> invalidProperties) {
+      Set<InvalidPluginProperty> invalidProperties) {
     super(generateErrorMessage(pluginClass, missingProperties, invalidProperties));
     this.missingProperties = Collections.unmodifiableSet(new HashSet<>(missingProperties));
     this.invalidProperties = Collections.unmodifiableSet(new HashSet<>(invalidProperties));
     invalidProperties.stream()
-      .map(InvalidPluginProperty::getCause)
-      .filter(Objects::nonNull)
-      .forEach(this::addSuppressed);
+        .map(InvalidPluginProperty::getCause)
+        .filter(Objects::nonNull)
+        .forEach(this::addSuppressed);
   }
 
   /**
@@ -56,32 +58,33 @@ public class InvalidPluginConfigException extends RuntimeException {
   }
 
   /**
-   * @return the set of invalid properties, usually because the value given in the PluginProperties did not match
-   *         the expected type.
+   * @return the set of invalid properties, usually because the value given in the PluginProperties
+   *     did not match the expected type.
    */
   public Set<InvalidPluginProperty> getInvalidProperties() {
     return invalidProperties;
   }
 
   private static String generateErrorMessage(PluginClass pluginClass, Set<String> missingProperties,
-                                             Set<InvalidPluginProperty> invalidProperties) {
+      Set<InvalidPluginProperty> invalidProperties) {
     String baseMessage = String.format("Unable to create config for %s %s", pluginClass.getType(),
-                                       pluginClass.getName());
+        pluginClass.getName());
     if (missingProperties.isEmpty() && invalidProperties.isEmpty()) {
       return baseMessage;
     }
 
     StringBuilder errorMessage = new StringBuilder(baseMessage);
     if (missingProperties.size() == 1) {
-      errorMessage.append(String.format(" Required property '%s' is missing.", missingProperties.iterator().next()));
+      errorMessage.append(String.format(" Required property '%s' is missing.",
+          missingProperties.iterator().next()));
     } else if (missingProperties.size() > 1) {
       errorMessage.append(String.format(" Required properties '%s' are missing.",
-                                        String.join(", ", missingProperties)));
+          String.join(", ", missingProperties)));
     }
 
     for (InvalidPluginProperty invalidProperty : invalidProperties) {
       errorMessage.append(String.format(" '%s' is invalid: %s.",
-                                        invalidProperty.getName(), invalidProperty.getErrorMessage()));
+          invalidProperty.getName(), invalidProperty.getErrorMessage()));
     }
 
     return errorMessage.toString();

@@ -25,16 +25,18 @@ import io.cdap.cdap.data2.dataset2.SingleTypeModule;
  */
 public final class DatasetModules {
 
-  private DatasetModules() {}
+  private DatasetModules() {
+  }
 
   /**
-   * Creates {@link DatasetModule} given a class of {@link DatasetModule} type or {@link Dataset}. In latter case uses
-   * {@link SingleTypeModule} to construct a {@link DatasetModule}.
+   * Creates {@link DatasetModule} given a class of {@link DatasetModule} type or {@link Dataset}.
+   * In latter case uses {@link SingleTypeModule} to construct a {@link DatasetModule}.
+   *
    * @param clazz class to be used
    * @return {@link DatasetModule} instance
    */
   public static DatasetModule getDatasetModule(Class clazz)
-    throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 
     if (DatasetModule.class.isAssignableFrom(clazz)) {
       return (DatasetModule) clazz.newInstance();
@@ -44,20 +46,21 @@ public final class DatasetModules {
     }
 
     String msg = String.format(
-      "Cannot use class %s to instantiate dataset module; it must be of type DatasetModule or Dataset",
-      clazz.getName());
+        "Cannot use class %s to instantiate dataset module; it must be of type DatasetModule or Dataset",
+        clazz.getName());
     throw new IllegalArgumentException(msg);
   }
 
   /**
    * Gets class of the dataset module to be used in {@link #getDatasetModule(Class)};
    *
-   * We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
-   * by only implementing Dataset. Without requiring implementing datasets module, definition and other classes.
-   * In this case we wrap that Dataset implementation with SingleTypeModule. But since we don't have a way to serde
-   * dataset modules, if we pass only SingleTypeModule.class the Dataset implementation info will be lost. Hence, as
-   * a workaround we put Dataset implementation class in MDS (on DatasetService) and wrapping it with SingleTypeModule
-   * when we need to instantiate module.
+   * We support easier APIs for custom datasets: user can implement dataset and make it available
+   * for others to use by only implementing Dataset. Without requiring implementing datasets module,
+   * definition and other classes. In this case we wrap that Dataset implementation with
+   * SingleTypeModule. But since we don't have a way to serde dataset modules, if we pass only
+   * SingleTypeModule.class the Dataset implementation info will be lost. Hence, as a workaround we
+   * put Dataset implementation class in MDS (on DatasetService) and wrapping it with
+   * SingleTypeModule when we need to instantiate module.
    */
   public static Class getDatasetModuleClass(DatasetModule module) {
     if (module instanceof SingleTypeModule) {

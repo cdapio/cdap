@@ -28,22 +28,29 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Version 1 codec for {@link SecureStoreData} and providing the {@link java.security.KeyStore} scheme.
+ * Version 1 codec for {@link SecureStoreData} and providing the {@link java.security.KeyStore}
+ * scheme.
  *
- * Version 1 codec uses JCEKS KeyStore and directly converts the namespace and key name to a key alias in
- * <namespace>-<key> format. When encoding and decoding a {@link SecureStoreData} struct, each piece of metadata
- * along with its length is written in binary format. See {@link #encode(SecureStoreData)} and {@link #decode(byte[])}
- * for details.
+ * Version 1 codec uses JCEKS KeyStore and directly converts the namespace and key name to a key
+ * alias in
+ * <namespace>-<key> format. When encoding and decoding a {@link SecureStoreData} struct, each
+ * piece
+ * of metadata along with its length is written in binary format. See {@link
+ * #encode(SecureStoreData)} and {@link #decode(byte[])} for details.
  *
- * NOTE: This codec should not be used in normal operation and remains here for backwards compatibility purposes.
- *       See {@link SecureStoreDataCodecV2} instead.
+ * NOTE: This codec should not be used in normal operation and remains here for backwards
+ * compatibility purposes. See {@link SecureStoreDataCodecV2} instead.
  */
 @Deprecated
 public class SecureStoreDataCodecV1 implements FileSecureStoreCodec {
 
-  /** Scheme for KeyStore instance. */
+  /**
+   * Scheme for KeyStore instance.
+   */
   private static final String SCHEME_JCEKS = "jceks";
-  /** Separator between key namespace and key name in key alias. */
+  /**
+   * Separator between key namespace and key name in key alias.
+   */
   private static final String NAME_SEPARATOR = ":";
 
   @Override

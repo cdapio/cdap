@@ -30,7 +30,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class RuntimeServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  RuntimeServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient, TwillRunner twillRunner) {
+  RuntimeServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient,
+      TwillRunner twillRunner) {
     super(cConf, discoveryClient, Constants.Service.RUNTIME, twillRunner);
   }
 

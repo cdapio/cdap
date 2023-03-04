@@ -51,18 +51,19 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    DatasetId instance = cliConfig.getCurrentNamespace().dataset(arguments.get(ArgumentName.DATASET.toString()));
+    DatasetId instance = cliConfig.getCurrentNamespace()
+        .dataset(arguments.get(ArgumentName.DATASET.toString()));
     DatasetMeta meta = datasetClient.get(instance);
 
     Table table = Table.builder()
-      .setHeader("hive table", "spec", "type", "principal")
-      .setRows(ImmutableList.of(meta), new RowMaker<DatasetMeta>() {
-        @Override
-        public List<?> makeRow(DatasetMeta object) {
-          return Lists.newArrayList(object.getHiveTableName(), GSON.toJson(object.getSpec()),
-                                    GSON.toJson(object.getType()), object.getOwnerPrincipal());
-        }
-      }).build();
+        .setHeader("hive table", "spec", "type", "principal")
+        .setRows(ImmutableList.of(meta), new RowMaker<DatasetMeta>() {
+          @Override
+          public List<?> makeRow(DatasetMeta object) {
+            return Lists.newArrayList(object.getHiveTableName(), GSON.toJson(object.getSpec()),
+                GSON.toJson(object.getType()), object.getOwnerPrincipal());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
@@ -74,6 +75,6 @@ public class DescribeDatasetInstanceCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return String.format("Describes %s",
-                         Fragment.of(Article.A, ElementType.DATASET.getName()));
+        Fragment.of(Article.A, ElementType.DATASET.getName()));
   }
 }

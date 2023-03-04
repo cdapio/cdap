@@ -20,4 +20,5 @@ package io.cdap.cdap.api.dataset.lib;
  * Represents a partition of a time partitioned file set.
  */
 public interface TimePartitionDetail extends TimePartition, PartitionDetail {
+
 }

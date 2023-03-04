@@ -42,8 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link TwillController} wrapper that performs impersonation on {@link #getResourceReport()}, {@link #terminate()}
- * and {@link #kill()}.
+ * A {@link TwillController} wrapper that performs impersonation on {@link #getResourceReport()},
+ * {@link #terminate()} and {@link #kill()}.
  */
 final class ImpersonatedTwillController implements TwillController {
 
@@ -53,7 +53,8 @@ final class ImpersonatedTwillController implements TwillController {
   private final Impersonator impersonator;
   private final ProgramId programId;
 
-  ImpersonatedTwillController(TwillController delegate, Impersonator impersonator, ProgramId programId) {
+  ImpersonatedTwillController(TwillController delegate, Impersonator impersonator,
+      ProgramId programId) {
     this.delegate = delegate;
     this.impersonator = impersonator;
     this.programId = programId;
@@ -105,7 +106,8 @@ final class ImpersonatedTwillController implements TwillController {
   }
 
   @Override
-  public Future<Set<String>> restartInstances(Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
+  public Future<Set<String>> restartInstances(
+      Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
     return delegate.restartInstances(runnableToInstanceIds);
   }
 
@@ -120,13 +122,14 @@ final class ImpersonatedTwillController implements TwillController {
   }
 
   @Override
-  public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(
+      Map<String, LogEntry.Level> logLevels) {
     return delegate.updateLogLevels(logLevels);
   }
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-                                                             Map<String, LogEntry.Level> logLevels) {
+      Map<String, LogEntry.Level> logLevels) {
     return delegate.updateLogLevels(runnableName, logLevels);
   }
 
@@ -200,7 +203,8 @@ final class ImpersonatedTwillController implements TwillController {
   }
 
   @Override
-  public void awaitTerminated(long timeout, TimeUnit timeoutUnit) throws TimeoutException, ExecutionException {
+  public void awaitTerminated(long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException, ExecutionException {
     delegate.awaitTerminated(timeout, timeoutUnit);
   }
 

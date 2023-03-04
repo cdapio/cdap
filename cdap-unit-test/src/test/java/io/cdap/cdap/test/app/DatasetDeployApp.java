@@ -188,9 +188,9 @@ public class DatasetDeployApp extends AbstractApplication {
 
       Record that = (Record) o;
 
-      return Objects.equal(this.id, that.id) &&
-        Objects.equal(this.firstName, that.firstName) &&
-        Objects.equal(this.lastName, that.lastName);
+      return Objects.equal(this.id, that.id)
+          && Objects.equal(this.firstName, that.firstName)
+          && Objects.equal(this.lastName, that.lastName);
     }
 
     @Override

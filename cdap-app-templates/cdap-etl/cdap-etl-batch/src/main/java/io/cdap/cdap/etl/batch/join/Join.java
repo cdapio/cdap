@@ -31,12 +31,14 @@ import java.util.Set;
 
 /**
  * Performs join operation
+ *
  * @param <JOIN_KEY> type of join key
  * @param <INPUT_RECORD> type of input record
  * @param <OUT> type of output of mapreduce
  */
 
 public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
+
   private Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
   private JOIN_KEY joinKey;
   private Iterator<JoinElement<INPUT_RECORD>> iterator;
@@ -44,7 +46,8 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
   private final int numOfInputs;
 
   public Join(Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner, JOIN_KEY joinKey,
-              Iterator<JoinElement<INPUT_RECORD>> iterator, int numOfInputs, Emitter<OUT> emitter) throws Exception {
+      Iterator<JoinElement<INPUT_RECORD>> iterator, int numOfInputs, Emitter<OUT> emitter)
+      throws Exception {
     this.joiner = joiner;
     this.joinKey = joinKey;
     this.iterator = iterator;
@@ -77,8 +80,9 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
     return perStageJoinElements;
   }
 
-  private void join(Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements, Set<String> requiredInputs)
-    throws Exception {
+  private void join(Map<String, List<JoinElement<INPUT_RECORD>>> perStageJoinElements,
+      Set<String> requiredInputs)
+      throws Exception {
     List<List<JoinElement<INPUT_RECORD>>> list = new ArrayList<>(perStageJoinElements.values());
     ArrayList<JoinElement<INPUT_RECORD>> joinRow = new ArrayList<>();
     Set<String> joinRowInputs = new HashSet<>();
@@ -87,8 +91,8 @@ public class Join<JOIN_KEY, INPUT_RECORD, OUT> {
 
   // TODO use iterative algorithm instead of recursion
   private void getCartesianProduct(List<List<JoinElement<INPUT_RECORD>>> list, int index,
-                                   List<JoinElement<INPUT_RECORD>> joinRow,
-                                   Set<String> joinRowInputs, Set<String> requiredInputs) throws Exception {
+      List<JoinElement<INPUT_RECORD>> joinRow,
+      Set<String> joinRowInputs, Set<String> requiredInputs) throws Exception {
     // Check up to the end of the list and emit only if records from all the required inputs are present in joinElements
     if (index == list.size() && joinRowInputs.containsAll(requiredInputs)) {
       emitter.emit(joiner.merge(joinKey, joinRow));

@@ -21,8 +21,8 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * This interface expose methods for authenticating HTTP calls.
- * It is used to set the {@code Authorization} header in the form of
+ * This interface expose methods for authenticating HTTP calls. It is used to set the {@code
+ * Authorization} header in the form of
  * <pre>
  * {@code Authorization: type credentials}
  * </pre>

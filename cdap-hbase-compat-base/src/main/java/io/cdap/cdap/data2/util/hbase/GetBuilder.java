@@ -21,14 +21,14 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.Filter;
 
 /**
- * Builder for creating {@link Get}. This builder should be used for cross HBase versions compatibility.
- * All methods on this class are just delegating to calls to {@link Get} object.
+ * Builder for creating {@link Get}. This builder should be used for cross HBase versions
+ * compatibility. All methods on this class are just delegating to calls to {@link Get} object.
  */
 public interface GetBuilder {
 
-  GetBuilder addFamily(byte [] family);
+  GetBuilder addFamily(byte[] family);
 
-  GetBuilder addColumn(byte [] family, byte [] qualifier);
+  GetBuilder addColumn(byte[] family, byte[] qualifier);
 
   GetBuilder setTimeRange(long minStamp, long maxStamp) throws IOException;
 

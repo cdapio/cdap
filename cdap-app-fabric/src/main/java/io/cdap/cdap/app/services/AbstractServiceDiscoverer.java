@@ -31,9 +31,9 @@ import java.net.URL;
 import javax.annotation.Nullable;
 
 /**
- * An abstract implementation of {@link ServiceDiscoverer}.
- * It provides definition for {@link ServiceDiscoverer#getServiceURL}  and expects the sub-classes to give definition
- * for {@link AbstractServiceDiscoverer#getDiscoveryServiceClient}.
+ * An abstract implementation of {@link ServiceDiscoverer}. It provides definition for {@link
+ * ServiceDiscoverer#getServiceURL}  and expects the sub-classes to give definition for {@link
+ * AbstractServiceDiscoverer#getDiscoveryServiceClient}.
  */
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
@@ -76,7 +76,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   @Nullable
   @Override
   public HttpURLConnection openConnection(String namespaceId, String applicationId,
-                                          String serviceId, String methodPath) throws IOException {
+      String serviceId, String methodPath) throws IOException {
     try {
       return createRemoteClient(namespaceId, applicationId, serviceId).openConnection(methodPath);
     } catch (ServiceUnavailableException e) {
@@ -97,10 +97,13 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
    * @param serviceId service name of the service
    * @return a {@link RemoteClient} that is setup to be used in the current execution environment.
    */
-  private RemoteClient createRemoteClient(String namespaceId, String applicationId, String serviceId) {
-    String discoveryName = ServiceDiscoverable.getName(namespaceId, applicationId, ProgramType.SERVICE, serviceId);
+  private RemoteClient createRemoteClient(String namespaceId, String applicationId,
+      String serviceId) {
+    String discoveryName = ServiceDiscoverable.getName(namespaceId, applicationId,
+        ProgramType.SERVICE, serviceId);
     String basePath = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
-                                    Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId);
-    return getRemoteClientFactory().createRemoteClient(discoveryName, HttpRequestConfig.DEFAULT, basePath);
+        Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId);
+    return getRemoteClientFactory().createRemoteClient(discoveryName, HttpRequestConfig.DEFAULT,
+        basePath);
   }
 }

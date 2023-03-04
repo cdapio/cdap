@@ -29,8 +29,8 @@ interface TwillControllerFactory {
   /**
    * Creates a new instance of {@link TwillControllerFactory}.
    *
-   * @param startupTask an optional task to run to start the program execution.
-   *                    This task will be executed asynchronously.
+   * @param startupTask an optional task to run to start the program execution. This task will
+   *     be executed asynchronously.
    * @param timeout the maximum amount of time for the startup task to complete
    * @param timeoutUnit the time unit for the timeout
    * @return a {@link TwillController} controlling and reflecting the state of the program execution

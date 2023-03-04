@@ -34,6 +34,7 @@ public final class MessagingUtils {
    * Constants used for TMS.
    */
   public static final class Constants {
+
     public static final String DEFAULT_GENERATION = Integer.toString(1);
     public static final byte[] COLUMN_FAMILY = {'d'};
     public static final byte[] METADATA_COLUMN = Bytes.toBytes("m");
@@ -56,8 +57,8 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert {@link TopicId} and generation id to byte array to be used for data tables (message and payload) as
-   * row key prefix.
+   * Convert {@link TopicId} and generation id to byte array to be used for data tables (message and
+   * payload) as row key prefix.
    *
    * @param topicId {@link TopicId}
    * @param generation generation id of the topic
@@ -72,7 +73,8 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the
+   * {@link TopicId}
    *
    * @param topicBytes byte array which contains the representation of the topic id
    * @param offset offset to start decoding
@@ -88,8 +90,8 @@ public final class MessagingUtils {
   }
 
   /**
-   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the {@link TopicId}.
-   * Same as calling {@link #toTopicId(byte[], int, int)} with {@code offset = 0}
+   * Convert byte array encoded with the {@link #toMetadataRowKey(TopicId)} method back to the
+   * {@link TopicId}. Same as calling {@link #toTopicId(byte[], int, int)} with {@code offset = 0}
    * and {@code length = topicBytes.length}.
    *
    * @param topicBytes byte array which contains the representation of the topic id
@@ -132,7 +134,8 @@ public final class MessagingUtils {
    * @return write timestamp
    */
   public static long getWriteTimestamp(byte[] payloadTableRowKey, int offset, int rowKeyLength) {
-    return Bytes.toLong(payloadTableRowKey, offset + getTopicLengthPayloadEntry(rowKeyLength) + Bytes.SIZEOF_LONG);
+    return Bytes.toLong(payloadTableRowKey,
+        offset + getTopicLengthPayloadEntry(rowKeyLength) + Bytes.SIZEOF_LONG);
   }
 
   /**
@@ -156,7 +159,8 @@ public final class MessagingUtils {
    */
   public static boolean isOlderGeneration(int dataGeneration, int currGeneration) {
     boolean prevGeneration = dataGeneration < Math.abs(currGeneration);
-    boolean deletedGeneration = (currGeneration < 0) && (dataGeneration == Math.abs(currGeneration));
+    boolean deletedGeneration =
+        (currGeneration < 0) && (dataGeneration == Math.abs(currGeneration));
     return prevGeneration || deletedGeneration;
   }
 }

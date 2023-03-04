@@ -52,9 +52,9 @@ public class PipelineCondition extends AbstractCondition {
   private Metrics metrics;
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .create();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+      .create();
 
   public PipelineCondition(BatchPhaseSpec spec) {
     this.phaseSpec = spec;
@@ -78,33 +78,40 @@ public class PipelineCondition extends AbstractCondition {
       throw new IllegalStateException("WorkflowContext for the Condition cannot be null.");
     }
     Map<String, String> properties = context.getConditionSpecification().getProperties();
-    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID),
+        BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageSpec stageSpec = phase.iterator().next();
-    PluginContext pluginContext = new PipelinePluginContext(context, metrics, phaseSpec.isStageLoggingEnabled(),
-                                                            phaseSpec.isProcessTimingEnabled());
+    PluginContext pluginContext = new PipelinePluginContext(context, metrics,
+        phaseSpec.isStageLoggingEnabled(),
+        phaseSpec.isProcessTimingEnabled());
 
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(context.getToken(), context.getRuntimeArguments()),
-                                context.getLogicalStartTime(), context, context, context.getNamespace());
+        new DefaultMacroEvaluator(
+            new BasicArguments(context.getToken(), context.getRuntimeArguments()),
+            context.getLogicalStartTime(), context, context, context.getNamespace());
 
     try {
       Condition condition = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
       PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
-      ConditionContext conditionContext = new BasicConditionContext(context, pipelineRuntime, stageSpec);
+      ConditionContext conditionContext = new BasicConditionContext(context, pipelineRuntime,
+          stageSpec);
       boolean result = condition.apply(conditionContext);
       WorkflowToken token = context.getToken();
       if (token == null) {
-        throw new IllegalStateException("WorkflowToken cannot be null when Condition is executed through Workflow.");
+        throw new IllegalStateException(
+            "WorkflowToken cannot be null when Condition is executed through Workflow.");
       }
 
-      for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
+      for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments()
+          .entrySet()) {
         token.put(entry.getKey(), entry.getValue());
       }
 
       return result;
     } catch (Exception e) {
-      String msg = String.format("Error executing condition '%s' in the pipeline.", stageSpec.getName());
+      String msg = String.format("Error executing condition '%s' in the pipeline.",
+          stageSpec.getName());
       throw new RuntimeException(msg, e);
     }
   }

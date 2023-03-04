@@ -22,7 +22,9 @@ import com.google.common.base.Objects;
  * Boundary of a log read request.
  */
 public class ReadRange {
-  public static final ReadRange LATEST = new ReadRange(-1, Long.MAX_VALUE, LogOffset.LATEST_KAFKA_OFFSET);
+
+  public static final ReadRange LATEST = new ReadRange(-1, Long.MAX_VALUE,
+      LogOffset.LATEST_KAFKA_OFFSET);
 
   private final long fromMillis;
   private final long toMillis;
@@ -63,9 +65,9 @@ public class ReadRange {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("fromMillis", fromMillis)
-      .add("toMillis", toMillis)
-      .add("kafkaOffset", kafkaOffset)
-      .toString();
+        .add("fromMillis", fromMillis)
+        .add("toMillis", toMillis)
+        .add("kafkaOffset", kafkaOffset)
+        .toString();
   }
 }

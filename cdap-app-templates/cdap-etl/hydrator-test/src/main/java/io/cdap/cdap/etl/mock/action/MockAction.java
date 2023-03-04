@@ -38,11 +38,13 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Mock sink that writes records to a Table and has a utility method for getting all records written.
+ * Mock sink that writes records to a Table and has a utility method for getting all records
+ * written.
  */
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name("TableWriterAction")
 public class MockAction extends Action {
+
   private final Config config;
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
@@ -50,6 +52,7 @@ public class MockAction extends Action {
    * Config for the MockAction
    */
   public static class Config extends PluginConfig {
+
     private String tableName;
     private String rowKey;
     private String columnKey;
@@ -88,14 +91,15 @@ public class MockAction extends Action {
 
     if (config.argumentKey != null && config.argumentValue != null) {
       if (!context.getArguments().get(config.argumentKey).equals(config.argumentValue)) {
-        throw new IllegalStateException(String.format("Expected %s to be present in the argument map with value %s.",
-                                                      config.argumentKey, config.argumentValue));
+        throw new IllegalStateException(
+            String.format("Expected %s to be present in the argument map with value %s.",
+                config.argumentKey, config.argumentValue));
       }
     }
   }
 
   public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey, String value,
-                                    @Nullable String argumentKey, @Nullable String argumentValue) {
+      @Nullable String argumentKey, @Nullable String argumentValue) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("tableName", tableName);
     builder.put("rowKey", rowKey);
@@ -108,7 +112,8 @@ public class MockAction extends Action {
     return new ETLPlugin("TableWriterAction", Action.PLUGIN_TYPE, builder.build(), null);
   }
 
-  public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey, String value) {
+  public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey,
+      String value) {
     return getPlugin(tableName, rowKey, columnKey, value, null, null);
   }
 
@@ -118,18 +123,21 @@ public class MockAction extends Action {
     properties.put("rowKey", new PluginPropertyField("rowKey", "", "string", true, false));
     properties.put("columnKey", new PluginPropertyField("columnKey", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
-    properties.put("argumentKey", new PluginPropertyField("argumentKey", "", "string", false, false));
-    properties.put("argumentValue", new PluginPropertyField("argumentValue", "", "string", false, false));
+    properties.put("argumentKey",
+        new PluginPropertyField("argumentKey", "", "string", false, false));
+    properties.put("argumentValue",
+        new PluginPropertyField("argumentValue", "", "string", false, false));
     return PluginClass.builder().setName("TableWriterAction").setType(Action.PLUGIN_TYPE)
-             .setDescription("").setClassName(MockAction.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockAction.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 
   /**
    * Read the value for the specified rowKey and columnKey.
    */
-  public static String readOutput(DataSetManager<Table> tableManager, String rowKey, String columnKey)
-    throws Exception {
+  public static String readOutput(DataSetManager<Table> tableManager, String rowKey,
+      String columnKey)
+      throws Exception {
     Table table = tableManager.get();
     return Bytes.toString(table.get(Bytes.toBytes(rowKey), Bytes.toBytes(columnKey)));
   }

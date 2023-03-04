@@ -19,8 +19,8 @@ package io.cdap.cdap.messaging.service;
 import java.io.IOException;
 
 /**
- * An internal interface used by {@link CoreMessagingService} and {@link CoreMessageFetcher} for providing
- * messaging tables.
+ * An internal interface used by {@link CoreMessagingService} and {@link CoreMessageFetcher} for
+ * providing messaging tables.
  *
  * @param <T> Type of the message table.
  */

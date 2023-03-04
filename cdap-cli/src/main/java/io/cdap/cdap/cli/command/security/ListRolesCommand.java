@@ -53,30 +53,33 @@ public class ListRolesCommand extends AbstractAuthCommand {
     Set<Role> roles;
     if (!(Strings.isNullOrEmpty(principalType) && Strings.isNullOrEmpty(principalName))) {
       roles = client.listRoles(new Principal(principalName,
-                                             Principal.PrincipalType.valueOf(principalType.toUpperCase())));
+          Principal.PrincipalType.valueOf(principalType.toUpperCase())));
     } else {
       roles = client.listAllRoles();
     }
 
     Table table = Table.builder()
-      .setHeader("Role")
-      .setRows(Lists.newArrayList(roles), new RowMaker<Role>() {
-        @Override
-        public List<?> makeRow(Role role) {
-          return Lists.newArrayList(role.getName());
-        }
-      }).build();
+        .setHeader("Role")
+        .setRows(Lists.newArrayList(roles), new RowMaker<Role>() {
+          @Override
+          public List<?> makeRow(Role role) {
+            return Lists.newArrayList(role.getName());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("list roles [for <%s> <%s>]", ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
+    return String.format("list roles [for <%s> <%s>]", ArgumentName.PRINCIPAL_TYPE,
+        ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override
   public String getDescription() {
-    return "Lists all roles, optionally for a particular principal in an authorization system for role-based " +
-      "access control";
+    return
+        "Lists all roles, optionally for a particular principal in an authorization system for role-based "
+
+            + "access control";
   }
 }

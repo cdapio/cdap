@@ -25,22 +25,23 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link BatchSource} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around {@link BatchSource} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  *
  * @param <KEY_IN> the input key type
  * @param <VAL_IN> the input value type
  * @param <OUT> the output type
  */
 public class WrappedBatchSource<KEY_IN, VAL_IN, OUT>
-  extends BatchSource<KEY_IN, VAL_IN, OUT>
-  implements PluginWrapper<BatchSource<KEY_IN, VAL_IN, OUT>> {
+    extends BatchSource<KEY_IN, VAL_IN, OUT>
+    implements PluginWrapper<BatchSource<KEY_IN, VAL_IN, OUT>> {
+
   private final BatchSource<KEY_IN, VAL_IN, OUT> batchSource;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
   public WrappedBatchSource(BatchSource<KEY_IN, VAL_IN, OUT> batchSource,
-                            Caller caller, OperationTimer operationTimer) {
+      Caller caller, OperationTimer operationTimer) {
     this.batchSource = batchSource;
     this.caller = caller;
     this.operationTimer = operationTimer;

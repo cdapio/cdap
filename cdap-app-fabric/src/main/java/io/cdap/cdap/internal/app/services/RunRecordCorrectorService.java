@@ -48,7 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The base implementation of the service that periodically scans for program runs that no longer running.
+ * The base implementation of the service that periodically scans for program runs that no longer
+ * running.
  */
 public abstract class RunRecordCorrectorService extends AbstractIdleService {
 
@@ -59,9 +60,10 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   // PENDING is not in this list because provision tasks run in the CDAP master and are resumed on start up.
   // So if CDAP is shut down in the middle of a provision task, it will get resumed by the ProvisioningService.
   // RESUMING in not in this set because it is not actually a state, despite being an enum value.
-  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(ProgramRunStatus.STARTING,
-                                                                               ProgramRunStatus.RUNNING,
-                                                                               ProgramRunStatus.SUSPENDED);
+  private static final Set<ProgramRunStatus> NOT_STOPPED_STATUSES = EnumSet.of(
+      ProgramRunStatus.STARTING,
+      ProgramRunStatus.RUNNING,
+      ProgramRunStatus.SUSPENDED);
   private final Store store;
   private final ProgramStateWriter programStateWriter;
   private final ProgramRuntimeService runtimeService;
@@ -72,19 +74,21 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private ScheduledExecutorService localDatasetDeleterService;
 
-  RunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                            ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                            DatasetFramework datasetFramework) {
+  RunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework) {
     this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework,
-         2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
-         cConf.getInt(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_TX_BATCH_SIZE));
+        2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+        cConf.getInt(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_TX_BATCH_SIZE));
   }
 
   @VisibleForTesting
-  RunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                            ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                            DatasetFramework datasetFramework,
-                            long startTimeoutSecs, int txBatchSize) {
+  RunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework,
+      long startTimeoutSecs, int txBatchSize) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.runtimeService = runtimeService;
@@ -100,15 +104,15 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     Set<ProgramRunId> fixed = doFixRunRecords();
 
     if (!fixed.isEmpty()) {
-      LOG.info("Corrected {} run records with status in {} that have no actual running program. " +
-                 "Such programs likely have crashed or were killed by external signal.",
-               fixed.size(), NOT_STOPPED_STATUSES);
+      LOG.info("Corrected {} run records with status in {} that have no actual running program. "
+              + "Such programs likely have crashed or were killed by external signal.",
+          fixed.size(), NOT_STOPPED_STATUSES);
     }
   }
 
   /**
-   * Fix all the possible inconsistent states for RunRecords that shows it is in RUNNING state but actually not
-   * via check to {@link ProgramRuntimeService} for a type of CDAP program.
+   * Fix all the possible inconsistent states for RunRecords that shows it is in RUNNING state but
+   * actually not via check to {@link ProgramRuntimeService} for a type of CDAP program.
    *
    * @return the set of fixed {@link ProgramRunId}.
    */
@@ -124,7 +128,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         // runs are not guaranteed to come back in order of start time, so need to scan the entire time range
         // each time. Should not be worse in performance than specifying a more restrictive time range
         // because time range is just used as a read-time filter.
-        Map<ProgramRunId, RunRecordDetail> runs = store.getRuns(status, 0L, Long.MAX_VALUE, txBatchSize, filter);
+        Map<ProgramRunId, RunRecordDetail> runs = store.getRuns(status, 0L, Long.MAX_VALUE,
+            txBatchSize, filter);
         LOG.trace("{} run records in {} state but are not actually running", runs.size(), status);
         if (runs.isEmpty()) {
           break;
@@ -133,8 +138,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         for (RunRecordDetail record : runs.values()) {
           ProgramRunId programRunId = record.getProgramRunId();
           String msg = String.format(
-            "Fixed RunRecord for program run %s in %s state because it is actually not running",
-            programRunId, record.getStatus());
+              "Fixed RunRecord for program run %s in %s state because it is actually not running",
+              programRunId, record.getStatus());
           programStateWriter.error(programRunId, new ProgramRunAbortedException(msg));
           fixedPrograms.add(programRunId);
           LOG.warn(msg);
@@ -143,10 +148,11 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     }
 
     if (fixedPrograms.isEmpty()) {
-      LOG.trace("No RunRecord found with status in {}, but the program are not actually running", NOT_STOPPED_STATUSES);
+      LOG.trace("No RunRecord found with status in {}, but the program are not actually running",
+          NOT_STOPPED_STATUSES);
     } else {
       LOG.warn("Fixed {} RunRecords with status in {}, but the programs are not actually running",
-               fixedPrograms.size(), NOT_STOPPED_STATUSES);
+          fixedPrograms.size(), NOT_STOPPED_STATUSES);
     }
     return fixedPrograms;
   }
@@ -156,22 +162,28 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     LOG.info("Starting RunRecordCorrectorService");
 
     localDatasetDeleterService = Executors
-      .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("local dataset deleter").build());
+        .newSingleThreadScheduledExecutor(
+            new ThreadFactoryBuilder().setNameFormat("local dataset deleter").build());
     long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
     if (interval <= 0) {
-      LOG.warn("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
+      LOG.warn(
+          "Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.",
+          interval);
       interval = 3600L;
     }
 
-    long initialDelay = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS);
+    long initialDelay = cConf.getLong(
+        Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS);
     if (initialDelay <= 0) {
-      LOG.warn("Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
-               initialDelay);
+      LOG.warn(
+          "Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
+          initialDelay);
       initialDelay = 300L;
     }
 
     Runnable runnable = new LocalDatasetDeleterRunnable(namespaceAdmin, store, datasetFramework);
-    localDatasetDeleterService.scheduleWithFixedDelay(runnable, initialDelay, interval, TimeUnit.SECONDS);
+    localDatasetDeleterService.scheduleWithFixedDelay(runnable, initialDelay, interval,
+        TimeUnit.SECONDS);
   }
 
   @Override
@@ -189,8 +201,9 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   }
 
   /**
-   * Creates a {@link Predicate} for {@link RunRecordDetail} to be used for scanning the {@link Store} for run records
-   * that doesn't have the program actually running as determined by the {@link ProgramRuntimeService}.
+   * Creates a {@link Predicate} for {@link RunRecordDetail} to be used for scanning the {@link
+   * Store} for run records that doesn't have the program actually running as determined by the
+   * {@link ProgramRuntimeService}.
    *
    * @param excludedIds a set of {@link ProgramRunId} that are always rejected by the filter.
    */
@@ -215,10 +228,13 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
       // If the workflow is still running, then we don't fix this run record.
       // This is because it won't be found via the ProgramRuntimeService
       Map<String, String> systemArgs = record.getSystemArgs();
-      String workflowName = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
-      String workflowRunId = systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+      String workflowName =
+          systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
+      String workflowRunId =
+          systemArgs == null ? null : systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
       if (workflowName != null && workflowRunId != null) {
-        ProgramId workflowProgramId = programId.getParent().program(ProgramType.WORKFLOW, workflowName);
+        ProgramId workflowProgramId = programId.getParent()
+            .program(ProgramType.WORKFLOW, workflowName);
 
         // If the workflow is still running, ignore the record.
         if (runtimeService.list(workflowProgramId).containsKey(RunIds.fromString(workflowRunId))) {
@@ -228,7 +244,8 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
         // Verify the store, if the workflow status is already in end state, correct the underlying program
         RunRecordDetail workflowRun = store.getRun(workflowProgramId.run(workflowRunId));
         // the null check if just to avoid the NPE warning, it should never be null
-        if (timeSinceStart > startTimeoutSecs && (workflowRun == null || workflowRun.getStatus().isEndState())) {
+        if (timeSinceStart > startTimeoutSecs && (workflowRun == null || workflowRun.getStatus()
+            .isEndState())) {
           return true;
         }
       }
@@ -244,7 +261,7 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
 
       // Check if it is not actually running.
       return timeSinceStart > startTimeoutSecs
-        && !runtimeService.list(programId).containsKey(RunIds.fromString(programRunId.getRun()));
+          && !runtimeService.list(programId).containsKey(RunIds.fromString(programRunId.getRun()));
 
     };
   }

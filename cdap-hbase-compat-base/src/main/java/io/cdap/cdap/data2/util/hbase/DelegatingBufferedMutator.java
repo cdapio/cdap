@@ -24,8 +24,8 @@ import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Mutation;
 
 /**
- * A concrete class implementation that delegate all {@link BufferedMutator}
- * operations to another {@link BufferedMutator}.
+ * A concrete class implementation that delegate all {@link BufferedMutator} operations to another
+ * {@link BufferedMutator}.
  */
 public class DelegatingBufferedMutator implements BufferedMutator {
 

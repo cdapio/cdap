@@ -28,6 +28,7 @@ import java.util.Set;
  */
 @Beta
 public final class FieldType {
+
   /**
    * Supported data types.
    */
@@ -54,14 +55,16 @@ public final class FieldType {
   /**
    * Valid field types that can be part of a primary key.
    */
-  public static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
-                                                                                           Type.STRING, Type.BOOLEAN));
+  public static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(
+      EnumSet.of(Type.INTEGER, Type.LONG,
+          Type.STRING, Type.BOOLEAN));
 
   /**
    * Valid field types that can be defined as an index.
    */
-  public static final Set<Type> INDEX_COLUMN_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
-                                                                                            Type.STRING, Type.BOOLEAN));
+  public static final Set<Type> INDEX_COLUMN_TYPES = Collections.unmodifiableSet(
+      EnumSet.of(Type.INTEGER, Type.LONG,
+          Type.STRING, Type.BOOLEAN));
   private final String name;
   private final Type type;
 
@@ -99,8 +102,8 @@ public final class FieldType {
       return false;
     }
     FieldType fieldType = (FieldType) o;
-    return Objects.equals(name, fieldType.name) &&
-      type == fieldType.type;
+    return Objects.equals(name, fieldType.name)
+        && type == fieldType.type;
   }
 
   @Override
@@ -111,9 +114,9 @@ public final class FieldType {
 
   @Override
   public String toString() {
-    return "FieldType{" +
-      "name='" + name + '\'' +
-      ", type=" + type +
-      '}';
+    return "FieldType{"
+        + "name='" + name + '\''
+        + ", type=" + type
+        + '}';
   }
 }

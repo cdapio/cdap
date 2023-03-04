@@ -50,45 +50,48 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * {@link PrivateModule} for authorization classes. This module is necessary and must be in app-fabric because classes
- * like {@link DatasetFramework}, {@link DynamicDatasetCache}, {@link DefaultAdmin} are not available in cdap-security.
+ * {@link PrivateModule} for authorization classes. This module is necessary and must be in
+ * app-fabric because classes like {@link DatasetFramework}, {@link DynamicDatasetCache}, {@link
+ * DefaultAdmin} are not available in cdap-security.
  *
- * This module is part of the injector created in StandaloneMain and MasterServiceMain, which makes it available to
- * services. The requirements for this module are:
- * 1. This module is used for creating and exposing {@link AccessControllerInstantiator}.
- * 2. The {@link AccessControllerInstantiator} needs a {@link DefaultAuthorizationContext}.
- * 3. The {@link DefaultAuthorizationContext} needs a {@link DatasetContext}, a {@link Admin} and a
- * {@link Transactional}.
+ * This module is part of the injector created in StandaloneMain and MasterServiceMain, which makes
+ * it available to services. The requirements for this module are: 1. This module is used for
+ * creating and exposing {@link AccessControllerInstantiator}. 2. The {@link
+ * AccessControllerInstantiator} needs a {@link DefaultAuthorizationContext}. 3. The {@link
+ * DefaultAuthorizationContext} needs a {@link DatasetContext}, a {@link Admin} and a {@link
+ * Transactional}.
  *
- * These requirements are fulfilled by:
- * 1. Constructing a {@link Singleton} {@link MultiThreadDatasetCache} by injecting a {@link DatasetFramework}, a
- * {@link TransactionSystemClient} and a {@link MetricsCollectionService}. This {@link MultiThreadDatasetCache} is
- * created for datasets in the {@link NamespaceId#SYSTEM}, since the datasets that {@link AccessController} extensions
- * need are created in the system namespace.
- * 2. Binding the {@link DatasetContext} to the {@link MultiThreadDatasetCache} created above.
- * 3. Using the {@link MultiThreadDatasetCache} to create a {@link TransactionContext} for providing the
- * {@link Transactional}.
- * 4. Binding a {@link DefaultAdmin} by injecting {@link DatasetFramework}. This {@link DefaultAdmin} is also created
- * for the {@link NamespaceId#SYSTEM}.
- * 5. Using the bound {@link DatasetContext}, {@link Admin} and {@link Transactional} to provide the injections for
- * {@link DefaultAuthorizationContext}, which is provided using a {@link Guice} {@link FactoryModuleBuilder} to
- * construct a {@link AuthorizationContextFactory}.
- * 6. Only exposing a {@link Singleton} binding to {@link AccessControllerInstantiator} from this module. The
- * {@link AccessControllerInstantiator} can just {@link Inject} the {@link AuthorizationContextFactory} and call
- * {@link AuthorizationContextFactory#create(Properties)} using an {@link Assisted} {@link Properties} object.
+ * These requirements are fulfilled by: 1. Constructing a {@link Singleton} {@link
+ * MultiThreadDatasetCache} by injecting a {@link DatasetFramework}, a {@link
+ * TransactionSystemClient} and a {@link MetricsCollectionService}. This {@link
+ * MultiThreadDatasetCache} is created for datasets in the {@link NamespaceId#SYSTEM}, since the
+ * datasets that {@link AccessController} extensions need are created in the system namespace. 2.
+ * Binding the {@link DatasetContext} to the {@link MultiThreadDatasetCache} created above. 3. Using
+ * the {@link MultiThreadDatasetCache} to create a {@link TransactionContext} for providing the
+ * {@link Transactional}. 4. Binding a {@link DefaultAdmin} by injecting {@link DatasetFramework}.
+ * This {@link DefaultAdmin} is also created for the {@link NamespaceId#SYSTEM}. 5. Using the bound
+ * {@link DatasetContext}, {@link Admin} and {@link Transactional} to provide the injections for
+ * {@link DefaultAuthorizationContext}, which is provided using a {@link Guice} {@link
+ * FactoryModuleBuilder} to construct a {@link AuthorizationContextFactory}. 6. Only exposing a
+ * {@link Singleton} binding to {@link AccessControllerInstantiator} from this module. The {@link
+ * AccessControllerInstantiator} can just {@link Inject} the {@link AuthorizationContextFactory} and
+ * call {@link AuthorizationContextFactory#create(Properties)} using an {@link Assisted} {@link
+ * Properties} object.
  */
 public class AuthorizationModule extends PrivateModule {
+
   @Override
   protected void configure() {
-    bind(DynamicDatasetCache.class).toProvider(DynamicDatasetCacheProvider.class).in(Scopes.SINGLETON);
+    bind(DynamicDatasetCache.class).toProvider(DynamicDatasetCacheProvider.class)
+        .in(Scopes.SINGLETON);
     bind(DatasetContext.class).to(DynamicDatasetCache.class).in(Scopes.SINGLETON);
     bind(Admin.class).toProvider(AdminProvider.class);
     bind(Transactional.class).toProvider(TransactionalProvider.class);
 
     install(
-      new FactoryModuleBuilder()
-        .implement(AuthorizationContext.class, DefaultAuthorizationContext.class)
-        .build(AuthorizationContextFactory.class)
+        new FactoryModuleBuilder()
+            .implement(AuthorizationContext.class, DefaultAuthorizationContext.class)
+            .build(AuthorizationContextFactory.class)
     );
 
     bind(AccessControllerInstantiator.class).in(Scopes.SINGLETON);
@@ -106,8 +109,9 @@ public class AuthorizationModule extends PrivateModule {
     private final MetricsCollectionService metricsCollectionService;
 
     @Inject
-    private DynamicDatasetCacheProvider(DatasetFramework dsFramework, TransactionSystemClient txClient,
-                                        MetricsCollectionService metricsCollectionService) {
+    private DynamicDatasetCacheProvider(DatasetFramework dsFramework,
+        TransactionSystemClient txClient,
+        MetricsCollectionService metricsCollectionService) {
       this.dsFramework = dsFramework;
       this.txClient = txClient;
       this.metricsCollectionService = metricsCollectionService;
@@ -117,22 +121,23 @@ public class AuthorizationModule extends PrivateModule {
     public DynamicDatasetCache get() {
       SystemDatasetInstantiator dsInstantiator = new SystemDatasetInstantiator(dsFramework);
       return new MultiThreadDatasetCache(
-        dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.of(),
-        metricsCollectionService.getContext(ImmutableMap.of()),
-        ImmutableMap.of()
+          dsInstantiator, txClient, NamespaceId.SYSTEM, ImmutableMap.of(),
+          metricsCollectionService.getContext(ImmutableMap.of()),
+          ImmutableMap.of()
       );
     }
   }
 
   @Singleton
   private static final class AdminProvider implements Provider<Admin> {
+
     private final DatasetFramework dsFramework;
     private final SecureStoreManager secureStoreManager;
     private final NamespaceQueryAdmin namespaceQueryAdmin;
 
     @Inject
     private AdminProvider(DatasetFramework dsFramework, SecureStoreManager secureStoreManager,
-                          NamespaceQueryAdmin namespaceQueryAdmin) {
+        NamespaceQueryAdmin namespaceQueryAdmin) {
       this.dsFramework = dsFramework;
       this.secureStoreManager = secureStoreManager;
       this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -140,7 +145,8 @@ public class AuthorizationModule extends PrivateModule {
 
     @Override
     public Admin get() {
-      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager, namespaceQueryAdmin);
+      return new DefaultAdmin(dsFramework, NamespaceId.SYSTEM, secureStoreManager,
+          namespaceQueryAdmin);
     }
   }
 

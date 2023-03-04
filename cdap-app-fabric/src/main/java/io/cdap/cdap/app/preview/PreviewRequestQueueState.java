@@ -22,6 +22,7 @@ import java.util.Objects;
  * Class representing the state of the preview job queue.
  */
 public class PreviewRequestQueueState {
+
   private final int pendingRequests;
 
   public PreviewRequestQueueState(int pendingRequests) {

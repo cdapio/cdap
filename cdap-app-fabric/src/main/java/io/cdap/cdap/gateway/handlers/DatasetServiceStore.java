@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
  * DatasetService Store implements ServiceStore using Datasets without Transaction.
  */
 public final class DatasetServiceStore extends AbstractIdleService implements ServiceStore {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceStore.class);
   private static final Gson GSON = new Gson();
 
@@ -72,17 +73,17 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   @Override
   protected void startUp() throws Exception {
     final DatasetId serviceStoreDatasetInstanceId =
-      NamespaceId.SYSTEM.dataset(Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
+        NamespaceId.SYSTEM.dataset(Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
     table = Retries.supplyWithRetries(() -> {
       try {
         return DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
-                                               NoTxKeyValueTable.class.getName(),
-                                               DatasetProperties.EMPTY, null);
+            NoTxKeyValueTable.class.getName(),
+            DatasetProperties.EMPTY, null);
       } catch (Exception e) {
         // Throwing RetryableException here is just to make it retry getting the dataset
         // an exception here usually means there is an hbase problem
         LOG.warn("Error getting service store dataset {}. Will retry after some time: {}",
-                 serviceStoreDatasetInstanceId, e.getMessage());
+            serviceStoreDatasetInstanceId, e.getMessage());
         throw new RetryableException(e);
       }
     }, RetryStrategies.exponentialDelay(1, 30, TimeUnit.SECONDS));
@@ -94,38 +95,45 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   }
 
   @Override
-  public synchronized void setRestartInstanceRequest(String serviceName, long startTimeMs, long endTimeMs,
-                                                     boolean isSuccess, int instanceId) {
+  public synchronized void setRestartInstanceRequest(String serviceName, long startTimeMs,
+      long endTimeMs,
+      boolean isSuccess, int instanceId) {
     Preconditions.checkNotNull(serviceName, "Service name should not be null.");
-    Preconditions.checkArgument(instanceId >= 0, "Instance id has to be greater than or equal to zero.");
+    Preconditions.checkArgument(instanceId >= 0,
+        "Instance id has to be greater than or equal to zero.");
 
     RestartStatus status = isSuccess ? RestartStatus.SUCCESS : RestartStatus.FAILURE;
     RestartServiceInstancesStatus restartStatus =
-      new RestartServiceInstancesStatus(serviceName, startTimeMs, endTimeMs, status, ImmutableSet.of(instanceId));
+        new RestartServiceInstancesStatus(serviceName, startTimeMs, endTimeMs, status,
+            ImmutableSet.of(instanceId));
     String toJson = GSON.toJson(restartStatus, RestartServiceInstancesStatus.class);
 
     table.put(Bytes.toBytes(serviceName + "-restart"), Bytes.toBytes(toJson));
   }
 
   @Override
-  public synchronized void setRestartAllInstancesRequest(String serviceName, long startTimeMs, long endTimeMs,
-                                                         boolean isSuccess) {
+  public synchronized void setRestartAllInstancesRequest(String serviceName, long startTimeMs,
+      long endTimeMs,
+      boolean isSuccess) {
     Preconditions.checkNotNull(serviceName, "Service name should not be null.");
 
     RestartStatus status = isSuccess ? RestartStatus.SUCCESS : RestartStatus.FAILURE;
     Integer serviceInstance = getServiceInstance(serviceName);
     int instanceCount = (serviceInstance == null) ? 0 : serviceInstance;
-    Set<Integer> instancesToRestart = Ranges.closedOpen(0, instanceCount).asSet(DiscreteDomains.integers());
+    Set<Integer> instancesToRestart = Ranges.closedOpen(0, instanceCount)
+        .asSet(DiscreteDomains.integers());
 
     RestartServiceInstancesStatus restartStatus =
-      new RestartServiceInstancesStatus(serviceName, startTimeMs, endTimeMs, status, instancesToRestart);
+        new RestartServiceInstancesStatus(serviceName, startTimeMs, endTimeMs, status,
+            instancesToRestart);
     String toJson = GSON.toJson(restartStatus, RestartServiceInstancesStatus.class);
 
     table.put(Bytes.toBytes(serviceName + "-restart"), Bytes.toBytes(toJson));
   }
 
   @Override
-  public synchronized RestartServiceInstancesStatus getLatestRestartInstancesRequest(String serviceName)
+  public synchronized RestartServiceInstancesStatus getLatestRestartInstancesRequest(
+      String serviceName)
       throws IllegalStateException {
     String jsonString = Bytes.toString(table.get(Bytes.toBytes(serviceName + "-restart")));
     if (jsonString == null) {

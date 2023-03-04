@@ -42,16 +42,17 @@ final class MessageTableStoreRequestWriter extends StoreRequestWriter<MessageTab
   }
 
   @Override
-  MessageTable.Entry getEntry(TopicMetadata metadata, boolean transactional, long transactionWritePointer,
-                              long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
+  MessageTable.Entry getEntry(TopicMetadata metadata, boolean transactional,
+      long transactionWritePointer,
+      long writeTimestamp, short sequenceId, @Nullable byte[] payload) {
     return entry
-      .setTopicId(metadata.getTopicId())
-      .setGeneration(metadata.getGeneration())
-      .setTransactional(transactional)
-      .setTransactionWritePointer(transactionWritePointer)
-      .setPublishTimestamp(writeTimestamp)
-      .setSequenceId(sequenceId)
-      .setPayload(payload);
+        .setTopicId(metadata.getTopicId())
+        .setGeneration(metadata.getGeneration())
+        .setTransactional(transactional)
+        .setTransactionWritePointer(transactionWritePointer)
+        .setPublishTimestamp(writeTimestamp)
+        .setSequenceId(sequenceId)
+        .setPayload(payload);
   }
 
   @Override

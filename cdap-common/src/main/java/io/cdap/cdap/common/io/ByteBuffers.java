@@ -31,12 +31,14 @@ public final class ByteBuffers {
   private static final int MAX_BUFFER_SIZE = 64 * 1024;
 
   /**
-   * Writes all remaining bytes of a {@link ByteBuffer} to an {@link OutputStream}. The position and limit of
-   * the buffer is not modified after this call returns.
+   * Writes all remaining bytes of a {@link ByteBuffer} to an {@link OutputStream}. The position and
+   * limit of the buffer is not modified after this call returns.
    */
-  public static void writeToStream(ByteBuffer buffer, OutputStream outputStream) throws IOException {
+  public static void writeToStream(ByteBuffer buffer, OutputStream outputStream)
+      throws IOException {
     if (buffer.hasArray()) {
-      outputStream.write(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+      outputStream.write(buffer.array(), buffer.arrayOffset() + buffer.position(),
+          buffer.remaining());
       return;
     }
 
@@ -52,10 +54,10 @@ public final class ByteBuffers {
   }
 
   /**
-   * Creates a new {@link ByteBuffer} which the content the same as the given {@link ByteBuffer}
-   * by copying the content. The new {@link ByteBuffer} will have position = 0, limit = content length.
-   * The returning {@link ByteBuffer} will always be heap based buffer. The position and limit of the original
-   * buffer will not be modified after this call.
+   * Creates a new {@link ByteBuffer} which the content the same as the given {@link ByteBuffer} by
+   * copying the content. The new {@link ByteBuffer} will have position = 0, limit = content length.
+   * The returning {@link ByteBuffer} will always be heap based buffer. The position and limit of
+   * the original buffer will not be modified after this call.
    */
   public static ByteBuffer copy(ByteBuffer buffer) {
     if (!buffer.hasRemaining()) {

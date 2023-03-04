@@ -19,6 +19,7 @@ package io.cdap.cdap.api.metrics;
  * Metrics processor status for a topic
  */
 public class MetricsProcessorStatus {
+
   private final MetricsMessageId messageId;
   private final long oldestMetricsTimestamp;
   private final long latestMetricsTimestamp;
@@ -26,7 +27,7 @@ public class MetricsProcessorStatus {
   private final long lastProcessedTimestamp;
 
   public MetricsProcessorStatus(MetricsMessageId messageId, long oldestMetricsTimestamp,
-                                long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp) {
+      long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp) {
     this.messageId = messageId;
     this.oldestMetricsTimestamp = oldestMetricsTimestamp;
     this.latestMetricsTimestamp = latestMetricsTimestamp;

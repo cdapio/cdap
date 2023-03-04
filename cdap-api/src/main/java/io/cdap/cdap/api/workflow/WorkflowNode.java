@@ -20,6 +20,7 @@ package io.cdap.cdap.api.workflow;
  * Represents node in the {@link Workflow}.
  */
 public abstract class WorkflowNode {
+
   protected final String nodeId;
   protected final WorkflowNodeType nodeType;
 
@@ -29,7 +30,6 @@ public abstract class WorkflowNode {
   }
 
   /**
-   *
    * @return the id of the {@link WorkflowNode}
    */
   public String getNodeId() {
@@ -37,7 +37,6 @@ public abstract class WorkflowNode {
   }
 
   /**
-   *
    * @return the type of the {@link WorkflowNode}
    */
   public WorkflowNodeType getType() {

@@ -124,8 +124,8 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
 
   private int getExceptionCode(String exceptionClass, String exceptionMessage, String namespace) {
     if (IllegalArgumentException.class.getName().equals(exceptionClass)) {
-      return String.format(RemoteValidationTask.NAMESPACE_DOES_NOT_EXIST, namespace).equals(exceptionMessage) ?
-        HttpURLConnection.HTTP_NOT_FOUND : HttpURLConnection.HTTP_BAD_REQUEST;
+      return String.format(RemoteValidationTask.NAMESPACE_DOES_NOT_EXIST, namespace).equals(exceptionMessage)
+        ? HttpURLConnection.HTTP_NOT_FOUND : HttpURLConnection.HTTP_BAD_REQUEST;
     }
     return HttpURLConnection.HTTP_INTERNAL_ERROR;
   }

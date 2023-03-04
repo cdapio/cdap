@@ -42,21 +42,24 @@ import org.slf4j.LoggerFactory;
  * MetricsProcessorStatusService with PingHandler used for discovery during CDAP-services startup.
  */
 public class MetricsProcessorStatusService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorStatusService.class);
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
-  public MetricsProcessorStatusService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                                       @Named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)
-                                       Set<HttpHandler> handlers,
-                                       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+  public MetricsProcessorStatusService(CConfiguration cConf, SConfiguration sConf,
+      DiscoveryService discoveryService,
+      @Named(Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)
+          Set<HttpHandler> handlers,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.METRICS_PROCESSOR)
-      .setHttpHandlers(handlers)
-      .setHost(cConf.get(Constants.MetricsProcessor.BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.MetricsProcessor.BIND_PORT));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.METRICS_PROCESSOR)
+        .setHttpHandlers(handlers)
+        .setHost(cConf.get(Constants.MetricsProcessor.BIND_ADDRESS))
+        .setPort(cConf.getInt(Constants.MetricsProcessor.BIND_PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -68,14 +71,15 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.METRICS_PROCESSOR));
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.METRICS_PROCESSOR));
     LOG.info("Starting MetricsProcessor Status Service...");
 
     httpService.start();
 
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.METRICS_PROCESSOR, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.METRICS_PROCESSOR, httpService)));
     LOG.info("Started MetricsProcessor Status Service.");
   }
 
@@ -96,7 +100,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("bindAddress", httpService.getBindAddress())
-      .toString();
+        .add("bindAddress", httpService.getBindAddress())
+        .toString();
   }
 }

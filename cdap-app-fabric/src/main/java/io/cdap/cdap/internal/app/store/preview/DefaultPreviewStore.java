@@ -59,8 +59,10 @@ import javax.annotation.Nullable;
  * Default implementation of the {@link PreviewStore} that stores data in a level db table.
  */
 public class DefaultPreviewStore implements PreviewStore {
+
   private static final DatasetId PREVIEW_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.table");
-  private static final DatasetId PREVIEW_QUEUE_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.queue.table");
+  private static final DatasetId PREVIEW_QUEUE_TABLE_ID = NamespaceId.SYSTEM.dataset(
+      "preview.queue.table");
   private static final byte[] DATA_ROW_KEY_PREFIX = Bytes.toBytes("dr");
   private static final byte[] META_ROW_KEY_PREFIX = Bytes.toBytes("mr");
   private static final byte[] TRACER = Bytes.toBytes("t");
@@ -103,20 +105,22 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void put(ApplicationId applicationId, String tracerName, String propertyName, Object value) {
+  public void put(ApplicationId applicationId, String tracerName, String propertyName,
+      Object value) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
+        .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(DATA_ROW_KEY_PREFIX, applicationId)
-      .add(tracerName).add(counter.getAndIncrement()).build();
+        .add(tracerName).add(counter.getAndIncrement()).build();
 
     try {
       previewTable.putDefaultVersion(mdsKey.getKey(), TRACER, Bytes.toBytes(tracerName));
       previewTable.putDefaultVersion(mdsKey.getKey(), PROPERTY, Bytes.toBytes(propertyName));
       previewTable.putDefaultVersion(mdsKey.getKey(), VALUE, Bytes.toBytes(gson.toJson(value)));
     } catch (IOException e) {
-      String message = String.format("Error while putting property '%s' for application '%s' and tracer '%s' in" +
-                                       " preview table.", propertyName, applicationId, tracerName);
+      String message = String.format(
+          "Error while putting property '%s' for application '%s' and tracer '%s' in"
+              + " preview table.", propertyName, applicationId, tracerName);
       throw new RuntimeException(message, e);
     }
   }
@@ -124,9 +128,10 @@ public class DefaultPreviewStore implements PreviewStore {
   @Override
   public Map<String, List<JsonElement>> get(ApplicationId applicationId, String tracerName) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .create();
     byte[] startRowKey = getPreviewRowKeyBuilder(DATA_ROW_KEY_PREFIX, applicationId)
-      .add(tracerName).build().getKey();
+        .add(tracerName).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
     Map<String, List<JsonElement>> result = new HashMap<>();
@@ -140,8 +145,9 @@ public class DefaultPreviewStore implements PreviewStore {
         values.add(value);
       }
     } catch (IOException e) {
-      String message = String.format("Error while reading preview data for application '%s' and tracer '%s'.",
-                                     applicationId, tracerName);
+      String message = String.format(
+          "Error while reading preview data for application '%s' and tracer '%s'.",
+          applicationId, tracerName);
       throw new RuntimeException(message, e);
     }
     return result;
@@ -153,7 +159,8 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       previewTable.deleteRange(startRowKey, stopRowKey, null, null);
     } catch (IOException e) {
-      String message = String.format("Error while removing preview data for application '%s'.", applicationId);
+      String message = String.format("Error while removing preview data for application '%s'.",
+          applicationId);
       throw new RuntimeException(message, e);
     }
   }
@@ -170,26 +177,33 @@ public class DefaultPreviewStore implements PreviewStore {
   @Override
   public void setProgramId(ProgramRunId programRunId) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
-    MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, programRunId.getParent().getParent()).build();
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+        .create();
+    MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX,
+        programRunId.getParent().getParent()).build();
     try {
-      previewTable.putDefaultVersion(mdsKey.getKey(), RUN, Bytes.toBytes(gson.toJson(programRunId)));
+      previewTable.putDefaultVersion(mdsKey.getKey(), RUN,
+          Bytes.toBytes(gson.toJson(programRunId)));
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to put %s into preview store", programRunId), e);
+      throw new RuntimeException(String.format("Failed to put %s into preview store", programRunId),
+          e);
     }
   }
 
   @Override
   public ProgramRunId getProgramRunId(ApplicationId applicationId) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+        .create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
     byte[] runId = null;
     try {
-      runId = previewTable.getDefaultVersion(mdsKey.getKey(), RUN);;
+      runId = previewTable.getDefaultVersion(mdsKey.getKey(), RUN);
+      ;
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to get program run id for preview %s", applicationId), e);
+      throw new RuntimeException(
+          String.format("Failed to get program run id for preview %s", applicationId), e);
     }
     if (runId != null) {
       return gson.fromJson(Bytes.toString(runId), ProgramRunId.class);
@@ -200,28 +214,33 @@ public class DefaultPreviewStore implements PreviewStore {
   @Override
   public void setPreviewStatus(ApplicationId applicationId, PreviewStatus previewStatus) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
+        new BasicThrowableCodec()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
     try {
-      previewTable.putDefaultVersion(mdsKey.getKey(), STATUS, Bytes.toBytes(gson.toJson(previewStatus)));
-      previewTable.putDefaultVersion(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)));
+      previewTable.putDefaultVersion(mdsKey.getKey(), STATUS,
+          Bytes.toBytes(gson.toJson(previewStatus)));
+      previewTable.putDefaultVersion(mdsKey.getKey(), APPID,
+          Bytes.toBytes(gson.toJson(applicationId)));
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to put preview status %s for preview %s",
-                                               previewStatus, applicationId), e);
+          previewStatus, applicationId), e);
     }
   }
 
   @Override
   public PreviewStatus getPreviewStatus(ApplicationId applicationId) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
+        new BasicThrowableCodec()).create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
     byte[] status = null;
     try {
       status = previewTable.getDefaultVersion(mdsKey.getKey(), STATUS);
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to get the preview status for preview %s", applicationId), e);
+      throw new RuntimeException(
+          String.format("Failed to get the preview status for preview %s", applicationId), e);
     }
 
     if (status != null) {
@@ -232,27 +251,35 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void add(ApplicationId applicationId, AppRequest appRequest, @Nullable Principal principal) {
+  public void add(ApplicationId applicationId, AppRequest appRequest,
+      @Nullable Principal principal) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .create();
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
     MDSKey mdsKey = new MDSKey.Builder()
-      .add(WAITING)
-      .add(timeInSeconds)
-      .add(applicationId.getNamespace())
-      .add(applicationId.getApplication())
-      .build();
+        .add(WAITING)
+        .add(timeInSeconds)
+        .add(applicationId.getNamespace())
+        .add(applicationId.getApplication())
+        .build();
 
     try {
-      previewQueueTable.putDefaultVersion(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)));
-      previewQueueTable.putDefaultVersion(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)));
-      previewQueueTable.putDefaultVersion(mdsKey.getKey(), PRINCIPAL, Bytes.toBytes(gson.toJson(principal)));
-      long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.MILLISECONDS);
-      setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, submitTimeInMillis, null, null,
-                                                        null));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), APPID,
+          Bytes.toBytes(gson.toJson(applicationId)));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), CONFIG,
+          Bytes.toBytes(gson.toJson(appRequest)));
+      previewQueueTable.putDefaultVersion(mdsKey.getKey(), PRINCIPAL,
+          Bytes.toBytes(gson.toJson(principal)));
+      long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(),
+          TimeUnit.MILLISECONDS);
+      setPreviewStatus(applicationId,
+          new PreviewStatus(PreviewStatus.Status.WAITING, submitTimeInMillis, null, null,
+              null));
     } catch (IOException e) {
-      String message = String.format("Error while adding preview request with application '%s' in preview store.",
-                                     applicationId);
+      String message = String.format(
+          "Error while adding preview request with application '%s' in preview store.",
+          applicationId);
       throw new RuntimeException(message, e);
     }
   }
@@ -261,26 +288,28 @@ public class DefaultPreviewStore implements PreviewStore {
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
 
     MDSKey mdsKey = new MDSKey.Builder()
-      .add(WAITING)
-      .add(timeInSeconds)
-      .add(applicationId.getNamespace())
-      .add(applicationId.getApplication())
-      .build();
+        .add(WAITING)
+        .add(timeInSeconds)
+        .add(applicationId.getNamespace())
+        .add(applicationId.getApplication())
+        .build();
 
     try {
       previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), APPID);
       previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), CONFIG);
       previewQueueTable.deleteDefaultVersion(mdsKey.getKey(), PRINCIPAL);
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to remove application with id %s from waiting queue.",
-                                               applicationId), e);
+      throw new RuntimeException(
+          String.format("Failed to remove application with id %s from waiting queue.",
+              applicationId), e);
     }
   }
 
   @Override
   public List<PreviewRequest> getAllInWaitingState() {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .create();
     byte[] startRowKey = new MDSKey.Builder().add(WAITING).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
@@ -290,8 +319,10 @@ public class DefaultPreviewStore implements PreviewStore {
       while ((indexRow = scanner.next()) != null) {
         Map<byte[], byte[]> columns = indexRow.getColumns();
         AppRequest request = gson.fromJson(Bytes.toString(columns.get(CONFIG)), AppRequest.class);
-        ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)), ApplicationId.class);
-        Principal principal = gson.fromJson(Bytes.toString(columns.get(PRINCIPAL)), Principal.class);
+        ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)),
+            ApplicationId.class);
+        Principal principal = gson.fromJson(Bytes.toString(columns.get(PRINCIPAL)),
+            Principal.class);
         result.add(new PreviewRequest(applicationId, request, principal));
       }
     } catch (IOException e) {
@@ -302,34 +333,39 @@ public class DefaultPreviewStore implements PreviewStore {
 
   @Override
   public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo)
-    throws ConflictException {
+      throws ConflictException {
     if (pollerInfo != null) {
       setPollerinfo(applicationId, pollerInfo);
     }
     removeFromWaitingState(applicationId);
     PreviewStatus previewStatus = getPreviewStatus(applicationId);
     if (previewStatus == null) {
-      throw new ConflictException(String.format("Preview application with id %s does not exist.", applicationId));
+      throw new ConflictException(
+          String.format("Preview application with id %s does not exist.", applicationId));
     }
     if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
-      throw new ConflictException(String.format("Preview application with id %s does not exist in the " +
-                                                  "waiting state. Its current state is %s", applicationId,
-                                                previewStatus.getStatus().name()));
+      throw new ConflictException(
+          String.format("Preview application with id %s does not exist in the "
+                  + "waiting state. Its current state is %s", applicationId,
+              previewStatus.getStatus().name()));
     }
     long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
-    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
+    setPreviewStatus(applicationId,
+        new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
   }
 
   private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .create();
     MDSKey mdsKey = getPreviewRowKeyBuilder(META_ROW_KEY_PREFIX, applicationId).build();
 
     try {
       previewTable.putDefaultVersion(mdsKey.getKey(), POLLERINFO, pollerInfo);
     } catch (IOException e) {
-      String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
-                                 gson.toJson(pollerInfo), applicationId);
+      String msg = String.format(
+          "Error while setting the poller information %s for waiting preview application %s.",
+          gson.toJson(pollerInfo), applicationId);
       throw new RuntimeException(msg, e);
     }
   }
@@ -342,7 +378,8 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       pollerInfo = previewTable.getDefaultVersion(mdsKey.getKey(), POLLERINFO);
     } catch (IOException e) {
-      throw new RuntimeException(String.format("Failed to get the poller info for preview %s", applicationId), e);
+      throw new RuntimeException(
+          String.format("Failed to get the poller info for preview %s", applicationId), e);
     }
     if (pollerInfo != null) {
       return pollerInfo;
@@ -353,7 +390,8 @@ public class DefaultPreviewStore implements PreviewStore {
 
   @Override
   public void deleteExpiredData(long ttlInSeconds) {
-    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+        .create();
     byte[] startRowKey = new MDSKey.Builder().add(META_ROW_KEY_PREFIX).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
 
@@ -368,7 +406,8 @@ public class DefaultPreviewStore implements PreviewStore {
         }
 
         ApplicationId applicationId = gson.fromJson(applicationIdGson, ApplicationId.class);
-        long applicationSubmitTime = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
+        long applicationSubmitTime = RunIds.getTime(applicationId.getApplication(),
+            TimeUnit.SECONDS);
         if ((currentTimeInSeconds - applicationSubmitTime) > ttlInSeconds) {
           remove(applicationId);
         }
@@ -380,9 +419,9 @@ public class DefaultPreviewStore implements PreviewStore {
 
   private MDSKey.Builder getPreviewRowKeyBuilder(byte[] prefix, ApplicationId applicationId) {
     return new MDSKey.Builder()
-      .add(prefix)
-      .add(applicationId.getNamespace())
-      .add(applicationId.getApplication());
+        .add(prefix)
+        .add(applicationId.getNamespace())
+        .add(applicationId.getApplication());
   }
 
   @VisibleForTesting

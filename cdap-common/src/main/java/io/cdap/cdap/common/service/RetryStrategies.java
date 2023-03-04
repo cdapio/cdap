@@ -36,17 +36,21 @@ public final class RetryStrategies {
   /**
    * Creates a {@link RetryStrategy} that retries maximum given number of times, with the actual
    * delay behavior delegated to another {@link RetryStrategy}.
+   *
    * @param limit Maximum number of retries allowed.
-   * @param strategy When failure count is less than or equal to the limit, this strategy will be called.
+   * @param strategy When failure count is less than or equal to the limit, this strategy will
+   *     be called.
    * @return A {@link RetryStrategy}.
    */
   public static RetryStrategy limit(final int limit, final RetryStrategy strategy) {
     Preconditions.checkArgument(limit >= 0, "limit must be >= 0");
-    return (failureCount, startTime) -> failureCount <= limit ? strategy.nextRetry(failureCount, startTime) : -1L;
+    return (failureCount, startTime) -> failureCount <= limit ? strategy.nextRetry(failureCount,
+        startTime) : -1L;
   }
 
   /**
    * Creates a {@link RetryStrategy} that imposes a fix delay between each retries.
+   *
    * @param delay delay time
    * @param delayUnit {@link TimeUnit} for the delay.
    * @return A {@link RetryStrategy}.
@@ -58,12 +62,14 @@ public final class RetryStrategies {
 
   /**
    * Creates a {@link RetryStrategy} that will increase delay exponentially between each retries.
+   *
    * @param baseDelay delay to start with.
    * @param maxDelay cap of the delay.
    * @param delayUnit {@link TimeUnit} for the delays.
    * @return A {@link RetryStrategy}.
    */
-  public static RetryStrategy exponentialDelay(final long baseDelay, final long maxDelay, final TimeUnit delayUnit) {
+  public static RetryStrategy exponentialDelay(final long baseDelay, final long maxDelay,
+      final TimeUnit delayUnit) {
     Preconditions.checkArgument(baseDelay >= 0, "base delay must be >= 0");
     Preconditions.checkArgument(maxDelay >= 0, "max delay must be >= 0");
     return (failureCount, startTime) -> {
@@ -75,14 +81,17 @@ public final class RetryStrategies {
   }
 
   /**
-   * Creates a {@link RetryStrategy} that will retry until maximum amount of time has been passed since the request,
-   * with the actual delay behavior delegated to another {@link RetryStrategy}.
+   * Creates a {@link RetryStrategy} that will retry until maximum amount of time has been passed
+   * since the request, with the actual delay behavior delegated to another {@link RetryStrategy}.
+   *
    * @param maxElapseTime Maximum amount of time until giving up retry.
    * @param timeUnit {@link TimeUnit} for the max elapse time.
-   * @param strategy When time elapsed is less than or equal to the limit, this strategy will be called.
+   * @param strategy When time elapsed is less than or equal to the limit, this strategy will be
+   *     called.
    * @return A {@link RetryStrategy}.
    */
-  public static RetryStrategy timeLimit(long maxElapseTime, TimeUnit timeUnit, final RetryStrategy strategy) {
+  public static RetryStrategy timeLimit(long maxElapseTime, TimeUnit timeUnit,
+      final RetryStrategy strategy) {
     Preconditions.checkArgument(maxElapseTime >= 0, "max elapse time must be >= 0");
     final long maxElapseMs = TimeUnit.MILLISECONDS.convert(maxElapseTime, timeUnit);
     return (failureCount, startTime) -> {
@@ -92,19 +101,22 @@ public final class RetryStrategies {
   }
 
   /**
-   * Creates a {@link RetryStrategy} that will retry until maximum amount of time has been passed since the
-   * current time with the actual delay behavior delegated to another {@link RetryStrategy}. This is normally used
-   * instead of {@link #timeLimit(long, TimeUnit, RetryStrategy)} if the strategy is used across multiple operations,
-   * and there is a time bound for those multiple operations.
+   * Creates a {@link RetryStrategy} that will retry until maximum amount of time has been passed
+   * since the current time with the actual delay behavior delegated to another {@link
+   * RetryStrategy}. This is normally used instead of {@link #timeLimit(long, TimeUnit,
+   * RetryStrategy)} if the strategy is used across multiple operations, and there is a time bound
+   * for those multiple operations.
    *
    * @param maxElapseTime Maximum amount of time until giving up retry.
    * @param timeUnit {@link TimeUnit} for the max elapse time.
    * @param absoluteStartTime the start timestamp in millis.
-   * @param strategy When time elapsed is less than or equal to the limit, this strategy will be called.
+   * @param strategy When time elapsed is less than or equal to the limit, this strategy will be
+   *     called.
    * @return A {@link RetryStrategy}.
    */
-  public static RetryStrategy statefulTimeLimit(long maxElapseTime, TimeUnit timeUnit, long absoluteStartTime,
-                                                final RetryStrategy strategy) {
+  public static RetryStrategy statefulTimeLimit(long maxElapseTime, TimeUnit timeUnit,
+      long absoluteStartTime,
+      final RetryStrategy strategy) {
     Preconditions.checkArgument(maxElapseTime >= 0, "max elapse time must be >= 0");
     final long maxElapseMs = TimeUnit.MILLISECONDS.convert(maxElapseTime, timeUnit);
     return (failureCount, startTime) -> {
@@ -150,7 +162,8 @@ public final class RetryStrategies {
         throw new IllegalStateException("Unknown retry type " + type);
     }
 
-    return RetryStrategies.limit(maxRetries, RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
+    return RetryStrategies.limit(maxRetries,
+        RetryStrategies.timeLimit(maxTimeSecs, TimeUnit.SECONDS, baseStrategy));
   }
 
   private RetryStrategies() {

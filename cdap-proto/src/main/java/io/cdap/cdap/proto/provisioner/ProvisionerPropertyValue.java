@@ -22,6 +22,7 @@ import java.util.Objects;
  * A brief summary of provisioner property.
  */
 public class ProvisionerPropertyValue {
+
   private final String name;
   private final String value;
   // this variable indicates whether this property is editable or not.
@@ -46,7 +47,8 @@ public class ProvisionerPropertyValue {
   }
 
   /**
-   * Validate this is a valid object. Should be called when this is created through deserialization of user input.
+   * Validate this is a valid object. Should be called when this is created through deserialization
+   * of user input.
    *
    * @throws IllegalArgumentException if the object is invalid
    */
@@ -67,9 +69,9 @@ public class ProvisionerPropertyValue {
 
     ProvisionerPropertyValue that = (ProvisionerPropertyValue) o;
 
-    return Objects.equals(isEditable, that.isEditable) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(value, that.value);
+    return Objects.equals(isEditable, that.isEditable)
+        && Objects.equals(name, that.name)
+        && Objects.equals(value, that.value);
   }
 
   @Override
@@ -79,10 +81,10 @@ public class ProvisionerPropertyValue {
 
   @Override
   public String toString() {
-    return "ProvisionerPropertyValue{" +
-      "name='" + name + '\'' +
-      ", value='" + value + '\'' +
-      ", isEditable=" + isEditable +
-      '}';
+    return "ProvisionerPropertyValue{"
+        + "name='" + name + '\''
+        + ", value='" + value + '\''
+        + ", isEditable=" + isEditable
+        + '}';
   }
 }

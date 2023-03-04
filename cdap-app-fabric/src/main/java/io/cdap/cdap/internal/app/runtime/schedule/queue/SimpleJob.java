@@ -26,6 +26,7 @@ import java.util.List;
  * Simple implementation of {@link Job}.
  */
 public final class SimpleJob implements Job {
+
   private final ProgramSchedule schedule;
   private final long creationTime;
   private final JobKey jobKey;
@@ -35,12 +36,13 @@ public final class SimpleJob implements Job {
   private Long deleteTimeMillis;
 
   /**
-   * @param scheduleLastUpdatedTime the last modification time of the schedule, at the time this job is created.
-   *                                This serves as a way to detect whether the schedule was changed later-on, and
-   *                                hence, the job would be obsolete in that case.
+   * @param scheduleLastUpdatedTime the last modification time of the schedule, at the time this
+   *     job is created. This serves as a way to detect whether the schedule was changed later-on,
+   *     and hence, the job would be obsolete in that case.
    */
-  public SimpleJob(ProgramSchedule schedule, int generationId, long creationTime, List<Notification> notifications,
-                   State state, long scheduleLastUpdatedTime) {
+  public SimpleJob(ProgramSchedule schedule, int generationId, long creationTime,
+      List<Notification> notifications,
+      State state, long scheduleLastUpdatedTime) {
     this.schedule = schedule;
     this.creationTime = creationTime;
     this.jobKey = new JobKey(schedule.getScheduleId(), generationId);
@@ -95,32 +97,33 @@ public final class SimpleJob implements Job {
 
     SimpleJob that = (SimpleJob) o;
 
-    return Objects.equal(this.schedule, that.schedule) &&
-      Objects.equal(this.creationTime, that.creationTime) &&
-      Objects.equal(this.jobKey, that.jobKey) &&
-      Objects.equal(this.notifications, that.notifications) &&
-      Objects.equal(this.state, that.state) &&
-      Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime) &&
-      Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
+    return Objects.equal(this.schedule, that.schedule)
+        && Objects.equal(this.creationTime, that.creationTime)
+        && Objects.equal(this.jobKey, that.jobKey)
+        && Objects.equal(this.notifications, that.notifications)
+        && Objects.equal(this.state, that.state)
+        && Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime)
+        && Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, creationTime, jobKey, notifications, state, scheduleLastUpdatedTime,
-                            deleteTimeMillis);
+    return Objects.hashCode(schedule, creationTime, jobKey, notifications, state,
+        scheduleLastUpdatedTime,
+        deleteTimeMillis);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("schedule", schedule)
-      .add("creationTime", creationTime)
-      .add("jobKey", jobKey)
-      .add("notifications", notifications)
-      .add("state", state)
-      .add("scheduleLastUpdatedTime", scheduleLastUpdatedTime)
-      .add("deleteTimeMillis", deleteTimeMillis)
-      .toString();
+        .add("schedule", schedule)
+        .add("creationTime", creationTime)
+        .add("jobKey", jobKey)
+        .add("notifications", notifications)
+        .add("state", state)
+        .add("scheduleLastUpdatedTime", scheduleLastUpdatedTime)
+        .add("deleteTimeMillis", deleteTimeMillis)
+        .toString();
   }
 
   @Override

@@ -51,8 +51,8 @@ public class NotFoundException extends Exception implements HttpErrorStatusProvi
   }
 
   /**
-   * Return the object which could not be found. Returns null, if the entity is not known, such as when thrown from
-   * cdap-clients.
+   * Return the object which could not be found. Returns null, if the entity is not known, such as
+   * when thrown from cdap-clients.
    */
   @Nullable
   public Object getObject() {

@@ -71,22 +71,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link ProgramRunDispatcher} which enables Program-run execution to take place remotely (E.g.- in
- * another service)
+ * Implementation of {@link ProgramRunDispatcher} which enables Program-run execution to take place
+ * remotely (E.g.- in another service)
  */
 public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteProgramRunDispatcher.class);
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
-      new GsonBuilder())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
-    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
-    .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
+          new GsonBuilder())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
   private final Store store;
   private final CConfiguration cConf;
   private final ProgramRunnerFactory programRunnerFactory;
@@ -96,11 +96,12 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
   private final RemoteExecutionTwillRunnerService remoteExecutionTwillRunnerService;
 
   @Inject
-  public RemoteProgramRunDispatcher(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                    RemoteClientFactory remoteClientFactory, Store store,
-                                    ProgramRunnerFactory programRunnerFactory, TwillRunnerService twillRunnerService,
-                                    @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
-                                    @RemoteExecution TwillRunnerService remoteTwillRunnerService) {
+  public RemoteProgramRunDispatcher(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      RemoteClientFactory remoteClientFactory, Store store,
+      ProgramRunnerFactory programRunnerFactory, TwillRunnerService twillRunnerService,
+      @RemoteExecution ProgramRunnerFactory remoteProgramRunnerFactory,
+      @RemoteExecution TwillRunnerService remoteTwillRunnerService) {
     this.store = store;
     this.cConf = cConf;
     this.programRunnerFactory = programRunnerFactory;
@@ -111,34 +112,38 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     int connectTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.SystemWorker.HTTP_CLIENT_READ_TIMEOUT_MS);
     HttpRequestConfig httpRequestConfig = new HttpRequestConfig(connectTimeout, readTimeout, false);
-    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService, remoteClientFactory,
-                                                     RemoteTaskExecutor.Type.SYSTEM_WORKER, httpRequestConfig);
+    this.remoteTaskExecutor = new RemoteTaskExecutor(cConf, metricsCollectionService,
+        remoteClientFactory,
+        RemoteTaskExecutor.Type.SYSTEM_WORKER, httpRequestConfig);
   }
 
   @Override
-  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext) throws Exception {
+  public ProgramController dispatchProgram(ProgramRunDispatcherContext dispatcherContext)
+      throws Exception {
     RunId runId = dispatcherContext.getRunId();
     LOG.debug("Dispatching Program Run operation for Run ID: {}", runId.getId());
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ProgramRunDispatcherTask.class.getName())
-      .withParam(GSON.toJson(dispatcherContext)).build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            ProgramRunDispatcherTask.class.getName())
+        .withParam(GSON.toJson(dispatcherContext)).build();
     remoteTaskExecutor.runTask(request);
     ProgramId programId = dispatcherContext.getProgramDescriptor().getProgramId();
     ProgramRunId programRunId = programId.run(runId);
     ClusterMode clusterMode = ProgramRunners.getClusterMode(dispatcherContext.getProgramOptions());
 
     boolean tetheredRun = dispatcherContext
-      .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
+        .getProgramOptions().getArguments().hasOption(ProgramOptionConstants.PEER_NAME);
     ProgramRunnerFactory runnerFactory = programRunnerFactory;
     if (clusterMode == ClusterMode.ISOLATED && !tetheredRun) {
       runnerFactory = Optional.ofNullable(remoteProgramRunnerFactory)
-        .orElseThrow(UnsupportedOperationException::new);
+          .orElseThrow(UnsupportedOperationException::new);
     }
 
     ProgramRunner runner = runnerFactory.create(programId.getType());
     if (!(runner instanceof ProgramControllerCreator)) {
-      String msg = String.format("Program %s with runid %s uses an unsupported controller for remote dispatching.",
-                                 dispatcherContext.getProgramDescriptor().getProgramId(),
-                                 dispatcherContext.getRunId());
+      String msg = String.format(
+          "Program %s with runid %s uses an unsupported controller for remote dispatching.",
+          dispatcherContext.getProgramDescriptor().getProgramId(),
+          dispatcherContext.getRunId());
       throw new UnsupportedOperationException(msg);
     }
 
@@ -150,22 +155,25 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
     }
     ProgramController programController = null;
     if (twillController != null) {
-      programController = ((ProgramControllerCreator) runner).createProgramController(programRunId, twillController);
+      programController = ((ProgramControllerCreator) runner).createProgramController(programRunId,
+          twillController);
     }
     if (programController == null) {
       String msg = String.format("Unable to create controller for Program %s with runid %s",
-                                 dispatcherContext.getProgramDescriptor().getProgramId(),
-                                 dispatcherContext.getRunId());
+          dispatcherContext.getProgramDescriptor().getProgramId(),
+          dispatcherContext.getRunId());
       throw new Exception(msg);
     }
     return programController;
   }
 
-  private TwillController getNativeTwillController(ProgramRunId programRunId) throws InterruptedException {
+  private TwillController getNativeTwillController(ProgramRunId programRunId)
+      throws InterruptedException {
     AtomicReference<TwillController> twillControllerReference = new AtomicReference<>();
     RetryStrategy retryStrategy =
-      RetryStrategies.timeLimit(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS,
-                                RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
+        RetryStrategies.timeLimit(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+            TimeUnit.SECONDS,
+            RetryStrategies.exponentialDelay(10, 1000, TimeUnit.MILLISECONDS));
 
     long startRetry = System.currentTimeMillis();
     Retries.runWithRetries(() -> {
@@ -175,18 +183,20 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
        * (2) TwillController has been removed from twillRunnerService.
        */
       TwillController twillController = twillRunnerService
-        .lookup(TwillAppNames.toTwillAppName(
+          .lookup(TwillAppNames.toTwillAppName(
                   programRunId.getParent()),
-                RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
+              RunIds.fromString(Objects.requireNonNull(programRunId.getRun())));
       if (twillController == null) {
-        throw new RuntimeException(String.format("Unable to get twill controller for program run %s",
-                                                 programRunId));
+        throw new RuntimeException(
+            String.format("Unable to get twill controller for program run %s",
+                programRunId));
       }
       twillControllerReference.set(twillController);
     }, retryStrategy, e -> true);
 
-    LOG.debug("Waiting for twill controller for program run {} to go into either running or terminate states.",
-              programRunId);
+    LOG.debug(
+        "Waiting for twill controller for program run {} to go into either running or terminate states.",
+        programRunId);
     CountDownLatch latch = new CountDownLatch(1);
     twillControllerReference.get().onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
     twillControllerReference.get().onTerminated(() -> {
@@ -194,20 +204,21 @@ public class RemoteProgramRunDispatcher implements ProgramRunDispatcher {
       LOG.warn("Twill controller for program run {} terminated.", programRunId);
     }, Threads.SAME_THREAD_EXECUTOR);
 
-
     long retryDuration = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startRetry);
     // Since it has already waited for retryDuration seconds to get twill controller, we subtract that
     // from PROGRAM_MAX_START_SECONDS
     // in order to have a consistent latch.wait logic between on_premise and isolated modes.
-    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS) - retryDuration, TimeUnit.SECONDS);
+    latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS) - retryDuration,
+        TimeUnit.SECONDS);
     return twillControllerReference.get();
   }
 
   private TwillController getRemoteTwillController(ProgramRunId programRunId) {
     RunRecordDetail runRecordDetail = store.getRun(programRunId);
     if (runRecordDetail == null) {
-      String msg = String.format("Could not find run record for Program %s with runid %s", programRunId.getProgram(),
-                                 programRunId.getRun());
+      String msg = String.format("Could not find run record for Program %s with runid %s",
+          programRunId.getProgram(),
+          programRunId.getRun());
       throw new IllegalStateException(msg);
     }
     return remoteExecutionTwillRunnerService.createTwillControllerFromRunRecord(runRecordDetail);

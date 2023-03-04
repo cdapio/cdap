@@ -63,22 +63,23 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final LoggingContext loggingContext;
   private final Executor executor;
 
-  DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
-                            SparkCompat sparkCompat, @Nullable SSHContext sshContext,
-                            @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
-                            RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
-                            @Nullable String profileName, Executor executor,
-                            LoggingContext loggingContext) {
+  DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName,
+      Map<String, String> properties,
+      SparkCompat sparkCompat, @Nullable SSHContext sshContext,
+      @Nullable VersionInfo appCDAPVersion, LocationFactory locationFactory,
+      RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
+      @Nullable String profileName, Executor executor,
+      LoggingContext loggingContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
-                                     programRunId.getProgram(), programRunId.getRun());
+        programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
-      .setNamespace(programRunId.getNamespace())
-      .setApplication(programRunId.getApplication())
-      .setVersion(programRunId.getVersion())
-      .setProgramType(programRunId.getType().name())
-      .setProgram(programRunId.getProgram())
-      .setRun(programRunId.getRun())
-      .build();
+        .setNamespace(programRunId.getNamespace())
+        .setApplication(programRunId.getApplication())
+        .setVersion(programRunId.getVersion())
+        .setProgramType(programRunId.getType().name())
+        .setProgram(programRunId.getProgram())
+        .setRun(programRunId.getRun())
+        .build();
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
@@ -124,7 +125,8 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     return cdapVersion;
   }
 
-  @Override @Nullable
+  @Override
+  @Nullable
   public VersionInfo getAppCDAPVersionInfo() {
     return appCDAPVersion;
   }

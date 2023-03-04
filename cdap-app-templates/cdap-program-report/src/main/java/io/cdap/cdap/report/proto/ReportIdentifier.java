@@ -20,6 +20,7 @@ package io.cdap.cdap.report.proto;
  * ReportIdentifier represented by userName and reportId
  */
 public class ReportIdentifier {
+
   private final String userName;
   private final String reportId;
 

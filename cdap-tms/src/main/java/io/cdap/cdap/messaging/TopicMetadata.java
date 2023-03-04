@@ -42,11 +42,12 @@ public class TopicMetadata {
   }
 
   /**
-   * Creates a new instance for the given topic with the associated properties.
-   * The properties provided can optionally be validated to see if it contains valid
-   * values for all required properties.
+   * Creates a new instance for the given topic with the associated properties. The properties
+   * provided can optionally be validated to see if it contains valid values for all required
+   * properties.
    *
-   * @throws IllegalArgumentException if {@code validate} is {@code true} and the provided properties is not valid.
+   * @throws IllegalArgumentException if {@code validate} is {@code true} and the provided
+   *     properties is not valid.
    */
   public TopicMetadata(TopicId topicId, Map<String, String> properties, boolean validate) {
     this.topicId = topicId;
@@ -63,7 +64,7 @@ public class TopicMetadata {
    * @param topicId topic id
    * @param properties a list of key/value pairs that will get converted into a {@link Map}.
    */
-  public TopicMetadata(TopicId topicId, Object...properties) {
+  public TopicMetadata(TopicId topicId, Object... properties) {
     this(topicId, toMap(properties));
   }
 
@@ -127,16 +128,17 @@ public class TopicMetadata {
 
   @Override
   public String toString() {
-    return "TopicMetadata{" +
-      "topicId=" + topicId +
-      ", properties=" + properties +
-      '}';
+    return "TopicMetadata{"
+        + "topicId=" + topicId
+        + ", properties=" + properties
+        + '}';
   }
 
   /**
    * Validates all the required properties of the given topic.
    *
-   * @throws IllegalArgumentException if any required properties is missing or having invalid values
+   * @throws IllegalArgumentException if any required properties is missing or having invalid
+   *     values
    */
   private void validateProperties() {
     validateTTL();
@@ -151,44 +153,52 @@ public class TopicMetadata {
   private void validateTTL() {
     String ttl = properties.get(TTL_KEY);
     if (ttl == null) {
-      throw new IllegalArgumentException("Missing ttl property from the metadata of topic " + topicId);
+      throw new IllegalArgumentException(
+          "Missing ttl property from the metadata of topic " + topicId);
     }
     try {
       if (Integer.parseInt(ttl) <= 0) {
-        throw new IllegalArgumentException("The ttl property must be greater than zero for topic " + topicId);
+        throw new IllegalArgumentException(
+            "The ttl property must be greater than zero for topic " + topicId);
       }
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("The ttl property must be a number greater than zero for topic " + topicId, e);
+      throw new IllegalArgumentException(
+          "The ttl property must be a number greater than zero for topic " + topicId, e);
     }
   }
 
   /**
    * Validates the "generation" property of the given topic.
    *
-   * @throws IllegalArgumentException if the generation is missing, not a number, or if it is equal to 0.
+   * @throws IllegalArgumentException if the generation is missing, not a number, or if it is
+   *     equal to 0.
    */
   private void validateGeneration() {
     String generation = properties.get(GENERATION_KEY);
     if (generation == null) {
-      throw new IllegalArgumentException("Missing generation property from the metadata of topic " + topicId);
+      throw new IllegalArgumentException(
+          "Missing generation property from the metadata of topic " + topicId);
     }
     try {
       if (Integer.parseInt(generation) == 0) {
-        throw new IllegalArgumentException("The generation property must not be zero for topic " + topicId);
+        throw new IllegalArgumentException(
+            "The generation property must not be zero for topic " + topicId);
       }
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("The generation property must be a number other " +
-                                           "than zero for topic " + topicId);
+      throw new IllegalArgumentException("The generation property must be a number other "
+          + "than zero for topic " + topicId);
     }
   }
 
   /**
-   * Turns a list of {@link Object} into a {@link Map} by using even index objects as keys and the following odd index
-   * objects as values. The {@link Object#toString()} method will be used to convert {@link Object} to {@link String}.
+   * Turns a list of {@link Object} into a {@link Map} by using even index objects as keys and the
+   * following odd index objects as values. The {@link Object#toString()} method will be used to
+   * convert {@link Object} to {@link String}.
    */
-  private static Map<String, String> toMap(Object...properties) {
+  private static Map<String, String> toMap(Object... properties) {
     if (properties.length % 2 != 0) {
-      throw new IllegalArgumentException("The properties size should be even as it should contain key-value pairs");
+      throw new IllegalArgumentException(
+          "The properties size should be even as it should contain key-value pairs");
     }
 
     Map<String, String> map = new HashMap<>();

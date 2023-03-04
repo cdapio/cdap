@@ -31,10 +31,12 @@ import java.util.Set;
 /**
  * Codec to serialize and deserialize {@link WorkerSpecification}
  */
-public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<WorkerSpecification> {
+public final class WorkerSpecificationCodec extends
+    AbstractSpecificationCodec<WorkerSpecification> {
 
   @Override
-  public JsonElement serialize(WorkerSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(WorkerSpecification spec, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
     jsonObj.addProperty("className", spec.getClassName());
     jsonObj.addProperty("name", spec.getName());
@@ -48,19 +50,22 @@ public final class WorkerSpecificationCodec extends AbstractSpecificationCodec<W
   }
 
   @Override
-  public WorkerSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public WorkerSpecification deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     JsonObject jsonObj = (JsonObject) json;
 
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new WorkerSpecification(className, name, description, properties, datasets, resources, instances, plugins);
+    return new WorkerSpecification(className, name, description, properties, datasets, resources,
+        instances, plugins);
   }
 }

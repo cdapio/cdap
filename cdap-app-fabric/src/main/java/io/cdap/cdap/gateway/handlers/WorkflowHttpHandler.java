@@ -88,23 +88,26 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowHttpHandler.class);
   private static final Type STRING_TO_NODESTATEDETAIL_MAP_TYPE
-    = new TypeToken<Map<String, WorkflowNodeStateDetail>>() { }.getType();
+      = new TypeToken<Map<String, WorkflowNodeStateDetail>>() {
+  }.getType();
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
-    .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
-    .registerTypeAdapter(Trigger.class, new TriggerCodec())
-    .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
-    .registerTypeAdapter(Constraint.class, new ConstraintCodec())
-    .create();
+      .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+      .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
+      .registerTypeAdapter(Trigger.class, new TriggerCodec())
+      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+      .create();
 
   private final DatasetFramework datasetFramework;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
 
   @Inject
-  WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService, DatasetFramework datasetFramework) {
+  WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
+      DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
     this.store = store;
     this.runtimeService = runtimeService;
@@ -113,9 +116,9 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/suspend")
   public void suspendWorkflowRun(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                 @PathParam("workflow-name") String workflowName,
-                                 @PathParam("run-id") String runId) throws Exception {
+      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+      @PathParam("workflow-name") String workflowName,
+      @PathParam("run-id") String runId) throws Exception {
     ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.SUSPENDED) {
       throw new ConflictException("Program run already suspended");
@@ -127,9 +130,9 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/resume")
   public void resumeWorkflowRun(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
-                                @PathParam("workflow-name") String workflowName,
-                                @PathParam("run-id") String runId) throws Exception {
+      @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
+      @PathParam("workflow-name") String workflowName,
+      @PathParam("run-id") String runId) throws Exception {
     ProgramController controller = getProgramController(namespaceId, appId, workflowName, runId);
     if (controller.getState() == ProgramController.State.ALIVE) {
       throw new ConflictException("Program is already running");
@@ -142,12 +145,14 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the {@link ProgramController} for the given workflow program.
    */
   private ProgramController getProgramController(String namespace, String appName,
-                                                 String workflowName, String runId) throws NotFoundException {
+      String workflowName, String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
-    ApplicationSpecification appSpec = getAppSpecForValidRun(namespaceId, appName, workflowName, runId);
-    ApplicationId appId =  namespaceId.app(appName, appSpec.getAppVersion());
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespaceId, appName, workflowName,
+        runId);
+    ApplicationId appId = namespaceId.app(appName, appSpec.getAppVersion());
     ProgramId id = appId.workflow(workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id)
+        .get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
     }
@@ -157,18 +162,21 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/token")
   public void getWorkflowToken(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId,
-                               @PathParam("workflow-id") String workflowId,
-                               @PathParam("run-id") String runId,
-                               @QueryParam("scope") @DefaultValue("user") String scope,
-                               @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId,
+      @PathParam("workflow-id") String workflowId,
+      @PathParam("run-id") String runId,
+      @QueryParam("scope") @DefaultValue("user") String scope,
+      @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
     WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
     WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
-    WorkflowTokenDetail workflowTokenDetail = WorkflowTokenDetail.of(workflowToken.getAll(tokenScope));
-    Type workflowTokenDetailType = new TypeToken<WorkflowTokenDetail>() { }.getType();
+    WorkflowTokenDetail workflowTokenDetail = WorkflowTokenDetail.of(
+        workflowToken.getAll(tokenScope));
+    Type workflowTokenDetailType = new TypeToken<WorkflowTokenDetail>() {
+    }.getType();
     if (key.isEmpty()) {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(workflowTokenDetail, workflowTokenDetailType));
+      responder.sendJson(HttpResponseStatus.OK,
+          GSON.toJson(workflowTokenDetail, workflowTokenDetailType));
       return;
     }
     List<NodeValue> nodeValueEntries = workflowToken.getAll(key, tokenScope);
@@ -176,40 +184,42 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(key);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(WorkflowTokenDetail.of(Collections.singletonMap(key, nodeValueEntries)),
-                                   workflowTokenDetailType));
+        GSON.toJson(WorkflowTokenDetail.of(Collections.singletonMap(key, nodeValueEntries)),
+            workflowTokenDetailType));
   }
 
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodes/{node-id}/token")
   public void getWorkflowToken(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId,
-                               @PathParam("workflow-id") String workflowId,
-                               @PathParam("run-id") String runId,
-                               @PathParam("node-id") String nodeId,
-                               @QueryParam("scope") @DefaultValue("user") String scope,
-                               @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId,
+      @PathParam("workflow-id") String workflowId,
+      @PathParam("run-id") String runId,
+      @PathParam("node-id") String nodeId,
+      @QueryParam("scope") @DefaultValue("user") String scope,
+      @QueryParam("key") @DefaultValue("") String key) throws NotFoundException {
     WorkflowToken workflowToken = getWorkflowToken(namespaceId, appId, workflowId, runId);
     WorkflowToken.Scope tokenScope = WorkflowToken.Scope.valueOf(scope.toUpperCase());
     Map<String, Value> workflowTokenFromNode = workflowToken.getAllFromNode(nodeId, tokenScope);
     WorkflowTokenNodeDetail tokenAtNode = WorkflowTokenNodeDetail.of(workflowTokenFromNode);
-    Type workflowTokenNodeDetailType = new TypeToken<WorkflowTokenNodeDetail>() { }.getType();
+    Type workflowTokenNodeDetailType = new TypeToken<WorkflowTokenNodeDetail>() {
+    }.getType();
     if (key.isEmpty()) {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(tokenAtNode, workflowTokenNodeDetailType));
+      responder.sendJson(HttpResponseStatus.OK,
+          GSON.toJson(tokenAtNode, workflowTokenNodeDetailType));
       return;
     }
     if (!workflowTokenFromNode.containsKey(key)) {
       throw new NotFoundException(key);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(WorkflowTokenNodeDetail.of(Collections.singletonMap(key,
-                                                                                       workflowTokenFromNode.get(key))),
-                                   workflowTokenNodeDetailType));
+        GSON.toJson(WorkflowTokenNodeDetail.of(Collections.singletonMap(key,
+                workflowTokenFromNode.get(key))),
+            workflowTokenNodeDetailType));
   }
 
   private WorkflowToken getWorkflowToken(String namespace, String appName, String workflow,
-                                         String runId) throws NotFoundException {
+      String runId) throws NotFoundException {
     NamespaceId namespaceId = Ids.namespace(namespace);
     ApplicationSpecification appSpec = getAppSpecForValidRun(namespaceId, appName, workflow, runId);
     WorkflowId workflowId = namespaceId.app(appName, appSpec.getAppVersion()).workflow(workflow);
@@ -222,14 +232,16 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/nodes/state")
   public void getWorkflowNodeStates(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String applicationId,
-                                    @PathParam("workflow-id") String workflowId,
-                                    @PathParam("run-id") String runId)
-    throws NotFoundException {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String applicationId,
+      @PathParam("workflow-id") String workflowId,
+      @PathParam("run-id") String runId)
+      throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId, runId);
-    ProgramId workflowProgramId = namespace.app(applicationId, appSpec.getAppVersion()).workflow(workflowId);
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId,
+        runId);
+    ProgramId workflowProgramId = namespace.app(applicationId, appSpec.getAppVersion())
+        .workflow(workflowId);
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
 
     if (workflowSpec == null) {
@@ -244,26 +256,30 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       nodeStates.put(nodeStateDetail.getNodeId(), nodeStateDetail);
     }
 
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE));
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(nodeStates, STRING_TO_NODESTATEDETAIL_MAP_TYPE));
   }
 
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/localdatasets")
   public void getWorkflowLocalDatasets(HttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId,
-                                       @PathParam("app-id") String applicationId,
-                                       @PathParam("workflow-id") String workflowId,
-                                       @PathParam("run-id") String runId)
-    throws NotFoundException, DatasetManagementException, UnauthorizedException {
-    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String applicationId,
+      @PathParam("workflow-id") String workflowId,
+      @PathParam("run-id") String runId)
+      throws NotFoundException, DatasetManagementException, UnauthorizedException {
+    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId,
+        workflowId, runId);
     Map<String, DatasetSpecificationSummary> localDatasetSummaries = new HashMap<>();
-    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs()
+        .entrySet()) {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       String datasetType = localDatasetEntry.getValue().getTypeName();
-      Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties().getProperties();
+      Map<String, String> datasetProperties = localDatasetEntry.getValue().getProperties()
+          .getProperties();
       if (datasetFramework.hasInstance(new DatasetId(namespaceId, mappedDatasetName))) {
         localDatasetSummaries.put(localDatasetEntry.getKey(),
-                                  new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
+            new DatasetSpecificationSummary(mappedDatasetName, datasetType, datasetProperties));
       }
     }
 
@@ -273,13 +289,15 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}/workflows/{workflow-id}/runs/{run-id}/localdatasets")
   public void deleteWorkflowLocalDatasets(HttpRequest request, HttpResponder responder,
-                                       @PathParam("namespace-id") String namespaceId,
-                                       @PathParam("app-id") String applicationId,
-                                       @PathParam("workflow-id") String workflowId,
-                                       @PathParam("run-id") String runId) throws NotFoundException {
-    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId, workflowId, runId);
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String applicationId,
+      @PathParam("workflow-id") String workflowId,
+      @PathParam("run-id") String runId) throws NotFoundException {
+    WorkflowSpecification workflowSpec = getWorkflowSpecForValidRun(namespaceId, applicationId,
+        workflowId, runId);
     Set<String> errorOnDelete = new HashSet<>();
-    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs().entrySet()) {
+    for (Map.Entry<String, DatasetCreationSpec> localDatasetEntry : workflowSpec.getLocalDatasetSpecs()
+        .entrySet()) {
       String mappedDatasetName = localDatasetEntry.getKey() + "." + runId;
       // try best to delete the local datasets.
       try {
@@ -288,7 +306,8 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
         // Dataset instance is already deleted. so its no-op.
       } catch (Throwable t) {
         errorOnDelete.add(mappedDatasetName);
-        LOG.error("Failed to delete the Workflow local dataset {}. Reason - {}", mappedDatasetName, t.getMessage());
+        LOG.error("Failed to delete the Workflow local dataset {}. Reason - {}", mappedDatasetName,
+            t.getMessage());
       }
     }
 
@@ -297,12 +316,15 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    String errorMessage = "Failed to delete Workflow local datasets - " + Joiner.on(",").join(errorOnDelete);
+    String errorMessage =
+        "Failed to delete Workflow local datasets - " + Joiner.on(",").join(errorOnDelete);
     throw new RuntimeException(errorMessage);
   }
 
   /**
-   * Get the {@link WorkflowSpecification} if valid application id, workflow id, and runid are provided.
+   * Get the {@link WorkflowSpecification} if valid application id, workflow id, and runid are
+   * provided.
+   *
    * @param namespaceId the namespace id
    * @param applicationId the application id
    * @param workflowId the workflow id
@@ -311,11 +333,13 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
    * @throws NotFoundException is thrown when the application, workflow, or runid is not found
    */
   private WorkflowSpecification getWorkflowSpecForValidRun(String namespaceId, String applicationId,
-                                                           String workflowId, String runId) throws NotFoundException {
+      String workflowId, String runId) throws NotFoundException {
     NamespaceId namespace = Ids.namespace(namespaceId);
-    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId, runId);
+    ApplicationSpecification appSpec = getAppSpecForValidRun(namespace, applicationId, workflowId,
+        runId);
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId);
-    ProgramId programId = namespace.app(applicationId, appSpec.getAppVersion()).workflow(workflowId);
+    ProgramId programId = namespace.app(applicationId, appSpec.getAppVersion())
+        .workflow(workflowId);
     if (workflowSpec == null) {
       throw new ProgramNotFoundException(programId);
     }
@@ -323,7 +347,9 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Get the {@link ApplicationSpecification} if valid application id, workflow id, and runid are provided.
+   * Get the {@link ApplicationSpecification} if valid application id, workflow id, and runid are
+   * provided.
+   *
    * @param namespace the namespace id
    * @param applicationId the application id
    * @param workflowId the workflow id
@@ -331,13 +357,16 @@ public class WorkflowHttpHandler extends AbstractAppFabricHttpHandler {
    * @return the specifications for the Workflow
    * @throws NotFoundException is thrown when the application, workflow, or runid is not found
    */
-  private ApplicationSpecification getAppSpecForValidRun(NamespaceId namespace, String applicationId,
-                                                         String workflowId, String runId) throws NotFoundException {
-    ProgramReference programRef = namespace.appReference(applicationId).program(ProgramType.WORKFLOW, workflowId);
+  private ApplicationSpecification getAppSpecForValidRun(NamespaceId namespace,
+      String applicationId,
+      String workflowId, String runId) throws NotFoundException {
+    ProgramReference programRef = namespace.appReference(applicationId)
+        .program(ProgramType.WORKFLOW, workflowId);
     // Fetch run record ignoring version
     RunRecordDetail runRecord = store.getRun(programRef, runId);
     if (runRecord == null) {
-      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
+      throw new NotFoundException(
+          String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
 
     // Get correct version from runRecord and fetch the appSpec

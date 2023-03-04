@@ -19,15 +19,17 @@ package io.cdap.cdap.api.dataset.lib;
 import java.util.List;
 
 /**
- * Returns access to an iterator of the requested partitions as well as a {@link PartitionConsumerState} which can be
- * used to request partitions created after the previous request of partitions.
+ * Returns access to an iterator of the requested partitions as well as a {@link
+ * PartitionConsumerState} which can be used to request partitions created after the previous
+ * request of partitions.
  */
 public class PartitionConsumerResult {
+
   private final PartitionConsumerState partitionConsumerState;
   private final List<PartitionDetail> partitions;
 
   public PartitionConsumerResult(PartitionConsumerState partitionConsumerState,
-                                 List<PartitionDetail> partitions) {
+      List<PartitionDetail> partitions) {
     this.partitionConsumerState = partitionConsumerState;
     this.partitions = partitions;
   }

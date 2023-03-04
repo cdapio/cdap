@@ -36,7 +36,8 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramInstancesCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  protected GetProgramInstancesCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -51,7 +52,7 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
     int instances;
     switch (elementType) {
       case WORKER:
-        if (programIdParts.length < 2)  {
+        if (programIdParts.length < 2) {
           throw new CommandInputError(this);
         }
         String workerId = programIdParts[1];
@@ -67,7 +68,8 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
         break;
       default:
         // TODO: remove this
-        throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);
+        throw new IllegalArgumentException(
+            "Unrecognized program element type for scaling: " + elementType);
     }
 
     output.println(instances);
@@ -75,11 +77,13 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s instances <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("get %s instances <%s>", elementType.getName(),
+        elementType.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets the number of instances of %s", Fragment.of(Article.A, elementType.getName()));
+    return String.format("Gets the number of instances of %s",
+        Fragment.of(Article.A, elementType.getName()));
   }
 }

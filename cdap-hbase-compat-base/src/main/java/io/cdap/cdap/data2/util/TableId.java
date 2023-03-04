@@ -24,6 +24,7 @@ import com.google.common.base.Strings;
  * Identifier for an HBase and LevelDB tables that contains a namespace and a table name
  */
 public class TableId {
+
   private final String namespace;
   private final String tableName;
 
@@ -41,8 +42,10 @@ public class TableId {
   }
 
   public static TableId from(String namespace, String tableName) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace), "Namespace should not be null or empty");
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName), "Table name should not be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace),
+        "Namespace should not be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName),
+        "Table name should not be null or empty");
     return new TableId(namespace, tableName);
   }
 
@@ -56,7 +59,8 @@ public class TableId {
     }
 
     TableId that = (TableId) o;
-    return Objects.equal(namespace, that.getNamespace()) && Objects.equal(tableName, that.getTableName());
+    return Objects.equal(namespace, that.getNamespace()) && Objects.equal(tableName,
+        that.getTableName());
   }
 
   @Override
@@ -67,8 +71,8 @@ public class TableId {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("namespace", namespace)
-      .add("tableName", tableName)
-      .toString();
+        .add("namespace", namespace)
+        .add("tableName", tableName)
+        .toString();
   }
 }

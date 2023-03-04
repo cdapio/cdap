@@ -32,9 +32,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * An abstract base class for generating schema. It knows how to generate
- * most of the supported data type, except record (bean class) type, which
- * it delegates to child class.
+ * An abstract base class for generating schema. It knows how to generate most of the supported data
+ * type, except record (bean class) type, which it delegates to child class.
  */
 public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
@@ -85,7 +84,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
   }
 
   @Override
-  public final Schema generate(Type type, boolean acceptRecursiveTypes) throws UnsupportedTypeException {
+  public final Schema generate(Type type, boolean acceptRecursiveTypes)
+      throws UnsupportedTypeException {
     Set<String> knownRecords = Collections.emptySet();
     return doGenerate(TypeToken.of(type), knownRecords, acceptRecursiveTypes);
   }
@@ -93,17 +93,19 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
   /**
    * Actual schema generation. It recursively resolves container types.
    *
-   * @param typeToken    Encapsulate the Java type for generating a {@link Schema}.
-   * @param knownRecords Set of record names that has the schema already generated. It is used for
-   *                     recursive class field references.
-   * @param acceptRecursion Whether to tolerate type recursion. If false, will throw UnsupportedTypeException if
-   *                        a recursive type is encountered.
+   * @param typeToken Encapsulate the Java type for generating a {@link Schema}.
+   * @param knownRecords Set of record names that has the schema already generated. It is used
+   *     for recursive class field references.
+   * @param acceptRecursion Whether to tolerate type recursion. If false, will throw
+   *     UnsupportedTypeException if a recursive type is encountered.
    * @return A {@link Schema} representing the given java {@link Type}.
-   * @throws UnsupportedTypeException Indicates schema generation is not support for the given java {@link Type}.
+   * @throws UnsupportedTypeException Indicates schema generation is not support for the given
+   *     java {@link Type}.
    */
   @SuppressWarnings("unchecked")
-  protected final Schema doGenerate(TypeToken<?> typeToken, Set<String> knownRecords, boolean acceptRecursion)
-    throws UnsupportedTypeException {
+  protected final Schema doGenerate(TypeToken<?> typeToken, Set<String> knownRecords,
+      boolean acceptRecursion)
+      throws UnsupportedTypeException {
     Type type = typeToken.getType();
     Class<?> rawType = typeToken.getRawType();
 
@@ -120,7 +122,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
     // Java array, use ARRAY schema.
     if (rawType.isArray()) {
-      Schema componentSchema = doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords, acceptRecursion);
+      Schema componentSchema = doGenerate(TypeToken.of(rawType.getComponentType()), knownRecords,
+          acceptRecursion);
       if (rawType.getComponentType().isPrimitive()) {
         return Schema.arrayOf(componentSchema);
       }
@@ -128,8 +131,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     }
 
     if (!(type instanceof Class || type instanceof ParameterizedType)) {
-      throw new UnsupportedTypeException("Type " + type + " is not supported. " +
-                                         "Only Class or ParameterizedType are supported.");
+      throw new UnsupportedTypeException("Type " + type + " is not supported. "
+          + "Only Class or ParameterizedType are supported.");
     }
 
     // Any parameterized Collection class would be represented by ARRAY schema.
@@ -137,7 +140,8 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
       if (!(type instanceof ParameterizedType)) {
         throw new UnsupportedTypeException("Only supports parameterized Collection type.");
       }
-      TypeToken<?> componentType = typeToken.resolveType(((ParameterizedType) type).getActualTypeArguments()[0]);
+      TypeToken<?> componentType = typeToken.resolveType(
+          ((ParameterizedType) type).getActualTypeArguments()[0]);
       Schema componentSchema = doGenerate(componentType, knownRecords, acceptRecursion);
       return Schema.arrayOf(Schema.unionOf(componentSchema, Schema.of(Schema.Type.NULL)));
     }
@@ -154,7 +158,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
       Schema valueSchema = doGenerate(valueType, knownRecords, acceptRecursion);
 
       return Schema.mapOf(doGenerate(keyType, knownRecords, acceptRecursion),
-                          Schema.unionOf(valueSchema, Schema.of(Schema.Type.NULL)));
+          Schema.unionOf(valueSchema, Schema.of(Schema.Type.NULL)));
     }
 
     // Any Java class, class name as the record name.
@@ -178,12 +182,11 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
    *
    * @param typeToken Type of the record.
    * @param knownRecords Set of record names that schema has already been generated.
-   * @param acceptRecursiveTypes Whether to tolerate type recursion. If false, will throw UnsupportedTypeException if
-   *                             a recursive type is encountered.
+   * @param acceptRecursiveTypes Whether to tolerate type recursion. If false, will throw
+   *     UnsupportedTypeException if a recursive type is encountered.
    * @return An instance of {@link Schema}
-   * @throws UnsupportedTypeException
    */
   protected abstract Schema generateRecord(TypeToken<?> typeToken,
-                                           Set<String> knownRecords,
-                                           boolean acceptRecursiveTypes) throws UnsupportedTypeException;
+      Set<String> knownRecords,
+      boolean acceptRecursiveTypes) throws UnsupportedTypeException;
 }

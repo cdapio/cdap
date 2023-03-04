@@ -41,8 +41,8 @@ import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Implementation of {@link DynamicDatasetCache} that performs all operations on a per-thread basis.
- * That is, every thread is guaranteed to receive its own distinct copy of every dataset; every thread
- * has its own transaction context, etc.
+ * That is, every thread is guaranteed to receive its own distinct copy of every dataset; every
+ * thread has its own transaction context, etc.
  */
 public class MultiThreadDatasetCache extends DynamicDatasetCache {
 
@@ -52,47 +52,48 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   /**
    * See {@link DynamicDatasetCache}.
    *
-   * @param staticDatasets  if non-null, a map from dataset name to runtime arguments. These datasets will be
-   *                        instantiated immediately, and they will participate in every transaction started
-   *                        through {@link #newTransactionContext}.
-   * @param multiThreadTxAwares a list of {@link MultiThreadTransactionAware} that will get added to each
-   *                            {@link SingleThreadDatasetCache} instance created for each thread through the
-   *                            {@link SingleThreadDatasetCache#addExtraTransactionAware(TransactionAware)} method
-   *                            to participate in transaction lifecycle.
+   * @param staticDatasets if non-null, a map from dataset name to runtime arguments. These
+   *     datasets will be instantiated immediately, and they will participate in every transaction
+   *     started through {@link #newTransactionContext}.
+   * @param multiThreadTxAwares a list of {@link MultiThreadTransactionAware} that will get
+   *     added to each {@link SingleThreadDatasetCache} instance created for each thread through the
+   *     {@link SingleThreadDatasetCache#addExtraTransactionAware(TransactionAware)} method to
+   *     participate in transaction lifecycle.
    */
   public MultiThreadDatasetCache(final SystemDatasetInstantiator instantiator,
-                                 final TransactionSystemClient txClient,
-                                 final NamespaceId namespace,
-                                 final Map<String, String> runtimeArguments,
-                                 @Nullable final MetricsContext metricsContext,
-                                 @Nullable final Map<String, Map<String, String>> staticDatasets,
-                                 final MultiThreadTransactionAware<?>...multiThreadTxAwares) {
+      final TransactionSystemClient txClient,
+      final NamespaceId namespace,
+      final Map<String, String> runtimeArguments,
+      @Nullable final MetricsContext metricsContext,
+      @Nullable final Map<String, Map<String, String>> staticDatasets,
+      final MultiThreadTransactionAware<?>... multiThreadTxAwares) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.perThreadMap = CacheBuilder.newBuilder()
-      .weakKeys()
-      .removalListener(new RemovalListener<Thread, DynamicDatasetCache>() {
-        @Override
-        @ParametersAreNonnullByDefault
-        public void onRemoval(RemovalNotification<Thread, DynamicDatasetCache> notification) {
-          DynamicDatasetCache cache = notification.getValue();
-          if (cache != null) {
-            cache.close();
-          }
-        }
-      })
-      .build(
-        new CacheLoader<Thread, SingleThreadDatasetCache>() {
+        .weakKeys()
+        .removalListener(new RemovalListener<Thread, DynamicDatasetCache>() {
           @Override
           @ParametersAreNonnullByDefault
-          public SingleThreadDatasetCache load(Thread thread) throws Exception {
-            SingleThreadDatasetCache cache = new SingleThreadDatasetCache(
-              instantiator, txClient, namespace, runtimeArguments, metricsContext, staticDatasets);
-            for (MultiThreadTransactionAware<?> txAware : multiThreadTxAwares) {
-              cache.addExtraTransactionAware(txAware);
+          public void onRemoval(RemovalNotification<Thread, DynamicDatasetCache> notification) {
+            DynamicDatasetCache cache = notification.getValue();
+            if (cache != null) {
+              cache.close();
             }
-            return cache;
           }
-        });
+        })
+        .build(
+            new CacheLoader<Thread, SingleThreadDatasetCache>() {
+              @Override
+              @ParametersAreNonnullByDefault
+              public SingleThreadDatasetCache load(Thread thread) throws Exception {
+                SingleThreadDatasetCache cache = new SingleThreadDatasetCache(
+                    instantiator, txClient, namespace, runtimeArguments, metricsContext,
+                    staticDatasets);
+                for (MultiThreadTransactionAware<?> txAware : multiThreadTxAwares) {
+                  cache.addExtraTransactionAware(txAware);
+                }
+                return cache;
+              }
+            });
   }
 
   @Override
@@ -109,7 +110,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
 
   @Override
   public <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return entryForCurrentThread().getDataset(key, bypass);
   }
 

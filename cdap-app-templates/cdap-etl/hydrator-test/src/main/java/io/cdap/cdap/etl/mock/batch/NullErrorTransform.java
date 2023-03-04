@@ -36,6 +36,7 @@ import java.util.Map;
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("NullErrorTransform")
 public class NullErrorTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final NullErrorTransform.Config config;
 
@@ -46,7 +47,7 @@ public class NullErrorTransform extends Transform<StructuredRecord, StructuredRe
   @Override
   @SuppressWarnings("ConstantConditions")
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-      config.name = null;
+    config.name = null;
     // throw null pointer exception
     if (config.name.equals("xyz")) {
       config.name = "pqr";
@@ -59,7 +60,8 @@ public class NullErrorTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     // no-op
   }
 
@@ -67,6 +69,7 @@ public class NullErrorTransform extends Transform<StructuredRecord, StructuredRe
    * Config for NullErrorTransform.
    */
   public static class Config extends PluginConfig {
+
     private String name;
   }
 
@@ -80,7 +83,8 @@ public class NullErrorTransform extends Transform<StructuredRecord, StructuredRe
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
     return PluginClass.builder().setName("NullErrorTransform").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(NullErrorTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(NullErrorTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

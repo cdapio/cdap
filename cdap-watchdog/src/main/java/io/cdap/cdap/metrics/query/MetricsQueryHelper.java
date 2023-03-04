@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class MetricsQueryHelper {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetricsQueryHelper.class);
 
   public static final String NAMESPACE_STRING = "namespace";
@@ -81,49 +82,49 @@ public class MetricsQueryHelper {
 
   static {
     ImmutableBiMap<String, String> mapping = ImmutableBiMap.<String, String>builder()
-      .put(Constants.Metrics.Tag.NAMESPACE, NAMESPACE_STRING)
-      .put(Constants.Metrics.Tag.RUN_ID, "run")
-      .put(Constants.Metrics.Tag.INSTANCE_ID, "instance")
+        .put(Constants.Metrics.Tag.NAMESPACE, NAMESPACE_STRING)
+        .put(Constants.Metrics.Tag.RUN_ID, "run")
+        .put(Constants.Metrics.Tag.INSTANCE_ID, "instance")
 
-      .put(Constants.Metrics.Tag.COMPONENT, "component")
-      .put(Constants.Metrics.Tag.HANDLER, "handler")
-      .put(Constants.Metrics.Tag.METHOD, "method")
+        .put(Constants.Metrics.Tag.COMPONENT, "component")
+        .put(Constants.Metrics.Tag.HANDLER, "handler")
+        .put(Constants.Metrics.Tag.METHOD, "method")
 
-      .put(Constants.Metrics.Tag.DATASET, "dataset")
+        .put(Constants.Metrics.Tag.DATASET, "dataset")
 
-      .put(Constants.Metrics.Tag.APP, APP_STRING)
+        .put(Constants.Metrics.Tag.APP, APP_STRING)
 
-      .put(Constants.Metrics.Tag.SERVICE, "service")
-      // SERVICE_HANDLER is the same HANDLER
+        .put(Constants.Metrics.Tag.SERVICE, "service")
+        // SERVICE_HANDLER is the same HANDLER
 
-      .put(Constants.Metrics.Tag.WORKER, "worker")
+        .put(Constants.Metrics.Tag.WORKER, "worker")
 
-      .put(Constants.Metrics.Tag.PRODUCER, "producer")
-      .put(Constants.Metrics.Tag.CONSUMER, "consumer")
+        .put(Constants.Metrics.Tag.PRODUCER, "producer")
+        .put(Constants.Metrics.Tag.CONSUMER, "consumer")
 
-      .put(Constants.Metrics.Tag.MAPREDUCE, "mapreduce")
-      .put(Constants.Metrics.Tag.MR_TASK_TYPE, "tasktype")
+        .put(Constants.Metrics.Tag.MAPREDUCE, "mapreduce")
+        .put(Constants.Metrics.Tag.MR_TASK_TYPE, "tasktype")
 
-      .put(Constants.Metrics.Tag.WORKFLOW, "workflow")
+        .put(Constants.Metrics.Tag.WORKFLOW, "workflow")
 
-      .put(Constants.Metrics.Tag.PROVISIONER, "provisioner")
+        .put(Constants.Metrics.Tag.PROVISIONER, "provisioner")
 
-      .put(Constants.Metrics.Tag.SPARK, "spark")
-      .put(Constants.Metrics.Tag.STATUS, "status")
+        .put(Constants.Metrics.Tag.SPARK, "spark")
+        .put(Constants.Metrics.Tag.STATUS, "status")
 
-      // put program related tag
-      .put(Constants.Metrics.Tag.PROGRAM, "program")
-      .put(Constants.Metrics.Tag.PROGRAM_TYPE, "programtype")
+        // put program related tag
+        .put(Constants.Metrics.Tag.PROGRAM, "program")
+        .put(Constants.Metrics.Tag.PROGRAM_TYPE, "programtype")
 
-      // put profile related tag
-      .put(Constants.Metrics.Tag.PROFILE, "profile")
-      .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
-      .put(Constants.Metrics.Tag.CLASS, "class")
-      .put(Constants.Metrics.Tag.TRIES, "retry")
+        // put profile related tag
+        .put(Constants.Metrics.Tag.PROFILE, "profile")
+        .put(Constants.Metrics.Tag.PROFILE_SCOPE, "profilescope")
+        .put(Constants.Metrics.Tag.CLASS, "class")
+        .put(Constants.Metrics.Tag.TRIES, "retry")
 
-      // put schedule job related tag
-      .put(Constants.Metrics.Tag.SCHEDULE, "schedule")
-      .build();
+        // put schedule job related tag
+        .put(Constants.Metrics.Tag.SCHEDULE, "schedule")
+        .build();
 
     tagNameToHuman = mapping;
     humanToTagName = mapping.inverse();
@@ -140,7 +141,7 @@ public class MetricsQueryHelper {
     // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
     // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery = new MetricSearchQuery(0, Integer.MAX_VALUE, -1,
-                                                          toTagValues(humanToTagNames(parseTagValues(tags))));
+        toTagValues(humanToTagNames(parseTagValues(tags))));
     return tagValuesToHuman(metricStore.findNextAvailableTags(searchQuery));
   }
 
@@ -148,7 +149,8 @@ public class MetricsQueryHelper {
     return getMetrics(humanToTagNames(parseTagValues(tagValues)));
   }
 
-  public Map<String, MetricQueryResult> executeBatchQueries(Map<String, QueryRequestFormat> queries) throws Exception {
+  public Map<String, MetricQueryResult> executeBatchQueries(Map<String, QueryRequestFormat> queries)
+      throws Exception {
     LOG.trace("Received Queries {}", queries);
     Map<String, MetricQueryResult> queryFinalResponse = Maps.newHashMap();
     for (Map.Entry<String, QueryRequestFormat> query : queries.entrySet()) {
@@ -158,9 +160,11 @@ public class MetricsQueryHelper {
     return queryFinalResponse;
   }
 
-  public MetricQueryResult executeTagQuery(List<String> tags, List<String> metrics, List<String> groupByTags,
-                                           Map<String, List<String>> queryTimeParams) throws Exception {
-    MetricQueryRequest queryRequest = new MetricQueryRequest(parseTagValuesAsMap(tags), metrics, groupByTags);
+  public MetricQueryResult executeTagQuery(List<String> tags, List<String> metrics,
+      List<String> groupByTags,
+      Map<String, List<String>> queryTimeParams) throws Exception {
+    MetricQueryRequest queryRequest = new MetricQueryRequest(parseTagValuesAsMap(tags), metrics,
+        groupByTags);
     setTimeRangeInQueryRequest(queryRequest, queryTimeParams);
     return executeQuery(queryRequest);
   }
@@ -174,7 +178,7 @@ public class MetricsQueryHelper {
     // we want to search the entire range, so startTimestamp is '0' and end Timestamp is Integer.MAX_VALUE and
     // limit is -1 , to include the entire search result.
     MetricSearchQuery searchQuery =
-      new MetricSearchQuery(0, Integer.MAX_VALUE, -1, toTagValues(tagValues));
+        new MetricSearchQuery(0, Integer.MAX_VALUE, -1, toTagValues(tagValues));
     Collection<String> metricNames = metricStore.findMetricNames(searchQuery);
     return Lists.newArrayList(Iterables.filter(metricNames, Predicates.notNull()));
   }
@@ -239,34 +243,38 @@ public class MetricsQueryHelper {
     }
 
     MetricQueryRequest queryRequest = new MetricQueryRequest(queryRequestFormat.getTags(),
-                                                             queryRequestFormat.getMetrics(),
-                                                             queryRequestFormat.getGroupBy());
+        queryRequestFormat.getMetrics(),
+        queryRequestFormat.getGroupBy());
     setTimeRangeInQueryRequest(queryRequest, queryParams);
     return queryRequest;
   }
 
-  private void setTimeRangeInQueryRequest(MetricQueryRequest request, Map<String, List<String>> queryTimeParams) {
+  private void setTimeRangeInQueryRequest(MetricQueryRequest request,
+      Map<String, List<String>> queryTimeParams) {
     Long start =
-      queryTimeParams.containsKey(PARAM_START_TIME) ?
-        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0)) : null;
+        queryTimeParams.containsKey(PARAM_START_TIME)
+            ? TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_START_TIME).get(0))
+            : null;
     Long end =
-      queryTimeParams.containsKey(PARAM_END_TIME) ?
-        TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
+        queryTimeParams.containsKey(PARAM_END_TIME)
+            ? TimeMathParser.parseTimeInSeconds(queryTimeParams.get(PARAM_END_TIME).get(0)) : null;
     Integer count = null;
 
     AggregationOption aggregationOption =
-      queryTimeParams.containsKey(PARAM_AGGREGATE)
-        ? AggregationOption.valueOf(queryTimeParams.get(PARAM_AGGREGATE).get(0).toUpperCase())
-        : AggregationOption.FALSE;
-    boolean aggregate = aggregationOption.equals(AggregationOption.TRUE) || ((start == null) && (end == null));
+        queryTimeParams.containsKey(PARAM_AGGREGATE)
+            ? AggregationOption.valueOf(queryTimeParams.get(PARAM_AGGREGATE).get(0).toUpperCase())
+            : AggregationOption.FALSE;
+    boolean aggregate =
+        aggregationOption.equals(AggregationOption.TRUE) || ((start == null) && (end == null));
 
-    Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
-      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : getResolution(null, start, end);
+    Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION)
+        ? getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end)
+        : getResolution(null, start, end);
 
     Interpolator interpolator = null;
     if (queryTimeParams.containsKey(PARAM_INTERPOLATE)) {
-      long timeLimit = queryTimeParams.containsKey(PARAM_MAX_INTERPOLATE_GAP) ?
-        Long.parseLong(queryTimeParams.get(PARAM_MAX_INTERPOLATE_GAP).get(0)) : Long.MAX_VALUE;
+      long timeLimit = queryTimeParams.containsKey(PARAM_MAX_INTERPOLATE_GAP)
+          ? Long.parseLong(queryTimeParams.get(PARAM_MAX_INTERPOLATE_GAP).get(0)) : Long.MAX_VALUE;
       interpolator = getInterpolator(queryTimeParams.get(PARAM_INTERPOLATE).get(0), timeLimit);
     }
 
@@ -278,10 +286,11 @@ public class MetricsQueryHelper {
         end = start + count * resolution;
       }
     } else if (start != null && end != null) {
-      count = (int) (((end / resolution * resolution) - (start / resolution * resolution)) / resolution + 1);
+      count = (int) (
+          ((end / resolution * resolution) - (start / resolution * resolution)) / resolution + 1);
     } else if (!aggregate) {
-      throw new IllegalArgumentException("At least two of count/start/end parameters " +
-                                           "are required for time-range queries ");
+      throw new IllegalArgumentException("At least two of count/start/end parameters "
+          + "are required for time-range queries ");
     }
 
     if (aggregate) {
@@ -292,18 +301,18 @@ public class MetricsQueryHelper {
   }
 
   /**
-   * Get the integer resolution based on the resolution string, start and end ts. The logic of determining resolution
-   * is:
-   * 1. If the resolution string is a specific time interval, for example, 1s, 1m, 60s, and if this interval exists in
-   * the available resolution, that resolution will get returned.
-   * 2. If the resolution "auto", then start and end timestamp must be specified to determine the correct resolution.
-   * If end - start > 10 hours, hour resolution will be used. If end - start > 10 mins, min resolution will be used.
-   * If end -start < 10 mins, minimum resolution will be used.
-   * 3. If the resolution is null, i.e, not specified in the query, then if start and end timestamp are not null,
-   * the logic will be same as the resolution is "auto". If any of the start or end timestamp is not specified,
-   * minimum resolution will be used.
+   * Get the integer resolution based on the resolution string, start and end ts. The logic of
+   * determining resolution is: 1. If the resolution string is a specific time interval, for
+   * example, 1s, 1m, 60s, and if this interval exists in the available resolution, that resolution
+   * will get returned. 2. If the resolution "auto", then start and end timestamp must be specified
+   * to determine the correct resolution. If end - start > 10 hours, hour resolution will be used.
+   * If end - start > 10 mins, min resolution will be used. If end -start < 10 mins, minimum
+   * resolution will be used. 3. If the resolution is null, i.e, not specified in the query, then if
+   * start and end timestamp are not null, the logic will be same as the resolution is "auto". If
+   * any of the start or end timestamp is not specified, minimum resolution will be used.
    *
-   * @param resolution the resolution string, can be specific resolution like 1s, 1m, etc, or can be auto or null.
+   * @param resolution the resolution string, can be specific resolution like 1s, 1m, etc, or
+   *     can be auto or null.
    * @param start the start timestamp, null if not specified in the query
    * @param end the end timestamp, null if not specified in the query
    * @return the integer resolution for the query
@@ -314,24 +323,25 @@ public class MetricsQueryHelper {
       if (start != null && end != null) {
         long difference = end - start;
         if (difference < 0) {
-          throw new IllegalArgumentException(String.format("The start time %d should not be " +
-                                                             "larger than the end time %d", start, end));
+          throw new IllegalArgumentException(String.format("The start time %d should not be "
+              + "larger than the end time %d", start, end));
         }
         return getResolution(difference);
       } else if (resolution != null) {
-        throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
-                                             "should be provided to determine resolution");
+        throw new IllegalArgumentException("if resolution=auto, start and end timestamp "
+            + "should be provided to determine resolution");
       } else {
         return minResolution;
       }
     } else {
       // if not auto, check if the given resolution matches available resolutions that we support.
       int resolutionInterval = TimeMathParser.resolutionInSeconds(resolution);
-      if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600) ||
-        (resolutionInterval == 60) || (resolutionInterval == minResolution))) {
-        throw new IllegalArgumentException(String.format("Resolution interval not supported, only %d second, " +
-                                                           "1 minute and 1 hour resolutions are supported currently",
-                                                         minResolution));
+      if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600)
+          || (resolutionInterval == 60) || (resolutionInterval == minResolution))) {
+        throw new IllegalArgumentException(
+            String.format("Resolution interval not supported, only %d second, "
+                    + "1 minute and 1 hour resolutions are supported currently",
+                minResolution));
       }
       return resolutionInterval;
     }
@@ -364,16 +374,17 @@ public class MetricsQueryHelper {
     MetricQueryRequest.TimeRange timeRange = queryRequest.getTimeRange();
     AggregationOption aggregation = timeRange.getAggregation();
     if (timeRange.getCount() <= 0) {
-      throw new IllegalArgumentException("Invalid metrics aggregation request, the limit must be greater than 0");
+      throw new IllegalArgumentException(
+          "Invalid metrics aggregation request, the limit must be greater than 0");
     }
 
     Map<String, String> tagsSliceBy = humanToTagNames(transformTagMap(queryRequest.getTags()));
 
     MetricDataQuery query = new MetricDataQuery(timeRange.getStart(), timeRange.getEnd(),
-                                                timeRange.getResolutionInSeconds(),
-                                                timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
-                                                tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
-                                                aggregation, timeRange.getInterpolate());
+        timeRange.getResolutionInSeconds(),
+        timeRange.getCount(), toMetrics(queryRequest.getMetrics()),
+        tagsSliceBy, transformGroupByTags(queryRequest.getGroupBy()),
+        aggregation, timeRange.getInterpolate());
     Collection<MetricTimeSeries> queryResult = metricStore.query(query);
 
     long endTime = timeRange.getEnd();
@@ -437,13 +448,13 @@ public class MetricsQueryHelper {
   }
 
   private MetricQueryResult decorate(Collection<MetricTimeSeries> series, long startTs, long endTs,
-                                     int resolution) {
+      int resolution) {
     MetricQueryResult.TimeSeries[] serieses = new MetricQueryResult.TimeSeries[series.size()];
     int i = 0;
     for (MetricTimeSeries timeSeries : series) {
       MetricQueryResult.TimeValue[] timeValues = decorate(timeSeries.getTimeValues());
       serieses[i++] = new MetricQueryResult.TimeSeries(timeSeries.getMetricName(),
-                                                       tagNamesToHuman(timeSeries.getTagValues()), timeValues);
+          tagNamesToHuman(timeSeries.getTagValues()), timeValues);
     }
     return new MetricQueryResult(startTs, endTs, serieses, resolution);
   }
@@ -452,7 +463,8 @@ public class MetricsQueryHelper {
     MetricQueryResult.TimeValue[] timeValues = new MetricQueryResult.TimeValue[points.size()];
     int k = 0;
     for (TimeValue timeValue : points) {
-      timeValues[k++] = new MetricQueryResult.TimeValue(timeValue.getTimestamp(), timeValue.getValue());
+      timeValues[k++] = new MetricQueryResult.TimeValue(timeValue.getTimestamp(),
+          timeValue.getValue());
     }
     return timeValues;
   }
@@ -468,10 +480,11 @@ public class MetricsQueryHelper {
   }
 
   /**
-   * Helper class to Deserialize Query requests and based on this
-   * {@link MetricQueryRequest} will be constructed
+   * Helper class to Deserialize Query requests and based on this {@link MetricQueryRequest} will be
+   * constructed
    */
   public class QueryRequestFormat {
+
     private Map<String, String> tags;
     private List<String> metrics;
     private List<String> groupBy;
@@ -494,13 +507,16 @@ public class MetricsQueryHelper {
 
     /**
      * time range has aggregate=true or {start, end, count, resolution, interpolate} parameters,
-     * since start, end can be represented as 'now ('+' or '-')' and not just absolute timestamp,
-     * we use this format to get those strings and after parsing and determining other parameters, we can construct
-     * {@link MetricQueryRequest} , similar for resolution.
+     * since start, end can be represented as 'now ('+' or '-')' and not just absolute timestamp, we
+     * use this format to get those strings and after parsing and determining other parameters, we
+     * can construct {@link MetricQueryRequest} , similar for resolution.
+     *
      * @return time range prameters
      */
     public Map<String, String> getTimeRange() {
-      timeRange = (timeRange == null || timeRange.size() == 0) ? ImmutableMap.of("aggregate", "true") : timeRange;
+      timeRange =
+          (timeRange == null || timeRange.size() == 0) ? ImmutableMap.of("aggregate", "true")
+              : timeRange;
       return timeRange;
     }
   }

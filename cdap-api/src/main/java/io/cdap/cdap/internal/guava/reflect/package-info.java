@@ -15,11 +15,11 @@
  */
 
 /**
- * This package contains utilities to work with Java reflection.
- * It is copied and modified from the
+ * This package contains utilities to work with Java reflection. It is copied and modified from the
  * <a href="http://guava-libraries.googlecode.com">Guava libraries</a>.
  *
- * The modification is many about removing dependencies on too many other Guava classes, like immutable collections.
+ * The modification is many about removing dependencies on too many other Guava classes, like
+ * immutable collections.
  */
 @javax.annotation.ParametersAreNonnullByDefault
 package io.cdap.cdap.internal.guava.reflect;

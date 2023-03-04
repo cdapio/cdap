@@ -23,6 +23,7 @@ import java.util.Objects;
  * Class representing a macro function.
  */
 public class MacroFunction {
+
   private final String functionName;
   private final List<String> arguments;
 
@@ -33,6 +34,7 @@ public class MacroFunction {
 
   /**
    * return the function name
+   *
    * @return function name
    */
   public String getFunctionName() {
@@ -41,6 +43,7 @@ public class MacroFunction {
 
   /**
    * return the list of arguments to the function
+   *
    * @return the list of arguments
    */
   public List<String> getArguments() {
@@ -58,7 +61,8 @@ public class MacroFunction {
 
     MacroFunction that = (MacroFunction) o;
 
-    return Objects.equals(functionName, that.functionName) && Objects.equals(arguments, that.arguments);
+    return Objects.equals(functionName, that.functionName) && Objects.equals(arguments,
+        that.arguments);
   }
 
   @Override
@@ -68,9 +72,9 @@ public class MacroFunction {
 
   @Override
   public String toString() {
-    return "MacroFunction{" +
-      "functionName='" + functionName + '\'' +
-      ", arguments=" + arguments +
-      '}';
+    return "MacroFunction{"
+        + "functionName='" + functionName + '\''
+        + ", arguments=" + arguments
+        + '}';
   }
 }

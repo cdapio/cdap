@@ -39,7 +39,8 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of the {@link CustomActionConfigurer}.
  */
-public final class DefaultCustomActionConfigurer extends AbstractConfigurer implements CustomActionConfigurer {
+public final class DefaultCustomActionConfigurer extends AbstractConfigurer implements
+    CustomActionConfigurer {
 
   private final CustomAction customAction;
 
@@ -47,11 +48,13 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
   private String description;
   private Map<String, String> properties;
 
-  private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                        PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                        @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                        FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder , pluginInstantiator, runtimeInfo, featureFlagsProvider);
+  private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace,
+      Id.Artifact artifactId,
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
@@ -60,7 +63,8 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
 
   @Override
   public void setName(String name) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name of the CustomAction cannot be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
+        "Name of the CustomAction cannot be null or empty");
     this.name = name;
   }
 
@@ -79,21 +83,23 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
   private DefaultCustomActionSpecification createSpecification() {
     Set<String> datasets = new HashSet<>();
     Reflections.visit(customAction, customAction.getClass(), new PropertyFieldExtractor(properties),
-                      new DataSetFieldExtractor(datasets));
+        new DataSetFieldExtractor(datasets));
     return new DefaultCustomActionSpecification(customAction.getClass().getName(), name,
-                                                description, properties, datasets);
+        description, properties, datasets);
   }
 
-  public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
-                                                          Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                          PluginInstantiator pluginInstantiator,
-                                                          @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                                          FeatureFlagsProvider featureFlagsProvider) {
-    DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
-                                                                                 pluginFinder,
-                                                                                 pluginInstantiator, 
-                                                                                 runtimeInfo,
-                                                                                 featureFlagsProvider);
+  public static CustomActionSpecification configureAction(CustomAction action,
+      Id.Namespace deployNamespace,
+      Id.Artifact artifactId, PluginFinder pluginFinder,
+      PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action,
+        deployNamespace, artifactId,
+        pluginFinder,
+        pluginInstantiator,
+        runtimeInfo,
+        featureFlagsProvider);
     action.configure(configurer);
     return configurer.createSpecification();
   }

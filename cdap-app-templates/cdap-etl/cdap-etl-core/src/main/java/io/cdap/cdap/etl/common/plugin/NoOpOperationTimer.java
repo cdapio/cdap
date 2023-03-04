@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.common.plugin;
  * An operation timer that doesn't do anything.
  */
 public class NoOpOperationTimer implements OperationTimer {
+
   public static final NoOpOperationTimer INSTANCE = new NoOpOperationTimer();
 
   private NoOpOperationTimer() {

@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
  * Uniquely identifies a Job.
  */
 public class JobKey {
+
   private final ScheduleId scheduleId;
   private final int generationId;
 
@@ -56,8 +57,8 @@ public class JobKey {
 
     JobKey that = (JobKey) o;
 
-    return Objects.equal(this.scheduleId, that.scheduleId) &&
-      Objects.equal(this.generationId, that.generationId);
+    return Objects.equal(this.scheduleId, that.scheduleId)
+        && Objects.equal(this.generationId, that.generationId);
   }
 
   @Override
@@ -68,8 +69,8 @@ public class JobKey {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("scheduleId", scheduleId)
-      .add("generationId", generationId)
-      .toString();
+        .add("scheduleId", scheduleId)
+        .add("generationId", generationId)
+        .toString();
   }
 }

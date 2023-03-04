@@ -22,6 +22,7 @@ import io.cdap.cdap.api.schedule.Trigger;
  * A Trigger builder that builds a {@link AbstractSatisfiableCompositeTrigger}
  */
 public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder {
+
   private final Type type;
   protected final Trigger[] triggers;
 
@@ -35,13 +36,15 @@ public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder 
     return type;
   }
 
-  protected SatisfiableTrigger[] getBuiltTriggers(String namespace, String applicationName, String applicationVersion) {
+  protected SatisfiableTrigger[] getBuiltTriggers(String namespace, String applicationName,
+      String applicationVersion) {
     int numTriggers = triggers.length;
     SatisfiableTrigger[] builtTriggers = new SatisfiableTrigger[numTriggers];
     for (int i = 0; i < numTriggers; i++) {
       Trigger trigger = triggers[i];
-      builtTriggers[i] = trigger instanceof TriggerBuilder ?
-        ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion) : (SatisfiableTrigger) trigger;
+      builtTriggers[i] = trigger instanceof TriggerBuilder
+          ? ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion)
+          : (SatisfiableTrigger) trigger;
     }
     return builtTriggers;
   }

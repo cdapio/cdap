@@ -22,10 +22,12 @@ import java.util.concurrent.TimeUnit;
  * Constants used by the report generation app and file schema.
  */
 public final class Constants {
+
   /**
    * Constants releated to security key encryption
    */
   public static final class Security {
+
     public static final String ENCRYPTION_ALGORITHM = "AES";
     public static final String KEY_FILE_NAME = "security_key";
     public static final String KEY_FILE_PERMISSION = "700";
@@ -36,6 +38,7 @@ public final class Constants {
    * Constants related to emitting metrics
    */
   public static final class Metrics {
+
     public static final String SYSTEM_NAMESPACE = "system";
     public static final String RECORDS_PROCESSED_METRIC = "program.status.processed";
     public static final String SYNC_INTERVAL_TIME_MILLIS_METRIC = "run.metadata.last.sync.time.millis";
@@ -70,6 +73,7 @@ public final class Constants {
    * Constants used as location names for report generation app.
    */
   public static final class LocationName {
+
     public static final String REPORT_DIR = "reports";
     public static final String SUMMARY = "_SUMMARY";
   }
@@ -80,6 +84,7 @@ public final class Constants {
    * Notification property fields
    */
   public static final class Notification {
+
     public static final String PROGRAM_RUN_ID = "programRunId";
     public static final String PROGRAM_STATUS = "programStatus";
     public static final String ARTIFACT_ID = "artifactId";
@@ -98,6 +103,7 @@ public final class Constants {
      * Program status options
      */
     public static final class Status {
+
       public static final String STARTING = "STARTING";
       public static final String RUNNING = "RUNNING";
       public static final String KILLED = "KILLED";
@@ -107,12 +113,15 @@ public final class Constants {
       public static final String RESUMING = "RESUMING";
     }
   }
+
   /**
    * Constants related to report generation and expiration
    */
   public static final class Report {
+
     // report files will expire after 48 hours after they are generated
-    public static final String DEFAULT_REPORT_EXPIRY_TIME_SECONDS = String.valueOf(TimeUnit.DAYS.toSeconds(2));
+    public static final String DEFAULT_REPORT_EXPIRY_TIME_SECONDS = String.valueOf(
+        TimeUnit.DAYS.toSeconds(2));
     public static final String REPORT_EXPIRY_TIME_SECONDS = "report.expiry.duration.seconds";
   }
 

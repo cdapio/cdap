@@ -43,14 +43,16 @@ public final class ScheduleTaskPublisher {
 
   /**
    * Publish notification for the triggered schedule
-   *  @param notificationType type of the notification
-   * @param scheduleId       {@link ScheduleId} of the triggered schedule
-   * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
+   *
+   * @param notificationType type of the notification
+   * @param scheduleId {@link ScheduleId} of the triggered schedule
+   * @param systemOverrides Arguments that would be supplied as system runtime arguments for the
+   *     program.
    * @param userOverrides Arguments to add to the user runtime arguments for the program.
    */
   public void publishNotification(Notification.Type notificationType, ScheduleId scheduleId,
-                                  Map<String, String> systemOverrides, Map<String, String> userOverrides)
-    throws Exception {
+      Map<String, String> systemOverrides, Map<String, String> userOverrides)
+      throws Exception {
 
     Map<String, String> properties = new HashMap<>();
     properties.put(ProgramOptionConstants.SCHEDULE_ID, GSON.toJson(scheduleId));
@@ -58,6 +60,7 @@ public final class ScheduleTaskPublisher {
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userOverrides));
 
     Notification notification = new Notification(notificationType, properties);
-    messagingService.publish(StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
+    messagingService.publish(
+        StoreRequestBuilder.of(topicId).addPayload(GSON.toJson(notification)).build());
   }
 }

@@ -23,6 +23,7 @@ import java.util.Objects;
  * Key to identify a provisioning task.
  */
 public class ProvisioningTaskKey {
+
   private final ProgramRunId programRunId;
   private final ProvisioningOp.Type type;
 

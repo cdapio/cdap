@@ -29,7 +29,8 @@ import java.util.function.Predicate;
 import org.apache.tephra.TransactionExecutor;
 
 /**
- * Implementation of {@link LineageStoreReader} for reading lineage information from {@link LineageTable}.
+ * Implementation of {@link LineageStoreReader} for reading lineage information from {@link
+ * LineageTable}.
  */
 public class DefaultLineageStoreReader implements LineageStoreReader {
 
@@ -59,8 +60,9 @@ public class DefaultLineageStoreReader implements LineageStoreReader {
    * @return program-dataset access information
    */
   @Override
-  public Set<Relation> getRelations(final DatasetId datasetInstance, final long start, final long end,
-                                    final Predicate<Relation> filter) {
+  public Set<Relation> getRelations(final DatasetId datasetInstance, final long start,
+      final long end,
+      final Predicate<Relation> filter) {
     return execute(input -> input.getRelations(datasetInstance, start, end, filter));
   }
 
@@ -75,7 +77,7 @@ public class DefaultLineageStoreReader implements LineageStoreReader {
    */
   @Override
   public Set<Relation> getRelations(final ProgramId program, final long start, final long end,
-                                    final Predicate<Relation> filter) {
+      final Predicate<Relation> filter) {
     return execute(input -> input.getRelations(program, start, end, filter));
   }
 

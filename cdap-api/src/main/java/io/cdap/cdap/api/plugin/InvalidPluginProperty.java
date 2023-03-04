@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * An invalid plugin property.
  */
 public class InvalidPluginProperty {
+
   private final String name;
   private final String errorMessage;
   private final Exception cause;
@@ -65,8 +66,8 @@ public class InvalidPluginProperty {
 
     InvalidPluginProperty that = (InvalidPluginProperty) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage) &&
-      Objects.equals(cause, that.cause);
+    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage)
+        && Objects.equals(cause, that.cause);
   }
 
   @Override

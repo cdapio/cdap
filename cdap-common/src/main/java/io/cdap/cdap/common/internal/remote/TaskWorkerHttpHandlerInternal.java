@@ -39,12 +39,6 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -60,6 +54,11 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Internal {@link HttpHandler} for Task worker.
@@ -67,13 +66,14 @@ import javax.ws.rs.core.MediaType;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/worker")
 public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
+
   /**
    * Fraction of duration which will be used for calculating a range.
    */
   private static final double DURATION_FRACTION = 0.1;
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-                                                                         new BasicThrowableCodec()).create();
+      new BasicThrowableCodec()).create();
 
   private final RunnableTaskLauncher runnableTaskLauncher;
   private final BiConsumer<Boolean, TaskDetails> taskCompletionConsumer;
@@ -81,7 +81,8 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicBoolean hasInflightRequest = new AtomicBoolean(false);
 
   /**
-   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
+   * Holds the total number of requests that have been executed by this handler that should count
+   * toward max allowed.
    */
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
@@ -94,10 +95,12 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AtomicBoolean mustRestart = new AtomicBoolean(false);
 
   public TaskWorkerHttpHandlerInternal(CConfiguration cConf, DiscoveryService discoveryService,
-                                       DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
-                                       MetricsCollectionService metricsCollectionService) {
-    int killAfterRequestCount = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
-    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf, discoveryService, discoveryServiceClient);
+      DiscoveryServiceClient discoveryServiceClient, Consumer<String> stopper,
+      MetricsCollectionService metricsCollectionService) {
+    int killAfterRequestCount = cConf.getInt(
+        Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
+    this.runnableTaskLauncher = new RunnableTaskLauncher(cConf, discoveryService,
+        discoveryServiceClient);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {
@@ -128,10 +131,11 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * If there is no ongoing request, worker pod gets restarted after a random duration is selected from the following
-   * range. Otherwise, worker pod can only get restarted once the ongoing request finishes.
-   * range = [Duration - DURATION_FRACTION * Duration, Duration + DURATION_FRACTION * Duration]
-   * Reason: by randomizing the duration, it is guaranteed that pods do not get restarted at the same time.
+   * If there is no ongoing request, worker pod gets restarted after a random duration is selected
+   * from the following range. Otherwise, worker pod can only get restarted once the ongoing request
+   * finishes. range = [Duration - DURATION_FRACTION * Duration, Duration + DURATION_FRACTION *
+   * Duration] Reason: by randomizing the duration, it is guaranteed that pods do not get restarted
+   * at the same time.
    */
   private void enablePeriodicRestart(CConfiguration cConf, Consumer<String> stopper) {
     int duration = cConf.getInt(Constants.TaskWorker.CONTAINER_KILL_AFTER_DURATION_SECOND, 0);
@@ -139,18 +143,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     int upperBound = (int) (duration + duration * DURATION_FRACTION);
     if (lowerBound > 0) {
       int waitTime = (new Random()).nextInt(upperBound - lowerBound) + lowerBound;
-      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("task-worker-restart"))
-        .schedule(
-          () -> {
-            if (hasInflightRequest.compareAndSet(false, true)) {
-              // there is no ongoing request. pod gets restarted.
-              stopper.accept("");
-            }
-            // we restart once a request finishes.
-            // TODO: this might delay the pod restart to after executing a new request if the
-            // ongoing request is already in the stopper.
-            mustRestart.set(true);
-          }, waitTime, TimeUnit.SECONDS);
+      Executors.newSingleThreadScheduledExecutor(
+              Threads.createDaemonThreadFactory("task-worker-restart"))
+          .schedule(
+              () -> {
+                if (hasInflightRequest.compareAndSet(false, true)) {
+                  // there is no ongoing request. pod gets restarted.
+                  stopper.accept("");
+                }
+                // we restart once a request finishes.
+                // TODO: this might delay the pod restart to after executing a new request if the
+                // ongoing request is already in the stopper.
+                mustRestart.set(true);
+              }, waitTime, TimeUnit.SECONDS);
     }
   }
 
@@ -165,30 +170,32 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
 
     long startTime = System.currentTimeMillis();
     try {
-      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                                                              RunnableTaskRequest.class);
+      RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
+          request.content().toString(StandardCharsets.UTF_8),
+          RunnableTaskRequest.class);
       RunnableTaskContext runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
       try {
         runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
         TaskDetails taskDetails = new TaskDetails(metricsCollectionService, startTime,
-                                                  runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
+            runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
         responder.sendContent(HttpResponseStatus.OK,
-                              new RunnableTaskBodyProducer(runnableTaskContext, taskCompletionConsumer, taskDetails),
-                              new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                                                           MediaType.APPLICATION_OCTET_STREAM));
+            new RunnableTaskBodyProducer(runnableTaskContext, taskCompletionConsumer, taskDetails),
+            new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+                MediaType.APPLICATION_OCTET_STREAM));
       } catch (ClassNotFoundException | ClassCastException ex) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(ex),
-                             new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+            new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
         // Since the user class is not even loaded, no user code ran, hence it's ok to not terminate the runner
         taskCompletionConsumer.accept(false, new TaskDetails(metricsCollectionService,
-                                                             startTime, false, runnableTaskRequest));
+            startTime, false, runnableTaskRequest));
       }
     } catch (Exception ex) {
       LOG.error("Failed to run task {}", request.content().toString(StandardCharsets.UTF_8), ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
-                           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
       // Potentially ran user code, hence terminate the runner.
-      taskCompletionConsumer.accept(false, new TaskDetails(metricsCollectionService, startTime, true, null));
+      taskCompletionConsumer.accept(false,
+          new TaskDetails(metricsCollectionService, startTime, true, null));
     }
   }
 
@@ -197,25 +204,27 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   public void token(io.netty.handler.codec.http.HttpRequest request, HttpResponder responder) {
     if (metadataServiceEndpoint == null) {
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED,
-                           String.format("%s has not been set", Constants.TaskWorker.METADATA_SERVICE_END_POINT));
+          String.format("%s has not been set", Constants.TaskWorker.METADATA_SERVICE_END_POINT));
       return;
     }
 
     try {
       URL url = new URL(metadataServiceEndpoint);
-      HttpRequest tokenRequest = HttpRequest.get(url).addHeader("Metadata-Flavor", "Google").build();
+      HttpRequest tokenRequest = HttpRequest.get(url).addHeader("Metadata-Flavor", "Google")
+          .build();
       HttpResponse tokenResponse = HttpRequests.execute(tokenRequest);
-      responder.sendByteArray(HttpResponseStatus.OK, tokenResponse.getResponseBody(), EmptyHttpHeaders.INSTANCE);
+      responder.sendByteArray(HttpResponseStatus.OK, tokenResponse.getResponseBody(),
+          EmptyHttpHeaders.INSTANCE);
     } catch (Exception ex) {
       LOG.warn("Failed to fetch token from metadata service", ex);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(ex),
-                           new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
+          new DefaultHttpHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json"));
     }
   }
 
   /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Return json representation of an exception. Used to propagate exception across network for
+   * better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
@@ -223,18 +232,19 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * By using BodyProducer instead of simply sending out response bytes,
-   * the handler can get notified (through finished method) when sending the response is done,
-   * so it can safely call the stopper to kill the worker pod.
+   * By using BodyProducer instead of simply sending out response bytes, the handler can get
+   * notified (through finished method) when sending the response is done, so it can safely call the
+   * stopper to kill the worker pod.
    */
   private static class RunnableTaskBodyProducer extends BodyProducer {
+
     private final RunnableTaskContext context;
     private final BiConsumer<Boolean, TaskDetails> stopper;
     private final TaskDetails taskDetails;
     private boolean done;
 
     RunnableTaskBodyProducer(RunnableTaskContext context, BiConsumer<Boolean, TaskDetails> stopper,
-                             TaskDetails taskDetails) {
+        TaskDetails taskDetails) {
       this.context = context;
       this.stopper = stopper;
       this.taskDetails = taskDetails;

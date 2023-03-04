@@ -43,7 +43,8 @@ public class DefaultMessageTableCacheProvider implements MessageTableCacheProvid
   private volatile boolean initialized;
 
   @Inject
-  DefaultMessageTableCacheProvider(CConfiguration cConf, MetricsCollectionService metricsCollectionService) {
+  DefaultMessageTableCacheProvider(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService) {
     // Due to circular dependency (see CoreMessagingService), we can't use the MetricsCollectionService in the
     // constructor, hence delay the cache initialization to later time.
     this.cConf = cConf;
@@ -73,10 +74,11 @@ public class DefaultMessageTableCacheProvider implements MessageTableCacheProvid
             if (hardLimit > 0) {
               // Have reduce trigger as 70% of the hard limit and min retain as 50% of the hard limit
               // In future, it can be adjusted dynamically based on metrics
-              MessageCache.Limits limits = new MessageCache.Limits(hardLimit / 2, hardLimit * 7 / 10, hardLimit);
+              MessageCache.Limits limits = new MessageCache.Limits(hardLimit / 2,
+                  hardLimit * 7 / 10, hardLimit);
               for (TopicId topic : systemTopics) {
                 caches.put(topic, new MessageCache<>(comparator, weigher, limits,
-                                                     createMetricsContext(cConf, topic, metricsCollectionService)));
+                    createMetricsContext(cConf, topic, metricsCollectionService)));
               }
             }
           }
@@ -111,12 +113,13 @@ public class DefaultMessageTableCacheProvider implements MessageTableCacheProvid
    * Creates a {@link MetricsContext} for {@link MessageCache} to use for the given topic.
    */
   private MetricsContext createMetricsContext(CConfiguration cConf, TopicId topicId,
-                                              MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService) {
     return metricsCollectionService.getContext(ImmutableMap.of(
-      Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
-      Constants.Metrics.Tag.INSTANCE_ID, cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0"),
-      Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),
-      Constants.Metrics.Tag.TOPIC, topicId.getTopic()
+        Constants.Metrics.Tag.COMPONENT, Constants.Service.MESSAGING_SERVICE,
+        Constants.Metrics.Tag.INSTANCE_ID,
+        cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID, "0"),
+        Constants.Metrics.Tag.NAMESPACE, topicId.getNamespace(),
+        Constants.Metrics.Tag.TOPIC, topicId.getTopic()
     ));
   }
 }

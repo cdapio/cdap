@@ -24,14 +24,17 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Contains metadata associated with a particular {@link Partition} of a {@link PartitionedFileSet}.
+ * Contains metadata associated with a particular {@link Partition} of a {@link
+ * PartitionedFileSet}.
  */
 public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
+
   private final Map<String, String> metadata;
   private final long creationTime;
   private final long lastModificationTime;
 
-  public PartitionMetadata(Map<String, String> metadata, long creationTime, long lastModificationTime) {
+  public PartitionMetadata(Map<String, String> metadata, long creationTime,
+      long lastModificationTime) {
     this.metadata = Collections.unmodifiableMap(new HashMap<>(metadata));
     this.creationTime = creationTime;
     this.lastModificationTime = lastModificationTime;
@@ -80,8 +83,8 @@ public class PartitionMetadata implements Iterable<Map.Entry<String, String>> {
 
     PartitionMetadata other = (PartitionMetadata) o;
     return creationTime == other.creationTime
-      && lastModificationTime == other.lastModificationTime
-      && metadata.equals(other.metadata);
+        && lastModificationTime == other.lastModificationTime
+        && metadata.equals(other.metadata);
   }
 
   @Override

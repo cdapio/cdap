@@ -47,11 +47,12 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options,
-                                           CConfiguration cConf) {
+      EnvironmentOptions options,
+      CConfiguration cConf) {
 
     if (!SecurityUtil.isManagedSecurity(cConf)) {
-      throw new RuntimeException("Security is not enabled. Authentication service shouldn't be used");
+      throw new RuntimeException(
+          "Security is not enabled. Authentication service shouldn't be used");
     }
 
     List<Module> modules = new ArrayList<>();
@@ -62,12 +63,13 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
   @Override
   protected void addServices(Injector injector,
-                             List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv,
-                             MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+      List<? super Service> services,
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv,
+      MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }

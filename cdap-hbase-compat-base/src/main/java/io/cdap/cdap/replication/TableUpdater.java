@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * Utility class for Replication Status Tool
  */
 public abstract class TableUpdater {
+
   private static final Logger LOG = LoggerFactory.getLogger(TableUpdater.class);
   private Map<String, TimeValue> cachedUpdates;
   private final Object cachedUpdatesLock = new Object();
@@ -43,6 +44,7 @@ public abstract class TableUpdater {
   public boolean tableExists;
 
   private class TimeValue {
+
     private long time;
     private boolean stale;
 
@@ -59,21 +61,23 @@ public abstract class TableUpdater {
     this.conf = conf;
 
     String configuredDelay = conf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_DELAY);
-    String configuredPeriod = conf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_PERIOD);
+    String configuredPeriod = conf.get(
+        ReplicationConstants.ReplicationStatusTool.REPLICATION_PERIOD);
     long delay = (configuredDelay != null)
-      ? new Long(configuredDelay)
-      : ReplicationConstants.ReplicationStatusTool.REPLICATION_DELAY_DEFAULT;
+        ? new Long(configuredDelay)
+        : ReplicationConstants.ReplicationStatusTool.REPLICATION_DELAY_DEFAULT;
     long period = (configuredPeriod != null)
-      ? new Long(configuredPeriod)
-      : ReplicationConstants.ReplicationStatusTool.REPLICATION_PERIOD_DEFAULT;
+        ? new Long(configuredPeriod)
+        : ReplicationConstants.ReplicationStatusTool.REPLICATION_PERIOD_DEFAULT;
 
     cachedUpdates = new HashMap<>();
     setupTimer(delay, period);
   }
 
   /**
-   * Synchronized method used by replication status tool TableUpdate class to add timestamps
-   * from coprocessors.
+   * Synchronized method used by replication status tool TableUpdate class to add timestamps from
+   * coprocessors.
+   *
    * @param regionName is the key for the Map
    * @param time is the value for the Map
    */

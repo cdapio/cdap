@@ -29,43 +29,44 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 
 /**
- * An abstract implementation of {@link MessagePublisher} that implement most of the publish methods by
- * delegating to the {@link #publish(String, String, Iterator)}.
+ * An abstract implementation of {@link MessagePublisher} that implement most of the publish methods
+ * by delegating to the {@link #publish(String, String, Iterator)}.
  */
 public abstract class AbstractMessagePublisher implements MessagePublisher {
 
   @Override
   public final void publish(String namespace,
-                            String topic, String... payloads)
-    throws IOException, TopicNotFoundException, AccessException {
+      String topic, String... payloads)
+      throws IOException, TopicNotFoundException, AccessException {
     publish(namespace, topic, StandardCharsets.UTF_8, Iterators.forArray(payloads));
   }
 
   @Override
   public final void publish(String namespace, String topic,
-                            Charset charset, String... payloads)
-    throws IOException, TopicNotFoundException, AccessException {
+      Charset charset, String... payloads)
+      throws IOException, TopicNotFoundException, AccessException {
     publish(namespace, topic, charset, Iterators.forArray(payloads));
   }
 
   @Override
   public final void publish(String namespace,
-                            String topic, byte[]... payloads)
-    throws IOException, TopicNotFoundException, AccessException {
+      String topic, byte[]... payloads)
+      throws IOException, TopicNotFoundException, AccessException {
     publish(namespace, topic, Iterators.forArray(payloads));
   }
 
   @Override
   public final void publish(String namespace, String topic, final Charset charset,
-                            Iterator<String> payloads)
-    throws IOException, TopicNotFoundException, AccessException {
-    publish(namespace, topic, Iterators.transform(payloads, input -> ByteBuffers.getByteArray(charset.encode(input))));
+      Iterator<String> payloads)
+      throws IOException, TopicNotFoundException, AccessException {
+    publish(namespace, topic,
+        Iterators.transform(payloads, input -> ByteBuffers.getByteArray(charset.encode(input))));
   }
 
   @Override
   public final void publish(String namespace, String topic,
-                            Iterator<byte[]> payloads)
-    throws TopicNotFoundException, IOException, AccessException {
+      Iterator<byte[]> payloads)
+      throws TopicNotFoundException, IOException, AccessException {
     NamespaceId namespaceId = new NamespaceId(namespace);
     publish(namespaceId.topic(topic), payloads);
   }
@@ -74,6 +75,6 @@ public abstract class AbstractMessagePublisher implements MessagePublisher {
    * Publishes payloads to the given topic.
    */
   protected abstract void publish(TopicId topicId,
-                                  Iterator<byte[]> payloads)
-    throws IOException, TopicNotFoundException, AccessException;
+      Iterator<byte[]> payloads)
+      throws IOException, TopicNotFoundException, AccessException;
 }

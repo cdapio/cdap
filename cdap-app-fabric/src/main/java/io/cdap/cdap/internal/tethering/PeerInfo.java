@@ -23,15 +23,17 @@ import javax.annotation.Nullable;
  * Peer information that's persisted in the tethering store.
  */
 public class PeerInfo extends PeerBase {
+
   private final long lastConnectionTime;
 
-  public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus, PeerMetadata metadata,
-                  long requestTime) {
+  public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus,
+      PeerMetadata metadata,
+      long requestTime) {
     this(name, endpoint, tetheringStatus, metadata, requestTime, 0);
   }
 
   public PeerInfo(String name, @Nullable String endpoint, TetheringStatus tetheringStatus,
-                  PeerMetadata metadata, long requestTime, long lastConnectionTime) {
+      PeerMetadata metadata, long requestTime, long lastConnectionTime) {
     super(name, endpoint, tetheringStatus, metadata, requestTime);
     this.lastConnectionTime = lastConnectionTime;
   }

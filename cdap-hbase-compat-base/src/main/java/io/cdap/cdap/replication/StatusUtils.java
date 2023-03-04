@@ -31,14 +31,16 @@ public final class StatusUtils {
   public static String getReplicationStateTableName(Configuration conf) throws IOException {
     String name = conf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAME);
     String ns =
-      conf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAMESPACE);
+        conf.get(ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_NAMESPACE);
     String nsPrefix = conf.get(Constants.Dataset.TABLE_PREFIX);
     String tableName =
-      (nsPrefix != null) ? nsPrefix : "cdap"
-        + "_"
-        + (ns != null ? ns : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAMESPACE)
-        + ":"
-        + (name != null ? name : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAME);
+        (nsPrefix != null) ? nsPrefix : "cdap"
+            + "_"
+            + (ns != null ? ns
+            : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAMESPACE)
+            + ":"
+            + (name != null ? name
+            : ReplicationConstants.ReplicationStatusTool.REPLICATION_STATE_TABLE_DEFAULT_NAME);
     return tableName;
   }
 }

@@ -50,8 +50,9 @@ public class LoggerLogHandler implements LogHandler {
         }
       };
     } else {
-      LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
-               logger.getClass().getName());
+      LOG.warn(
+          "Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
+          logger.getClass().getName());
       delegate = new PrinterLogHandler(new PrintWriter(System.out));
     }
   }

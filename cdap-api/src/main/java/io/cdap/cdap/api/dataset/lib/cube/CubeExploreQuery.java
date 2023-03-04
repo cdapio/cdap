@@ -23,11 +23,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Defines a query to perform exploration of the {@link Cube} data, e.g. to find dimension name and values and
- * measure names.
+ * Defines a query to perform exploration of the {@link Cube} data, e.g. to find dimension name and
+ * values and measure names.
  */
 @Beta
 public class CubeExploreQuery {
+
   private final long startTs;
   private final long endTs;
   private final int resolution;
@@ -35,13 +36,17 @@ public class CubeExploreQuery {
   private final List<DimensionValue> dimensionValues;
 
   /**
-   * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to explore in.
+   * Creates instance of {@link CubeExploreQuery} that defines selection of data of {@link Cube} to
+   * explore in.
+   *
    * @param startTs start time of the data selection, inclusive, in seconds since epoch
    * @param endTs end time of the data selection, exclusive, in seconds since epoch
    * @param resolution resolution of the aggregations explore
-   * @param dimensionValues dimension name, dimension value pairs that define the data selection
+   * @param dimensionValues dimension name, dimension value pairs that define the data
+   *     selection
    */
-  public CubeExploreQuery(long startTs, long endTs, int resolution, int limit, List<DimensionValue> dimensionValues) {
+  public CubeExploreQuery(long startTs, long endTs, int resolution, int limit,
+      List<DimensionValue> dimensionValues) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
@@ -93,6 +98,7 @@ public class CubeExploreQuery {
    * Builds {@link CubeExploreQuery}.
    */
   public static final class Builder {
+
     private long startTs;
     private long endTs;
     private int resolution;
@@ -117,10 +123,13 @@ public class CubeExploreQuery {
      * Builder for configuring {@link CubeExploreQuery}.
      */
     public final class From {
-      private From() {}
+
+      private From() {
+      }
 
       /**
        * Sets resolution for {@link CubeExploreQuery}.
+       *
        * @param amount amount of units
        * @param timeUnit unit type
        * @return builder for configuring {@link CubeExploreQuery}
@@ -135,7 +144,9 @@ public class CubeExploreQuery {
      * Builder for configuring {@link CubeExploreQuery}.
      */
     public final class Where {
-      private Where() {}
+
+      private Where() {
+      }
 
       /**
        * @return builder for configuring {@link CubeExploreQuery}
@@ -149,10 +160,13 @@ public class CubeExploreQuery {
      * Builder for configuring {@link CubeExploreQuery}.
      */
     public final class Dimension {
-      private Dimension() {}
+
+      private Dimension() {
+      }
 
       /**
        * Adds dimension value to filter by.
+       *
        * @param name name of dimension
        * @param value value of dimension
        * @return builder for configuring {@link CubeExploreQuery}
@@ -164,6 +178,7 @@ public class CubeExploreQuery {
 
       /**
        * Adds dimension values to filter by.
+       *
        * @param dimValues dimension name, dimension value pairs to filter by
        * @return builder for configuring {@link CubeExploreQuery}
        */
@@ -174,6 +189,7 @@ public class CubeExploreQuery {
 
       /**
        * Defines time range for {@link CubeExploreQuery}.
+       *
        * @param startTsInSec start time inclusive (epoch in seconds)
        * @param endTsInSec end time exclusive (epoch in seconds)
        * @return builder for configuring {@link CubeExploreQuery}
@@ -189,10 +205,13 @@ public class CubeExploreQuery {
      * Builder for configuring {@link CubeExploreQuery}.
      */
     public final class Limit {
-      private Limit() {}
+
+      private Limit() {
+      }
 
       /**
        * Sets a limit on returned data points per time series
+       *
        * @param limit limit value
        * @return builder for configuring {@link CubeExploreQuery}
        */
@@ -206,7 +225,9 @@ public class CubeExploreQuery {
      * Builder for configuring {@link CubeExploreQuery}.
      */
     public final class Build {
-      private Build() {}
+
+      private Build() {
+      }
 
       /**
        * @return {@link CubeExploreQuery}

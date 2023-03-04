@@ -33,8 +33,10 @@ import io.cdap.cdap.proto.id.ApplicationId;
  * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}
  */
 class DefaultDataTracer implements DataTracer {
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
+
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class,
+          new SchemaTypeAdapter())
+      .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
 
   private final String tracerName;
   private final ApplicationId applicationId;
@@ -42,8 +44,9 @@ class DefaultDataTracer implements DataTracer {
   private final CConfiguration cConf;
   private final int maximumTracedRecords;
 
-  DefaultDataTracer(ApplicationId applicationId, String tracerName, PreviewDataPublisher previewDataPublisher,
-                    CConfiguration cConf) {
+  DefaultDataTracer(ApplicationId applicationId, String tracerName,
+      PreviewDataPublisher previewDataPublisher,
+      CConfiguration cConf) {
     this.tracerName = tracerName;
     this.applicationId = applicationId;
     this.previewDataPublisher = previewDataPublisher;
@@ -53,8 +56,10 @@ class DefaultDataTracer implements DataTracer {
 
   @Override
   public void info(String propertyName, Object propertyValue) {
-    PreviewDataPayload payload = new PreviewDataPayload(applicationId, tracerName, propertyName, propertyValue);
-    PreviewMessage message = new PreviewMessage(PreviewMessage.Type.DATA, applicationId, GSON.toJsonTree(payload));
+    PreviewDataPayload payload = new PreviewDataPayload(applicationId, tracerName, propertyName,
+        propertyValue);
+    PreviewMessage message = new PreviewMessage(PreviewMessage.Type.DATA, applicationId,
+        GSON.toJsonTree(payload));
     previewDataPublisher.publish(applicationId, message);
   }
 

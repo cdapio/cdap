@@ -62,18 +62,22 @@ public class DataprocJobMain {
     Map<String, Collection<String>> arguments = fromPosixArray(args);
 
     if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
-      throw new RuntimeException("Missing --" + RUNTIME_JOB_CLASS + " argument for the RuntimeJob classname");
+      throw new RuntimeException(
+          "Missing --" + RUNTIME_JOB_CLASS + " argument for the RuntimeJob classname");
     }
     if (!arguments.containsKey(SPARK_COMPAT)) {
-      throw new RuntimeException("Missing --" + SPARK_COMPAT + " argument for the spark compat version");
+      throw new RuntimeException(
+          "Missing --" + SPARK_COMPAT + " argument for the spark compat version");
     }
 
-    Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
+    Thread.setDefaultUncaughtExceptionHandler(
+        (t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
 
     // Get the Java properties
     for (Map.Entry<String, Collection<String>> entry : arguments.entrySet()) {
       if (entry.getKey().startsWith(PROPERTY_PREFIX)) {
-        System.setProperty(entry.getKey().substring(PROPERTY_PREFIX.length()), entry.getValue().iterator().next());
+        System.setProperty(entry.getKey().substring(PROPERTY_PREFIX.length()),
+            entry.getValue().iterator().next());
       }
     }
 
@@ -90,8 +94,8 @@ public class DataprocJobMain {
 
     // create classpath from resources, application and twill jars
     URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
-                                                                 Constants.Files.APPLICATION_JAR,
-                                                                 Constants.Files.TWILL_JAR));
+        Constants.Files.APPLICATION_JAR,
+        Constants.Files.TWILL_JAR));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
@@ -154,16 +158,12 @@ public class DataprocJobMain {
   }
 
   /**
-   * This method will generate class path by adding following to urls to front of default classpath:
+   * This method will generate class path by adding following to urls to front of default
+   * classpath:
    *
-   * expanded.resource.jar
-   * expanded.application.jar
-   * expanded.application.jar/lib/*.jar
-   * expanded.application.jar/classes
-   * expanded.twill.jar
-   * expanded.twill.jar/lib/*.jar
+   * expanded.resource.jar expanded.application.jar expanded.application.jar/lib/*.jar
+   * expanded.application.jar/classes expanded.twill.jar expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
-   *
    */
   private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
     URL[] urls = cl.getURLs();
@@ -243,7 +243,9 @@ public class DataprocJobMain {
 
   /**
    * Converts a POSIX compliant program argument array to a String-to-String Map.
-   * @param args Array of Strings where each element is a POSIX compliant program argument (Ex: "--os=Linux" )
+   *
+   * @param args Array of Strings where each element is a POSIX compliant program argument (Ex:
+   *     "--os=Linux" )
    * @return Map of argument Keys and Values (Ex: Key = "os" and Value = "Linux").
    */
   private static Map<String, Collection<String>> fromPosixArray(String[] args) {
@@ -254,7 +256,8 @@ public class DataprocJobMain {
       String key = idx < 0 ? arg.substring(keyOff) : arg.substring(keyOff, idx);
       String value = idx < 0 ? "" : arg.substring(idx + 1);
       // Remote quote from the value if it is quoted
-      if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+      if (value.length() >= 2 && value.charAt(0) == '"'
+          && value.charAt(value.length() - 1) == '"') {
         value = value.substring(1, value.length() - 1);
       }
 
@@ -268,24 +271,29 @@ public class DataprocJobMain {
    */
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
-    URLClassLoader classLoader = new URLClassLoader(classpath, DataprocJobMain.class.getClassLoader().getParent());
+    URLClassLoader classLoader = new URLClassLoader(classpath,
+        DataprocJobMain.class.getClassLoader().getParent());
     if (containerClassLoaderName == null) {
       return classLoader;
     }
 
     try {
       @SuppressWarnings("unchecked")
-      Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(containerClassLoaderName);
+      Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(
+          containerClassLoaderName);
 
       // Instantiate with constructor (URL[] classpath, ClassLoader parentClassLoader)
-      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpath, classLoader.getParent());
+      return cls.getConstructor(URL[].class, ClassLoader.class)
+          .newInstance(classpath, classLoader.getParent());
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Failed to load container class loader class " + containerClassLoaderName, e);
+      throw new RuntimeException(
+          "Failed to load container class loader class " + containerClassLoaderName, e);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException("Container class loader must have a public constructor with " +
-                                   "parameters (URL[] classpath, ClassLoader parent)", e);
+      throw new RuntimeException("Container class loader must have a public constructor with "
+          + "parameters (URL[] classpath, ClassLoader parent)", e);
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-      throw new RuntimeException("Failed to create container class loader of class " + containerClassLoaderName, e);
+      throw new RuntimeException(
+          "Failed to create container class loader of class " + containerClassLoaderName, e);
     }
   }
 }

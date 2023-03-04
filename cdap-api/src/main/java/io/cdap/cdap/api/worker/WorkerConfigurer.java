@@ -28,12 +28,14 @@ public interface WorkerConfigurer extends DatasetConfigurer, ProgramConfigurer, 
 
   /**
    * Sets the resources requirements for the the {@link Worker}.
+   *
    * @param resources the requirements
    */
   void setResources(Resources resources);
 
   /**
    * Sets the number of instances needed for the {@link Worker}.
+   *
    * @param instances number of instances, must be > 0
    */
   void setInstances(int instances);

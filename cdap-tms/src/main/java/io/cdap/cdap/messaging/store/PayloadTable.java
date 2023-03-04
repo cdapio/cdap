@@ -68,23 +68,27 @@ public interface PayloadTable extends Closeable {
   }
 
   /**
-   * Fetches entries from the payload table under the given topic, starting from the given {@link MessageId}.
+   * Fetches entries from the payload table under the given topic, starting from the given {@link
+   * MessageId}.
    *
    * @param metadata {@link TopicMetadata} of the topic to fetch from
    * @param transactionWritePointer transaction write pointer
    * @param messageId message Id to start from
-   * @param inclusive {@code true} to include the entry identified by the given {@link MessageId} as the first message
+   * @param inclusive {@code true} to include the entry identified by the given {@link
+   *     MessageId} as the first message
    * @param limit maximum number of entries to fetch
    * @return a {@link CloseableIterator} of entries
    */
-  CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer, MessageId messageId,
-                                 boolean inclusive, int limit) throws IOException;
+  CloseableIterator<Entry> fetch(TopicMetadata metadata, long transactionWritePointer,
+      MessageId messageId,
+      boolean inclusive, int limit) throws IOException;
 
   /**
    * Stores a list of entries to the payload table under the given topic.
    *
-   * @param entries a list of entries to store. This method guarantees each {@link Entry} will be consumed right away,
-   *                hence it is safe for the {@link Iterator} to reuse the same {@link Entry} instance
+   * @param entries a list of entries to store. This method guarantees each {@link Entry} will
+   *     be consumed right away, hence it is safe for the {@link Iterator} to reuse the same {@link
+   *     Entry} instance
    */
   void store(Iterator<? extends Entry> entries) throws IOException;
 }

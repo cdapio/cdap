@@ -42,7 +42,7 @@ public class PluginNotExistsException extends NotFoundException {
 
   public PluginNotExistsException(ArtifactId artifactId, String type, String name) {
     super("plugin", String.format("%s:%s:%s:%s:%s",
-                                  artifactId.getNamespace(), type, name, artifactId.getArtifact(),
-                                  artifactId.getVersion()));
+        artifactId.getNamespace(), type, name, artifactId.getArtifact(),
+        artifactId.getVersion()));
   }
 }

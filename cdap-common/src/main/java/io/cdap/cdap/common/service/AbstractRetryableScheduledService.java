@@ -29,14 +29,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link AbstractScheduledService} that runs task periodically and with retry logic upon task failure.
+ * A {@link AbstractScheduledService} that runs task periodically and with retry logic upon task
+ * failure.
  */
 public abstract class AbstractRetryableScheduledService extends AbstractScheduledService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryableScheduledService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      AbstractRetryableScheduledService.class);
 
   // Use a per instance sampling logger such that each instance will have their own rate sampling.
-  private final Logger outageLog = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private final Logger outageLog = Loggers.sampling(LOG,
+      LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
   private final RetryStrategy retryStrategy;
 
@@ -48,7 +51,8 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
   /**
    * Constructor.
    *
-   * @param retryStrategy the {@link RetryStrategy} for determining how to retry when there is exception raised
+   * @param retryStrategy the {@link RetryStrategy} for determining how to retry when there is
+   *     exception raised
    */
   protected AbstractRetryableScheduledService(RetryStrategy retryStrategy) {
     this.retryStrategy = retryStrategy;
@@ -81,16 +85,16 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * Determines if retry on the given {@link Exception}.
    *
    * @param ex the exception raised by the {@link #runTask()} call.
-   * @return {@code true} to retry in the next iteration; otherwise {@code false} to fail and terminate this service
-   *         with the given exception.
+   * @return {@code true} to retry in the next iteration; otherwise {@code false} to fail and
+   *     terminate this service with the given exception.
    */
   protected boolean shouldRetry(Exception ex) {
     return true;
   }
 
   /**
-   * Performs startup task. This method will be called from the executor returned by the {@link #executor()} method.
-   * By default this method does nothing.
+   * Performs startup task. This method will be called from the executor returned by the {@link
+   * #executor()} method. By default this method does nothing.
    *
    * @throws Exception if startup of this service failed
    */
@@ -99,8 +103,8 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
   }
 
   /**
-   * Performs shutdown task. This method will be called from the executor returned by the {@link #executor()} method.
-   * By default this method does nothing.
+   * Performs shutdown task. This method will be called from the executor returned by the {@link
+   * #executor()} method. By default this method does nothing.
    *
    * @throws Exception if shutdown of this service failed
    */
@@ -117,7 +121,8 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
 
   @Override
   protected ScheduledExecutorService executor() {
-    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory(getServiceName()));
+    executor = Executors.newSingleThreadScheduledExecutor(
+        Threads.createDaemonThreadFactory(getServiceName()));
     return executor;
   }
 
@@ -138,12 +143,13 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
   }
 
   /**
-   * Called when the RetryStrategy used by this class returns a negative number, indicating to abort the operation.
-   * This method allows a subclass to terminate the service (by throwing exception), or to continue retrying by
-   * avoiding throwing of the exception, which resets the retry count.
+   * Called when the RetryStrategy used by this class returns a negative number, indicating to abort
+   * the operation. This method allows a subclass to terminate the service (by throwing exception),
+   * or to continue retrying by avoiding throwing of the exception, which resets the retry count.
    *
    * @param e the exception which exhausted retries
-   * @return the number of milliseconds to delay until the next iteration of the {@link #runTask} method.
+   * @return the number of milliseconds to delay until the next iteration of the {@link #runTask}
+   *     method.
    * @throws Exception if decided to terminate the retry
    */
   protected long handleRetriesExhausted(Exception e) throws Exception {
@@ -174,9 +180,10 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
         if (delayMillis < 0) {
           t.addSuppressed(
-            new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
-                                                        failureCount,
-                                                        System.currentTimeMillis() - nonFailureStartTime)));
+              new RetriesExhaustedException(
+                  String.format("Retries exhausted after %d failures and %d ms.",
+                      failureCount,
+                      System.currentTimeMillis() - nonFailureStartTime)));
           delayMillis = Math.max(0L, handleRetriesExhausted(e));
           nonFailureStartTime = 0L;
           failureCount = 0;

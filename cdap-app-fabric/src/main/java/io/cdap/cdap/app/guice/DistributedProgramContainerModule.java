@@ -94,8 +94,8 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * The guice {@link Module} used for program execution in distributed mode. This module
- * is used in both client/driver containers and task containers.
+ * The guice {@link Module} used for program execution in distributed mode. This module is used in
+ * both client/driver containers and task containers.
  */
 public class DistributedProgramContainerModule extends AbstractModule {
 
@@ -107,12 +107,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private final ServiceAnnouncer serviceAnnouncer;
 
   public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
-                                           ProgramRunId programRunId, ProgramOptions programOpts) {
+      ProgramRunId programRunId, ProgramOptions programOpts) {
     this(cConf, hConf, programRunId, programOpts, null);
   }
 
-  public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf, ProgramRunId programRunId,
-                                           ProgramOptions programOpts, @Nullable ServiceAnnouncer serviceAnnouncer) {
+  public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
+      ProgramRunId programRunId,
+      ProgramOptions programOpts, @Nullable ServiceAnnouncer serviceAnnouncer) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.programRunId = programRunId;
@@ -124,7 +125,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
   protected void configure() {
     List<Module> modules = getCoreModules();
 
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
+        programOpts);
     modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
 
     install(Modules.override(modules).with(new AbstractModule() {
@@ -160,7 +162,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new AppStateModule());
     modules.add(new NamespaceQueryAdminModule());
     modules.add(new DataSetsModules().getDistributedModules());
-    modules.add(new ProgramStateWriterModule(clusterMode, systemArgs.hasOption(ProgramOptionConstants.PEER_NAME)));
+    modules.add(new ProgramStateWriterModule(clusterMode,
+        systemArgs.hasOption(ProgramOptionConstants.PEER_NAME)));
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -179,7 +182,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
           bind(ServiceAnnouncer.class).toInstance(serviceAnnouncer);
         }
 
-        bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+        bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class)
+            .in(Scopes.SINGLETON);
       }
     });
 
@@ -205,17 +209,20 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addDataFabricModules(List<Module> modules) {
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
       String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
-      modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
+      modules.add(new DataFabricModules(
+          generateClientId(programRunId, instanceId)).getDistributedModules());
       modules.add(new SystemDatasetRuntimeModule().getDistributedModules());
     } else {
       modules.add(new DataSetServiceModules().getStandaloneModules());
-      modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
-          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
-        }
-      }));
+      modules.add(
+          Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+            @Override
+            protected void configure() {
+              // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
+              bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class)
+                  .in(Scopes.SINGLETON);
+            }
+          }));
     }
   }
 
@@ -243,9 +250,10 @@ public class DistributedProgramContainerModule extends AbstractModule {
       @Override
       protected void configure() {
         bind(DiscoveryService.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+            .toProvider(
+                new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
 
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
@@ -286,10 +294,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   /**
-   * A Guice module to provide {@link ProgramStateWriter} binding. In normal same cluster / remote cluster execution,
-   * it just publishes program states to TMS based on the discovery service. For tethered execution,
-   * it publishes program states to the TMS running in the current master environment,
-   * instead of using the normal discovery service that bind to talk to the originating CDAP instance.
+   * A Guice module to provide {@link ProgramStateWriter} binding. In normal same cluster / remote
+   * cluster execution, it just publishes program states to TMS based on the discovery service. For
+   * tethered execution, it publishes program states to the TMS running in the current master
+   * environment, instead of using the normal discovery service that bind to talk to the originating
+   * CDAP instance.
    */
   private static final class ProgramStateWriterModule extends PrivateModule {
 
@@ -318,10 +327,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   /**
-   * A guice {@link Provider} for providing the binding for {@link ProgramStatePublisher}
-   * that is used in tethered execution.
+   * A guice {@link Provider} for providing the binding for {@link ProgramStatePublisher} that is
+   * used in tethered execution.
    */
-  private static final class ProgramStatePublisherProvider implements Provider<ProgramStatePublisher> {
+  private static final class ProgramStatePublisherProvider implements
+      Provider<ProgramStatePublisher> {
 
     private final CConfiguration cConf;
     private final MasterEnvironment masterEnv;
@@ -329,7 +339,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     @Inject
     ProgramStatePublisherProvider(CConfiguration cConf, MasterEnvironment masterEnv,
-                                  InternalAuthenticator internalAuthenticator) {
+        InternalAuthenticator internalAuthenticator) {
       this.cConf = cConf;
       this.masterEnv = masterEnv;
       this.internalAuthenticator = internalAuthenticator;
@@ -338,10 +348,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
     @Override
     public ProgramStatePublisher get() {
       RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-        masterEnv.getDiscoveryServiceClientSupplier().get(),
-        internalAuthenticator);
+          masterEnv.getDiscoveryServiceClientSupplier().get(),
+          internalAuthenticator);
 
-      return new MessagingProgramStatePublisher(cConf, new ClientMessagingService(cConf, remoteClientFactory));
+      return new MessagingProgramStatePublisher(cConf,
+          new ClientMessagingService(cConf, remoteClientFactory));
     }
   }
 }

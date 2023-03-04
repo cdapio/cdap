@@ -33,23 +33,25 @@ import javax.annotation.Nullable;
  * Specification for a batch pipeline.
  */
 public class BatchPipelineSpec extends PipelineSpec {
+
   private final List<ActionSpec> endingActions;
   private final StageSpec sqlEngineStageSpec;
 
   private BatchPipelineSpec(Set<StageSpec> stages,
-                            Set<Connection> connections,
-                            Resources resources,
-                            Resources driverResources,
-                            Resources clientResources,
-                            boolean stageLoggingEnabled,
-                            boolean processTimingEnabled,
-                            List<ActionSpec> endingActions,
-                            int numOfRecordsPreview,
-                            Map<String, String> properties,
-                            Set<String> connectionsUsed,
-                            @Nullable StageSpec sqlEngineStageSpec, Engine engine) {
-    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties, connectionsUsed, engine);
+      Set<Connection> connections,
+      Resources resources,
+      Resources driverResources,
+      Resources clientResources,
+      boolean stageLoggingEnabled,
+      boolean processTimingEnabled,
+      List<ActionSpec> endingActions,
+      int numOfRecordsPreview,
+      Map<String, String> properties,
+      Set<String> connectionsUsed,
+      @Nullable StageSpec sqlEngineStageSpec, Engine engine) {
+    super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled,
+        processTimingEnabled,
+        numOfRecordsPreview, properties, connectionsUsed, engine);
     this.endingActions = ImmutableList.copyOf(endingActions);
     this.sqlEngineStageSpec = sqlEngineStageSpec;
   }
@@ -78,7 +80,7 @@ public class BatchPipelineSpec extends PipelineSpec {
     BatchPipelineSpec that = (BatchPipelineSpec) o;
 
     return Objects.equals(endingActions, that.endingActions)
-      && Objects.equals(sqlEngineStageSpec, that.sqlEngineStageSpec);
+        && Objects.equals(sqlEngineStageSpec, that.sqlEngineStageSpec);
   }
 
   @Override
@@ -88,10 +90,10 @@ public class BatchPipelineSpec extends PipelineSpec {
 
   @Override
   public String toString() {
-    return "BatchPipelineSpec{" +
-      "endingActions=" + endingActions +
-      ", sqlEngineStageSpec=" + sqlEngineStageSpec +
-      "} " + super.toString();
+    return "BatchPipelineSpec{"
+        + "endingActions=" + endingActions
+        + ", sqlEngineStageSpec=" + sqlEngineStageSpec
+        + "} " + super.toString();
   }
 
   public static Builder builder() {
@@ -103,6 +105,7 @@ public class BatchPipelineSpec extends PipelineSpec {
    * Builder for creating a BatchPipelineSpec.
    */
   public static class Builder extends PipelineSpec.Builder<Builder> {
+
     private List<ActionSpec> endingActions;
     private StageSpec sqlEngineStageSpec;
 
@@ -124,8 +127,8 @@ public class BatchPipelineSpec extends PipelineSpec {
     @Override
     public BatchPipelineSpec build() {
       return new BatchPipelineSpec(stages, connections, resources, driverResources, clientResources,
-                                   stageLoggingEnabled, processTimingEnabled, endingActions,
-                                   numOfRecordsPreview, properties, connectionsUsed, sqlEngineStageSpec, engine);
+          stageLoggingEnabled, processTimingEnabled, endingActions,
+          numOfRecordsPreview, properties, connectionsUsed, sqlEngineStageSpec, engine);
     }
   }
 }

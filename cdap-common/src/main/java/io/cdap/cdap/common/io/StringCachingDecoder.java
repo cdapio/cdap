@@ -24,21 +24,22 @@ import javax.annotation.Nullable;
 
 /**
  * This Decoder wraps another decoder and uses cache to establish identity mapping of string values.
- * It's extremely valuable to reduce memory footprint of deserialized values with same strings. Pretty often
- * when values are serialized, it's string fields refer to constants and don't consume much memory. But with
- * JSON or binary deserialization each such constant is deserialized separately increasing memory footprint multifold.
- * This decoder aims to solve this problem.
+ * It's extremely valuable to reduce memory footprint of deserialized values with same strings.
+ * Pretty often when values are serialized, it's string fields refer to constants and don't consume
+ * much memory. But with JSON or binary deserialization each such constant is deserialized
+ * separately increasing memory footprint multifold. This decoder aims to solve this problem.
  *
- * There are two approaches to use it: you can pass a real concurrent LRU cache or, if you have a set of values
- * to deserialize in a single thread, simply pass a {@link HashMap} and throw it away after all values are deserialized.
- * The HashMap is much faster than a real concurrent hash, but can be used only in cetain scenarios.
+ * There are two approaches to use it: you can pass a real concurrent LRU cache or, if you have a
+ * set of values to deserialize in a single thread, simply pass a {@link HashMap} and throw it away
+ * after all values are deserialized. The HashMap is much faster than a real concurrent hash, but
+ * can be used only in cetain scenarios.
  */
 public class StringCachingDecoder implements Decoder {
+
   private final Decoder delegate;
   private final Map<String, String> cache;
 
   /**
-   *
    * @param delegate Decoder to delegate to
    * @param cache map to be used as a cache.
    */
@@ -48,7 +49,6 @@ public class StringCachingDecoder implements Decoder {
   }
 
   /**
-   *
    * @return map used as a cache
    */
   public Map<String, String> getCache() {

@@ -102,20 +102,20 @@ public interface SSHSession extends Closeable {
    * Copies content to remote host.
    *
    * @param input {@link InputStream} for the source content
-   * @param targetPath target path. If the path is an existing directory, file with the {@code targetName} will
-   *                   be created under the given path. If the path doesn't exist or is an existing file,
-   *                   content will be written/overwritten to the given path
+   * @param targetPath target path. If the path is an existing directory, file with the {@code
+   *     targetName} will be created under the given path. If the path doesn't exist or is an
+   *     existing file, content will be written/overwritten to the given path
    * @param targetName file name in the {@code targetPath} if {@code targetPath} is a directory
    * @param size size of the content
    * @param permission permission of the target file
-   * @param lastAccessTime the optional file last access time in milliseconds.
-   *                       Both this and the {@code lastModifiedTime} should not be {@code null} to have time to be set
-   * @param lastModifiedTime the optional file last modified time in milliseconds.
-   *                         Both this and the {@code lastAccessTime} should not be {@code null} to have time to be set
+   * @param lastAccessTime the optional file last access time in milliseconds. Both this and the
+   *     {@code lastModifiedTime} should not be {@code null} to have time to be set
+   * @param lastModifiedTime the optional file last modified time in milliseconds. Both this and
+   *     the {@code lastAccessTime} should not be {@code null} to have time to be set
    * @throws IOException if failed to copy the content
    */
   void copy(InputStream input, String targetPath, String targetName, long size, int permission,
-            @Nullable Long lastAccessTime, @Nullable Long lastModifiedTime) throws IOException;
+      @Nullable Long lastAccessTime, @Nullable Long lastModifiedTime) throws IOException;
 
   /**
    * Creates a local port forwarding channel from this SSH session.
@@ -123,19 +123,21 @@ public interface SSHSession extends Closeable {
    * @param targetHost the target hostname to forward to
    * @param targetPort the target port to forward to
    * @param originatePort the original port that the client is connect to
-   * @param dataConsumer A {@link PortForwarding.DataConsumer} for consuming incoming data from the forwarding channel
+   * @param dataConsumer A {@link PortForwarding.DataConsumer} for consuming incoming data from
+   *     the forwarding channel
    * @return a {@link PortForwarding} for communicating with the forwarding channel
    * @throws IOException if failed to open the port forwarding channel
    */
   PortForwarding createLocalPortForward(String targetHost, int targetPort, int originatePort,
-                                        PortForwarding.DataConsumer dataConsumer) throws IOException;
+      PortForwarding.DataConsumer dataConsumer) throws IOException;
 
   /**
    * Creates a remote port forwarding from this SSH session.
    *
-   * @param remotePort port listening on the remote host "localhost" interface. If it is {@code 0}, a random port
-   *                   will be acquired on the remote host
-   * @param localPort traffic from remote host will forward to the local port in the local host "localhost" interface
+   * @param remotePort port listening on the remote host "localhost" interface. If it is {@code
+   *     0}, a random port will be acquired on the remote host
+   * @param localPort traffic from remote host will forward to the local port in the local host
+   *     "localhost" interface
    * @return a {@link RemotePortForwarding}
    * @throws IOException if failed to create the port forwarding
    */

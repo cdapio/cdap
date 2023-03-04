@@ -45,7 +45,8 @@ final class CachingLocation implements LinkableLocation {
   private final Location delegate;
   private final CachingPathProvider cachingPathProvider;
 
-  CachingLocation(LocationFactory locationFactory, Location delegate, CachingPathProvider cachingPathProvider) {
+  CachingLocation(LocationFactory locationFactory, Location delegate,
+      CachingPathProvider cachingPathProvider) {
     this.locationFactory = locationFactory;
     this.delegate = delegate;
     this.cachingPathProvider = cachingPathProvider;
@@ -126,9 +127,10 @@ final class CachingLocation implements LinkableLocation {
 
     try (InputStream input = delegate.getInputStream()) {
       Files.createDirectories(cachePath.getParent());
-      Path tmpPath = Files.createTempFile(cachePath.getParent(), cachePath.getFileName().toString(), ".tmp",
-                                          PosixFilePermissions.asFileAttribute(
-                                            PosixFilePermissions.fromString("rw-------")));
+      Path tmpPath = Files.createTempFile(cachePath.getParent(), cachePath.getFileName().toString(),
+          ".tmp",
+          PosixFilePermissions.asFileAttribute(
+              PosixFilePermissions.fromString("rw-------")));
       Files.copy(input, tmpPath, StandardCopyOption.REPLACE_EXISTING);
       try {
         Files.move(tmpPath, cachePath, StandardCopyOption.ATOMIC_MOVE);
@@ -183,7 +185,8 @@ final class CachingLocation implements LinkableLocation {
   @Nullable
   public Location renameTo(Location destination) throws IOException {
     Location result = this.delegate.renameTo(destination);
-    return result == null ? null : new CachingLocation(locationFactory, result, cachingPathProvider);
+    return result == null ? null
+        : new CachingLocation(locationFactory, result, cachingPathProvider);
   }
 
   @Override

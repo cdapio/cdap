@@ -28,7 +28,8 @@ import java.util.concurrent.Executor;
 public final class AsyncFunctions {
 
   /**
-   * Converts a {@link Function} into {@link AsyncFunction} by performing the operation in the given executor.
+   * Converts a {@link Function} into {@link AsyncFunction} by performing the operation in the given
+   * executor.
    *
    * @param function Function to apply
    * @param executor Executor for the function to execute in
@@ -36,7 +37,8 @@ public final class AsyncFunctions {
    * @param <O> Output type
    * @return A {@link AsyncFunction} that will call the function in the given executor.
    */
-  public static <I, O> AsyncFunction<I, O> asyncWrap(final Function<I, O> function, final Executor executor) {
+  public static <I, O> AsyncFunction<I, O> asyncWrap(final Function<I, O> function,
+      final Executor executor) {
     return new AsyncFunction<I, O>() {
       @Override
       public ListenableFuture<O> apply(final I input) throws Exception {
@@ -58,12 +60,14 @@ public final class AsyncFunctions {
   }
 
   /**
-   * Converts a {@link Function} into {@link AsyncFunction} by performing the operation in the same thread.
+   * Converts a {@link Function} into {@link AsyncFunction} by performing the operation in the same
+   * thread.
    *
    * @param function Function to apply
    * @param <I> Input type
    * @param <O> Output type
-   * @return A {@link AsyncFunction} that will call the function in the same thread as the caller thread.
+   * @return A {@link AsyncFunction} that will call the function in the same thread as the caller
+   *     thread.
    */
   public static <I, O> AsyncFunction<I, O> asyncWrap(final Function<I, O> function) {
     return new AsyncFunction<I, O>() {

@@ -15,6 +15,7 @@
  */
 
 package io.cdap.cdap.etl.api.connector;
+
 import com.google.gson.annotations.SerializedName;
 
 /**

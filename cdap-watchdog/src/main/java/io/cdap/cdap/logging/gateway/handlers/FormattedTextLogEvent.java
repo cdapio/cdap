@@ -19,8 +19,8 @@ package io.cdap.cdap.logging.gateway.handlers;
 import io.cdap.cdap.logging.read.LogOffset;
 
 /**
-* Handles formatting of log event to send
-*/
+ * Handles formatting of log event to send
+ */
 public final class FormattedTextLogEvent extends FormattedLogOffset {
 
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})

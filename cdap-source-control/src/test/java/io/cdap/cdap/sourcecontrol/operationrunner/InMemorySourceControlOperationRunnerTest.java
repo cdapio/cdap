@@ -47,40 +47,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InMemorySourceControlOperationRunnerTest {
+
   private static final String FAKE_APP_NAME = "app1";
-  private static final String FAKE_APP_SPEC = "{\n" +
-      "  \"artifact\": {\n" +
-      "     \"name\": \"cdap-notifiable-workflow\",\n" +
-      "     \"version\": \"1.0.0\",\n" +
-      "     \"scope\": \"system\"\n" +
-      "  },\n" +
-      "  \"config\": {\n" +
-      "     \"plugin\": {\n" +
-      "        \"name\": \"WordCount\",\n" +
-      "        \"type\": \"sparkprogram\",\n" +
-      "        \"artifact\": {\n" +
-      "           \"name\": \"word-count-program\",\n" +
-      "           \"scope\": \"user\",\n" +
-      "           \"version\": \"1.0.0\"\n" +
-      "        }\n" +
-      "     }\n" +
-      "  },\n" +
-      "  \"preview\" : {\n" +
-      "    \"programName\" : \"WordCount\",\n" +
-      "    \"programType\" : \"spark\"\n" +
-      "    },\n" +
-      "  \"principal\" : \"test2\"\n" +
-      "}";
+  private static final String FAKE_APP_SPEC = "{\n"
+      + "  \"artifact\": {\n"
+      + "     \"name\": \"cdap-notifiable-workflow\",\n"
+      + "     \"version\": \"1.0.0\",\n"
+      + "     \"scope\": \"system\"\n"
+      + "  },\n"
+      + "  \"config\": {\n"
+      + "     \"plugin\": {\n"
+      + "        \"name\": \"WordCount\",\n"
+      + "        \"type\": \"sparkprogram\",\n"
+      + "        \"artifact\": {\n"
+      + "           \"name\": \"word-count-program\",\n"
+      + "           \"scope\": \"user\",\n"
+      + "           \"version\": \"1.0.0\"\n"
+      + "        }\n"
+      + "     }\n"
+      + "  },\n"
+      + "  \"preview\" : {\n"
+      + "    \"programName\" : \"WordCount\",\n"
+      + "    \"programType\" : \"spark\"\n"
+      + "    },\n"
+      + "  \"principal\" : \"test2\"\n"
+      + "}";
   private static final String FAKE_FILE_HASH = "5905258bb958ceda80b6a37938050ad876920f09";
   private static final String FAKE_COMMIT_HASH = "5905258bb958ceda80b6a37938050ad876920f10";
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static final ApplicationDetail testAppDetails = new ApplicationDetail(
-    "app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
-    new ArrayList<>(), new ArrayList<>(), null, null);
+      "app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
+      new ArrayList<>(), new ArrayList<>(), null, null);
   private static final String pathPrefix = "pathPrefix";
   private static final RepositoryConfig testRepoConfig = new RepositoryConfig.Builder()
-    .setProvider(Provider.GITHUB)
+      .setProvider(Provider.GITHUB)
     .setLink("ignored")
     .setDefaultBranch("develop")
     .setPathPrefix(pathPrefix)

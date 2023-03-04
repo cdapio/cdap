@@ -29,58 +29,59 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Decodes an object from a {@link Row} object fetched from a {@link Table} into a {@link StructuredRecord}.
- * The schema may contain a field for the row key, which must be a non-null simple type. The name of the
- * row field must be given if the schema contains it.
+ * Decodes an object from a {@link Row} object fetched from a {@link Table} into a {@link
+ * StructuredRecord}. The schema may contain a field for the row key, which must be a non-null
+ * simple type. The name of the row field must be given if the schema contains it.
  */
 public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRecord> {
+
   // these are used since we know the type or the row key in the constructor,
   // and we don't want to have a big switch statement each time we read a row.
   private static final Map<Schema.Type, RowKeyFunction> ROW_KEY_FUNCTIONS =
-    ImmutableMap.<Schema.Type, RowKeyFunction>builder()
-      .put(Schema.Type.BOOLEAN, new RowKeyFunction<Boolean>() {
-        @Override
-        public Boolean convert(byte[] rowKey) {
-          return Bytes.toBoolean(rowKey);
-        }
-      })
-      .put(Schema.Type.BYTES, new RowKeyFunction<byte[]>() {
-        @Override
-        public byte[] convert(byte[] rowKey) {
-          return rowKey;
-        }
-      })
-      .put(Schema.Type.INT, new RowKeyFunction<Integer>() {
-        @Override
-        public Integer convert(byte[] rowKey) {
-          return Bytes.toInt(rowKey);
-        }
-      })
-      .put(Schema.Type.LONG, new RowKeyFunction<Long>() {
-        @Override
-        public Long convert(byte[] rowKey) {
-          return Bytes.toLong(rowKey);
-        }
-      })
-      .put(Schema.Type.FLOAT, new RowKeyFunction<Float>() {
-        @Override
-        public Float convert(byte[] rowKey) {
-          return Bytes.toFloat(rowKey);
-        }
-      })
-      .put(Schema.Type.DOUBLE, new RowKeyFunction<Double>() {
-        @Override
-        public Double convert(byte[] rowKey) {
-          return Bytes.toDouble(rowKey);
-        }
-      })
-      .put(Schema.Type.STRING, new RowKeyFunction<String>() {
-        @Override
-        public String convert(byte[] rowKey) {
-          return Bytes.toString(rowKey);
-        }
-      })
-      .build();
+      ImmutableMap.<Schema.Type, RowKeyFunction>builder()
+          .put(Schema.Type.BOOLEAN, new RowKeyFunction<Boolean>() {
+            @Override
+            public Boolean convert(byte[] rowKey) {
+              return Bytes.toBoolean(rowKey);
+            }
+          })
+          .put(Schema.Type.BYTES, new RowKeyFunction<byte[]>() {
+            @Override
+            public byte[] convert(byte[] rowKey) {
+              return rowKey;
+            }
+          })
+          .put(Schema.Type.INT, new RowKeyFunction<Integer>() {
+            @Override
+            public Integer convert(byte[] rowKey) {
+              return Bytes.toInt(rowKey);
+            }
+          })
+          .put(Schema.Type.LONG, new RowKeyFunction<Long>() {
+            @Override
+            public Long convert(byte[] rowKey) {
+              return Bytes.toLong(rowKey);
+            }
+          })
+          .put(Schema.Type.FLOAT, new RowKeyFunction<Float>() {
+            @Override
+            public Float convert(byte[] rowKey) {
+              return Bytes.toFloat(rowKey);
+            }
+          })
+          .put(Schema.Type.DOUBLE, new RowKeyFunction<Double>() {
+            @Override
+            public Double convert(byte[] rowKey) {
+              return Bytes.toDouble(rowKey);
+            }
+          })
+          .put(Schema.Type.STRING, new RowKeyFunction<String>() {
+            @Override
+            public String convert(byte[] rowKey) {
+              return Bytes.toString(rowKey);
+            }
+          })
+          .build();
   private final String rowFieldName;
   private final RowKeyFunction rowKeyFunction;
 
@@ -94,9 +95,10 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
       Schema.Type rowType = rowField.getSchema().getType();
       Preconditions.checkArgument(rowType != Schema.Type.NULL, "Row field cannot have null type.");
       Preconditions.checkArgument(rowField.getSchema().isSimpleOrNullableSimple(),
-        "Row field must be a simple (boolean, bytes, int, long, float, double, or string) or nullable simple type.");
+          "Row field must be a simple (boolean, bytes, int, long, float, double, or string) or nullable simple type.");
       if (rowField.getSchema().isNullableSimple()) {
-        this.rowKeyFunction = ROW_KEY_FUNCTIONS.get(rowField.getSchema().getNonNullable().getType());
+        this.rowKeyFunction = ROW_KEY_FUNCTIONS.get(
+            rowField.getSchema().getNonNullable().getType());
       } else {
         this.rowKeyFunction = ROW_KEY_FUNCTIONS.get(rowType);
       }
@@ -107,7 +109,8 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
 
   @Override
   public StructuredRecord read(Row row, Schema sourceSchema) throws IOException {
-    Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD, "Source schema must be a record.");
+    Preconditions.checkArgument(sourceSchema.getType() == Schema.Type.RECORD,
+        "Source schema must be a record.");
     initializeRead(sourceSchema);
     StructuredRecord.Builder builder = StructuredRecord.builder(schema);
     // if one of the fields should come from the row key, add it.
@@ -126,7 +129,8 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
           advanceField();
           continue;
         }
-        builder.set(sourceFieldName, read(row, sourceField.getSchema(), targetField.getSchema(), type));
+        builder.set(sourceFieldName,
+            read(row, sourceField.getSchema(), targetField.getSchema(), type));
       }
       return builder.build();
     } catch (Exception e) {
@@ -136,6 +140,7 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
 
   // converts a row key into some other object.
   private interface RowKeyFunction<T> {
+
     T convert(byte[] rowKey);
   }
 }

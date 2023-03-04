@@ -20,8 +20,8 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 
 /**
- * This interface provides methods that instantiate a {@link StructuredTable} during the runtime.
- * of a program.
+ * This interface provides methods that instantiate a {@link StructuredTable} during the runtime. of
+ * a program.
  */
 @Beta
 public interface StructuredTableContext {
@@ -35,5 +35,5 @@ public interface StructuredTableContext {
    * @throws TableNotFoundException if the table is not found
    */
   StructuredTable getTable(StructuredTableId tableId)
-    throws StructuredTableInstantiationException, TableNotFoundException;
+      throws StructuredTableInstantiationException, TableNotFoundException;
 }

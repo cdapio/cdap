@@ -48,8 +48,8 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * This class is to manage preference related functions. It will wrap the {@link PreferencesTable} operation
- * in transaction in each method
+ * This class is to manage preference related functions. It will wrap the {@link PreferencesTable}
+ * operation in transaction in each method
  */
 public class PreferencesService {
 
@@ -58,8 +58,9 @@ public class PreferencesService {
 
   @Inject
   public PreferencesService(MessagingService messagingService,
-                            CConfiguration cConf, TransactionRunner transactionRunner) {
-    MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
+      CConfiguration cConf, TransactionRunner transactionRunner) {
+    MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(
+        messagingService);
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
     this.transactionRunner = transactionRunner;
   }
@@ -88,8 +89,8 @@ public class PreferencesService {
    * Validate the profile status is enabled and set the preferences in same transaction
    */
   private void setConfig(EntityId entityId,
-                         Map<String, String> propertyMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      Map<String, String> propertyMap)
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       PreferencesTable preferencesTable = new PreferencesTable(context);
@@ -100,13 +101,14 @@ public class PreferencesService {
   /**
    * Validate the profile status is enabled and set the preferences
    */
-  private void setConfig(ProfileStore profileStore, PreferencesTable preferencesTable, EntityId entityId,
-                         Map<String, String> propertyMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
+  private void setConfig(ProfileStore profileStore, PreferencesTable preferencesTable,
+      EntityId entityId,
+      Map<String, String> propertyMap)
+      throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
 
     boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
-    NamespaceId namespaceId = isInstanceLevel ?
-      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    NamespaceId namespaceId = isInstanceLevel
+        ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
 
     // validate the profile and publish the necessary metadata change if the profile exists in the property
     Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(namespaceId, propertyMap);
@@ -114,18 +116,21 @@ public class PreferencesService {
       ProfileId profileId = profile.get();
       // if it is instance level set, the profile has to be in SYSTEM scope, so throw BadRequestException when
       // setting a USER scoped profile
-      if (isInstanceLevel && !propertyMap.get(SystemArguments.PROFILE_NAME).startsWith(EntityScope.SYSTEM.name())) {
-        throw new BadRequestException(String.format("Cannot set profile %s at the instance level. " +
-                                                      "Only system profiles can be set at the instance level. " +
-                                                      "The profile property must look like SYSTEM:[profile-name]",
-                                                    propertyMap.get(SystemArguments.PROFILE_NAME)));
+      if (isInstanceLevel && !propertyMap.get(SystemArguments.PROFILE_NAME)
+          .startsWith(EntityScope.SYSTEM.name())) {
+        throw new BadRequestException(
+            String.format("Cannot set profile %s at the instance level. "
+                    + "Only system profiles can be set at the instance level. "
+                    + "The profile property must look like SYSTEM:[profile-name]",
+                propertyMap.get(SystemArguments.PROFILE_NAME)));
       }
 
       if (profileStore.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
-        throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
-                                                           "assigned to any programs or schedules",
-                                                         profileId.getProfile(), profileId.getNamespace()),
-                                           profileId);
+        throw new ProfileConflictException(
+            String.format("Profile %s in namespace %s is disabled. It cannot be "
+                    + "assigned to any programs or schedules",
+                profileId.getProfile(), profileId.getNamespace()),
+            profileId);
       }
 
     }
@@ -133,7 +138,8 @@ public class PreferencesService {
     // need to get old property and check if it contains profile information
     Map<String, String> oldProperties = preferencesTable.getPreferences(entityId).getProperties();
     // get the old profile information from the previous properties
-    Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
+    Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId,
+        oldProperties);
     long seqId = preferencesTable.setPreferences(entityId, propertyMap);
 
     // After everything is set, publish the update message and add the association if profile is present
@@ -158,8 +164,8 @@ public class PreferencesService {
     TransactionRunners.run(transactionRunner, context -> {
       PreferencesTable dataset = new PreferencesTable(context);
       Map<String, String> oldProp = dataset.getPreferences(entityId).getProperties();
-      NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-        NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+      NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE)
+          ? NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
       Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProp);
       long seqId = dataset.deleteProperties(entityId);
 
@@ -250,6 +256,7 @@ public class PreferencesService {
   public Map<String, String> getResolvedProperties(ApplicationId appId) {
     return getConfigResolvedProperties(appId);
   }
+
   public PreferencesDetail getResolvedPreferences(ApplicationId appId) {
     return getResolved(appId);
   }
@@ -259,8 +266,9 @@ public class PreferencesService {
    */
   // TODO: remove and replace callsites with getResolvedPreferences
   public Map<String, String> getResolvedProperties(ProgramId programId) {
-   return getConfigResolvedProperties(programId);
+    return getConfigResolvedProperties(programId);
   }
+
   public PreferencesDetail getResolvedPreferences(ProgramId programId) {
     return getResolved(programId);
   }
@@ -269,25 +277,27 @@ public class PreferencesService {
    * Set instance level preferences
    */
   public void setProperties(Map<String, String> propMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(new InstanceId(""), propMap);
   }
 
   /**
-   * Set instance level preferences if they are not already set. Only adds the properties that don't already exist.
+   * Set instance level preferences if they are not already set. Only adds the properties that don't
+   * already exist.
    *
    * @param properties the preferences to add
    * @return the preference keys that were added
    */
   public Set<String> addProperties(Map<String, String> properties)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     InstanceId instanceId = new InstanceId("");
 
     Set<String> added = new HashSet<>();
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       PreferencesTable preferencesTable = new PreferencesTable(context);
-      Map<String, String> oldProperties = preferencesTable.getPreferences(instanceId).getProperties();
+      Map<String, String> oldProperties = preferencesTable.getPreferences(instanceId)
+          .getProperties();
       Map<String, String> newProperties = new HashMap<>(properties);
 
       added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
@@ -302,7 +312,7 @@ public class PreferencesService {
    * Set namespace level preferences
    */
   public void setProperties(NamespaceId namespaceId, Map<String, String> propMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(namespaceId, propMap);
   }
 
@@ -310,7 +320,7 @@ public class PreferencesService {
    * Set app level preferences
    */
   public void setProperties(ApplicationId appId, Map<String, String> propMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(appId, propMap);
   }
 
@@ -318,7 +328,7 @@ public class PreferencesService {
    * Set program level preferences
    */
   public void setProperties(ProgramId programId, Map<String, String> propMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+      throws NotFoundException, ProfileConflictException, BadRequestException {
     setConfig(programId, propMap);
   }
 

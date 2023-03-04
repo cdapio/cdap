@@ -21,10 +21,11 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import java.util.Set;
 
 /**
- * An interface for classes that can provide data required for the execution of the workflow.
- * This interface is implemented by controllers of the programs which can possibly run inside the Workflow,
- * such as MapReduce and Spark. If these programs were executed as a part of Workflow, then Workflow driver
- * can call these methods to get the data which need to be passed along the further stages in the Workflow.
+ * An interface for classes that can provide data required for the execution of the workflow. This
+ * interface is implemented by controllers of the programs which can possibly run inside the
+ * Workflow, such as MapReduce and Spark. If these programs were executed as a part of Workflow,
+ * then Workflow driver can call these methods to get the data which need to be passed along the
+ * further stages in the Workflow.
  */
 public interface WorkflowDataProvider {
 

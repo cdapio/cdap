@@ -20,9 +20,9 @@ import io.cdap.cdap.api.service.http.HttpContentProducer;
 import io.cdap.http.BodyProducer;
 
 /**
- * Interface for creating {@link BodyProducer} instance from {@link HttpContentProducer}.
- * Instance of this class is used in {@link DelayedHttpServiceResponder#execute(boolean)}
- * to create {@link BodyProducer} from {@link HttpContentProducer}.
+ * Interface for creating {@link BodyProducer} instance from {@link HttpContentProducer}. Instance
+ * of this class is used in {@link DelayedHttpServiceResponder#execute(boolean)} to create {@link
+ * BodyProducer} from {@link HttpContentProducer}.
  */
 interface BodyProducerFactory {
 

@@ -24,26 +24,31 @@ import java.util.Map;
  */
 // todo: methods should throw IOException instead of Exception
 public interface MetricStore {
+
   /**
    * Sets {@link MetricsContext} to be used for emitting metrics by this {@link MetricStore}.
+   *
    * @param metricsContext metrics context to use
    */
   void setMetricsContext(MetricsContext metricsContext);
 
   /**
    * Adds {@link MetricValues} to the store.
+   *
    * @param metricValues metric values to add.
    */
   void add(MetricValues metricValues);
 
   /**
    * Adds {@link MetricValues}s to the store.
+   *
    * @param metricValues metric values to add.
    */
   void add(Collection<? extends MetricValues> metricValues);
 
   /**
    * Queries metrics data.
+   *
    * @param query query to execute
    * @return time series that satisfy the query
    */
@@ -57,23 +62,27 @@ public interface MetricStore {
   void deleteBefore(long timestamp);
 
   /**
-   * Deletes all metric data in the resolution tables based on their ttl setting based on the current timestamp.
+   * Deletes all metric data in the resolution tables based on their ttl setting based on the
+   * current timestamp.
    */
   void deleteTTLExpired();
 
   /**
    * Deletes all metric data specified by the {@link MetricDeleteQuery}
+   *
    * @param query specifies what to delete
    */
   void delete(MetricDeleteQuery query);
 
   /**
-   * Deletes all metrics data. NOTE: dangerous, all data will be lost. Likely you only need to use it in tests.
+   * Deletes all metrics data. NOTE: dangerous, all data will be lost. Likely you only need to use
+   * it in tests.
    */
   void deleteAll();
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of next available tags
+   *
    * @param query specifies where to search
    * @return collection of tag value pairs in no particular order
    */
@@ -81,16 +90,17 @@ public interface MetricStore {
 
   /**
    * Given a list of tags in the {@link MetricSearchQuery}, returns the list of measures available
+   *
    * @param query specifies where to search
    * @return collection of metric names in no particular order
    */
   Collection<String> findMetricNames(MetricSearchQuery query);
 
   /**
-   * Get realtime metrics processor status, Returns the map of topic information to the metrics processing stats for
-   * that topic
+   * Get realtime metrics processor status, Returns the map of topic information to the metrics
+   * processing stats for that topic
+   *
    * @return map of topic info to processing info for the topic
-   * @throws Exception
    */
   Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception;
 }

@@ -39,21 +39,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A Service for Tephra's TransactionSystemClient that waits on startup for the transaction system to be available.
- * Everything else is just delegated to a TransactionSystemClient.
+ * A Service for Tephra's TransactionSystemClient that waits on startup for the transaction system
+ * to be available. Everything else is just delegated to a TransactionSystemClient.
  */
 public class DistributedTransactionSystemClientService
-  extends AbstractIdleService implements TransactionSystemClientService {
+    extends AbstractIdleService implements TransactionSystemClientService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedTransactionSystemClientService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      DistributedTransactionSystemClientService.class);
   private final CConfiguration cConf;
   private final TransactionSystemClient delegate;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public DistributedTransactionSystemClientService(CConfiguration cConf,
-                                                   DiscoveryServiceClient discoveryServiceClient,
-                                                   TransactionSystemClient delegate) {
+      DiscoveryServiceClient discoveryServiceClient,
+      TransactionSystemClient delegate) {
     this.cConf = cConf;
     this.delegate = delegate;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -64,27 +65,31 @@ public class DistributedTransactionSystemClientService
     LOG.info("Starting TransactionSystemClientService.");
     int timeout = cConf.getInt(Constants.Startup.STARTUP_SERVICE_TIMEOUT);
     if (timeout > 0) {
-      LOG.debug("Waiting for transaction system to be available. Will timeout after {} seconds.", timeout);
+      LOG.debug("Waiting for transaction system to be available. Will timeout after {} seconds.",
+          timeout);
       try {
         Tasks.waitFor(true, new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return discoveryServiceClient.discover(Constants.Service.TRANSACTION).iterator().hasNext();
-          }
-        }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)), TimeUnit.SECONDS);
+              @Override
+              public Boolean call() throws Exception {
+                return discoveryServiceClient.discover(Constants.Service.TRANSACTION).iterator()
+                    .hasNext();
+              }
+            }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)),
+            TimeUnit.SECONDS);
         LOG.info("TransactionSystemClientService started.");
       } catch (TimeoutException e) {
         // its not a nice message... throw one with a better message
         throw new TimeoutException(String.format(
-          "Timed out after %d seconds while waiting to discover the %s service. " +
-            "Check the logs for the service to see what went wrong.",
-          timeout, Constants.Service.TRANSACTION));
+            "Timed out after %d seconds while waiting to discover the %s service. "
+                + "Check the logs for the service to see what went wrong.",
+            timeout, Constants.Service.TRANSACTION));
       } catch (InterruptedException e) {
-        throw new RuntimeException(String.format("Interrupted while waiting to discover the %s service.",
-                                                 Constants.Service.TRANSACTION));
+        throw new RuntimeException(
+            String.format("Interrupted while waiting to discover the %s service.",
+                Constants.Service.TRANSACTION));
       } catch (ExecutionException e) {
         throw new RuntimeException(String.format("Error while waiting to discover the %s service.",
-                                                 Constants.Service.TRANSACTION), e);
+            Constants.Service.TRANSACTION), e);
       }
     }
   }
@@ -110,13 +115,15 @@ public class DistributedTransactionSystemClientService
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionNotInProgressException {
     //noinspection deprecation
     return delegate.canCommit(tx, changeIds);
   }
 
   @Override
-  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionFailureException {
     delegate.canCommitOrThrow(tx, changeIds);
   }
 

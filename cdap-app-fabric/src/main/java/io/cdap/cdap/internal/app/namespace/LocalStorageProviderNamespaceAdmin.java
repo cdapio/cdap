@@ -24,11 +24,13 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 /**
  * Manages namespaces on local underlying systems.
  */
-public final class LocalStorageProviderNamespaceAdmin extends AbstractStorageProviderNamespaceAdmin {
+public final class LocalStorageProviderNamespaceAdmin extends
+    AbstractStorageProviderNamespaceAdmin {
 
   @Inject
-  LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacePathLocator namespacePathLocator,
-                                     NamespaceQueryAdmin namespaceQueryAdmin) {
+  LocalStorageProviderNamespaceAdmin(CConfiguration cConf,
+      NamespacePathLocator namespacePathLocator,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     super(cConf, namespacePathLocator, namespaceQueryAdmin);
   }
 }

@@ -30,28 +30,29 @@ import java.lang.reflect.Type;
  * Codec used to serialize and deserialize {@link PartitionFilter.Condition}s.
  */
 public class ConditionCodec extends ComparableCodec
-  implements JsonSerializer<PartitionFilter.Condition>, JsonDeserializer<PartitionFilter.Condition> {
+    implements JsonSerializer<PartitionFilter.Condition>,
+    JsonDeserializer<PartitionFilter.Condition> {
 
   @Override
   public PartitionFilter.Condition deserialize(JsonElement jsonElement, Type type,
-                                               JsonDeserializationContext deserializationContext)
-    throws JsonParseException {
+      JsonDeserializationContext deserializationContext)
+      throws JsonParseException {
 
     JsonObject jsonObject = jsonElement.getAsJsonObject();
     boolean isSingleValue = jsonObject.get("isSingleValue").getAsBoolean();
     if (isSingleValue) {
       return new PartitionFilter.Condition<>(jsonObject.get("fieldName").getAsString(),
-                                             deserializeComparable(jsonObject.get("lower"), deserializationContext));
+          deserializeComparable(jsonObject.get("lower"), deserializationContext));
     } else {
       return new PartitionFilter.Condition<>(jsonObject.get("fieldName").getAsString(),
-                                             deserializeComparable(jsonObject.get("lower"), deserializationContext),
-                                             deserializeComparable(jsonObject.get("upper"), deserializationContext));
+          deserializeComparable(jsonObject.get("lower"), deserializationContext),
+          deserializeComparable(jsonObject.get("upper"), deserializationContext));
     }
   }
 
   @Override
   public JsonElement serialize(PartitionFilter.Condition condition, Type type,
-                               JsonSerializationContext jsonSerializationContext) {
+      JsonSerializationContext jsonSerializationContext) {
     JsonObject jsonObj = new JsonObject();
     jsonObj.addProperty("fieldName", condition.getFieldName());
     jsonObj.add("lower", serializeComparable(condition.getLower(), jsonSerializationContext));

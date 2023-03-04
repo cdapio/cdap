@@ -91,9 +91,9 @@ public final class Resources {
 
   @Override
   public String toString() {
-    return "Resources{" +
-      "virtualCores=" + virtualCores +
-      ", memoryMB=" + memoryMB +
-      '}';
+    return "Resources{"
+        + "virtualCores=" + virtualCores
+        + ", memoryMB=" + memoryMB
+        + '}';
   }
 }

@@ -44,18 +44,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Class representing the information about field lineage for a single program run.
- * Currently we store the operations associated with the field lineage and corresponding
- * checksum. Algorithm to compute checksum is same as how Avro computes the Schema fingerprint.
- * (https://issues.apache.org/jira/browse/AVRO-1006). The implementation of fingerprint
- * algorithm is taken from {@code org.apache.avro.SchemaNormalization} class. Since the checksum
- * is persisted in store, any change to the canonicalize form or fingerprint algorithm would
- * require upgrade step to update the stored checksums.
+ * Class representing the information about field lineage for a single program run. Currently we
+ * store the operations associated with the field lineage and corresponding checksum. Algorithm to
+ * compute checksum is same as how Avro computes the Schema fingerprint.
+ * (https://issues.apache.org/jira/browse/AVRO-1006). The implementation of fingerprint algorithm is
+ * taken from {@code org.apache.avro.SchemaNormalization} class. Since the checksum is persisted in
+ * store, any change to the canonicalize form or fingerprint algorithm would require upgrade step to
+ * update the stored checksums.
  */
 public class FieldLineageInfo {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-    .create();
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+      .create();
   private static final Logger LOG = LoggerFactory.getLogger(FieldLineageInfo.class);
 
   // Dropped fields are stored with this EPF so that will be serialized by GSON's library
@@ -96,20 +97,20 @@ public class FieldLineageInfo {
   private transient Map<String, Set<Operation>> operationOutgoingConnections;
 
   /**
-   * Create an instance of a class from supplied collection of operations.
-   * Validations are performed on the collection before creating instance. All of the operations
-   * must have unique names. Collection must have at least one operation of type READ and one
-   * operation of type WRITE. The origins specified for the {@link InputField} are also validated
-   * to make sure the operation with the corresponding name exists in the collection. However, we do not
-   * validate the existence of path to the fields in the destination from sources. If no such path exists
-   * then the lineage will be incomplete.
+   * Create an instance of a class from supplied collection of operations. Validations are performed
+   * on the collection before creating instance. All of the operations must have unique names.
+   * Collection must have at least one operation of type READ and one operation of type WRITE. The
+   * origins specified for the {@link InputField} are also validated to make sure the operation with
+   * the corresponding name exists in the collection. However, we do not validate the existence of
+   * path to the fields in the destination from sources. If no such path exists then the lineage
+   * will be incomplete.
    *
-   * Apart from collection of operations, this instance also stores the fields belonging
-   * to the destination along with the incoming and outgoing summaries. Computing summaries
-   * can be expensive operation, so it is better to do it while emitting the instance to TMS
-   * from program container, so that its subscriber simply insert it into the dataset without any
-   * possibility to running into the dataset transaction timeouts. For this reason, create instance
-   * using this constructor from program container, before writing to TMS.
+   * Apart from collection of operations, this instance also stores the fields belonging to the
+   * destination along with the incoming and outgoing summaries. Computing summaries can be
+   * expensive operation, so it is better to do it while emitting the instance to TMS from program
+   * container, so that its subscriber simply insert it into the dataset without any possibility to
+   * running into the dataset transaction timeouts. For this reason, create instance using this
+   * constructor from program container, before writing to TMS.
    *
    * @param operations the collection of field lineage operations
    * @throws IllegalArgumentException if validation fails
@@ -119,10 +120,10 @@ public class FieldLineageInfo {
   }
 
   /**
-   * When computation of summaries is not required, this constructor can be used to create an instance.
-   * Specifically while serving REST api for getting operations on a field, we create instance with the
-   * operations stored in dataset. However we do not need to compute summaries at that point, so provide
-   * computeSummaries as {@code false}.
+   * When computation of summaries is not required, this constructor can be used to create an
+   * instance. Specifically while serving REST api for getting operations on a field, we create
+   * instance with the operations stored in dataset. However we do not need to compute summaries at
+   * that point, so provide computeSummaries as {@code false}.
    *
    * @param operations the collection of field lineage operations
    * @param computeSummaries boolean flag to determine whether summaries should be computed
@@ -157,9 +158,10 @@ public class FieldLineageInfo {
 
     for (Operation operation : operations) {
       if (operationsMap.containsKey(operation.getName())) {
-        throw new IllegalArgumentException(String.format("All operations provided for creating field " +
-                "level lineage info must have unique names. " +
-                "Operation name '%s' is repeated.", operation.getName()));
+        throw new IllegalArgumentException(
+            String.format("All operations provided for creating field "
+                + "level lineage info must have unique names. "
+                + "Operation name '%s' is repeated.", operation.getName()));
 
       }
 
@@ -170,17 +172,20 @@ public class FieldLineageInfo {
           ReadOperation read = (ReadOperation) operation;
           EndPoint source = read.getSource();
           if (source == null) {
-            throw new IllegalArgumentException(String.format("Source endpoint cannot be null for the read " +
-                    "operation '%s'.", read.getName()));
+            throw new IllegalArgumentException(
+                String.format("Source endpoint cannot be null for the read "
+                    + "operation '%s'.", read.getName()));
           }
           readOperations.add(read);
           break;
         case TRANSFORM:
           TransformOperation transform = (TransformOperation) operation;
-          Set<String> origins = transform.getInputs().stream().map(InputField::getOrigin).collect(Collectors.toSet());
+          Set<String> origins = transform.getInputs().stream().map(InputField::getOrigin)
+              .collect(Collectors.toSet());
           // for each origin corresponding to the input fields there is a connection from that origin to this operation
           for (String origin : origins) {
-            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
+            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin,
+                k -> new HashSet<>());
             connections.add(transform);
           }
           allOrigins.addAll(origins);
@@ -192,14 +197,17 @@ public class FieldLineageInfo {
           WriteOperation write = (WriteOperation) operation;
           EndPoint destination = write.getDestination();
           if (destination == null) {
-            throw new IllegalArgumentException(String.format("Destination endpoint cannot be null for the write " +
-                    "operation '%s'.", write.getName()));
+            throw new IllegalArgumentException(
+                String.format("Destination endpoint cannot be null for the write "
+                    + "operation '%s'.", write.getName()));
           }
 
-          origins = write.getInputs().stream().map(InputField::getOrigin).collect(Collectors.toSet());
+          origins = write.getInputs().stream().map(InputField::getOrigin)
+              .collect(Collectors.toSet());
           // for each origin corresponding to the input fields there is a connection from that origin to this operation
           for (String origin : origins) {
-            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin, k -> new HashSet<>());
+            Set<Operation> connections = operationOutgoingConnections.computeIfAbsent(origin,
+                k -> new HashSet<>());
             connections.add(write);
           }
           allOrigins.addAll(origins);
@@ -211,23 +219,26 @@ public class FieldLineageInfo {
     }
 
     Set<String> operationsWithNoOutgoingConnections
-            = Sets.difference(operationsMap.keySet(), operationOutgoingConnections.keySet());
+        = Sets.difference(operationsMap.keySet(), operationOutgoingConnections.keySet());
     // put empty set for operations with no outgoing connection rather than checking for null later
     for (String operation : operationsWithNoOutgoingConnections) {
       operationOutgoingConnections.put(operation, new HashSet<>());
     }
 
     if (readOperations.isEmpty()) {
-      throw new IllegalArgumentException("Field level lineage requires at least one operation of type 'READ'.");
+      throw new IllegalArgumentException(
+          "Field level lineage requires at least one operation of type 'READ'.");
     }
 
     if (writeOperations.isEmpty()) {
-      throw new IllegalArgumentException("Field level lineage requires at least one operation of type 'WRITE'.");
+      throw new IllegalArgumentException(
+          "Field level lineage requires at least one operation of type 'WRITE'.");
     }
 
     Sets.SetView<String> invalidOrigins = Sets.difference(allOrigins, operationsMap.keySet());
     if (!invalidOrigins.isEmpty()) {
-      throw new IllegalArgumentException(String.format("No operation is associated with the origins '%s'.",
+      throw new IllegalArgumentException(
+          String.format("No operation is associated with the origins '%s'.",
               invalidOrigins));
     }
   }
@@ -315,7 +326,8 @@ public class FieldLineageInfo {
 
     Map<EndPoint, Set<String>> destinationFields = new HashMap<>();
     for (WriteOperation write : this.writeOperations) {
-      Set<String> endPointFields = destinationFields.computeIfAbsent(write.getDestination(), k -> new HashSet<>());
+      Set<String> endPointFields = destinationFields.computeIfAbsent(write.getDestination(),
+          k -> new HashSet<>());
       for (InputField field : write.getInputs()) {
         endPointFields.add(field.getName());
       }
@@ -360,7 +372,8 @@ public class FieldLineageInfo {
           endPointFields.addAll(new HashSet<>(operationEndPointMap.get(input.getOrigin())));
           continue;
         }
-        endPointFields.addAll(computeIncomingSummaryHelper(previous, transform, operationEndPointMap));
+        endPointFields.addAll(
+            computeIncomingSummaryHelper(previous, transform, operationEndPointMap));
       }
     }
     return summary;
@@ -369,17 +382,18 @@ public class FieldLineageInfo {
   /**
    * Helper method to compute the incoming summary
    *
-   * @param currentOperation the operation being processed. Since we are processing incoming this operation is on the
-   * left side if graph is imagined in horizontal orientation or this operation is the input to the to
-   * previousOperation
-   * @param previousOperation the previous operation which is processed and reside on right to the current operation if
-   * the graph is imagined to be in horizontal orientation.
-   * @param operationEndPointMap a map that contains the operation name to the final endpoint field it will generate,
-   * this is used to track the path we already computed to ensure we do not do the same computation again
+   * @param currentOperation the operation being processed. Since we are processing incoming
+   *     this operation is on the left side if graph is imagined in horizontal orientation or this
+   *     operation is the input to the to previousOperation
+   * @param previousOperation the previous operation which is processed and reside on right to
+   *     the current operation if the graph is imagined to be in horizontal orientation.
+   * @param operationEndPointMap a map that contains the operation name to the final endpoint
+   *     field it will generate, this is used to track the path we already computed to ensure we do
+   *     not do the same computation again
    */
   private Set<EndPointField> computeIncomingSummaryHelper(Operation currentOperation,
-                                                          Operation previousOperation,
-                                                          Map<String, Set<EndPointField>> operationEndPointMap) {
+      Operation previousOperation,
+      Map<String, Set<EndPointField>> operationEndPointMap) {
     if (currentOperation.getType() == OperationType.READ) {
       // if current operation is of type READ, previous operation must be of type TRANSFORM or WRITE
       // get only the input fields from the previous operations for which the origin is current READ operation
@@ -413,14 +427,15 @@ public class FieldLineageInfo {
       TransformOperation transform = (TransformOperation) currentOperation;
       // optimization to avoid repeating work if there are input fields with the same origin
       Set<String> transformOrigins = transform.getInputs().stream()
-        .map(InputField::getOrigin)
-        .collect(Collectors.toSet());
+          .map(InputField::getOrigin)
+          .collect(Collectors.toSet());
       for (String transformOrigin : transformOrigins) {
         if (operationEndPointMap.containsKey(transformOrigin)) {
           relatedSources.addAll(operationEndPointMap.get(transformOrigin));
         } else {
           relatedSources.addAll(
-            computeIncomingSummaryHelper(operationsMap.get(transformOrigin), currentOperation, operationEndPointMap));
+              computeIncomingSummaryHelper(operationsMap.get(transformOrigin), currentOperation,
+                  operationEndPointMap));
         }
       }
       operationEndPointMap.put(currentOperation.getName(), relatedSources);
@@ -433,7 +448,8 @@ public class FieldLineageInfo {
     for (Map.Entry<EndPointField, Set<EndPointField>> entry : getIncomingSummary().entrySet()) {
       Set<EndPointField> values = entry.getValue();
       for (EndPointField value : values) {
-        Set<EndPointField> outgoingEndPointFields = outgoingSummary.computeIfAbsent(value, k -> new HashSet<>());
+        Set<EndPointField> outgoingEndPointFields = outgoingSummary.computeIfAbsent(value,
+            k -> new HashSet<>());
         outgoingEndPointFields.add(entry.getKey());
       }
     }
@@ -452,10 +468,11 @@ public class FieldLineageInfo {
    * sWrite: (codeGen.id, parse.name, parse.address) -> secureStore
    * iWrite: (parse.id, parse.name, parse.address) -> insecureStore
    * </pre>
-   * <p>If the destination field is 'id' field of insecureStore then the result set will contain the operations iWrite,
-   * parse, pRead.</p>
-   * <p>If the destination field is 'id' field of secureStore then the result set will contain the operations sWrite,
-   * codeGen, parse, pRead, cRead.</p>
+   * <p>If the destination field is 'id' field of insecureStore then the result set will contain
+   * the
+   * operations iWrite, parse, pRead.</p>
+   * <p>If the destination field is 'id' field of secureStore then the result set will contain the
+   * operations sWrite, codeGen, parse, pRead, cRead.</p>
    *
    * @param destinationField the EndPointField for which the operations need to find out
    * @return the subset of operations
@@ -473,15 +490,17 @@ public class FieldLineageInfo {
       }
 
       Set<InputField> filteredInputs =
-        write.getInputs().stream().filter(input -> input.getName().equals(destinationField.getField()))
-          .collect(Collectors.toSet());
+          write.getInputs().stream()
+              .filter(input -> input.getName().equals(destinationField.getField()))
+              .collect(Collectors.toSet());
 
       for (InputField input : filteredInputs) {
         // mark this write operation as visited
         visitedOperations.add(write);
         // traverse backward in the graph by looking up the origin of this input field which is the operation
         // which computed this destinationField
-        getIncomingOperationsForFieldHelper(operationsMap.get(input.getOrigin()), visitedOperations);
+        getIncomingOperationsForFieldHelper(operationsMap.get(input.getOrigin()),
+            visitedOperations);
       }
     }
     return visitedOperations;
@@ -493,7 +512,8 @@ public class FieldLineageInfo {
    * @param currentOperation the current operation from which the graph needs to explored
    * @param visitedOperations all the operations visited so far
    */
-  private void getIncomingOperationsForFieldHelper(Operation currentOperation, Set<Operation> visitedOperations) {
+  private void getIncomingOperationsForFieldHelper(Operation currentOperation,
+      Set<Operation> visitedOperations) {
     if (!visitedOperations.add(currentOperation)) {
       return;
     }
@@ -507,7 +527,8 @@ public class FieldLineageInfo {
     if (currentOperation.getType() == OperationType.TRANSFORM) {
       TransformOperation transform = (TransformOperation) currentOperation;
       for (InputField field : transform.getInputs()) {
-        getIncomingOperationsForFieldHelper(operationsMap.get(field.getOrigin()), visitedOperations);
+        getIncomingOperationsForFieldHelper(operationsMap.get(field.getOrigin()),
+            visitedOperations);
       }
     }
   }
@@ -525,8 +546,10 @@ public class FieldLineageInfo {
    * iWrite: (parse.id, parse.name, parse.address) -> insecureStore
    * </pre>
    *
-   * <p>The sourceField is 'id' of codeFile then the returned operations set will contain cRead, codeGen, sWrite.</p>
-   * <p>If the sourceField is 'body' of personFile then the returned set of operations will contain pRead, parse,
+   * <p>The sourceField is 'id' of codeFile then the returned operations set will contain cRead,
+   * codeGen, sWrite.</p>
+   * <p>If the sourceField is 'body' of personFile then the returned set of operations will contain
+   * pRead, parse,
    * codeGen, sWrite, iWrite.</p>
    *
    * @param sourceField the {@link EndPointField} whose outgoing operations needs to be found
@@ -539,14 +562,15 @@ public class FieldLineageInfo {
 
     Set<Operation> visitedOperations = new HashSet<>();
     for (ReadOperation readOperation : readOperations) {
-      if (!(readOperation.getSource().equals(sourceField.getEndPoint()) &&
-        readOperation.getOutputs().contains(sourceField.getField()))) {
+      if (!(readOperation.getSource().equals(sourceField.getEndPoint())
+          && readOperation.getOutputs().contains(sourceField.getField()))) {
         continue;
       }
       // the read operation is for the dataset to which the sourceField belong and it did read the sourceField for
       // which outgoing operation is requested so process it
       visitedOperations.add(readOperation);
-      for (Operation outgoingOperation : operationOutgoingConnections.get(readOperation.getName())) {
+      for (Operation outgoingOperation : operationOutgoingConnections.get(
+          readOperation.getName())) {
         // Check that the source field is an input field for the outgoing operation.
         // Consider the example in the method javadoc with:
         //  sourceField = personFile.offset
@@ -567,9 +591,10 @@ public class FieldLineageInfo {
 
   /**
    * Helper method to compute the outgoing connections
+   *
    * @param currentOperation current operation which needs to evaluated
-   * @param visitedOperations a {@link Set} containing all the operations which has been processed so
-   * far.
+   * @param visitedOperations a {@link Set} containing all the operations which has been
+   *     processed so far.
    */
   private void computeOutgoing(Operation currentOperation, Set<Operation> visitedOperations) {
     // mark this operation if not already done
@@ -596,8 +621,8 @@ public class FieldLineageInfo {
   /**
    * Checks whether the given field is used in the next operations or not
    *
-   * @param nextOperation the next operation which should either be a {@link TransformOperation} or {@link
-   * WriteOperation}
+   * @param nextOperation the next operation which should either be a {@link TransformOperation}
+   *     or {@link WriteOperation}
    * @param inputField the field whose usage needs to be checked
    * @return true if the field is used in the nextOperation
    */
@@ -615,18 +640,16 @@ public class FieldLineageInfo {
   }
 
   /**
-   * Sort the operations in topological order. In topological order, each operation in the list
-   * is guaranteed to occur before any other operation that reads its outputs.
+   * Sort the operations in topological order. In topological order, each operation in the list is
+   * guaranteed to occur before any other operation that reads its outputs.
    *
    * For example, consider following scenario:
    *
-   *    read-----------------------write
-   *       \                        /
-   *       ----parse----normalize---
+   * read-----------------------write \                        / ----parse----normalize---
    *
-   * Since write operation is dependent on the read and normalize for its input, it would be
-   * last in the order. normalize depends on the parse, so it would appear after parse. Similarly
-   * parse operation would appear after the read but before normalize in the returned list.
+   * Since write operation is dependent on the read and normalize for its input, it would be last in
+   * the order. normalize depends on the parse, so it would appear after parse. Similarly parse
+   * operation would appear after the read but before normalize in the returned list.
    *
    * @param operations set of operations to be sorted
    * @return the list containing topologically sorted operations
@@ -643,7 +666,8 @@ public class FieldLineageInfo {
       }
       // it is common use case that a transform generates some fields from nowhere, in this case, should treat it
       // like a read operation
-      if (OperationType.TRANSFORM == operation.getType() && ((TransformOperation) operation).getInputs().isEmpty()) {
+      if (OperationType.TRANSFORM == operation.getType()
+          && ((TransformOperation) operation).getInputs().isEmpty()) {
         operationsWithNoIncomings.add(operation.getName());
       }
     }
@@ -714,11 +738,13 @@ public class FieldLineageInfo {
           continue;
         }
         // Current operation is the outgoing operation for origin represented by the input field.
-        Set<String> outgoings = outgoingOperations.computeIfAbsent(inputField.getOrigin(), k -> new HashSet<>());
+        Set<String> outgoings = outgoingOperations.computeIfAbsent(inputField.getOrigin(),
+            k -> new HashSet<>());
         outgoings.add(operation.getName());
 
         // Origin represented by the input field is the incoming operation for the current operation.
-        Set<String> incomings = incomingOperations.computeIfAbsent(operation.getName(), k -> new HashSet<>());
+        Set<String> incomings = incomingOperations.computeIfAbsent(operation.getName(),
+            k -> new HashSet<>());
         incomings.add(inputField.getOrigin());
       }
     }
@@ -733,7 +759,8 @@ public class FieldLineageInfo {
 
       // it is possible that there are no outgoings for the field, since it is possible some field is not used in the
       // downstream of plugins
-      Iterator<String> outgoingsIter = outgoingOperations.getOrDefault(current, Collections.emptySet()).iterator();
+      Iterator<String> outgoingsIter = outgoingOperations.getOrDefault(current,
+          Collections.emptySet()).iterator();
       while (outgoingsIter.hasNext()) {
         String next = outgoingsIter.next();
         outgoingsIter.remove();
@@ -750,18 +777,19 @@ public class FieldLineageInfo {
 
     if (!outgoingOperations.isEmpty()) {
       throw new IllegalArgumentException(String.format("Cycle detected in graph for operations %s",
-                                                       outgoingOperations));
+          outgoingOperations));
     }
 
     return orderedOperations;
   }
 
   /**
-   * Creates the canonicalize representation of the collection of operations. Canonicalize representation is
-   * simply the JSON format of operations. Before creating the JSON, collection of operations is sorted based
-   * on the operation name so that irrespective of the order of insertion, same set of operations always generate
-   * same canonicalize form. This representation is then used for computing the checksum. So if there are any changes
-   * to this representation, upgrade step would be required to update all the checksums stored in store.
+   * Creates the canonicalize representation of the collection of operations. Canonicalize
+   * representation is simply the JSON format of operations. Before creating the JSON, collection of
+   * operations is sorted based on the operation name so that irrespective of the order of
+   * insertion, same set of operations always generate same canonicalize form. This representation
+   * is then used for computing the checksum. So if there are any changes to this representation,
+   * upgrade step would be required to update all the checksums stored in store.
    */
   private String canonicalize() {
     List<Operation> ops = new ArrayList<>(operations);

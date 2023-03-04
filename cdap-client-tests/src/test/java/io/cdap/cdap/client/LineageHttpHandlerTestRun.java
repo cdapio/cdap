@@ -187,10 +187,11 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
     AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
     Tasks.waitFor(1, () -> {
       runRecords.set(
-        programClient.getProgramRuns(program, ProgramRunStatus.ALL.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE)
-          .stream()
-          .filter(record -> (exclude == null || !record.getPid().equals(exclude.getId())) &&
-            record.getStatus() != ProgramRunStatus.PENDING)
+        programClient.getProgramRuns(program, ProgramRunStatus.ALL.name(), 0, Long.MAX_VALUE,
+                Integer.MAX_VALUE)
+            .stream()
+            .filter(record -> (exclude == null || !record.getPid().equals(exclude.getId()))
+                && record.getStatus() != ProgramRunStatus.PENDING)
           .collect(Collectors.toList()));
       return Iterables.size(runRecords.get());
     }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);

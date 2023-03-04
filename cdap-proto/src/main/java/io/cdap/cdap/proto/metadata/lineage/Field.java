@@ -22,6 +22,7 @@ import java.util.Objects;
  * A class which contains field name and whether the field has lineage info present or not.
  */
 public class Field {
+
   private final String name;
   private final boolean lineage;
 
@@ -47,8 +48,8 @@ public class Field {
       return false;
     }
     Field field = (Field) o;
-    return lineage == field.lineage &&
-      Objects.equals(name, field.name);
+    return lineage == field.lineage
+        && Objects.equals(name, field.name);
   }
 
   @Override
@@ -58,9 +59,9 @@ public class Field {
 
   @Override
   public String toString() {
-    return "Field{" +
-      "name='" + name + '\'' +
-      ", lineage=" + lineage +
-      '}';
+    return "Field{"
+        + "name='" + name + '\''
+        + ", lineage=" + lineage
+        + '}';
   }
 }

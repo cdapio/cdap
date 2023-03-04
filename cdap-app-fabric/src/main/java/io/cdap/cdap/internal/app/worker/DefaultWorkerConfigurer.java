@@ -48,12 +48,14 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
   private Map<String, String> properties;
   private Set<String> datasets;
 
-  public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                 PluginFinder pluginFinder,
-                                 PluginInstantiator pluginInstantiator,
-                                 @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                 FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+  public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace,
+      Id.Artifact artifactId,
+      PluginFinder pluginFinder,
+      PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.worker = worker;
     this.name = worker.getClass().getSimpleName();
     this.description = "";
@@ -94,6 +96,6 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
     // Grab all @Property fields
     Reflections.visit(worker, worker.getClass(), new PropertyFieldExtractor(properties));
     return new WorkerSpecification(worker.getClass().getName(), name, description,
-                                   properties, datasets, resource, instances, getPlugins());
+        properties, datasets, resource, instances, getPlugins());
   }
 }

@@ -23,6 +23,7 @@ import java.util.Objects;
  * Encapsulates information necessary to impersonate a user - principal and keytab path.
  */
 public final class ImpersonationInfo {
+
   private final String principal;
   private final String keytabURI;
 
@@ -50,10 +51,10 @@ public final class ImpersonationInfo {
 
   @Override
   public String toString() {
-    return "ImpersonationInfo{" +
-      "principal='" + principal + '\'' +
-      ", keytabURI='" + keytabURI + '\'' +
-      '}';
+    return "ImpersonationInfo{"
+        + "principal='" + principal + '\''
+        + ", keytabURI='" + keytabURI + '\''
+        + '}';
   }
 
   @Override

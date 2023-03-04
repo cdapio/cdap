@@ -51,7 +51,7 @@ public class DefaultHBase12CDH570DDLExecutor extends DefaultHBaseDDLExecutor {
 
   @Override
   protected void doGrantPermissions(String namespace, @Nullable String table,
-                                    Map<String, Permission.Action[]> permissions) throws IOException {
+      Map<String, Permission.Action[]> permissions) throws IOException {
     String entity = table == null ? "namespace " + namespace : "table " + namespace + ":" + table;
     try (Connection connection = ConnectionFactory.createConnection(admin.getConfiguration())) {
       if (!AccessControlClient.isAccessControllerRunning(connection)) {
@@ -65,14 +65,15 @@ public class DefaultHBase12CDH570DDLExecutor extends DefaultHBaseDDLExecutor {
         try {
           LOG.info("Granting {} for {} to {}", Arrays.toString(actions), entity, userOrGroup);
           if (table != null) {
-            AccessControlClient.grant(connection, TableName.valueOf(namespace, table), user, null, null, actions);
+            AccessControlClient.grant(connection, TableName.valueOf(namespace, table), user, null,
+                null, actions);
           } else {
             AccessControlClient.grant(connection, namespace, user, actions);
           }
         } catch (Throwable t) {
           Throwables.propagateIfInstanceOf(t, IOException.class);
           throw new IOException(String.format("Error while granting %s for %s to %s",
-                                              Arrays.toString(actions), entity, userOrGroup), t);
+              Arrays.toString(actions), entity, userOrGroup), t);
         }
       }
     }

@@ -64,8 +64,8 @@ public class BrowseEntityPropertyValue {
     }
 
     BrowseEntityPropertyValue that = (BrowseEntityPropertyValue) o;
-    return Objects.equals(value, that.value) &&
-             Objects.equals(type, that.type);
+    return Objects.equals(value, that.value)
+        && Objects.equals(type, that.type);
   }
 
   @Override
@@ -84,6 +84,7 @@ public class BrowseEntityPropertyValue {
    * Builder for {@link BrowseEntityPropertyValue}
    */
   public static class Builder {
+
     private String value;
     private PropertyType type;
 

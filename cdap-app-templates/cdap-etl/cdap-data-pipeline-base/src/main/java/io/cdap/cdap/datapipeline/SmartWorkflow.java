@@ -441,8 +441,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     if (spec.getEngine() == Engine.MAPREDUCE) {
-      WRAPPERLOGGER.warn("Pipeline '{}' is using Mapreduce engine which is planned to be deprecated. " +
-                           "Please use Spark engine.", context.getApplicationSpecification().getName());
+      WRAPPERLOGGER.warn("Pipeline '{}' is using Mapreduce engine which is planned to be deprecated. "
+                           + "Please use Spark engine.", context.getApplicationSpecification().getName());
     }
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
@@ -647,9 +647,9 @@ public class SmartWorkflow extends AbstractWorkflow {
       // if we're already on a branch, we should never have another branch for non-condition programs
       Set<String> nodeOutputs = dag.getNodeOutputs(node);
       if (nodeOutputs.size() > 1) {
-        throw new IllegalStateException("Found an unexpected non-condition branch while on another branch. " +
-                                          "This means there is a pipeline planning bug. " +
-                                          "Please contact the CDAP team to open a bug report.");
+        throw new IllegalStateException("Found an unexpected non-condition branch while on another branch. "
+                                          + "This means there is a pipeline planning bug. "
+                                          + "Please contact the CDAP team to open a bug report.");
       }
       if (!nodeOutputs.isEmpty()) {
         addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), programAdder, shouldJoin);

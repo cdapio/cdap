@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  * Class to scan and also delete meta data
  */
 public class FileMetadataCleaner {
+
   private static final Logger LOG = LoggerFactory.getLogger(FileMetadataCleaner.class);
   private final TransactionRunner transactionRunner;
 
@@ -48,11 +49,14 @@ public class FileMetadataCleaner {
 
   /**
    * scans for meta data in new format which has expired the log retention.
+   *
    * @param tillTime time till which files will be deleted
    * @param fileCleanupBatchSize transaction clean up batch size.
-   * @return list of DeleteEntry - used to get files to delete for which metadata has already been deleted
+   * @return list of DeleteEntry - used to get files to delete for which metadata has already been
+   *     deleted
    */
-  public List<DeletedEntry> scanAndGetFilesToDelete(final long tillTime, final int fileCleanupBatchSize) {
+  public List<DeletedEntry> scanAndGetFilesToDelete(final long tillTime,
+      final int fileCleanupBatchSize) {
     final List<DeletedEntry> toDelete = new ArrayList<>(fileCleanupBatchSize);
 
     try {
@@ -81,7 +85,7 @@ public class FileMetadataCleaner {
   @Nullable
   @SuppressWarnings("ConstantConditions")
   private Range scanFilesToDelete(StructuredTable table, int fileCleanupBatchSize, long tillTime,
-                                  List<DeletedEntry> toDelete, AtomicReference<Range> range) throws IOException {
+      List<DeletedEntry> toDelete, AtomicReference<Range> range) throws IOException {
     try (CloseableIterator<StructuredRow> iter = table.scan(range.get(), fileCleanupBatchSize)) {
       while (iter.hasNext()) {
         if (toDelete.size() >= fileCleanupBatchSize) {
@@ -91,16 +95,17 @@ public class FileMetadataCleaner {
         long creationTime = row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD);
         if (creationTime <= tillTime) {
           // expired - can be deleted
-          toDelete.add(new DeletedEntry(row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD),
-                                        row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
-                                        row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
-                                        row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)));
+          toDelete.add(new DeletedEntry(
+              row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD),
+              row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
+              row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
+              row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)));
         } else {
           // return range to skip this logging context and move to next one.
           return Range.from(ImmutableList.of(
-            Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
-                               row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD))),
-                            Range.Bound.EXCLUSIVE);
+                  Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
+                      row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD))),
+              Range.Bound.EXCLUSIVE);
         }
       }
       // if there are no more files to delete, return next range as null.
@@ -109,9 +114,9 @@ public class FileMetadataCleaner {
   }
 
   /**
-   * delete the rows specified in the list
-   * if delete time is closer to transaction timeout, we break and return list of deleted entries so far.
-   * @param toDeleteRows
+   * delete the rows specified in the list if delete time is closer to transaction timeout, we break
+   * and return list of deleted entries so far.
+   *
    * @return list of deleted entries.
    */
   private List<DeletedEntry> deleteNewMetadataEntries(final List<DeletedEntry> toDeleteRows) {
@@ -135,6 +140,7 @@ public class FileMetadataCleaner {
   }
 
   static final class DeletedEntry {
+
     private String identifier;
     private long eventTime;
     private long creationTime;
@@ -149,6 +155,7 @@ public class FileMetadataCleaner {
 
     /**
      * identifier
+     *
      * @return identifier string
      */
     public String getIdentifier() {
@@ -157,6 +164,7 @@ public class FileMetadataCleaner {
 
     /**
      * event time
+     *
      * @return event time
      */
     public long getEventTime() {
@@ -165,6 +173,7 @@ public class FileMetadataCleaner {
 
     /**
      * creation time of entry
+     *
      * @return creation time
      */
     public long getCreationTime() {
@@ -173,6 +182,7 @@ public class FileMetadataCleaner {
 
     /**
      * path to be deleted
+     *
      * @return path string
      */
     String getPath() {
@@ -182,9 +192,9 @@ public class FileMetadataCleaner {
 
   private List<Field<?>> getKeyFields(DeletedEntry entry) {
     return Arrays.asList(Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
-                                            entry.getIdentifier()),
-                         Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, entry.getEventTime()),
-                         Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD,
-                                          entry.getCreationTime()));
+            entry.getIdentifier()),
+        Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, entry.getEventTime()),
+        Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD,
+            entry.getCreationTime()));
   }
 }

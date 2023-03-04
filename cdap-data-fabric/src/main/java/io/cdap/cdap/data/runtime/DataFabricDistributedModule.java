@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
  * Defines guice bindings for distributed modules.
  */
 public class DataFabricDistributedModule extends AbstractModule {
+
   private static final Logger LOG = LoggerFactory.getLogger(DataFabricDistributedModule.class);
   private final String txClientId;
 
@@ -72,19 +73,21 @@ public class DataFabricDistributedModule extends AbstractModule {
     // some of these classes need to be non-singleton in order to create a new instance during leader() in
     // TransactionService
     bind(SnapshotCodecProvider.class).in(Scopes.SINGLETON);
-    bind(TransactionStateStorage.class).annotatedWith(Names.named("persist")).to(HDFSTransactionStateStorage.class);
+    bind(TransactionStateStorage.class).annotatedWith(Names.named("persist"))
+        .to(HDFSTransactionStateStorage.class);
     bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
     // to catch issues during configure time
     bind(TransactionManager.class);
 
     bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID)).to(txClientId);
 
-    bind(TransactionSystemClient.class).toProvider(DistributedTxSystemClientProvider.class).in(Scopes.SINGLETON);
+    bind(TransactionSystemClient.class).toProvider(DistributedTxSystemClientProvider.class)
+        .in(Scopes.SINGLETON);
     bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
 
     install(new FactoryModuleBuilder()
-              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
-              .build(TransactionExecutorFactory.class));
+        .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+        .build(TransactionExecutorFactory.class));
 
     install(new TransactionExecutorModule());
     install(new StorageModule());
@@ -115,7 +118,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     public ThriftClientProvider get() {
       // configure the client provider
       String provider = cConf.get(TxConstants.Service.CFG_DATA_TX_CLIENT_PROVIDER,
-                                  TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
+          TxConstants.Service.DEFAULT_DATA_TX_CLIENT_PROVIDER);
       ThriftClientProvider clientProvider;
       if ("pool".equals(provider)) {
         clientProvider = new PooledClientProvider(hConf, discoveryServiceClient);
@@ -131,9 +134,12 @@ public class DataFabricDistributedModule extends AbstractModule {
   }
 
   /**
-   * Distributed transaction client provider which provides the {@link TransactionSystemClient} for distributed mode.
+   * Distributed transaction client provider which provides the {@link TransactionSystemClient} for
+   * distributed mode.
    */
-  private static final class DistributedTxSystemClientProvider extends AbstractTransactionSystemClientProvider {
+  private static final class DistributedTxSystemClientProvider extends
+      AbstractTransactionSystemClientProvider {
+
     private final Injector injector;
 
     @Inject

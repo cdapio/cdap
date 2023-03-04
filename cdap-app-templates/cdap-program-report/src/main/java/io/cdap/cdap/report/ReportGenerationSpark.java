@@ -103,14 +103,15 @@ import org.slf4j.LoggerFactory;
  * A Spark program for generating reports, querying for report statuses, and reading reports.
  */
 public class ReportGenerationSpark extends AbstractExtendedSpark {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Filter.class, new FilterCodec())
-    .disableHtmlEscaping()
-    .create();
+      .registerTypeAdapter(Filter.class, new FilterCodec())
+      .disableHtmlEscaping()
+      .create();
   private static final Logger LOG = LoggerFactory.getLogger(ReportGenerationSpark.class);
   private static final ExecutorService REPORT_EXECUTOR =
-    new ThreadPoolExecutor(0, 3, 60L, TimeUnit.SECONDS,
-                           new SynchronousQueue<>(), Threads.createDaemonThreadFactory("report-generation-%d"));
+      new ThreadPoolExecutor(0, 3, 60L, TimeUnit.SECONDS,
+          new SynchronousQueue<>(), Threads.createDaemonThreadFactory("report-generation-%d"));
   // User name authenticated and passed down by CDAP-Router using this key in header
   private static final String USER_ID = "CDAP-UserId";
   // Default user id will be used on non-authenticated cluster
@@ -124,13 +125,17 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     String version = getSparkVersion();
     if (!isSparkVersionSupported(version)) {
       throw new RuntimeException(
-        String.format("Spark Version %s is not supported, Please upgrade to Spark version 2.1 or later", version));
+          String.format(
+              "Spark Version %s is not supported, Please upgrade to Spark version 2.1 or later",
+              version));
     }
   }
 
   /**
-   * Spark version returned using SparkContext#version() is set by org.apache.spark.SparkBuildInfo in a similar manner
-   * by loading the spark-version-info.properties file and getting the property version.
+   * Spark version returned using SparkContext#version() is set by org.apache.spark.SparkBuildInfo
+   * in a similar manner by loading the spark-version-info.properties file and getting the property
+   * version.
+   *
    * @return version string or null if unable to load the file due to error
    */
   @Nullable
@@ -150,7 +155,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   }
 
   /**
-   * ReportGeneration is supported only from Spark version 2.1 currrently, we return false for versions lower than 2.1
+   * ReportGeneration is supported only from Spark version 2.1 currrently, we return false for
+   * versions lower than 2.1
    */
   private boolean isSparkVersionSupported(@Nullable String version) {
     LOG.debug("Spark version is {}", version);
@@ -177,11 +183,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   }
 
   /**
-   * Returns an {@link InputStream} to the given resource by looking it up from the given {@link ClassLoader}
-   * or {@code null} if the given resource is not found.
+   * Returns an {@link InputStream} to the given resource by looking it up from the given {@link
+   * ClassLoader} or {@code null} if the given resource is not found.
    */
   @Nullable
-  private InputStream openResource(ClassLoader classLoader, String resourceName) throws IOException {
+  private InputStream openResource(ClassLoader classLoader, String resourceName)
+      throws IOException {
     URL resource = classLoader.getResource(resourceName);
     if (resource == null) {
       return null;
@@ -196,13 +203,16 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
   }
 
   /**
-   * A {@link SparkHttpServiceHandler} generating reports, querying for report statuses, and reading reports.
+   * A {@link SparkHttpServiceHandler} generating reports, querying for report statuses, and reading
+   * reports.
    */
   public static final class ReportSparkHandler extends AbstractSparkHttpServiceHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(ReportSparkHandler.class);
-    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() { }.getType();
-    private static final Type REPORT_SAVE_REQUEST_TYPE = new TypeToken<ReportSaveRequest>() { }.getType();
+    private static final Type REPORT_GENERATION_REQUEST_TYPE = new TypeToken<ReportGenerationRequest>() {
+    }.getType();
+    private static final Type REPORT_SAVE_REQUEST_TYPE = new TypeToken<ReportSaveRequest>() {
+    }.getType();
     private static final String DEFAULT_LIMIT = "10000";
     private static final String READ_LIMIT = "readLimit";
     private static final String START_FILE = "_START";
@@ -220,34 +230,40 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Map<String, String> runtimeArguments = context.getRuntimeArguments();
       readLimit = Integer.parseInt(runtimeArguments.getOrDefault(READ_LIMIT, "10000"));
       String expiryTimeInSecondsString =
-        runtimeArguments.getOrDefault(Constants.Report.REPORT_EXPIRY_TIME_SECONDS,
-                                      Constants.Report.DEFAULT_REPORT_EXPIRY_TIME_SECONDS);
-      reportsExpiryTimeMillis = TimeUnit.SECONDS.toMillis(Long.parseLong(expiryTimeInSecondsString));
+          runtimeArguments.getOrDefault(Constants.Report.REPORT_EXPIRY_TIME_SECONDS,
+              Constants.Report.DEFAULT_REPORT_EXPIRY_TIME_SECONDS);
+      reportsExpiryTimeMillis = TimeUnit.SECONDS.toMillis(
+          Long.parseLong(expiryTimeInSecondsString));
     }
 
     /**
-     * Read the secure key file to read the security key bytes and initialize Cipher using AES and the mode
-     * encryption/decryption is based on the parameter cipherMode.
+     * Read the secure key file to read the security key bytes and initialize Cipher using AES and
+     * the mode encryption/decryption is based on the parameter cipherMode.
      *
      * @param cipherMode either encrypt or decrypt mode
      * @return Initialized Cipher
      * @throws IllegalStateException If the key file doesn't exist
      * @throws IOException If there are any exception while reading the file
      * @throws NoSuchAlgorithmException if encryption algorithm is not found
-     * @throws NoSuchPaddingException could be thrown while getting cipher instance for encryption algorithm
-     * @throws InvalidKeyException could be thrown while getting cipher instance for encryption algorithm
+     * @throws NoSuchPaddingException could be thrown while getting cipher instance for
+     *     encryption algorithm
+     * @throws InvalidKeyException could be thrown while getting cipher instance for encryption
+     *     algorithm
      */
-    private Cipher initializeCipher(int cipherMode) throws IllegalStateException, IOException, NoSuchPaddingException,
-      NoSuchAlgorithmException, InvalidKeyException {
+    private Cipher initializeCipher(int cipherMode)
+        throws IllegalStateException, IOException, NoSuchPaddingException,
+        NoSuchAlgorithmException, InvalidKeyException {
       Location keyLocation =
-        getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(Constants.Security.KEY_FILE_NAME);
+          getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(
+              Constants.Security.KEY_FILE_NAME);
       if (!keyLocation.exists()) {
         throw new IllegalStateException("Security Key file doesn't exist, cannot share reports");
       }
       try (InputStream inputStream = keyLocation.getInputStream()) {
         byte[] keyBytes = ByteStreams.toByteArray(inputStream);
         Cipher cipher = Cipher.getInstance(Constants.Security.ENCRYPTION_ALGORITHM);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, Constants.Security.ENCRYPTION_ALGORITHM);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes,
+            Constants.Security.ENCRYPTION_ALGORITHM);
         cipher.init(cipherMode, secretKeySpec);
         return cipher;
       }
@@ -262,26 +278,28 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @GET
     @Path("/reports")
     public void getReports(HttpServiceRequest request, HttpServiceResponder responder,
-                           @QueryParam("offset") @DefaultValue("0") int offset,
-                           @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit) {
+        @QueryParam("offset") @DefaultValue("0") int offset,
+        @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit) {
       ReportList reportList;
       try {
         reportList = getReportList(offset, limit, getUserName(request.getAllHeaders()));
       } catch (Exception e) {
         LOG.error("Failed to list reports.", e);
-        responder.sendError(500, String.format("Failed to list reports because of error: %s", e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to list reports because of error: %s", e.getMessage()));
         return;
       }
       responder.sendJson(200, reportList);
     }
 
     private String getUserName(Map<String, List<String>> headers) {
-      return headers.getOrDefault(USER_ID, Collections.singletonList(DEFAULT_USER_ID)).stream().findFirst().get();
+      return headers.getOrDefault(USER_ID, Collections.singletonList(DEFAULT_USER_ID)).stream()
+          .findFirst().get();
     }
 
     /**
-     * Gets a list of report statuses from all the unexpired reports starting from the given offset position,
-     * with at most the limit number of report statuses in the list returned.
+     * Gets a list of report statuses from all the unexpired reports starting from the given offset
+     * position, with at most the limit number of report statuses in the list returned.
      *
      * @param offset the starting index position in the unexpired report directories
      * @param limit the maximum number of report statuses returned in the result
@@ -290,7 +308,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @throws Exception if getting status of a report fails
      */
     private ReportList getReportList(int offset, int limit, String user) throws Exception {
-      Location reportFilesetLocation = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(user);
+      Location reportFilesetLocation = getDatasetBaseLocation(
+          ReportGenerationApp.REPORT_FILESET).append(user);
       // we create directory for the user when the user generates a report first,
       // return empty list if location doesn't exist.
       if (!reportFilesetLocation.exists()) {
@@ -300,8 +319,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       // TODO: [CDAP-13292] use cache to store reportIdDirs
       List<Location> reportIdDirs = new ArrayList<>(reportFilesetLocation.list());
       // sort reportIdDirs directories by the creation time of report ID in DESCENDING order
-      reportIdDirs.sort((loc1, loc2) -> Long.compare(ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS),
-                                                     ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS)));
+      reportIdDirs.sort(
+          (loc1, loc2) -> Long.compare(ReportIds.getTime(loc2.getName(), TimeUnit.SECONDS),
+              ReportIds.getTime(loc1.getName(), TimeUnit.SECONDS)));
       // the index of current report directory among the unexpired report directories
       int existingReportDirIdx = 0;
       Iterator<Location> reportIdDirIter = reportIdDirs.iterator();
@@ -310,7 +330,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       while (reportIdDirIter.hasNext() && reportStatuses.size() < limit) {
         Location reportIdDir = reportIdDirIter.next();
         String reportId = reportIdDir.getName();
-        ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, getReportRequest(reportIdDir));
+        ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir,
+            getReportRequest(reportIdDir));
         // skip adding reports that are expired, or the index of the current directory among existing directories
         // is smaller than the given offset
         if (ReportStatus.EXPIRED.equals(metaInfo.getStatus()) || existingReportDirIdx++ < offset) {
@@ -324,59 +345,66 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @POST
     @Path("/reports/{report-id}/share")
     public void shareReport(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("report-id") String reportId) {
+        @PathParam("report-id") String reportId) {
       Location reportIdDir;
       try {
         String userName = getUserName(request.getAllHeaders());
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName).append(reportId);
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName)
+            .append(reportId);
         if (!reportIdDir.exists()) {
-          responder.sendError(404, String.format("Invalid report-id %s, report does not exist", reportId));
+          responder.sendError(404,
+              String.format("Invalid report-id %s, report does not exist", reportId));
           return;
         }
         String shareId = encodeShareId(new ReportIdentifier(userName, reportId));
         responder.sendJson(200, new ShareId(shareId), ShareId.class, GSON);
       } catch (IOException | GeneralSecurityException e) {
         LOG.error("Failed to read report with id {}", reportId, e);
-        responder.sendError(500, String.format("Failed to read report with id %s because of error: %s",
-                                               reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to read report with id %s because of error: %s",
+                reportId, e.getMessage()));
         return;
       }
     }
 
-    private String encodeShareId(ReportIdentifier reportIdentifier) throws GeneralSecurityException, IOException {
+    private String encodeShareId(ReportIdentifier reportIdentifier)
+        throws GeneralSecurityException, IOException {
       byte[] response = GSON.toJson(reportIdentifier).getBytes(StandardCharsets.UTF_8);
       Cipher encryptionCipher = initializeCipher(Cipher.ENCRYPT_MODE);
       byte[] cipherReponse = encryptionCipher.doFinal(response);
       return Base64.getUrlEncoder().encodeToString(cipherReponse);
     }
 
-    private ReportIdentifier decodeShareId(String shareId) throws GeneralSecurityException, IOException {
+    private ReportIdentifier decodeShareId(String shareId)
+        throws GeneralSecurityException, IOException {
       byte[] decodedCipherBytes = Base64.getUrlDecoder().decode(shareId.getBytes());
       Cipher decryptionCipher = initializeCipher(Cipher.DECRYPT_MODE);
-      byte[]  decodedBytes = decryptionCipher.doFinal(decodedCipherBytes);
-      String decodedString = new String(decodedBytes, 0, decodedBytes.length, StandardCharsets.UTF_8);
+      byte[] decodedBytes = decryptionCipher.doFinal(decodedCipherBytes);
+      String decodedString = new String(decodedBytes, 0, decodedBytes.length,
+          StandardCharsets.UTF_8);
       return GSON.fromJson(decodedString, ReportIdentifier.class);
     }
 
     @GET
     @Path("/reports/info")
     public void getReportStatus(HttpServiceRequest request, HttpServiceResponder responder,
-                                @QueryParam("report-id") String reportId,
-                                @QueryParam("share-id") String shareId) {
+        @QueryParam("report-id") String reportId,
+        @QueryParam("share-id") String shareId) {
 
       Location reportIdDir;
       ReportIdentifier reportIdentifier;
       String idMessage;
       try {
-        reportIdentifier = validateAndGetReportIdentifier(reportId, request.getAllHeaders(), shareId);
+        reportIdentifier = validateAndGetReportIdentifier(reportId, request.getAllHeaders(),
+            shareId);
         idMessage = shareId == null ? String.format("ReportId : %s", reportId) :
-          String.format("ShareId : %s", shareId);
+            String.format("ShareId : %s", shareId);
       } catch (IllegalArgumentException iae) {
         responder.sendError(400, iae.getMessage());
         return;
       } catch (GeneralSecurityException | IOException e) {
         responder.sendError(500, String.format(
-          "Error while decoding shareId %s, due to exception : ", shareId, e.getMessage()));
+            "Error while decoding shareId %s, due to exception : ", shareId, e.getMessage()));
         return;
       }
 
@@ -384,8 +412,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         reportIdDir = getLocationFromReportIdentifier(reportIdentifier);
       } catch (IOException e) {
         LOG.error("Failed to get location for report with {}", idMessage, e);
-        responder.sendError(500, String.format("Failed to get location for report with %s because of error: %s",
-                                               idMessage, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to get location for report with %s because of error: %s",
+                idMessage, e.getMessage()));
         return;
       }
       try {
@@ -395,8 +424,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         }
       } catch (IOException e) {
         LOG.error("Failed to check whether the location of report with {} exists", idMessage, e);
-        responder.sendError(500, String.format("Failed to check whether the location of report with %s exists" +
-                                                 " because of error: %s", idMessage, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to check whether the location of report with %s exists"
+                + " because of error: %s", idMessage, e.getMessage()));
         return;
       }
       ReportGenerationInfo reportGenerationInfo;
@@ -407,8 +437,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         reportGenerationInfo = getReportGenerationInfo(reportId, reportIdDir);
       } catch (Exception e) {
         LOG.error("Failed to get the status for report with {}.", idMessage, e);
-        responder.sendError(500, String.format("Failed to get the status for report with %s" +
-                                                 " because of error: %s", idMessage, e.getMessage()));
+        responder.sendError(500, String.format("Failed to get the status for report with %s"
+            + " because of error: %s", idMessage, e.getMessage()));
         return;
       }
       // expired report is considered as deleted
@@ -420,29 +450,31 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Gets the report generation information of the given report id with the information stored in files
-     * under the given directory
+     * Gets the report generation information of the given report id with the information stored in
+     * files under the given directory
      *
      * @param reportId the id of the report
-     * @param reportIdDir the location of the directory containing files with the report generation information
+     * @param reportIdDir the location of the directory containing files with the report
+     *     generation information
      * @return the report generation information of the given report id
-     * @throws Exception
      */
     private ReportGenerationInfo getReportGenerationInfo(String reportId, Location reportIdDir)
-      throws Exception {
+        throws Exception {
       ReportGenerationRequest reportRequest = getReportRequest(reportIdDir);
       ReportMetaInfo metaInfo = getReportMetaInfo(reportId, reportIdDir, reportRequest);
       // if the report generation completed, read the summary from _SUMMARY file and include the summary
       // in the response
       if (ReportStatus.COMPLETED.equals(metaInfo.getStatus())) {
-        ReportSummary summary = GSON.fromJson(readStringFromFile(reportIdDir.append(LocationName.SUMMARY)),
-                                              ReportSummary.class);
+        ReportSummary summary = GSON.fromJson(
+            readStringFromFile(reportIdDir.append(LocationName.SUMMARY)),
+            ReportSummary.class);
         return new ReportGenerationInfo(metaInfo, null, reportRequest, summary);
       }
       // if the report generation failed, read the error from _FAILURE file and include it in the response
       if (ReportStatus.FAILED.equals(metaInfo.getStatus())) {
-        return new ReportGenerationInfo(metaInfo, readStringFromFile(reportIdDir.append(FAILURE_FILE)),
-                                        reportRequest, null);
+        return new ReportGenerationInfo(metaInfo,
+            readStringFromFile(reportIdDir.append(FAILURE_FILE)),
+            reportRequest, null);
       }
       // if the report is neither COMPLETED nor FAILED, return response with error and summary as null
       return new ReportGenerationInfo(metaInfo, null, reportRequest, null);
@@ -450,7 +482,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
 
     /**
      * Read report summary for the report if it exists, return null otherwise
-     * @param reportIdDir
+     *
      * @return {@link ReportSummary}
      * @throws IOException if failed to read the summary content
      */
@@ -472,11 +504,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * @throws IOException if the file does not exist or fails to read the content of the file
      */
     private String readStringFromFile(Location fileLocation) throws IOException {
-      return new String(ByteStreams.toByteArray(fileLocation.getInputStream()), StandardCharsets.UTF_8);
+      return new String(ByteStreams.toByteArray(fileLocation.getInputStream()),
+          StandardCharsets.UTF_8);
     }
 
     /**
-     * Gets the report request from _START file, which was written at the beginning of report generation
+     * Gets the report request from _START file, which was written at the beginning of report
+     * generation
      */
     private ReportGenerationRequest getReportRequest(Location reportIdDir) throws Exception {
       // read the report request from _START file, which was written at the beginning of report generation
@@ -485,18 +519,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Gets the meta information of a report including the creation time parsed from the report ID, the report name and
-     * the report description from the report save request if the report is saved, or the report name from report
-     * generation request if the report is not saved, and also the status of the report.
+     * Gets the meta information of a report including the creation time parsed from the report ID,
+     * the report name and the report description from the report save request if the report is
+     * saved, or the report name from report generation request if the report is not saved, and also
+     * the status of the report.
      *
      * @param reportId the id of the report
-     * @param reportIdDir the location of the directory containing files with the report meta information
+     * @param reportIdDir the location of the directory containing files with the report meta
+     *     information
      * @param generationRequest the report generation request
      * @return the meta information of the report
-     * @throws Exception if fails to get the status of the report or fails to access the file with report save request
+     * @throws Exception if fails to get the status of the report or fails to access the file
+     *     with report save request
      */
     private ReportMetaInfo getReportMetaInfo(String reportId, Location reportIdDir,
-                                             ReportGenerationRequest generationRequest) throws Exception {
+        ReportGenerationRequest generationRequest) throws Exception {
       // Get the creation time from the report ID, which is time based UUID
       long creationTime = ReportIds.getTime(reportId, TimeUnit.SECONDS);
       ExtendedReportStatus extendedReportStatus = getReportStatus(reportIdDir);
@@ -507,35 +544,41 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       if (!savedFile.exists()) {
         Long expiryTimeSecs = null;
         if (extendedReportStatus.getExpirationTime() != null) {
-          expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(extendedReportStatus.getExpirationTime());
+          expiryTimeSecs = TimeUnit.MILLISECONDS.toSeconds(
+              extendedReportStatus.getExpirationTime());
         }
-        return new ReportMetaInfo(generationRequest.getName(), null, creationTime, expiryTimeSecs, status);
+        return new ReportMetaInfo(generationRequest.getName(), null, creationTime, expiryTimeSecs,
+            status);
       }
       // read the report save request from the file
       String reportSaveRequestString =
-        new String(ByteStreams.toByteArray(savedFile.getInputStream()), StandardCharsets.UTF_8);
-      ReportSaveRequest saveRequest = GSON.fromJson(reportSaveRequestString, REPORT_SAVE_REQUEST_TYPE);
+          new String(ByteStreams.toByteArray(savedFile.getInputStream()), StandardCharsets.UTF_8);
+      ReportSaveRequest saveRequest = GSON.fromJson(reportSaveRequestString,
+          REPORT_SAVE_REQUEST_TYPE);
       // the report is saved, get the name and the description from the report save request
       // and return null as expiry time
-      return new ReportMetaInfo(saveRequest.getName(), saveRequest.getDescription(), creationTime, null, status);
+      return new ReportMetaInfo(saveRequest.getName(), saveRequest.getDescription(), creationTime,
+          null, status);
     }
 
     @DELETE
     @Path("/reports/{report-id}")
     public void deleteReport(HttpServiceRequest request, HttpServiceResponder responder,
-                             @PathParam("report-id") String reportId) {
+        @PathParam("report-id") String reportId) {
       Location reportIdDir;
       try {
         String userName = getUserName(request.getAllHeaders());
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName).append(reportId);
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName)
+            .append(reportId);
         if (!reportIdDir.exists()) {
           responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
           return;
         }
       } catch (IOException e) {
         LOG.error("Failed to access the directory of the report with id {}", reportId, e);
-        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
-                                                 "because of error: %s", reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to access the directory of the report with id %s "
+                + "because of error: %s", reportId, e.getMessage()));
         return;
       }
       ReportStatus status;
@@ -543,27 +586,31 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
-        responder.sendError(500, String.format("Failed to get the status of the report %s becasue of error: %s",
-                                               reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to get the status of the report %s becasue of error: %s",
+                reportId, e.getMessage()));
         return;
       }
       // if the report is already expired, deleting the report is not allowed to avoid conflict
       if (ReportStatus.EXPIRED.equals(status)) {
-        responder.sendError(404, String.format("Report with id %s has already been deleted", reportId));
+        responder.sendError(404,
+            String.format("Report with id %s has already been deleted", reportId));
         return;
       }
       try {
         if (!reportIdDir.delete(true)) {
           // this should never happen since the directory is asserted to exist with valid path before reaching here
-          responder.sendError(500, String.format("Failed to delete report with id %s because the directory %s " +
-                                                   "does not exist or the path is invalid", reportId,
-                                                 reportIdDir.toURI().toString()));
+          responder.sendError(500,
+              String.format("Failed to delete report with id %s because the directory %s "
+                      + "does not exist or the path is invalid", reportId,
+                  reportIdDir.toURI().toString()));
           return;
         }
       } catch (IOException e) {
         LOG.error("Failed to delete report with id {}", reportId, e);
-        responder.sendError(500, String.format("Failed to delete report with id %s because of error: %s",
-                                               reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to delete report with id %s because of error: %s",
+                reportId, e.getMessage()));
         return;
       }
       responder.sendStatus(200);
@@ -572,19 +619,21 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @POST
     @Path("/reports/{report-id}/save")
     public void saveReport(HttpServiceRequest request, HttpServiceResponder responder,
-                           @PathParam("report-id") String reportId) {
+        @PathParam("report-id") String reportId) {
       Location reportIdDir;
       try {
         String userName = getUserName(request.getAllHeaders());
-        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName).append(reportId);
+        reportIdDir = getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(userName)
+            .append(reportId);
         if (!reportIdDir.exists()) {
           responder.sendError(404, String.format("Report with id %s does not exist.", reportId));
           return;
         }
       } catch (IOException e) {
         LOG.error("Failed to access the directory of the report with id {}", reportId, e);
-        responder.sendError(500, String.format("Failed to access the directory of the report with id %s " +
-                                                 "because of error: %s", reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to access the directory of the report with id %s "
+                + "because of error: %s", reportId, e.getMessage()));
         return;
       }
       ReportStatus status;
@@ -592,8 +641,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", reportId, e);
-        responder.sendError(500, String.format("Failed to get the status of the report %s because of error: %s",
-                                               reportId, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to get the status of the report %s because of error: %s",
+                reportId, e.getMessage()));
         return;
       }
       // only allow saving the report when its status is COMPLETED
@@ -615,20 +665,22 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         if (savedFile.exists()) {
           try {
             ReportSaveRequest saveRequest =
-              GSON.fromJson(readStringFromFile(reportIdDir.append(SAVED_FILE)), REPORT_SAVE_REQUEST_TYPE);
-            responder.sendError(403, String.format("Report with id %s is already saved with name '%s' " +
-                                                     "and description '%s'. Updating the saved report is not allowed.",
-                                                   reportId, saveRequest.getName(), saveRequest.getDescription()));
+                GSON.fromJson(readStringFromFile(reportIdDir.append(SAVED_FILE)),
+                    REPORT_SAVE_REQUEST_TYPE);
+            responder.sendError(403,
+                String.format("Report with id %s is already saved with name '%s' "
+                        + "and description '%s'. Updating the saved report is not allowed.",
+                    reportId, saveRequest.getName(), saveRequest.getDescription()));
             return;
           } catch (Exception e) {
-            LOG.warn("Failed to parse the content of the existing report saving request in {}. " +
-                       "Will overwrite with the new saving request.", savedFile.toURI().toString(), e);
+            LOG.warn("Failed to parse the content of the existing report saving request in {}. "
+                + "Will overwrite with the new saving request.", savedFile.toURI().toString(), e);
           }
         }
       } catch (Exception e) {
         LOG.error("Failed to save the report {}", reportId, e);
         responder.sendError(500, String.format("Failed to save the report %s because of error: %s",
-                                               reportId, e.getMessage()));
+            reportId, e.getMessage()));
         return;
       }
       String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
@@ -641,55 +693,64 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       try {
         if (!savedFile.createNew()) {
-          responder.sendError(500, String.format("Failed to create a file %s for saving the report with id %s " +
-                                                   "since it already exists", savedFile.toURI().toString(), reportId));
+          responder.sendError(500,
+              String.format("Failed to create a file %s for saving the report with id %s "
+                  + "since it already exists", savedFile.toURI().toString(), reportId));
           return;
         }
       } catch (IOException e) {
-        LOG.error("Failed to save the report {} when creating the file {}", reportId, savedFile.toURI().toString(), e);
-        responder.sendError(500, String.format("Failed to save the report %s because of error in " +
-                                                 "creating the file %s: %s",
-                                               reportId, savedFile.toURI().toString(), e.getMessage()));
+        LOG.error("Failed to save the report {} when creating the file {}", reportId,
+            savedFile.toURI().toString(), e);
+        responder.sendError(500, String.format("Failed to save the report %s because of error in "
+                + "creating the file %s: %s",
+            reportId, savedFile.toURI().toString(), e.getMessage()));
         return;
       }
       // save the report save request in the _SAVED file
       try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(savedFile.getOutputStream(),
-                                                                       StandardCharsets.UTF_8), true)) {
+          StandardCharsets.UTF_8), true)) {
         writer.write(requestJson);
       } catch (IOException e) {
-        LOG.error("Failed to save the report {} when writing to the file", reportId, savedFile.toURI().toString(), e);
-        responder.sendError(500, String.format("Failed to save the report %s because of error " +
-                                                 "in writing to the file %s: %s",
-                                               reportId, savedFile.toURI().toString(), e.getMessage()));
+        LOG.error("Failed to save the report {} when writing to the file", reportId,
+            savedFile.toURI().toString(), e);
+        responder.sendError(500, String.format("Failed to save the report %s because of error "
+                + "in writing to the file %s: %s",
+            reportId, savedFile.toURI().toString(), e.getMessage()));
         return;
       }
-      responder.sendString(200, String.format("Report with id %s is saved successfully with the name: '%s' " +
-                                                "and description: '%s' ", reportId, saveRequest.getName(),
-                                              saveRequest.getDescription()),
-                           StandardCharsets.UTF_8);
+      responder.sendString(200,
+          String.format("Report with id %s is saved successfully with the name: '%s' "
+                  + "and description: '%s' ", reportId, saveRequest.getName(),
+              saveRequest.getDescription()),
+          StandardCharsets.UTF_8);
     }
 
     /**
-     * Use reportId and userName to construct the {@link ReportIdentifier}
-     * If instead shareId is provided, we decode the userName and reportId from shareId and construct the identifier
-     * and return that.
+     * Use reportId and userName to construct the {@link ReportIdentifier} If instead shareId is
+     * provided, we decode the userName and reportId from shareId and construct the identifier and
+     * return that.
+     *
      * @param reportId - id of the report, can be null if shareId is provided
-     * @param headers - request headers, used to retrieve the name of the owner who generated the report,
-     *                  if reportId is not null
-     * @param shareId - shareId if the report is a shared report, can be null if reportId and userName is provided
+     * @param headers - request headers, used to retrieve the name of the owner who generated
+     *     the report, if reportId is not null
+     * @param shareId - shareId if the report is a shared report, can be null if reportId and
+     *     userName is provided
      * @return {@link ReportIdentifier}
-     * @throws IllegalArgumentException if none of the reportId and shareId is provided or if both are provided
+     * @throws IllegalArgumentException if none of the reportId and shareId is provided or if
+     *     both are provided
      * @throws UnsupportedEncodingException if there are any error while decoding the shareId
      */
     private ReportIdentifier validateAndGetReportIdentifier(
-      @Nullable String reportId, Map<String, List<String>> headers, @Nullable String shareId)
-      throws IllegalArgumentException, IOException, GeneralSecurityException {
+        @Nullable String reportId, Map<String, List<String>> headers, @Nullable String shareId)
+        throws IllegalArgumentException, IOException, GeneralSecurityException {
       if (reportId == null && shareId == null) {
-        throw new IllegalArgumentException("Either reportId or sharedId must be provided, missing both");
+        throw new IllegalArgumentException(
+            "Either reportId or sharedId must be provided, missing both");
       }
 
       if (reportId != null && shareId != null) {
-        throw new IllegalArgumentException("Only one of reportId or sharedId must be provided, provided both");
+        throw new IllegalArgumentException(
+            "Only one of reportId or sharedId must be provided, provided both");
       }
       if (reportId != null) {
         return new ReportIdentifier(getUserName(headers), reportId);
@@ -699,18 +760,19 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     private Location getLocationFromReportIdentifier(ReportIdentifier reportIdentifier)
-      throws IOException {
-      return getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(reportIdentifier.getUserName()).
-        append(reportIdentifier.getReportId());
+        throws IOException {
+      return getDatasetBaseLocation(ReportGenerationApp.REPORT_FILESET).append(
+              reportIdentifier.getUserName()).
+          append(reportIdentifier.getReportId());
     }
 
     @GET
     @Path("reports/download")
     public void getReportDetails(HttpServiceRequest request, HttpServiceResponder responder,
-                                 @QueryParam("offset") @DefaultValue("0") long offset,
-                                 @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit,
-                                 @QueryParam("report-id") String reportId,
-                                 @QueryParam("share-id") String shareId) throws Exception {
+        @QueryParam("offset") @DefaultValue("0") long offset,
+        @QueryParam("limit") @DefaultValue(DEFAULT_LIMIT) int limit,
+        @QueryParam("report-id") String reportId,
+        @QueryParam("share-id") String shareId) throws Exception {
       if (offset < 0) {
         responder.sendError(400, "offset cannot be negative");
         return;
@@ -726,15 +788,16 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       ReportIdentifier reportIdentifier;
       String idMessage;
       try {
-        reportIdentifier = validateAndGetReportIdentifier(reportId, request.getAllHeaders(), shareId);
+        reportIdentifier = validateAndGetReportIdentifier(reportId, request.getAllHeaders(),
+            shareId);
         idMessage = shareId == null ? String.format("ReportId : %s", reportId) :
-          String.format("ShareId : %s", shareId);
+            String.format("ShareId : %s", shareId);
       } catch (IllegalArgumentException iae) {
         responder.sendError(400, iae.getMessage());
         return;
       } catch (UnsupportedEncodingException | GeneralSecurityException e) {
         responder.sendError(500, String.format(
-          "Error while decoding shareId %s, due to exception : ", shareId, e.getMessage()));
+            "Error while decoding shareId %s, due to exception : ", shareId, e.getMessage()));
         return;
       }
       Location reportIdDir;
@@ -742,8 +805,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         reportIdDir = getLocationFromReportIdentifier(reportIdentifier);
       } catch (IOException e) {
         LOG.error("Failed to get location for report with {}", idMessage, e);
-        responder.sendError(500, String.format("Failed to get location for report with %s because of error: %s",
-                                               idMessage, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to get location for report with %s because of error: %s",
+                idMessage, e.getMessage()));
         return;
       }
 
@@ -765,12 +829,13 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           long recordCount = 0;
           Location reportDir = reportIdDir.append(LocationName.REPORT_DIR);
           if (!reportDir.exists() || reportDir.list().size() < 1) {
-            responder.sendError(404, String.format("Content files not found for report %s", idMessage));
+            responder.sendError(404,
+                String.format("Content files not found for report %s", idMessage));
             return;
           }
           // TODO: [CDAP-13291] need to support reading multiple report files
           Optional<Location> reportFile =
-            reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
+              reportDir.list().stream().filter(l -> l.getName().endsWith(".avro")).findFirst();
           // TODO: [CDAP-13292] use cache to store content of the reports
           // Read the report file and add lines starting from the position
           // of offset to the result until the result reaches
@@ -778,7 +843,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
           if (reportFile.isPresent()) {
             Location reportFileLocation = reportFile.get();
             DataFileStream<GenericRecord> dataFileStream =
-              new DataFileStream<>(reportFileLocation.getInputStream(), new GenericDatumReader<>());
+                new DataFileStream<>(reportFileLocation.getInputStream(),
+                    new GenericDatumReader<>());
             while (dataFileStream.hasNext()) {
               GenericRecord record = dataFileStream.next();
               if (recordCount++ < offset) {
@@ -793,8 +859,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         }
         // call custom method to convert ReportContent to JSON to return report details as JSON objects directly
         // without stringifying them
-        responder.sendString(200, new ReportContent(offset, limit, totalRecords, reportRecords).toJson(),
-                             StandardCharsets.UTF_8);
+        responder.sendString(200,
+            new ReportContent(offset, limit, totalRecords, reportRecords).toJson(),
+            StandardCharsets.UTF_8);
         return;
       }
 
@@ -804,21 +871,25 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         status = getReportStatus(reportIdDir).getReportStatus();
       } catch (Exception e) {
         LOG.error("Failed to get the status of the report {}", idMessage, e);
-        responder.sendError(500, String.format("Failed to get the status of the %s because of error: %s",
-                                               idMessage, e.getMessage()));
+        responder.sendError(500,
+            String.format("Failed to get the status of the %s because of error: %s",
+                idMessage, e.getMessage()));
         return;
       }
       switch (status) {
         case RUNNING:
-          responder.sendError(202, String.format("%s is still being generated, please retry later.", idMessage));
+          responder.sendError(202,
+              String.format("%s is still being generated, please retry later.", idMessage));
           return;
         case FAILED:
-          responder.sendError(400, String.format("Reading details of the %s with failed status is not allowed.",
-                                                 idMessage));
+          responder.sendError(400,
+              String.format("Reading details of the %s with failed status is not allowed.",
+                  idMessage));
           return;
         default: // this should never happen
-          responder.sendError(500, String.format("Unable to read report with %s with unknown status %s.",
-                                                 idMessage, status));
+          responder.sendError(500,
+              String.format("Unable to read report with %s with unknown status %s.",
+                  idMessage, status));
           return;
       }
     }
@@ -826,7 +897,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     @POST
     @Path("/reports")
     public void executeReportGeneration(HttpServiceRequest request, HttpServiceResponder responder)
-      throws IOException {
+        throws IOException {
       String requestJson = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       LOG.debug("Received report generation request {}", requestJson);
       ReportGenerationRequest reportRequest;
@@ -839,7 +910,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
 
       String reportId = ReportIds.generate().toString();
-      ReportIdentifier reportIdentifier = new ReportIdentifier(getUserName(request.getAllHeaders()), reportId);
+      ReportIdentifier reportIdentifier = new ReportIdentifier(getUserName(request.getAllHeaders()),
+          reportId);
       Location reportIdDir = getLocationFromReportIdentifier(reportIdentifier);
       if (!reportIdDir.mkdirs()) {
         responder.sendError(500, "Failed to create a new directory for report " + reportId);
@@ -855,7 +927,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       }
       // Save the report generation request in the _START file
       try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(startFile.getOutputStream(),
-                                                                       StandardCharsets.UTF_8), true)) {
+          StandardCharsets.UTF_8), true)) {
         writer.write(requestJson);
       }
       LOG.debug("Wrote to startFile {}", startFile.toURI());
@@ -867,15 +939,17 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     /**
-     * Delegates report generation to {@link #generateReport(ReportGenerationRequest, Location)} and writes
-     * errors caught during report generation to a _FAILURE file.
+     * Delegates report generation to {@link #generateReport(ReportGenerationRequest, Location)} and
+     * writes errors caught during report generation to a _FAILURE file.
      *
      * @param reportRequest the request to generate report
-     * @param reportIdDir the location of the directory which will be the parent directory of _FAILURE file
-     *                    and will be passed to {@link #generateReport(ReportGenerationRequest, Location)}
+     * @param reportIdDir the location of the directory which will be the parent directory of
+     *     _FAILURE file and will be passed to {@link #generateReport(ReportGenerationRequest,
+     *     Location)}
      * @param reportId the ID of the report being generated
      */
-    private void tryGenerateReport(ReportGenerationRequest reportRequest, Location reportIdDir, String reportId) {
+    private void tryGenerateReport(ReportGenerationRequest reportRequest, Location reportIdDir,
+        String reportId) {
       try {
         generateReport(reportRequest, reportIdDir);
       } catch (Throwable t) {
@@ -890,8 +964,9 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
             LOG.error("Failed to create a _FAILURE file for report {}", reportId);
             return;
           }
-          try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(failureFile.getOutputStream(),
-                                                                           StandardCharsets.UTF_8), true)) {
+          try (PrintWriter writer = new PrintWriter(
+              new OutputStreamWriter(failureFile.getOutputStream(),
+                  StandardCharsets.UTF_8), true)) {
             writer.println(t.toString());
             t.printStackTrace(writer);
           }
@@ -908,10 +983,11 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * that actually launches a Spark job to generate reports.
      *
      * @param reportRequest the request to generate report
-     * @param reportIdDir the location of the directory where the report files directory, COUNT file,
-     *                    and _SUCCESS file will be created.
+     * @param reportIdDir the location of the directory where the report files directory, COUNT
+     *     file, and _SUCCESS file will be created.
      */
-    private void generateReport(ReportGenerationRequest reportRequest, Location reportIdDir) throws IOException {
+    private void generateReport(ReportGenerationRequest reportRequest, Location reportIdDir)
+        throws IOException {
       Location baseLocation = getDatasetBaseLocation(ReportGenerationApp.RUN_META_FILESET);
       // Get a list of directories of all namespaces under RunMetaFileset base location
       List<Location> nsLocations;
@@ -921,7 +997,8 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       Stream<Location> filteredNsLocations = nsLocations.stream();
       // If the namespace filter exists, apply the filter to get filtered namespace directories
       if (nsFilter != null) {
-        filteredNsLocations = nsLocations.stream().filter(nsLocation -> nsFilter.apply(nsLocation.getName()));
+        filteredNsLocations = nsLocations.stream()
+            .filter(nsLocation -> nsFilter.apply(nsLocation.getName()));
       }
       // Iterate through all qualified namespaces directories to get program run meta files
       Stream<Location> metaFiles = filteredNsLocations.flatMap(nsLocation -> {
@@ -938,14 +1015,15 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
       List<String> metaFilePaths = metaFiles.filter(metaFile -> {
         String fileName = metaFile.getName();
         return fileName.endsWith(".avro")
-          //file name is of the format <event-time-millis>-<creation-time-millis>.avro
-          && TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(fileName.substring(0, fileName.indexOf("-")))) <
-          reportRequest.getEnd();
+            //file name is of the format <event-time-millis>-<creation-time-millis>.avro
+            && TimeUnit.MILLISECONDS.toSeconds(
+            Long.parseLong(fileName.substring(0, fileName.indexOf("-")))) <
+            reportRequest.getEnd();
       }).map(location -> location.toURI().toString()).collect(Collectors.toList());
       LOG.debug("Filtered meta files {}", metaFilePaths);
       // Generate the report with the request and program run meta files
       ReportGenerationHelper.generateReport(sqlContext, reportRequest,
-                                            metaFilePaths, reportIdDir, reportsExpiryTimeMillis);
+          metaFilePaths, reportIdDir, reportsExpiryTimeMillis);
     }
 
     /**
@@ -976,14 +1054,16 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
      * report generation job might be returned as RUNNING
      *
      * @param reportIdDir the base directory with report ID as directory name
-     * @return {@link ExtendedReportStatus} if report is completed extended report status will have expiration time
+     * @return {@link ExtendedReportStatus} if report is completed extended report status will have
+     *     expiration time
      */
     private ExtendedReportStatus getReportStatus(Location reportIdDir) throws Exception {
       // if the report is completed but has expired, return EXPIRED as its status too
       ReportSummary reportSummary = getReportSummaryIfExists(reportIdDir);
       if (reportSummary != null) {
         return reportSummary.isExpired() ? new ExtendedReportStatus(ReportStatus.EXPIRED) :
-          new ExtendedReportStatus(ReportStatus.COMPLETED, reportSummary.getyExpirationTimeMillis());
+            new ExtendedReportStatus(ReportStatus.COMPLETED,
+                reportSummary.getyExpirationTimeMillis());
       }
       if (reportIdDir.append(FAILURE_FILE).exists()) {
         return new ExtendedReportStatus(ReportStatus.FAILED);
@@ -992,6 +1072,7 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
     }
 
     private class ExtendedReportStatus {
+
       private final ReportStatus status;
       @Nullable
       private final Long expirationTimeMillis;

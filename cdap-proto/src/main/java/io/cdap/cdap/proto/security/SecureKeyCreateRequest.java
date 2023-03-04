@@ -24,11 +24,13 @@ import javax.annotation.Nullable;
  * Request for creating a new entry in the secure store
  */
 public class SecureKeyCreateRequest {
+
   private final String description;
   private final String data;
   private final Map<String, String> properties;
 
-  public SecureKeyCreateRequest(@Nullable String description, String data, Map<String, String> properties) {
+  public SecureKeyCreateRequest(@Nullable String description, String data,
+      Map<String, String> properties) {
     this.description = description;
     this.data = data;
     this.properties = properties;
@@ -49,8 +51,8 @@ public class SecureKeyCreateRequest {
 
   @Override
   public String toString() {
-    return "SecureKeyCreateRequest{" +
-      "description='" + description + '\'' +
-      '}';
+    return "SecureKeyCreateRequest{"
+        + "description='" + description + '\''
+        + '}';
   }
 }

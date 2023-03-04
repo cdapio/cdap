@@ -24,16 +24,19 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * ApplicationSpecification and associated system tables. This is used because the StructuredTableSpecifications
- * can't be stored in the ApplicationSpecification since the class is not in cdap-api.
+ * ApplicationSpecification and associated system tables. This is used because the
+ * StructuredTableSpecifications can't be stored in the ApplicationSpecification since the class is
+ * not in cdap-api.
  */
 public class AppSpecInfo {
+
   private final ApplicationSpecification appSpec;
   private final Collection<StructuredTableSpecification> systemTables;
   private final Map<MetadataScope, Metadata> metadata;
 
   public AppSpecInfo(ApplicationSpecification appSpec,
-                     Collection<StructuredTableSpecification> systemTables, Map<MetadataScope, Metadata> metadata) {
+      Collection<StructuredTableSpecification> systemTables,
+      Map<MetadataScope, Metadata> metadata) {
     this.appSpec = appSpec;
     this.systemTables = systemTables;
     this.metadata = metadata;

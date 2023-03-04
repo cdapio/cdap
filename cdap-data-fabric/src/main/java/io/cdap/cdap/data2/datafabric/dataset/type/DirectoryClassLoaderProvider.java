@@ -41,33 +41,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta} by unpacking the dataset jar and creating a
- * {@link DirectoryClassLoader} over the unpacked jar. Classloaders are cached, and unpacked directories are cleaned
- * up when the provider is closed. Note that this means changes to dataset code are not picked up, as the assumption
- * is that this provider is created once at the start of a program run and closed at the end.
+ * Creates a {@link ClassLoader} for a {@link DatasetModuleMeta} by unpacking the dataset jar and
+ * creating a {@link DirectoryClassLoader} over the unpacked jar. Classloaders are cached, and
+ * unpacked directories are cleaned up when the provider is closed. Note that this means changes to
+ * dataset code are not picked up, as the assumption is that this provider is created once at the
+ * start of a program run and closed at the end.
  */
 public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider {
+
   private static final Logger LOG = LoggerFactory.getLogger(DirectoryClassLoaderProvider.class);
   private final LoadingCache<CacheKey, ClassLoader> classLoaders;
   private final LocationFactory locationFactory;
   private final File tmpDir;
 
   public DirectoryClassLoaderProvider(CConfiguration cConf,
-                                      LocationFactory locationFactory) {
+      LocationFactory locationFactory) {
     this.locationFactory = locationFactory;
     this.classLoaders = CacheBuilder.newBuilder()
-      .removalListener(new ClassLoaderRemovalListener())
-      .build(new ClassLoaderCacheLoader());
+        .removalListener(new ClassLoaderRemovalListener())
+        .build(new ClassLoaderCacheLoader());
     File baseDir =
-      new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.tmpDir = DirUtils.createTempDir(baseDir);
   }
 
   @Override
-  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException {
-    URI jarLocation = moduleMeta.getJarLocationPath() == null ? null : URI.create(moduleMeta.getJarLocationPath());
-    return jarLocation == null ?
-      parentClassLoader : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
+  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader)
+      throws IOException {
+    URI jarLocation = moduleMeta.getJarLocationPath() == null ? null
+        : URI.create(moduleMeta.getJarLocationPath());
+    return jarLocation == null
+        ? parentClassLoader
+        : classLoaders.getUnchecked(new CacheKey(jarLocation, parentClassLoader));
   }
 
   @Override
@@ -81,8 +87,10 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       LOG.warn("Failed to delete directory {}", tmpDir);
     }
   }
-  
-  private static final class ClassLoaderRemovalListener implements RemovalListener<CacheKey, ClassLoader> {
+
+  private static final class ClassLoaderRemovalListener implements
+      RemovalListener<CacheKey, ClassLoader> {
+
     @Override
     public void onRemoval(RemovalNotification<CacheKey, ClassLoader> notification) {
       ClassLoader cl = notification.getValue();
@@ -93,6 +101,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
   }
 
   private final class CacheKey {
+
     private final URI uri;
     private final ClassLoader parentClassLoader;
 
@@ -123,7 +132,8 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
   }
 
   /**
-   * A CacheLoader that will copy the jar to a temporary location, unpack it, and create a DirectoryClassLoader.
+   * A CacheLoader that will copy the jar to a temporary location, unpack it, and create a
+   * DirectoryClassLoader.
    */
   private final class ClassLoaderCacheLoader extends CacheLoader<CacheKey, ClassLoader> {
 
@@ -132,9 +142,10 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       if (key.uri == null) {
         return key.parentClassLoader;
       }
-      Location jarLocation = Locations.getLocationFromAbsolutePath(locationFactory, key.uri.getPath());
+      Location jarLocation = Locations.getLocationFromAbsolutePath(locationFactory,
+          key.uri.getPath());
       ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-        jarLocation, () -> DirUtils.createTempDir(tmpDir));
+          jarLocation, () -> DirUtils.createTempDir(tmpDir));
       LOG.trace("Unpacked dataset jar from {} to {}.", key.uri, classLoaderFolder.getDir());
 
       return new DirectoryClassLoader(classLoaderFolder.getDir(), key.parentClassLoader, "lib");

@@ -44,8 +44,9 @@ import org.apache.tephra.Transaction;
 // todo: use locks instead of synchronize
 // todo: consider using SortedMap instead of NavigableMap in APIs
 public class InMemoryTableService {
+
   private static Map<String, ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>>> tables =
-    Maps.newHashMap();
+      Maps.newHashMap();
 
   public static synchronized boolean exists(String tableName) {
     return tables.containsKey(tableName);
@@ -71,18 +72,20 @@ public class InMemoryTableService {
 
   // no nulls
   public static synchronized void merge(String tableName,
-                                        SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> changes,
-                                        long version) {
+      SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> changes,
+      long version) {
     // todo: handle nulls
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     SortedMap<byte[], ? extends SortedMap<byte[], Update>> changesCopy = deepCopyUpdates(changes);
     for (Map.Entry<byte[], ? extends SortedMap<byte[], Update>> change : changesCopy.entrySet()) {
       merge(table, change.getKey(), change.getValue(), version);
     }
   }
 
-  private static void merge(ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table,
-                            byte[] row, Map<byte[], Update> changes, long version) {
+  private static void merge(
+      ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table,
+      byte[] row, Map<byte[], Update> changes, long version) {
     // get the correct row from the table, create it if it doesn't exist
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
     if (rowMap == null) {
@@ -105,9 +108,11 @@ public class InMemoryTableService {
 
   // todo: remove it from here: only used by "system" metrics table, which should be revised
   @Deprecated
-  public static synchronized Map<byte[], Long> increment(String tableName, byte[] row, Map<byte[], Long> increments) {
+  public static synchronized Map<byte[], Long> increment(String tableName, byte[] row,
+      Map<byte[], Long> increments) {
     Map<byte[], Long> resultMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     // get the correct row from the table, create it if it doesn't exist
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
     if (rowMap == null) {
@@ -137,8 +142,9 @@ public class InMemoryTableService {
   }
 
   public static synchronized boolean swap(String tableName, byte[] row, byte[] column,
-                                          byte[] oldValue, byte[] newValue) {
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+      byte[] oldValue, byte[] newValue) {
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     // get the correct row from the table, create it if it doesn't exist
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
     Update existingValue = null;
@@ -152,7 +158,8 @@ public class InMemoryTableService {
     if (oldValue == null && existingValue != null) {
       return false;
     }
-    if (oldValue != null && (existingValue == null || !Bytes.equals(oldValue, existingValue.getBytes()))) {
+    if (oldValue != null && (existingValue == null || !Bytes.equals(oldValue,
+        existingValue.getBytes()))) {
       return false;
     }
     // write new value
@@ -177,10 +184,11 @@ public class InMemoryTableService {
   }
 
   public static synchronized void undo(String tableName,
-                                       NavigableMap<byte[], NavigableMap<byte[], Update>> changes,
-                                       long version) {
+      NavigableMap<byte[], NavigableMap<byte[], Update>> changes,
+      long version) {
     // todo: handle nulls
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     for (Map.Entry<byte[], NavigableMap<byte[], Update>> change : changes.entrySet()) {
       byte[] row = change.getKey();
       NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
@@ -194,20 +202,23 @@ public class InMemoryTableService {
   }
 
   public static synchronized void delete(String tableName, Iterable<byte[]> rows) {
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     for (byte[] row : rows) {
       table.remove(row);
     }
   }
 
   public static synchronized void deleteColumns(String tableName, byte[] row, byte[] column) {
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     NavigableMap<byte[], NavigableMap<Long, Update>> columnValues = table.get(row);
     columnValues.remove(column);
   }
 
   public static synchronized void delete(String tableName, byte[] rowPrefix) {
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     if (rowPrefix.length == 0) {
       table.clear();
     } else {
@@ -221,7 +232,8 @@ public class InMemoryTableService {
   }
 
   /**
-   * Given a key prefix, return the smallest key that is greater than all keys starting with that prefix.
+   * Given a key prefix, return the smallest key that is greater than all keys starting with that
+   * prefix.
    */
   static byte[] rowAfterPrefix(byte[] prefix) {
     Preconditions.checkNotNull(prefix, "prefix must not be null");
@@ -238,22 +250,24 @@ public class InMemoryTableService {
   }
 
   public static synchronized NavigableMap<byte[], NavigableMap<Long, byte[]>> get(String tableName,
-                                                                                  byte[] row,
-                                                                                  @Nullable Transaction tx) {
+      byte[] row,
+      @Nullable Transaction tx) {
     // todo: handle nulls
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(
+        tableName);
     Preconditions.checkArgument(table != null, "table not found: " + tableName);
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
     return deepCopy(Updates.rowToBytes(getVisible(rowMap, tx)));
   }
 
   public static synchronized NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>
-                             getRowRange(String tableName,
-                                         byte[] startRow,
-                                         byte[] stopRow,
-                                         @Nullable Transaction tx) {
+  getRowRange(String tableName,
+      byte[] startRow,
+      byte[] stopRow,
+      @Nullable Transaction tx) {
     // todo: handle nulls
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> tableData = tables.get(tableName);
+    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> tableData = tables.get(
+        tableName);
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> rows;
     if (startRow == null && stopRow == null) {
       rows = tableData;
@@ -266,10 +280,10 @@ public class InMemoryTableService {
     }
 
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> result =
-      Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> rowMap : rows.entrySet()) {
       NavigableMap<byte[], NavigableMap<Long, Update>> columns =
-        tx == null ? rowMap.getValue() : getVisible(rowMap.getValue(), tx);
+          tx == null ? rowMap.getValue() : getVisible(rowMap.getValue(), tx);
       result.put(copy(rowMap.getKey()), deepCopy(Updates.rowToBytes(columns)));
     }
 
@@ -281,12 +295,13 @@ public class InMemoryTableService {
   }
 
   private static NavigableMap<byte[], NavigableMap<Long, Update>> getVisible(
-    NavigableMap<byte[], NavigableMap<Long, Update>> rowMap, final Transaction tx) {
+      NavigableMap<byte[], NavigableMap<Long, Update>> rowMap, final Transaction tx) {
 
     if (rowMap == null) {
       return null;
     }
-    NavigableMap<byte[], NavigableMap<Long, Update>> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<Long, Update>> result = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<Long, Update>> column : rowMap.entrySet()) {
       SortedMap<Long, Update> visbleValues = column.getValue();
       if (tx != null) {
@@ -312,7 +327,7 @@ public class InMemoryTableService {
   }
 
   private static SortedMap<byte[], SortedMap<byte[], Update>> deepCopyUpdates(
-    SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> src) {
+      SortedMap<byte[], ? extends SortedMap<byte[], ? extends Update>> src) {
 
     SortedMap<byte[], SortedMap<byte[], Update>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], ? extends SortedMap<byte[], ? extends Update>> entry : src.entrySet()) {
@@ -330,7 +345,7 @@ public class InMemoryTableService {
 
   @Nullable
   private static NavigableMap<byte[], NavigableMap<Long, byte[]>> deepCopy(
-    @Nullable NavigableMap<byte[], NavigableMap<Long, byte[]>> src) {
+      @Nullable NavigableMap<byte[], NavigableMap<Long, byte[]>> src) {
 
     if (src == null) {
       return null;

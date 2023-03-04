@@ -54,13 +54,14 @@ public interface ProgramRuntimeProvider {
    *
    * @param programType the {@link ProgramType} that the {@link ProgramRunner} will be used on
    * @param mode The execution mode that the {@link ProgramRunner} will be used one
-   * @param injector the CDAP app-fabric Guice {@link Injector} for acquiring system services to interact with CDAP
+   * @param injector the CDAP app-fabric Guice {@link Injector} for acquiring system services to
+   *     interact with CDAP
    */
   ProgramRunner createProgramRunner(ProgramType programType, Mode mode, Injector injector);
 
   /**
-   * Return whether the specified program type is supported. If not,
-   * {@link #createProgramRunner(ProgramType, Mode, Injector)} will not be called.
+   * Return whether the specified program type is supported. If not, {@link
+   * #createProgramRunner(ProgramType, Mode, Injector)} will not be called.
    *
    * @param programType the {@link ProgramType} to check support for
    * @param cConf the CDAP configuration
@@ -69,8 +70,8 @@ public interface ProgramRuntimeProvider {
   boolean isSupported(ProgramType programType, CConfiguration cConf);
 
   /**
-   * Creates a ClassLoader for the given program type.
-   * This is useful if you need the program class loader but do not need to run a program.
+   * Creates a ClassLoader for the given program type. This is useful if you need the program class
+   * loader but do not need to run a program.
    *
    * @param cConf The configuration to use
    * @param programType The type of program

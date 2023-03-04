@@ -20,8 +20,9 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.client.Increment;
 
 /**
- * Builder for creating {@link Increment}. This builder should be used for cross HBase versions compatibility.
- * All methods on this class are just delegating to calls to {@link Increment} object.
+ * Builder for creating {@link Increment}. This builder should be used for cross HBase versions
+ * compatibility. All methods on this class are just delegating to calls to {@link Increment}
+ * object.
  */
 public interface IncrementBuilder {
 

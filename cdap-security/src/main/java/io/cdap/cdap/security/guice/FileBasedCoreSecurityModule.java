@@ -22,8 +22,8 @@ import io.cdap.cdap.security.auth.FileBasedKeyManager;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
- * Guice bindings for FileBasedKeyManagers. This extends {@code SecurityModule} to provide
- * an instance of {@code FileBasedKeyManager}.
+ * Guice bindings for FileBasedKeyManagers. This extends {@code SecurityModule} to provide an
+ * instance of {@code FileBasedKeyManager}.
  */
 public class FileBasedCoreSecurityModule extends CoreSecurityModule {
 

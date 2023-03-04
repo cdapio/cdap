@@ -26,22 +26,25 @@ import java.util.List;
  * <p>
  * This is copied from old data-fabric, could be improved.
  * <p>
- * NOTE: there's also seem to be a bug: first split should have open start and last one open end... TODO: fix it
+ * NOTE: there's also seem to be a bug: first split should have open start and last one open end...
+ * TODO: fix it
  */
 public class SplitsUtil {
   // Simplest stateless getSplits method implementation (doesn't use the actual stored data)
 
   /**
-   * If the number of splits is not given, and we have no hints from the table structure (that can be implemented in
-   * overriding implementations, though), the primitive getSplits methos will return up to this many splits. Note that
-   * we cannot read this number from configuration, because the current OVCTable(Handle) does not pass configuration
-   * down into the tables anywhere. See ENG-2395 for the fix.
+   * If the number of splits is not given, and we have no hints from the table structure (that can
+   * be implemented in overriding implementations, though), the primitive getSplits methos will
+   * return up to this many splits. Note that we cannot read this number from configuration, because
+   * the current OVCTable(Handle) does not pass configuration down into the tables anywhere. See
+   * ENG-2395 for the fix.
    */
   static final int DEFAULT_NUMBER_OF_SPLITS = 8;
 
   /**
-   * Simplest possible implementation of getSplits. Takes the given start and end and divides the key space in
-   * between into (almost) even partitions, using a long integer approximation of the keys.
+   * Simplest possible implementation of getSplits. Takes the given start and end and divides the
+   * key space in between into (almost) even partitions, using a long integer approximation of the
+   * keys.
    */
   static List<KeyRange> primitiveGetSplits(int numSplits, byte[] start, byte[] stop) {
     // if the range is empty, return no splits
@@ -60,7 +63,7 @@ public class SplitsUtil {
     // each range will start with the stop key of the previous range.
     // start key of the first range is either the given start, or the least possible key {0};
     List<KeyRange> ranges = Lists.newArrayListWithExpectedSize(numSplits);
-    byte[] current = start == null ? new byte[] { 0x00 } : start;
+    byte[] current = start == null ? new byte[]{0x00} : start;
     for (int i = 1; i < numSplits; i++) {
       long bound = begin + (long) (splitSize * i);
       byte[] next = keyForBound(bound);
@@ -85,7 +88,7 @@ public class SplitsUtil {
       return isStop ? 0xffffffffffffffL : 0L;
     } else {
       // leading zero helps avoid negative long values for keys beginning with a byte > 0x80
-      final byte[] leadingZero = { 0x00 };
+      final byte[] leadingZero = {0x00};
       byte[] x;
       if (key.length >= Bytes.SIZEOF_LONG - 1) {
         x = Bytes.add(leadingZero, Bytes.head(key, Bytes.SIZEOF_LONG - 1));

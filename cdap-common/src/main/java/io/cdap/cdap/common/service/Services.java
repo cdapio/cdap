@@ -32,26 +32,31 @@ public class Services {
 
   private static final Logger LOG = LoggerFactory.getLogger(Services.class);
 
-  private Services() { }
+  private Services() {
+  }
 
   /**
    * Attempts to start the passed in service
+   *
    * @param service The service to start
    * @param timeout The duration to wait for the service to start
    * @param timeoutUnit The time unit used for the timeout parameter
-   * @param timeoutErrorMessage An optional error message to display if starting the service times out
+   * @param timeoutErrorMessage An optional error message to display if starting the service
+   *     times out
    * @throws TimeoutException If the service can not be started before the specified timeout
-   * @throws InterruptedException If the service is interrupted while trying to start the service
+   * @throws InterruptedException If the service is interrupted while trying to start the
+   *     service
    * @throws ExecutionException If an exception occurs while trying to start the service
    */
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit,
-                                  @Nullable String timeoutErrorMessage)
-    throws TimeoutException, InterruptedException, ExecutionException {
+      @Nullable String timeoutErrorMessage)
+      throws TimeoutException, InterruptedException, ExecutionException {
     ListenableFuture<Service.State> startFuture = service.start();
     try {
       startFuture.get(timeout, timeoutUnit);
     } catch (TimeoutException e) {
-      LOG.error(timeoutErrorMessage != null ? timeoutErrorMessage : "Timeout while waiting to start service.", e);
+      LOG.error(timeoutErrorMessage != null ? timeoutErrorMessage
+          : "Timeout while waiting to start service.", e);
       TimeoutException timeoutException = new TimeoutException(timeoutErrorMessage);
       if (e.getStackTrace() != null) {
         timeoutException.setStackTrace(e.getStackTrace());
@@ -77,7 +82,7 @@ public class Services {
    * See {@link Services#startAndWait(Service, long, TimeUnit, String)}
    */
   public static void startAndWait(Service service, long timeout, TimeUnit timeoutUnit)
-    throws TimeoutException, InterruptedException, ExecutionException {
+      throws TimeoutException, InterruptedException, ExecutionException {
     startAndWait(service, timeout, timeoutUnit, null);
   }
 }

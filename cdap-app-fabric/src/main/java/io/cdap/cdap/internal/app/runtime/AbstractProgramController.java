@@ -43,8 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Abstract base implementation of {@link ProgramController} that governs state transitions as well as
- * {@link Listener} invocation mechanism.
+ * Abstract base implementation of {@link ProgramController} that governs state transitions as well
+ * as {@link Listener} invocation mechanism.
  */
 public abstract class AbstractProgramController implements ProgramController {
 
@@ -71,9 +71,9 @@ public abstract class AbstractProgramController implements ProgramController {
     // hanging around when it is idle.
     String name = programRunId.getParent() + "-" + programRunId.getRun();
     this.executor = new ThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
-                                           new LinkedBlockingQueue<>(),
-                                           new ThreadFactoryBuilder()
-                                             .setNameFormat("pcontroller-" + name + "-%d").build());
+        new LinkedBlockingQueue<>(),
+        new ThreadFactoryBuilder()
+            .setNameFormat("pcontroller-" + name + "-%d").build());
   }
 
   @Override
@@ -91,7 +91,8 @@ public abstract class AbstractProgramController implements ProgramController {
     LOG.trace("Suspend program {}", programRunId);
     if (!state.compareAndSet(State.ALIVE, State.SUSPENDING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Suspension not allowed for " + programRunId + " in " + state.get()));
+          new IllegalStateException(
+              "Suspension not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -114,7 +115,8 @@ public abstract class AbstractProgramController implements ProgramController {
     LOG.trace("Resume program {}", programRunId);
     if (!state.compareAndSet(State.SUSPENDED, State.RESUMING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Resumption not allowed for " + programRunId + " in " + state.get()));
+          new IllegalStateException(
+              "Resumption not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -135,10 +137,11 @@ public abstract class AbstractProgramController implements ProgramController {
   public final ListenableFuture<ProgramController> stop() {
     LOG.trace("Stop program {}", programRunId);
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
-      && !state.compareAndSet(State.ALIVE, State.STOPPING)
-      && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
+        && !state.compareAndSet(State.ALIVE, State.STOPPING)
+        && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
       return Futures.immediateFailedFuture(
-        new IllegalStateException("Stopping not allowed for " + programRunId + " in " + state.get()));
+          new IllegalStateException(
+              "Stopping not allowed for " + programRunId + " in " + state.get()));
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
@@ -172,9 +175,9 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   /**
-   * Returns the graceful stop timeout in milliseconds. If it returns a value that is smaller than {@code 0},
-   * if means graceful stop timeout is not defined. It is up to the implementation of the controller to
-   * determine stop timeout.
+   * Returns the graceful stop timeout in milliseconds. If it returns a value that is smaller than
+   * {@code 0}, if means graceful stop timeout is not defined. It is up to the implementation of the
+   * controller to determine stop timeout.
    */
   protected final long getGracefulTimeoutMillis() {
     return gracefulTimeoutMillis;
@@ -190,8 +193,8 @@ public abstract class AbstractProgramController implements ProgramController {
   protected void complete(final State completionState) {
     LOG.trace("Program {} completed with state {}", programRunId, completionState);
     if (!state.compareAndSet(State.STARTING, completionState)
-      && !state.compareAndSet(State.ALIVE, completionState)
-      && !state.compareAndSet(State.SUSPENDED, completionState)) {
+        && !state.compareAndSet(State.ALIVE, completionState)
+        && !state.compareAndSet(State.SUSPENDED, completionState)) {
       LOG.warn("Cannot transit to COMPLETED state from {} state: {}", state.get(), programRunId);
       return;
     }
@@ -201,7 +204,8 @@ public abstract class AbstractProgramController implements ProgramController {
         caller.killed();
       } else if (State.ERROR.equals(completionState)) {
         // mark program as error when its in error state.
-        caller.error(new Exception(String.format("Program %s completed with exception.", programRunId)));
+        caller.error(
+            new Exception(String.format("Program %s completed with exception.", programRunId)));
       } else {
         caller.completed();
       }
@@ -272,6 +276,7 @@ public abstract class AbstractProgramController implements ProgramController {
 
   /**
    * Force this controller into error state.
+   *
    * @param t The failure cause
    */
   protected final void error(final Throwable t) {
@@ -302,8 +307,9 @@ public abstract class AbstractProgramController implements ProgramController {
   protected abstract void doCommand(String name, Object value) throws Exception;
 
   /**
-   * Force this controller into error state and set the failure into the given future.
-   * This method should only be called from the single thread executor of this class.
+   * Force this controller into error state and set the failure into the given future. This method
+   * should only be called from the single thread executor of this class.
+   *
    * @param t The failure cause
    */
   private <V> void error(Throwable t, SettableFuture<V> future) {
@@ -402,8 +408,9 @@ public abstract class AbstractProgramController implements ProgramController {
       try {
         executor.execute(runnable);
       } catch (Throwable t) {
-        String msg = String.format("Exception while executing method '%s' on listener %s with executor %s.",
-                                   methodName, listener, executor);
+        String msg = String.format(
+            "Exception while executing method '%s' on listener %s with executor %s.",
+            methodName, listener, executor);
         LOG.error(msg, t);
       }
     }

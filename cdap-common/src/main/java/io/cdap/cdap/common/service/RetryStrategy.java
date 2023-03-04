@@ -27,7 +27,7 @@ public interface RetryStrategy {
    * @param failures Number of times that the operation has been failed.
    * @param startTime Timestamp in milliseconds that the request starts.
    * @return Number of milliseconds to wait before retrying the operation. Returning {@code 0} means
-   *         retry it immediately, while negative means abort the operation.
+   *     retry it immediately, while negative means abort the operation.
    */
   long nextRetry(int failures, long startTime);
 }

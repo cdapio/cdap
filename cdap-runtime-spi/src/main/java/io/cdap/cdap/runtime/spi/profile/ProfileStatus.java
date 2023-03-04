@@ -21,14 +21,14 @@ package io.cdap.cdap.runtime.spi.profile;
  */
 public enum ProfileStatus {
   /**
-   * If the status of a profile is enabled, it can be assigned to any program. A profile cannot be deleted
-   * when its status is enabled.
+   * If the status of a profile is enabled, it can be assigned to any program. A profile cannot be
+   * deleted when its status is enabled.
    */
   ENABLED,
 
   /**
-   * If the status of a profile is disabled, it cannot be assigned to any program. A profile can only be deleted
-   * when its status is disabled.
+   * If the status of a profile is disabled, it cannot be assigned to any program. A profile can
+   * only be deleted when its status is disabled.
    */
   DISABLED
 }

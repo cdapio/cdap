@@ -24,17 +24,18 @@ import io.cdap.cdap.etl.common.RecordInfo;
 
 
 /**
- * Processing any stages that can be represented as a Transformation. Passes the RecordInfo directly to
- * the underlying transformation.
+ * Processing any stages that can be represented as a Transformation. Passes the RecordInfo directly
+ * to the underlying transformation.
  *
  * @param <T> type of input object
  */
 public class DirectOutputPipeStage<T> extends PipeStage<RecordInfo<T>> {
+
   private final Transformation<RecordInfo<T>, Object> transform;
   private final Emitter<Object> emitter;
 
   public DirectOutputPipeStage(String stageName, Transformation<RecordInfo<T>, Object> transform,
-                               Emitter<Object> emitter) {
+      Emitter<Object> emitter) {
     super(stageName);
     this.transform = transform;
     this.emitter = emitter;

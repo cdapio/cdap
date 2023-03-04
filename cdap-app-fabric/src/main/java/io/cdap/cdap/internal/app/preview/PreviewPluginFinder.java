@@ -29,25 +29,27 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
- * PreviewPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used exclusively in tasks
- * running in the {@link PreviewRunnerTwillRunnable}. This implementation uses the {@link ArtifactLocalizerClient} to
- * download and cache the given artifact on the local file system; however, it does not unpack the artifact as the
- * SparkCompiler may require it packed to function properly. See CDAP-19311 for details.
+ * PreviewPluginFinder is an extension of {@link RemotePluginFinder} that is meant to be used
+ * exclusively in tasks running in the {@link PreviewRunnerTwillRunnable}. This implementation uses
+ * the {@link ArtifactLocalizerClient} to download and cache the given artifact on the local file
+ * system; however, it does not unpack the artifact as the SparkCompiler may require it packed to
+ * function properly. See CDAP-19311 for details.
  */
 public class PreviewPluginFinder extends RemotePluginFinder {
+
   private final ArtifactLocalizerClient artifactLocalizerClient;
 
   @Inject
   PreviewPluginFinder(LocationFactory locationFactory,
-                      RemoteClientFactory remoteClientFactory,
-                      ArtifactLocalizerClient artifactLocalizerClient) {
+      RemoteClientFactory remoteClientFactory,
+      ArtifactLocalizerClient artifactLocalizerClient) {
     super(locationFactory, remoteClientFactory);
     this.artifactLocalizerClient = artifactLocalizerClient;
   }
 
   @Override
   protected Location getArtifactLocation(ArtifactId artifactId)
-    throws IOException, ArtifactNotFoundException, UnauthorizedException {
+      throws IOException, ArtifactNotFoundException, UnauthorizedException {
     return Locations.toLocation(artifactLocalizerClient.getArtifactLocation(artifactId));
   }
 }

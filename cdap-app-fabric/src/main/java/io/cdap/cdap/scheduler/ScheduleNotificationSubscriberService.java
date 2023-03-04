@@ -64,7 +64,9 @@ import org.slf4j.LoggerFactory;
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
  */
 public class ScheduleNotificationSubscriberService extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(ScheduleNotificationSubscriberService.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(
+      ScheduleNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
@@ -75,14 +77,14 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                                        MetricsCollectionService metricsCollectionService,
-                                        TransactionRunner transactionRunner) {
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.metricsCollectionService = metricsCollectionService;
     this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(transactionRunner),
-                                            new DataEventSubscriberService(transactionRunner),
-                                            new ProgramStatusEventSubscriberService(transactionRunner));
+        new DataEventSubscriberService(transactionRunner),
+        new ProgramStatusEventSubscriberService(transactionRunner));
   }
 
   @Override
@@ -91,16 +93,18 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     // Use a shared executor for all different subscribers and only keep one core thread
     subscriberExecutor = Executors.newScheduledThreadPool(
-      1, Threads.createDaemonThreadFactory("scheduler-notification-subscriber-%d"));
+        1, Threads.createDaemonThreadFactory("scheduler-notification-subscriber-%d"));
 
     // Start all subscriber services. All of them has no-op in start, so they shouldn't fail.
-    Futures.successfulAsList(subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
+    Futures.successfulAsList(
+        subscriberServices.stream().map(Service::start).collect(Collectors.toList())).get();
   }
 
   @Override
   protected void shutDown() throws Exception {
     // This never throw
-    Futures.successfulAsList(subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
+    Futures.successfulAsList(
+        subscriberServices.stream().map(Service::stop).collect(Collectors.toList())).get();
 
     for (Service service : subscriberServices) {
       // The service must have been stopped, and calling stop again will just return immediate with the
@@ -117,15 +121,18 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   }
 
   /**
-   * Abstract base class for implementing job queue logic for various kind of notifications.
-   * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
+   * Abstract base class for implementing job queue logic for various kind of notifications. No
+   * transactions should be started in any of the overrided methods since they are already wrapped
+   * in a transaction.
    */
-  private abstract class AbstractSchedulerSubscriberService extends AbstractNotificationSubscriberService {
+  private abstract class AbstractSchedulerSubscriberService extends
+      AbstractNotificationSubscriberService {
 
     AbstractSchedulerSubscriberService(String name, String topic, int fetchSize,
-                                       TransactionRunner transactionRunner) {
-      super(name, cConf, topic, fetchSize, cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
-            messagingService, metricsCollectionService, transactionRunner);
+        TransactionRunner transactionRunner) {
+      super(name, cConf, topic, fetchSize,
+          cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
+          messagingService, metricsCollectionService, transactionRunner);
     }
 
     @Nullable
@@ -135,13 +142,14 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void storeMessageId(StructuredTableContext context, String messageId) throws IOException {
+    protected void storeMessageId(StructuredTableContext context, String messageId)
+        throws IOException {
       getJobQueue(context).persistSubscriberState(getTopicId().getTopic(), messageId);
     }
 
     @Override
     protected void processMessages(StructuredTableContext structuredTableContext,
-                                   Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
+        Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueTable jobQueue = getJobQueue(structuredTableContext);
 
@@ -159,7 +167,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
      * Processes a single {@link Notification}.
      */
     protected abstract void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                                JobQueueTable jobQueue, Notification notification) throws IOException;
+        JobQueueTable jobQueue, Notification notification) throws IOException;
 
     private JobQueueTable getJobQueue(StructuredTableContext context) {
       return JobQueueTable.getJobQueue(context, cConf);
@@ -178,12 +186,12 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     SchedulerEventSubscriberService(TransactionRunner transactionRunner) {
       // Time and stream size events are non-transactional
       super("scheduler.event", cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), transactionRunner);
+          cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueTable jobQueue, Notification notification) throws IOException {
+        JobQueueTable jobQueue, Notification notification) throws IOException {
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
       if (scheduleIdString == null) {
@@ -204,24 +212,26 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       try {
         record = scheduleStore.getScheduleRecord(scheduleId);
       } catch (NotFoundException e) {
-        LOG.warn("Ignore notification that doesn't have a schedule {} associated with, {}", scheduleId, notification);
+        LOG.warn("Ignore notification that doesn't have a schedule {} associated with, {}",
+            scheduleId, notification);
         return;
       }
       try {
         jobQueue.addNotification(record, notification);
       } catch (Exception e) {
-        emitScheduleJobNotificationFailureMetrics(record.getSchedule().getScheduleId().getApplication(),
-                                                  record.getSchedule().getScheduleId().getSchedule());
+        emitScheduleJobNotificationFailureMetrics(
+            record.getSchedule().getScheduleId().getApplication(),
+            record.getSchedule().getScheduleId().getSchedule());
         throw e;
       }
     }
 
     private void emitScheduleJobNotificationFailureMetrics(String application, String schedule) {
       Map<String, String> tags = ImmutableMap.of(
-        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-        Constants.Metrics.Tag.COMPONENT, "schedulenotification",
-        Constants.Metrics.Tag.APP, application,
-        Constants.Metrics.Tag.SCHEDULE, schedule);
+          Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
+          Constants.Metrics.Tag.COMPONENT, "schedulenotification",
+          Constants.Metrics.Tag.APP, application,
+          Constants.Metrics.Tag.SCHEDULE, schedule);
       MetricsContext collector = metricsCollectionService.getContext(tags);
       collector.increment(Constants.Metrics.ScheduledJob.SCHEDULE_NOTIFICATION_FAILURE, 1);
     }
@@ -235,19 +245,19 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     DataEventSubscriberService(TransactionRunner transactionRunner) {
       // Dataset partition events are published transactionally, hence fetch need to be transactional too.
       super("scheduler.data.event", cConf.get(Constants.Dataset.DATA_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), transactionRunner);
+          cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueTable jobQueue, Notification notification) throws IOException {
+        JobQueueTable jobQueue, Notification notification) throws IOException {
       String datasetIdString = notification.getProperties().get(Notification.DATASET_ID);
       if (datasetIdString == null) {
         return;
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
       for (ProgramScheduleRecord schedule :
-        scheduleStore.findSchedules(Schedulers.triggerKeyForPartition(datasetId))) {
+          scheduleStore.findSchedules(Schedulers.triggerKeyForPartition(datasetId))) {
         jobQueue.addNotification(schedule, notification);
       }
     }
@@ -256,23 +266,28 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   /**
    * Class responsible for program status events.
    */
-  private final class ProgramStatusEventSubscriberService extends AbstractSchedulerSubscriberService {
+  private final class ProgramStatusEventSubscriberService extends
+      AbstractSchedulerSubscriberService {
 
     ProgramStatusEventSubscriberService(TransactionRunner transactionRunner) {
       // Fetch transactionally since publishing from AppMetadataStore is transactional.
-      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), transactionRunner);
+      super("scheduler.program.event",
+          cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
+          cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueTable jobQueue, Notification notification) throws IOException {
-      String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+        JobQueueTable jobQueue, Notification notification) throws IOException {
+      String programRunIdString = notification.getProperties()
+          .get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      String programRunStatusString = notification.getProperties()
+          .get(ProgramOptionConstants.PROGRAM_STATUS);
 
       ProgramStatus programStatus;
       try {
-        programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
+        programStatus = ProgramRunStatus.toProgramStatus(
+            ProgramRunStatus.valueOf(programRunStatusString));
       } catch (IllegalArgumentException e) {
         // Return silently, this happens for statuses that are not meant to be scheduled
         return;
@@ -285,9 +300,11 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramId programId = programRunId.getParent();
-      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId,
+          programStatus);
 
-      for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(triggerKeyForProgramStatus)) {
+      for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(
+          triggerKeyForProgramStatus)) {
         jobQueue.addNotification(schedule, notification);
       }
     }

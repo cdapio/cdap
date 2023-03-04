@@ -60,10 +60,10 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
 
   @Inject
   public LogHttpHandler(AccessEnforcer accessEnforcer,
-                        AuthenticationContext authenticationContext,
-                        LogReader logReader,
-                        ProgramRunRecordFetcher programRunFetcher,
-                        CConfiguration cConf) {
+      AuthenticationContext authenticationContext,
+      LogReader logReader,
+      ProgramRunRecordFetcher programRunFetcher,
+      CConfiguration cConf) {
     super(cConf);
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -73,184 +73,212 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/logs")
-  public void getLogs(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                      @PathParam("program-id") String programId,
-                      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
-                      @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void getLogs(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId,
+      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             ProgramType.valueOfCategoryName(programType));
+        LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
+            ProgramType.valueOfCategoryName(programType));
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
-              toTimeSecsParam, escape, filterStr, null, format, suppress);
+        toTimeSecsParam, escape, filterStr, null, format, suppress);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs")
-  public void getRunIdLogs(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                           @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                           @PathParam("program-id") String programId, @PathParam("run-id") String runId,
-                           @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                           @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
-                           @QueryParam("escape") @DefaultValue("true") boolean escape,
-                           @QueryParam("filter") @DefaultValue("") String filterStr,
-                           @QueryParam("format") @DefaultValue("text") String format,
-                           @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void getRunIdLogs(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
     RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
-                                                                                    runRecord.getSystemArgs());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef,
+        runId,
+        runRecord.getSystemArgs());
 
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam, toTimeSecsParam,
-              escape, filterStr, runRecord, format, suppress);
+        escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/logs/next")
-  public void next(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                   @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                   @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                   @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                   @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("format") @DefaultValue("text") String format,
-                   @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void next(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext(namespaceId, appId,
-                                             programId, ProgramType.valueOfCategoryName(programType));
-    doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+        LoggingContextHelper.getLoggingContext(namespaceId, appId,
+            programId, ProgramType.valueOfCategoryName(programType));
+    doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null,
+        format, suppress);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs/next")
-  public void runIdNext(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                        @PathParam("program-id") String programId, @PathParam("run-id") String runId,
-                        @QueryParam("max") @DefaultValue("50") int maxEvents,
-                        @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                        @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void runIdNext(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
     RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
-                                                                                    runRecord.getSystemArgs());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef,
+        runId,
+        runRecord.getSystemArgs());
 
     doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
-           escape, filterStr, runRecord, format, suppress);
+        escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/logs/prev")
-  public void prev(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                   @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                   @PathParam("program-id") String programId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                   @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                   @QueryParam("escape") @DefaultValue("true") boolean escape,
-                   @QueryParam("filter") @DefaultValue("") String filterStr,
-                   @QueryParam("format") @DefaultValue("text") String format,
-                   @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void prev(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
-                                             ProgramType.valueOfCategoryName(programType));
-    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+        LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
+            ProgramType.valueOfCategoryName(programType));
+    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null,
+        format, suppress);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs/prev")
-  public void runIdPrev(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                        @PathParam("app-id") String appId, @PathParam("program-type") String programType,
-                        @PathParam("program-id") String programId, @PathParam("run-id") String runId,
-                        @QueryParam("max") @DefaultValue("50") int maxEvents,
-                        @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                        @QueryParam("escape") @DefaultValue("true") boolean escape,
-                        @QueryParam("filter") @DefaultValue("") String filterStr,
-                        @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws Exception {
+  public void runIdPrev(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") String appId, @PathParam("program-type") String programType,
+      @PathParam("program-id") String programId, @PathParam("run-id") String runId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
     ensureVisibilityOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramReference programRef = new ProgramReference(namespaceId, appId, type, programId);
     RunRecordDetail runRecord = getRunRecordMeta(programRef, runId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef, runId,
-                                                                                    runRecord.getSystemArgs());
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRef,
+        runId,
+        runRecord.getSystemArgs());
 
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
-           escape, filterStr, runRecord, format, suppress);
+        escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs")
-  public void sysList(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
-                      @PathParam("service-id") String serviceId,
-                      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
-                      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
-                      @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) throws Exception {
-    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
-                                                                           serviceId);
+  public void sysList(HttpRequest request, HttpResponder responder,
+      @PathParam("component-id") String componentId,
+      @PathParam("service-id") String serviceId,
+      @QueryParam("start") @DefaultValue("-1") long fromTimeSecsParam,
+      @QueryParam("stop") @DefaultValue("-1") long toTimeSecsParam,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
+        Id.Namespace.SYSTEM.getId(), componentId,
+        serviceId);
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
-              toTimeSecsParam, escape, filterStr, null, format, suppress);
+        toTimeSecsParam, escape, filterStr, null, format, suppress);
   }
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs/next")
-  public void sysNext(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
-                      @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                      @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) throws Exception {
-    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
-                                                                           serviceId);
+  public void sysNext(HttpRequest request, HttpResponder responder,
+      @PathParam("component-id") String componentId,
+      @PathParam("service-id") String serviceId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
+        Id.Namespace.SYSTEM.getId(), componentId,
+        serviceId);
     doNext(logReader, responder, loggingContext, maxEvents,
-           fromOffsetStr, escape, filterStr, null, format, suppress);
+        fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET
   @Path("/system/{component-id}/{service-id}/logs/prev")
-  public void sysPrev(HttpRequest request, HttpResponder responder, @PathParam("component-id") String componentId,
-                      @PathParam("service-id") String serviceId, @QueryParam("max") @DefaultValue("50") int maxEvents,
-                      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
-                      @QueryParam("escape") @DefaultValue("true") boolean escape,
-                      @QueryParam("filter") @DefaultValue("") String filterStr,
-                      @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) throws Exception {
-    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(), StandardPermission.GET);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
-                                                                           serviceId);
-    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+  public void sysPrev(HttpRequest request, HttpResponder responder,
+      @PathParam("component-id") String componentId,
+      @PathParam("service-id") String serviceId,
+      @QueryParam("max") @DefaultValue("50") int maxEvents,
+      @QueryParam("fromOffset") @DefaultValue("") String fromOffsetStr,
+      @QueryParam("escape") @DefaultValue("true") boolean escape,
+      @QueryParam("filter") @DefaultValue("") String filterStr,
+      @QueryParam("format") @DefaultValue("text") String format,
+      @QueryParam("suppress") List<String> suppress) throws Exception {
+    accessEnforcer.enforce(NamespaceId.SYSTEM, authenticationContext.getPrincipal(),
+        StandardPermission.GET);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(
+        Id.Namespace.SYSTEM.getId(), componentId,
+        serviceId);
+    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null,
+        format, suppress);
   }
 
   private RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId)
-    throws IOException, NotFoundException, UnauthorizedException {
+      throws IOException, NotFoundException, UnauthorizedException {
     RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRef, runId);
     if (runRecordMeta == null) {
-      throw new NotFoundException(String.format("No run record found for program %s and runID: %s", programRef, runId));
+      throw new NotFoundException(
+          String.format("No run record found for program %s and runID: %s", programRef, runId));
     }
     return runRecordMeta;
   }
 
-  private void ensureVisibilityOnProgram(String namespace, String application, String programType, String program)
-    throws Exception {
+  private void ensureVisibilityOnProgram(String namespace, String application, String programType,
+      String program)
+      throws Exception {
     ApplicationId appId = new ApplicationId(namespace, application);
-    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType), program);
+    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType),
+        program);
     accessEnforcer.enforce(programId, authenticationContext.getPrincipal(), StandardPermission.GET);
   }
 }

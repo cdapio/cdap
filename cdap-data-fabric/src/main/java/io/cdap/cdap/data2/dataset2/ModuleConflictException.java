@@ -23,6 +23,7 @@ import io.cdap.cdap.api.dataset.DatasetManagementException;
  * in the system.
  */
 public class ModuleConflictException extends DatasetManagementException {
+
   public ModuleConflictException(String message) {
     super(message);
   }

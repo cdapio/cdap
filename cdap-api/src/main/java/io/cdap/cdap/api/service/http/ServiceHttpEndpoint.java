@@ -29,6 +29,7 @@ public final class ServiceHttpEndpoint {
 
   /**
    * Create an instance of {@link ServiceHttpEndpoint}.
+   *
    * @param method type of method.
    * @param path path of the endpoint.
    */

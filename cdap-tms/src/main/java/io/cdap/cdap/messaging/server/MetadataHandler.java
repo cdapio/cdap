@@ -52,8 +52,10 @@ import javax.ws.rs.PathParam;
 public final class MetadataHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();
-  private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
+  private static final Type TOPIC_PROPERTY_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
+  private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() {
+  }.getType();
   private static final Function<TopicId, String> TOPIC_TO_NAME = new Function<TopicId, String>() {
     @Override
     public String apply(TopicId topicId) {
@@ -71,48 +73,51 @@ public final class MetadataHandler extends AbstractHttpHandler {
   @PUT
   @Path("/topics/{topic}")
   public void createTopic(FullHttpRequest request, HttpResponder responder,
-                          @PathParam("namespace") String namespace,
-                          @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.createTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+    messagingService.createTopic(
+        new TopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @PUT
   @Path("/topics/{topic}/properties")
   public void updateTopic(FullHttpRequest request, HttpResponder responder,
-                          @PathParam("namespace") String namespace,
-                          @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    messagingService.updateTopic(new TopicMetadata(topicId, decodeTopicProperties(request.content())));
+    messagingService.updateTopic(
+        new TopicMetadata(topicId, decodeTopicProperties(request.content())));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @GET
   @Path("/topics/{topic}")
   public void getTopic(HttpRequest request, HttpResponder responder,
-                       @PathParam("namespace") String namespace,
-                       @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
     TopicMetadata metadata = messagingService.getTopic(topicId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata.getProperties(), TOPIC_PROPERTY_TYPE));
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(metadata.getProperties(), TOPIC_PROPERTY_TYPE));
   }
 
   @GET
   @Path("/topics")
   public void listTopics(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace") String namespace) throws Exception {
+      @PathParam("namespace") String namespace) throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(
-                         Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
-                         TOPIC_LIST_TYPE));
+        GSON.toJson(
+            Lists.transform(messagingService.listTopics(new NamespaceId(namespace)), TOPIC_TO_NAME),
+            TOPIC_LIST_TYPE));
   }
 
   @DELETE
   @Path("/topics/{topic}")
   public void deleteTopic(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace") String namespace,
-                          @PathParam("topic") String topic) throws Exception {
+      @PathParam("namespace") String namespace,
+      @PathParam("topic") String topic) throws Exception {
     TopicId topicId = new NamespaceId(namespace).topic(topic);
     messagingService.deleteTopic(topicId);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -121,16 +126,19 @@ public final class MetadataHandler extends AbstractHttpHandler {
   /**
    * Decodes the topic property map from the given request body.
    */
-  private Map<String, String> decodeTopicProperties(ByteBuf channelBuffer) throws BadRequestException {
+  private Map<String, String> decodeTopicProperties(ByteBuf channelBuffer)
+      throws BadRequestException {
     if (!channelBuffer.isReadable()) {
       return Collections.emptyMap();
     }
 
     try {
-      return GSON.fromJson(new InputStreamReader(new ByteBufInputStream(channelBuffer), StandardCharsets.UTF_8),
-                           TOPIC_PROPERTY_TYPE);
+      return GSON.fromJson(
+          new InputStreamReader(new ByteBufInputStream(channelBuffer), StandardCharsets.UTF_8),
+          TOPIC_PROPERTY_TYPE);
     } catch (Exception e) {
-      throw new BadRequestException("Invalid topic properties. It must be JSON object with string values.");
+      throw new BadRequestException(
+          "Invalid topic properties. It must be JSON object with string values.");
     }
   }
 }

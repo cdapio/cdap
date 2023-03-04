@@ -25,9 +25,11 @@ import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
- * Wrapper around {@link PluginSelector} that delegates to another selector but tracks which artifact it chose.
+ * Wrapper around {@link PluginSelector} that delegates to another selector but tracks which
+ * artifact it chose.
  */
 public class TrackedPluginSelector extends PluginSelector {
+
   private final PluginSelector delegate;
   private ArtifactId selectedArtifact;
   private ArtifactSelectorConfig suggestion;
@@ -39,9 +41,11 @@ public class TrackedPluginSelector extends PluginSelector {
   @Nullable
   @Override
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
-    ArtifactId latestArtifact = plugins.tailMap(plugins.lastKey()).entrySet().iterator().next().getKey();
-    suggestion = new ArtifactSelectorConfig(latestArtifact.getScope().name(), latestArtifact.getName(),
-                                            latestArtifact.getVersion().getVersion());
+    ArtifactId latestArtifact = plugins.tailMap(plugins.lastKey()).entrySet().iterator().next()
+        .getKey();
+    suggestion = new ArtifactSelectorConfig(latestArtifact.getScope().name(),
+        latestArtifact.getName(),
+        latestArtifact.getVersion().getVersion());
 
     Map.Entry<ArtifactId, PluginClass> selected = delegate.select(plugins);
     selectedArtifact = selected == null ? null : selected.getKey();

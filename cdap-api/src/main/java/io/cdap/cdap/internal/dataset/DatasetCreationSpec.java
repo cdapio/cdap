@@ -23,6 +23,7 @@ import java.util.Objects;
  * Information for creating dataset instance.
  */
 public final class DatasetCreationSpec {
+
   private final String instanceName;
   private final String typeName;
   private final DatasetProperties props;
@@ -56,9 +57,9 @@ public final class DatasetCreationSpec {
 
     DatasetCreationSpec that = (DatasetCreationSpec) o;
 
-    return Objects.equals(instanceName, that.instanceName) &&
-      Objects.equals(typeName, that.typeName) &&
-      Objects.equals(props.getProperties(), that.props.getProperties());
+    return Objects.equals(instanceName, that.instanceName)
+        && Objects.equals(typeName, that.typeName)
+        && Objects.equals(props.getProperties(), that.props.getProperties());
   }
 
   @Override

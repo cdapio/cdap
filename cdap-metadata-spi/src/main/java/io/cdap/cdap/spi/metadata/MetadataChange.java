@@ -21,11 +21,12 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import java.util.Objects;
 
 /**
- * The change effected by an operation is represented by
- * the metadata before and after the operation.
+ * The change effected by an operation is represented by the metadata before and after the
+ * operation.
  */
 @Beta
 public class MetadataChange {
+
   private final MetadataEntity entity;
   private final Metadata before;
   private final Metadata after;
@@ -57,9 +58,9 @@ public class MetadataChange {
       return false;
     }
     MetadataChange that = (MetadataChange) o;
-    return Objects.equals(entity, that.entity) &&
-      Objects.equals(before, that.before) &&
-      Objects.equals(after, that.after);
+    return Objects.equals(entity, that.entity)
+        && Objects.equals(before, that.before)
+        && Objects.equals(after, that.after);
   }
 
   @Override
@@ -69,10 +70,10 @@ public class MetadataChange {
 
   @Override
   public String toString() {
-    return "MetadataChange{" +
-      "entity=" + entity +
-      ", before=" + before +
-      ", after=" + after +
-      '}';
+    return "MetadataChange{"
+        + "entity=" + entity
+        + ", before=" + before
+        + ", after=" + after
+        + '}';
   }
 }

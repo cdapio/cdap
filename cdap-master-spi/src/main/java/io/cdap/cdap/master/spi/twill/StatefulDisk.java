@@ -55,9 +55,9 @@ public class StatefulDisk {
     }
 
     StatefulDisk that = (StatefulDisk) o;
-    return diskSizeGB == that.diskSizeGB &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(mountPath, that.mountPath);
+    return diskSizeGB == that.diskSizeGB
+        && Objects.equals(name, that.name)
+        && Objects.equals(mountPath, that.mountPath);
   }
 
   @Override

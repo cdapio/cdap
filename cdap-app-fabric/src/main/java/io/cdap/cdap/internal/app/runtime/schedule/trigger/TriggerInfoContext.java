@@ -35,13 +35,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Context object, exposing information that may be useful during the construction of
- * {@link io.cdap.cdap.api.schedule.TriggerInfo} for a trigger.
+ * Context object, exposing information that may be useful during the construction of {@link
+ * io.cdap.cdap.api.schedule.TriggerInfo} for a trigger.
  */
 public class TriggerInfoContext {
 
   private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private final Job job;
   private final Store store;
@@ -74,7 +75,8 @@ public class TriggerInfoContext {
     if (!programId.getType().equals(ProgramType.WORKFLOW)) {
       return null;
     }
-    return store.getWorkflowToken(new WorkflowId(programId.getParent(), programId.getProgram()), programRunId.getRun());
+    return store.getWorkflowToken(new WorkflowId(programId.getParent(), programId.getProgram()),
+        programRunId.getRun());
   }
 
   /**

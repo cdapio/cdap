@@ -53,17 +53,20 @@ import java.util.Map;
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name("FieldLineageAction")
 public class FieldLineageAction extends Action {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter()).create();
-  private static final Type LIST_OPERTAION = new TypeToken<List<Operation>>() { }.getType();
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter()).create();
+  private static final Type LIST_OPERTAION = new TypeToken<List<Operation>>() {
+  }.getType();
   private final Config config;
 
   /**
    * Config for the FieldLineageAction
    */
   public static class Config extends PluginConfig {
+
     private String readDataset;
     private String writeDataset;
     // json string for the field operations
@@ -83,7 +86,8 @@ public class FieldLineageAction extends Action {
     context.record(operations);
   }
 
-  public static ETLPlugin getPlugin(String readDataset, String writeDataset, Collection<Operation> fieldOperations) {
+  public static ETLPlugin getPlugin(String readDataset, String writeDataset,
+      Collection<Operation> fieldOperations) {
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("readDataset", readDataset);
     builder.put("writeDataset", writeDataset);
@@ -93,19 +97,25 @@ public class FieldLineageAction extends Action {
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("readDataset", new PluginPropertyField("readDataset", "", "string", true, false));
-    properties.put("writeDataset", new PluginPropertyField("writeDataset", "", "string", true, false));
-    properties.put("fieldOperations", new PluginPropertyField("fieldOperations", "", "string", true, false));
+    properties.put("readDataset",
+        new PluginPropertyField("readDataset", "", "string", true, false));
+    properties.put("writeDataset",
+        new PluginPropertyField("writeDataset", "", "string", true, false));
+    properties.put("fieldOperations",
+        new PluginPropertyField("fieldOperations", "", "string", true, false));
 
     return PluginClass.builder().setName("FieldLineageAction").setType(Action.PLUGIN_TYPE)
-             .setDescription("").setClassName(FieldLineageAction.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(FieldLineageAction.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 
   /**
    * Type adapter for {@link Operation}.
    */
-  private static class OperationTypeAdapter implements JsonSerializer<Operation>, JsonDeserializer<Operation> {
+  private static class OperationTypeAdapter implements JsonSerializer<Operation>,
+      JsonDeserializer<Operation> {
+
     @Override
     public JsonElement serialize(Operation src, Type typeOfSrc, JsonSerializationContext context) {
       return context.serialize(src);
@@ -113,7 +123,7 @@ public class FieldLineageAction extends Action {
 
     @Override
     public Operation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-      throws JsonParseException {
+        throws JsonParseException {
       JsonObject jsonObj = json.getAsJsonObject();
 
       OperationType type = context.deserialize(jsonObj.get("type"), OperationType.class);

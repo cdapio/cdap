@@ -32,8 +32,11 @@ import org.apache.twill.discovery.Discoverable;
  *
  * NOTE: This class may move to different package when needed.
  */
-public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDeserializer<Discoverable> {
-  private static final Type BYTE_ARRAY_TYPE = new TypeToken<byte[]>() { }.getType();
+public class DiscoverableCodec implements JsonSerializer<Discoverable>,
+    JsonDeserializer<Discoverable> {
+
+  private static final Type BYTE_ARRAY_TYPE = new TypeToken<byte[]>() {
+  }.getType();
 
   @Override
   public JsonElement serialize(Discoverable src, Type typeOfSrc, JsonSerializationContext context) {
@@ -47,7 +50,7 @@ public class DiscoverableCodec implements JsonSerializer<Discoverable>, JsonDese
 
   @Override
   public Discoverable deserialize(JsonElement json, Type typeOfT,
-                                  JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     String service = jsonObj.get("service").getAsString();
     String hostname = jsonObj.get("hostname").getAsString();

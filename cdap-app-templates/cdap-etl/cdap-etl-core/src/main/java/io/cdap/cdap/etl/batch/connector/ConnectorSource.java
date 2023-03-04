@@ -33,20 +33,21 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
- * Internal batch source used as a connector between pipeline phases.
- * Though this extends BatchSource, this will not be instantiated through the plugin framework, but will
- * be created explicitly through the application.
+ * Internal batch source used as a connector between pipeline phases. Though this extends
+ * BatchSource, this will not be instantiated through the plugin framework, but will be created
+ * explicitly through the application.
  *
- * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that wrote to it.
- * This way, multiple phases can have the same local PartitionedFileSet as a sink, and the source will read data
- * from all partitions.
+ * The batch connector is just a PartitionedFileSet, where a partition is the name of a phase that
+ * wrote to it. This way, multiple phases can have the same local PartitionedFileSet as a sink, and
+ * the source will read data from all partitions.
  *
- * This is because we don't want this to show up as a plugin that users can select and use, and also because
- * it uses features not exposed in the etl api (local workflow datasets).
+ * This is because we don't want this to show up as a plugin that users can select and use, and also
+ * because it uses features not exposed in the etl api (local workflow datasets).
  *
  * @param <T> type of output object
  */
 public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
+
   // you can't read from the basedir of a FileSet so adding an arbitrary directory where data will be stored/read.
   static final String DATA_DIR = "data";
   private final String datasetName;
@@ -59,11 +60,11 @@ public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
   // we may want to expose local datasets in cdap-etl-api, but that is a separate track.
   public void configure(WorkflowConfigurer workflowConfigurer) {
     workflowConfigurer.createLocalDataset(datasetName, FileSet.class,
-                                          FileSetProperties.builder()
-                                            .setInputFormat(CombineTextInputFormat.class)
-                                            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
-                                            .setOutputFormat(TextOutputFormat.class)
-                                            .build());
+        FileSetProperties.builder()
+            .setInputFormat(CombineTextInputFormat.class)
+            .setInputProperty(FileInputFormat.INPUT_DIR_RECURSIVE, "true")
+            .setOutputFormat(TextOutputFormat.class)
+            .build());
   }
 
   @Override

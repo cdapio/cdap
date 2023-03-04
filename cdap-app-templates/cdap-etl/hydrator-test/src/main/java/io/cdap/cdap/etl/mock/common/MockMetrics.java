@@ -25,6 +25,7 @@ import java.util.Map;
  * Mock metrics for unit tests.
  */
 public class MockMetrics implements Metrics {
+
   private final Map<String, Long> gauges = Maps.newHashMap();
   private final Map<String, Long> counts = Maps.newHashMap();
 

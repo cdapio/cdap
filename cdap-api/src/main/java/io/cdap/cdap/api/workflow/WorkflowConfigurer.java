@@ -31,22 +31,20 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer {
 
   /**
-   * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program must be
-   * configured when the Application is defined. Application deployment will fail if the MapReduce program does
-   * not exist.
+   * Adds a MapReduce program as a next sequential step in the {@link Workflow}. MapReduce program
+   * must be configured when the Application is defined. Application deployment will fail if the
+   * MapReduce program does not exist.
    *
    * @param mapReduce name of the MapReduce program to be added to the {@link Workflow}
-   *
    */
   void addMapReduce(String mapReduce);
 
   /**
    * Adds a Spark program as a next sequential step in the {@link Workflow}. Spark program must be
-   * configured when the Application is defined. Application deployment will fail if the Spark program
-   * does not exist.
+   * configured when the Application is defined. Application deployment will fail if the Spark
+   * program does not exist.
    *
    * @param spark name of the Spark program to be added to the {@link Workflow}
-   *
    */
   void addSpark(String spark);
 
@@ -59,19 +57,23 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer,
 
   /**
    * Forks the execution of the {@link Workflow} into multiple branches
+   *
    * @return the configurer for the {@link Workflow}
    */
   WorkflowForkConfigurer<? extends WorkflowConfigurer> fork();
 
   /**
    * Adds a condition to the {@link Workflow}.
+   *
    * @param condition the {@link Predicate} to be evaluated for the condition
    * @return the configurer for the condition
    */
-  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
+  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
+      Predicate<WorkflowContext> condition);
 
   /**
    * Adds a condition to the {@link Workflow}.
+   *
    * @param condition the {@link Condition} to be evaluated
    * @return the configurer for the condition
    */
@@ -81,8 +83,8 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer,
    * Adds a local dataset instance to the {@link Workflow}.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
@@ -96,13 +98,14 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer,
    * represented by the datasetClass parameter in the current namespace.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName dataset instance name
    * @param datasetClass dataset class to create the Dataset type from
    * @param props dataset instance properties
    */
   @Beta
-  void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props);
+  void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass,
+      DatasetProperties props);
 }

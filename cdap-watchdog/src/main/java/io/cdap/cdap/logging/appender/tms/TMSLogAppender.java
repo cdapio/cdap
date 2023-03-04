@@ -65,7 +65,8 @@ public class TMSLogAppender extends LogAppender {
   @Override
   public void start() {
     TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
-    Optional.ofNullable(tmsLogPublisher.getAndSet(publisher)).ifPresent(TMSLogPublisher::stopAndWait);
+    Optional.ofNullable(tmsLogPublisher.getAndSet(publisher))
+        .ifPresent(TMSLogPublisher::stopAndWait);
     publisher.startAndWait();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
@@ -110,12 +111,13 @@ public class TMSLogAppender extends LogAppender {
 
     private TMSLogPublisher(CConfiguration cConf, MessagingService messagingService) {
       super(cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE, 512),
-            RetryStrategies.fromConfiguration(cConf, "system.log.process."));
+          RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.topicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
       this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.logPartitionType =
-              LogPartitionType.valueOf(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase());
+          LogPartitionType.valueOf(
+              cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase());
       this.messagingContext = new MultiThreadMessagingContext(messagingService);
     }
 
@@ -128,19 +130,20 @@ public class TMSLogAppender extends LogAppender {
 
     @Override
     protected void publish(List<Map.Entry<Integer, byte[]>> logMessages)
-      throws TopicNotFoundException, IOException, AccessException {
+        throws TopicNotFoundException, IOException, AccessException {
       MessagePublisher directMessagePublisher = messagingContext.getDirectMessagePublisher();
 
       // Group the log messages by partition and then publish all messages to their respective partitions
       Map<Integer, List<byte[]>> partitionedMessages = new HashMap<>();
       for (Map.Entry<Integer, byte[]> logMessage : logMessages) {
-        List<byte[]> messages = partitionedMessages.computeIfAbsent(logMessage.getKey(), k -> new ArrayList<>());
+        List<byte[]> messages = partitionedMessages.computeIfAbsent(logMessage.getKey(),
+            k -> new ArrayList<>());
         messages.add(logMessage.getValue());
       }
 
       for (Map.Entry<Integer, List<byte[]>> partition : partitionedMessages.entrySet()) {
         directMessagePublisher.publish(NamespaceId.SYSTEM.getNamespace(),
-                                       topicPrefix + partition.getKey(), partition.getValue().iterator());
+            topicPrefix + partition.getKey(), partition.getValue().iterator());
       }
     }
 

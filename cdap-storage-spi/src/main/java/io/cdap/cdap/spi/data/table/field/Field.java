@@ -23,11 +23,13 @@ import javax.annotation.Nullable;
 
 /**
  * Represents a column of a table, and its value.
- * @param <T> the type of the value. Valid types for regular fields are int, long, double, float and string.
- *           Valid types for primary keys are int, long and string.
+ *
+ * @param <T> the type of the value. Valid types for regular fields are int, long, double, float
+ *     and string. Valid types for primary keys are int, long and string.
  */
 @Beta
 public final class Field<T> {
+
   private final FieldType fieldType;
   private final T value;
 
@@ -86,11 +88,13 @@ public final class Field<T> {
 
   @Override
   public String toString() {
-    return "Field{" +
-      "name='" + fieldType.getName() + '\'' +
-      ", type='" + fieldType.getType() + '\'' +
-      ", value='" +
-      (fieldType.getType() == FieldType.Type.BYTES ? Bytes.toStringBinary((byte[]) value) : value) + '\'' +
-      '}';
+    return "Field{"
+        + "name='" + fieldType.getName() + '\''
+        + ", type='" + fieldType.getType() + '\''
+        + ", value='"
+        + (fieldType.getType() == FieldType.Type.BYTES ? Bytes.toStringBinary((byte[]) value)
+        : value)
+        + '\''
+        + '}';
   }
 }

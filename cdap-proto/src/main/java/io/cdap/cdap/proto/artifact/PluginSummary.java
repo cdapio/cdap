@@ -22,11 +22,11 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents an plugin info returned by
- * /artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}
+ * Represents an plugin info returned by /artifacts/{artifact-name}/versions/{artifact-version}/extensions/{plugin-type}
  */
 @Beta
 public class PluginSummary {
+
   protected final String name;
   protected final String type;
   protected final String category;
@@ -35,7 +35,7 @@ public class PluginSummary {
   protected final ArtifactSummary artifact;
 
   public PluginSummary(String name, String type, @Nullable String category, String className,
-                       ArtifactSummary artifact, String description) {
+      ArtifactSummary artifact, String description) {
     this.name = name;
     this.type = type;
     this.category = category;
@@ -80,12 +80,12 @@ public class PluginSummary {
 
     PluginSummary that = (PluginSummary) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(category, that.category) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(className, that.className) &&
-      Objects.equals(artifact, that.artifact);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(category, that.category)
+        && Objects.equals(description, that.description)
+        && Objects.equals(className, that.className)
+        && Objects.equals(artifact, that.artifact);
   }
 
   @Override
@@ -95,13 +95,13 @@ public class PluginSummary {
 
   @Override
   public String toString() {
-    return "PluginSummary{" +
-      "name='" + name + '\'' +
-      ", type='" + type + '\'' +
-      ", category='" + category + '\'' +
-      ", description='" + description + '\'' +
-      ", className='" + className + '\'' +
-      ", artifact=" + artifact +
-      '}';
+    return "PluginSummary{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", category='" + category + '\''
+        + ", description='" + description + '\''
+        + ", className='" + className + '\''
+        + ", artifact=" + artifact
+        + '}';
   }
 }

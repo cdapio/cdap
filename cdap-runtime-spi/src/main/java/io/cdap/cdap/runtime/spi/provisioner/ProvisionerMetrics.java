@@ -21,8 +21,10 @@ package io.cdap.cdap.runtime.spi.provisioner;
  * Defines a way to collect provisioner metrics.
  */
 public interface ProvisionerMetrics {
+
   /**
    * Increases the value of the specific metric by delta.
+   *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
    */
@@ -30,6 +32,7 @@ public interface ProvisionerMetrics {
 
   /**
    * Sets the specific metric to the provided value.
+   *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.
    */

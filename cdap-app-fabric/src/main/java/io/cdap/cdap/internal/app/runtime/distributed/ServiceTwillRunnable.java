@@ -36,7 +36,7 @@ public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServicePr
 
   @Override
   protected Module createModule(CConfiguration cConf, Configuration hConf,
-                                ProgramOptions programOptions, ProgramRunId programRunId) {
+      ProgramOptions programOptions, ProgramRunId programRunId) {
     Module module = super.createModule(cConf, hConf, programOptions, programRunId);
     return Modules.combine(module, new DistributedArtifactManagerModule());
   }

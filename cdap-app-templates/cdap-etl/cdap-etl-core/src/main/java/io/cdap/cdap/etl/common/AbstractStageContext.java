@@ -44,9 +44,9 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
- * Base implementation of {@link StageContext} for common functionality.
- * This context scopes plugin ids by the id of the stage. This allows multiple transforms to use plugins with
- * the same id without clobbering each other.
+ * Base implementation of {@link StageContext} for common functionality. This context scopes plugin
+ * ids by the id of the stage. This allows multiple transforms to use plugins with the same id
+ * without clobbering each other.
  */
 public abstract class AbstractStageContext implements StageContext {
 
@@ -66,8 +66,8 @@ public abstract class AbstractStageContext implements StageContext {
     this.stageMetrics = new DefaultStageMetrics(pipelineRuntime.getMetrics(), stageSpec.getName());
     Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
     // all plugins except joiners have just a single input schema
-    this.inputSchema = inputSchemas.isEmpty() ?
-      null : stageSpec.getInputSchemas().values().iterator().next();
+    this.inputSchema = inputSchemas.isEmpty()
+        ? null : stageSpec.getInputSchemas().values().iterator().next();
     Map<String, Schema> portSchemas = new HashMap<>();
     for (StageSpec.Port outputPort : stageSpec.getOutputPorts().values()) {
       if (outputPort.getPort() != null) {
@@ -77,10 +77,11 @@ public abstract class AbstractStageContext implements StageContext {
     this.outputPortSchemas = Collections.unmodifiableMap(portSchemas);
     this.arguments = pipelineRuntime.getArguments();
     this.failureCollector = new LoggingFailureCollector(stageSpec.getName(), inputSchemas);
-    this.macroEvaluator = new DefaultMacroEvaluator(arguments, pipelineRuntime.getLogicalStartTime(),
-                                                    pipelineRuntime.getSecureStore(),
-                                                    pipelineRuntime.getServiceDiscoverer(),
-                                                    pipelineRuntime.getNamespace());
+    this.macroEvaluator = new DefaultMacroEvaluator(arguments,
+        pipelineRuntime.getLogicalStartTime(),
+        pipelineRuntime.getSecureStore(),
+        pipelineRuntime.getServiceDiscoverer(),
+        pipelineRuntime.getNamespace());
   }
 
   @Override
@@ -105,14 +106,15 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public final PluginProperties getPluginProperties(final String pluginId) {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId)));
+        () -> pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId)));
   }
 
   @Override
   public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
     try {
       return CALLER.call(
-        () -> pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId), macroEvaluator));
+          () -> pipelineRuntime.getPluginContext()
+              .newPluginInstance(scopePluginId(pluginId), macroEvaluator));
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, InstantiationException.class);
       throw Throwables.propagate(e);
@@ -122,13 +124,13 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public final <T> Class<T> loadPluginClass(final String pluginId) {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId)));
+        () -> pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId)));
   }
 
   @Override
   public final PluginProperties getPluginProperties() {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName()));
+        () -> pipelineRuntime.getPluginContext().getPluginProperties(stageSpec.getName()));
   }
 
   @Override
@@ -179,32 +181,35 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Nullable
   @Override
-  public URL getServiceURL(final String namespaceId, final String applicationId, final String serviceId) {
+  public URL getServiceURL(final String namespaceId, final String applicationId,
+      final String serviceId) {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(namespaceId, applicationId, serviceId));
+        () -> pipelineRuntime.getServiceDiscoverer()
+            .getServiceURL(namespaceId, applicationId, serviceId));
   }
 
   @Nullable
   @Override
   public URL getServiceURL(final String applicationId, final String serviceId) {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));
+        () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));
   }
 
   @Nullable
   @Override
   public URL getServiceURL(final String serviceId) {
     return CALLER.callUnchecked(
-      () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId));
+        () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId));
   }
 
   @Nullable
   @Override
   public HttpURLConnection openConnection(String namespaceId, String applicationId,
-                                          String serviceId, String methodPath) throws IOException {
+      String serviceId, String methodPath) throws IOException {
     try {
       return CALLER.call(
-        () -> pipelineRuntime.getServiceDiscoverer().openConnection(namespaceId, applicationId, serviceId, methodPath));
+          () -> pipelineRuntime.getServiceDiscoverer()
+              .openConnection(namespaceId, applicationId, serviceId, methodPath));
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
@@ -297,11 +302,13 @@ public abstract class AbstractStageContext implements StageContext {
   }
 
   private MetadataReader getMetadataReader() {
-    return pipelineRuntime.getMetadataReader().orElseThrow(this::createMetadataUnsupportedException);
+    return pipelineRuntime.getMetadataReader()
+        .orElseThrow(this::createMetadataUnsupportedException);
   }
 
   private MetadataWriter getMetadataWriter() {
-    return pipelineRuntime.getMetadataWriter().orElseThrow(this::createMetadataUnsupportedException);
+    return pipelineRuntime.getMetadataWriter()
+        .orElseThrow(this::createMetadataUnsupportedException);
   }
 
   private UnsupportedOperationException createMetadataUnsupportedException() {

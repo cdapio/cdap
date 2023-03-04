@@ -33,9 +33,9 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
 /**
- * Implementation of {@link MessagePublisher} that implements {@link TransactionAware} so that messages will be
- * published transactionally if there is an active transaction. If there is no active transaction, it will
- * delegate to {@link DirectMessagePublisher} for publishing.
+ * Implementation of {@link MessagePublisher} that implements {@link TransactionAware} so that
+ * messages will be published transactionally if there is an active transaction. If there is no
+ * active transaction, it will delegate to {@link DirectMessagePublisher} for publishing.
  */
 final class BasicMessagePublisher extends AbstractMessagePublisher implements TransactionAware {
 
@@ -56,7 +56,7 @@ final class BasicMessagePublisher extends AbstractMessagePublisher implements Tr
 
   @Override
   public void publish(TopicId topicId, Iterator<byte[]> payloads)
-    throws IOException, TopicNotFoundException, UnauthorizedException {
+      throws IOException, TopicNotFoundException, UnauthorizedException {
     if (transaction == null) {
       directMessagePublisher.publish(topicId, payloads);
       return;

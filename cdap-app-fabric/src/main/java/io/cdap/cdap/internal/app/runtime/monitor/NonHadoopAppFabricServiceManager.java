@@ -30,7 +30,7 @@ public class NonHadoopAppFabricServiceManager extends AbstractMasterServiceManag
 
   @Inject
   NonHadoopAppFabricServiceManager(CConfiguration cConf, DiscoveryServiceClient discoveryClient,
-                                   TwillRunner twillRunner) {
+      TwillRunner twillRunner) {
     super(cConf, discoveryClient, Constants.Service.APP_FABRIC_HTTP, twillRunner);
   }
 

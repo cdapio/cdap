@@ -74,13 +74,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A bytecode generator for generating class that implements {@link io.cdap.http.HttpHandler} interface and
- * copy public methods annotated with {@link Path} of a delegating class by delegating to the delegation instance.
+ * A bytecode generator for generating class that implements {@link io.cdap.http.HttpHandler}
+ * interface and copy public methods annotated with {@link Path} of a delegating class by delegating
+ * to the delegation instance.
  *
- * It is needed for wrapping user class that annotated with {@link Path} into a class that implements
- * {@link io.cdap.http.HttpHandler} for the netty http service to inspect.
+ * It is needed for wrapping user class that annotated with {@link Path} into a class that
+ * implements {@link io.cdap.http.HttpHandler} for the netty http service to inspect.
  *
- * Also, the generated class can impose transaction boundary for calls to those {@link Path @Path} methods.
+ * Also, the generated class can impose transaction boundary for calls to those {@link Path @Path}
+ * methods.
  *
  * The generated class has a skeleton looks like this:
  *
@@ -108,11 +110,11 @@ import org.slf4j.LoggerFactory;
 final class HttpHandlerGenerator {
 
   private static final Set<Type> HTTP_ANNOTATION_TYPES = ImmutableSet.of(
-    Type.getType(GET.class),
-    Type.getType(POST.class),
-    Type.getType(PUT.class),
-    Type.getType(DELETE.class),
-    Type.getType(HEAD.class)
+      Type.getType(GET.class),
+      Type.getType(POST.class),
+      Type.getType(PUT.class),
+      Type.getType(DELETE.class),
+      Type.getType(HEAD.class)
   );
 
   private static final Type TX_POLICY_TYPE = Type.getType(TransactionPolicy.class);
@@ -120,7 +122,8 @@ final class HttpHandlerGenerator {
   private static final Type ATOMIC_REFERENCE_TYPE = Type.getType(AtomicReference.class);
   private static final Type THROWING_RUNNABLE_TYPE = Type.getType(ThrowingRunnable.class);
   private static final Type EXCEPTION_TYPE = Type.getType(Exception.class);
-  private static final Type DELAYED_HTTP_SERVICE_RESPONDER_TYPE = Type.getType(DelayedHttpServiceResponder.class);
+  private static final Type DELAYED_HTTP_SERVICE_RESPONDER_TYPE = Type.getType(
+      DelayedHttpServiceResponder.class);
   private static final Type HTTP_CONTENT_CONSUMER_TYPE = Type.getType(HttpContentConsumer.class);
 
   private final TransactionControl defaultTxControl;
@@ -130,9 +133,9 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * Generates a new class that implements {@link HttpHandler} by copying methods signatures from the given
-   * user service handler class. Calls to user service handler methods are transactional unless
-   * the method is annotated with {@link TransactionPolicy(TransactionControl)}.
+   * Generates a new class that implements {@link HttpHandler} by copying methods signatures from
+   * the given user service handler class. Calls to user service handler methods are transactional
+   * unless the method is annotated with {@link TransactionPolicy(TransactionControl)}.
    *
    * @param delegateType type of the user service handler
    * @param pathPrefix prefix for all {@code @PATH} annotation
@@ -152,8 +155,8 @@ final class HttpHandlerGenerator {
     // Generate the class
     Type classType = Type.getObjectType(className);
     classWriter.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
-                      className, getClassSignature(delegateType),
-                      Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
+        className, getClassSignature(delegateType),
+        Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
 
     // Inspect the delegate class hierarchy to generate public handler methods.
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
@@ -165,7 +168,8 @@ final class HttpHandlerGenerator {
     generateConstructor(delegateType, classWriter);
     generateLogger(classType, classWriter);
 
-    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
+    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className,
+        preservedClasses);
     // DEBUG block. Uncomment for debug
     // io.cdap.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
@@ -173,19 +177,23 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * Inspects the given type and copy/rewrite handler methods from it into the newly generated class.
+   * Inspects the given type and copy/rewrite handler methods from it into the newly generated
+   * class.
    *
    * @param delegateType The user handler type
-   * @param inspectType The type that needs to be inspected. It's either the delegateType or one of its parents
+   * @param inspectType The type that needs to be inspected. It's either the delegateType or one
+   *     of its parents
    */
-  private void inspectHandler(final TypeToken<?> delegateType, final TypeToken<?> inspectType, final String pathPrefix,
-                              final Type classType, final ClassWriter classWriter,
-                              final List<Class<?>> preservedClasses) throws IOException {
+  private void inspectHandler(final TypeToken<?> delegateType, final TypeToken<?> inspectType,
+      final String pathPrefix,
+      final Type classType, final ClassWriter classWriter,
+      final List<Class<?>> preservedClasses) throws IOException {
     Class<?> rawType = inspectType.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
     try (
-      InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class")
+        InputStream sourceBytes = rawType.getClassLoader()
+            .getResourceAsStream(Type.getInternalName(rawType) + ".class")
     ) {
       ClassReader classReader = new ClassReader(sourceBytes);
       classReader.accept(new ClassVisitor(Opcodes.ASM5) {
@@ -196,7 +204,7 @@ final class HttpHandlerGenerator {
 
         @Override
         public void visit(int version, int access, String name, String signature,
-                          String superName, String[] interfaces) {
+            String superName, String[] interfaces) {
           super.visit(version, access, name, signature, superName, interfaces);
         }
 
@@ -225,7 +233,8 @@ final class HttpHandlerGenerator {
         }
 
         @Override
-        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+            String[] exceptions) {
           // Create a class-level annotation with the prefix, if the user has not specified any class-level
           // annotation.
           if (!visitedPath) {
@@ -242,45 +251,50 @@ final class HttpHandlerGenerator {
             return mv;
           }
           return new HandlerMethodVisitor(delegateType, mv, desc, signature, access, name,
-                                          exceptions, classType, classWriter, preservedClasses);
+              exceptions, classType, classWriter, preservedClasses);
         }
       }, ClassReader.SKIP_DEBUG);
     }
   }
 
   /**
-   * Generates the constructor. The constructor generated has signature {@code (DelegatorContext, MetricsContext)}.
+   * Generates the constructor. The constructor generated has signature {@code (DelegatorContext,
+   * MetricsContext)}.
    */
   private void generateConstructor(TypeToken<?> delegateType, ClassWriter classWriter) {
-    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class,
+        MetricsContext.class);
     String signature = Signatures.getMethodSignature(constructor, TypeToken.of(void.class),
-                                                     getContextType(delegateType),
-                                                     TypeToken.of(MetricsContext.class));
+        getContextType(delegateType),
+        TypeToken.of(MetricsContext.class));
 
     // Constructor(DelegatorContext, MetricsContext)
-    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null,
+        classWriter);
 
     // super(context, metricsContext);
     mg.loadThis();
     mg.loadArg(0);
     mg.loadArg(1);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
-                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class));
+        Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class));
     mg.returnValue();
     mg.endMethod();
   }
 
   /**
-   * Generates a static Logger field for logging and a static initialization block to initialize the logger.
+   * Generates a static Logger field for logging and a static initialization block to initialize the
+   * logger.
    */
   private void generateLogger(Type classType, ClassWriter classWriter) {
     // private static final Logger LOG = LoggerFactory.getLogger(classType);
     classWriter.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, "LOG",
-                           Type.getType(Logger.class).getDescriptor(), null, null);
+        Type.getType(Logger.class).getDescriptor(), null, null);
     Method init = Methods.getMethod(void.class, "<clinit>");
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_STATIC, init, null, null, classWriter);
     mg.visitLdcInsn(classType);
-    mg.invokeStatic(Type.getType(LoggerFactory.class), Methods.getMethod(Logger.class, "getLogger", Class.class));
+    mg.invokeStatic(Type.getType(LoggerFactory.class),
+        Methods.getMethod(Logger.class, "getLogger", Class.class));
     mg.putStatic(classType, "LOG", Type.getType(Logger.class));
     mg.returnValue();
     mg.endMethod();
@@ -298,12 +312,14 @@ final class HttpHandlerGenerator {
    */
   private <T> TypeToken<DelegatorContext<T>> getContextType(TypeToken<T> delegateType) {
     return new TypeToken<DelegatorContext<T>>() {
-    }.where(new TypeParameter<T>() { }, delegateType);
+    }.where(new TypeParameter<T>() {
+    }, delegateType);
   }
 
   /**
-   * Generates the class signature of the generate class. The generated class is not parameterized, however
-   * it extends from {@link AbstractHttpHandlerDelegator} with parameterized type of the user http handler.
+   * Generates the class signature of the generate class. The generated class is not parameterized,
+   * however it extends from {@link AbstractHttpHandlerDelegator} with parameterized type of the
+   * user http handler.
    *
    * @param delegateType Type of the user http handler
    * @return The signature string
@@ -323,8 +339,8 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * The ASM MethodVisitor for visiting handler class methods and optionally copy them if it is a handler
-   * method.
+   * The ASM MethodVisitor for visiting handler class methods and optionally copy them if it is a
+   * handler method.
    */
   private class HandlerMethodVisitor extends MethodVisitor {
 
@@ -352,12 +368,12 @@ final class HttpHandlerGenerator {
      * @param exceptions Method exceptions list
      * @param classType Type of the generated class
      * @param classWriter Writer for generating bytecode
-     * @param preservedClasses List for storing classes that needs to be preserved for correct class loading.
-     *                         See {@link ClassDefinition} for details.
+     * @param preservedClasses List for storing classes that needs to be preserved for correct
+     *     class loading. See {@link ClassDefinition} for details.
      */
     HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc,
-                         String signature, int access, String name, String[] exceptions,
-                         Type classType, ClassWriter classWriter, List<Class<?>> preservedClasses) {
+        String signature, int access, String name, String[] exceptions,
+        Type classType, ClassWriter classWriter, List<Class<?>> preservedClasses) {
       super(Opcodes.ASM5, mv);
       this.delegateType = delegateType;
       this.desc = desc;
@@ -430,8 +446,8 @@ final class HttpHandlerGenerator {
 
       // If the first two parameters are not HttpServiceRequest and HttpServiceResponder, don't copy
       if (argTypes.length < 2
-        || !argTypes[0].equals(Type.getType(HttpServiceRequest.class))
-        || !argTypes[1].equals(Type.getType(HttpServiceResponder.class))) {
+          || !argTypes[0].equals(Type.getType(HttpServiceRequest.class))
+          || !argTypes[1].equals(Type.getType(HttpServiceResponder.class))) {
         super.visitEnd();
         return;
       }
@@ -446,10 +462,11 @@ final class HttpHandlerGenerator {
       // Otherwise, the return type must be void
       if (returnType.getSort() == Type.OBJECT) {
         try {
-          Class<?> returnClass = delegateType.getRawType().getClassLoader().loadClass(returnType.getClassName());
+          Class<?> returnClass = delegateType.getRawType().getClassLoader()
+              .loadClass(returnType.getClassName());
           if (!HttpContentConsumer.class.isAssignableFrom(returnClass)) {
             throw new IllegalArgumentException("Handler method must either return void or a "
-                                                 + HttpContentConsumer.class.getName());
+                + HttpContentConsumer.class.getName());
           }
           returnType = Type.getType(BodyConsumer.class);
         } catch (ClassNotFoundException e) {
@@ -459,13 +476,13 @@ final class HttpHandlerGenerator {
         }
       } else if (!returnType.equals(Type.VOID_TYPE)) {
         throw new IllegalArgumentException("Handler method must either return void or a "
-                                             + HttpContentConsumer.class.getName());
+            + HttpContentConsumer.class.getName());
       }
 
       // Copy the method signature with the first two parameter types changed and return type changed
       String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
       MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc,
-                                                            rewriteMethodSignature(signature), exceptions);
+          rewriteMethodSignature(signature), exceptions);
       GeneratorAdapter mg = new GeneratorAdapter(methodVisitor, access, name, methodDesc);
 
       // Replay all annotations before generating the body.
@@ -486,9 +503,10 @@ final class HttpHandlerGenerator {
 
     /**
      * Preserves method parameter classes for class loading. The first two parameters are always
-     * {@link HttpServiceRequest} and {@link HttpServiceResponder}, which don't need to be preserved since
-     * they are always loaded by the CDAP system ClassLoader. The third and onward method parameter classes
-     * need to be preserved since they can be defined by user, hence in the user ClassLoader.
+     * {@link HttpServiceRequest} and {@link HttpServiceResponder}, which don't need to be preserved
+     * since they are always loaded by the CDAP system ClassLoader. The third and onward method
+     * parameter classes need to be preserved since they can be defined by user, hence in the user
+     * ClassLoader.
      *
      * @see ClassDefinition
      */
@@ -500,7 +518,8 @@ final class HttpHandlerGenerator {
         for (int i = 2; i < argTypes.length; i++) {
           // Only add object type parameter which is not Java class
           if (argTypes[i].getSort() == Type.OBJECT) {
-            Class<?> cls = delegateType.getRawType().getClassLoader().loadClass(argTypes[i].getClassName());
+            Class<?> cls = delegateType.getRawType().getClassLoader()
+                .loadClass(argTypes[i].getClassName());
 
             // Classes loaded by bootstrap classloader are having null ClassLoader. They don't need to be preserved.
             if (cls.getClassLoader() != null) {
@@ -515,9 +534,9 @@ final class HttpHandlerGenerator {
     }
 
     /**
-     * Rewrite the handler method signature to have the first two parameters rewritten from
-     * {@link HttpServiceRequest} and {@link HttpServiceResponder} into
-     * {@link HttpRequest} and {@link HttpResponder}.
+     * Rewrite the handler method signature to have the first two parameters rewritten from {@link
+     * HttpServiceRequest} and {@link HttpServiceResponder} into {@link HttpRequest} and {@link
+     * HttpResponder}.
      */
     private String rewriteMethodSignature(String signature) {
       if (signature == null) {
@@ -545,8 +564,8 @@ final class HttpHandlerGenerator {
     }
 
     /**
-     * Generate the handle method body.
-     * For handler that doesn't return {@link HttpContentConsumer}, it has the following form:
+     * Generate the handle method body. For handler that doesn't return {@link HttpContentConsumer},
+     * it has the following form:
      *
      * <pre>
      * public void handle(HttpRequest request, HttpResponder responder, ...) {
@@ -584,7 +603,7 @@ final class HttpHandlerGenerator {
      * </pre>
      */
     private void generateDelegateBody(ClassWriter classWriter, GeneratorAdapter mg,
-                                      Method method, TransactionControl txControl) {
+        Method method, TransactionControl txControl) {
       boolean useBodyConsumer = method.getReturnType().getSort() == Type.OBJECT;
 
       // Generate the synthetic static method for lambda invoke first
@@ -612,8 +631,8 @@ final class HttpHandlerGenerator {
       mg.loadArg(1);
       mg.getStatic(TX_CONTROL_TYPE, defaultTxControl.name(), TX_CONTROL_TYPE);
       mg.invokeVirtual(classType,
-                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
-                                         HttpResponder.class, TransactionControl.class));
+          Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
+              HttpResponder.class, TransactionControl.class));
       mg.storeLocal(wrappedResponder, DELAYED_HTTP_SERVICE_RESPONDER_TYPE);
 
       int consumerRef = 0;
@@ -622,7 +641,8 @@ final class HttpHandlerGenerator {
         consumerRef = mg.newLocal(ATOMIC_REFERENCE_TYPE);
         mg.newInstance(ATOMIC_REFERENCE_TYPE);
         mg.dup();
-        mg.invokeConstructor(ATOMIC_REFERENCE_TYPE, new Method("<init>", Type.VOID_TYPE, new Type[0]));
+        mg.invokeConstructor(ATOMIC_REFERENCE_TYPE,
+            new Method("<init>", Type.VOID_TYPE, new Type[0]));
         mg.storeLocal(consumerRef);
       }
 
@@ -651,7 +671,7 @@ final class HttpHandlerGenerator {
       mg.loadThis();
       mg.loadArg(0);
       mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
+          Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
 
       mg.loadLocal(wrappedResponder);
 
@@ -662,22 +682,23 @@ final class HttpHandlerGenerator {
 
       // Perform the lambda invocation.
       Handle metaFactoryHandle = new Handle(Opcodes.H_INVOKESTATIC,
-                                            Type.getType(LambdaMetafactory.class).getInternalName(),
-                                            "metafactory", Methods.LAMBDA_META_FACTORY_METHOD_DESC, false);
+          Type.getType(LambdaMetafactory.class).getInternalName(),
+          "metafactory", Methods.LAMBDA_META_FACTORY_METHOD_DESC, false);
       Handle lambdaMethodHandle = new Handle(Opcodes.H_INVOKESTATIC, classType.getInternalName(),
-                                             lambdaMethod.getName(), lambdaMethod.getDescriptor(), false);
+          lambdaMethod.getName(), lambdaMethod.getDescriptor(), false);
 
       // Signature of the ThrowingRunnable.run() method
       Type samMethodType = Type.getType(Type.getMethodDescriptor(Type.VOID_TYPE));
       // Use invokeDynamic to call the static lambda method, which to the invokeDynamic command, it is as if
       // calling a method that returns a ThrowingRunnable.
-      mg.invokeDynamic("run", Type.getMethodDescriptor(THROWING_RUNNABLE_TYPE, lambdaMethod.getArgumentTypes()),
-                       metaFactoryHandle, samMethodType, lambdaMethodHandle, samMethodType);
+      mg.invokeDynamic("run",
+          Type.getMethodDescriptor(THROWING_RUNNABLE_TYPE, lambdaMethod.getArgumentTypes()),
+          metaFactoryHandle, samMethodType, lambdaMethodHandle, samMethodType);
 
       // Second argument to the execute method
       mg.push(txControl == TransactionControl.IMPLICIT);
       mg.invokeVirtual(classType, new Method("execute", Type.VOID_TYPE,
-                                             new Type[] { THROWING_RUNNABLE_TYPE, Type.BOOLEAN_TYPE }));
+          new Type[]{THROWING_RUNNABLE_TYPE, Type.BOOLEAN_TYPE}));
 
       mg.goTo(txTryEnd);
 
@@ -695,7 +716,7 @@ final class HttpHandlerGenerator {
       mg.loadLocal(wrappedResponder);
       mg.loadLocal(throwable);
       mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE,
-                       Methods.getMethod(void.class, "setFailure", Throwable.class));
+          Methods.getMethod(void.class, "setFailure", Throwable.class));
 
       if (useBodyConsumer) {
         // consumerRef.set(null);
@@ -730,7 +751,8 @@ final class HttpHandlerGenerator {
         //   wrappedResponder.execute();
         //   return null;
         mg.loadLocal(wrappedResponder);
-        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE, Methods.getMethod(void.class, "execute"));
+        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE,
+            Methods.getMethod(void.class, "execute"));
         mg.visitInsn(Opcodes.ACONST_NULL);
         mg.returnValue();
 
@@ -744,22 +766,23 @@ final class HttpHandlerGenerator {
         mg.loadLocal(wrappedResponder);
         mg.getStatic(TX_CONTROL_TYPE, defaultTxControl.name(), TX_CONTROL_TYPE);
         mg.invokeVirtual(classType, Methods.getMethod(BodyConsumer.class, "wrapContentConsumer",
-                                                      HttpContentConsumer.class,
-                                                      DelayedHttpServiceResponder.class,
-                                                      TransactionControl.class));
+            HttpContentConsumer.class,
+            DelayedHttpServiceResponder.class,
+            TransactionControl.class));
         mg.returnValue();
       } else {
         // wrappedResponder.execute();
         mg.loadLocal(wrappedResponder);
-        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE, Methods.getMethod(void.class, "execute"));
+        mg.invokeVirtual(DELAYED_HTTP_SERVICE_RESPONDER_TYPE,
+            Methods.getMethod(void.class, "execute"));
         mg.returnValue();
       }
       mg.endMethod();
     }
 
     /**
-     * Generates a synthetic static method for lambda dynamic invocation.
-     * For handler method that doesn't return {@link HttpContentConsumer}, it has the following form:
+     * Generates a synthetic static method for lambda dynamic invocation. For handler method that
+     * doesn't return {@link HttpContentConsumer}, it has the following form:
      *
      * <pre>
      *   private static [synthetic] void methodName(T handler, HttpServiceRequest request,
@@ -776,9 +799,9 @@ final class HttpHandlerGenerator {
      *     consumerRef.set(handler.methodName(request, responder, ...);
      *   }
      * </pre>
-     *
      */
-    private Method generateRunnableLambda(ClassWriter classWriter, Method handlerMethod, boolean useBodyConsumer) {
+    private Method generateRunnableLambda(ClassWriter classWriter, Method handlerMethod,
+        boolean useBodyConsumer) {
       Type handlerType = Type.getType(delegateType.getRawType());
 
       // Setup the method argument types
@@ -791,10 +814,11 @@ final class HttpHandlerGenerator {
 
       // Generate the method
       Method lambdaMethod = new Method(generateMethodName(handlerMethod), Type.VOID_TYPE,
-                                       argumentTypes.toArray(new Type[argumentTypes.size()]));
-      GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
-                                                 lambdaMethod, null, new Type[] { Type.getType(Exception.class) },
-                                                 classWriter);
+          argumentTypes.toArray(new Type[argumentTypes.size()]));
+      GeneratorAdapter mg = new GeneratorAdapter(
+          Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC + Opcodes.ACC_SYNTHETIC,
+          lambdaMethod, null, new Type[]{Type.getType(Exception.class)},
+          classWriter);
 
       // Load all the arguments and call the handler method.
       // handler.methodName(request, responder, ...);
@@ -817,8 +841,9 @@ final class HttpHandlerGenerator {
    * Generates a legal Java method name from the given method descriptor.
    */
   private String generateMethodName(Method method) {
-    return "lambda$" + method.toString().codePoints().map(c -> Character.isJavaIdentifierPart(c) ? c : '_')
-      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
-      .toString();
+    return "lambda$" + method.toString().codePoints()
+        .map(c -> Character.isJavaIdentifierPart(c) ? c : '_')
+        .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+        .toString();
   }
 }

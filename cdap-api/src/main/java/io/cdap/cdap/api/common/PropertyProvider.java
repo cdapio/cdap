@@ -30,6 +30,7 @@ public interface PropertyProvider {
 
   /**
    * Return the property value of a given key.
+   *
    * @param key for getting specific property value.
    * @return The value associated with the key or {@code null} if not such key exists.
    */

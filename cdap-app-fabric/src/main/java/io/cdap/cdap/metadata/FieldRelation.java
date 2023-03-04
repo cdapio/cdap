@@ -22,6 +22,7 @@ import java.util.Objects;
  * This class represents the field relation about two dataset, source field -> destination field.
  */
 public class FieldRelation {
+
   private final String source;
   private final String destination;
 
@@ -41,8 +42,8 @@ public class FieldRelation {
     }
 
     FieldRelation that = (FieldRelation) o;
-    return Objects.equals(source, that.source) &&
-      Objects.equals(destination, that.destination);
+    return Objects.equals(source, that.source)
+        && Objects.equals(destination, that.destination);
   }
 
   @Override

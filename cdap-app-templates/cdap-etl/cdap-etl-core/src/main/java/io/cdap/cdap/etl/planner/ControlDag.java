@@ -28,12 +28,13 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 /**
- * A DAG (directed acyclic graph) where edges represent a happens-before relationship.
- * In these types of scenarios, certain edges may be redundant and can be removed.
- * This simplifies the dag into something that is much easier to work with if it needs
- * to be used as a fork-join type of dag for workflow execution.
+ * A DAG (directed acyclic graph) where edges represent a happens-before relationship. In these
+ * types of scenarios, certain edges may be redundant and can be removed. This simplifies the dag
+ * into something that is much easier to work with if it needs to be used as a fork-join type of dag
+ * for workflow execution.
  */
 public class ControlDag extends Dag {
+
   private static final Set<String> EMPTY = ImmutableSet.of();
 
   public ControlDag(Collection<Connection> connections) {
@@ -50,30 +51,25 @@ public class ControlDag extends Dag {
    *
    * For example the following dag is not a fork-join dag:
    *
-   *      |--> n2 -------|
-   *      |              |--> n5
-   *      |--> n3 -------|
-   *  n1--|           |
-   *      |           v
-   *      |--> n4 --> n6
+   * |--> n2 -------| |              |--> n5 |--> n3 -------| n1--|           | |           v |-->
+   * n4 --> n6
    *
-   *  There are many ways to turn this into a fork-join while still respecting all happens-before relationships,
-   *  but for simplicity we'll use an algorithm that doesn't have any nested forks and will turn the above into:
+   * There are many ways to turn this into a fork-join while still respecting all happens-before
+   * relationships, but for simplicity we'll use an algorithm that doesn't have any nested forks and
+   * will turn the above into:
    *
-   *       |--> n2 --|
-   *       |         |               |--> n5 --|
-   *  n1 --|--> n3 --|--> n2.n3.n4 --|         |--> n5.n6
-   *       |         |               |--> n6 --|
-   *       |--> n4 --|
+   * |--> n2 --| |         |               |--> n5 --| n1 --|--> n3 --|--> n2.n3.n4 --|         |-->
+   * n5.n6 |         |               |--> n6 --| |--> n4 --|
    *
-   *  The algorithm is to insert a join node whenever it sees a fork. Every time there is a fork, we will follow
-   *  each branch to its endpoint (a node that forks, merges, or is a sink), then insert a join node that each
-   *  branch endpoint connects to.
+   * The algorithm is to insert a join node whenever it sees a fork. Every time there is a fork, we
+   * will follow each branch to its endpoint (a node that forks, merges, or is a sink), then insert
+   * a join node that each branch endpoint connects to.
    */
   public void flatten() {
     // this should never be the case, as it should be checked when the dag is created.
     if (sources.isEmpty()) {
-      throw new IllegalStateException("There are no sources in the graph, which means there is a cycle.");
+      throw new IllegalStateException(
+          "There are no sources in the graph, which means there is a cycle.");
     }
 
     trim();
@@ -110,7 +106,8 @@ public class ControlDag extends Dag {
     for (String output : outputs) {
       String branchEndpoint = findBranchEnd(output);
       branchEndpoints.add(branchEndpoint);
-      branchEndpointOutputs.put(branchEndpoint, new HashSet<>(outgoingConnections.get(branchEndpoint)));
+      branchEndpointOutputs.put(branchEndpoint,
+          new HashSet<>(outgoingConnections.get(branchEndpoint)));
     }
 
     /*
@@ -197,8 +194,8 @@ public class ControlDag extends Dag {
   }
 
   /**
-   * Returns the number of paths from the start node to the stop node.
-   * The number of paths from a node to itself is 1.
+   * Returns the number of paths from the start node to the stop node. The number of paths from a
+   * node to itself is 1.
    *
    * @param start the node to start from
    * @param stop the node to end at
@@ -218,14 +215,10 @@ public class ControlDag extends Dag {
   /**
    * Trims any redundant control connections.
    *
-   * For example:
-   *   n1 ------> n2
-   *       |      |
-   *       |      v
-   *       |----> n3
-   * has a redundant edge n1 -> n3, because the edge from n2 -> n3 already enforces n1 -> n3.
-   * The approach is look at each node (call it nodeB). For each input into nodeB (call it nodeA),
-   * if there is another path from nodeA to nodeB besides the direct edge, we can remove the edge nodeA -> nodeB.
+   * For example: n1 ------> n2 |      | |      v |----> n3 has a redundant edge n1 -> n3, because
+   * the edge from n2 -> n3 already enforces n1 -> n3. The approach is look at each node (call it
+   * nodeB). For each input into nodeB (call it nodeA), if there is another path from nodeA to nodeB
+   * besides the direct edge, we can remove the edge nodeA -> nodeB.
    *
    * @return number of connections removed.
    */

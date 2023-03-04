@@ -42,7 +42,8 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
 /**
- * A {@link ClassRewriter} for rewriting the Dataset bytecode. It modifies the Dataset class as follow:
+ * A {@link ClassRewriter} for rewriting the Dataset bytecode. It modifies the Dataset class as
+ * follow:
  *
  * <pre>
  * 1. Introduce a new field, "_datasetRuntimeContext0" of type {@link DatasetRuntimeContext}.
@@ -67,12 +68,13 @@ import org.objectweb.asm.commons.Method;
  *    }
  * </pre>
  *
- * The class rewrite will skip rewriting of all {@link TransactionAware} methods and {@link Closeable}
- * as they are dataset operation methods.
+ * The class rewrite will skip rewriting of all {@link TransactionAware} methods and {@link
+ * Closeable} as they are dataset operation methods.
  */
 public final class DatasetClassRewriter implements ClassRewriter {
 
-  private static final Type DATASET_RUNTIME_CONTEXT_TYPE = Type.getType(DatasetRuntimeContext.class);
+  private static final Type DATASET_RUNTIME_CONTEXT_TYPE = Type.getType(
+      DatasetRuntimeContext.class);
   private static final Type CLASS_TYPE = Type.getType(Class.class);
 
   @Override
@@ -104,20 +106,22 @@ public final class DatasetClassRewriter implements ClassRewriter {
     }
 
     @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName,
+        String[] interfaces) {
       super.visit(version, access, name, signature, superName, interfaces);
       interfaceClass = Modifier.isInterface(access);
     }
 
     @Override
-    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+    public FieldVisitor visitField(int access, String name, String desc, String signature,
+        Object value) {
       fields.add(name);
       return super.visitField(access, name, desc, signature, value);
     }
 
     @Override
     public MethodVisitor visitMethod(int access, final String name,
-                                     String desc, String signature, String[] exceptions) {
+        String desc, String signature, String[] exceptions) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
       // No need to if the class is an interface or the method is static
@@ -130,7 +134,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
         // visitMethod is always called after all visitField calls, hence generate the extra field here
         datasetRuntimeContextField = generateFieldName("_datasetRuntimeContext", fields);
         super.visitField(Modifier.PRIVATE, datasetRuntimeContextField,
-                         DATASET_RUNTIME_CONTEXT_TYPE.getDescriptor(), null, null);
+            DATASET_RUNTIME_CONTEXT_TYPE.getDescriptor(), null, null);
       }
 
       return new FinallyAdapter(Opcodes.ASM5, mv, access, name, desc) {
@@ -161,7 +165,7 @@ public final class DatasetClassRewriter implements ClassRewriter {
             // this._datasetRuntimeContext = DatasetRuntimeContext.getContext();
             loadThis();
             invokeStatic(DATASET_RUNTIME_CONTEXT_TYPE,
-                         new Method("getContext", Type.getMethodDescriptor(DATASET_RUNTIME_CONTEXT_TYPE)));
+                new Method("getContext", Type.getMethodDescriptor(DATASET_RUNTIME_CONTEXT_TYPE)));
             putField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
           }
 
@@ -174,8 +178,8 @@ public final class DatasetClassRewriter implements ClassRewriter {
             visitLdcInsn(isConstructor);
             push(methodAnnotationType);
             invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                          new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE,
-                                                                               Type.BOOLEAN_TYPE, CLASS_TYPE)));
+                new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE,
+                    Type.BOOLEAN_TYPE, CLASS_TYPE)));
           }
           // try {
           beginTry();
@@ -191,13 +195,13 @@ public final class DatasetClassRewriter implements ClassRewriter {
             //   this._datasetRuntimeContext.close();
             // }
             invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                          new Method("close", Type.getMethodDescriptor(Type.VOID_TYPE)));
+                new Method("close", Type.getMethodDescriptor(Type.VOID_TYPE)));
           } else {
             // } finally {
             //   this._datasetRuntimeContext.onMethodExit();
             // }
             invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                          new Method("onMethodExit", Type.getMethodDescriptor(Type.VOID_TYPE)));
+                new Method("onMethodExit", Type.getMethodDescriptor(Type.VOID_TYPE)));
           }
         }
 
@@ -220,7 +224,8 @@ public final class DatasetClassRewriter implements ClassRewriter {
     /**
      * Generates a field name that doesn't conflict with the existing set of field names.
      *
-     * @param prefix prefix of the generated field name; the field name is generated as [prefix][sequence-id]
+     * @param prefix prefix of the generated field name; the field name is generated as
+     *     [prefix][sequence-id]
      * @param fields set of existing field names
      * @return a unique field name
      */

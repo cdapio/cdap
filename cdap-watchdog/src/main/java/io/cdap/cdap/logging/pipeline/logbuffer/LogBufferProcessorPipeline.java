@@ -42,14 +42,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Log processing pipeline to process log events from log buffer. Log events are pushed to this pipeline for further
- * processing.
+ * Log processing pipeline to process log events from log buffer. Log events are pushed to this
+ * pipeline for further processing.
  */
 public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferProcessorPipeline.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
-    Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
+      Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
   private static final int INCOMING_EVENT_QUEUE_SIZE = 10000;
 
   private final String name;
@@ -67,8 +68,9 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   private long lastCheckpointTime;
   private int unSyncedEvents;
 
-  public LogBufferProcessorPipeline(LogProcessorPipelineContext context, LogBufferPipelineConfig config,
-                                    CheckpointManager<LogBufferFileOffset> checkpointManager, int instanceId) {
+  public LogBufferProcessorPipeline(LogProcessorPipelineContext context,
+      LogBufferPipelineConfig config,
+      CheckpointManager<LogBufferFileOffset> checkpointManager, int instanceId) {
     this.name = context.getName();
     this.instanceId = instanceId;
     this.config = config;
@@ -76,7 +78,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
     this.checkpointManager = checkpointManager;
     this.metricsContext = context;
     this.eventQueueProcessor = new TimeEventQueueProcessor<>(context, config.getMaxBufferSize(),
-                                                             config.getEventDelayMillis(), ImmutableSet.of(instanceId));
+        config.getEventDelayMillis(), ImmutableSet.of(instanceId));
     this.incomingEventQueue = new ArrayBlockingQueue<>(INCOMING_EVENT_QUEUE_SIZE);
     this.checkpoints = new HashMap<>();
     this.stopLatch = new CountDownLatch(1);
@@ -88,10 +90,11 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
     Checkpoint<LogBufferFileOffset> checkpoint = checkpointManager.getCheckpoint(instanceId);
 
     checkpoints.put(0, new MutableLogBufferCheckpoint(checkpoint.getOffset().getFileId(),
-                                                      checkpoint.getOffset().getFilePos(),
-                                                      checkpoint.getMaxEventTime()));
+        checkpoint.getOffset().getFilePos(),
+        checkpoint.getMaxEventTime()));
     context.start();
-    LOG.info("Log processor pipeline for {} with config {} started with checkpoint {}", name, config, this.checkpoints);
+    LOG.info("Log processor pipeline for {} with config {} started with checkpoint {}", name,
+        config, this.checkpoints);
   }
 
   @Override
@@ -145,7 +148,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
    */
   private boolean processEvents(BlockingQueue<LogBufferEvent> incomingEventQueue) {
     ProcessedEventMetadata<LogBufferFileOffset> metadata
-      = eventQueueProcessor.process(0, new LogFileOffsetTransformIterator(incomingEventQueue));
+        = eventQueueProcessor.process(0, new LogFileOffsetTransformIterator(incomingEventQueue));
 
     // none of the events were processed.
     if (metadata.getTotalEventsProcessed() <= 0) {
@@ -229,6 +232,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
    * A mutable implementation of {@link Checkpoint}.
    */
   private static final class MutableLogBufferCheckpoint extends Checkpoint<LogBufferFileOffset> {
+
     private MutableLogBufferFileOffset offset;
     private long maxEventTs;
 
@@ -254,10 +258,10 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     @Override
     public String toString() {
-      return "MutableLogBufferCheckpoint{" +
-        "offset=" + offset +
-        ", maxEventTs=" + maxEventTs +
-        '}';
+      return "MutableLogBufferCheckpoint{"
+          + "offset=" + offset
+          + ", maxEventTs=" + maxEventTs
+          + '}';
     }
   }
 
@@ -265,6 +269,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
    * A mutable implementation of {@link LogBufferFileOffset}.
    */
   private static final class MutableLogBufferFileOffset extends LogBufferFileOffset {
+
     private long fileId;
     private long filePos;
 
@@ -294,17 +299,19 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     @Override
     public String toString() {
-      return "MutableLogBufferFileOffset{" +
-        "fileId=" + fileId +
-        ", filePos=" + filePos +
-        '}';
+      return "MutableLogBufferFileOffset{"
+          + "fileId=" + fileId
+          + ", filePos=" + filePos
+          + '}';
     }
   }
 
   /**
    * Iterator to transform LogBufferEvent to ProcessorEvent.
    */
-  private final class LogFileOffsetTransformIterator implements Iterator<ProcessorEvent<LogBufferFileOffset>> {
+  private final class LogFileOffsetTransformIterator implements
+      Iterator<ProcessorEvent<LogBufferFileOffset>> {
+
     private final BlockingQueue<LogBufferEvent> queue;
     private int count;
 
@@ -327,7 +334,8 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
       LogBufferEvent nextEvent = queue.poll();
       count++;
-      return new ProcessorEvent<>(nextEvent.getLogEvent(), nextEvent.getEventSize(), nextEvent.getOffset());
+      return new ProcessorEvent<>(nextEvent.getLogEvent(), nextEvent.getEventSize(),
+          nextEvent.getOffset());
     }
   }
 }

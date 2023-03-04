@@ -359,12 +359,13 @@ public abstract class NettyRouterTestBase {
 
   private String makeRequest(URI uri, PrintWriter out, InputStream inputStream) throws IOException {
     //Send request
-    out.print("GET " + uri.getPath() + " HTTP/1.1\r\n" +
-                "Host: " + uri.getHost() + "\r\n" +
-                "Connection: keep-alive\r\n\r\n");
+    out.print("GET " + uri.getPath() + " HTTP/1.1\r\n"
+        + "Host: " + uri.getHost() + "\r\n"
+        + "Connection: keep-alive\r\n\r\n");
     out.flush();
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+    BufferedReader reader = new BufferedReader(
+        new InputStreamReader(inputStream, StandardCharsets.UTF_8));
 
     // Read the first line and find
     String line = reader.readLine();

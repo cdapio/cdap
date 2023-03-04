@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Dataset instance metadata.
  */
 public class DatasetMeta {
+
   private final DatasetSpecification spec;
 
   // todo: meta of modules inside will have list of all types in the module that is redundant here
@@ -35,12 +36,14 @@ public class DatasetMeta {
   @SerializedName("principal")
   private final String ownerPrincipal;
 
-  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName) {
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type,
+      @Nullable String hiveTableName) {
     this(spec, type, hiveTableName, null);
   }
 
-  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type, @Nullable String hiveTableName,
-                     @Nullable String ownerPrincipal) {
+  public DatasetMeta(DatasetSpecification spec, DatasetTypeMeta type,
+      @Nullable String hiveTableName,
+      @Nullable String ownerPrincipal) {
     this.spec = spec;
     this.type = type;
     this.hiveTableName = hiveTableName;

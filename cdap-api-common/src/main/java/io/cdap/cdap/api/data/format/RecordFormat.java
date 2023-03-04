@@ -24,14 +24,15 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Interface specifying how to read data in some format into java objects.
- * A format implies at least a default schema, which may be as simple as a byte array.
+ * Interface specifying how to read data in some format into java objects. A format implies at least
+ * a default schema, which may be as simple as a byte array.
  *
  * @param <FROM> the raw data to read from.
  * @param <TO> object to format the data into.
  */
 @Beta
 public abstract class RecordFormat<FROM, TO> {
+
   protected Schema schema;
 
   /**
@@ -39,22 +40,23 @@ public abstract class RecordFormat<FROM, TO> {
    *
    * @param input input object to read.
    * @return formatted input.
-   * @throws UnexpectedFormatException if the input object could not be read because it is of an unexpected format.
+   * @throws UnexpectedFormatException if the input object could not be read because it is of an
+   *     unexpected format.
    */
   public abstract TO read(FROM input) throws UnexpectedFormatException;
 
   /**
    * Get the default schema for the format. The default is used if no schema is provided in the call
-   * to {@link #initialize(FormatSpecification)}. Should return null if there is no default schema, meaning
-   * a schema must be provided during initialization of the format.
+   * to {@link #initialize(FormatSpecification)}. Should return null if there is no default schema,
+   * meaning a schema must be provided during initialization of the format.
    *
    * @return the default schema for the format, or null if a schema must be provided to the format
    */
   protected abstract Schema getDefaultSchema();
 
   /**
-   * Validate the given schema, throwing an exception if it is unsupported. It can be assumed that the input schema
-   * is not null and is a record of at least one field.
+   * Validate the given schema, throwing an exception if it is unsupported. It can be assumed that
+   * the input schema is not null and is a record of at least one field.
    *
    * @param schema the schema to validate for the format
    * @throws UnsupportedTypeException if the schema not supported
@@ -62,13 +64,15 @@ public abstract class RecordFormat<FROM, TO> {
   protected abstract void validateSchema(Schema schema) throws UnsupportedTypeException;
 
   /**
-   * Initialize the format with the given desired schema and properties.
-   * Guaranteed to be called once before any other method is called.
+   * Initialize the format with the given desired schema and properties. Guaranteed to be called
+   * once before any other method is called.
    *
-   * @param formatSpecification the specification for the format, containing the desired schema and settings
+   * @param formatSpecification the specification for the format, containing the desired schema
+   *     and settings
    * @throws UnsupportedTypeException if the desired schema and properties are not supported
    */
-  public void initialize(@Nullable FormatSpecification formatSpecification) throws UnsupportedTypeException {
+  public void initialize(@Nullable FormatSpecification formatSpecification)
+      throws UnsupportedTypeException {
     Schema desiredSchema = null;
     Map<String, String> settings = Collections.emptyMap();
     if (formatSpecification != null) {

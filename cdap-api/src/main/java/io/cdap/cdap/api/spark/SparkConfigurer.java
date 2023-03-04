@@ -31,10 +31,10 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, PluginConfigurer {
 
   /**
-   * Sets the Spark program class name in specification.
-   * The provided class should have a {@code static void main(String[])} method. It can also implements
-   * the {@code io.cdap.cdap.api.spark.SparkMain} interface for Spark program written in Scala or
-   * the {@code io.cdap.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
+   * Sets the Spark program class name in specification. The provided class should have a {@code
+   * static void main(String[])} method. It can also implements the {@code
+   * io.cdap.cdap.api.spark.SparkMain} interface for Spark program written in Scala or the {@code
+   * io.cdap.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
    * {@code cdap-api-spark*} module.
    *
    * @param className the fully qualified name of Spark program class.
@@ -42,8 +42,9 @@ public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, P
   void setMainClassName(String className);
 
   /**
-   * Sets the resources requirement for the Spark client process. It is the process where the
-   * {@link ProgramLifecycle#initialize(RuntimeContext)} and {@link ProgramLifecycle#destroy()} methods get executed.
+   * Sets the resources requirement for the Spark client process. It is the process where the {@link
+   * ProgramLifecycle#initialize(RuntimeContext)} and {@link ProgramLifecycle#destroy()} methods get
+   * executed.
    */
   void setClientResources(Resources resources);
 

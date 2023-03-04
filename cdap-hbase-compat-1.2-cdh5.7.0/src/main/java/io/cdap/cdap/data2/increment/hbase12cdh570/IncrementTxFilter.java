@@ -23,27 +23,34 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.hbase.coprocessor.TransactionVisibilityFilter;
 
 /**
- * {@link TransactionVisibilityFilter}'s default behavior is to give only latest valid version for the transactional
- * cell to its sub-filters. However the {@link IncrementFilter} need to see all previous valid versions for readless
- * increments, since increments are stored as just the different versions of the same cell. This {@link Filter}
- * extends the {@link TransactionVisibilityFilter} and overrides the
- * {@link TransactionVisibilityFilter#determineReturnCode} method to achieve this.
+ * {@link TransactionVisibilityFilter}'s default behavior is to give only latest valid version for
+ * the transactional cell to its sub-filters. However the {@link IncrementFilter} need to see all
+ * previous valid versions for readless increments, since increments are stored as just the
+ * different versions of the same cell. This {@link Filter} extends the {@link
+ * TransactionVisibilityFilter} and overrides the {@link TransactionVisibilityFilter#determineReturnCode}
+ * method to achieve this.
  */
 public class IncrementTxFilter extends TransactionVisibilityFilter {
+
   /**
    * Creates a new instance of the {@link Filter}.
-   * @param tx the current transaction to apply. Only data visible to this transaction will be returned
+   *
+   * @param tx the current transaction to apply. Only data visible to this transaction will be
+   *     returned
    * @param ttlByFamily map of time-to-live (TTL) (in milliseconds) by column family name
-   * @param allowEmptyValues if {@code true} cells with empty {@code byte[]} values will be returned, if {@code false}
-   *                         these will be interpreted as "delete" markers and the column will be filtered out
+   * @param allowEmptyValues if {@code true} cells with empty {@code byte[]} values will be
+   *     returned, if {@code false} these will be interpreted as "delete" markers and the column
+   *     will be filtered out
    * @param scanType the type of scan operation being performed
-   * @param cellFilter if non-null, this filter will be applied to all cells visible to the current transaction, by
-   *                   calling {@link Filter#filterKeyValue(org.apache.hadoop.hbase.Cell)}.  If null, then
-   *                   {@link ReturnCode#INCLUDE_AND_NEXT_COL} will be returned instead.
+   * @param cellFilter if non-null, this filter will be applied to all cells visible to the
+   *     current transaction, by calling {@link Filter#filterKeyValue(org.apache.hadoop.hbase.Cell)}.
+   *     If null, then {@link ReturnCode#INCLUDE_AND_NEXT_COL} will be returned instead.
    */
-  public IncrementTxFilter(Transaction tx, Map<byte[], Long> ttlByFamily, boolean allowEmptyValues, ScanType scanType,
-                           Filter cellFilter) {
-    super(tx, ttlByFamily, allowEmptyValues, scanType, Filters.combine(new IncrementFilter(), cellFilter));
+  public IncrementTxFilter(Transaction tx, Map<byte[], Long> ttlByFamily, boolean allowEmptyValues,
+      ScanType scanType,
+      Filter cellFilter) {
+    super(tx, ttlByFamily, allowEmptyValues, scanType,
+        Filters.combine(new IncrementFilter(), cellFilter));
   }
 
   @Override

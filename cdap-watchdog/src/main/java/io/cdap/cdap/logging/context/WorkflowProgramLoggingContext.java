@@ -21,6 +21,7 @@ import io.cdap.cdap.proto.ProgramType;
  * Logging context to be used by programs running inside Workflow.
  */
 public class WorkflowProgramLoggingContext extends WorkflowLoggingContext {
+
   public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
   public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
   public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
@@ -36,8 +37,9 @@ public class WorkflowProgramLoggingContext extends WorkflowLoggingContext {
    * @param programName name of the program
    * @param programRunId run id of the program launched through workflow
    */
-  public WorkflowProgramLoggingContext(String namespaceId, String applicationId, String workflowId, String runId,
-                                       ProgramType programType, String programName, String programRunId) {
+  public WorkflowProgramLoggingContext(String namespaceId, String applicationId, String workflowId,
+      String runId,
+      ProgramType programType, String programName, String programRunId) {
     super(namespaceId, applicationId, workflowId, runId);
     setSystemTag(TAG_WORKFLOW_PROGRAM_RUN_ID, programRunId);
     switch (programType) {
@@ -48,7 +50,8 @@ public class WorkflowProgramLoggingContext extends WorkflowLoggingContext {
         setSystemTag(TAG_WORKFLOW_SPARK_ID, programName);
         break;
       default:
-        throw new IllegalArgumentException(String.format("Program type %s is not supported by Workflow.", programType));
+        throw new IllegalArgumentException(
+            String.format("Program type %s is not supported by Workflow.", programType));
     }
   }
 }

@@ -33,8 +33,8 @@ public class SystemMetricsExporterModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new FactoryModuleBuilder()
-              .implement(JMXMetricsCollector.class, JMXMetricsCollector.class)
-              .build(JMXMetricsCollectorFactory.class));
+        .implement(JMXMetricsCollector.class, JMXMetricsCollector.class)
+        .build(JMXMetricsCollectorFactory.class));
     bind(MetricsPublisher.class).to(MetricsWritersMetricsPublisher.class);
     bind(MetricsWriterProvider.class).to(MetricsWriterExtensionLoader.class);
   }

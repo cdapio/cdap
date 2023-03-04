@@ -77,70 +77,70 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
- * Dataset that manages Metadata using an {@link IndexedTable}. Supports writing tags and properties. Tags are single
- * elements, whereas properties are key-values.
+ * Dataset that manages Metadata using an {@link IndexedTable}. Supports writing tags and
+ * properties. Tags are single elements, whereas properties are key-values.
  *
- * Tags and properties both get translated into a {@link MetadataEntry}. A {@link MetadataEntry} corresponds to a
- * single metadata property or a list of metadata tags that is set on some {@link MetadataEntity},
- * like an application or a namespace. Each entry contains the
- * entity the metadata is for, a key, value, and schema. A metadata property is represented as a MetadataEntry
- * where the key is the property key and the value is the property value. Metadata tags are represented as a
+ * Tags and properties both get translated into a {@link MetadataEntry}. A {@link MetadataEntry}
+ * corresponds to a single metadata property or a list of metadata tags that is set on some {@link
+ * MetadataEntity}, like an application or a namespace. Each entry contains the entity the metadata
+ * is for, a key, value, and schema. A metadata property is represented as a MetadataEntry where the
+ * key is the property key and the value is the property value. Metadata tags are represented as a
  * MetadataEntry where the key is 'tags' and the value is a comma separated list of the tags.
  *
- * The value for a {@link MetadataEntry} is stored under the 'v' column as a string. The data in the 'v' column
- * is not indexed by the underlying IndexedTable.
- * The row key used to store metadata entries is a composite MDSKey. It always begins with:
+ * The value for a {@link MetadataEntry} is stored under the 'v' column as a string. The data in the
+ * 'v' column is not indexed by the underlying IndexedTable. The row key used to store metadata
+ * entries is a composite MDSKey. It always begins with:
  *
  * v:[metadata-entity-type]
  *
- * where metadata-entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs that comes from the
- * entity hierarchy. At the very end there is the key from {@link MetadataEntry#getKey()}.
- * For example, suppose we have set two properties and two tags on an entity.
- * The properties are 'owner'='sam' and 'final'='false.
- * The tags are 'small', 'beta'.
- * The entity is mapreduce 'mr' in app 'appX' in namespace 'ns1'.
+ * where metadata-entity-type comes from {@link MetadataEntity#getType()}. Next is a series of pairs
+ * that comes from the entity hierarchy. At the very end there is the key from {@link
+ * MetadataEntry#getKey()}. For example, suppose we have set two properties and two tags on an
+ * entity. The properties are 'owner'='sam' and 'final'='false. The tags are 'small', 'beta'. The
+ * entity is mapreduce 'mr' in app 'appX' in namespace 'ns1'.
  *
  * The table will look like:
- *
+ * <pre>
  * rowkey                                                                           column -> value
  *
  * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner         v -> sam
  * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:final         v -> false
  * v:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags          v -> small,beta
- *
+ * </pre>
  * If we set that same metadata on namespace 'ns2', we would be adding rows:
  *
+ * <pre>
  * v:namespace:namespace:ns2:owner                                                  v -> sam
  * v:namespace:namespace:ns2:final                                                  v -> false
  * v:namespace:namespace:ns2:tags                                                   v -> small,beta
+ * </pre>
  *
- * Note that in these examples, for readability, ':' is used to separate parts of the MDSKey.
- * In reality, there is no separator. An integer specifying the length of the part is placed in front of each part.
- * This is the write done on every {@link MetadataEntry}.
- * In addition to each entry write, a set of index writes will be done for each entry.
- * Indexes are written to the 'i', 'n', 'in', 'c', and 'ic' columns.
+ * Note that in these examples, for readability, ':' is used to separate parts of the MDSKey. In
+ * reality, there is no separator. An integer specifying the length of the part is placed in front
+ * of each part. This is the write done on every {@link MetadataEntry}. In addition to each entry
+ * write, a set of index writes will be done for each entry. Indexes are written to the 'i', 'n',
+ * 'in', 'c', and 'ic' columns.
  *
- * The 'i' column is for default metadata indexes
- * The 'n' column is for entity name indexes
- * The 'in' column is for entity name indexes in reverse order
- * The 'c' column is for creation-time indexes
+ * The 'i' column is for default metadata indexes The 'n' column is for entity name indexes The 'in'
+ * column is for entity name indexes in reverse order The 'c' column is for creation-time indexes
  * The 'ic' column is for creation-time indexes in reverse order
  *
- * Which indexes are used will depend on {@link #getIndexersForKey(String, boolean)}, which essentially
- * looks for special keys that {@link AbstractSystemMetadataWriter} are known to write.
+ * Which indexes are used will depend on {@link #getIndexersForKey(String, boolean)}, which
+ * essentially looks for special keys that {@link AbstractSystemMetadataWriter} are known to write.
  *
  * Each index will generate one or more index values from the single {@link MetadataEntry} value.
  * For example, suppose an indexer is given a metadata property 'owner'='foo bar', and generates
- * index values 'foo bar', 'owner:foo bar', 'foo', 'owner:foo', 'bar', and 'owner:bar'.
- * That means a single {@link MetadataEntry} for 'owner'='foo bar' will generate six different index values.
+ * index values 'foo bar', 'owner:foo bar', 'foo', 'owner:foo', 'bar', and 'owner:bar'. That means a
+ * single {@link MetadataEntry} for 'owner'='foo bar' will generate six different index values.
  *
- * The rowkey for each index value is similar to the rowkey for the {@link MetadataEntry} except 'i' is used as the
- * prefix instead of 'v', and it includes the index value at the end.
- * Each index value will be written twice.
- * The first write is with the {@link MetadataEntity} namespace as a prefix, used for namespace specific search.
- * The second write is without any prefix, used for cross namespace search. They will be written to different columns.
- * With our previous example, the following data will be written:
+ * The rowkey for each index value is similar to the rowkey for the {@link MetadataEntry} except 'i'
+ * is used as the prefix instead of 'v', and it includes the index value at the end. Each index
+ * value will be written twice. The first write is with the {@link MetadataEntity} namespace as a
+ * prefix, used for namespace specific search. The second write is without any prefix, used for
+ * cross namespace search. They will be written to different columns. With our previous example, the
+ * following data will be written:
  *
+ * <pre>
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i  -> ns1:foo bar
  *                                                                                        xi -> foo bar
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:foo bar       i  -> ns1:owner:foo bar
@@ -152,11 +152,12 @@ import javax.annotation.Nullable;
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i  -> ns1:bar
  *                                                                                        xi -> bar
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:owner:bar           i  -> ns1:owner:bar
- *                                                                                        xi -> owner:bar
+ * </pre>                                                                                       xi -> owner:bar
  *
- * Since tags are just a special property where the property key is 'tags',
- * if 'foo' and 'bar' are set as a tags on a mapreduce program, the table will look like:
+ * Since tags are just a special property where the property key is 'tags', if 'foo' and 'bar' are
+ * set as a tags on a mapreduce program, the table will look like:
  *
+ * <pre>
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i  -> ns1:foo
  *                                                                                        xi -> foo
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:foo            i  -> ns1:tags:foo
@@ -164,28 +165,30 @@ import javax.annotation.Nullable;
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i  -> ns1:bar
  *                                                                                        xi -> bar
  * i:program:namespace:ns1:application:appX:type:mapreduce:program:mr:tags:bar            i  -> ns1:tags:bar
- *                                                                                        xi -> tags:bar
+ * </pre>                                                                                       xi -> tags:bar
  *
- * In addition to the entry and it's indexes, there is also history write done per {@link MetadataEntity}.
- * The row key for history is similar to the index row key except it is prefixed by 'h' instead of 'v' and it
- * contains an inverted timestamp at the end instead of the metadata key-value.
- * The timestamp corresponds to the time of the write.
- * The value is stored in the 'h' column and is a {@link Record} object.
- * This will give a snapshot of all properties and tags for that entity at the time of that write.
- * For example, for 'owner'='foo' set on a mapreduce program, the history row key will be:
+ * In addition to the entry and it's indexes, there is also history write done per {@link
+ * MetadataEntity}. The row key for history is similar to the index row key except it is prefixed by
+ * 'h' instead of 'v' and it contains an inverted timestamp at the end instead of the metadata
+ * key-value. The timestamp corresponds to the time of the write. The value is stored in the 'h'
+ * column and is a {@link Record} object. This will give a snapshot of all properties and tags for
+ * that entity at the time of that write. For example, for 'owner'='foo' set on a mapreduce program,
+ * the history row key will be:
  *
  * h:program:namespace:ns1:application:appX:type:mapreduce:program:mr:[inverted-timestamp]
  *
- * and the value written will contain all properties and tags for that mapreduce program at that time.
+ * and the value written will contain all properties and tags for that mapreduce program at that
+ * time.
  */
 public class MetadataDataset extends AbstractDataset {
+
   /**
    * Type name
    */
   public static final String TYPE = "metadataDataset";
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .create();
 
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
@@ -194,29 +197,30 @@ public class MetadataDataset extends AbstractDataset {
 
   // Fuzzy key is of form <row key, key mask>. We want to compare row keys.
   private static final Comparator<ImmutablePair<byte[], byte[]>> FUZZY_KEY_COMPARATOR =
-    (o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst());
+      (o1, o2) -> Bytes.compareTo(o1.getFirst(), o2.getFirst());
 
-  private static final Set<Indexer> DEFAULT_INDEXERS = Collections.singleton(new DefaultValueIndexer());
+  private static final Set<Indexer> DEFAULT_INDEXERS = Collections.singleton(
+      new DefaultValueIndexer());
   private static final Map<String, Set<Indexer>> SYSTEM_METADATA_KEY_TO_INDEXERS = ImmutableMap.of(
-    MetadataConstants.SCHEMA_KEY, Collections.singleton(
-      new SchemaIndexer()
-    ),
-    MetadataConstants.ENTITY_NAME_KEY, ImmutableSet.of(
-      // used for listing entities sorted in ascending order of name
-      new ValueOnlyIndexer(),
-      // used for listing entities sorted in descending order of name
-      new InvertedValueIndexer(),
-      // used for searching entities with a search query
-      new DefaultValueIndexer()
-    ),
-    MetadataConstants.CREATION_TIME_KEY, ImmutableSet.of(
-      // used for listing entities sorted in ascending order of creation time
-      new ValueOnlyIndexer(),
-      // used for listing entities sorted in descending order of creation time
-      new InvertedTimeIndexer(),
-      // used for searching entities with a search query
-      new DefaultValueIndexer()
-    )
+      MetadataConstants.SCHEMA_KEY, Collections.singleton(
+          new SchemaIndexer()
+      ),
+      MetadataConstants.ENTITY_NAME_KEY, ImmutableSet.of(
+          // used for listing entities sorted in ascending order of name
+          new ValueOnlyIndexer(),
+          // used for listing entities sorted in descending order of name
+          new InvertedValueIndexer(),
+          // used for searching entities with a search query
+          new DefaultValueIndexer()
+      ),
+      MetadataConstants.CREATION_TIME_KEY, ImmutableSet.of(
+          // used for listing entities sorted in ascending order of creation time
+          new ValueOnlyIndexer(),
+          // used for listing entities sorted in descending order of creation time
+          new InvertedTimeIndexer(),
+          // used for searching entities with a search query
+          new DefaultValueIndexer()
+      )
   );
 
   // default column for metadata indexes
@@ -230,8 +234,9 @@ public class MetadataDataset extends AbstractDataset {
   // column for inverted creation-time based index
   static final IndexColumn INVERTED_CREATION_TIME_INDEX_COLUMN = new IndexColumn("ic", "xic");
   static final Collection<IndexColumn> INDEX_COLUMNS =
-    ImmutableList.of(DEFAULT_INDEX_COLUMN, ENTITY_NAME_INDEX_COLUMN, INVERTED_ENTITY_NAME_INDEX_COLUMN,
-                     CREATION_TIME_INDEX_COLUMN, INVERTED_CREATION_TIME_INDEX_COLUMN);
+      ImmutableList.of(DEFAULT_INDEX_COLUMN, ENTITY_NAME_INDEX_COLUMN,
+          INVERTED_ENTITY_NAME_INDEX_COLUMN,
+          CREATION_TIME_INDEX_COLUMN, INVERTED_CREATION_TIME_INDEX_COLUMN);
 
   private final IndexedTable indexedTable;
   private final MetadataScope scope;
@@ -243,8 +248,8 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Adds a metadata property for the specified {@link MetadataEntity}.
-   * Overwrites the property if it already exists.
+   * Adds a metadata property for the specified {@link MetadataEntity}. Overwrites the property if
+   * it already exists.
    *
    * @param metadataEntity the metadata entity for which the property needs to be updated
    * @param key The metadata key to be added
@@ -255,12 +260,11 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Adds the given properties the given metadataEntity.
-   * Overwrites properties that already exist.
+   * Adds the given properties the given metadataEntity. Overwrites properties that already exist.
    *
    * @param metadataEntity the metadataEntity to which properties needs to be added
-   * @param properties the properties to add (note if the property key exist and new value is different it will be
-   * overwritten)
+   * @param properties the properties to add (note if the property key exist and new value is
+   *     different it will be overwritten)
    * @return {@link Change} representing the change in metadata for the metadataEntity
    */
   public Change addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
@@ -271,7 +275,8 @@ public class MetadataDataset extends AbstractDataset {
       // if there is at least one entry then we need to process that entry to update metadata and at that point we want
       // to store what was the previousMetadata before we called addMetadata
       Map.Entry<String, String> first = iterator.next();
-      Change metadataChange = addMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
+      Change metadataChange = addMetadata(
+          new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
       // metadata before addMetadata was applied
       previousMetadata = metadataChange.getExisting();
       // metadata after addMetadata was applied
@@ -285,23 +290,25 @@ public class MetadataDataset extends AbstractDataset {
     // if there are more key-value properties then process them updating the final metadata state
     while (iterator.hasNext()) {
       Map.Entry<String, String> next = iterator.next();
-      finalMetadata = addMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
+      finalMetadata = addMetadata(
+          new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
     }
     return new Change(previousMetadata, finalMetadata);
   }
 
   /**
    * Adds a new tag for the specified {@link MetadataEntity}.
+   *
    * @param metadataEntity the metadataEntity to which the tag needs to be added
    * @param tagsToAdd the tags to add
    */
   public Change addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
     return addMetadata(new MetadataEntry(metadataEntity, MetadataConstants.TAGS_KEY,
-                                         Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
+        Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
   }
 
   @VisibleForTesting
-  Change addTags(MetadataEntity entity, String ... tags) {
+  Change addTags(MetadataEntity entity, String... tags) {
     return addTags(entity, Sets.newHashSet(tags));
   }
 
@@ -356,11 +363,14 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Retrieve the {@link MetadataEntry} corresponding to the specified key for the {@link MetadataEntity}.
+   * Retrieve the {@link MetadataEntry} corresponding to the specified key for the {@link
+   * MetadataEntity}.
    *
-   * @param metadataEntity the {@link MetadataEntity} for which the {@link MetadataEntry} is to be retrieved
+   * @param metadataEntity the {@link MetadataEntity} for which the {@link MetadataEntry} is to
+   *     be retrieved
    * @param key the property key for which the {@link MetadataEntry} is to be retrieved
-   * @return the {@link MetadataEntry} corresponding to the specified key for the {@link MetadataEntity}
+   * @return the {@link MetadataEntry} corresponding to the specified key for the {@link
+   *     MetadataEntity}
    */
   @Nullable
   public MetadataEntry getProperty(MetadataEntity metadataEntity, String key) {
@@ -394,7 +404,7 @@ public class MetadataDataset extends AbstractDataset {
   private Record getMetadata(MetadataEntity metadataEntity, Map<String, String> metadata) {
     Map<String, String> properties = new HashMap<>(metadata);
     Set<String> tags = properties.containsKey(MetadataConstants.TAGS_KEY)
-      ? splitTags(properties.get(MetadataConstants.TAGS_KEY)) : Collections.emptySet();
+        ? splitTags(properties.get(MetadataConstants.TAGS_KEY)) : Collections.emptySet();
     properties.remove(MetadataConstants.TAGS_KEY);
     return new Record(metadataEntity, properties, tags);
   }
@@ -403,12 +413,14 @@ public class MetadataDataset extends AbstractDataset {
     if (tags == null) {
       return new HashSet<>();
     }
-    Iterable<String> split = Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(tags);
+    Iterable<String> split = Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults()
+        .split(tags);
     return StreamSupport.stream(split.spliterator(), false).collect(Collectors.toSet());
   }
 
   /**
    * Removes the specified keys from the metadata properties of an entity.
+   *
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified keys
    * @param keys the keys to remove
    */
@@ -417,12 +429,13 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   @VisibleForTesting
-  void removeProperties(MetadataEntity entity, String ... names) {
+  void removeProperties(MetadataEntity entity, String... names) {
     removeProperties(entity, Sets.newHashSet(names));
   }
 
   /**
    * Removes the specified tags from the specified entity.
+   *
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified tags
    * @param tagsToRemove the tags to remove
    */
@@ -430,7 +443,8 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(metadataEntity);
     if (existingTags.isEmpty()) {
       // nothing to remove
-      Record emptyMetadata = new Record(metadataEntity, Collections.emptyMap(), Collections.emptySet());
+      Record emptyMetadata = new Record(metadataEntity, Collections.emptyMap(),
+          Collections.emptySet());
       return new Change(emptyMetadata, emptyMetadata);
     }
 
@@ -446,12 +460,12 @@ public class MetadataDataset extends AbstractDataset {
       return new Change(metadataChange.getExisting(), metadataChangesOnAdd.getLatest());
     }
     return new Change(metadataChange.getExisting(), new Record(metadataEntity,
-                                                               metadataChange.getExisting().getProperties(),
-                                                               Collections.emptySet()));
+        metadataChange.getExisting().getProperties(),
+        Collections.emptySet()));
   }
 
   @VisibleForTesting
-  Change removeTags(MetadataEntity entity, String ... tags) {
+  Change removeTags(MetadataEntity entity, String... tags) {
     return removeTags(entity, Sets.newHashSet(tags));
   }
 
@@ -474,7 +488,9 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Removes all keys that satisfy a given predicate from the metadata of the specified {@link MetadataEntity}.
+   * Removes all keys that satisfy a given predicate from the metadata of the specified {@link
+   * MetadataEntity}.
+   *
    * @param metadataEntity the {@link MetadataEntity} for which keys are to be removed
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
@@ -521,6 +537,7 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Removes all keys for the given metadata
+   *
    * @param metadataEntity whose metadata needs to be removed
    * @return {@link Change} the metadata before and after deletion
    */
@@ -530,7 +547,9 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Removes the specified keys from the metadata of the specified {@link MetadataEntity}.
-   * @param metadataEntity the {@link MetadataEntity} for which the specified metadata keys are to be removed
+   *
+   * @param metadataEntity the {@link MetadataEntity} for which the specified metadata keys are
+   *     to be removed
    * @param keys the keys to remove from the metadata of the specified {@link MetadataEntity}
    */
   private Change removeMetadata(MetadataEntity metadataEntity, Set<String> keys) {
@@ -541,7 +560,8 @@ public class MetadataDataset extends AbstractDataset {
    * Deletes all indexes associated with a metadata key
    *
    * @param metadataEntity the {@link MetadataEntity} for which keys are to be removed
-   * @param metadataKey the key to remove from the metadata of the specified {@link MetadataEntity}
+   * @param metadataKey the key to remove from the metadata of the specified {@link
+   *     MetadataEntity}
    */
   private void deleteIndexes(MetadataEntity metadataEntity, String metadataKey) {
     MDSKey mdsKey = MetadataKey.createIndexRowKey(metadataEntity, metadataKey, null);
@@ -558,6 +578,7 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time.
+   *
    * @param metadataEntitys entity ids
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
@@ -571,7 +592,8 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   private Record getSnapshotBeforeTime(MetadataEntity metadataEntity, long timeMillis) {
-    byte[] scanStartKey = MetadataHistoryKey.getMDSScanStartKey(metadataEntity, timeMillis).getKey();
+    byte[] scanStartKey = MetadataHistoryKey.getMDSScanStartKey(metadataEntity, timeMillis)
+        .getKey();
     byte[] scanEndKey = MetadataHistoryKey.getMDSScanStopKey(metadataEntity).getKey();
     // TODO: add limit to scan, we need only one row
     try (Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey)) {
@@ -595,7 +617,7 @@ public class MetadataDataset extends AbstractDataset {
       return Collections.emptySet();
     }
 
-    List<ImmutablePair<byte [], byte []>> fuzzyKeys = new ArrayList<>(metadataEntitys.size());
+    List<ImmutablePair<byte[], byte[]>> fuzzyKeys = new ArrayList<>(metadataEntitys.size());
     for (MetadataEntity metadataEntity : metadataEntitys) {
       fuzzyKeys.add(getFuzzyKeyFor(metadataEntity));
     }
@@ -620,7 +642,8 @@ public class MetadataDataset extends AbstractDataset {
 
     // Create metadata objects for each entity from grouped rows
     Set<Record> metadataSet = new HashSet<>();
-    for (Map.Entry<MetadataEntity, Collection<MetadataEntry>> entry : metadataMap.asMap().entrySet()) {
+    for (Map.Entry<MetadataEntity, Collection<MetadataEntry>> entry : metadataMap.asMap()
+        .entrySet()) {
       Map<String, String> properties = new HashMap<>();
       Set<String> tags = Collections.emptySet();
       for (MetadataEntry metadataEntry : entry.getValue()) {
@@ -662,23 +685,23 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
-   * for the specified types.
-   * When using default sorting, limits, cursors, and offset are ignored and all results are returned.
-   * When using custom sorting, at most offset + limit * (numCursors + 1) results are returned.
-   * When using default sorting, results are returned in whatever order is determined by the underlying storage.
-   * When using custom sorting, results are returned sorted according to the field and order specified.
-   * When using default sorting, any query is allowed.
-   * When using custom sorting, the query must be '*'.
-   * In all cases, duplicate entries will be returned if multiple index values point to the same entry.
-   * This is often the case when using a '*' query.
+   * Searches entities that match the specified search query in the specified namespace and {@link
+   * NamespaceId#SYSTEM} for the specified types. When using default sorting, limits, cursors, and
+   * offset are ignored and all results are returned. When using custom sorting, at most offset
+   + * limit * (numCursors + 1) results are returned. When using default sorting, results are returned
+   * in whatever order is determined by the underlying storage. When using custom sorting, results
+   * are returned sorted according to the field and order specified. When using default sorting, any
+   * query is allowed. When using custom sorting, the query must be '*'. In all cases, duplicate
+   * entries will be returned if multiple index values point to the same entry. This is often the
+   * case when using a '*' query.
    *
    * TODO: (CDAP-13637) clean this up and clearly define a consistent contract
    *
    * @param request the search request
-   * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing each matching
-   *         {@link MetadataEntity} with its associated metadata. It also optionally contains a list of cursors
-   *         for subsequent queries to start with, if the specified #sortInfo is not {@link SortInfo#DEFAULT}.
+   * @return a {@link SearchResults} object containing a list of {@link MetadataEntry} containing
+   *     each matching {@link MetadataEntity} with its associated metadata. It also optionally
+   *     contains a list of cursors for subsequent queries to start with, if the specified #sortInfo
+   *     is not {@link SortInfo#DEFAULT}.
    */
   public SearchResults search(SearchRequest request) throws BadRequestException {
     if (SortInfo.DEFAULT.equals(request.getSortInfo())) {
@@ -690,8 +713,8 @@ public class MetadataDataset extends AbstractDataset {
 
   private SearchResults searchByDefaultIndex(SearchRequest request) {
     List<MetadataEntry> results = new LinkedList<>();
-    String column = request.isNamespaced() ?
-      DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
+    String column = request.isNamespaced()
+        ? DEFAULT_INDEX_COLUMN.getColumn() : DEFAULT_INDEX_COLUMN.getCrossNamespaceColumn();
 
     for (SearchTerm searchTerm : getSearchTerms(request)) {
       Scanner scanner;
@@ -709,7 +732,7 @@ public class MetadataDataset extends AbstractDataset {
         Row next;
         while ((next = scanner.next()) != null) {
           Optional<MetadataEntry> metadataEntry = parseRow(next, column, request.getTypes(),
-                                                           request.shouldShowHidden());
+              request.shouldShowHidden());
           metadataEntry.ifPresent(results::add);
         }
       } finally {
@@ -729,7 +752,8 @@ public class MetadataDataset extends AbstractDataset {
 
     List<MetadataEntry> results = new LinkedList<>();
     IndexColumn indexColumn = getIndexColumn(sortInfo.getSortBy(), sortInfo.getSortOrder());
-    String column = request.isNamespaced() ? indexColumn.getColumn() : indexColumn.getCrossNamespaceColumn();
+    String column =
+        request.isNamespaced() ? indexColumn.getColumn() : indexColumn.getCrossNamespaceColumn();
     // we want to return the first chunk of 'limit' elements after offset
     // in addition, we want to pre-fetch 'numCursors' chunks of size 'limit'.
     // Note that there's a potential for overflow so we account by limiting it to Integer.MAX_VALUE
@@ -737,7 +761,8 @@ public class MetadataDataset extends AbstractDataset {
     List<String> cursors = new ArrayList<>(numCursors);
 
     if (!"*".equals(request.getQuery())) {
-      throw new BadRequestException("Cannot search with non-default sort with any query other than '*'");
+      throw new BadRequestException(
+          "Cannot search with non-default sort with any query other than '*'");
     }
 
     String cursor = request.getCursor();
@@ -747,8 +772,9 @@ public class MetadataDataset extends AbstractDataset {
       byte[] namespaceStartKey = Bytes.toBytes(searchTerm.getTerm());
       byte[] startKey = namespaceStartKey;
       if (!Strings.isNullOrEmpty(cursor)) {
-        String prefix = searchTerm.getNamespaceId() == null ?
-          "" : searchTerm.getNamespaceId().getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR;
+        String prefix = searchTerm.getNamespaceId() == null
+            ? ""
+            : searchTerm.getNamespaceId().getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR;
         startKey = Bytes.toBytes(prefix + cursor);
       }
       @SuppressWarnings("ConstantConditions")
@@ -764,7 +790,7 @@ public class MetadataDataset extends AbstractDataset {
         Row next;
         while ((next = scanner.next()) != null && results.size() < fetchSize) {
           Optional<MetadataEntry> metadataEntry =
-            parseRow(next, column, request.getTypes(), request.shouldShowHidden());
+              parseRow(next, column, request.getTypes(), request.shouldShowHidden());
           if (!metadataEntry.isPresent()) {
             continue;
           }
@@ -774,7 +800,8 @@ public class MetadataDataset extends AbstractDataset {
             String cursorVal = Bytes.toString(next.get(column));
             // add the cursor, with the namespace removed.
             if (cursorVal != null && request.isNamespaced()) {
-              cursorVal = cursorVal.substring(cursorVal.indexOf(MetadataConstants.KEYVALUE_SEPARATOR) + 1);
+              cursorVal = cursorVal.substring(
+                  cursorVal.indexOf(MetadataConstants.KEYVALUE_SEPARATOR) + 1);
             }
             cursors.add(cursorVal);
           }
@@ -787,7 +814,7 @@ public class MetadataDataset extends AbstractDataset {
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
   // so return an Optional
   private Optional<MetadataEntry> parseRow(Row rowToProcess, String indexColumn,
-                                           Set<String> entityFilter, boolean showHidden) {
+      Set<String> entityFilter, boolean showHidden) {
     String rowValue = rowToProcess.getString(indexColumn);
     if (rowValue == null) {
       return Optional.empty();
@@ -806,7 +833,8 @@ public class MetadataDataset extends AbstractDataset {
     try {
       NamespacedEntityId namespacedEntityId = EntityId.fromMetadataEntity(metadataEntity);
       // if the entity starts with _ then skip it unless the caller choose to showHidden.
-      if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName().startsWith("_")) {
+      if (!showHidden && namespacedEntityId != null && namespacedEntityId.getEntityName()
+          .startsWith("_")) {
         return Optional.empty();
       }
     } catch (IllegalArgumentException e) {
@@ -819,10 +847,9 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Generate the search terms to use for the query.
-   * The search query is split on whitespace into one or more raw terms. Each raw term is cleaned and formatted
-   * into a SearchTerm.
-   * See {@link SearchTerm#from(NamespaceId, String)} for how cleaning and formatting is done.
+   * Generate the search terms to use for the query. The search query is split on whitespace into
+   * one or more raw terms. Each raw term is cleaned and formatted into a SearchTerm. See {@link
+   * SearchTerm#from(NamespaceId, String)} for how cleaning and formatting is done.
    *
    * @param searchRequest the request to get search terms for
    * @return formatted search query which is namespaced
@@ -833,7 +860,8 @@ public class MetadataDataset extends AbstractDataset {
     List<SearchTerm> searchTerms = new LinkedList<>();
     Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
     String searchQuery = searchRequest.getQuery();
-    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
+    for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults()
+        .split(searchQuery)) {
       termAdder.accept(term);
     }
     return searchTerms;
@@ -842,7 +870,7 @@ public class MetadataDataset extends AbstractDataset {
   @VisibleForTesting
   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
   static Consumer<String> determineSearchFields(Optional<NamespaceId> namespace,
-                                                Set<EntityScope> entityScopes, List<SearchTerm> searchTerms) {
+      Set<EntityScope> entityScopes, List<SearchTerm> searchTerms) {
     if (!namespace.isPresent()) {
       // we can't really represent "any namespace but system", so we just search for any occurrence of the term
       if (entityScopes.contains(EntityScope.USER)) {
@@ -851,12 +879,12 @@ public class MetadataDataset extends AbstractDataset {
       if (entityScopes.contains(EntityScope.SYSTEM)) {
         return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
       }
-    // namespace is present
+      // namespace is present
     } else if (namespace.get().equals(NamespaceId.SYSTEM)) {
       if (entityScopes.contains(EntityScope.SYSTEM)) {
         return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
       }
-    // namespace is a user namespace
+      // namespace is a user namespace
     } else if (entityScopes.contains(EntityScope.USER)) {
       if (entityScopes.contains(EntityScope.SYSTEM)) {
         return term -> {
@@ -865,12 +893,13 @@ public class MetadataDataset extends AbstractDataset {
         };
       }
       return term -> searchTerms.add(SearchTerm.from(namespace.get(), term));
-    // namespace is a user namespace and scope does not contain user
+      // namespace is a user namespace and scope does not contain user
     } else if (entityScopes.contains(EntityScope.SYSTEM)) {
       return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
     }
     // no search terms - entityScopes is empty, namespace system and scope user, etc...
-    return term -> { };
+    return term -> {
+    };
   }
 
   private void writeValue(MetadataEntry entry) {
@@ -885,7 +914,9 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Store indexes for a {@link MetadataEntry}
-   * @param indexers {@link Set<String>} of {@link Indexer indexers} for this {@link MetadataEntry}
+   *
+   * @param indexers {@link Set<String>} of {@link Indexer indexers} for this {@link
+   *     MetadataEntry}
    * @param metadataEntry {@link MetadataEntry} for which indexes are to be stored
    */
   private void storeIndexes(MetadataEntry metadataEntry, Set<Indexer> indexers) {
@@ -893,7 +924,7 @@ public class MetadataDataset extends AbstractDataset {
     deleteIndexes(metadataEntry.getMetadataEntity(), metadataEntry.getKey());
 
     String namespacePrefix = metadataEntry.getMetadataEntity().getValue(MetadataEntity.NAMESPACE)
-      + MetadataConstants.KEYVALUE_SEPARATOR;
+        + MetadataConstants.KEYVALUE_SEPARATOR;
     for (Indexer indexer : indexers) {
       Set<String> indexes = indexer.getIndexes(metadataEntry);
       IndexColumn indexColumn = getIndexColumn(metadataEntry.getKey(), indexer.getSortOrder());
@@ -905,10 +936,12 @@ public class MetadataDataset extends AbstractDataset {
         // store one value for within namespace search and one for cross namespace search
         String lowercaseIndex = index.toLowerCase();
         MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntry.getMetadataEntity(),
-                                                           metadataEntry.getKey(), lowercaseIndex);
+            metadataEntry.getKey(), lowercaseIndex);
         Put put = new Put(mdsIndexKey.getKey());
-        put.add(Bytes.toBytes(indexColumn.getCrossNamespaceColumn()), Bytes.toBytes(lowercaseIndex));
-        put.add(Bytes.toBytes(indexColumn.getColumn()), Bytes.toBytes(namespacePrefix + lowercaseIndex));
+        put.add(Bytes.toBytes(indexColumn.getCrossNamespaceColumn()),
+            Bytes.toBytes(lowercaseIndex));
+        put.add(Bytes.toBytes(indexColumn.getColumn()),
+            Bytes.toBytes(namespacePrefix + lowercaseIndex));
         indexedTable.put(put);
       }
     }
@@ -943,6 +976,7 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Snapshots the metadata for the given metadataEntity at the given time.
+   *
    * @param metadata which needs to be snapshot
    */
   private void writeHistory(Record metadata) {
@@ -974,13 +1008,15 @@ public class MetadataDataset extends AbstractDataset {
     // (which will delete all indexes) and rewriting the tag as new record. In case of existing tag an optimization
     // can be made to check if the new metadata being written is properties or tags as in case of properties we will
     // not need include new entity indexes but keep the code cleaner we avoid that conditional check here.
-    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty());
+    Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(),
+        existingMetadata.getProperties().isEmpty());
     Record updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
     return new Change(existingMetadata, updatedMetadata);
   }
 
   /**
    * Writes the entry for the {@link MetadataEntity}
+   *
    * @param existing the existing metadata to which the metadata is being written
    * @param entry the new metadata entry
    * @param indexers the indexers to use for this entry
@@ -1000,14 +1036,16 @@ public class MetadataDataset extends AbstractDataset {
 
       // the new metadata entry with updated tags
       entryToWrite = new MetadataEntry(entry.getMetadataEntity(), entry.getKey(),
-                                       Joiner.on(TAGS_SEPARATOR).join(updatedTags));
-      updatedMetadata = new Record(existing.getMetadataEntity(), existing.getProperties(), updatedTags);
+          Joiner.on(TAGS_SEPARATOR).join(updatedTags));
+      updatedMetadata = new Record(existing.getMetadataEntity(), existing.getProperties(),
+          updatedTags);
     } else {
       // for  properties  key-value pair we just write new value
       entryToWrite = entry;
       HashMap<String, String> updatedProperties = new HashMap<>(existing.getProperties());
       updatedProperties.put(entry.getKey(), entry.getValue());
-      updatedMetadata = new Record(existing.getMetadataEntity(), updatedProperties, existing.getTags());
+      updatedMetadata = new Record(existing.getMetadataEntity(), updatedProperties,
+          existing.getTags());
     }
     writeValue(entryToWrite);
     // store indexes for the tags being added
@@ -1019,9 +1057,10 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Returns all the {@link Indexer indexers} that apply to a specified metadata key.
+   *
    * @param key the metadata key
-   * @param isNewEntity whether to include indexers which should be used only if this is the first
-   * time a metadata record is being stored for the given metadata entity
+   * @param isNewEntity whether to include indexers which should be used only if this is the
+   *     first time a metadata record is being stored for the given metadata entity
    */
   private Set<Indexer> getIndexersForKey(String key, boolean isNewEntity) {
     Set<Indexer> indexers = new HashSet<>();
@@ -1038,15 +1077,17 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Deletes a row if the value in the index column is non-null. This is necessary because at least in the
-   * InMemoryTable implementation, after deleting the index row, the index column still has a {@code null} value in it.
-   * A {@link Scanner} on the table after the delete returns the deleted rows with {@code null} values.
+   * Deletes a row if the value in the index column is non-null. This is necessary because at least
+   * in the InMemoryTable implementation, after deleting the index row, the index column still has a
+   * {@code null} value in it. A {@link Scanner} on the table after the delete returns the deleted
+   * rows with {@code null} values.
    *
    * @param row the row to delete
    */
   private void deleteIndexRow(Row row) {
     for (IndexColumn indexColumn : INDEX_COLUMNS) {
-      if (row.get(indexColumn.namespaceColumn) != null || row.get(indexColumn.crossNamespaceColumn) != null) {
+      if (row.get(indexColumn.namespaceColumn) != null
+          || row.get(indexColumn.crossNamespaceColumn) != null) {
         indexedTable.delete(row.getRow());
       }
     }
@@ -1061,6 +1102,7 @@ public class MetadataDataset extends AbstractDataset {
    * Columns for an Index.
    */
   static class IndexColumn {
+
     private final String namespaceColumn;
     private final String crossNamespaceColumn;
 
@@ -1082,6 +1124,7 @@ public class MetadataDataset extends AbstractDataset {
    * Information about a search term.
    */
   static class SearchTerm {
+
     private final NamespaceId namespaceId;
     private final String term;
     private final boolean isPrefix;
@@ -1124,12 +1167,13 @@ public class MetadataDataset extends AbstractDataset {
 
     /**
      * Create a SearchTerm. The raw term will be cleaned and formatted to meet the search need.
-     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase.
-     * If the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
-     * For example, 'foo : bar' will be changed to 'foo:bar'.
-     * If it is a prefix search, the part before the ending '*' will be used taken as the term.
+     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase. If
+     * the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
+     * For example, 'foo : bar' will be changed to 'foo:bar'. If it is a prefix search, the part
+     * before the ending '*' will be used taken as the term.
      * <p>
-     * For example, given raw term ' State : BETA* ', the result will be a prefix search where term = 'state:beta'.
+     * For example, given raw term ' State : BETA* ', the result will be a prefix search where term
+     * = 'state:beta'.
      *
      * @param rawTerm the raw search term
      */
@@ -1139,17 +1183,18 @@ public class MetadataDataset extends AbstractDataset {
 
     /**
      * Create a SearchTerm. The raw term will be cleaned and formatted to meet the search need.
-     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase.
-     * If the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
-     * For example, 'foo : bar' will be changed to 'foo:bar'.
-     * If it is a prefix search, the part before the ending '*' will be used taken as the term.
-     * If it is a namespace search, the namespace will be prefixed to the term.
+     * Leading and ending whitespace will be trimmed and characters will be changed to lowercase. If
+     * the term is a [key]:[value] search, any whitespace around the ':' separator will be removed.
+     * For example, 'foo : bar' will be changed to 'foo:bar'. If it is a prefix search, the part
+     * before the ending '*' will be used taken as the term. If it is a namespace search, the
+     * namespace will be prefixed to the term.
      * <p>
      * For example, given namespace 'ns1' and raw term ' State : BETA* ', the result will be a
      * prefix search where term = 'ns1:state:beta'.
      *
-     * @param namespaceId the namespace id if it is a within-namespace search, or null if it is cross namespace
-     * @param rawTerm     the raw search term
+     * @param namespaceId the namespace id if it is a within-namespace search, or null if it is
+     *     cross namespace
+     * @param rawTerm the raw search term
      */
     static SearchTerm from(@Nullable NamespaceId namespaceId, String rawTerm) {
       String formattedTerm = rawTerm.trim().toLowerCase();
@@ -1166,7 +1211,8 @@ public class MetadataDataset extends AbstractDataset {
       }
 
       if (namespaceId != null) {
-        formattedTerm = namespaceId.getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR + formattedTerm;
+        formattedTerm =
+            namespaceId.getNamespace() + MetadataConstants.KEYVALUE_SEPARATOR + formattedTerm;
       }
 
       return new SearchTerm(namespaceId, formattedTerm, isPrefix);
@@ -1175,9 +1221,11 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Represents the complete metadata of a {@link MetadataEntity} including its properties and tags.
+   * Represents the complete metadata of a {@link MetadataEntity} including its properties and
+   * tags.
    */
   public static class Record {
+
     private final MetadataEntity metadataEntity;
     private final Map<String, String> properties;
     private final Set<String> tags;
@@ -1194,13 +1242,15 @@ public class MetadataDataset extends AbstractDataset {
       this(namespacedEntityId.toMetadataEntity());
     }
 
-    public Record(NamespacedEntityId namespacedEntityId, Map<String, String> properties, Set<String> tags) {
+    public Record(NamespacedEntityId namespacedEntityId, Map<String, String> properties,
+        Set<String> tags) {
       this(namespacedEntityId.toMetadataEntity(), properties, tags);
     }
 
     public Record(MetadataEntity metadataEntity, Map<String, String> properties, Set<String> tags) {
       if (metadataEntity == null || properties == null || tags == null) {
-        throw new IllegalArgumentException("Valid and non-null metadata entity, properties and tags must be provided.");
+        throw new IllegalArgumentException(
+            "Valid and non-null metadata entity, properties and tags must be provided.");
       }
       this.metadataEntity = metadataEntity;
       this.properties = new HashMap<>(properties);
@@ -1212,12 +1262,13 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     /**
-     * @return {@link NamespacedEntityId} to which the {@link Record} belongs if it is a known cdap entity type for
-     * example datasets, applications etc. Custom resources likes fields etc cannot be converted into cdap
-     * {@link NamespacedEntityId} and calling this for {@link Record} associated with such resources will fail with
-     * a {@link IllegalArgumentException}.
-     * @throws IllegalArgumentException if the {@link Record} belong to a custom cdap resource and not a known cdap
-     * entity.
+     * @return {@link NamespacedEntityId} to which the {@link Record} belongs if it is a known cdap
+     *     entity type for example datasets, applications etc. Custom resources likes fields etc
+     *     cannot be converted into cdap {@link NamespacedEntityId} and calling this for {@link
+     *     Record} associated with such resources will fail with a {@link
+     *     IllegalArgumentException}.
+     * @throws IllegalArgumentException if the {@link Record} belong to a custom cdap resource
+     *     and not a known cdap entity.
      */
     public NamespacedEntityId getEntityId() {
       return EntityId.fromMetadataEntity(metadataEntity);
@@ -1242,9 +1293,9 @@ public class MetadataDataset extends AbstractDataset {
 
       Record that = (Record) o;
 
-      return Objects.equals(metadataEntity, that.metadataEntity) &&
-        Objects.equals(properties, that.properties) &&
-        Objects.equals(tags, that.tags);
+      return Objects.equals(metadataEntity, that.metadataEntity)
+          && Objects.equals(properties, that.properties)
+          && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -1254,11 +1305,11 @@ public class MetadataDataset extends AbstractDataset {
 
     @Override
     public String toString() {
-      return "MetaRecord{" +
-        "metadataEntity=" + metadataEntity +
-        ", properties=" + properties +
-        ", tags=" + tags +
-        '}';
+      return "MetaRecord{"
+          + "metadataEntity=" + metadataEntity
+          + ", properties=" + properties
+          + ", tags=" + tags
+          + '}';
     }
   }
 
@@ -1266,6 +1317,7 @@ public class MetadataDataset extends AbstractDataset {
    * Represents the change in Metadata
    */
   public static class Change {
+
     private final Record existing;
     private final Record latest;
 

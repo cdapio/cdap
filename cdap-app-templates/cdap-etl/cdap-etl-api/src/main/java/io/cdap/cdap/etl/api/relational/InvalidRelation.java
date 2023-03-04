@@ -26,54 +26,55 @@ import io.cdap.cdap.etl.api.aggregation.WindowAggregationDefinition;
 import java.util.Map;
 
 public class InvalidRelation implements Relation {
-    private final String errorMsg;
 
-    public InvalidRelation(String errorMsg) {
-        this.errorMsg = errorMsg;
-    }
+  private final String errorMsg;
 
-    @Override
-    public boolean isValid() {
-        return false;
-    }
+  public InvalidRelation(String errorMsg) {
+    this.errorMsg = errorMsg;
+  }
 
-    @Override
-    public String getValidationError() {
-        return errorMsg;
-    }
+  @Override
+  public boolean isValid() {
+    return false;
+  }
 
-    @Override
-    public Relation setColumn(String s, Expression expression) {
-        return this;
-    }
+  @Override
+  public String getValidationError() {
+    return errorMsg;
+  }
 
-    @Override
-    public Relation dropColumn(String s) {
-        return this;
-    }
+  @Override
+  public Relation setColumn(String s, Expression expression) {
+    return this;
+  }
 
-    @Override
-    public Relation select(Map<String, Expression> map) {
-        return this;
-    }
+  @Override
+  public Relation dropColumn(String s) {
+    return this;
+  }
 
-    @Override
-    public Relation filter(Expression expression) {
-        return this;
-    }
+  @Override
+  public Relation select(Map<String, Expression> map) {
+    return this;
+  }
 
-    @Override
-    public Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
-        return this;
-    }
+  @Override
+  public Relation filter(Expression expression) {
+    return this;
+  }
 
-    @Override
-    public Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
-        return this;
-    }
+  @Override
+  public Relation groupBy(GroupByAggregationDefinition aggregationDefinition) {
+    return this;
+  }
 
-    @Override
-    public Relation window(WindowAggregationDefinition aggregationDefinition) {
-        return this;
-    }
+  @Override
+  public Relation deduplicate(DeduplicateAggregationDefinition aggregationDefinition) {
+    return this;
+  }
+
+  @Override
+  public Relation window(WindowAggregationDefinition aggregationDefinition) {
+    return this;
+  }
 }

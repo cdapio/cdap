@@ -28,7 +28,8 @@ public interface ComputeFactory {
   /**
    * Create a Compute client.
    *
-   * @param conf configuration for dataproc calls, containing things like the connect and read timeouts
+   * @param conf configuration for dataproc calls, containing things like the connect and read
+   *     timeouts
    * @return Compute client
    * @throws GeneralSecurityException if there was a security issue creating the client
    * @throws IOException if there was an I/O exception creating the client

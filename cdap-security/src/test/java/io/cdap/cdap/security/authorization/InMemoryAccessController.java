@@ -251,8 +251,8 @@ public class InMemoryAccessController implements AccessController {
   private boolean isParent(EntityId guessingParent, Map<EntityType, String> guessingChild) {
     Map<EntityType, String> questionedEntityParts = Authorizable.fromEntityId(guessingParent).getEntityParts();
     for (EntityType entityType : questionedEntityParts.keySet()) {
-      if (!(guessingChild.containsKey(entityType) &&
-        guessingChild.get(entityType).equals(questionedEntityParts.get(entityType)))) {
+      if (!(guessingChild.containsKey(entityType)
+          && guessingChild.get(entityType).equals(questionedEntityParts.get(entityType)))) {
         return false;
       }
     }
@@ -289,22 +289,22 @@ public class InMemoryAccessController implements AccessController {
       if (entityId.getEntityType().equals(EntityType.ARTIFACT)) {
         ArtifactId artifactId = (ArtifactId) entityId;
         ArtifactId thatArtifactId = (ArtifactId) thatEntityId;
-        return Objects.equals(artifactId.getNamespace(), thatArtifactId.getNamespace()) &&
-          Objects.equals(artifactId.getArtifact(), thatArtifactId.getArtifact());
+        return Objects.equals(artifactId.getNamespace(), thatArtifactId.getNamespace())
+            && Objects.equals(artifactId.getArtifact(), thatArtifactId.getArtifact());
       }
       if (entityId.getEntityType().equals(EntityType.APPLICATION)) {
         ApplicationId applicationId = (ApplicationId) entityId;
         ApplicationId thatApplicationId = (ApplicationId) thatEntityId;
-        return Objects.equals(applicationId.getNamespace(), thatApplicationId.getNamespace()) &&
-          Objects.equals(applicationId.getApplication(), thatApplicationId.getApplication());
+        return Objects.equals(applicationId.getNamespace(), thatApplicationId.getNamespace())
+            && Objects.equals(applicationId.getApplication(), thatApplicationId.getApplication());
       }
       if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
         ProgramId programId = (ProgramId) entityId;
         ProgramId thatProgramId = (ProgramId) thatEntityId;
-        return Objects.equals(programId.getNamespace(), thatProgramId.getNamespace()) &&
-          Objects.equals(programId.getApplication(), thatProgramId.getApplication()) &&
-          Objects.equals(programId.getType(), thatProgramId.getType()) &&
-          Objects.equals(programId.getProgram(), thatProgramId.getProgram());
+        return Objects.equals(programId.getNamespace(), thatProgramId.getNamespace())
+            && Objects.equals(programId.getApplication(), thatProgramId.getApplication())
+            && Objects.equals(programId.getType(), thatProgramId.getType())
+            && Objects.equals(programId.getProgram(), thatProgramId.getProgram());
       }
       return Objects.equals(entityId, that.entityId);
     }

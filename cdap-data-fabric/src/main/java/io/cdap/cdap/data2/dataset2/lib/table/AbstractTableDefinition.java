@@ -35,7 +35,7 @@ import io.cdap.cdap.data2.datafabric.dataset.DatasetsUtil;
  * @param <A> the type of the table admin
  */
 public abstract class AbstractTableDefinition<D extends Dataset, A extends DatasetAdmin>
-  extends AbstractDatasetDefinition<D, A> implements Reconfigurable {
+    extends AbstractDatasetDefinition<D, A> implements Reconfigurable {
 
   // todo: datasets should not depend on cdap configuration!
   @Inject
@@ -53,35 +53,40 @@ public abstract class AbstractTableDefinition<D extends Dataset, A extends Datas
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
     return DatasetSpecification.builder(name, getName())
-      .properties(properties.getProperties())
-      .build();
+        .properties(properties.getProperties())
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties properties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties properties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     validateUpdate(properties, currentSpec);
     return configure(instanceName, properties);
   }
 
   /**
    * Validate that the new properties for an HBase Table are compatible with its existing spec.
+   *
    * @param newProperties the new properties
    * @param currentSpec the table's specification before the update
    * @throws IncompatibleUpdateException if any of the new properties is incompatible
    */
-  private static void validateUpdate(DatasetProperties newProperties, DatasetSpecification currentSpec)
-    throws IncompatibleUpdateException {
+  private static void validateUpdate(DatasetProperties newProperties,
+      DatasetSpecification currentSpec)
+      throws IncompatibleUpdateException {
 
     boolean wasTransactional = DatasetsUtil.isTransactional(currentSpec.getProperties());
     boolean isTransactional = DatasetsUtil.isTransactional(newProperties.getProperties());
     if (wasTransactional != isTransactional) {
       throw new IncompatibleUpdateException(String.format(
-        "Attempt to change whether the table is transactional from %s to %s.", wasTransactional, isTransactional));
+          "Attempt to change whether the table is transactional from %s to %s.", wasTransactional,
+          isTransactional));
     }
-    boolean wasReadlessIncrement = TableProperties.getReadlessIncrementSupport(currentSpec.getProperties());
-    boolean isReadlessIncrement = TableProperties.getReadlessIncrementSupport(newProperties.getProperties());
+    boolean wasReadlessIncrement = TableProperties.getReadlessIncrementSupport(
+        currentSpec.getProperties());
+    boolean isReadlessIncrement = TableProperties.getReadlessIncrementSupport(
+        newProperties.getProperties());
     if (wasReadlessIncrement && !isReadlessIncrement) {
       throw new IncompatibleUpdateException("Attempt to disable read-less increments.");
     }
@@ -89,7 +94,8 @@ public abstract class AbstractTableDefinition<D extends Dataset, A extends Datas
     String newColumnFamily = TableProperties.getColumnFamily(newProperties.getProperties());
     if (!oldColumnFamily.equals(newColumnFamily)) {
       throw new IncompatibleUpdateException(
-        String.format("Attempt to change the column family from '%s' to '%s'.", oldColumnFamily, newColumnFamily));
+          String.format("Attempt to change the column family from '%s' to '%s'.", oldColumnFamily,
+              newColumnFamily));
     }
   }
 }

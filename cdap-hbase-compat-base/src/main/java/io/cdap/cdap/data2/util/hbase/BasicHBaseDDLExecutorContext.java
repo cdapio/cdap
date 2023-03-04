@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Basic implementation of the {@link HBaseDDLExecutorContext}.
  */
 class BasicHBaseDDLExecutorContext implements HBaseDDLExecutorContext {
+
   private final Configuration hConf;
   private final Map<String, String> properties;
   private static final String PROPERTY_PREFIX = "cdap.hbase.spi.";

@@ -61,7 +61,8 @@ import javax.annotation.Nullable;
 import org.apache.twill.zookeeper.ZKClientService;
 
 /**
- * The main class to run metadata service. Also, the dataset op executor is running this process as well.
+ * The main class to run metadata service. Also, the dataset op executor is running this process as
+ * well.
  */
 public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
@@ -74,46 +75,47 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new MessagingClientModule(),
-      new NamespaceQueryAdminModule(),
-      getDataFabricModule(),
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new MetadataServiceModule(),
-      new AuditModule(),
-      new EntityVerifierModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(Store.class).to(DefaultStore.class);
+        new MessagingClientModule(),
+        new NamespaceQueryAdminModule(),
+        getDataFabricModule(),
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        new DataSetsModules().getStandaloneModules(),
+        new MetadataServiceModule(),
+        new AuditModule(),
+        new EntityVerifierModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new DFSLocationModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(Store.class).to(DefaultStore.class);
 
-          // Current impersonation is not supported
-          bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-          bind(PermissionManager.class).to(NoOpAccessController.class);
+            // Current impersonation is not supported
+            bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+            bind(PermissionManager.class).to(NoOpAccessController.class);
 
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          // TODO (CDAP-14677): find a better way to inject metadata publisher
-          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            // TODO (CDAP-14677): find a better way to inject metadata publisher
+            bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+          }
         }
-      }
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
     services.add(injector.getInstance(MetadataConsumerSubscriberService.class));
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -140,7 +142,7 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.METADATA_SERVICE);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.METADATA_SERVICE);
   }
 }

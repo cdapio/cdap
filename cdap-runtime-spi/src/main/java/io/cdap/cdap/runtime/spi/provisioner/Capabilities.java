@@ -31,18 +31,20 @@ public class Capabilities {
   private final Set<String> datasetTypes;
 
   /**
-   * Creates a {@link Capabilities} object from the given {@link Set}. Note: Capabilities are case insensitive and all
-   * the capabilities will be converted into lowercase.
+   * Creates a {@link Capabilities} object from the given {@link Set}. Note: Capabilities are case
+   * insensitive and all the capabilities will be converted into lowercase.
    *
    * @param datasetTypes a {@link Set} containing dataset type capabilities
    */
   public Capabilities(Set<String> datasetTypes) {
     this.datasetTypes = datasetTypes.isEmpty() ? Collections.emptySet() :
-      Collections.unmodifiableSet(datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
+        Collections.unmodifiableSet(
+            datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
   }
 
   /**
-   * @return {@link Set} containing the dataset type capabilities which can be be empty if there are no requirements
+   * @return {@link Set} containing the dataset type capabilities which can be be empty if there are
+   *     no requirements
    */
   public Set<String> getDatasetTypes() {
     return datasetTypes;
@@ -67,9 +69,9 @@ public class Capabilities {
 
   @Override
   public String toString() {
-    return "Capabilities{" +
-      "datasetTypes=" + datasetTypes +
-      '}';
+    return "Capabilities{"
+        + "datasetTypes=" + datasetTypes
+        + '}';
   }
 
   public boolean isEmpty() {

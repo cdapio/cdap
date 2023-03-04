@@ -20,4 +20,5 @@ package io.cdap.cdap.etl.api.engine.sql.capability;
  * Marker interface which denotes capabilities exposed by the SQL engine to handle push operations.
  */
 public interface PushCapability {
+
 }

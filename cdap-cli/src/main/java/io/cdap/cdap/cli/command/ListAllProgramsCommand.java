@@ -49,21 +49,21 @@ public class ListAllProgramsCommand extends AbstractAuthCommand implements Categ
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Map<ProgramType, List<ProgramRecord>> allPrograms =
-      appClient.listAllPrograms(cliConfig.getCurrentNamespace());
+        appClient.listAllPrograms(cliConfig.getCurrentNamespace());
     List<ProgramRecord> allProgramsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : allPrograms.values()) {
       allProgramsList.addAll(subList);
     }
 
     Table table = Table.builder()
-      .setHeader("type", "app", "id", "description")
-      .setRows(allProgramsList, new RowMaker<ProgramRecord>() {
-        @Override
-        public List<?> makeRow(ProgramRecord object) {
-          return Lists.newArrayList(object.getType().getCategoryName(), object.getApp(),
-                                    object.getName(), object.getDescription());
-        }
-      }).build();
+        .setHeader("type", "app", "id", "description")
+        .setRows(allProgramsList, new RowMaker<ProgramRecord>() {
+          @Override
+          public List<?> makeRow(ProgramRecord object) {
+            return Lists.newArrayList(object.getType().getCategoryName(), object.getApp(),
+                object.getName(), object.getDescription());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

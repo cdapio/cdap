@@ -23,6 +23,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
  * In-memory implementation of Table that does not require transactions.
  */
 public class NoTxInMemoryTable extends InMemoryTable {
+
   public NoTxInMemoryTable(DatasetContext datasetContext, String name, CConfiguration cConf) {
     super(datasetContext, name, cConf);
   }

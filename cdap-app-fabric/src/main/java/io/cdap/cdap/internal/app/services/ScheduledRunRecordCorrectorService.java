@@ -34,10 +34,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A distributed-mode only run record corrector service that corrects run records at a scheduled, configurable rate.
+ * A distributed-mode only run record corrector service that corrects run records at a scheduled,
+ * configurable rate.
  */
 public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorService {
-  private static final Logger LOG = LoggerFactory.getLogger(ScheduledRunRecordCorrectorService.class);
+
+  private static final Logger LOG = LoggerFactory.getLogger(
+      ScheduledRunRecordCorrectorService.class);
 
   private ScheduledExecutorService scheduledExecutorService;
   private final long initialDelay;
@@ -46,16 +49,19 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
   private boolean done;
 
   @Inject
-  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                     ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                                     DatasetFramework datasetFramework) {
-    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 300L, null, false);
+  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework) {
+    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework, 300L,
+        null, false);
   }
 
-  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                     ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
-                                     DatasetFramework datasetFramework,
-                                     long initialDelay, @Nullable Long interval, boolean runOnce) {
+  ScheduledRunRecordCorrectorService(CConfiguration cConf, Store store,
+      ProgramStateWriter programStateWriter,
+      ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+      DatasetFramework datasetFramework,
+      long initialDelay, @Nullable Long interval, boolean runOnce) {
     super(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework);
     this.runOnce = runOnce;
     this.interval = computeInterval(interval, cConf);
@@ -66,9 +72,11 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
     if (givenInterval != null) {
       return givenInterval;
     }
-    long configuredInterval = cConf.getLong(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
+    long configuredInterval = cConf.getLong(
+        Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS);
     if (configuredInterval <= 0) {
-      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", configuredInterval);
+      LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.",
+          configuredInterval);
       configuredInterval = 180L;
     }
     return configuredInterval;
@@ -78,10 +86,11 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
   protected void startUp() throws Exception {
     super.startUp();
 
-    scheduledExecutorService = Executors.newScheduledThreadPool(1, Threads.createDaemonThreadFactory("run-corrector"));
+    scheduledExecutorService = Executors.newScheduledThreadPool(1,
+        Threads.createDaemonThreadFactory("run-corrector"));
     // Schedule the run record corrector with the configured initial delay and interval between runs
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(),
-       initialDelay, interval, TimeUnit.SECONDS);
+        initialDelay, interval, TimeUnit.SECONDS);
   }
 
   @Override
@@ -120,13 +129,15 @@ public class ScheduledRunRecordCorrectorService extends RunRecordCorrectorServic
         // if configured to run only until successful once, mark success and shutdown the executor
         if (runOnce) {
           done = true;
-          LOG.debug("Corrected run records successfully. Run record correction will run again when CDAP restarts.");
+          LOG.debug(
+              "Corrected run records successfully. Run record correction will run again when CDAP restarts.");
           scheduledExecutorService.shutdown();
         }
       } catch (Throwable t) {
         // Ignore any exception thrown since this behaves like daemon thread.
         //noinspection ThrowableResultOfMethodCallIgnored
-        LOG.warn("Unable to complete correcting run records: {}", Throwables.getRootCause(t).getMessage());
+        LOG.warn("Unable to complete correcting run records: {}",
+            Throwables.getRootCause(t).getMessage());
         LOG.debug("Exception thrown when running run id cleaner.", t);
       }
     }

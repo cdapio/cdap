@@ -23,23 +23,26 @@ import javax.annotation.Nullable;
  * Change Summary returned in the app response.
  */
 public class ChangeDetail extends ChangeSummary {
+
   @Nullable
   private final String author;
   private final long creationTimeMillis;
   @Nullable
   private final Boolean latest;
 
-  public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
-                      long creationTimeMillis, @Nullable Boolean latest) {
+  public ChangeDetail(@Nullable String description, @Nullable String parentVersion,
+      @Nullable String author,
+      long creationTimeMillis, @Nullable Boolean latest) {
     super(description, parentVersion);
     this.author = author;
     this.creationTimeMillis = creationTimeMillis;
     this.latest = latest;
   }
 
-  public ChangeDetail(@Nullable String description, @Nullable String parentVersion, @Nullable String author,
-                      long creationTimeMillis) {
-      this(description, parentVersion, author, creationTimeMillis, null);
+  public ChangeDetail(@Nullable String description, @Nullable String parentVersion,
+      @Nullable String author,
+      long creationTimeMillis) {
+    this(description, parentVersion, author, creationTimeMillis, null);
   }
 
   /**
@@ -76,8 +79,8 @@ public class ChangeDetail extends ChangeSummary {
 
     ChangeDetail that = (ChangeDetail) o;
 
-    return creationTimeMillis == that.creationTimeMillis &&
-      Objects.equals(author, that.author);
+    return creationTimeMillis == that.creationTimeMillis
+        && Objects.equals(author, that.author);
   }
 
   @Override
@@ -87,10 +90,10 @@ public class ChangeDetail extends ChangeSummary {
 
   @Override
   public String toString() {
-    return "ChangeDetail{" +
-      "author='" + author + '\'' +
-      ", creationTimeMillis=" + creationTimeMillis + '\'' +
-      ", latest=" + latest +
-      '}';
+    return "ChangeDetail{"
+        + "author='" + author + '\''
+        + ", creationTimeMillis=" + creationTimeMillis + '\''
+        + ", latest=" + latest
+        + '}';
   }
 }

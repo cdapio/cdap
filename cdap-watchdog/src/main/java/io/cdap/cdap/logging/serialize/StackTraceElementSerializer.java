@@ -25,7 +25,9 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for StackTraceElement.
  */
 class StackTraceElementSerializer {
-  private StackTraceElementSerializer() {}
+
+  private StackTraceElementSerializer() {
+  }
 
   static GenericRecord encode(Schema schema, StackTraceElement stackTraceElement) {
     if (stackTraceElement != null) {

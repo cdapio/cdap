@@ -30,7 +30,8 @@ public interface ServiceTaskExecutor {
    *
    * @param runnable the runnable to call
    * @param transactional decide whether transaction is needed or not
-   * @throws Exception if there is exception, either caused by the runnable or by the transaction system.
+   * @throws Exception if there is exception, either caused by the runnable or by the
+   *     transaction system.
    */
   void execute(ThrowingRunnable runnable, boolean transactional) throws Exception;
 
@@ -40,7 +41,8 @@ public interface ServiceTaskExecutor {
    * @param callable the runnable to call
    * @param transactional decide whether transaction is needed or not
    * @return the result from the {@link Callable#call()}
-   * @throws Exception if there is exception, either caused by the runnable or by the transaction system.
+   * @throws Exception if there is exception, either caused by the runnable or by the
+   *     transaction system.
    */
   <T> T execute(Callable<T> callable, boolean transactional) throws Exception;
 
@@ -50,7 +52,8 @@ public interface ServiceTaskExecutor {
   void releaseCallResources();
 
   /**
-   * Returns a {@link Transactional} used by this task executor for executing transactional tasks directly.
+   * Returns a {@link Transactional} used by this task executor for executing transactional tasks
+   * directly.
    */
   Transactional getTransactional();
 }

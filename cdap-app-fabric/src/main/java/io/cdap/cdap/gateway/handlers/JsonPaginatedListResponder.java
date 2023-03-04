@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.function.Function;
 
 /**
- * Writes a json object that contains an array with provided key and nextPageToken, returned
- * from {@link #respond} generator
+ * Writes a json object that contains an array with provided key and nextPageToken, returned from
+ * {@link #respond} generator
  */
 public class JsonPaginatedListResponder extends JsonListResponder {
 
@@ -38,21 +38,24 @@ public class JsonPaginatedListResponder extends JsonListResponder {
   }
 
   /**
-   * Allows to write a paginated Json response. Provided generator should call {@link JsonListResponder#send(Object)} to
-   * write Json representation to an output stream. It should also return nextPageToken or null if its a last page.
+   * Allows to write a paginated Json response. Provided generator should call {@link
+   * JsonListResponder#send(Object)} to write Json representation to an output stream. It should
+   * also return nextPageToken or null if its a last page.
+   *
    * @param gson instance of Gson library to be used for json conversions
    * @param responder {@link HttpResponder} to be used to stream Json objects to
    * @param valuesKey json object key for values array
-   * @param generator should call send for every generated object to be written to an output stream.
-   * Should return nextPageToken or null if its a last page.
+   * @param generator should call send for every generated object to be written to an output
+   *     stream. Should return nextPageToken or null if its a last page.
    */
   public static void respond(Gson gson, HttpResponder responder,
       String valuesKey, Function<JsonListResponder, String> generator) throws IOException {
-    JsonPaginatedListResponder jsonPaginatedListResponder = new JsonPaginatedListResponder(gson, responder,
+    JsonPaginatedListResponder jsonPaginatedListResponder = new JsonPaginatedListResponder(gson,
+        responder,
         valuesKey);
-      String nextPageToken = generator.apply(jsonPaginatedListResponder);
-      jsonPaginatedListResponder.setNextPageToken(nextPageToken);
-      jsonPaginatedListResponder.finish();
+    String nextPageToken = generator.apply(jsonPaginatedListResponder);
+    jsonPaginatedListResponder.setNextPageToken(nextPageToken);
+    jsonPaginatedListResponder.finish();
   }
 
   @Override

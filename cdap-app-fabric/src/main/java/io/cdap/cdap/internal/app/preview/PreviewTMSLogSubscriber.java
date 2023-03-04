@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
  * TMS Log subscriber for preview logs.
  */
 public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<Iterator<byte[]>> {
+
   private static final Logger LOG = LoggerFactory.getLogger(PreviewTMSLogSubscriber.class);
   private static final String CONSUMER_NAME = "preview.log.writer";
   private static final String TOPIC_NAME = "previewlog0";
@@ -59,22 +60,22 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
 
   @Inject
   PreviewTMSLogSubscriber(CConfiguration cConf,
-                          @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService,
-                          MetricsCollectionService metricsCollectionService,
-                          TransactionRunner transactionRunner, RemoteExecutionLogProcessor logProcessor) {
+      @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService,
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner, RemoteExecutionLogProcessor logProcessor) {
     super(
-      NamespaceId.SYSTEM.topic(TOPIC_NAME),
-      cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
-      cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
-      cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
-      RetryStrategies.fromConfiguration(cConf, "system.preview."),
-      metricsCollectionService.getContext(
-        ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Service.PREVIEW_HTTP,
-                        Constants.Metrics.Tag.INSTANCE_ID, "0",
-                        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
-                        Constants.Metrics.Tag.TOPIC, TOPIC_NAME,
-                        Constants.Metrics.Tag.CONSUMER, CONSUMER_NAME
-      )));
+        NamespaceId.SYSTEM.topic(TOPIC_NAME),
+        cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+        cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+        cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
+        RetryStrategies.fromConfiguration(cConf, "system.preview."),
+        metricsCollectionService.getContext(
+            ImmutableMap.of(Constants.Metrics.Tag.COMPONENT, Constants.Service.PREVIEW_HTTP,
+                Constants.Metrics.Tag.INSTANCE_ID, "0",
+                Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+                Constants.Metrics.Tag.TOPIC, TOPIC_NAME,
+                Constants.Metrics.Tag.CONSUMER, CONSUMER_NAME
+            )));
 
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactionRunner = transactionRunner;
@@ -102,7 +103,7 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
 
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Iterator<byte[]>>> messages) throws Exception {
+      Iterator<ImmutablePair<String, Iterator<byte[]>>> messages) throws Exception {
     while (messages.hasNext()) {
       ImmutablePair<String, Iterator<byte[]>> next = messages.next();
       String messageId = next.getFirst();
@@ -113,8 +114,9 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
         if (messageId.equals(erroredMessageId)) {
           errorCount++;
           if (errorCount >= maxRetriesOnError) {
-            LOG.warn("Skipping preview message {} after processing it has caused {} consecutive errors: {}",
-                     message, errorCount, e.getMessage());
+            LOG.warn(
+                "Skipping preview message {} after processing it has caused {} consecutive errors: {}",
+                message, errorCount, e.getMessage());
             continue;
           }
         } else {

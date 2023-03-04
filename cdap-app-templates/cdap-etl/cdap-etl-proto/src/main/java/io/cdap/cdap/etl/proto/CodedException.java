@@ -22,6 +22,7 @@ import io.cdap.cdap.api.common.HttpErrorStatusProvider;
  * An exception that contains an HTTP error code.
  */
 public class CodedException extends RuntimeException implements HttpErrorStatusProvider {
+
   private final int code;
 
   public CodedException(int code, String message) {
@@ -35,7 +36,6 @@ public class CodedException extends RuntimeException implements HttpErrorStatusP
   }
 
   /**
-   *
    * @return HTTP error code
    * @deprecated use {@link #getStatusCode()} instead
    */

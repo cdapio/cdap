@@ -212,8 +212,8 @@ public class TransactionServiceTest {
 
     txExecutor.execute(() -> {
       byte[] existing = table.get(Bytes.toBytes("row"), Bytes.toBytes("col"));
-      Assert.assertTrue((verifyGet == null && existing == null) ||
-                          Arrays.equals(Bytes.toBytes(verifyGet), existing));
+      Assert.assertTrue((verifyGet == null && existing == null)
+          || Arrays.equals(Bytes.toBytes(verifyGet), existing));
       table.put(Bytes.toBytes("row"), Bytes.toBytes("col"), Bytes.toBytes(toPut));
     });
   }

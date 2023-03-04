@@ -30,7 +30,8 @@ import java.util.Map;
  */
 public class NamespaceConfigCodec implements TypeAdapterFactory {
 
-  public static final TypeToken<Map<String, String>> MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { };
+  public static final TypeToken<Map<String, String>> MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() {
+  };
 
   @Override
   public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {

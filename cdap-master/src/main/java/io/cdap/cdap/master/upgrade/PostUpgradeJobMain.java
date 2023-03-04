@@ -38,13 +38,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * Restarts all schedules and programs stopped between startTimeMillis and now.
- * The first parameter to this job should be the hostname, the second should be the port the
- * router service is running on, the third should be startTimeMillis, and the fourth should be "true" if we want to
- * restart system apps.
- * Eg, if the router is running at URI http://your-hostname:11015, all schedules and programs stopped between
- * 1565913178ms and now, and system apps are to be restarted, then pass in
- * your-hostname as the first parameter, 11015 as the second, 1565913178 as the third, and true as the fourth.
+ * Restarts all schedules and programs stopped between startTimeMillis and now. The first parameter
+ * to this job should be the hostname, the second should be the port the router service is running
+ * on, the third should be startTimeMillis, and the fourth should be "true" if we want to restart
+ * system apps. Eg, if the router is running at URI http://your-hostname:11015, all schedules and
+ * programs stopped between 1565913178ms and now, and system apps are to be restarted, then pass in
+ * your-hostname as the first parameter, 11015 as the second, 1565913178 as the third, and true as
+ * the fourth.
  */
 public class PostUpgradeJobMain {
 
@@ -53,19 +53,19 @@ public class PostUpgradeJobMain {
   public static void main(String[] args) {
     if (args.length < 3 || args.length > 4) {
       throw new RuntimeException(
-        String.format("Invalid number of arguments to %s. Needed 3, found %d",
-                      PostUpgradeJobMain.class.getSimpleName(), args.length));
+          String.format("Invalid number of arguments to %s. Needed 3, found %d",
+              PostUpgradeJobMain.class.getSimpleName(), args.length));
     }
     // TODO(CDAP-18299): Refactor to use internal service discovery mechanism instead of making calls via the router.
     ConnectionConfig connectionConfig = ConnectionConfig.builder()
-      .setHostname(args[0])
-      .setPort(Integer.parseInt(args[1]))
-      .setSSLEnabled(false)
-      .build();
+        .setHostname(args[0])
+        .setPort(Integer.parseInt(args[1]))
+        .setSSLEnabled(false)
+        .build();
     ClientConfig.Builder clientConfigBuilder =
-      ClientConfig.builder()
-        .setDefaultReadTimeout(DEFAULT_READ_TIMEOUT_MILLIS)
-        .setConnectionConfig(connectionConfig);
+        ClientConfig.builder()
+            .setDefaultReadTimeout(DEFAULT_READ_TIMEOUT_MILLIS)
+            .setConnectionConfig(connectionConfig);
 
     // If used in proxy mode, attach a user ID header to upgrade jobs.
     CConfiguration cConf = CConfiguration.create();
@@ -80,23 +80,23 @@ public class PostUpgradeJobMain {
     ClientConfig clientConfig = clientConfigBuilder.build();
 
     RetryStrategy retryStrategy =
-      RetryStrategies.timeLimit(30, TimeUnit.SECONDS,
-                                RetryStrategies.exponentialDelay(10, 500, TimeUnit.MILLISECONDS));
+        RetryStrategies.timeLimit(30, TimeUnit.SECONDS,
+            RetryStrategies.exponentialDelay(10, 500, TimeUnit.MILLISECONDS));
     final boolean restartSystemApps = args.length == 4 && "true".equals(args[3]);
 
     try {
       Retries.callWithRetries(
-        () -> {
-          restartPipelinesAndSchedules(clientConfig, Long.parseLong(args[2]), restartSystemApps);
-          return null;
-        }, retryStrategy, e -> e instanceof IOException || e instanceof NotFoundException);
+          () -> {
+            restartPipelinesAndSchedules(clientConfig, Long.parseLong(args[2]), restartSystemApps);
+            return null;
+          }, retryStrategy, e -> e instanceof IOException || e instanceof NotFoundException);
     } catch (Exception e) {
       throw new RuntimeException("Failed to restart pipelines and schedules.", e);
     }
   }
 
   private static void restartPipelinesAndSchedules(
-    ClientConfig clientConfig, long startTimeMillis, boolean restartSystemApps) throws Exception {
+      ClientConfig clientConfig, long startTimeMillis, boolean restartSystemApps) throws Exception {
     long endTimeMillis = System.currentTimeMillis();
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
     ScheduleClient scheduleClient = new ScheduleClient(clientConfig);
@@ -104,7 +104,8 @@ public class PostUpgradeJobMain {
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
 
     List<NamespaceId> namespaceIdList =
-      namespaceClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList());
+        namespaceClient.list().stream().map(NamespaceMeta::getNamespaceId)
+            .collect(Collectors.toList());
     if (restartSystemApps) {
       namespaceIdList.add(NamespaceId.SYSTEM);
     }
@@ -112,10 +113,10 @@ public class PostUpgradeJobMain {
     for (NamespaceId namespaceId : namespaceIdList) {
       for (ApplicationRecord record : applicationClient.list(namespaceId)) {
         ApplicationId applicationId =
-          new ApplicationId(namespaceId.getNamespace(), record.getName(), record.getAppVersion());
+            new ApplicationId(namespaceId.getNamespace(), record.getName(), record.getAppVersion());
         programClient.restart(applicationId,
-                              TimeUnit.MILLISECONDS.toSeconds(startTimeMillis),
-                              TimeUnit.MILLISECONDS.toSeconds(endTimeMillis));
+            TimeUnit.MILLISECONDS.toSeconds(startTimeMillis),
+            TimeUnit.MILLISECONDS.toSeconds(endTimeMillis));
       }
 
       // Re-enable schedules in a namespace AFTER programs have been restarted.

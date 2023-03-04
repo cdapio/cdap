@@ -31,7 +31,8 @@ public class DefaultProgram implements Program {
   private final Location jarLocation;
   private final ClassLoader classLoader;
 
-  public DefaultProgram(ProgramDescriptor programDescriptor, Location jarLocation, ClassLoader classLoader) {
+  public DefaultProgram(ProgramDescriptor programDescriptor, Location jarLocation,
+      ClassLoader classLoader) {
     this.programDescriptor = programDescriptor;
     this.jarLocation = jarLocation;
     this.classLoader = classLoader;

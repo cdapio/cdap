@@ -22,6 +22,7 @@ import java.util.Set;
 
 /**
  * Fetches {@link Privilege privileges} of the specified {@link Principal}.
+ *
  * @deprecated Use {@link GrantFetcher}
  */
 @Deprecated

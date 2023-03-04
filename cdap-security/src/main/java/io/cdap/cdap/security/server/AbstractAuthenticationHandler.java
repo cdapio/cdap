@@ -28,11 +28,12 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.util.security.Constraint;
 
 /**
- * An abstract authentication handler that provides basic functionality including
- * setting of constraints and setting of different required services.
+ * An abstract authentication handler that provides basic functionality including setting of
+ * constraints and setting of different required services.
  */
 @Path("/*")
 public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHandler {
+
   protected Map<String, String> handlerProps;
 
   /**

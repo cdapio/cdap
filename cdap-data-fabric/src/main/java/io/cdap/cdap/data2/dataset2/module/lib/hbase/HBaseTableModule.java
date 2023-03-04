@@ -25,6 +25,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
  * Registers HBase-backed implementations of the basic datasets
  */
 public class HBaseTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new HBaseTableDefinition("table"));

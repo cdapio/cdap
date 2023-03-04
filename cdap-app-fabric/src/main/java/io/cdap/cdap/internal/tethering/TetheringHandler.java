@@ -49,10 +49,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link io.cdap.http.HttpHandler} to manage tethering v3 REST APIs that are common to client and server.
+ * {@link io.cdap.http.HttpHandler} to manage tethering v3 REST APIs that are common to client and
+ * server.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class TetheringHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(TetheringHandler.class);
   private static final Gson GSON = new GsonBuilder().create();
 
@@ -70,7 +72,7 @@ public class TetheringHandler extends AbstractHttpHandler {
 
   @Inject
   TetheringHandler(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-                   ProfileService profileService) {
+      ProfileService profileService) {
     this.cConf = cConf;
     this.store = store;
     this.messagingService = messagingService;
@@ -83,7 +85,7 @@ public class TetheringHandler extends AbstractHttpHandler {
   public void init(HandlerContext context) {
     super.init(context);
     connectionTimeout = cConf.getInt(Constants.Tethering.CONNECTION_TIMEOUT_SECONDS,
-                                     Constants.Tethering.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
+        Constants.Tethering.DEFAULT_CONNECTION_TIMEOUT_SECONDS);
   }
 
   /**
@@ -104,8 +106,9 @@ public class TetheringHandler extends AbstractHttpHandler {
    */
   @GET
   @Path("/tethering/connections/{peer}")
-  public void getTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws PeerNotFoundException, IOException {
+  public void getTether(HttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws PeerNotFoundException, IOException {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(createPeerState(store.getPeer(peer))));
   }
 
@@ -114,19 +117,21 @@ public class TetheringHandler extends AbstractHttpHandler {
    */
   @DELETE
   @Path("/tethering/connections/{peer}")
-  public void deleteTether(HttpRequest request, HttpResponder responder, @PathParam("peer") String peer)
-    throws NotFoundException, IOException, BadRequestException {
+  public void deleteTether(HttpRequest request, HttpResponder responder,
+      @PathParam("peer") String peer)
+      throws NotFoundException, IOException, BadRequestException {
     boolean tetheringServerEnabled = cConf.getBoolean(Constants.Tethering.TETHERING_SERVER_ENABLED);
     if (tetheringServerEnabled) {
       // Fail deletion if there are any profiles using this tethering
       List<Profile> tetheringProfiles = profileService.getProfiles(
-        TetheringProvisioner.TETHERING_NAME,
-        new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer, true));
+          TetheringProvisioner.TETHERING_NAME,
+          new ProvisionerPropertyValue(TetheringConf.TETHERED_INSTANCE_PROPERTY, peer, true));
       if (!tetheringProfiles.isEmpty()) {
-        throw new BadRequestException(String.format("Cannot delete tethering as it's in use by compute profiles: %s." +
-                                                      " Delete these profiles before deleting this tethering.",
-                                                    tetheringProfiles.stream().map(Profile::getName)
-                                                      .collect(Collectors.toList())));
+        throw new BadRequestException(
+            String.format("Cannot delete tethering as it's in use by compute profiles: %s."
+                    + " Delete these profiles before deleting this tethering.",
+                tetheringProfiles.stream().map(Profile::getName)
+                    .collect(Collectors.toList())));
       }
     }
 
@@ -134,8 +139,9 @@ public class TetheringHandler extends AbstractHttpHandler {
     store.deletePeer(peer, !tetheringServerEnabled);
     // Remove per-tethering client topic if we're running on the server
     // If we're running on the client, remove per-tethering server program status update topic
-    TopicId topic = tetheringServerEnabled ? new TopicId(NamespaceId.SYSTEM.getNamespace(), clientTopicPrefix + peer) :
-      new TopicId(NamespaceId.SYSTEM.getNamespace(), programStateTopicPrefix + peer);
+    TopicId topic = tetheringServerEnabled ? new TopicId(NamespaceId.SYSTEM.getNamespace(),
+        clientTopicPrefix + peer) :
+        new TopicId(NamespaceId.SYSTEM.getNamespace(), programStateTopicPrefix + peer);
     try {
       messagingService.deleteTopic(topic);
     } catch (TopicNotFoundException e) {
@@ -151,6 +157,6 @@ public class TetheringHandler extends AbstractHttpHandler {
       connectionStatus = TetheringConnectionStatus.ACTIVE;
     }
     return new PeerState(peerInfo.getName(), peerInfo.getEndpoint(), peerInfo.getTetheringStatus(),
-                         peerInfo.getMetadata(), peerInfo.getRequestTime(), connectionStatus);
+        peerInfo.getMetadata(), peerInfo.getRequestTime(), connectionStatus);
   }
 }

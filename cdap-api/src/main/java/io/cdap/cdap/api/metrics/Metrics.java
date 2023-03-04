@@ -19,12 +19,14 @@ package io.cdap.cdap.api.metrics;
 import java.util.Map;
 
 /**
- * Defines a way to collect user-defined metrics.
- * To use it, just add a Metrics field in a CDAP application element and start using it.
+ * Defines a way to collect user-defined metrics. To use it, just add a Metrics field in a CDAP
+ * application element and start using it.
  */
 public interface Metrics {
+
   /**
    * Increases the value of the specific metric by delta.
+   *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
    */
@@ -32,6 +34,7 @@ public interface Metrics {
 
   /**
    * Increases the value of the specific metric by delta.
+   *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
    */
@@ -45,6 +48,7 @@ public interface Metrics {
 
   /**
    * Sets the specific metric to the provided value.
+   *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.
    */
@@ -52,9 +56,12 @@ public interface Metrics {
 
   /**
    * Get the child {@link Metrics} by adding specified tags to the current metrics context.
+   *
    * @param tags to be added to the current metrics context
-   * @return an instance of {@link Metrics} which can be used to collect metrics with new child context.
-   * @throws IllegalArgumentException if any of the supplied tag name already exists in the current metrics context
+   * @return an instance of {@link Metrics} which can be used to collect metrics with new child
+   *     context.
+   * @throws IllegalArgumentException if any of the supplied tag name already exists in the
+   *     current metrics context
    */
   Metrics child(Map<String, String> tags);
 

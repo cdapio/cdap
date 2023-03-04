@@ -44,12 +44,13 @@ public final class SupportBundleServiceModule extends AbstractModule {
   @Override
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
-      binder(), HttpHandler.class, Names.named(Constants.SupportBundle.HANDLERS_NAME));
+        binder(), HttpHandler.class, Names.named(Constants.SupportBundle.HANDLERS_NAME));
     CommonHandlers.add(handlerBinder);
     handlerBinder.addBinding().to(SupportBundleHttpHandler.class);
     bind(SupportBundleInternalService.class).in(Scopes.SINGLETON);
     Multibinder<SupportBundleTaskFactory> supportBundleTaskFactoryMultibinder = Multibinder.newSetBinder(
-      binder(), SupportBundleTaskFactory.class, Names.named(Constants.SupportBundle.TASK_FACTORY));
+        binder(), SupportBundleTaskFactory.class,
+        Names.named(Constants.SupportBundle.TASK_FACTORY));
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundlePipelineInfoTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleSystemLogTaskFactory.class);
     supportBundleTaskFactoryMultibinder.addBinding().to(SupportBundleVMInfoTaskFactory.class);

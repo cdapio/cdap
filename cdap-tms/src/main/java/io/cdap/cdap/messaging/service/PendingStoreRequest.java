@@ -38,7 +38,7 @@ final class PendingStoreRequest extends StoreRequest {
 
   PendingStoreRequest(StoreRequest originalRequest, TopicMetadata topicMetadata) {
     super(originalRequest.getTopicId(), originalRequest.isTransactional(),
-          originalRequest.getTransactionWritePointer());
+        originalRequest.getTransactionWritePointer());
     this.originalRequest = originalRequest;
     this.metadata = topicMetadata;
   }
@@ -112,13 +112,13 @@ final class PendingStoreRequest extends StoreRequest {
 
   @Override
   public String toString() {
-    return "PendingStoreRequest{" +
-      "completed=" + completed +
-      ", startTimestamp=" + startTimestamp +
-      ", startSequenceId=" + startSequenceId +
-      ", endTimestamp=" + endTimestamp +
-      ", endSequenceId=" + endSequenceId +
-      ", failureCause=" + failureCause +
-      '}';
+    return "PendingStoreRequest{"
+        + "completed=" + completed
+        + ", startTimestamp=" + startTimestamp
+        + ", startSequenceId=" + startSequenceId
+        + ", endTimestamp=" + endTimestamp
+        + ", endSequenceId=" + endSequenceId
+        + ", failureCause=" + failureCause
+        + '}';
   }
 }

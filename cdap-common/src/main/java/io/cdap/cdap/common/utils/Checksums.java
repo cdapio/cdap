@@ -21,19 +21,21 @@ package io.cdap.cdap.common.utils;
  */
 public final class Checksums {
 
-  private Checksums() { }
+  private Checksums() {
+  }
 
   private static final long EMPTY64 = 0xc15d213aa4d7a795L;
 
   /**
-   * The implementation of fingerprint algorithm is copied from {@code org.apache.avro.SchemaNormalization} class.
+   * The implementation of fingerprint algorithm is copied from {@code
+   * org.apache.avro.SchemaNormalization} class.
    *
    * @param data byte string for which fingerprint is to be computed
    * @return the 64-bit Rabin Fingerprint (as recommended in the Avro spec) of a byte string
    */
-   public static long fingerprint64(byte[] data) {
+  public static long fingerprint64(byte[] data) {
     long result = EMPTY64;
-    for (byte b: data) {
+    for (byte b : data) {
       int index = (int) (result ^ b) & 0xff;
       result = (result >>> 8) ^ FP64.FP_TABLE[index];
     }
@@ -42,7 +44,9 @@ public final class Checksums {
 
   /* An inner class ensures that FP_TABLE initialized only when needed. */
   private static class FP64 {
+
     private static final long[] FP_TABLE = new long[256];
+
     static {
       for (int i = 0; i < 256; i++) {
         long fp = i;

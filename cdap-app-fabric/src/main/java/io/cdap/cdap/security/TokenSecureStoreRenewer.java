@@ -44,8 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link SecureStoreRenewer} implementation that renew delegation tokens for
- * YARN applications that are launched by CDAP.
+ * A {@link SecureStoreRenewer} implementation that renew delegation tokens for YARN applications
+ * that are launched by CDAP.
  */
 public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
@@ -59,8 +59,8 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
   @Inject
   TokenSecureStoreRenewer(YarnConfiguration yarnConf, CConfiguration cConf,
-                          LocationFactory locationFactory,
-                          SecureStore secureStore) {
+      LocationFactory locationFactory,
+      SecureStore secureStore) {
     this.yarnConf = yarnConf;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
@@ -69,6 +69,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
   /**
    * Returns the minimum update interval for the delegation tokens.
+   *
    * @return The update interval in milliseconds.
    */
   public long getUpdateInterval() {
@@ -82,7 +83,8 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   }
 
   @Override
-  public void renew(String application, RunId runId, SecureStoreWriter secureStoreWriter) throws IOException {
+  public void renew(String application, RunId runId, SecureStoreWriter secureStoreWriter)
+      throws IOException {
     Credentials credentials = createCredentials();
     UserGroupInformation currentUser = null;
     try {
@@ -92,12 +94,13 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       LOG.debug("Cannot determine current user", e);
     }
     LOG.debug("Updating credentials for application {}, run {}, tokens {}, with current user {}",
-              application, runId, credentials.getAllTokens(), currentUser);
+        application, runId, credentials.getAllTokens(), currentUser);
     secureStoreWriter.write(YarnSecureStore.create(credentials));
   }
 
   /**
-   * Creates a {@link Credentials} that contains delegation tokens of the current user for all services that CDAP uses.
+   * Creates a {@link Credentials} that contains delegation tokens of the current user for all
+   * services that CDAP uses.
    */
   public Credentials createCredentials() {
     Credentials refreshedCredentials = new Credentials();
@@ -148,12 +151,11 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     List<Long> renewalTimes = Lists.newArrayList();
 
     renewalTimes.add(hConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                      DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+        DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
     // The value contains in hbase-default.xml, so it should always there. If it is really missing, default it to 1 day.
     renewalTimes.add(hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
-                                      TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
-
+        TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
 
     // Set the update interval to the shortest update interval of all required renewals.
     Long minimumInterval = Collections.min(renewalTimes);

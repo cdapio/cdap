@@ -23,29 +23,33 @@ import javax.annotation.Nullable;
  * Represents the information of a report generation in an HTTP response.
  */
 public class ReportGenerationInfo extends ReportMetaInfo {
+
   @Nullable
   private final String error;
   private final ReportGenerationRequest request;
   private final ReportSummary summary;
 
-  public ReportGenerationInfo(String name, @Nullable String description, long created, @Nullable Long expiry,
-                              ReportStatus status, @Nullable String error, ReportGenerationRequest request,
-                              @Nullable ReportSummary summary) {
+  public ReportGenerationInfo(String name, @Nullable String description, long created,
+      @Nullable Long expiry,
+      ReportStatus status, @Nullable String error, ReportGenerationRequest request,
+      @Nullable ReportSummary summary) {
     super(name, description, created, expiry, status);
     this.error = error;
     this.request = request;
     this.summary = summary;
   }
 
-  public ReportGenerationInfo(ReportMetaInfo metaInfo, @Nullable String error, ReportGenerationRequest request,
-                              @Nullable ReportSummary summary) {
+  public ReportGenerationInfo(ReportMetaInfo metaInfo, @Nullable String error,
+      ReportGenerationRequest request,
+      @Nullable ReportSummary summary) {
     this(metaInfo.getName(), metaInfo.getDescription(), metaInfo.getCreated(), metaInfo.getExpiry(),
-         metaInfo.getStatus(), error, request, summary);
+        metaInfo.getStatus(), error, request, summary);
   }
 
   /**
-   * @return the error of the report generation if the status of the report is {@link ReportStatus#FAILED},
-   *         or {@code null} if the report status is not {@link ReportStatus#FAILED}
+   * @return the error of the report generation if the status of the report is {@link
+   *     ReportStatus#FAILED}, or {@code null} if the report status is not {@link
+   *     ReportStatus#FAILED}
    */
   @Nullable
   public String getError() {
@@ -60,8 +64,9 @@ public class ReportGenerationInfo extends ReportMetaInfo {
   }
 
   /**
-   * @return the summary of the report if the status of the report is {@link ReportStatus#COMPLETED},
-   *         or {@code null} if the report status is not {@link ReportStatus#COMPLETED}
+   * @return the summary of the report if the status of the report is {@link
+   *     ReportStatus#COMPLETED}, or {@code null} if the report status is not {@link
+   *     ReportStatus#COMPLETED}
    */
   @Nullable
   public ReportSummary getSummary() {

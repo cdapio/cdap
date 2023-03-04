@@ -37,8 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Dataproc's Auto-Scaling policy Operations and configurations to be used when a pipeline is enabled with
- * CDAP's predefined auto-scaling feature.
+ * Dataproc's Auto-Scaling policy Operations and configurations to be used when a pipeline is
+ * enabled with CDAP's predefined auto-scaling feature.
  */
 public class PredefinedAutoScaling {
 
@@ -66,41 +66,42 @@ public class PredefinedAutoScaling {
   @VisibleForTesting
   AutoscalingPolicy generatePredefinedAutoScaling() {
     InstanceGroupAutoscalingPolicyConfig workerInstanceGroupAutoscalingPolicyConfig =
-      InstanceGroupAutoscalingPolicyConfig.newBuilder()
-        .setMinInstances(PredefinedAutoScalingPolicy.WorkerConfig.MIN_INSTANCES)
-        .setMaxInstances(PredefinedAutoScalingPolicy.WorkerConfig.MAX_INSTANCES)
-        .setWeight(1)
-        .build();
+        InstanceGroupAutoscalingPolicyConfig.newBuilder()
+            .setMinInstances(PredefinedAutoScalingPolicy.WorkerConfig.MIN_INSTANCES)
+            .setMaxInstances(PredefinedAutoScalingPolicy.WorkerConfig.MAX_INSTANCES)
+            .setWeight(1)
+            .build();
 
     InstanceGroupAutoscalingPolicyConfig secondaryWorkerInstanceGroupAutoscalingPolicyConfig =
-      InstanceGroupAutoscalingPolicyConfig.newBuilder()
-        .setMinInstances(PredefinedAutoScalingPolicy.SecondaryWorkerConfig.MIN_INSTANCES)
-        .setMaxInstances(PredefinedAutoScalingPolicy.SecondaryWorkerConfig.MAX_INSTANCES)
-        .setWeight(1)
-        .build();
+        InstanceGroupAutoscalingPolicyConfig.newBuilder()
+            .setMinInstances(PredefinedAutoScalingPolicy.SecondaryWorkerConfig.MIN_INSTANCES)
+            .setMaxInstances(PredefinedAutoScalingPolicy.SecondaryWorkerConfig.MAX_INSTANCES)
+            .setWeight(1)
+            .build();
 
     BasicYarnAutoscalingConfig basicYarnApplicationConfig =
-      BasicYarnAutoscalingConfig.newBuilder()
-        .setScaleUpFactor(PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_UP_FACTOR)
-        .setScaleDownFactor(PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_DOWN_FACTOR)
-        .setScaleUpMinWorkerFraction(
-          PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_UP_MIN_WORKER_FRACTION)
-        .setGracefulDecommissionTimeout(
-          PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.GRACEFUL_DECOMMISSION)
-        .build();
+        BasicYarnAutoscalingConfig.newBuilder()
+            .setScaleUpFactor(PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_UP_FACTOR)
+            .setScaleDownFactor(
+                PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_DOWN_FACTOR)
+            .setScaleUpMinWorkerFraction(
+                PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.SCALE_UP_MIN_WORKER_FRACTION)
+            .setGracefulDecommissionTimeout(
+                PredefinedAutoScalingPolicy.BasicAlgorithm.YarnConfig.GRACEFUL_DECOMMISSION)
+            .build();
 
     BasicAutoscalingAlgorithm basicAutoscalingAlgorithm =
-      BasicAutoscalingAlgorithm.newBuilder()
-        .setYarnConfig(basicYarnApplicationConfig)
-        .build();
+        BasicAutoscalingAlgorithm.newBuilder()
+            .setYarnConfig(basicYarnApplicationConfig)
+            .build();
 
     AutoscalingPolicy autoscalingPolicy =
-      AutoscalingPolicy.newBuilder()
-        .setId(AUTOSCALING_POLICY_ID)
-        .setWorkerConfig(workerInstanceGroupAutoscalingPolicyConfig)
-        .setSecondaryWorkerConfig(secondaryWorkerInstanceGroupAutoscalingPolicyConfig)
-        .setBasicAlgorithm(basicAutoscalingAlgorithm)
-        .build();
+        AutoscalingPolicy.newBuilder()
+            .setId(AUTOSCALING_POLICY_ID)
+            .setWorkerConfig(workerInstanceGroupAutoscalingPolicyConfig)
+            .setSecondaryWorkerConfig(secondaryWorkerInstanceGroupAutoscalingPolicyConfig)
+            .setBasicAlgorithm(basicAutoscalingAlgorithm)
+            .build();
 
     return autoscalingPolicy;
   }
@@ -108,7 +109,7 @@ public class PredefinedAutoScaling {
   //Creates the auto-scaling policy if doesn't exist.
   public String createPredefinedAutoScalingPolicy() throws IOException {
     AutoscalingPolicyName autoscalingPolicyName = AutoscalingPolicyName.ofProjectLocationAutoscalingPolicyName(
-      dataprocConf.getProjectId(), dataprocConf.getRegion(), AUTOSCALING_POLICY_ID);
+        dataprocConf.getProjectId(), dataprocConf.getRegion(), AUTOSCALING_POLICY_ID);
     AutoscalingPolicy generatedPolicy = generatePredefinedAutoScaling();
 
     try (AutoscalingPolicyServiceClient autoscalingPolicyServiceClient = getAutoscalingPolicyServiceClient()) {
@@ -122,20 +123,22 @@ public class PredefinedAutoScaling {
       try {
         existingPolicy = autoscalingPolicyServiceClient.getAutoscalingPolicy(autoscalingPolicyName);
         boolean yarnDiff = !existingPolicy.getBasicAlgorithm().getYarnConfig()
-          .equals(generatedPolicy.getBasicAlgorithm().getYarnConfig());
-        boolean workerDiff = !existingPolicy.getWorkerConfig().equals(generatedPolicy.getWorkerConfig());
+            .equals(generatedPolicy.getBasicAlgorithm().getYarnConfig());
+        boolean workerDiff = !existingPolicy.getWorkerConfig()
+            .equals(generatedPolicy.getWorkerConfig());
         boolean secondaryWorkerDiff = !existingPolicy.getSecondaryWorkerConfig()
-          .equals(generatedPolicy.getSecondaryWorkerConfig());
+            .equals(generatedPolicy.getSecondaryWorkerConfig());
 
         if (yarnDiff || workerDiff || secondaryWorkerDiff) {
-          LOG.warn("The predefined auto-scaling policy {} already exists and is having a different configuration" +
-                     "as compared to CDF/CDAP's chosen configuration", existingPolicy.getName());
+          LOG.warn(
+              "The predefined auto-scaling policy {} already exists and is having a different configuration"
+
+                  + "as compared to CDF/CDAP's chosen configuration", existingPolicy.getName());
         }
       } catch (NotFoundException e) {
         createPolicy = true;
         LOG.debug("The autoscaling policy doesn't exists");
       }
-
 
       if (createPolicy) {
         RegionName parent = RegionName.of(dataprocConf.getProjectId(), dataprocConf.getRegion());
@@ -155,17 +158,18 @@ public class PredefinedAutoScaling {
    */
   @VisibleForTesting
   AutoscalingPolicyServiceClient getAutoscalingPolicyServiceClient()
-    throws IOException {
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(dataprocConf.getDataprocCredentials());
+      throws IOException {
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
+        dataprocConf.getDataprocCredentials());
 
     String rootUrl = Optional.ofNullable(dataprocConf.getRootUrl())
         .orElse(ClusterControllerSettings.getDefaultEndpoint());
     String regionalEndpoint = dataprocConf.getRegion() + "-" + rootUrl;
 
     AutoscalingPolicyServiceSettings autoscalingPolicyServiceSettings = AutoscalingPolicyServiceSettings.newBuilder()
-      .setCredentialsProvider(credentialsProvider)
-      .setEndpoint(regionalEndpoint)
-      .build();
+        .setCredentialsProvider(credentialsProvider)
+        .setEndpoint(regionalEndpoint)
+        .build();
     return AutoscalingPolicyServiceClient.create(autoscalingPolicyServiceSettings);
   }
 
@@ -173,21 +177,27 @@ public class PredefinedAutoScaling {
    * The Auto Scaling Profile configurations chosen according to POC conducted
    */
   private static final class PredefinedAutoScalingPolicy {
+
     private static final class BasicAlgorithm {
+
       private static final class YarnConfig {
+
         private static final Double SCALE_UP_FACTOR = 0.2;
         private static final Double SCALE_DOWN_FACTOR = 0.0;
         private static final Double SCALE_UP_MIN_WORKER_FRACTION = 0.75;
-        private static final Duration GRACEFUL_DECOMMISSION = Duration.newBuilder().setSeconds(86400).build();
+        private static final Duration GRACEFUL_DECOMMISSION = Duration.newBuilder()
+            .setSeconds(86400).build();
       }
     }
 
     private static final class WorkerConfig {
+
       private static final int MIN_INSTANCES = 2;
       private static final int MAX_INSTANCES = 2;
     }
 
     private static final class SecondaryWorkerConfig {
+
       private static final int MIN_INSTANCES = 0;
       private static final int MAX_INSTANCES = 40;
     }

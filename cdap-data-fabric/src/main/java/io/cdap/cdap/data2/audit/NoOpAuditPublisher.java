@@ -32,7 +32,8 @@ public class NoOpAuditPublisher implements AuditPublisher {
   }
 
   @Override
-  public void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload) {
+  public void publish(MetadataEntity metadataEntity, AuditType auditType,
+      AuditPayload auditPayload) {
     // no-op
   }
 }

@@ -39,17 +39,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maintain and return total number of launching and running run-records.
- * This class is used by flow-control mechanism for launch requests.
- * It also has a cleanup mechanism to automatically remove old (i.e., configurable) entries from the counter as a
- * safe-guard mechanism.
+ * Maintain and return total number of launching and running run-records. This class is used by
+ * flow-control mechanism for launch requests. It also has a cleanup mechanism to automatically
+ * remove old (i.e., configurable) entries from the counter as a safe-guard mechanism.
  */
 public class RunRecordMonitorService extends AbstractScheduledService {
+
   private static final Logger LOG = LoggerFactory.getLogger(RunRecordMonitorService.class);
 
   /**
-   * Contains ProgramRunIds of runs that have been accepted, but have not been added to metadata store plus
-   * all run records with {@link ProgramRunStatus#PENDING} or {@link ProgramRunStatus#STARTING} status.
+   * Contains ProgramRunIds of runs that have been accepted, but have not been added to metadata
+   * store plus all run records with {@link ProgramRunStatus#PENDING} or {@link
+   * ProgramRunStatus#STARTING} status.
    */
   private final BlockingQueue<ProgramRunId> launchingQueue;
   private final ProgramRuntimeService runtimeService;
@@ -61,13 +62,13 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
   @Inject
   public RunRecordMonitorService(CConfiguration cConf, ProgramRuntimeService runtimeService,
-                                 MetricsCollectionService metricsCollectionService) {
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.runtimeService = runtimeService;
     this.metricsCollectionService = metricsCollectionService;
 
     this.launchingQueue = new PriorityBlockingQueue<>(128, Comparator.comparingLong(
-      o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
+        o -> RunIds.getTime(o.getRun(), TimeUnit.MILLISECONDS)));
     this.ageThresholdSec = cConf.getLong(Constants.AppFabric.MONITOR_RECORD_AGE_THRESHOLD_SECONDS);
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
   }
@@ -93,14 +94,14 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0,
-                                          cConf.getInt(Constants.AppFabric.MONITOR_CLEANUP_INTERVAL_SECONDS),
-                                          TimeUnit.SECONDS);
+        cConf.getInt(Constants.AppFabric.MONITOR_CLEANUP_INTERVAL_SECONDS),
+        TimeUnit.SECONDS);
   }
 
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("run-record-monitor-service-cleanup-scheduler"));
+        Threads.createDaemonThreadFactory("run-record-monitor-service-cleanup-scheduler"));
     return executor;
   }
 
@@ -123,7 +124,8 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     int runningCount = getProgramsRunningCount();
 
-    LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount, runningCount);
+    LOG.info("Counter has {} concurrent launching and {} running programs.", launchingCount,
+        runningCount);
     return new Counter(launchingCount, runningCount);
   }
 
@@ -140,15 +142,16 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
   /**
    * Remove the request with the provided programRunId when the request is no longer launching.
-   * I.e., not in-flight, not in {@link ProgramRunStatus#PENDING} and not in {@link ProgramRunStatus#STARTING}
+   * I.e., not in-flight, not in {@link ProgramRunStatus#PENDING} and not in {@link
+   * ProgramRunStatus#STARTING}
    *
-   * @param programRunId      of the request to be removed from launching queue.
+   * @param programRunId of the request to be removed from launching queue.
    * @param emitRunningChange if true, also updates {@link Constants.Metrics.FlowControl#RUNNING_COUNT}
    */
   public void removeRequest(ProgramRunId programRunId, boolean emitRunningChange) {
     if (launchingQueue.remove(programRunId)) {
       LOG.info("Removed request with runId {}. Counter has {} concurrent launching requests.",
-               programRunId, launchingQueue.size());
+          programRunId, launchingQueue.size());
       emitMetrics(Constants.Metrics.FlowControl.LAUNCHING_COUNT, launchingQueue.size());
     }
 
@@ -164,8 +167,9 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   private void cleanupQueue() {
     while (true) {
       ProgramRunId programRunId = launchingQueue.peek();
-      if (programRunId == null ||
-        RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) + (ageThresholdSec * 1000) >=
+      if (programRunId == null
+          || RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) + (ageThresholdSec * 1000)
+          >=
           System.currentTimeMillis()) {
         //Queue is empty or queue head has not expired yet.
         return;
@@ -179,16 +183,14 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   }
 
   /**
-   * Returns the total number of programs in running state.
-   * The count includes batch (i.e., {@link ProgramType#WORKFLOW}),
-   * streaming (i.e., {@link ProgramType#SPARK}) with no parent and
+   * Returns the total number of programs in running state. The count includes batch (i.e., {@link
+   * ProgramType#WORKFLOW}), streaming (i.e., {@link ProgramType#SPARK}) with no parent and
    * replication (i.e., {@link ProgramType#WORKER}) jobs.
-   *
-   * @return
    */
   private int getProgramsRunningCount() {
     List<ProgramRuntimeService.RuntimeInfo> list = runtimeService
-      .listAll(ProgramType.WORKFLOW, ProgramType.WORKER, ProgramType.SPARK, ProgramType.MAPREDUCE);
+        .listAll(ProgramType.WORKFLOW, ProgramType.WORKER, ProgramType.SPARK,
+            ProgramType.MAPREDUCE);
 
     int launchingCount = launchingQueue.size();
 
@@ -197,8 +199,8 @@ public class RunRecordMonitorService extends AbstractScheduledService {
     // A program controller is created when a launch request is in the middle of starting state.
     // Therefore, the returning running count is NOT precise.
     int impreciseRunningCount = (int) list.stream()
-      .filter(r -> isRunning(r.getController().getState().getRunStatus()))
-      .count();
+        .filter(r -> isRunning(r.getController().getState().getRunStatus()))
+        .count();
 
     if (maxConcurrentRuns < 0 || (launchingCount + impreciseRunningCount < maxConcurrentRuns)) {
       // It is safe to return the imprecise value since either flow control for runs is disabled (i.e., -1) or
@@ -208,17 +210,17 @@ public class RunRecordMonitorService extends AbstractScheduledService {
 
     // Flow control is at the threshold. We return the precise count.
     return (int) list.stream()
-      .filter(r ->
-                isRunning(r.getController().getState().getRunStatus())
-                  && !launchingQueue.contains(r.getController().getProgramRunId())
-      )
-      .count();
+        .filter(r ->
+            isRunning(r.getController().getState().getRunStatus())
+                && !launchingQueue.contains(r.getController().getProgramRunId())
+        )
+        .count();
   }
 
   private boolean isRunning(ProgramRunStatus status) {
     if (status == ProgramRunStatus.RUNNING
-      || status == ProgramRunStatus.SUSPENDED
-      || status == ProgramRunStatus.RESUMING) {
+        || status == ProgramRunStatus.SUSPENDED
+        || status == ProgramRunStatus.RESUMING) {
       return true;
     }
 
@@ -226,17 +228,18 @@ public class RunRecordMonitorService extends AbstractScheduledService {
   }
 
   class Counter {
+
     /**
      * Total number of launch requests that have been accepted but still missing in metadata store +
-     * total number of run records with {@link ProgramRunStatus#PENDING} status +
-     * total number of run records with {@link ProgramRunStatus#STARTING} status
+     * * total number of run records with {@link ProgramRunStatus#PENDING} status + total number of
+     * run records with {@link ProgramRunStatus#STARTING} status
      */
     private final int launchingCount;
 
     /**
-     * Total number of run records with {@link ProgramRunStatus#RUNNING status +
-     * Total number of run records with {@link ProgramRunStatus#SUSPENDED} status +
-     * Total number of run records with {@link ProgramRunStatus#RESUMING} status
+     * Total number of run records with {@link ProgramRunStatus#RUNNING status + Total number of run
+     * records with {@link ProgramRunStatus#SUSPENDED} status + Total number of run records with
+     * {@link ProgramRunStatus#RESUMING} status
      */
     private final int runningCount;
 

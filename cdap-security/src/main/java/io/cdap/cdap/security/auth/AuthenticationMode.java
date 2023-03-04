@@ -20,8 +20,13 @@ package io.cdap.cdap.security.auth;
  * Authentication mode determines which method of authentication CDAP is using.
  */
 public enum AuthenticationMode {
-  /** The default mode. Uses a CDAP authentication esrver with signed authentication tokens. */
+  /**
+   * The default mode. Uses a CDAP authentication esrver with signed authentication tokens.
+   */
   MANAGED,
-  /** Expects authentication to have already occurred upstream and extracts the user identity directly from request. */
+  /**
+   * Expects authentication to have already occurred upstream and extracts the user identity
+   * directly from request.
+   */
   PROXY
 }

@@ -33,15 +33,16 @@ import java.util.stream.Stream;
  * Define the Dataset for metadata.
  */
 public class MetadataDatasetDefinition
-  extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin>
-  implements Reconfigurable {
+    extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin>
+    implements Reconfigurable {
 
   private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
   public static final String SCOPE_KEY = "scope";
 
   private final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
 
-  public MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
+  public MetadataDatasetDefinition(String name,
+      DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
     this.indexedTableDef = indexedTableDef;
   }
@@ -50,49 +51,49 @@ public class MetadataDatasetDefinition
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     String[] indexColumns = MetadataDataset.INDEX_COLUMNS.stream()
-      .flatMap(indexCol -> Stream.of(indexCol.getCrossNamespaceColumn(), indexCol.getColumn()))
-      .toArray(String[]::new);
+        .flatMap(indexCol -> Stream.of(indexCol.getCrossNamespaceColumn(), indexCol.getColumn()))
+        .toArray(String[]::new);
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(
-        indexedTableDef.configure(
-          METADATA_INDEX_TABLE_NAME,
-          addIndexColumns(properties, indexColumns)
+        .properties(properties.getProperties())
+        .datasets(
+            indexedTableDef.configure(
+                METADATA_INDEX_TABLE_NAME,
+                addIndexColumns(properties, indexColumns)
+            )
         )
-      )
-      .build();
+        .build();
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties newProperties,
-                                          DatasetSpecification currentSpec) {
+      DatasetProperties newProperties,
+      DatasetSpecification currentSpec) {
     return configure(instanceName, newProperties);
   }
 
   private DatasetProperties addIndexColumns(DatasetProperties properties, String... indexColumns) {
     return DatasetProperties
-      .builder()
-      .addAll(properties.getProperties())
-      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(indexColumns))
-      .build();
+        .builder()
+        .addAll(properties.getProperties())
+        .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(indexColumns))
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return indexedTableDef.getAdmin(datasetContext,
-                                    spec.getSpecification(METADATA_INDEX_TABLE_NAME),
-                                    classLoader);
+        spec.getSpecification(METADATA_INDEX_TABLE_NAME),
+        classLoader);
   }
 
   @Override
   public MetadataDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     String scope = spec.getProperty(SCOPE_KEY);
     return new MetadataDataset(indexedTableDef.getDataset(datasetContext,
-                                                          spec.getSpecification(METADATA_INDEX_TABLE_NAME),
-                                                          arguments, classLoader),
-                               scope == null ? MetadataScope.USER : MetadataScope.valueOf(scope));
+        spec.getSpecification(METADATA_INDEX_TABLE_NAME),
+        arguments, classLoader),
+        scope == null ? MetadataScope.USER : MetadataScope.valueOf(scope));
   }
 }

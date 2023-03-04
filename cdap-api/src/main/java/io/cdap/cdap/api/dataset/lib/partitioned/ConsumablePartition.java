@@ -23,6 +23,7 @@ import io.cdap.cdap.api.dataset.lib.PartitionKey;
  * Represents a {@link Partition} available for consuming.
  */
 public interface ConsumablePartition {
+
   /**
    * @return the PartitionKey associated with this partition
    */
@@ -59,7 +60,8 @@ public interface ConsumablePartition {
   void untake();
 
   /**
-   * Marks the ProcessState as AVAILABLE, resets the timestamp to 0, and increments the number of failures by 1
+   * Marks the ProcessState as AVAILABLE, resets the timestamp to 0, and increments the number of
+   * failures by 1
    */
   void retry();
 
@@ -74,7 +76,8 @@ public interface ConsumablePartition {
   void discard();
 
   /**
-   * @return the timestamp that this partition was claimed for processing, or 0 if it is not IN_PROGRESS
+   * @return the timestamp that this partition was claimed for processing, or 0 if it is not
+   *     IN_PROGRESS
    */
   long getTimestamp();
 

@@ -19,7 +19,8 @@ package io.cdap.cdap.common;
 import io.cdap.cdap.proto.id.DatasetModuleId;
 
 /**
- * Thrown when the user tried to add a dataset module, but a dataset module by that name already exists.
+ * Thrown when the user tried to add a dataset module, but a dataset module by that name already
+ * exists.
  */
 public class DatasetModuleAlreadyExistsException extends AlreadyExistsException {
 

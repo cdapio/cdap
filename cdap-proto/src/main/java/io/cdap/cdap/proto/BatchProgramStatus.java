@@ -20,12 +20,15 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Describes the status of a program, as returned by the batch status endpoint POST /namespaces/{namespace}/status.
+ * Describes the status of a program, as returned by the batch status endpoint POST
+ * /namespaces/{namespace}/status.
  */
 public class BatchProgramStatus extends BatchProgramResult {
+
   private final String status;
 
-  public BatchProgramStatus(BatchProgram program, int statusCode, @Nullable String error, @Nullable String status) {
+  public BatchProgramStatus(BatchProgram program, int statusCode, @Nullable String error,
+      @Nullable String status) {
     super(program, statusCode, error);
     this.status = status;
   }

@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * A {@link SecretManager} which manages sensitive data using Google Cloud KMS.
  */
 public class CloudSecretManager implements SecretManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(CloudSecretManager.class);
   private static final String CLOUD_KMS_NAME = "gcp-cloudkms";
   private static final String CRYPTO_KEY_PREFIX = "cdap_key_";
@@ -62,8 +63,9 @@ public class CloudSecretManager implements SecretManager {
     client.createCryptoKeyIfNotExists(CRYPTO_KEY_PREFIX + namespace);
     byte[] encryptedData = client.encrypt(CRYPTO_KEY_PREFIX + namespace, secret.getData());
     SecretMetadata metadata = secret.getMetadata();
-    SecretInfo secretInfo = new SecretInfo(metadata.getName(), metadata.getDescription(), encryptedData,
-                                           metadata.getCreationTimeMs(), metadata.getProperties());
+    SecretInfo secretInfo = new SecretInfo(metadata.getName(), metadata.getDescription(),
+        encryptedData,
+        metadata.getCreationTimeMs(), metadata.getProperties());
     store.store(namespace, metadata.getName(), encoderDecoder, secretInfo);
   }
 
@@ -71,8 +73,9 @@ public class CloudSecretManager implements SecretManager {
   public Secret get(String namespace, String name) throws SecretNotFoundException, IOException {
     SecretInfo secretInfo = store.get(namespace, name, encoderDecoder);
     byte[] decrypted = client.decrypt(CRYPTO_KEY_PREFIX + namespace, secretInfo.getSecretData());
-    return new Secret(decrypted, new SecretMetadata(secretInfo.getName(), secretInfo.getDescription(),
-                                                    secretInfo.getCreationTimeMs(), secretInfo.getProperties()));
+    return new Secret(decrypted,
+        new SecretMetadata(secretInfo.getName(), secretInfo.getDescription(),
+            secretInfo.getCreationTimeMs(), secretInfo.getProperties()));
   }
 
   @Override
@@ -81,7 +84,7 @@ public class CloudSecretManager implements SecretManager {
     List<SecretMetadata> metadataList = new ArrayList<>();
     for (SecretInfo secretInfo : secretInfos) {
       metadataList.add(new SecretMetadata(secretInfo.getName(), secretInfo.getDescription(),
-                                          secretInfo.getCreationTimeMs(), secretInfo.getProperties()));
+          secretInfo.getCreationTimeMs(), secretInfo.getProperties()));
     }
     return metadataList;
   }

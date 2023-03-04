@@ -68,14 +68,15 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   private final SupportBundleJob supportBundleJob;
   private final int maxRunsPerProgram;
 
-  public SupportBundlePipelineInfoTask(String uuid, List<NamespaceId> namespaces, String requestApplication,
-                                       String runId, File basePath,
-                                       RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
-                                       RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
-                                       RemoteLogsFetcher remoteLogsFetcher, ProgramType programType, String programName,
-                                       RemoteMetricsSystemClient remoteMetricsSystemClient,
-                                       SupportBundleJob supportBundleJob, int maxRunsPerProgram,
-                                       RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
+  public SupportBundlePipelineInfoTask(String uuid, List<NamespaceId> namespaces,
+      String requestApplication,
+      String runId, File basePath,
+      RemoteApplicationDetailFetcher remoteApplicationDetailFetcher,
+      RemoteProgramRunRecordsFetcher remoteProgramRunRecordsFetcher,
+      RemoteLogsFetcher remoteLogsFetcher, ProgramType programType, String programName,
+      RemoteMetricsSystemClient remoteMetricsSystemClient,
+      SupportBundleJob supportBundleJob, int maxRunsPerProgram,
+      RemoteProgramRunRecordFetcher remoteProgramRunRecordFetcher) {
     this.uuid = uuid;
     this.basePath = basePath;
     this.namespaces = namespaces;
@@ -106,7 +107,7 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
       } else {
         try {
           processApplicationDetail(namespaceId, remoteApplicationDetailFetcher.get(
-            namespaceId.appReference(requestApplication)));
+              namespaceId.appReference(requestApplication)));
         } catch (NotFoundException e) {
           LOG.debug("Failed to find application {} ", requestApplication, e);
           continue;
@@ -116,9 +117,10 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
   }
 
   private void processApplicationDetail(NamespaceId namespaceId, ApplicationDetail appDetail)
-    throws IOException, NotFoundException {
+      throws IOException, NotFoundException {
     String application = appDetail.getName();
-    ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application, appDetail.getAppVersion());
+    ApplicationId applicationId = new ApplicationId(namespaceId.getNamespace(), application,
+        appDetail.getAppVersion());
 
     File appFolderPath = new File(basePath, appDetail.getName());
     DirUtils.mkdirs(appFolderPath);
@@ -129,37 +131,44 @@ public class SupportBundlePipelineInfoTask implements SupportBundleTask {
     Iterable<RunRecord> runRecordList;
     if (runId != null) {
       ProgramRunId programRunId = programId.run(runId);
-      RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(programRunId);
+      RunRecordDetail runRecordDetail = remoteProgramRunRecordFetcher.getRunRecordMeta(
+          programRunId);
       runRecordList = Collections.singletonList(runRecordDetail);
     } else {
       runRecordList = getRunRecords(programId);
     }
 
     SupportBundleRuntimeInfoTask supportBundleRuntimeInfoTask =
-      new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType, programId,
-                                       remoteMetricsSystemClient, runRecordList);
+        new SupportBundleRuntimeInfoTask(appFolderPath, namespaceId, applicationId, programType,
+            programId,
+            remoteMetricsSystemClient, runRecordList);
     SupportBundlePipelineRunLogTask supportBundlePipelineRunLogTask =
-      new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher, runRecordList);
+        new SupportBundlePipelineRunLogTask(appFolderPath, programId, remoteLogsFetcher,
+            runRecordList);
 
     String runtimeInfoClassName = supportBundleRuntimeInfoTask.getClass().getSimpleName();
     String runtimeInfoTaskName =
-      uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
-    supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(), runtimeInfoTaskName,
-                                 runtimeInfoClassName);
+        uuid.concat(": ").concat(runtimeInfoClassName).concat(": ").concat(appDetail.getName());
+    supportBundleJob.executeTask(supportBundleRuntimeInfoTask, basePath.getPath(),
+        runtimeInfoTaskName,
+        runtimeInfoClassName);
 
     String runtimeLogClassName = supportBundlePipelineRunLogTask.getClass().getSimpleName();
-    String runtimeLogTaskName = uuid.concat(": ").concat(runtimeLogClassName).concat(": ").concat(appDetail.getName());
-    supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(), runtimeLogTaskName,
-                                 runtimeLogClassName);
+    String runtimeLogTaskName = uuid.concat(": ").concat(runtimeLogClassName).concat(": ")
+        .concat(appDetail.getName());
+    supportBundleJob.executeTask(supportBundlePipelineRunLogTask, basePath.getPath(),
+        runtimeLogTaskName,
+        runtimeLogClassName);
   }
 
-  private Iterable<RunRecord> getRunRecords(ProgramId programId) throws NotFoundException, IOException {
+  private Iterable<RunRecord> getRunRecords(ProgramId programId)
+      throws NotFoundException, IOException {
     Iterable<RunRecord> allRunRecordList =
-      remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
+        remoteProgramRunRecordsFetcher.getProgramRuns(programId, 0, Long.MAX_VALUE, 100);
     return () -> StreamSupport.stream(allRunRecordList.spliterator(), false)
-      .filter(run -> run.getStatus().isEndState())
-      .sorted(Comparator.comparing(RunRecord::getStartTs).reversed())
-      .limit(maxRunsPerProgram)
-      .iterator();
+        .filter(run -> run.getStatus().isEndState())
+        .sorted(Comparator.comparing(RunRecord::getStartTs).reversed())
+        .limit(maxRunsPerProgram)
+        .iterator();
   }
 }

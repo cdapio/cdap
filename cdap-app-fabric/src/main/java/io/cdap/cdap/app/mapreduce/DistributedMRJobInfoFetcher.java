@@ -24,23 +24,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and
- * then {@link LocalMRJobInfoFetcher} if necessary.
+ * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and then {@link
+ * LocalMRJobInfoFetcher} if necessary.
  */
 public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
+
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMRJobInfoFetcher.class);
   private final MRJobClient mrJobClient;
   private final LocalMRJobInfoFetcher localMRJobInfoFetcher;
 
   @Inject
-  public DistributedMRJobInfoFetcher(MRJobClient mrJobClient, LocalMRJobInfoFetcher localMRJobInfoFetcher) {
+  public DistributedMRJobInfoFetcher(MRJobClient mrJobClient,
+      LocalMRJobInfoFetcher localMRJobInfoFetcher) {
     this.mrJobClient = mrJobClient;
     this.localMRJobInfoFetcher = localMRJobInfoFetcher;
   }
 
   /**
-   * Attempts to use MRJobClient to retrieve job information of a particular run.
-   * If there is an IOException or NotFoundException, it will fall back to the Metrics System via MapReduceMetricsInfo.
+   * Attempts to use MRJobClient to retrieve job information of a particular run. If there is an
+   * IOException or NotFoundException, it will fall back to the Metrics System via
+   * MapReduceMetricsInfo.
+   *
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
@@ -49,7 +53,9 @@ public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
     try {
       return mrJobClient.getMRJobInfo(runId);
     } catch (Exception e) {
-      LOG.debug("Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.", runId, e);
+      LOG.debug(
+          "Failed to get run history from JobClient for runId: {}. Falling back to Metrics system.",
+          runId, e);
       return localMRJobInfoFetcher.getMRJobInfo(runId);
     }
   }

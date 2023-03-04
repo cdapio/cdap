@@ -21,13 +21,14 @@ import io.cdap.cdap.etl.api.MultiOutputEmitter;
 import java.util.Map;
 
 /**
- * An emitter that stops an {@link OperationTimer} when it is emitting something. This is used because when we are
- * timing how long a plugin's method takes, we don't want to include time spent emitting records, especially
- * since the emit call can call subsequent stages before returning.
+ * An emitter that stops an {@link OperationTimer} when it is emitting something. This is used
+ * because when we are timing how long a plugin's method takes, we don't want to include time spent
+ * emitting records, especially since the emit call can call subsequent stages before returning.
  *
  * @param <E> the error type
  */
 public class UntimedMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
+
   private final MultiOutputEmitter<E> delegate;
   private final OperationTimer operationTimer;
 

@@ -37,8 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Duplicate store class for application meatadata.
- * JIRA https://issues.cask.co/browse/CDAP-2172
+ * Duplicate store class for application meatadata. JIRA https://issues.cask.co/browse/CDAP-2172
  */
 public class AppMetadataStore {
 
@@ -67,29 +66,37 @@ public class AppMetadataStore {
   }
 
 
-  private RunRecordDetail getUnfinishedRun(ProgramReference programRef, String runId) throws IOException {
+  private RunRecordDetail getUnfinishedRun(ProgramReference programRef, String runId)
+      throws IOException {
     List<Field<?>> runningKeys = new ArrayList<>();
-    runningKeys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_ACTIVE));
+    runningKeys.add(
+        Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_ACTIVE));
     addProgramRunReferenceKeys(runningKeys, programRef, runId);
     return getRunRecordMeta(runningKeys);
   }
 
   private RunRecordDetail getCompletedRun(ProgramReference programRef, String runId)
-    throws IOException {
+      throws IOException {
     List<Field<?>> completedKeys = new ArrayList<>();
-    completedKeys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
+    completedKeys.add(
+        Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
     addProgramRunReferenceKeys(completedKeys, programRef, runId);
     return getRunRecordMeta(completedKeys);
   }
 
-  private void addProgramRunReferenceKeys(List<Field<?>> fields, ProgramReference programRef, String runId) {
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, programRef.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, programRef.getApplication()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programRef.getType().name()));
-    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programRef.getProgram()));
+  private void addProgramRunReferenceKeys(List<Field<?>> fields, ProgramReference programRef,
+      String runId) {
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+        programRef.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD,
+        programRef.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD,
+        programRef.getType().name()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD,
+        programRef.getProgram()));
     fields.add(Fields.longField(
-      StoreDefinition.AppMetadataStore.RUN_START_TIME,
-      getInvertedTsKeyPart(RunIds.getTime(runId, TimeUnit.SECONDS))));
+        StoreDefinition.AppMetadataStore.RUN_START_TIME,
+        getInvertedTsKeyPart(RunIds.getTime(runId, TimeUnit.SECONDS))));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runId));
   }
 
@@ -98,7 +105,7 @@ public class AppMetadataStore {
     // Instead of reading by full primary keys, we scan by all keys without version
     // Since we made sure run id is unique
     try (CloseableIterator<StructuredRow> iterator =
-           runRecordsTable.scan(Range.singleton(partialPrimaryKeys), 1)) {
+        runRecordsTable.scan(Range.singleton(partialPrimaryKeys), 1)) {
       if (iterator.hasNext()) {
         return deserializeRunRecordMeta(iterator.next());
       }
@@ -108,18 +115,22 @@ public class AppMetadataStore {
 
   private static RunRecordDetail deserializeRunRecordMeta(StructuredRow row) {
     RunRecordDetail existing =
-      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordDetail.class);
+        GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA),
+            RunRecordDetail.class);
     return RunRecordDetail.builder(existing)
-      .setProgramRunId(
-        getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
-      .build();
+        .setProgramRunId(
+            getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(
+                existing.getPid()))
+        .build();
   }
 
   private static ProgramId getProgramIdFromRunRecordsPrimaryKeys(List<Field<?>> primaryKeys) {
     // Assume keys are in correct ordering - skip first field since it's run_status
-    return new ApplicationId(getStringFromField(primaryKeys.get(1)), getStringFromField(primaryKeys.get(2)),
-                             getStringFromField(primaryKeys.get(3)))
-      .program(ProgramType.valueOf(getStringFromField(primaryKeys.get(4))), getStringFromField(primaryKeys.get(5)));
+    return new ApplicationId(getStringFromField(primaryKeys.get(1)),
+        getStringFromField(primaryKeys.get(2)),
+        getStringFromField(primaryKeys.get(3)))
+        .program(ProgramType.valueOf(getStringFromField(primaryKeys.get(4))),
+            getStringFromField(primaryKeys.get(5)));
   }
 
   private static String getStringFromField(Field<?> field) {

@@ -26,15 +26,19 @@ public interface AppStateStore {
 
   /**
    * Returns the saved state for given app and key.
+   *
    * @param key Key for the state, should not be null
-   * @return value as Optional<byte[]> . Value will not be present if key is not present in the store.
-   * @throws IOException if the namespace/app is not available or otherwise unable to fetch state
+   * @return value as Optional<byte[]> . Value will not be present if key is not present in the
+   *     store.
+   * @throws IOException if the namespace/app is not available or otherwise unable to fetch
+   *     state
    * @throws IllegalArgumentException if the key is null or empty
    */
   Optional<byte[]> getState(String key) throws IOException;
 
   /**
    * Saves the state for an app with a key. This state is removed when the app is deleted.
+   *
    * @param key Key for the state, should not be null
    * @param value value as byte[], should not be null
    * @throws IOException if the app is not available or otherwise unable to save state

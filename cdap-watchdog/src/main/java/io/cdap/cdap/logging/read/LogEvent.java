@@ -22,6 +22,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * Represents a log event returned by LogReader.
  */
 public class LogEvent {
+
   private final ILoggingEvent loggingEvent;
   private final LogOffset offset;
 

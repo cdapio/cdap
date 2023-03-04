@@ -43,17 +43,17 @@ import javax.annotation.Nullable;
 import org.apache.twill.common.Cancellable;
 
 /**
- * The default implementation of {@link DatasetRuntimeContext}. It performs authorization, lineage and usage recording
- * for each individual dataset operation.
+ * The default implementation of {@link DatasetRuntimeContext}. It performs authorization, lineage
+ * and usage recording for each individual dataset operation.
  *
- * This class is created and stored in every Dataset that is created.
- * This is done through class rewriting in the DatasetClassRewriter.
+ * This class is created and stored in every Dataset that is created. This is done through class
+ * rewriting in the DatasetClassRewriter.
  */
 public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
 
   /**
-   * A helper interface for {@link DefaultDatasetRuntimeContext} to abstract lineage writing, audit log publishing
-   * and usage recording logic.
+   * A helper interface for {@link DefaultDatasetRuntimeContext} to abstract lineage writing, audit
+   * log publishing and usage recording logic.
    */
   public interface DatasetAccessRecorder {
 
@@ -69,26 +69,27 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   }
 
   private static final Map<Class<? extends Annotation>, AccessInfo> ANNOTATION_TO_ACCESS_INFO = ImmutableMap.of(
-    ReadOnly.class, new AccessInfo(EnumSet.of(StandardPermission.GET), AccessType.READ),
-    WriteOnly.class, new AccessInfo(EnumSet.of(StandardPermission.UPDATE), AccessType.WRITE),
-    ReadWrite.class, new AccessInfo(EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE),
-                                    AccessType.READ_WRITE)
+      ReadOnly.class, new AccessInfo(EnumSet.of(StandardPermission.GET), AccessType.READ),
+      WriteOnly.class, new AccessInfo(EnumSet.of(StandardPermission.UPDATE), AccessType.WRITE),
+      ReadWrite.class, new AccessInfo(EnumSet.of(StandardPermission.GET, StandardPermission.UPDATE),
+          AccessType.READ_WRITE)
   );
-  private static final AccessInfo UNKNOWN_ACCESS_INFO = new AccessInfo(EnumSet.noneOf(StandardPermission.class),
-                                                                       AccessType.UNKNOWN);
+  private static final AccessInfo UNKNOWN_ACCESS_INFO = new AccessInfo(
+      EnumSet.noneOf(StandardPermission.class),
+      AccessType.UNKNOWN);
 
   private final ThreadLocal<CallStack> callStack = new InheritableThreadLocal<CallStack>() {
-      @Override
-      protected CallStack initialValue() {
-        return new CallStack();
-      }
+    @Override
+    protected CallStack initialValue() {
+      return new CallStack();
+    }
 
-      @Override
-      protected CallStack childValue(CallStack parentValue) {
-        // Copy the stack
-        return new CallStack(parentValue);
-      }
-    };
+    @Override
+    protected CallStack childValue(CallStack parentValue) {
+      // Copy the stack
+      return new CallStack(parentValue);
+    }
+  };
 
   private final AccessEnforcer enforcer;
   private final DatasetAccessRecorder accessRecorder;
@@ -108,22 +109,23 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
   private final boolean[] auditRecorded;
 
   /**
-   * Helper method to execute a {@link Callable} with a {@link DatasetRuntimeContext}.
-   * This method is mainly called from
-   * {@link LineageWriterDatasetFramework#getDataset(DatasetId, Map, ClassLoader, DatasetClassLoaderProvider,
-   * Iterable, AccessType)} and
-   * {@link NoSqlStructuredTableDatasetDefinition#getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)}
+   * Helper method to execute a {@link Callable} with a {@link DatasetRuntimeContext}. This method
+   * is mainly called from {@link LineageWriterDatasetFramework#getDataset(DatasetId, Map,
+   * ClassLoader, DatasetClassLoaderProvider, Iterable, AccessType)} and {@link
+   * NoSqlStructuredTableDatasetDefinition#getDataset(DatasetContext, DatasetSpecification, Map,
+   * ClassLoader)}
    */
   public static <T> T execute(AccessEnforcer enforcer,
-                              DatasetAccessRecorder accessRecorder,
-                              Principal principal,
-                              DatasetId datasetId,
-                              @Nullable Class<? extends Annotation> constructorDefaultAnnotation,
-                              Callable<T> callable) throws Exception {
+      DatasetAccessRecorder accessRecorder,
+      Principal principal,
+      DatasetId datasetId,
+      @Nullable Class<? extends Annotation> constructorDefaultAnnotation,
+      Callable<T> callable) throws Exception {
     // Memorize the old context, change to a new one and restore it at the end.
     // It is needed so that nested call to DatasetFramework.getDataset can create the call site context correctly.
-    Cancellable cancel = setContext(new DefaultDatasetRuntimeContext(enforcer, accessRecorder, principal,
-                                                                     datasetId, constructorDefaultAnnotation));
+    Cancellable cancel = setContext(
+        new DefaultDatasetRuntimeContext(enforcer, accessRecorder, principal,
+            datasetId, constructorDefaultAnnotation));
     try {
       return callable.call();
     } finally {
@@ -131,9 +133,10 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     }
   }
 
-  private DefaultDatasetRuntimeContext(AccessEnforcer enforcer, DatasetAccessRecorder accessRecorder,
-                                       Principal principal, DatasetId datasetId,
-                                       @Nullable Class<? extends Annotation> constructorDefaultAnnotation) {
+  private DefaultDatasetRuntimeContext(AccessEnforcer enforcer,
+      DatasetAccessRecorder accessRecorder,
+      Principal principal, DatasetId datasetId,
+      @Nullable Class<? extends Annotation> constructorDefaultAnnotation) {
     this.enforcer = enforcer;
     this.accessRecorder = accessRecorder;
     this.principal = principal;
@@ -156,7 +159,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
       accessInfo = ANNOTATION_TO_ACCESS_INFO.get(annotation);
       if (accessInfo == null) {
         // shouldn't happen
-        throw new DataSetException("Unsupported annotation " + annotation + " on dataset " + datasetId);
+        throw new DataSetException(
+            "Unsupported annotation " + annotation + " on dataset " + datasetId);
       }
     }
 
@@ -166,8 +170,9 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     try {
       enforcer.enforce(datasetId, principal, accessInfo.getPermissions());
     } catch (Exception e) {
-      throw new DataSetException("The principal " + principal + " is not authorized to access " + datasetId +
-                                   " for operation types " + accessInfo.getPermissions(), e);
+      throw new DataSetException(
+          "The principal " + principal + " is not authorized to access " + datasetId
+              + " for operation types " + accessInfo.getPermissions(), e);
     }
 
     recordAccess(callStack.enter(accessInfo.getAccessType()), accessInfo.getAccessType());
@@ -257,8 +262,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     void exit() {
       // Make sure we won't pop more than it should
       if (stack.size() <= minSize) {
-        throw new DataSetException("Invalid dataset call stack for dataset " + datasetId +
-                                     ". Potentially caused by illegal manipulation of callstack");
+        throw new DataSetException("Invalid dataset call stack for dataset " + datasetId
+            + ". Potentially caused by illegal manipulation of callstack");
       }
       stack.removeLast();
     }

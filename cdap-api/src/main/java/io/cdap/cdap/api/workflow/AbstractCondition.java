@@ -21,7 +21,8 @@ import io.cdap.cdap.api.annotation.TransactionPolicy;
 import java.util.Map;
 
 /**
- * The abstract class provides default implementation of the {@link Condition} methods for an easy extension
+ * The abstract class provides default implementation of the {@link Condition} methods for an easy
+ * extension
  */
 public abstract class AbstractCondition implements Condition {
 
@@ -67,7 +68,8 @@ public abstract class AbstractCondition implements Condition {
   }
 
   /**
-   * Classes derived from {@link AbstractCondition} can override this method to destroy the {@link Condition}.
+   * Classes derived from {@link AbstractCondition} can override this method to destroy the {@link
+   * Condition}.
    */
   @Override
   @TransactionPolicy(TransactionControl.IMPLICIT)

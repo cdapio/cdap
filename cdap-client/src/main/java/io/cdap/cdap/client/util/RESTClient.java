@@ -63,43 +63,49 @@ public class RESTClient {
     return listeners.remove(listener);
   }
 
-  public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
+  public HttpResponse execute(HttpRequest request, AccessToken accessToken,
+      int... allowedErrorCodes)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(),
+        allowedErrorCodes);
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken,
+      int... allowedErrorCodes)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
-                     .addHeaders(getAuthHeaders(accessToken))
-                     .build(), allowedErrorCodes);
+        .addHeaders(getAuthHeaders(accessToken))
+        .build(), allowedErrorCodes);
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
-                              int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers,
+      AccessToken accessToken,
+      int... allowedErrorCodes)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
-                     .addHeaders(headers)
-                     .addHeaders(getAuthHeaders(accessToken))
-                     .build(), allowedErrorCodes);
+        .addHeaders(headers)
+        .addHeaders(getAuthHeaders(accessToken))
+        .build(), allowedErrorCodes);
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, String body, Map<String, String> headers,
-                              AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  public HttpResponse execute(HttpMethod httpMethod, URL url, String body,
+      Map<String, String> headers,
+      AccessToken accessToken, int... allowedErrorCodes)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     return execute(HttpRequest.builder(httpMethod, url)
-                     .addHeaders(headers)
-                     .addHeaders(getAuthHeaders(accessToken))
-                     .withBody(body).build(), allowedErrorCodes);
+        .addHeaders(headers)
+        .addHeaders(getAuthHeaders(accessToken))
+        .withBody(body).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpRequest request, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     int currentTry = 0;
     HttpResponse response;
     int responseCode;
-    boolean allowUnavailable = ArrayUtils.contains(allowedErrorCodes, HttpURLConnection.HTTP_UNAVAILABLE);
+    boolean allowUnavailable = ArrayUtils.contains(allowedErrorCodes,
+        HttpURLConnection.HTTP_UNAVAILABLE);
 
     do {
       onRequest(request, currentTry);
@@ -146,11 +152,11 @@ public class RESTClient {
   }
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException, UnauthenticatedException, DisconnectedException {
+      throws IOException, UnauthenticatedException, DisconnectedException {
 
     HttpResponse response = HttpRequests.execute(
-      HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(),
-      clientConfig.getUploadRequestConfig());
+        HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(),
+        clientConfig.getUploadRequestConfig());
     int responseCode = response.getResponseCode();
     if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -170,7 +176,8 @@ public class RESTClient {
     if (accessToken != null) {
       ImmutableMap.Builder<String, String> headersBuilder = ImmutableMap.builder();
       headersBuilder.putAll(headers);
-      headersBuilder.put(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+      headersBuilder.put(HttpHeaders.AUTHORIZATION,
+          accessToken.getTokenType() + " " + accessToken.getValue());
       headers = headersBuilder.build();
     }
     return headers;
@@ -180,7 +187,9 @@ public class RESTClient {
    * Listener for when requests are made and when responses are received.
    */
   public interface Listener {
+
     void onRequest(HttpRequest request, int attempt);
+
     void onResponse(HttpRequest request, HttpResponse response, int attemptsMade);
   }
 }

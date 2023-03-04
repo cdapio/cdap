@@ -17,9 +17,11 @@
 package io.cdap.cdap.etl.api.relational;
 
 /**
- * Marker interface that defines various capabilities of the relational engines / expression factories.
- * This interface is implemented by various enum classes, each enum class defines a group of capabilities.
- * Plugins can use capabilities to see if passed engine can do a transform and which expression factory to use.
+ * Marker interface that defines various capabilities of the relational engines / expression
+ * factories. This interface is implemented by various enum classes, each enum class defines a group
+ * of capabilities. Plugins can use capabilities to see if passed engine can do a transform and
+ * which expression factory to use.
  */
 public interface Capability {
+
 }

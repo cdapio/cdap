@@ -105,8 +105,8 @@ public class SchemaWalkerTest {
         return false;
       }
       Pair pair = (Pair) o;
-      return Objects.equals(field, pair.field) &&
-        Objects.equals(schema, pair.schema);
+      return Objects.equals(field, pair.field)
+          && Objects.equals(schema, pair.schema);
     }
 
     @Override

@@ -32,25 +32,29 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
 
 /**
- * Base class that helps in retrying certain calls to the transaction system.
- * Unfortunately, this class is tightly coupled with the TransactionServiceClient in Tephra,
- * as it determines a retryable failure by checking if the TransactionSystemClient threw a RuntimeException wrapping
- * a TException, which is what TransactionServiceClient does. Once Tephra implements better exceptions, this class
- * can be removed.
+ * Base class that helps in retrying certain calls to the transaction system. Unfortunately, this
+ * class is tightly coupled with the TransactionServiceClient in Tephra, as it determines a
+ * retryable failure by checking if the TransactionSystemClient threw a RuntimeException wrapping a
+ * TException, which is what TransactionServiceClient does. Once Tephra implements better
+ * exceptions, this class can be removed.
  *
- * By default, it doesn't retry anything. Subclasses should override the methods that should be retried.
+ * By default, it doesn't retry anything. Subclasses should override the methods that should be
+ * retried.
  */
 public abstract class RetryingTransactionSystemClient implements TransactionSystemClient {
+
   private static final Predicate<Throwable> IS_RETRYABLE = new Predicate<Throwable>() {
     @Override
     public boolean test(Throwable input) {
-      return input instanceof RuntimeException && input.getCause() != null && input.getCause() instanceof TException;
+      return input instanceof RuntimeException && input.getCause() != null
+          && input.getCause() instanceof TException;
     }
   };
   protected final TransactionSystemClient delegate;
   private final RetryStrategy retryStrategy;
 
-  protected RetryingTransactionSystemClient(TransactionSystemClient delegate, RetryStrategy retryStrategy) {
+  protected RetryingTransactionSystemClient(TransactionSystemClient delegate,
+      RetryStrategy retryStrategy) {
     this.delegate = delegate;
     this.retryStrategy = retryStrategy;
   }
@@ -71,13 +75,15 @@ public abstract class RetryingTransactionSystemClient implements TransactionSyst
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionNotInProgressException {
     //noinspection deprecation
     return delegate.canCommit(tx, changeIds);
   }
 
   @Override
-  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionFailureException {
     delegate.canCommitOrThrow(tx, changeIds);
   }
 

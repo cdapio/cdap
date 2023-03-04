@@ -58,18 +58,21 @@ import org.slf4j.LoggerFactory;
  * Abstract Class that contains commonly used methods for parsing Http Requests.
  */
 public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
 
   /**
    * Json serializer.
    */
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapterFactory(new PermissionAdapterFactory())
-    .create();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapterFactory(new PermissionAdapterFactory())
+      .create();
 
-  protected static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  protected static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  protected static final Type MAP_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
+  protected static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() {
+  }.getType();
 
   /**
    * Name of the header that should specify the application archive
@@ -83,11 +86,11 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
   protected int getInstances(FullHttpRequest request) throws BadRequestException {
     Instances instances;
-      try {
-        instances = parseBody(request, Instances.class);
-      } catch (JsonSyntaxException e) {
-        throw new BadRequestException("Invalid JSON in request: " + e.getMessage());
-      }
+    try {
+      instances = parseBody(request, Instances.class);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Invalid JSON in request: " + e.getMessage());
+    }
     if (instances == null) {
       throw new BadRequestException("Invalid instance value in request");
     }
@@ -95,7 +98,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   @Nullable
-  protected <T> T parseBody(FullHttpRequest request, Type type) throws IllegalArgumentException, JsonSyntaxException {
+  protected <T> T parseBody(FullHttpRequest request, Type type)
+      throws IllegalArgumentException, JsonSyntaxException {
     ByteBuf content = request.content();
     if (!content.isReadable()) {
       return null;
@@ -111,7 +115,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected Map<String, String> decodeArguments(FullHttpRequest request) throws JsonSyntaxException {
+  protected Map<String, String> decodeArguments(FullHttpRequest request)
+      throws JsonSyntaxException {
     Map<String, String> args = parseBody(request, MAP_STRING_TYPE);
     if (args == null) {
       return ImmutableMap.of();
@@ -120,9 +125,11 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
-                                                              ProgramRuntimeService runtimeService) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
+      ProgramRuntimeService runtimeService) {
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(
+        programId.getType()).values();
+    Preconditions.checkNotNull(runtimeInfos,
+        UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {
@@ -136,13 +143,15 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
    * Respond with a 404 if a NoSuchElementException is thrown.
    */
   protected boolean respondIfElementNotFound(Throwable t, HttpResponder responder) {
-    return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND, responder,
-                                "Could not find element.");
+    return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND,
+        responder,
+        "Could not find element.");
   }
 
-  private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type, HttpResponseStatus status,
-                                                             HttpResponder responder, String msgFormat,
-                                                             Object... args) {
+  private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type,
+      HttpResponseStatus status,
+      HttpResponder responder, String msgFormat,
+      Object... args) {
     if (type.isAssignableFrom(Throwables.getRootCause(t).getClass())) {
       responder.sendString(status, String.format(msgFormat, args));
       return true;

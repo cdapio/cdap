@@ -28,13 +28,14 @@ import java.util.Objects;
  */
 @Beta
 public class MetadataPayload extends AuditPayload {
+
   private final Map<MetadataScope, Metadata> previous;
   private final Map<MetadataScope, Metadata> additions;
   private final Map<MetadataScope, Metadata> deletions;
 
   public MetadataPayload(Map<MetadataScope, Metadata> previous,
-                         Map<MetadataScope, Metadata> additions,
-                         Map<MetadataScope, Metadata> deletions) {
+      Map<MetadataScope, Metadata> additions,
+      Map<MetadataScope, Metadata> deletions) {
     this.previous = previous;
     this.additions = additions;
     this.deletions = deletions;
@@ -61,9 +62,9 @@ public class MetadataPayload extends AuditPayload {
       return false;
     }
     MetadataPayload that = (MetadataPayload) o;
-    return Objects.equals(previous, that.previous) &&
-      Objects.equals(additions, that.additions) &&
-      Objects.equals(deletions, that.deletions);
+    return Objects.equals(previous, that.previous)
+        && Objects.equals(additions, that.additions)
+        && Objects.equals(deletions, that.deletions);
   }
 
   @Override
@@ -73,10 +74,10 @@ public class MetadataPayload extends AuditPayload {
 
   @Override
   public String toString() {
-    return "MetadataPayload{" +
-      "previous=" + previous +
-      ", additions=" + additions +
-      ", deletions=" + deletions +
-      "} " + super.toString();
+    return "MetadataPayload{"
+        + "previous=" + previous
+        + ", additions=" + additions
+        + ", deletions=" + deletions
+        + "} " + super.toString();
   }
 }

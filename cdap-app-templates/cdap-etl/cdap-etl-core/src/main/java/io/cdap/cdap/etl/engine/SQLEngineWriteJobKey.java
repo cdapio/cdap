@@ -21,13 +21,15 @@ import java.util.Objects;
 /**
  * Class used to represent a write job for a given dataset.
  *
- * Since one dataset can be written to multiple destinations, we use this class as a way to ensure we keep the
- * dataset name consistent with our existing job keys.
+ * Since one dataset can be written to multiple destinations, we use this class as a way to ensure
+ * we keep the dataset name consistent with our existing job keys.
  */
 public class SQLEngineWriteJobKey extends SQLEngineJobKey {
+
   private final String destinationDatasetName;
 
-  public SQLEngineWriteJobKey(String datasetName, String destinationDatasetName, SQLEngineJobType jobType) {
+  public SQLEngineWriteJobKey(String datasetName, String destinationDatasetName,
+      SQLEngineJobType jobType) {
     super(datasetName, jobType);
     this.destinationDatasetName = destinationDatasetName;
   }

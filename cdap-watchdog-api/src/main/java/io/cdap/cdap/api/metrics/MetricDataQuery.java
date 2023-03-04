@@ -27,7 +27,8 @@ import javax.annotation.Nullable;
 /**
  * Defines a query to perform on {@link MetricStore} data.
  * </p>
- * Though limited currently in functionality, you can map {@link MetricDataQuery} to the following statement:
+ * Though limited currently in functionality, you can map {@link MetricDataQuery} to the following
+ * statement:
  * <pre>
  * SELECT count('read.ops')                                     << metric name and aggregation function
  * FROM Cube
@@ -66,10 +67,11 @@ public final class MetricDataQuery {
    * @param resolution Resolution in seconds.
    */
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         String metricName, AggregationFunction func,
-                         Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, Integer.MAX_VALUE, Collections.singletonMap(metricName, func), sliceByTagValues,
-         groupByTags, null);
+      String metricName, AggregationFunction func,
+      Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, Integer.MAX_VALUE, Collections.singletonMap(metricName, func),
+        sliceByTagValues,
+        groupByTags, null);
   }
 
   /**
@@ -78,9 +80,10 @@ public final class MetricDataQuery {
    * @param resolution Resolution in seconds.
    */
   public MetricDataQuery(long startTs, long endTs, int resolution,
-                         Map<String, AggregationFunction> metrics,
-                         Map<String, String> sliceByTagValues, List<String> groupByTags) {
-    this(startTs, endTs, resolution, Integer.MAX_VALUE, metrics, sliceByTagValues, groupByTags, null);
+      Map<String, AggregationFunction> metrics,
+      Map<String, String> sliceByTagValues, List<String> groupByTags) {
+    this(startTs, endTs, resolution, Integer.MAX_VALUE, metrics, sliceByTagValues, groupByTags,
+        null);
   }
 
   /**
@@ -89,18 +92,18 @@ public final class MetricDataQuery {
    * @param resolution Resolution in seconds.
    */
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
-                         Map<String, AggregationFunction> metrics,
-                         Map<String, String> sliceByTagValues, List<String> groupByTags,
-                         @Nullable Interpolator interpolator) {
+      Map<String, AggregationFunction> metrics,
+      Map<String, String> sliceByTagValues, List<String> groupByTags,
+      @Nullable Interpolator interpolator) {
     this(startTs, endTs, resolution, limit, metrics, sliceByTagValues, groupByTags,
-         AggregationOption.FALSE, interpolator);
+        AggregationOption.FALSE, interpolator);
   }
 
   public MetricDataQuery(long startTs, long endTs, int resolution, int limit,
-                         Map<String, AggregationFunction> metrics,
-                         Map<String, String> sliceByTagValues, List<String> groupByTags,
-                         AggregationOption aggregationOption,
-                         @Nullable Interpolator interpolator) {
+      Map<String, AggregationFunction> metrics,
+      Map<String, String> sliceByTagValues, List<String> groupByTags,
+      AggregationOption aggregationOption,
+      @Nullable Interpolator interpolator) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;
@@ -151,16 +154,16 @@ public final class MetricDataQuery {
 
   @Override
   public String toString() {
-    return "MetricDataQuery{" +
-      "startTs=" + startTs +
-      ", endTs=" + endTs +
-      ", resolution=" + resolution +
-      ", limit=" + limit +
-      ", metrics=" + metrics +
-      ", sliceByTagValues=" + sliceByTagValues +
-      ", groupByTags=" + groupByTags +
-      ", aggregationOption=" + aggregationOption +
-      ", interpolator=" + interpolator +
-      '}';
+    return "MetricDataQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", resolution=" + resolution
+        + ", limit=" + limit
+        + ", metrics=" + metrics
+        + ", sliceByTagValues=" + sliceByTagValues
+        + ", groupByTags=" + groupByTags
+        + ", aggregationOption=" + aggregationOption
+        + ", interpolator=" + interpolator
+        + '}';
   }
 }

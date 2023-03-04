@@ -61,14 +61,13 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 
 /**
- * Log Buffer Service responsible for:
- * loading, starting and stopping log buffer pipelines
- * creating concurrent writer
- * starting log buffer cleaner service to clean up logs that have been persisted by log buffer pipelines
- * recovering logs from log buffer
- * starting netty-http service to expose endpoint to process logs.
+ * Log Buffer Service responsible for: loading, starting and stopping log buffer pipelines creating
+ * concurrent writer starting log buffer cleaner service to clean up logs that have been persisted
+ * by log buffer pipelines recovering logs from log buffer starting netty-http service to expose
+ * endpoint to process logs.
  */
 public class LogBufferService extends AbstractIdleService {
+
   private final DiscoveryService discoveryService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -85,10 +84,10 @@ public class LogBufferService extends AbstractIdleService {
 
   @Inject
   LogBufferService(CConfiguration cConf, SConfiguration sConf, DiscoveryService discoveryService,
-                   @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
-                   Provider<AppenderContext> contextProvider,
-                   CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                   TransactionRunner txRunner) {
+      @Named(Constants.LogSaver.LOG_SAVER_HANDLER) Set<HttpHandler> handlers,
+      Provider<AppenderContext> contextProvider,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      TransactionRunner txRunner) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.handlers = handlers;
@@ -110,23 +109,26 @@ public class LogBufferService extends AbstractIdleService {
     // when it is done recovering data. So while recovery service is running, cleanup task will be a no-op
     AtomicBoolean startCleanup = new AtomicBoolean(false);
     // start log recovery service to recover all the pending logs.
-    recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers, startCleanup);
+    recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers,
+        startCleanup);
     recoveryService.startAndWait();
 
     // create concurrent writer
-    ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
-                                                                               new LogBufferCleaner(cConf,
-                                                                                                    checkpointManagers,
-                                                                                                    startCleanup));
+    ConcurrentLogBufferWriter concurrentWriter = new ConcurrentLogBufferWriter(cConf,
+        bufferPipelines,
+        new LogBufferCleaner(cConf,
+            checkpointManagers,
+            startCleanup));
 
     // create and start http service
     Set<HttpHandler> handlers = new HashSet<>(this.handlers);
     handlers.add(new LogBufferHandler(concurrentWriter));
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOGSAVER)
-      .setHttpHandlers(handlers)
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.LOGSAVER)
+        .setHttpHandlers(handlers)
+        .setExceptionHandler(new HttpExceptionHandler())
+        .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
+        .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -135,7 +137,8 @@ public class LogBufferService extends AbstractIdleService {
     httpService = builder.build();
     httpService.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOGSAVER, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.LOGSAVER, httpService)));
   }
 
   @Override
@@ -152,7 +155,8 @@ public class LogBufferService extends AbstractIdleService {
   /**
    * Blocks and validates all the given futures completed successfully.
    */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures) throws Exception {
+  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures)
+      throws Exception {
     // The get call shouldn't throw exception. It just block until all futures completed.
     Futures.successfulAsList(futures).get();
 
@@ -175,7 +179,8 @@ public class LogBufferService extends AbstractIdleService {
    * Load log buffer pipelines.
    */
   private List<LogBufferProcessorPipeline> loadLogPipelines() {
-    Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(cConf).load(contextProvider);
+    Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(
+        cConf).load(contextProvider);
     int pipelineCount = specs.size();
     List<LogBufferProcessorPipeline> bufferPipelines = new ArrayList<>();
     // Create one LogBufferProcessorPipeline per spec
@@ -184,16 +189,17 @@ public class LogBufferService extends AbstractIdleService {
       AppenderContext context = pipelineSpec.getContext();
       long bufferSize = getBufferSize(pipelineCount, cConf);
       LogBufferPipelineConfig config =
-        new LogBufferPipelineConfig(bufferSize, cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
-                                    cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS),
-                                    cConf.getLong(Constants.LogBuffer.LOG_BUFFER_PIPELINE_BATCH_SIZE, 1000));
+          new LogBufferPipelineConfig(bufferSize,
+              cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
+              cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS),
+              cConf.getLong(Constants.LogBuffer.LOG_BUFFER_PIPELINE_BATCH_SIZE, 1000));
 
       LogBufferCheckpointManager checkpointManager = new LogBufferCheckpointManager(txRunner,
-                                                                                    pipelineSpec.getCheckpointPrefix());
+          pipelineSpec.getCheckpointPrefix());
       LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
-        new LogProcessorPipelineContext(cConf, context.getName(), context,
-                                        context.getMetricsContext(), context.getInstanceId()), config,
-        checkpointManager, 0);
+          new LogProcessorPipelineContext(cConf, context.getName(), context,
+              context.getMetricsContext(), context.getInstanceId()), config,
+          checkpointManager, 0);
       RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
       pipelines.add(new RetryOnStartFailureService(() -> pipeline, retryStrategy));
       bufferPipelines.add(pipeline);
@@ -214,7 +220,7 @@ public class LogBufferService extends AbstractIdleService {
 
     double bufferRatio = cConf.getDouble(Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
     Preconditions.checkArgument(bufferRatio > 0 && bufferRatio < 1,
-                                "Config %s must be between 0 and 1", Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
+        "Config %s must be between 0 and 1", Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
 
     bufferSize = (long) ((Runtime.getRuntime().maxMemory() * bufferRatio) / numberOfPipelines);
     return bufferSize > 0 ? bufferSize : 1L;

@@ -35,13 +35,15 @@ import javax.annotation.Nullable;
 /**
  * Generates a pipeline spec for batch apps.
  */
-public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> {
+public class BatchPipelineSpecGenerator extends
+    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> {
 
   public <T extends PluginConfigurer & DatasetConfigurer> BatchPipelineSpecGenerator(
-    String namespace,
-    T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
-    Set<String> sinkPluginTypes, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
-    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, engine, featureFlagsProvider);
+      String namespace,
+      T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
+      Set<String> sinkPluginTypes, Engine engine, FeatureFlagsProvider featureFlagsProvider) {
+    super(namespace, configurer, runtimeConfigurer, sourcePluginTypes, sinkPluginTypes, engine,
+        featureFlagsProvider);
   }
 
   @Override
@@ -51,9 +53,10 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
       DefaultPipelineConfigurer pipelineConfigurer =
-        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine,
-                                      new DefaultStageConfigurer(name), getFeatureFlagsProvider());
-      StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
+          new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine,
+              new DefaultStageConfigurer(name), getFeatureFlagsProvider());
+      StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(),
+          pipelineConfigurer).build();
       specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }
 
@@ -70,20 +73,22 @@ public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchCo
 
   private StageSpec configureSqlEngine(ETLBatchConfig config) throws ValidationException {
     if (!config.isPushdownEnabled() || config.getTransformationPushdown() == null
-      || config.getTransformationPushdown().getPlugin() == null) {
+        || config.getTransformationPushdown().getPlugin() == null) {
       return null;
     }
 
     //Fixed name for SQL Engine config.
-    String stageName = SQLEngineUtils.buildStageName(config.getTransformationPushdown().getPlugin().getName());
+    String stageName = SQLEngineUtils.buildStageName(
+        config.getTransformationPushdown().getPlugin().getName());
 
     ETLStage sqlEngineStage =
-      new ETLStage(stageName, config.getTransformationPushdown().getPlugin());
+        new ETLStage(stageName, config.getTransformationPushdown().getPlugin());
     DefaultPipelineConfigurer pipelineConfigurer =
-      new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, stageName, engine,
-                                    new DefaultStageConfigurer(stageName), getFeatureFlagsProvider());
+        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, stageName, engine,
+            new DefaultStageConfigurer(stageName), getFeatureFlagsProvider());
 
-    ConfiguredStage configuredStage = configureStage(sqlEngineStage, validateConfig(config), pipelineConfigurer);
+    ConfiguredStage configuredStage = configureStage(sqlEngineStage, validateConfig(config),
+        pipelineConfigurer);
     return configuredStage.getStageSpec();
   }
 }

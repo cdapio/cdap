@@ -31,11 +31,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Class for serialize/deserialize Schema object to/from json through {@link com.google.gson.Gson Gson}.
+ * Class for serialize/deserialize Schema object to/from json through {@link com.google.gson.Gson
+ * Gson}.
  * <p>
- *  Expected usage:
+ * Expected usage:
  *
- *  <pre>
+ * <pre>
  *    Schema schema = ...;
  *    Gson gson = new GsonBuilder()
  *                  .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -131,12 +132,14 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   /**
    * Read JSON object and return Schema corresponding to it.
+   *
    * @param reader JsonReader used to read the json object
    * @param definedTypes defined types already encountered during the reading.
    * @return Schema reflecting json
    * @throws IOException when error occurs during reading json
    */
-  private Schema readObject(JsonReader reader, Map<String, Schema> definedTypes) throws IOException {
+  private Schema readObject(JsonReader reader, Map<String, Schema> definedTypes)
+      throws IOException {
     reader.beginObject();
     // Type of the schema
     Schema.Type schemaType = null;
@@ -275,7 +278,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * Constructs {@link Schema.Type#UNION UNION} type schema from the json input.
    *
    * @param reader The {@link JsonReader} for streaming json input tokens.
-   * @param definedTypes Map of defined type names and associated schema already encountered during the reading
+   * @param definedTypes Map of defined type names and associated schema already encountered
+   *     during the reading
    * @return A {@link Schema} of type {@link Schema.Type#UNION UNION}.
    * @throws IOException When fails to construct a valid schema from the input.
    */
@@ -291,6 +295,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   /**
    * Returns the {@link List} of enum values from the json input.
+   *
    * @param reader The {@link JsonReader} for streaming json input tokens.
    * @return a list of enum values
    * @throws IOException When fails to parse the input json.
@@ -307,14 +312,16 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
   /**
    * Get the list of {@link Schema.Field} associated with current RECORD.
+   *
    * @param recordName the name of the RECORD for which fields to be returned
    * @param reader the reader to read the record
    * @param definedTypes defined type names already encountered during the reading
    * @return the list of fields associated with the current record
    * @throws IOException when error occurs during reading the json
    */
-  private List<Schema.Field> getFields(String recordName, JsonReader reader, Map<String, Schema> definedTypes)
-    throws IOException {
+  private List<Schema.Field> getFields(String recordName, JsonReader reader,
+      Map<String, Schema> definedTypes)
+      throws IOException {
     definedTypes.put(recordName, Schema.recordOf(recordName));
     List<Schema.Field> fieldBuilder = new ArrayList<>();
     reader.beginArray();
@@ -325,7 +332,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
 
       while (reader.hasNext()) {
         String name = reader.nextName();
-        switch(name) {
+        switch (name) {
           case NAME:
             fieldName = reader.nextString();
             break;
@@ -352,7 +359,8 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
    * @return The same {@link JsonWriter} as the one passed in.
    * @throws IOException When fails to encode the schema into json.
    */
-  private JsonWriter write(JsonWriter writer, Schema schema, Set<String> definedTypes) throws IOException {
+  private JsonWriter write(JsonWriter writer, Schema schema, Set<String> definedTypes)
+      throws IOException {
     if (schema.getLogicalType() != null) {
       writer.beginObject().name(TYPE).value(schema.getType().name().toLowerCase());
       writer.name(LOGICAL_TYPE).value(schema.getLogicalType().getToken());
@@ -421,7 +429,7 @@ public final class SchemaTypeAdapter extends TypeAdapter<Schema> {
         // Emits the name of record, keyed by "name"
         definedTypes.add(schema.getRecordName());
         writer.name(NAME).value(schema.getRecordName())
-              .name(FIELDS).beginArray();
+            .name(FIELDS).beginArray();
         // Each field is an object, with field name keyed by "name" and field schema keyed by "type"
         for (Schema.Field field : schema.getFields()) {
           writer.beginObject().name(NAME).value(field.getName());

@@ -15,24 +15,23 @@
  */
 
 /**
- * An Application is a logical grouping of
- * {@link io.cdap.cdap.api.dataset.Dataset Datasets}
- * and programs.
+ * An Application is a logical grouping of {@link io.cdap.cdap.api.dataset.Dataset Datasets} and
+ * programs.
  *
  * <h1>Application</h1>
  *
  * <p>
- * Every Application must either implement the {@link io.cdap.cdap.api.app.Application} 
- * interface or extend the {@link io.cdap.cdap.api.app.AbstractApplication} class. 
- * Extending AbstractApplication is simpler and helps produce cleaner code.
+ * Every Application must either implement the {@link io.cdap.cdap.api.app.Application} interface or
+ * extend the {@link io.cdap.cdap.api.app.AbstractApplication} class. Extending AbstractApplication
+ * is simpler and helps produce cleaner code.
  * </p>
  *
  * <p>
- * To create a CDAP Application, first begin by extending the
- * {@link io.cdap.cdap.api.app.AbstractApplication} class, then implement its 
- * {@link io.cdap.cdap.api.app.Application#configure(ApplicationConfigurer configurer, ApplicationContext context)
- * configure()} method. In the configure method, specify the Application's metadata
- * (its name and description), and declare and configure each of the Application elements.
+ * To create a CDAP Application, first begin by extending the {@link
+ * io.cdap.cdap.api.app.AbstractApplication} class, then implement its {@link
+ * io.cdap.cdap.api.app.Application#configure(ApplicationConfigurer configurer, ApplicationContext
+ * context) configure()} method. In the configure method, specify the Application's metadata (its
+ * name and description), and declare and configure each of the Application elements.
  * </p>
  *
  * <p>
@@ -59,9 +58,9 @@
  * <h1>Dataset</h1>
  *
  * <p>
- * A {@link io.cdap.cdap.api.dataset.Dataset Dataset} defines the storage and
- * retrieval of data. In addition to the several Dataset implementations CDAP
- * provides, you can also implement your own Custom Datasets.
+ * A {@link io.cdap.cdap.api.dataset.Dataset Dataset} defines the storage and retrieval of data. In
+ * addition to the several Dataset implementations CDAP provides, you can also implement your own
+ * Custom Datasets.
  * </p>
  *
  * <p>
@@ -71,22 +70,20 @@
  * <h1>Spark</h1>
  *
  * <p>
- *   A {@link io.cdap.cdap.api.spark.Spark} program defines the processing
- *   of data using Spark.
+ * A {@link io.cdap.cdap.api.spark.Spark} program defines the processing of data using Spark.
  * </p>
  *
  * <h1>MapReduce</h1>
  *
  * <p>
- *   A {@link io.cdap.cdap.api.mapreduce.MapReduce} program to process in batch
- *   using MapReduce
+ * A {@link io.cdap.cdap.api.mapreduce.MapReduce} program to process in batch using MapReduce
  * </p>
  *
  * <h1>Workflow</h1>
  *
  * <p>
- *   A {@link io.cdap.cdap.api.workflow.Workflow} program to orchestrate a series
- *   of mapreduce or spark jobs.
+ * A {@link io.cdap.cdap.api.workflow.Workflow} program to orchestrate a series of mapreduce or
+ * spark jobs.
  * </p>
  */
 package io.cdap.cdap.api.app;

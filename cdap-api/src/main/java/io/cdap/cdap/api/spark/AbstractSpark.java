@@ -27,11 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This abstract class provides a default implementation of {@link Spark} methods for easy extension.
+ * This abstract class provides a default implementation of {@link Spark} methods for easy
+ * extension.
  */
 @Beta
 public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConfigurer>
-  implements Spark, ProgramLifecycle<SparkClientContext> {
+    implements Spark, ProgramLifecycle<SparkClientContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSpark.class);
   private SparkConfigurer configurer;
@@ -73,8 +74,8 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   /**
-   * Sets the job main class name in specification. The main method of this class will be called to run the
-   * Spark job
+   * Sets the job main class name in specification. The main method of this class will be called to
+   * run the Spark job
    *
    * @param mainClass the class containing the main method
    */
@@ -83,8 +84,8 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   /**
-   * Sets the Spark job main class name in specification. The main method of this class will be called to run the
-   * Spark job
+   * Sets the Spark job main class name in specification. The main method of this class will be
+   * called to run the Spark job
    *
    * @param mainClassName the fully qualified name of class containing the main method
    */
@@ -93,8 +94,8 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   /**
-   * Sets a set of properties that will be available through the {@link SparkSpecification#getProperties()}
-   * at runtime.
+   * Sets a set of properties that will be available through the {@link
+   * SparkSpecification#getProperties()} at runtime.
    *
    * @param properties the properties to set
    */
@@ -131,8 +132,10 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   }
 
   /**
-   * Classes derived from {@link AbstractSpark} can override this method to initialize the {@link Spark}.
-   * {@link SparkClientContext} will be available in this method using {@link AbstractSpark#getContext}.
+   * Classes derived from {@link AbstractSpark} can override this method to initialize the {@link
+   * Spark}. {@link SparkClientContext} will be available in this method using {@link
+   * AbstractSpark#getContext}.
+   *
    * @throws Exception if there is any error in initializing the Spark
    */
   @TransactionPolicy(TransactionControl.IMPLICIT)
@@ -150,7 +153,7 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
   /**
    * Return an instance of the {@link SparkClientContext}.
    */
-   protected final SparkClientContext getContext() {
-     return context;
-   }
+  protected final SparkClientContext getContext() {
+    return context;
+  }
 }

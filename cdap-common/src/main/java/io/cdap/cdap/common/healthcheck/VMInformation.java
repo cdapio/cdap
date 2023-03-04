@@ -37,10 +37,12 @@ public final class VMInformation {
   public static VMInformation collect() {
     MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
 
-    return new VMInformation(memoryMXBean.getHeapMemoryUsage(), memoryMXBean.getNonHeapMemoryUsage(), getThreadDump());
+    return new VMInformation(memoryMXBean.getHeapMemoryUsage(),
+        memoryMXBean.getNonHeapMemoryUsage(), getThreadDump());
   }
 
-  private VMInformation(MemoryUsage heapMemoryUsage, MemoryUsage nonHeapMemoryUsage, String threads) {
+  private VMInformation(MemoryUsage heapMemoryUsage, MemoryUsage nonHeapMemoryUsage,
+      String threads) {
     this.heapMemoryUsage = heapMemoryUsage;
     this.nonHeapMemoryUsage = nonHeapMemoryUsage;
     this.threads = threads;

@@ -20,12 +20,15 @@ package io.cdap.cdap.securestore.spi;
  * An Exception that indicates a secret is not found.
  */
 public class SecretNotFoundException extends Exception {
+
   private final String namespace;
   private final String secretName;
 
   public SecretNotFoundException(String namespace, String secretName) {
-    super(String.format("Secret name %s is not found the namespace %s. Please provide correct secret name that was " +
-                          "stored in %s namespace.", namespace, secretName, namespace));
+    super(String.format(
+        "Secret name %s is not found the namespace %s. Please provide correct secret name that was "
+
+            + "stored in %s namespace.", namespace, secretName, namespace));
     this.namespace = namespace;
     this.secretName = secretName;
   }

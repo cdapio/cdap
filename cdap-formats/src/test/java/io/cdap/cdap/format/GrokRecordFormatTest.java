@@ -71,15 +71,16 @@ public class GrokRecordFormatTest {
     Assert.assertEquals("6215", record.get("pid"));
     Assert.assertEquals("logfile turned over", record.get("message"));
 
-    message = "Oct 17 08:59:04 cdr.cs.colorado.edu amd[29648]: " +
-      "noconn option exists, and was turned on! (May cause NFS hangs on some systems...)";
+    message = "Oct 17 08:59:04 cdr.cs.colorado.edu amd[29648]: "
+        + "noconn option exists, and was turned on! (May cause NFS hangs on some systems...)";
     record = format.read(ByteBuffer.wrap(Bytes.toBytes(message)));
     Assert.assertEquals("Oct 17 08:59:04", record.get("timestamp"));
     Assert.assertEquals("cdr.cs.colorado.edu", record.get("logsource"));
     Assert.assertEquals("amd", record.get("program"));
     Assert.assertEquals("29648", record.get("pid"));
-    Assert.assertEquals("noconn option exists, and was turned on! (May cause NFS hangs on some systems...)",
-                        record.get("message"));
+    Assert.assertEquals(
+        "noconn option exists, and was turned on! (May cause NFS hangs on some systems...)",
+        record.get("message"));
   }
 
 }

@@ -28,58 +28,66 @@ import java.util.Set;
 public enum ElementType {
 
   INSTANCE("instance", new Noun("instance"), new Noun("Instance"), null, null,
-           ArgumentName.INSTANCE, Capability.PREFERENCES),
+      ArgumentName.INSTANCE, Capability.PREFERENCES),
 
   NAMESPACE("namespace", new Noun("namespace"), new Noun("Namespace"), null, null,
-            ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
+      ArgumentName.NAMESPACE_NAME, Capability.PREFERENCES),
 
   APP("app", new Noun("application"), new Noun("Application"), null, null,
       ArgumentName.APP, Capability.LIST, Capability.PREFERENCES),
 
   ARTIFACT("artifact", new Noun("artifact"), new Noun("Artifact"), null, null,
-           ArgumentName.ARTIFACT_NAME, Capability.LIST),
+      ArgumentName.ARTIFACT_NAME, Capability.LIST),
 
   DATASET("dataset", new Noun("dataset"), new Noun("Dataset"), null, null,
-          ArgumentName.DATASET, Capability.LIST),
+      ArgumentName.DATASET, Capability.LIST),
 
-  DATASET_MODULE("dataset module", new Noun("dataset module"), new Noun("Dataset module"), null, null,
-                 ArgumentName.DATASET_MODULE, Capability.LIST),
+  DATASET_MODULE("dataset module", new Noun("dataset module"), new Noun("Dataset module"), null,
+      null,
+      ArgumentName.DATASET_MODULE, Capability.LIST),
 
   DATASET_TYPE("dataset type", new Noun("dataset type"), new Noun("Dataset type"), null, null,
-               ArgumentName.DATASET_TYPE, Capability.LIST),
+      ArgumentName.DATASET_TYPE, Capability.LIST),
 
   QUERY("query", new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 
   PROGRAM("program", new Noun("program"), new Noun("Program"), null, null, ArgumentName.PROGRAM),
 
-  SCHEDULE("schedule", new Noun("schedule"), new Noun("Schedule"), null, null, ArgumentName.SCHEDULE),
+  SCHEDULE("schedule", new Noun("schedule"), new Noun("Schedule"), null, null,
+      ArgumentName.SCHEDULE),
 
   WORKFLOW("workflow", new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
-           ArgumentName.WORKFLOW,
-           Capability.RUNS, Capability.LOGS, Capability.STATUS, Capability.START, Capability.STOP,
-           Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+      ArgumentName.WORKFLOW,
+      Capability.RUNS, Capability.LOGS, Capability.STATUS, Capability.START, Capability.STOP,
+      Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  WORKER("worker", new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null, ArgumentName.WORKER,
-         Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-         Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+  WORKER("worker", new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null,
+      ArgumentName.WORKER,
+      Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
+      Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS,
+      Capability.PREFERENCES),
 
   SERVICE("service", new Noun("service"), new Noun("Service"), ProgramType.SERVICE, null,
-          ArgumentName.SERVICE,
-          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-          Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+      ArgumentName.SERVICE,
+      Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
+      Capability.START, Capability.STOP, Capability.LIST, Capability.RUNTIME_ARGS,
+      Capability.PREFERENCES),
 
   MAPREDUCE("mapreduce", new Noun("MapReduce program", "MapReduce programs"),
-            new Noun("MapReduce Program", "MapReduce Programs"),
-            ProgramType.MAPREDUCE, null,
-            ArgumentName.MAPREDUCE,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
-            Capability.RUNTIME_ARGS, Capability.PREFERENCES),
+      new Noun("MapReduce Program", "MapReduce Programs"),
+      ProgramType.MAPREDUCE, null,
+      ArgumentName.MAPREDUCE,
+      Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP,
+      Capability.LIST,
+      Capability.RUNTIME_ARGS, Capability.PREFERENCES),
 
-  SPARK("spark", new Noun("Spark program", "Spark programs"), new Noun("Spark Program", "Spark Programs"),
-            ProgramType.SPARK, null,
-            ArgumentName.SPARK,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP, Capability.LIST,
-            Capability.RUNTIME_ARGS, Capability.PREFERENCES);
+  SPARK("spark", new Noun("Spark program", "Spark programs"),
+      new Noun("Spark Program", "Spark Programs"),
+      ProgramType.SPARK, null,
+      ArgumentName.SPARK,
+      Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START, Capability.STOP,
+      Capability.LIST,
+      Capability.RUNTIME_ARGS, Capability.PREFERENCES);
 
   private final String shortName;
   private final Noun name;
@@ -89,9 +97,10 @@ public enum ElementType {
   private final ArgumentName argumentName;
   private final Noun titleName;
 
-  ElementType(String shortName, Noun name, Noun titleName, ProgramType programType, ProgramType parentType,
-              ArgumentName argumentName,
-              Capability... capabilities) {
+  ElementType(String shortName, Noun name, Noun titleName, ProgramType programType,
+      ProgramType parentType,
+      ArgumentName argumentName,
+      Capability... capabilities) {
     this.shortName = shortName;
     this.name = name;
     this.titleName = titleName;

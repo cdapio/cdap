@@ -28,7 +28,8 @@ import java.util.Map;
 public interface TaskLocalizationContext {
 
   /**
-   * Returns a {@link File} representing the path to a localized file localized with the given name.
+   * Returns a {@link File} representing the path to a localized file localized with the given
+   * name.
    *
    * @param name the local file's name
    * @return a {@link File} for the localized file

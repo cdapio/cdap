@@ -31,6 +31,7 @@ import java.io.PrintStream;
  * {@link Command} to create a namespace.
  */
 public class CreateNamespaceCommand extends AbstractCommand {
+
   private static final String SUCCESS_MSG = "Namespace '%s' created successfully.%n";
 
   private final NamespaceClient namespaceClient;
@@ -49,31 +50,35 @@ public class CreateNamespaceCommand extends AbstractCommand {
     String principal = arguments.getOptional(ArgumentName.PRINCIPAL.toString(), null);
     String groupName = arguments.getOptional(ArgumentName.NAMESPACE_GROUP_NAME.toString(), null);
     String keytabPath = arguments.getOptional(ArgumentName.NAMESPACE_KEYTAB_PATH.toString(), null);
-    String hbaseNamespace = arguments.getOptional(ArgumentName.NAMESPACE_HBASE_NAMESPACE.toString(), null);
-    String hiveDatabase = arguments.getOptional(ArgumentName.NAMESPACE_HIVE_DATABASE.toString(), null);
-    String schedulerQueueName = arguments.getOptional(ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME.toString(), null);
+    String hbaseNamespace = arguments.getOptional(ArgumentName.NAMESPACE_HBASE_NAMESPACE.toString(),
+        null);
+    String hiveDatabase = arguments.getOptional(ArgumentName.NAMESPACE_HIVE_DATABASE.toString(),
+        null);
+    String schedulerQueueName = arguments.getOptional(
+        ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME.toString(), null);
     String rootDir = arguments.getOptional(ArgumentName.NAMESPACE_ROOT_DIR.toString(), null);
 
     NamespaceMeta.Builder builder = new NamespaceMeta.Builder();
-    builder.setName(name).setDescription(description).setPrincipal(principal).setGroupName(groupName)
-      .setKeytabURI(keytabPath).setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace)
-      .setHiveDatabase(hiveDatabase).setSchedulerQueueName(schedulerQueueName);
+    builder.setName(name).setDescription(description).setPrincipal(principal)
+        .setGroupName(groupName)
+        .setKeytabURI(keytabPath).setRootDirectory(rootDir).setHBaseNamespace(hbaseNamespace)
+        .setHiveDatabase(hiveDatabase).setSchedulerQueueName(schedulerQueueName);
     namespaceClient.create(builder.build());
     output.printf(SUCCESS_MSG, name);
   }
 
   @Override
   public String getPattern() {
-    return String.format("create namespace <%s> [%s <%s>] [%s <%s>] [%s <%s>] " +
-                           "[%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>]", ArgumentName.NAMESPACE_NAME,
-                         ArgumentName.DESCRIPTION, ArgumentName.DESCRIPTION,
-                         ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL,
-                         ArgumentName.NAMESPACE_GROUP_NAME, ArgumentName.NAMESPACE_GROUP_NAME,
-                         ArgumentName.NAMESPACE_KEYTAB_PATH, ArgumentName.NAMESPACE_KEYTAB_PATH,
-                         ArgumentName.NAMESPACE_HBASE_NAMESPACE, ArgumentName.NAMESPACE_HBASE_NAMESPACE,
-                         ArgumentName.NAMESPACE_HIVE_DATABASE, ArgumentName.NAMESPACE_HIVE_DATABASE,
-                         ArgumentName.NAMESPACE_ROOT_DIR, ArgumentName.NAMESPACE_ROOT_DIR,
-                         ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME);
+    return String.format("create namespace <%s> [%s <%s>] [%s <%s>] [%s <%s>] "
+            + "[%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>] [%s <%s>]", ArgumentName.NAMESPACE_NAME,
+        ArgumentName.DESCRIPTION, ArgumentName.DESCRIPTION,
+        ArgumentName.PRINCIPAL, ArgumentName.PRINCIPAL,
+        ArgumentName.NAMESPACE_GROUP_NAME, ArgumentName.NAMESPACE_GROUP_NAME,
+        ArgumentName.NAMESPACE_KEYTAB_PATH, ArgumentName.NAMESPACE_KEYTAB_PATH,
+        ArgumentName.NAMESPACE_HBASE_NAMESPACE, ArgumentName.NAMESPACE_HBASE_NAMESPACE,
+        ArgumentName.NAMESPACE_HIVE_DATABASE, ArgumentName.NAMESPACE_HIVE_DATABASE,
+        ArgumentName.NAMESPACE_ROOT_DIR, ArgumentName.NAMESPACE_ROOT_DIR,
+        ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME, ArgumentName.NAMESPACE_SCHEDULER_QUEUENAME);
   }
 
   @Override

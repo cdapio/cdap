@@ -34,15 +34,18 @@ import java.lang.reflect.Type;
  * Type adapter for {@link FieldOperation}.
  */
 public class FieldOperationTypeAdapter implements JsonSerializer<FieldOperation>,
-  JsonDeserializer<FieldOperation> {
+    JsonDeserializer<FieldOperation> {
+
   @Override
-  public JsonElement serialize(FieldOperation src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(FieldOperation src, Type typeOfSrc,
+      JsonSerializationContext context) {
     return context.serialize(src);
   }
 
   @Override
-  public FieldOperation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-          throws JsonParseException {
+  public FieldOperation deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     OperationType type = context.deserialize(jsonObj.get("type"), OperationType.class);

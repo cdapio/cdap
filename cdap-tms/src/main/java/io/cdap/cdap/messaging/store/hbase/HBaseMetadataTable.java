@@ -54,7 +54,8 @@ public final class HBaseMetadataTable implements MetadataTable {
   private static final Gson GSON = new Gson();
 
   // It has to be a sorted map since we depends on the serialized map for compareAndPut operation for topic update.
-  private static final Type MAP_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<SortedMap<String, String>>() {
+  }.getType();
 
   private final HBaseTableUtil tableUtil;
   private final byte[] columnFamily;
@@ -63,7 +64,7 @@ public final class HBaseMetadataTable implements MetadataTable {
   private final HBaseExceptionHandler exceptionHandler;
 
   HBaseMetadataTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
-                     int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
+      int scanCacheRows, HBaseExceptionHandler exceptionHandler) {
     this.tableUtil = tableUtil;
     this.table = table;
     this.columnFamily = Arrays.copyOf(columnFamily, columnFamily.length);
@@ -74,8 +75,8 @@ public final class HBaseMetadataTable implements MetadataTable {
   @Override
   public TopicMetadata getMetadata(TopicId topicId) throws IOException, TopicNotFoundException {
     Get get = tableUtil.buildGet(MessagingUtils.toMetadataRowKey(topicId))
-      .addFamily(columnFamily)
-      .build();
+        .addFamily(columnFamily)
+        .build();
 
     try {
       Result result = table.get(get);
@@ -96,15 +97,16 @@ public final class HBaseMetadataTable implements MetadataTable {
   }
 
   @Override
-  public void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException {
+  public void createTopic(TopicMetadata topicMetadata)
+      throws TopicAlreadyExistsException, IOException {
     TopicId topicId = topicMetadata.getTopicId();
 
     byte[] rowKey = MessagingUtils.toMetadataRowKey(topicId);
     PutBuilder putBuilder = tableUtil.buildPut(rowKey);
 
     Get get = tableUtil.buildGet(rowKey)
-      .addFamily(columnFamily)
-      .build();
+        .addFamily(columnFamily)
+        .build();
 
     try {
       boolean completed = false;
@@ -147,12 +149,14 @@ public final class HBaseMetadataTable implements MetadataTable {
       while (!completed) {
         TopicMetadata oldMetadata = getMetadata(topicMetadata.getTopicId());
         TreeMap<String, String> newProperties = new TreeMap<>(topicMetadata.getProperties());
-        newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(oldMetadata.getGeneration()));
+        newProperties.put(TopicMetadata.GENERATION_KEY,
+            Integer.toString(oldMetadata.getGeneration()));
 
         Put put = tableUtil.buildPut(rowKey)
-          .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
-          .build();
-        byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
+            .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
+            .build();
+        byte[] oldValue = Bytes.toBytes(
+            GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
         completed = table.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
       }
     } catch (IOException e) {
@@ -170,11 +174,13 @@ public final class HBaseMetadataTable implements MetadataTable {
       while (!completed) {
         TopicMetadata oldMetadata = getMetadata(topicId);
         TreeMap<String, String> newProperties = new TreeMap<>(oldMetadata.getProperties());
-        newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(oldMetadata.getGeneration() * -1));
+        newProperties.put(TopicMetadata.GENERATION_KEY,
+            Integer.toString(oldMetadata.getGeneration() * -1));
         Put put = tableUtil.buildPut(rowKey)
-          .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
-          .build();
-        byte[] oldValue = Bytes.toBytes(GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
+            .add(columnFamily, COL, Bytes.toBytes(GSON.toJson(newProperties, MAP_TYPE)))
+            .build();
+        byte[] oldValue = Bytes.toBytes(
+            GSON.toJson(new TreeMap<>(oldMetadata.getProperties()), MAP_TYPE));
         completed = table.checkAndPut(rowKey, columnFamily, COL, oldValue, put);
       }
     } catch (IOException e) {
@@ -186,8 +192,8 @@ public final class HBaseMetadataTable implements MetadataTable {
   public List<TopicId> listTopics(NamespaceId namespaceId) throws IOException {
     byte[] startRow = MessagingUtils.topicScanKey(namespaceId);
     ScanBuilder scanBuilder = tableUtil.buildScan()
-      .setStartRow(startRow)
-      .setStopRow(Bytes.stopKeyForPrefix(startRow));
+        .setStartRow(startRow)
+        .setStopRow(Bytes.stopKeyForPrefix(startRow));
     return scanTopics(scanBuilder);
   }
 

@@ -29,10 +29,11 @@ import org.apache.hadoop.io.Text;
  * Used to read data written by {@link SingleConnectorSink}.
  */
 public class SingleConnectorSource extends ConnectorSource<StructuredRecord> {
+
   static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
-    "record",
-    Schema.Field.of("schema", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("record", Schema.of(Schema.Type.STRING)));
+      "record",
+      Schema.Field.of("schema", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("record", Schema.of(Schema.Type.STRING)));
   @Nullable
   private final Schema schema;
 
@@ -43,14 +44,15 @@ public class SingleConnectorSource extends ConnectorSource<StructuredRecord> {
 
   @Override
   public void transform(KeyValue<LongWritable, Text> input,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+      Emitter<StructuredRecord> emitter) throws Exception {
     StructuredRecord output;
     String inputStr = input.getValue().toString();
     StructuredRecord recordWithSchema =
-      StructuredRecordStringConverter.fromJsonString(inputStr, RECORD_WITH_SCHEMA);
+        StructuredRecordStringConverter.fromJsonString(inputStr, RECORD_WITH_SCHEMA);
     if (schema == null) {
       Schema outputSchema = Schema.parseJson((String) recordWithSchema.get("schema"));
-      output = StructuredRecordStringConverter.fromJsonString((String) recordWithSchema.get("record"), outputSchema);
+      output = StructuredRecordStringConverter.fromJsonString(
+          (String) recordWithSchema.get("record"), outputSchema);
     } else {
       output = StructuredRecordStringConverter.fromJsonString(inputStr, schema);
     }

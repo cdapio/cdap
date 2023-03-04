@@ -28,6 +28,7 @@ import java.util.Objects;
  * The result for the sample request
  */
 public class SampleDetail {
+
   private final List<StructuredRecord> sample;
   private final Map<String, String> properties;
 
@@ -41,7 +42,8 @@ public class SampleDetail {
   }
 
   /**
-   * Get the all the properties used to generate this sample, these properties can be directly used by a source/sink
+   * Get the all the properties used to generate this sample, these properties can be directly used
+   * by a source/sink
    */
   public Map<String, String> getProperties() {
     return properties;
@@ -58,8 +60,8 @@ public class SampleDetail {
     }
 
     SampleDetail that = (SampleDetail) o;
-    return Objects.equals(sample, that.sample) &&
-             Objects.equals(properties, that.properties);
+    return Objects.equals(sample, that.sample)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -78,6 +80,7 @@ public class SampleDetail {
    * Builder for {@link SampleDetail}
    */
   public static class Builder {
+
     private List<StructuredRecord> sample;
     private Map<String, String> properties;
 

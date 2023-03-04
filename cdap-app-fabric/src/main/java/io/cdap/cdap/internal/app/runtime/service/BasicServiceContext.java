@@ -51,28 +51,33 @@ import org.apache.tephra.TransactionSystemClient;
  * Basic service context
  */
 public class BasicServiceContext extends AbstractContext implements ServiceContext {
+
   private final ServiceSpecification specification;
   private final ArtifactManager artifactManager;
   private final int instanceId;
   private final AtomicInteger instanceCount;
 
-  public BasicServiceContext(ServiceSpecification spec, Program program, ProgramOptions programOptions,
-                             int instanceId, AtomicInteger instanceCount,
-                             CConfiguration cConf,
-                             MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
-                             TransactionSystemClient transactionSystemClient,
-                             @Nullable PluginInstantiator pluginInstantiator,
-                             SecureStore secureStore,
-                             SecureStoreManager secureStoreManager,
-                             MessagingService messagingService, MetadataReader metadataReader,
-                             MetadataPublisher metadataPublisher,
-                             NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                             RemoteClientFactory remoteClientFactory, ArtifactManager artifactManager,
-                             AppStateStoreProvider appStateStoreProvider) {
-    super(program, programOptions, cConf, Collections.emptySet(), datasetFramework, transactionSystemClient, false,
-          metricsCollectionService, ImmutableMap.of(), secureStore, secureStoreManager, messagingService,
-          pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin, fieldLineageWriter,
-          remoteClientFactory, appStateStoreProvider);
+  public BasicServiceContext(ServiceSpecification spec, Program program,
+      ProgramOptions programOptions,
+      int instanceId, AtomicInteger instanceCount,
+      CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
+      TransactionSystemClient transactionSystemClient,
+      @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore,
+      SecureStoreManager secureStoreManager,
+      MessagingService messagingService, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+      RemoteClientFactory remoteClientFactory, ArtifactManager artifactManager,
+      AppStateStoreProvider appStateStoreProvider) {
+    super(program, programOptions, cConf, Collections.emptySet(), datasetFramework,
+        transactionSystemClient, false,
+        metricsCollectionService, ImmutableMap.of(), secureStore, secureStoreManager,
+        messagingService,
+        pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin,
+        fieldLineageWriter,
+        remoteClientFactory, appStateStoreProvider);
     this.instanceCount = instanceCount;
     this.instanceId = instanceId;
     this.specification = spec;
@@ -96,15 +101,15 @@ public class BasicServiceContext extends AbstractContext implements ServiceConte
 
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, AccessException {
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
     return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
   }
 
   @Override
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
-                                                @Nullable ClassLoader parentClassLoader)
-    throws IOException, AccessException {
+      @Nullable ClassLoader parentClassLoader)
+      throws IOException, AccessException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 

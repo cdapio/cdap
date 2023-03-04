@@ -28,13 +28,15 @@ import java.util.regex.Pattern;
  * Default {@link Indexer} for {@link MetadataEntry}.
  */
 public class DefaultValueIndexer implements Indexer {
+
   private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:,\\s]+");
   private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
 
   /**
-   * Generates a set of tokens based on the metadata values. Splits values on whitespace, '-', '_', ':', and ',' to
-   * generate multiple tokens. Also generates an additional token that has the metadata key prefixed to it.
-   * Also adds a token that allows searching the property name, that is, properties:key, except if the key is "tags".
+   * Generates a set of tokens based on the metadata values. Splits values on whitespace, '-', '_',
+   * ':', and ',' to generate multiple tokens. Also generates an additional token that has the
+   * metadata key prefixed to it. Also adds a token that allows searching the property name, that
+   * is, properties:key, except if the key is "tags".
    *
    * For example, when given property 'owner'='foo bar', six tokens will be generated:
    *
@@ -81,7 +83,8 @@ public class DefaultValueIndexer implements Indexer {
       indexesWithKeyValue.add(key + MetadataConstants.KEYVALUE_SEPARATOR + index);
     }
     if (!key.equalsIgnoreCase(MetadataConstants.TAGS_KEY)) {
-      indexesWithKeyValue.add(MetadataConstants.PROPERTIES_KEY + MetadataConstants.KEYVALUE_SEPARATOR + key);
+      indexesWithKeyValue.add(
+          MetadataConstants.PROPERTIES_KEY + MetadataConstants.KEYVALUE_SEPARATOR + key);
     }
     return indexesWithKeyValue;
   }

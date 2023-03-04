@@ -21,13 +21,14 @@ import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.id.NamespaceId;
 
 /**
- * Factory interface for creating {@link ArtifactManager} that binds to a giving namespace.
- * This interface is for Guice assisted binding, hence there will be no concrete implementation of it.
+ * Factory interface for creating {@link ArtifactManager} that binds to a giving namespace. This
+ * interface is for Guice assisted binding, hence there will be no concrete implementation of it.
  */
 public interface ArtifactManagerFactory {
 
   /**
-   * Returns an implementation of {@link ArtifactManager} that operates on the given {@link NamespaceId}.
+   * Returns an implementation of {@link ArtifactManager} that operates on the given {@link
+   * NamespaceId}.
    *
    * @param namespaceId the namespace that the {@link ArtifactManager} will be operating on
    * @param retryStrategy the {@link RetryStrategy} to use for dealing with retryable failures

@@ -32,13 +32,15 @@ public interface MetadataConsumer {
   /**
    * Consumes lineage info for a program run.
    *
-   * @param context context for the MetadataConsumer containing properties required by the implementation.
+   * @param context context for the MetadataConsumer containing properties required by the
+   *     implementation.
    * @param programRun the {@link ProgramRun} for which lineage is consumed
-   * @param lineageInfo the {@link LineageInfo} containing details of lineage for the program run
-   *
+   * @param lineageInfo the {@link LineageInfo} containing details of lineage for the program
+   *     run
    * @throws Exception if there is any error while consuming lineage.
    */
-  void consumeLineage(MetadataConsumerContext context, ProgramRun programRun, LineageInfo lineageInfo)
-    throws Exception;
+  void consumeLineage(MetadataConsumerContext context, ProgramRun programRun,
+      LineageInfo lineageInfo)
+      throws Exception;
 }
 

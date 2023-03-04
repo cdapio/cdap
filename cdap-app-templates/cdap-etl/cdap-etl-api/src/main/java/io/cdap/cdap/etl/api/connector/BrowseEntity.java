@@ -22,11 +22,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * An entity that is browsable or samplable, or both.
- * For example, for file connector, this can be file or directory.
- * For database connector, this can be database or table.
+ * An entity that is browsable or samplable, or both. For example, for file connector, this can be
+ * file or directory. For database connector, this can be database or table.
  */
 public class BrowseEntity {
+
   private final String name;
   private final String path;
   private final String type;
@@ -35,7 +35,7 @@ public class BrowseEntity {
   private final Map<String, BrowseEntityPropertyValue> properties;
 
   private BrowseEntity(String name, String path, String type, boolean canSample, boolean canBrowse,
-                       Map<String, BrowseEntityPropertyValue> properties) {
+      Map<String, BrowseEntityPropertyValue> properties) {
     this.name = name;
     this.path = path;
     this.type = type;
@@ -79,12 +79,12 @@ public class BrowseEntity {
     }
 
     BrowseEntity that = (BrowseEntity) o;
-    return canSample == that.canSample &&
-      canBrowse == that.canBrowse &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(path, that.path) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(properties, that.properties);
+    return canSample == that.canSample
+        && canBrowse == that.canBrowse
+        && Objects.equals(name, that.name)
+        && Objects.equals(path, that.path)
+        && Objects.equals(type, that.type)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -103,6 +103,7 @@ public class BrowseEntity {
    * Builder for {@link BrowseEntity}
    */
   public static class Builder {
+
     private String name;
     private String path;
     private String type;

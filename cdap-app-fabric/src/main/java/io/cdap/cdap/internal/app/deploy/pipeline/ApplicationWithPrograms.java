@@ -21,26 +21,29 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import java.util.List;
 
 /**
- * Represents information of an application and all programs inside it that is undergoing deployment.
+ * Represents information of an application and all programs inside it that is undergoing
+ * deployment.
  */
 public class ApplicationWithPrograms extends ApplicationDeployable {
 
   private final List<ProgramDescriptor> programDescriptors;
 
   public ApplicationWithPrograms(ApplicationDeployable applicationDeployable,
-                                 Iterable<? extends ProgramDescriptor> programDescriptors) {
+      Iterable<? extends ProgramDescriptor> programDescriptors) {
     super(applicationDeployable.getArtifactId(), applicationDeployable.getArtifactLocation(),
-          applicationDeployable.getApplicationId(), applicationDeployable.getSpecification(),
-          applicationDeployable.getExistingAppSpec(), applicationDeployable.getApplicationDeployScope(),
-          applicationDeployable.getApplicationClass(), applicationDeployable.getOwnerPrincipal(),
-          applicationDeployable.canUpdateSchedules(), applicationDeployable.getSystemTables(),
-          applicationDeployable.getMetadata(), applicationDeployable.getChangeDetail(),
-          applicationDeployable.getSourceControlMeta(), applicationDeployable.isUpgrade());
+        applicationDeployable.getApplicationId(), applicationDeployable.getSpecification(),
+        applicationDeployable.getExistingAppSpec(),
+        applicationDeployable.getApplicationDeployScope(),
+        applicationDeployable.getApplicationClass(), applicationDeployable.getOwnerPrincipal(),
+        applicationDeployable.canUpdateSchedules(), applicationDeployable.getSystemTables(),
+        applicationDeployable.getMetadata(), applicationDeployable.getChangeDetail(),
+        applicationDeployable.getSourceControlMeta(), applicationDeployable.isUpgrade());
     this.programDescriptors = ImmutableList.copyOf(programDescriptors);
   }
 
   /**
-   * Returns a list of {@link ProgramDescriptor} for programs inside the application being deployed.
+   * Returns a list of {@link ProgramDescriptor} for programs inside the application being
+   * deployed.
    */
   public Iterable<ProgramDescriptor> getPrograms() {
     return programDescriptors;

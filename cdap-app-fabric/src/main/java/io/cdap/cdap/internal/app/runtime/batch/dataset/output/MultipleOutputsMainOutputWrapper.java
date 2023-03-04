@@ -36,27 +36,30 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 /**
- * OutputFormat that wraps a root OutputFormat and provides an OutputFormatCommitter that delegates to multiple
- * preconfigured OutputFormatCommitters. By design, this is the OutputFormat configured for all MapReduce jobs
- * being executed by CDAP. See MapReduceRuntimeService#setOutputsIfNeeded.
+ * OutputFormat that wraps a root OutputFormat and provides an OutputFormatCommitter that delegates
+ * to multiple preconfigured OutputFormatCommitters. By design, this is the OutputFormat configured
+ * for all MapReduce jobs being executed by CDAP. See MapReduceRuntimeService#setOutputsIfNeeded.
  *
  * @param <K> Type of key
  * @param <V> Type of value
  */
 public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
+
   private static final String ROOT_OUTPUT_FORMAT =
-    MultipleOutputsMainOutputWrapper.class.getCanonicalName() + ".rootOutputFormat";
+      MultipleOutputsMainOutputWrapper.class.getCanonicalName() + ".rootOutputFormat";
   private OutputFormat<K, V> innerFormat;
   private OutputCommitter committer;
 
   @Override
-  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
+  public RecordWriter<K, V> getRecordWriter(TaskAttemptContext job)
+      throws IOException, InterruptedException {
     OutputFormat<K, V> rootOutputFormat = getRootOutputFormat(job);
     List<String> namedOutputsList = MultipleOutputs.getNamedOutputsList(job);
     if (namedOutputsList.size() == 1) {
       // CDAP-14524 remove prefixes added before each key. We only need this for single output because for single
       // output rootOutputFormat is actual output format.
-      TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(job, namedOutputsList.get(0));
+      TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(job,
+          namedOutputsList.get(0));
       return rootOutputFormat.getRecordWriter(namedContext);
     }
     return rootOutputFormat.getRecordWriter(job);
@@ -66,11 +69,11 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
     for (String name : MultipleOutputs.getNamedOutputsList(context)) {
       Class<? extends OutputFormat> namedOutputFormatClass =
-        MultipleOutputs.getNamedOutputFormatClass(context, name);
+          MultipleOutputs.getNamedOutputFormatClass(context, name);
       JobContext namedContext = MultipleOutputs.getNamedJobContext(context, name);
 
       OutputFormat<K, V> outputFormat =
-        ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+          ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
 
       outputFormat.checkOutputSpecs(namedContext);
     }
@@ -78,15 +81,18 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   // the root OutputFormat is used only for writing, not for checking output specs or committing of the output
   // because the root is also in the delegates, which check the output spec and commit the output.
-  private OutputFormat<K, V> getRootOutputFormat(JobContext context) throws InvalidJobConfException {
+  private OutputFormat<K, V> getRootOutputFormat(JobContext context)
+      throws InvalidJobConfException {
     if (innerFormat == null) {
       Configuration conf = context.getConfiguration();
       @SuppressWarnings("unchecked")
       Class<? extends OutputFormat<K, V>> c =
-        (Class<? extends OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT, null, OutputFormat.class);
+          (Class<? extends OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT, null,
+              OutputFormat.class);
       if (c == null) {
-        throw new InvalidJobConfException("The job configuration does not contain required property: "
-                                            + ROOT_OUTPUT_FORMAT);
+        throw new InvalidJobConfException(
+            "The job configuration does not contain required property: "
+                + ROOT_OUTPUT_FORMAT);
       }
       innerFormat = ReflectionUtils.newInstance(c, conf);
     }
@@ -95,7 +101,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   @Override
   public synchronized OutputCommitter getOutputCommitter(TaskAttemptContext context)
-    throws IOException, InterruptedException {
+      throws IOException, InterruptedException {
     if (committer == null) {
       // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
       // same order as outputs were added. This makes multi-output a little more predictable (and testable).
@@ -108,23 +114,26 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
       // See MapReduceRuntimeService#setOutputsIfNeeded.
       if (namedOutputsList.size() == 1) {
         // CDAP-14524 Get context without prefixes for single output. This is needed becausez
-        TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, namedOutputsList.get(0));
-        committer = new MainOutputCommitter(getRootOutputFormat(namedContext).getOutputCommitter(namedContext),
-                                            delegates, namedContext);
+        TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context,
+            namedOutputsList.get(0));
+        committer = new MainOutputCommitter(
+            getRootOutputFormat(namedContext).getOutputCommitter(namedContext),
+            delegates, namedContext);
       } else {
         for (String name : namedOutputsList) {
           TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
           Class<? extends OutputFormat> namedOutputFormatClass =
-            MultipleOutputs.getNamedOutputFormatClass(context, name);
+              MultipleOutputs.getNamedOutputFormatClass(context, name);
 
           OutputFormat<K, V> outputFormat =
-            ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+              ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
           delegates.put(name, outputFormat.getOutputCommitter(namedContext));
         }
         // return a MultipleOutputsCommitter that commits for the root output format
         // as well as all delegate outputformats
-        committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context),
-                                            delegates, context);
+        committer = new MainOutputCommitter(
+            getRootOutputFormat(context).getOutputCommitter(context),
+            delegates, context);
       }
     }
     return committer;
@@ -137,26 +146,30 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
    * @param outputsMap list of outputs
    */
   public static void setOutputs(Job job, List<ProvidedOutput> outputsMap)
-    throws ClassNotFoundException {
+      throws ClassNotFoundException {
     OutputFormatProvider rootOutputFormatProvider;
     rootOutputFormatProvider = getRootOutputFormatProvider(job, outputsMap);
 
     // Set root outputformat and its configuration for the Hadoop job.
-    job.getConfiguration().set(ROOT_OUTPUT_FORMAT, rootOutputFormatProvider.getOutputFormatClassName());
-    for (Map.Entry<String, String> confEntry : rootOutputFormatProvider.getOutputFormatConfiguration().entrySet()) {
+    job.getConfiguration()
+        .set(ROOT_OUTPUT_FORMAT, rootOutputFormatProvider.getOutputFormatClassName());
+    for (Map.Entry<String, String> confEntry : rootOutputFormatProvider.getOutputFormatConfiguration()
+        .entrySet()) {
       job.getConfiguration().set(confEntry.getKey(), confEntry.getValue());
     }
 
     for (ProvidedOutput output : outputsMap) {
-      MultipleOutputs.addNamedOutput(job, output.getOutput().getAlias(), output.getOutputFormatClassName(),
-                                     job.getOutputKeyClass(), job.getOutputValueClass(),
-                                     output.getOutputFormatConfiguration());
+      MultipleOutputs.addNamedOutput(job, output.getOutput().getAlias(),
+          output.getOutputFormatClassName(),
+          job.getOutputKeyClass(), job.getOutputValueClass(),
+          output.getOutputFormatConfiguration());
 
     }
   }
 
-  private static OutputFormatProvider getRootOutputFormatProvider(Job job, List<ProvidedOutput> outputsMap)
-    throws ClassNotFoundException {
+  private static OutputFormatProvider getRootOutputFormatProvider(Job job,
+      List<ProvidedOutput> outputsMap)
+      throws ClassNotFoundException {
     OutputFormatProvider rootOutputFormatProvider;
     // There are 3 cases possible:
     // [1] output map is empty: user is not going through our APIs to add output; propagate the job's output format
@@ -167,12 +180,13 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
     if (outputsMap.isEmpty()) {
       rootOutputFormatProvider = new BasicOutputFormatProvider(job.getOutputFormatClass().getName(),
-                                                               Collections.emptyMap());
+          Collections.emptyMap());
     } else if (outputsMap.size() == 1) {
       rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
     } else {
-      rootOutputFormatProvider = new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(),
-                                                               Collections.emptyMap());
+      rootOutputFormatProvider = new BasicOutputFormatProvider(
+          UnsupportedOutputFormat.class.getName(),
+          Collections.emptyMap());
     }
     return rootOutputFormatProvider;
   }

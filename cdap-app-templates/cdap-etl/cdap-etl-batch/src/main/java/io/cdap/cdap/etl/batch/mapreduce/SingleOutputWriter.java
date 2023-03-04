@@ -26,6 +26,7 @@ import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
  * @param <VAL_OUT> the output value type
  */
 public class SingleOutputWriter<KEY_OUT, VAL_OUT> extends OutputWriter<KEY_OUT, VAL_OUT> {
+
   public SingleOutputWriter(MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
     super(context);
   }

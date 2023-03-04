@@ -53,9 +53,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class contains common methods that are needed by DataprocProvisioner and DataprocRuntimeJobManager.
+ * This class contains common methods that are needed by DataprocProvisioner and
+ * DataprocRuntimeJobManager.
  */
 public final class DataprocUtils {
+
   // The property name for the GCS bucket used by the runtime job manager for launching jobs via the job API
   // It can be overridden by profile runtime arguments (system.profile.properties.bucket)
   public static final String BUCKET = "bucket";
@@ -67,7 +69,7 @@ public final class DataprocUtils {
   public static final String GCS_CACHE_ENABLED = "gcsCacheEnabled";
   public static final String ARTIFACTS_COMPUTE_HASH_TIME_BUCKET_DAYS = "app.artifact.compute.hash.time.bucket.days";
   public static final Path CACHE_DIR_PATH = Paths.get(System.getProperty("java.io.tmpdir"),
-                                                      "dataproc.launcher.cache");
+      "dataproc.launcher.cache");
   public static final String LOCAL_CACHE_DISABLED = "disableLocalCaching";
   private static final int NUMBER_OF_RETRIES = 5;
   private static final int MIN_WAIT_TIME_MILLISECOND = 500;
@@ -83,8 +85,8 @@ public final class DataprocUtils {
   public static final String TROUBLESHOOTING_DOCS_URL_DEFAULT = "";
 
   /**
-   *  resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob)
-   *  that will be running on driver pool nodes.
+   * resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob) that will be
+   * running on driver pool nodes.
    */
   public static final String DRIVER_MEMORY_MB = "driverMemoryMB";
   public static final String DRIVER_MEMORY_MB_DEFAULT = "2048";
@@ -110,15 +112,15 @@ public final class DataprocUtils {
    * Deletes provided directory path on GCS.
    *
    * @param storageClient storage client
-   * @param bucket        bucket
-   * @param path          dir path to delete
+   * @param bucket bucket
+   * @param path dir path to delete
    */
   public static void deleteGCSPath(Storage storageClient, String bucket, String path) {
     try {
       String bucketName = getBucketName(bucket);
       StorageBatch batch = storageClient.batch();
       Page<Blob> blobs = storageClient.list(bucketName, Storage.BlobListOption.currentDirectory(),
-                                            Storage.BlobListOption.prefix(path + "/"));
+          Storage.BlobListOption.prefix(path + "/"));
       boolean addedToDelete = false;
       for (Blob blob : blobs.iterateAll()) {
         LOG.trace("Added path to be deleted {}", blob.getName());
@@ -131,7 +133,7 @@ public final class DataprocUtils {
       }
     } catch (Exception e) {
       LOG.warn(String.format("GCS path %s was not cleaned up for bucket %s due to %s. ",
-                             path, bucket, e.getMessage()), e);
+          path, bucket, e.getMessage()), e);
     }
   }
 
@@ -146,18 +148,19 @@ public final class DataprocUtils {
   }
 
   /**
-   * Utility class to parse the keyvalue string from UI Widget and return back HashMap.
-   * String is of format  <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value>
-   * eg:  networktag1=out2internet;networktag2=priority
-   * The return from the method is a map with key value pairs of (networktag1 out2internet) and (networktag2 priority)
+   * Utility class to parse the keyvalue string from UI Widget and return back HashMap. String is of
+   * format  <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value> eg:
+   * networktag1=out2internet;networktag2=priority The return from the method is a map with key
+   * value pairs of (networktag1 out2internet) and (networktag2 priority)
    *
-   * @param configValue       String to be parsed into key values format
-   * @param delimiter         Delimiter used for keyvalue pairs
+   * @param configValue String to be parsed into key values format
+   * @param delimiter Delimiter used for keyvalue pairs
    * @param keyValueDelimiter Delimiter between key and value.
    * @return Map of Key value pairs parsed from input configValue using the delimiters.
    */
-  public static Map<String, String> parseKeyValueConfig(@Nullable String configValue, String delimiter,
-                                                        String keyValueDelimiter) throws IllegalArgumentException {
+  public static Map<String, String> parseKeyValueConfig(@Nullable String configValue,
+      String delimiter,
+      String keyValueDelimiter) throws IllegalArgumentException {
     Map<String, String> map = new HashMap<>();
     if (configValue == null) {
       return map;
@@ -175,16 +178,17 @@ public final class DataprocUtils {
   }
 
   /**
-   * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key values.
+   * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key
+   * values.
    * <p>
-   * If a label key or value is invalid, a message will be logged but the key-value will not be returned in the map.
-   * Keys and values cannot be longer than 63 characters.
-   * Keys and values can only contain lowercase letters, numeric characters, underscores, and dashes.
-   * Keys must start with a lowercase letter and must not be empty.
+   * If a label key or value is invalid, a message will be logged but the key-value will not be
+   * returned in the map. Keys and values cannot be longer than 63 characters. Keys and values can
+   * only contain lowercase letters, numeric characters, underscores, and dashes. Keys must start
+   * with a lowercase letter and must not be empty.
    * <p>
-   * If a label is given without a '=', the label value will be empty.
-   * If a label is given as 'key=', the label value will be empty.
-   * If a label has multiple '=', it will be ignored. For example, 'key=val1=val2' will be ignored.
+   * If a label is given without a '=', the label value will be empty. If a label is given as
+   * 'key=', the label value will be empty. If a label has multiple '=', it will be ignored. For
+   * example, 'key=val1=val2' will be ignored.
    *
    * @param labelsStr the labels string to parse
    * @return valid labels from the parsed string
@@ -202,18 +206,22 @@ public final class DataprocUtils {
       String key = iter.next();
       String val = iter.hasNext() ? iter.next() : "";
       if (iter.hasNext()) {
-        LOG.warn("Ignoring invalid label {}. Labels should be of the form 'key=val' or just 'key'", keyvalue);
+        LOG.warn("Ignoring invalid label {}. Labels should be of the form 'key=val' or just 'key'",
+            keyvalue);
         continue;
       }
       if (!LABEL_KEY_PATTERN.matcher(key).matches()) {
-        LOG.warn("Ignoring invalid label key {}. Label keys cannot be longer than 63 characters, must start with "
-                   + "a lowercase letter, and can only contain lowercase letters, numeric characters, underscores,"
-                   + " and dashes.", key);
+        LOG.warn(
+            "Ignoring invalid label key {}. Label keys cannot be longer than 63 characters, must start with "
+                + "a lowercase letter, and can only contain lowercase letters, numeric characters, underscores,"
+                + " and dashes.", key);
         continue;
       }
       if (!LABEL_VAL_PATTERN.matcher(val).matches()) {
-        LOG.warn("Ignoring invalid label value {}. Label values cannot be longer than 63 characters, "
-                   + "and can only contain lowercase letters, numeric characters, underscores, and dashes.", val);
+        LOG.warn(
+            "Ignoring invalid label value {}. Label values cannot be longer than 63 characters, "
+                + "and can only contain lowercase letters, numeric characters, underscores, and dashes.",
+            val);
         continue;
       }
       validLabels.put(key, val);
@@ -238,7 +246,7 @@ public final class DataprocUtils {
       return network.substring(network.lastIndexOf('/') + 1);
     } catch (IOException e) {
       throw new IllegalArgumentException("Unable to get the network from the environment. "
-                                           + "Please explicitly set the network.", e);
+          + "Please explicitly set the network.", e);
     }
   }
 
@@ -252,7 +260,7 @@ public final class DataprocUtils {
       return zone.substring(zone.lastIndexOf('/') + 1);
     } catch (IOException e) {
       throw new IllegalArgumentException("Unable to get the zone from the environment. "
-                                           + "Please explicitly set the zone.", e);
+          + "Please explicitly set the zone.", e);
     }
   }
 
@@ -262,7 +270,8 @@ public final class DataprocUtils {
   public static String getRegionFromZone(String zone) {
     int idx = zone.lastIndexOf("-");
     if (idx <= 0) {
-      throw new IllegalArgumentException("Invalid zone. Zone must be in the format of <region>-<zone-name>");
+      throw new IllegalArgumentException(
+          "Invalid zone. Zone must be in the format of <region>-<zone-name>");
     }
     return zone.substring(0, idx);
   }
@@ -275,7 +284,7 @@ public final class DataprocUtils {
       return getMetadata("project/project-id");
     } catch (IOException e) {
       throw new IllegalArgumentException("Unable to get project id from the environment. "
-                                           + "Please explicitly set the project id and account key.", e);
+          + "Please explicitly set the project id and account key.", e);
     }
   }
 
@@ -283,7 +292,7 @@ public final class DataprocUtils {
    * Emit a dataproc metric.
    **/
   public static void emitMetric(ProvisionerContext context, String region,
-                                String metricName, @Nullable Exception e) {
+      String metricName, @Nullable Exception e) {
     StatusCode.Code statusCode;
     if (e == null) {
       statusCode = StatusCode.Code.OK;
@@ -297,9 +306,9 @@ public final class DataprocUtils {
       }
     }
     Map<String, String> tags = ImmutableMap.<String, String>builder()
-      .put("reg", region)
-      .put("sc", statusCode.toString())
-      .build();
+        .put("reg", region)
+        .put("sc", statusCode.toString())
+        .build();
     ProvisionerMetrics metrics = context.getMetrics(tags);
     metrics.count(metricName, 1);
   }
@@ -319,7 +328,8 @@ public final class DataprocUtils {
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestProperty("Metadata-Flavor", "Google");
       connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+      try (Reader reader = new InputStreamReader(connection.getInputStream(),
+          StandardCharsets.UTF_8)) {
         return CharStreams.toString(reader);
       }
     } finally {
@@ -353,10 +363,11 @@ public final class DataprocUtils {
   /**
    * Recursively deletes all the contents of the directory and the directory itself with retries.
    */
-  public static synchronized void deleteDirectoryWithRetries(@Nullable File file, String errorMessageOnFailure) {
+  public static synchronized void deleteDirectoryWithRetries(@Nullable File file,
+      String errorMessageOnFailure) {
     ExponentialBackOff backOff = new ExponentialBackOff.Builder()
-      .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
-      .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
+        .setInitialIntervalMillis(MIN_WAIT_TIME_MILLISECOND)
+        .setMaxIntervalMillis(MAX_WAIT_TIME_MILLISECOND).build();
 
     Exception exception = null;
     int counter = 0;
@@ -382,18 +393,19 @@ public final class DataprocUtils {
   }
 
   public static void setTemporaryHoldOnGCSObject(Storage storage, String bucket, Blob blob,
-                                                 String targetFilePath) throws InterruptedException {
+      String targetFilePath) throws InterruptedException {
     updateTemporaryHoldOnGCSObject(storage, bucket, blob, blob.getBlobId(), targetFilePath, true);
   }
 
   public static void removeTemporaryHoldOnGCSObject(Storage storage, String bucket, BlobId blobId,
-                                                    String targetFilePath) throws InterruptedException {
+      String targetFilePath) throws InterruptedException {
     updateTemporaryHoldOnGCSObject(storage, bucket, null, blobId, targetFilePath, false);
   }
 
-  private static void updateTemporaryHoldOnGCSObject(Storage storage, String bucket, @Nullable Blob blob, BlobId blobId,
-                                                     String targetFilePath,
-                                                     boolean temporaryHold) throws InterruptedException {
+  private static void updateTemporaryHoldOnGCSObject(Storage storage, String bucket,
+      @Nullable Blob blob, BlobId blobId,
+      String targetFilePath,
+      boolean temporaryHold) throws InterruptedException {
     for (int i = 1; i <= SET_CUSTOM_TIME_MAX_RETRY; i++) {
       try {
         // get a random jitter between 30min to 90min
@@ -401,20 +413,22 @@ public final class DataprocUtils {
         // Blob can be null when we set temporary hold to false as we don't need to check pre-existing custom time.
         // When setting to true, we'll check if custom time was recently set in which case we'll skip this operation.
         assert temporaryHold == (blob != null);
-        if (!temporaryHold || blob.getCustomTime() == null ||
-          blob.getTemporaryHold() == null || !blob.getTemporaryHold().booleanValue() ||
-          blob.getCustomTime() + jitter < System.currentTimeMillis()) {
+        if (!temporaryHold || blob.getCustomTime() == null
+            || blob.getTemporaryHold() == null || !blob.getTemporaryHold().booleanValue()
+            || blob.getCustomTime() + jitter < System.currentTimeMillis()) {
           BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-            .setCustomTime(System.currentTimeMillis())
-            .setTemporaryHold(temporaryHold)
-            .build();
+              .setCustomTime(System.currentTimeMillis())
+              .setTemporaryHold(temporaryHold)
+              .build();
           storage.update(blobInfo);
 
-          LOG.debug("Successfully set custom time for gs://{}/{} and temporary hold to {}", bucket, targetFilePath,
-                    temporaryHold);
+          LOG.debug("Successfully set custom time for gs://{}/{} and temporary hold to {}", bucket,
+              targetFilePath,
+              temporaryHold);
         } else {
           //custom time is still fresh
-          LOG.debug("Skip setting custom time for gs://{}/{} since it is fresh", bucket, targetFilePath);
+          LOG.debug("Skip setting custom time for gs://{}/{} since it is fresh", bucket,
+              targetFilePath);
         }
         return;
       } catch (Exception ex) {
@@ -430,7 +444,8 @@ public final class DataprocUtils {
     if (Strings.isNullOrEmpty(troubleshootingDocsURL)) {
       return "";
     }
-    return String.format("For troubleshooting Dataproc errors, refer to %s", troubleshootingDocsURL);
+    return String.format("For troubleshooting Dataproc errors, refer to %s",
+        troubleshootingDocsURL);
   }
 
   private DataprocUtils() {

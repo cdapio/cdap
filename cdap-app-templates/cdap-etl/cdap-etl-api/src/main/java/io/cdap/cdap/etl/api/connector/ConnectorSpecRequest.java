@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * Request for spec generation
  */
 public class ConnectorSpecRequest {
+
   private static final String CONNECTION_NAME_PREFIX = "${conn(";
   private static final String CONNECTION_NAME_FORMAT = "${conn(%s)}";
 
@@ -34,15 +35,16 @@ public class ConnectorSpecRequest {
   // this is the connection name with macro wrapped, like {conn:(connection-name)}
   private final String connectionWithMacro;
 
-  private ConnectorSpecRequest(@Nullable String path, Map<String, String> properties, String connectionWithMacro) {
+  private ConnectorSpecRequest(@Nullable String path, Map<String, String> properties,
+      String connectionWithMacro) {
     this.path = path;
     this.properties = properties;
     this.connectionWithMacro = connectionWithMacro;
   }
 
   /**
-   * Get the entity path for request, if the path is null, that means the properties contains
-   * all the path related configs
+   * Get the entity path for request, if the path is null, that means the properties contains all
+   * the path related configs
    */
   @Nullable
   public String getPath() {
@@ -68,9 +70,9 @@ public class ConnectorSpecRequest {
     }
 
     ConnectorSpecRequest that = (ConnectorSpecRequest) o;
-    return Objects.equals(path, that.path) &&
-             Objects.equals(properties, that.properties) &&
-             Objects.equals(connectionWithMacro, that.connectionWithMacro);
+    return Objects.equals(path, that.path)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(connectionWithMacro, that.connectionWithMacro);
   }
 
   @Override
@@ -89,6 +91,7 @@ public class ConnectorSpecRequest {
    * Builder for {@link ConnectorSpecRequest}
    */
   public static class Builder {
+
     private String path;
     private Map<String, String> properties;
     private String connectionWithMacro;
@@ -104,7 +107,7 @@ public class ConnectorSpecRequest {
 
     public Builder setConnection(String connection) {
       this.connectionWithMacro = connection.startsWith(CONNECTION_NAME_PREFIX) ? connection :
-                                   String.format(CONNECTION_NAME_FORMAT, connection);
+          String.format(CONNECTION_NAME_FORMAT, connection);
       return this;
     }
 

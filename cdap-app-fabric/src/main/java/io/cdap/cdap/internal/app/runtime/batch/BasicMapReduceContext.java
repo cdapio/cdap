@@ -95,31 +95,35 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private MapReduceClassLoader mapReduceClassLoader;
 
   BasicMapReduceContext(Program program, ProgramOptions programOptions,
-                        CConfiguration cConf,
-                        MapReduceSpecification spec,
-                        @Nullable WorkflowProgramInfo workflowProgramInfo,
-                        DiscoveryServiceClient discoveryServiceClient,
-                        MetricsCollectionService metricsCollectionService,
-                        TransactionSystemClient txClient,
-                        DatasetFramework dsFramework,
-                        @Nullable File pluginArchive,
-                        @Nullable PluginInstantiator pluginInstantiator,
-                        SecureStore secureStore,
-                        SecureStoreManager secureStoreManager,
-                        MessagingService messagingService, MetadataReader metadataReader,
-                        MetadataPublisher metadataPublisher,
-                        NamespaceQueryAdmin namespaceQueryAdmin,
-                        FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
-                        AppStateStoreProvider appStateStoreProvider) {
+      CConfiguration cConf,
+      MapReduceSpecification spec,
+      @Nullable WorkflowProgramInfo workflowProgramInfo,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService,
+      TransactionSystemClient txClient,
+      DatasetFramework dsFramework,
+      @Nullable File pluginArchive,
+      @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore,
+      SecureStoreManager secureStoreManager,
+      MessagingService messagingService, MetadataReader metadataReader,
+      MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      FieldLineageWriter fieldLineageWriter, RemoteClientFactory remoteClientFactory,
+      AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, false,
-          metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          messagingService, pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin,
-          fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+        metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore,
+        secureStoreManager,
+        messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+        namespaceQueryAdmin,
+        fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.spec = spec;
-    this.mapperResources = SystemArguments.getResources(getMapperRuntimeArguments(), spec.getMapperResources());
-    this.reducerResources = SystemArguments.getResources(getReducerRuntimeArguments(), spec.getReducerResources());
+    this.mapperResources = SystemArguments.getResources(getMapperRuntimeArguments(),
+        spec.getMapperResources());
+    this.reducerResources = SystemArguments.getResources(getReducerRuntimeArguments(),
+        spec.getReducerResources());
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
 
@@ -137,7 +141,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public String toString() {
     return String.format("name=%s, jobId=%s, %s", spec.getName(),
-                         job == null ? null : job.getJobID(), super.toString());
+        job == null ? null : job.getJobID(), super.toString());
   }
 
   @Override
@@ -170,46 +174,51 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   @SuppressWarnings("unchecked")
-  private void addInput(String alias, InputFormatProvider inputFormatProvider, @Nullable Class<?> mapperClass) {
+  private void addInput(String alias, InputFormatProvider inputFormatProvider,
+      @Nullable Class<?> mapperClass) {
     if (mapperClass != null && !Mapper.class.isAssignableFrom(mapperClass)) {
       throw new IllegalArgumentException("Specified mapper class must extend Mapper.");
     }
     if (inputs.containsKey(alias)) {
       throw new IllegalArgumentException("Input already configured: " + alias);
     }
-    inputs.put(alias, new MapperInput(alias, inputFormatProvider, (Class<? extends Mapper>) mapperClass));
+    inputs.put(alias,
+        new MapperInput(alias, inputFormatProvider, (Class<? extends Mapper>) mapperClass));
   }
 
   @Override
   public void addInput(Input input, @Nullable Class<?> mapperCls) {
-    if (input.getNamespace() != null && input.getNamespace().equals(NamespaceId.SYSTEM.getNamespace())
-      && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
+    if (input.getNamespace() != null && input.getNamespace()
+        .equals(NamespaceId.SYSTEM.getNamespace())
+        && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
       // trying to access system namespace from a program outside system namespace is not allowed
-      throw new IllegalArgumentException(String.format("Accessing Input %s in system namespace " +
-                                                         "is not allowed from the namespace %s",
-                                                       input.getName(), getProgram().getNamespaceId()));
+      throw new IllegalArgumentException(String.format("Accessing Input %s in system namespace "
+              + "is not allowed from the namespace %s",
+          input.getName(), getProgram().getNamespaceId()));
     }
     if (input instanceof Input.DatasetInput) {
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
       Input.InputFormatProviderInput createdInput = createInput(datasetInput);
       addInput(createdInput.getAlias(), createdInput.getInputFormatProvider(), mapperCls);
     } else if (input instanceof Input.InputFormatProviderInput) {
-      addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(), mapperCls);
+      addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(),
+          mapperCls);
     } else {
       // shouldn't happen unless user defines their own Input class
       throw new IllegalArgumentException(String.format("Input %s has unknown input class %s",
-                                                       input.getName(), input.getClass().getCanonicalName()));
+          input.getName(), input.getClass().getCanonicalName()));
     }
   }
 
   @Override
   public void addOutput(Output output) {
-    if (output.getNamespace() != null && output.getNamespace().equals(NamespaceId.SYSTEM.getNamespace())
-      && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
+    if (output.getNamespace() != null && output.getNamespace()
+        .equals(NamespaceId.SYSTEM.getNamespace())
+        && !getProgram().getNamespaceId().equals(NamespaceId.SYSTEM.getNamespace())) {
       // trying to access system namespace from a program outside system namespace is not allowed
-      throw new IllegalArgumentException(String.format("Accessing Output %s in system namespace " +
-                                                         "is not allowed from the namespace %s",
-                                                       output.getName(), getProgram().getNamespaceId()));
+      throw new IllegalArgumentException(String.format("Accessing Output %s in system namespace "
+              + "is not allowed from the namespace %s",
+          output.getName(), getProgram().getNamespaceId()));
     }
     String alias = output.getAlias();
     if (this.outputs.containsKey(alias)) {
@@ -221,12 +230,13 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       providedOutput = Outputs.transform((Output.DatasetOutput) output, this);
     } else if (output instanceof Output.OutputFormatProviderOutput) {
       OutputFormatProvider outputFormatProvider =
-        ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
+          ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
       if (outputFormatProvider instanceof DatasetOutputCommitter) {
         // disallow user from adding a DatasetOutputCommitter as an OutputFormatProviderOutput because we would not
         // be able to call its methods in MainOutputCommitter. It needs to be a DatasetOutput.
-        throw new IllegalArgumentException("Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. " +
-                                             "Add the output as a DatasetOutput.");
+        throw new IllegalArgumentException(
+            "Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. "
+                + "Add the output as a DatasetOutput.");
       }
       providedOutput = new ProvidedOutput(output, outputFormatProvider);
     } else if (output.getClass().getCanonicalName().startsWith(CDAP_PACKAGE_PREFIX)) {
@@ -237,7 +247,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     } else {
       // shouldn't happen unless user defines their own Output class
       throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
-                                                       output.getName(), output.getClass().getCanonicalName()));
+          output.getName(), output.getClass().getCanonicalName()));
     }
 
     this.outputs.put(alias, providedOutput);
@@ -280,8 +290,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   }
 
   /**
-   * Returns the information about Workflow if the MapReduce program is executed
-   * as a part of it, otherwise {@code null} is returned.
+   * Returns the information about Workflow if the MapReduce program is executed as a part of it,
+   * otherwise {@code null} is returned.
    */
   @Override
   @Nullable
@@ -345,9 +355,11 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       dataset = getDataset(datasetInput.getNamespace(), datasetName, datasetArgs, AccessType.READ);
     }
     DatasetInputFormatProvider datasetInputFormatProvider =
-      new DatasetInputFormatProvider(datasetInput.getNamespace(), datasetName, datasetArgs, dataset,
-                                     datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
-    return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider).alias(originalAlias);
+        new DatasetInputFormatProvider(datasetInput.getNamespace(), datasetName, datasetArgs,
+            dataset,
+            datasetInput.getSplits(), MapReduceBatchReadableInputFormat.class);
+    return (Input.InputFormatProviderInput) Input.of(datasetName, datasetInputFormatProvider)
+        .alias(originalAlias);
   }
 
   /**
@@ -362,7 +374,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     return state;
   }
 
-  private static Map<String, String> createMetricsTags(@Nullable WorkflowProgramInfo workflowProgramInfo) {
+  private static Map<String, String> createMetricsTags(
+      @Nullable WorkflowProgramInfo workflowProgramInfo) {
     if (workflowProgramInfo != null) {
       return workflowProgramInfo.updateMetricsTags(new HashMap<String, String>());
     }

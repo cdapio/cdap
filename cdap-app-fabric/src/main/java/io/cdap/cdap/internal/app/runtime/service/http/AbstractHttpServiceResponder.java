@@ -37,8 +37,8 @@ import javax.annotation.Nullable;
 import org.apache.twill.filesystem.Location;
 
 /**
- * An abstract implementation of {@link HttpServiceResponder} to simplify
- * concrete implementation of {@link HttpServiceResponder}.
+ * An abstract implementation of {@link HttpServiceResponder} to simplify concrete implementation of
+ * {@link HttpServiceResponder}.
  */
 public abstract class AbstractHttpServiceResponder implements HttpServiceResponder {
 
@@ -55,7 +55,7 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   @Override
   public final void sendJson(int status, Object object, Type type, Gson gson) {
     doSend(status, "application/json",
-           Unpooled.copiedBuffer(gson.toJson(object, type), StandardCharsets.UTF_8), null, null);
+        Unpooled.copiedBuffer(gson.toJson(object, type), StandardCharsets.UTF_8), null, null);
   }
 
   @Override
@@ -65,7 +65,8 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
 
   @Override
   public final void sendString(int status, String data, Charset charset) {
-    doSend(status, "text/plain; charset=" + charset.name(), Unpooled.copiedBuffer(data, charset), null, null);
+    doSend(status, "text/plain; charset=" + charset.name(), Unpooled.copiedBuffer(data, charset),
+        null, null);
   }
 
   @Override
@@ -89,13 +90,14 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   }
 
   @Override
-  public final void send(int status, ByteBuffer content, String contentType, Map<String, String> headers) {
+  public final void send(int status, ByteBuffer content, String contentType,
+      Map<String, String> headers) {
     send(status, content, contentType, headers.entrySet());
   }
 
   @Override
   public final void send(int status, ByteBuffer content, String contentType,
-                   Iterable<? extends Map.Entry<String, String>> headers) {
+      Iterable<? extends Map.Entry<String, String>> headers) {
     doSend(status, contentType, Unpooled.copiedBuffer(content), null, createHeaders(headers));
   }
 
@@ -106,13 +108,13 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
 
   @Override
   public final void send(int status, Location location,
-                         String contentType, Map<String, String> headers) throws IOException {
+      String contentType, Map<String, String> headers) throws IOException {
     send(status, location, contentType, headers.entrySet());
   }
 
   @Override
   public final void send(int status, Location location, String contentType,
-                         Iterable<? extends Map.Entry<String, String>> headers) throws IOException {
+      Iterable<? extends Map.Entry<String, String>> headers) throws IOException {
     send(status, new LocationHttpContentProducer(location), contentType, headers);
   }
 
@@ -122,13 +124,14 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
   }
 
   @Override
-  public final void send(int status, HttpContentProducer producer, String contentType, Map<String, String> headers) {
+  public final void send(int status, HttpContentProducer producer, String contentType,
+      Map<String, String> headers) {
     send(status, producer, contentType, headers.entrySet());
   }
 
   @Override
   public final void send(int status, HttpContentProducer producer, String contentType,
-                         Iterable<? extends Map.Entry<String, String>> headers) {
+      Iterable<? extends Map.Entry<String, String>> headers) {
     doSend(status, contentType, null, producer, createHeaders(headers));
   }
 
@@ -138,14 +141,14 @@ public abstract class AbstractHttpServiceResponder implements HttpServiceRespond
    * @param status response status code
    * @param contentType response content type
    * @param content response body if not null
-   * @param contentProducer {@link HttpContentProducer} for producing the response body if not null; if this
-   *                        is non-null, content should be null.
+   * @param contentProducer {@link HttpContentProducer} for producing the response body if not
+   *     null; if this is non-null, content should be null.
    * @param headers response headers
    */
   protected abstract void doSend(int status, String contentType,
-                                 @Nullable ByteBuf content,
-                                 @Nullable HttpContentProducer contentProducer,
-                                 @Nullable HttpHeaders headers);
+      @Nullable ByteBuf content,
+      @Nullable HttpContentProducer contentProducer,
+      @Nullable HttpHeaders headers);
 
   /**
    * Creates a {@link Multimap} from an {@link Iterable} of {@link Map.Entry}.

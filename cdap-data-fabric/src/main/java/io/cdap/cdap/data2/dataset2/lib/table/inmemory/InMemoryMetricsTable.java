@@ -56,7 +56,8 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public byte[] get(byte[] row, byte[] column) {
-    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryTableService.get(tableName, row, null);
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> rowMap = InMemoryTableService.get(tableName,
+        row, null);
     if (rowMap != null) {
       NavigableMap<Long, byte[]> valueMap = rowMap.get(column);
       if (valueMap != null && !valueMap.isEmpty()) {
@@ -68,18 +69,22 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
-    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], Long>> entry : updates.entrySet()) {
-      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_UPDATE));
+      convertedUpdates.put(entry.getKey(),
+          Maps.transformValues(entry.getValue(), Updates.LONG_TO_UPDATE));
     }
     InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }
 
   @Override
   public void putBytes(SortedMap<byte[], ? extends SortedMap<byte[], byte[]>> updates) {
-    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    SortedMap<byte[], SortedMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (NavigableMap.Entry<byte[], ? extends SortedMap<byte[], byte[]>> entry : updates.entrySet()) {
-      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.BYTES_TO_UPDATE));
+      convertedUpdates.put(entry.getKey(),
+          Maps.transformValues(entry.getValue(), Updates.BYTES_TO_UPDATE));
     }
     InMemoryTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }
@@ -96,14 +101,15 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) {
-    for (Map.Entry<byte[] , NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       increment(entry.getKey(), entry.getValue());
     }
   }
 
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) {
-    return InMemoryTableService.increment(tableName, row, ImmutableMap.of(column, delta)).get(column);
+    return InMemoryTableService.increment(tableName, row, ImmutableMap.of(column, delta))
+        .get(column);
   }
 
   @Override
@@ -115,22 +121,24 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
-                      @Nullable FuzzyRowFilter filter) {
+      @Nullable FuzzyRowFilter filter) {
 
     // todo: a lot of inefficient copying from one map to another
     NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> rowRange =
-      InMemoryTableService.getRowRange(tableName, start, stop, null);
+        InMemoryTableService.getRowRange(tableName, start, stop, null);
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = getLatest(rowRange);
 
     return new InMemoryScanner(rows.entrySet().iterator(), filter, null);
   }
 
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> getLatest(
-    NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> versionedRows) {
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> versionedRows) {
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> rows = Maps.newTreeMap(
+        Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> versionedRow : versionedRows.entrySet()) {
       NavigableMap<byte[], byte[]> columns = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      for (Map.Entry<byte[], NavigableMap<Long, byte[]>> versionedColumn : versionedRow.getValue().entrySet()) {
+      for (Map.Entry<byte[], NavigableMap<Long, byte[]>> versionedColumn : versionedRow.getValue()
+          .entrySet()) {
         columns.put(versionedColumn.getKey(), versionedColumn.getValue().firstEntry().getValue());
       }
       rows.put(versionedRow.getKey(), columns);

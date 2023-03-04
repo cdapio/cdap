@@ -29,9 +29,9 @@ import javax.annotation.Nullable;
 public interface FailureCollector {
 
   /**
-   * Add a validation failure to this failure collector. The method returns the validation failure that was added to
-   * the failure collector. This failure can be used to add additional {@link ValidationFailure.Cause}s.
-   * For example,
+   * Add a validation failure to this failure collector. The method returns the validation failure
+   * that was added to the failure collector. This failure can be used to add additional {@link
+   * ValidationFailure.Cause}s. For example,
    * <code>failureCollector.addFailure("message", "action").withConfigProperty("configProperty");</code>
    *
    * @param message failure message
@@ -44,9 +44,9 @@ public interface FailureCollector {
   }
 
   /**
-   * Throws validation exception if there are any failures that are added to the failure collector through
-   * {@link #addFailure(String, String)}.
-   * If no failures are added to the collector, it will return a {@link ValidationException} with empty failure list.
+   * Throws validation exception if there are any failures that are added to the failure collector
+   * through {@link #addFailure(String, String)}. If no failures are added to the collector, it will
+   * return a {@link ValidationException} with empty failure list.
    *
    * <pre>
    *   String someMethod() {

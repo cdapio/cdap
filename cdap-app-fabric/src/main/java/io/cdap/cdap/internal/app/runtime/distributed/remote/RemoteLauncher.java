@@ -37,20 +37,23 @@ import org.apache.twill.internal.Constants;
 import org.apache.twill.launcher.TwillLauncher;
 
 /**
- * This class is copied from {@link TwillLauncher} to workaround TWILL-259. The only differences is in the
- * {@link #addClassPathsToList(List, File)} method, that it expands a line from the classpath text file with the
- * environment variable before splitting it with ":".
+ * This class is copied from {@link TwillLauncher} to workaround TWILL-259. The only differences is
+ * in the {@link #addClassPathsToList(List, File)} method, that it expands a line from the classpath
+ * text file with the environment variable before splitting it with ":".
  */
 public class RemoteLauncher {
 
   /**
    * Main method to unpackage a jar and run the mainClass.main() method.
-   * @param args args[0] is the class name of the mainClass, args[1] is a boolean, telling whether to append classpath
-   *             from the "classpath.txt" runtime config jar or not. The rest of args are arguments to the mainClass.
+   *
+   * @param args args[0] is the class name of the mainClass, args[1] is a boolean, telling
+   *     whether to append classpath from the "classpath.txt" runtime config jar or not. The rest of
+   *     args are arguments to the mainClass.
    */
   public static void main(String[] args) throws Exception {
     if (args.length < 2) {
-      System.out.println("Usage: java " + RemoteLauncher.class.getName() + " [mainClass] [use_classpath] [args...]");
+      System.out.println("Usage: java " + RemoteLauncher.class.getName()
+          + " [mainClass] [use_classpath] [args...]");
       return;
     }
 
@@ -60,8 +63,9 @@ public class RemoteLauncher {
     // Create ClassLoader
     URL[] classpath = createClasspath(userClassPath);
     ClassLoader classLoader = createContainerClassLoader(classpath);
-    System.out.println("Launch class (" + mainClassName + ") using classloader " + classLoader.getClass().getName()
-                         + " with classpath: " + Arrays.toString(classpath));
+    System.out.println(
+        "Launch class (" + mainClassName + ") using classloader " + classLoader.getClass().getName()
+            + " with classpath: " + Arrays.toString(classpath));
 
     Thread.currentThread().setContextClassLoader(classLoader);
 
@@ -85,7 +89,8 @@ public class RemoteLauncher {
     // For backward compatibility, sort jars from twill and jars from application together
     // With TWILL-179, this will change as the user can have control on how it should be.
     List<File> libJarFiles = listJarFiles(new File(appJarDir, "lib"), new ArrayList<>());
-    listJarFiles(new File(twillJarDir, "lib"), libJarFiles).sort(Comparator.comparing(File::getName));
+    listJarFiles(new File(twillJarDir, "lib"), libJarFiles).sort(
+        Comparator.comparing(File::getName));
 
     // Add the app jar, resources jar and twill jar directories to the classpath as well
     for (File dir : Arrays.asList(appJarDir, twillJarDir)) {
@@ -104,15 +109,18 @@ public class RemoteLauncher {
     }
 
     if (useClassPath) {
-      addClassPathsToList(urls, new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.CLASSPATH));
+      addClassPathsToList(urls,
+          new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.CLASSPATH));
     }
 
-    addClassPathsToList(urls, new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.APPLICATION_CLASSPATH));
+    addClassPathsToList(urls,
+        new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.APPLICATION_CLASSPATH));
     return urls.toArray(new URL[0]);
   }
 
   /**
-   * Creates a {@link ClassLoader} to be used by this container that load classes from the given classpath.
+   * Creates a {@link ClassLoader} to be used by this container that load classes from the given
+   * classpath.
    */
   private static ClassLoader createContainerClassLoader(URL[] classpath) {
     String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
@@ -123,22 +131,27 @@ public class RemoteLauncher {
 
     try {
       @SuppressWarnings("unchecked")
-      Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(containerClassLoaderName);
+      Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(
+          containerClassLoaderName);
 
       // Instantiate with constructor (URL[] classpath, ClassLoader parentClassLoader)
-      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpath, classLoader.getParent());
+      return cls.getConstructor(URL[].class, ClassLoader.class)
+          .newInstance(classpath, classLoader.getParent());
     } catch (ClassNotFoundException e) {
-      throw new RuntimeException("Failed to load container class loader class " + containerClassLoaderName, e);
+      throw new RuntimeException(
+          "Failed to load container class loader class " + containerClassLoaderName, e);
     } catch (NoSuchMethodException e) {
-      throw new RuntimeException("Container class loader must have a public constructor with " +
-                                   "parameters (URL[] classpath, ClassLoader parent)", e);
+      throw new RuntimeException("Container class loader must have a public constructor with "
+          + "parameters (URL[] classpath, ClassLoader parent)", e);
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-      throw new RuntimeException("Failed to create container class loader of class " + containerClassLoaderName, e);
+      throw new RuntimeException(
+          "Failed to create container class loader of class " + containerClassLoaderName, e);
     }
   }
 
   private static void addClassPathsToList(List<URL> urls, File classpathFile) throws IOException {
-    try (BufferedReader reader = Files.newBufferedReader(classpathFile.toPath(), StandardCharsets.UTF_8)) {
+    try (BufferedReader reader = Files.newBufferedReader(classpathFile.toPath(),
+        StandardCharsets.UTF_8)) {
       String line = reader.readLine();
       if (line != null) {
         for (String path : expand(line).split(":")) {

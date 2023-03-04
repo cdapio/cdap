@@ -49,19 +49,20 @@ import java.util.Set;
  * Reads files into {@link ArtifactConfig ArtifactConfigs} for a specific namespace.
  */
 public class ArtifactConfigReader {
+
   private final LoadingCache<Id.Namespace, Gson> gsonCache;
 
   public ArtifactConfigReader() {
     this.gsonCache = CacheBuilder.newBuilder().build(
-      new CacheLoader<Id.Namespace, Gson>() {
-        @Override
-        public Gson load(Id.Namespace namespace) throws Exception {
-          return new GsonBuilder()
-            .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeDeserializer(namespace))
-            .registerTypeAdapter(ArtifactConfig.class, new ArtifactConfigDeserializer())
-            .create();
-        }
-      });
+        new CacheLoader<Id.Namespace, Gson>() {
+          @Override
+          public Gson load(Id.Namespace namespace) throws Exception {
+            return new GsonBuilder()
+                .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeDeserializer(namespace))
+                .registerTypeAdapter(ArtifactConfig.class, new ArtifactConfigDeserializer())
+                .create();
+          }
+        });
   }
 
   /**
@@ -70,39 +71,47 @@ public class ArtifactConfigReader {
    * @param namespace the namespace of the artifact this config file is for
    * @param configFile the config file to read
    * @return the contents of the file parsed as an ArtifactConfig
-   * @throws IOException if there was a problem reading the file, for example if the file does not exist.
-   * @throws InvalidArtifactException if there was a problem deserializing the file contents due to some invalid
-   *                                  format or unexpected value.
+   * @throws IOException if there was a problem reading the file, for example if the file does
+   *     not exist.
+   * @throws InvalidArtifactException if there was a problem deserializing the file contents due
+   *     to some invalid format or unexpected value.
    */
-  public ArtifactConfig read(Id.Namespace namespace, File configFile) throws IOException, InvalidArtifactException {
+  public ArtifactConfig read(Id.Namespace namespace, File configFile)
+      throws IOException, InvalidArtifactException {
     String fileName = configFile.getName();
     try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
       try {
-        ArtifactConfig config = gsonCache.getUnchecked(namespace).fromJson(reader, ArtifactConfig.class);
+        ArtifactConfig config = gsonCache.getUnchecked(namespace)
+            .fromJson(reader, ArtifactConfig.class);
 
         // check namespaces in parents are either system or the specified namespace
         for (ArtifactRange parent : config.getParents()) {
           NamespaceId parentNamespace = new NamespaceId(parent.getNamespace());
-          if (!NamespaceId.SYSTEM.equals(parentNamespace) && !namespace.toEntityId().equals(parentNamespace)) {
-            throw new InvalidArtifactException(String.format("Invalid parent %s. Parents must be in the same " +
-                                                               "namespace or a system artifact.", parent));
+          if (!NamespaceId.SYSTEM.equals(parentNamespace) && !namespace.toEntityId()
+              .equals(parentNamespace)) {
+            throw new InvalidArtifactException(
+                String.format("Invalid parent %s. Parents must be in the same "
+                    + "namespace or a system artifact.", parent));
           }
         }
         return config;
       } catch (JsonSyntaxException e) {
-        throw new InvalidArtifactException(String.format("%s contains invalid json: %s", fileName, e.getMessage()), e);
+        throw new InvalidArtifactException(
+            String.format("%s contains invalid json: %s", fileName, e.getMessage()), e);
       } catch (JsonParseException | IllegalArgumentException e) {
-        throw new InvalidArtifactException(String.format("Unable to parse %s: %s", fileName, e.getMessage()), e);
+        throw new InvalidArtifactException(
+            String.format("Unable to parse %s: %s", fileName, e.getMessage()), e);
       }
     }
   }
 
   /**
-   * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to be
-   * parsed via {@link ArtifactRanges#parseArtifactRange(String)}} or
-   * {@link ArtifactRanges#parseArtifactRange(String, String)}.
+   * Deserializer for ArtifactRange in a ArtifactConfig. Artifact ranges are expected to be able to
+   * be parsed via {@link ArtifactRanges#parseArtifactRange(String)}} or {@link
+   * ArtifactRanges#parseArtifactRange(String, String)}.
    */
   private static class ArtifactRangeDeserializer implements JsonDeserializer<ArtifactRange> {
+
     private final Id.Namespace namespace;
 
     ArtifactRangeDeserializer(Id.Namespace namespace) {
@@ -111,7 +120,7 @@ public class ArtifactConfigReader {
 
     @Override
     public ArtifactRange deserialize(JsonElement json, Type typeOfT,
-                                     JsonDeserializationContext context) throws JsonParseException {
+        JsonDeserializationContext context) throws JsonParseException {
       if (!json.isJsonPrimitive()) {
         throw new JsonParseException("ArtifactRange should be a string.");
       }
@@ -133,14 +142,19 @@ public class ArtifactConfigReader {
    * Deserializer for ArtifactConfig. Used to make sure collections are set to empty collections
    * instead of null.
    */
-  private static final class ArtifactConfigDeserializer implements JsonDeserializer<ArtifactConfig> {
-    private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
-    private static final Type PARENTS_TYPE = new TypeToken<Set<ArtifactRange>>() { }.getType();
-    private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final class ArtifactConfigDeserializer implements
+      JsonDeserializer<ArtifactConfig> {
+
+    private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() {
+    }.getType();
+    private static final Type PARENTS_TYPE = new TypeToken<Set<ArtifactRange>>() {
+    }.getType();
+    private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, String>>() {
+    }.getType();
 
     @Override
     public ArtifactConfig deserialize(JsonElement json, Type typeOfT,
-                                      JsonDeserializationContext context) throws JsonParseException {
+        JsonDeserializationContext context) throws JsonParseException {
       if (!json.isJsonObject()) {
         throw new JsonParseException("Config file must be a JSON Object.");
       }

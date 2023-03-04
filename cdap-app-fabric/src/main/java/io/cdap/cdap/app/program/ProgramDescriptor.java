@@ -33,11 +33,13 @@ public class ProgramDescriptor {
   private final ArtifactId artifactId;
 
   public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec) {
-    this(programId, appSpec, Artifacts.toProtoArtifactId(programId.getNamespaceId(), appSpec.getArtifactId()));
+    this(programId, appSpec,
+        Artifacts.toProtoArtifactId(programId.getNamespaceId(), appSpec.getArtifactId()));
   }
 
   @VisibleForTesting
-  public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec, ArtifactId artifactId) {
+  public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec,
+      ArtifactId artifactId) {
     this.programId = programId;
     this.appSpec = appSpec;
     this.artifactId = artifactId;

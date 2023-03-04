@@ -93,20 +93,22 @@ abstract class DataprocClient implements AutoCloseable {
   private static final int MIN_INITIAL_PARTITIONS_DEFAULT = 128;
   private static final int MAX_INITIAL_PARTITIONS_DEFAULT = 8192;
   private static final Set<String> ERROR_INFO_REASONS = ImmutableSet.of(
-    "rateLimitExceeded",
-    "resourceQuotaExceeded");
+      "rateLimitExceeded",
+      "resourceQuotaExceeded");
   protected final DataprocConf conf;
   private final ClusterControllerClient client;
   private final ComputeFactory computeFactory;
   private Compute compute;
 
-  protected DataprocClient(DataprocConf conf, ClusterControllerClient client, ComputeFactory computeFactory) {
+  protected DataprocClient(DataprocConf conf, ClusterControllerClient client,
+      ComputeFactory computeFactory) {
     this.conf = conf;
     this.client = client;
     this.computeFactory = computeFactory;
   }
 
-  private static String findNetwork(Compute compute, String project) throws IOException, RetryableProvisionException {
+  private static String findNetwork(Compute compute, String project)
+      throws IOException, RetryableProvisionException {
     List<Network> networks;
     try {
       NetworkList networkList = compute.networks().list(project).execute();
@@ -118,8 +120,10 @@ abstract class DataprocClient implements AutoCloseable {
 
     if (networks == null || networks.isEmpty()) {
       throw new DataprocRuntimeException(
-        String.format("Unable to find any networks in project '%s'. Please create a network in the project.", project),
-        ErrorTag.CONFIGURATION);
+          String.format(
+              "Unable to find any networks in project '%s'. Please create a network in the project.",
+              project),
+          ErrorTag.CONFIGURATION);
     }
 
     for (Network network : networks) {
@@ -143,23 +147,25 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Create a cluster. This will return after the initial request to create the cluster is completed.
-   * At this point, the cluster is likely not yet running, but in a provisioning state.
+   * Create a cluster. This will return after the initial request to create the cluster is
+   * completed. At this point, the cluster is likely not yet running, but in a provisioning state.
    *
-   * @param name         the name of the cluster to create
+   * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
-   * @param labels       labels to set on the cluster
+   * @param labels labels to set on the cluster
    * @param privateInstance {@code true} to indicate using private instance
-   * @param publicKey    the public key to set for cluster nodes if SSH access is required
+   * @param publicKey the public key to set for cluster nodes if SSH access is required
    * @return create operation metadata
-   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
-   * @throws AlreadyExistsException      if the cluster already exists
-   * @throws IOException                 if there was an I/O error talking to Google Compute APIs
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial
+   *     request to complete
+   * @throws AlreadyExistsException if the cluster already exists
+   * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels,
-                                         boolean privateInstance, @Nullable SSHPublicKey publicKey)
-    throws RetryableProvisionException, InterruptedException, IOException {
+  ClusterOperationMetadata createCluster(String name, String imageVersion,
+      Map<String, String> labels,
+      boolean privateInstance, @Nullable SSHPublicKey publicKey)
+      throws RetryableProvisionException, InterruptedException, IOException {
 
     String operationId = null;
     try {
@@ -176,13 +182,13 @@ abstract class DataprocClient implements AutoCloseable {
       metadata.putAll(conf.getClusterMetaData());
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
-        .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
-        .setShieldedInstanceConfig(
-          ShieldedInstanceConfig.newBuilder()
-            .setEnableSecureBoot(conf.isSecureBootEnabled())
-            .setEnableVtpm(conf.isvTpmEnabled())
-            .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build())
-        .putAllMetadata(metadata);
+          .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
+          .setShieldedInstanceConfig(
+              ShieldedInstanceConfig.newBuilder()
+                  .setEnableSecureBoot(conf.isSecureBootEnabled())
+                  .setEnableVtpm(conf.isvTpmEnabled())
+                  .setEnableIntegrityMonitoring(conf.isIntegrityMonitoringEnabled()).build())
+          .putAllMetadata(metadata);
 
       if (conf.getServiceAccount() != null) {
         clusterConfig.setServiceAccount(conf.getServiceAccount());
@@ -198,27 +204,28 @@ abstract class DataprocClient implements AutoCloseable {
       Map<String, String> clusterProperties = new HashMap<>(conf.getClusterProperties());
       // Enable/Disable stackdriver
       clusterProperties.put("dataproc:dataproc.logging.stackdriver.enable",
-                            Boolean.toString(conf.isStackdriverLoggingEnabled()));
+          Boolean.toString(conf.isStackdriverLoggingEnabled()));
       clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
-                            Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+          Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
       DiskConfig workerDiskConfig = DiskConfig.newBuilder()
-        .setBootDiskSizeGb(conf.getWorkerDiskGB())
-        .setBootDiskType(conf.getWorkerDiskType())
-        .setNumLocalSsds(0)
-        .build();
+          .setBootDiskSizeGb(conf.getWorkerDiskGB())
+          .setBootDiskType(conf.getWorkerDiskType())
+          .setNumLocalSsds(0)
+          .build();
       InstanceGroupConfig.Builder primaryWorkerConfig = InstanceGroupConfig.newBuilder()
-        .setNumInstances(conf.getWorkerNumNodes())
-        .setMachineTypeUri(conf.getWorkerMachineType())
-        .setDiskConfig(workerDiskConfig);
+          .setNumInstances(conf.getWorkerNumNodes())
+          .setMachineTypeUri(conf.getWorkerMachineType())
+          .setDiskConfig(workerDiskConfig);
       InstanceGroupConfig.Builder secondaryWorkerConfig = InstanceGroupConfig.newBuilder()
-        .setNumInstances(conf.getSecondaryWorkerNumNodes())
-        .setMachineTypeUri(conf.getWorkerMachineType())
-        .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE)
-        .setDiskConfig(workerDiskConfig);
+          .setNumInstances(conf.getSecondaryWorkerNumNodes())
+          .setMachineTypeUri(conf.getWorkerMachineType())
+          .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE)
+          .setDiskConfig(workerDiskConfig);
 
       //Set default concurrency settings for fixed cluster
-      if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy()) && !conf.isPredefinedAutoScaleEnabled()) {
+      if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy())
+          && !conf.isPredefinedAutoScaleEnabled()) {
         //Set spark.default.parallelism according to cluster size.
         //Spark defaults it to number of current executors, but when we configure the job
         //executors may not have started yet, so this value gets artificially low.
@@ -227,11 +234,14 @@ abstract class DataprocClient implements AutoCloseable {
         //but no more than 8192. This value is used only in spark 3 with adaptive execution and
         //according to our tests spark can handle really large numbers and 32x is a reasonable default.
         int initialPartitionNum = Math.min(
-          Math.max(conf.getTotalWorkerCPUs() * PARTITION_NUM_FACTOR, MIN_INITIAL_PARTITIONS_DEFAULT),
-          MAX_INITIAL_PARTITIONS_DEFAULT);
-        clusterProperties.putIfAbsent("spark:spark.default.parallelism", Integer.toString(defaultConcurrency));
-        clusterProperties.putIfAbsent("spark:spark.sql.adaptive.coalescePartitions.initialPartitionNum",
-                                      Integer.toString(initialPartitionNum));
+            Math.max(conf.getTotalWorkerCPUs() * PARTITION_NUM_FACTOR,
+                MIN_INITIAL_PARTITIONS_DEFAULT),
+            MAX_INITIAL_PARTITIONS_DEFAULT);
+        clusterProperties.putIfAbsent("spark:spark.default.parallelism",
+            Integer.toString(defaultConcurrency));
+        clusterProperties.putIfAbsent(
+            "spark:spark.sql.adaptive.coalescePartitions.initialPartitionNum",
+            Integer.toString(initialPartitionNum));
       }
 
       SoftwareConfig.Builder softwareConfigBuilder = SoftwareConfig.newBuilder()
@@ -246,36 +256,36 @@ abstract class DataprocClient implements AutoCloseable {
       }
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
-        .setEndpointConfig(EndpointConfig.newBuilder()
-                             .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
-                             .build())
-        .setMasterConfig(InstanceGroupConfig.newBuilder()
-                           .setNumInstances(conf.getMasterNumNodes())
-                           .setMachineTypeUri(conf.getMasterMachineType())
-                           .setDiskConfig(DiskConfig.newBuilder()
-                                            .setBootDiskType(conf.getMasterDiskType())
-                                            .setBootDiskSizeGb(conf.getMasterDiskGB())
-                                            .setNumLocalSsds(0)
-                                            .build())
-                           .build())
-        .setWorkerConfig(primaryWorkerConfig.build())
-        .setSecondaryWorkerConfig(secondaryWorkerConfig.build())
-        .setGceClusterConfig(clusterConfig.build())
-        .setSoftwareConfig(softwareConfigBuilder);
+          .setEndpointConfig(EndpointConfig.newBuilder()
+              .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
+              .build())
+          .setMasterConfig(InstanceGroupConfig.newBuilder()
+              .setNumInstances(conf.getMasterNumNodes())
+              .setMachineTypeUri(conf.getMasterMachineType())
+              .setDiskConfig(DiskConfig.newBuilder()
+                  .setBootDiskType(conf.getMasterDiskType())
+                  .setBootDiskSizeGb(conf.getMasterDiskGB())
+                  .setNumLocalSsds(0)
+                  .build())
+              .build())
+          .setWorkerConfig(primaryWorkerConfig.build())
+          .setSecondaryWorkerConfig(secondaryWorkerConfig.build())
+          .setGceClusterConfig(clusterConfig.build())
+          .setSoftwareConfig(softwareConfigBuilder);
 
       //Cluster TTL if one should be set
       if (conf.getIdleTTLMinutes() > 0) {
         long seconds = TimeUnit.MINUTES.toSeconds(conf.getIdleTTLMinutes());
         builder.setLifecycleConfig(LifecycleConfig.newBuilder()
-                                     .setIdleDeleteTtl(Duration.newBuilder().setSeconds(seconds).build()).build());
+            .setIdleDeleteTtl(Duration.newBuilder().setSeconds(seconds).build()).build());
       }
 
       //Add any Node Initialization action scripts
       for (String action : conf.getInitActions()) {
         builder.addInitializationActions(
-          NodeInitializationAction.newBuilder()
-            .setExecutableFile(action)
-            .build());
+            NodeInitializationAction.newBuilder()
+                .setExecutableFile(action)
+                .build());
       }
 
       // Set Auto Scaling Policy
@@ -289,14 +299,15 @@ abstract class DataprocClient implements AutoCloseable {
         //Check if policy is URI or ID. If ID Convert to URI
         if (!autoScalingPolicy.contains("/")) {
           autoScalingPolicy = "projects/" + conf.getProjectId() + "/regions/" + conf.getRegion()
-            + "/autoscalingPolicies/" + autoScalingPolicy;
+              + "/autoscalingPolicies/" + autoScalingPolicy;
         }
-        builder.setAutoscalingConfig(AutoscalingConfig.newBuilder().setPolicyUri(autoScalingPolicy).build());
+        builder.setAutoscalingConfig(
+            AutoscalingConfig.newBuilder().setPolicyUri(autoScalingPolicy).build());
       }
 
       if (conf.getEncryptionKeyName() != null) {
         builder.setEncryptionConfig(EncryptionConfig.newBuilder()
-                                      .setGcePdKmsKeyName(conf.getEncryptionKeyName()).build());
+            .setGcePdKmsKeyName(conf.getEncryptionKeyName()).build());
       }
 
       if (conf.getGcsBucket() != null) {
@@ -304,13 +315,13 @@ abstract class DataprocClient implements AutoCloseable {
       }
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
-        .setClusterName(name)
-        .putAllLabels(labels)
-        .setConfig(builder.build())
-        .build();
+          .setClusterName(name)
+          .putAllLabels(labels)
+          .setConfig(builder.build())
+          .build();
 
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
-        client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster);
+          client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster);
       operationId = operationFuture.getName();
       return operationFuture.getMetadata().get();
     } catch (ExecutionException e) {
@@ -324,7 +335,7 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   protected void setNetworkConfigs(Compute compute, GceClusterConfig.Builder clusterConfig,
-                                   boolean privateInstance) throws RetryableProvisionException, IOException {
+      boolean privateInstance) throws RetryableProvisionException, IOException {
     String network = conf.getNetwork();
     String systemNetwork = null;
     try {
@@ -351,8 +362,9 @@ abstract class DataprocClient implements AutoCloseable {
       network = findNetwork(compute, networkHostProjectId);
     }
     if (network == null) {
-      throw new DataprocRuntimeException("Unable to automatically detect a network, please explicitly set a network.",
-        ErrorTag.CONFIGURATION);
+      throw new DataprocRuntimeException(
+          "Unable to automatically detect a network, please explicitly set a network.",
+          ErrorTag.CONFIGURATION);
     }
 
     Network networkInfo = getNetworkInfo(networkHostProjectId, network, compute);
@@ -361,20 +373,23 @@ abstract class DataprocClient implements AutoCloseable {
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
       throw new DataprocRuntimeException(
-        String.format("Subnet '%s' does not exist in network '%s' in project '%s'. Please use a different subnet.",
-          subnet, network, networkHostProjectId),
-        ErrorTag.CONFIGURATION);
+          String.format(
+              "Subnet '%s' does not exist in network '%s' in project '%s'. Please use a different subnet.",
+              subnet, network, networkHostProjectId),
+          ErrorTag.CONFIGURATION);
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
-    boolean autoCreateSubnet = networkInfo.getAutoCreateSubnetworks() != null && networkInfo.getAutoCreateSubnetworks();
+    boolean autoCreateSubnet =
+        networkInfo.getAutoCreateSubnetworks() != null && networkInfo.getAutoCreateSubnetworks();
     if (!autoCreateSubnet) {
       // if the network uses custom subnets but none exist, error out
       if (subnets == null || subnets.isEmpty()) {
         throw new DataprocRuntimeException(
-          String.format("Network '%s' in project '%s' does not contain any subnets. " +
-                          "Please create a subnet or use a different network.", network, networkHostProjectId),
-          ErrorTag.CONFIGURATION);
+            String.format("Network '%s' in project '%s' does not contain any subnets. "
+                    + "Please create a subnet or use a different network.", network,
+                networkHostProjectId),
+            ErrorTag.CONFIGURATION);
       }
     }
 
@@ -390,8 +405,9 @@ abstract class DataprocClient implements AutoCloseable {
     addNetworkTags(clusterConfig, networkInfo, isInternalIpOnly);
   }
 
-  protected void addNetworkTags(GceClusterConfig.Builder clusterConfig, Network network, boolean internalIpOnly)
-    throws RetryableProvisionException, IOException {
+  protected void addNetworkTags(GceClusterConfig.Builder clusterConfig, Network network,
+      boolean internalIpOnly)
+      throws RetryableProvisionException, IOException {
     // no-op
   }
 
@@ -414,7 +430,8 @@ abstract class DataprocClient implements AutoCloseable {
   // a subnet in the same region as the dataproc cluster must be chosen. If a subnet name is provided then the subnet
   // will be choosen and the region will be picked on basis of the given zone. If a subnet name is not provided then
   // any subnetwork in the region of the given zone will be picked.
-  private static String chooseSubnet(String network, List<String> subnets, @Nullable String subnet, String region) {
+  private static String chooseSubnet(String network, List<String> subnets, @Nullable String subnet,
+      String region) {
     for (String currentSubnet : subnets) {
       // if a subnet name is given then get the region of that subnet based on the zone
       if (subnet != null && !currentSubnet.endsWith("subnetworks/" + subnet)) {
@@ -425,12 +442,14 @@ abstract class DataprocClient implements AutoCloseable {
       }
     }
     throw new DataprocRuntimeException(
-      String.format("Could not find %s in network '%s' that are for region '%s'", subnet == null ? "any subnet" :
-        String.format("a subnet named '%s", subnet), network, region), ErrorTag.CONFIGURATION);
+        String.format("Could not find %s in network '%s' that are for region '%s'",
+            subnet == null ? "any subnet" :
+                String.format("a subnet named '%s", subnet), network, region),
+        ErrorTag.CONFIGURATION);
   }
 
   private Network getNetworkInfo(String project, String network, Compute compute)
-    throws IOException, RetryableProvisionException {
+      throws IOException, RetryableProvisionException {
     Network networkObj;
     try {
       networkObj = compute.networks().get(project, network).execute();
@@ -441,9 +460,11 @@ abstract class DataprocClient implements AutoCloseable {
 
     if (networkObj == null) {
       throw new DataprocRuntimeException(
-        String.format("Unable to find network '%s' in project '%s'. Please specify another network.", network, project),
-        ErrorTag.CONFIGURATION
-        );
+          String.format(
+              "Unable to find network '%s' in project '%s'. Please specify another network.",
+              network, project),
+          ErrorTag.CONFIGURATION
+      );
     }
     return networkObj;
   }
@@ -483,7 +504,8 @@ abstract class DataprocClient implements AutoCloseable {
 
     // SSH will be used for job launching and/or monitoring, we need to validate network connectivity
     // CDAP and Dataproc are in the same network, should be able to use private IP only cluster
-    if (systemProjectId.equals(conf.getNetworkHostProjectID()) && systemNetwork.equals(network.getName())) {
+    if (systemProjectId.equals(conf.getNetworkHostProjectID()) && systemNetwork.equals(
+        network.getName())) {
       return true;
     }
 
@@ -495,16 +517,19 @@ abstract class DataprocClient implements AutoCloseable {
 
     // If there is no network connectivity and yet private ip only cluster is requested, raise an exception
     throw new DataprocRuntimeException(
-      String.format("Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
-                    systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName()),
-      ErrorTag.CONFIGURATION);
+        String.format(
+            "Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
+            systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName()),
+        ErrorTag.CONFIGURATION);
   }
 
-  private static PeeringState getPeeringState(String systemProjectId, String systemNetwork, Network networkInfo) {
+  private static PeeringState getPeeringState(String systemProjectId, String systemNetwork,
+      Network networkInfo) {
     // note: vpc network is a global resource.
     // https://cloud.google.com/compute/docs/regions-zones/global-regional-zonal-resources#globalresources
-    String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
-                                             systemProjectId, systemNetwork);
+    String systemNetworkPath = String.format(
+        "https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
+        systemProjectId, systemNetwork);
 
     LOG.trace(String.format("Self link for the system network is %s", systemNetworkPath));
     List<NetworkPeering> peerings = networkInfo.getPeerings();
@@ -528,13 +553,13 @@ abstract class DataprocClient implements AutoCloseable {
     }
     try {
       Optional<Cluster> cluster = getDataprocCluster(name)
-        .filter(c -> c.getStatus().getState() == ClusterStatus.State.ERROR);
+          .filter(c -> c.getStatus().getState() == ClusterStatus.State.ERROR);
       if (cluster.isPresent()) {
         deleteCluster(name);
       }
     } catch (Exception e) {
-      LOG.warn("Can't remove Dataproc Cluster " + name + ". " +
-                 "Attempted deletion because state was ERROR after creation", e);
+      LOG.warn("Can't remove Dataproc Cluster " + name + ". "
+          + "Attempted deletion because state was ERROR after creation", e);
     }
   }
 
@@ -545,7 +570,7 @@ abstract class DataprocClient implements AutoCloseable {
    * @param labels Key/Value pairs to set on the Dataproc cluster.
    */
   void updateClusterLabels(String clusterName,
-                           Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
+      Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
     updateClusterLabels(clusterName, labels, Collections.emptyList());
   }
 
@@ -557,22 +582,23 @@ abstract class DataprocClient implements AutoCloseable {
    * @param labelsToRemove collection of labels to remove from the Dataproc cluster.
    */
   void updateClusterLabels(String clusterName,
-                           Map<String, String> labelsToSet,
-                           Collection<String> labelsToRemove) throws RetryableProvisionException, InterruptedException {
+      Map<String, String> labelsToSet,
+      Collection<String> labelsToRemove) throws RetryableProvisionException, InterruptedException {
     if (labelsToSet.isEmpty() && labelsToRemove.isEmpty()) {
       return;
     }
     try {
       Cluster cluster = getDataprocCluster(clusterName)
-        .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
-        .orElseThrow(() -> new DataprocRuntimeException(
-          "Dataproc cluster " + clusterName + " does not exist or not in running state",
-          ErrorTag.CONFIGURATION));
+          .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
+          .orElseThrow(() -> new DataprocRuntimeException(
+              "Dataproc cluster " + clusterName + " does not exist or not in running state",
+              ErrorTag.CONFIGURATION));
       Map<String, String> existingLabels = cluster.getLabelsMap();
       // If the labels to set are already exist and labels to remove are not set,
       // no need to update the cluster labelsToSet.
-      if (labelsToSet.entrySet().stream().allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey()))) &&
-          labelsToRemove.stream().noneMatch(existingLabels::containsKey)
+      if (labelsToSet.entrySet().stream()
+          .allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey())))
+          && labelsToRemove.stream().noneMatch(existingLabels::containsKey)
       ) {
         return;
       }
@@ -582,20 +608,20 @@ abstract class DataprocClient implements AutoCloseable {
 
       FieldMask updateMask = FieldMask.newBuilder().addPaths("labels").build();
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
-        client.updateClusterAsync(UpdateClusterRequest
-                                    .newBuilder()
-                                    .setProjectId(conf.getProjectId())
-                                    .setRegion(conf.getRegion())
-                                    .setClusterName(clusterName)
-                                    .setCluster(cluster.toBuilder().clearLabels().putAllLabels(newLabels))
-                                    .setUpdateMask(updateMask)
-                                    .build());
+          client.updateClusterAsync(UpdateClusterRequest
+              .newBuilder()
+              .setProjectId(conf.getProjectId())
+              .setRegion(conf.getRegion())
+              .setClusterName(clusterName)
+              .setCluster(cluster.toBuilder().clearLabels().putAllLabels(newLabels))
+              .setUpdateMask(updateMask)
+              .build());
 
       ClusterOperationMetadata metadata = operationFuture.getMetadata().get();
       int numWarnings = metadata.getWarningsCount();
       if (numWarnings > 0) {
         LOG.warn("Encountered {} warning {} while setting labels on cluster:\n{}",
-                 numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
+            numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
       }
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -607,23 +633,26 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Delete the specified cluster if it exists. This will return after the initial request to delete the cluster
-   * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
+   * Delete the specified cluster if it exists. This will return after the initial request to delete
+   * the cluster is completed. At this point, the cluster is likely not yet deleted, but in a
+   * deleting state.
    *
    * @param name the name of the cluster to delete
-   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial
+   *     request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   Optional<ClusterOperationMetadata> deleteCluster(String name)
-    throws RetryableProvisionException, InterruptedException {
+      throws RetryableProvisionException, InterruptedException {
     String operationId = null;
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
-        .setClusterName(name)
-        .setProjectId(conf.getProjectId())
-        .setRegion(conf.getRegion())
-        .build();
-      OperationFuture<Empty, ClusterOperationMetadata> operationFuture = client.deleteClusterAsync(request);
+          .setClusterName(name)
+          .setProjectId(conf.getProjectId())
+          .setRegion(conf.getRegion())
+          .build();
+      OperationFuture<Empty, ClusterOperationMetadata> operationFuture = client.deleteClusterAsync(
+          request);
       operationId = operationFuture.getName();
       return Optional.of(operationFuture.getMetadata().get());
     } catch (ExecutionException e) {
@@ -642,7 +671,8 @@ abstract class DataprocClient implements AutoCloseable {
         // In general, if the cluster is already in the deleting state, behave as if the delete request was successful
         try {
           Optional<Cluster> cluster = getDataprocCluster(name);
-          if (!cluster.isPresent() || cluster.get().getStatus().getState() == ClusterStatus.State.DELETING) {
+          if (!cluster.isPresent()
+              || cluster.get().getStatus().getState() == ClusterStatus.State.DELETING) {
             return Optional.empty();
           }
           // if the cluster isn't gone or in the deleting state, handle the original delete error
@@ -663,10 +693,10 @@ abstract class DataprocClient implements AutoCloseable {
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   io.cdap.cdap.runtime.spi.provisioner.ClusterStatus getClusterStatus(String name)
-    throws RetryableProvisionException {
+      throws RetryableProvisionException {
     io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status = getDataprocCluster(name)
-      .map(cluster -> convertStatus(cluster.getStatus()))
-      .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
+        .map(cluster -> convertStatus(cluster.getStatus()))
+        .orElse(io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.NOT_EXISTS);
 
     return status;
   }
@@ -676,7 +706,8 @@ abstract class DataprocClient implements AutoCloseable {
     // same name, was deleted, then this current cluster was created). This won't happen in practice for ephemeral
     // clusters, but it's still not great to have this possibility in the implementation.
     // https://cdap.atlassian.net/browse/CDAP-19641
-    String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
+    String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(),
+        conf.getRegion());
     String filter = String.format("clusterName=%s AND operationType=CREATE", name);
 
     OperationsClient.ListOperationsPagedResponse operationsResponse;
@@ -698,8 +729,9 @@ abstract class DataprocClient implements AutoCloseable {
 
     if (page.getPageElementCount() > 1) {
       // shouldn't be possible
-      return MessageFormat.format("Multiple create operations found for cluster {0}, may not be able to " +
-                                    "find the failure message.", name);
+      return MessageFormat.format(
+          "Multiple create operations found for cluster {0}, may not be able to "
+              + "find the failure message.", name);
     }
 
     if (page.getPageElementCount() > 0) {
@@ -707,9 +739,9 @@ abstract class DataprocClient implements AutoCloseable {
       Status operationError = operation.getError();
       if (operationError != null) {
         return MessageFormat.format("Failed to create cluster {0}: {1}. Details: {2}", name,
-                                    operationError.getMessage(),
-                                    operationError.getDetailsList() != null ?
-                                      Arrays.toString(operationError.getDetailsList().toArray()) : "");
+            operationError.getMessage(),
+            operationError.getDetailsList() != null
+                ? Arrays.toString(operationError.getDetailsList().toArray()) : "");
       }
     }
 
@@ -717,14 +749,15 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Get information about the specified cluster. The cluster will not be present if it could not be found.
+   * Get information about the specified cluster. The cluster will not be present if it could not be
+   * found.
    *
    * @param name the cluster name
    * @return the cluster information if it exists
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   Optional<io.cdap.cdap.runtime.spi.provisioner.Cluster> getCluster(String name)
-    throws RetryableProvisionException, IOException {
+      throws RetryableProvisionException, IOException {
     Optional<Cluster> clusterOptional = getDataprocCluster(name);
     if (!clusterOptional.isPresent()) {
       return Optional.empty();
@@ -735,15 +768,15 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Get image version for the specified cluster. This information will not be present if the cluster could not be
-   * found, or the cluster specification doesn't contain this information
+   * Get image version for the specified cluster. This information will not be present if the
+   * cluster could not be found, or the cluster specification doesn't contain this information
    *
    * @param name the cluster name
    * @return the cluster image version if available.
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   Optional<String> getClusterImageVersion(String name)
-    throws RetryableProvisionException {
+      throws RetryableProvisionException {
     Optional<Cluster> clusterOptional = getDataprocCluster(name);
     if (!clusterOptional.isPresent()) {
       return Optional.empty();
@@ -755,8 +788,9 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   * Converts dataproc cluster object into provisioner one. This version does not throw checked exceptions and
-   * can be used as a {@link java.util.function.Function}.
+   * Converts dataproc cluster object into provisioner one. This version does not throw checked
+   * exceptions and can be used as a {@link java.util.function.Function}.
+   *
    * @param cluster dataproc cluster object
    * @return provisioner cluster object
    * @throws DataprocRuntimeException if there was an error
@@ -771,11 +805,13 @@ abstract class DataprocClient implements AutoCloseable {
 
   /**
    * Converts dataproc cluster object into provisioner one.
+   *
    * @param cluster dataproc cluster object
    * @return provisioner cluster object
    * @throws IOException if there was an error
    */
-  private io.cdap.cdap.runtime.spi.provisioner.Cluster getCluster(Cluster cluster) throws IOException {
+  private io.cdap.cdap.runtime.spi.provisioner.Cluster getCluster(Cluster cluster)
+      throws IOException {
     String zone = getZone(cluster.getConfig().getGceClusterConfig().getZoneUri());
 
     List<Node> nodes = new ArrayList<>();
@@ -786,17 +822,18 @@ abstract class DataprocClient implements AutoCloseable {
       nodes.add(getNode(Node.Type.WORKER, zone, workerName));
     }
     io.cdap.cdap.runtime.spi.provisioner.Cluster c = new io.cdap.cdap.runtime.spi.provisioner.Cluster(
-      cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes, Collections.emptyMap());
+        cluster.getClusterName(), convertStatus(cluster.getStatus()), nodes,
+        Collections.emptyMap());
     return c;
   }
 
   private Optional<Cluster> getDataprocCluster(String name) throws RetryableProvisionException {
     try {
       return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
-                                             .setClusterName(name)
-                                             .setProjectId(conf.getProjectId())
-                                             .setRegion(conf.getRegion())
-                                             .build()));
+          .setClusterName(name)
+          .setProjectId(conf.getProjectId())
+          .setRegion(conf.getRegion())
+          .build()));
     } catch (NotFoundException e) {
       return Optional.empty();
     } catch (ApiException e) {
@@ -810,42 +847,43 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   /**
-   *
    * @param status if not null, return only clusters in the specified state
-   * @param labels labels map to use as filters. A value can be "*" to indicate that label must be present
-   *               with any value.
+   * @param labels labels map to use as filters. A value can be "*" to indicate that label must
+   *     be present with any value.
    * @return iterable list of clusters that conform to the filter
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
-    @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
-    Map<String, String> labels) throws RetryableProvisionException {
+      @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
+      Map<String, String> labels) throws RetryableProvisionException {
     return getClusters(status, labels, c -> true);
   }
 
   /**
-   *
    * @param status if not null, return only clusters in the specified state
-   * @param labels labels map to use as filters. A value can be "*" to indicate that label must be present
-   *               with any value.
+   * @param labels labels map to use as filters. A value can be "*" to indicate that label must
+   *     be present with any value.
    * @param postFilter additional filter to apply before converting into provisioner cluster
    * @return iterable list of clusters that conform to the filter
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Stream<io.cdap.cdap.runtime.spi.provisioner.Cluster> getClusters(
-    @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
-    Map<String, String> labels,
-    Predicate<Cluster> postFilter) throws RetryableProvisionException {
+      @Nullable io.cdap.cdap.runtime.spi.provisioner.ClusterStatus status,
+      Map<String, String> labels,
+      Predicate<Cluster> postFilter) throws RetryableProvisionException {
 
     try {
       String filter = Stream.concat(
-        Optional.ofNullable(status).map(s -> Stream.of(String.format("status.state=%s", s))).orElse(Stream.empty()),
-        labels.entrySet().stream().map(e -> String.format("labels.%s=%s", e.getKey(), e.getValue())))
-        .collect(Collectors.joining(" AND "));
+              Optional.ofNullable(status).map(s -> Stream.of(String.format("status.state=%s", s)))
+                  .orElse(Stream.empty()),
+              labels.entrySet().stream()
+                  .map(e -> String.format("labels.%s=%s", e.getKey(), e.getValue())))
+          .collect(Collectors.joining(" AND "));
       return StreamSupport.stream(
-        client.listClusters(conf.getProjectId(), conf.getRegion(), filter).iterateAll().spliterator(), false)
-        .filter(postFilter)
-        .map(this::getClusterUnchecked);
+              client.listClusters(conf.getProjectId(), conf.getRegion(), filter).iterateAll()
+                  .spliterator(), false)
+          .filter(postFilter)
+          .map(this::getClusterUnchecked);
     } catch (ApiException e) {
       throw handleApiException(e);
     }
@@ -890,16 +928,19 @@ abstract class DataprocClient implements AutoCloseable {
   }
 
   // if there was an API exception that was not a 4xx, we can just try again
-  protected RetryableProvisionException handleApiException(ApiException e) throws RetryableProvisionException {
+  protected RetryableProvisionException handleApiException(ApiException e)
+      throws RetryableProvisionException {
     return handleApiException(null, e);
   }
 
-  private RetryableProvisionException handleApiException(@Nullable String operationId, ApiException e)
-    throws RetryableProvisionException {
+  private RetryableProvisionException handleApiException(@Nullable String operationId,
+      ApiException e)
+      throws RetryableProvisionException {
     if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
       throw new DataprocRetryableException(operationId, e);
     }
-    String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(conf.getTroubleshootingDocsUrl());
+    String helpMessage = DataprocUtils.getTroubleshootingHelpMessage(
+        conf.getTroubleshootingDocsUrl());
     if (e instanceof InvalidArgumentException) {
       throw new DataprocRuntimeException(operationId, helpMessage, e, ErrorTag.USER);
     }
@@ -922,9 +963,10 @@ abstract class DataprocClient implements AutoCloseable {
         throw new RetryableProvisionException(e);
       }
 
-      if (statusCode == HttpURLConnection.HTTP_FORBIDDEN || statusCode == DataprocUtils.RESOURCE_EXHAUSTED) {
+      if (statusCode == HttpURLConnection.HTTP_FORBIDDEN
+          || statusCode == DataprocUtils.RESOURCE_EXHAUSTED) {
         boolean isRetryAble = gError.getDetails().getErrors().stream()
-          .anyMatch(errorInfo -> ERROR_INFO_REASONS.contains(errorInfo.getReason()));
+            .anyMatch(errorInfo -> ERROR_INFO_REASONS.contains(errorInfo.getReason()));
         if (isRetryAble) {
           throw new RetryableProvisionException(e);
         }

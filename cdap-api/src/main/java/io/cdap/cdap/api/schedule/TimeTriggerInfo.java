@@ -27,8 +27,8 @@ public interface TimeTriggerInfo extends TriggerInfo {
   String getCronExpression();
 
   /**
-   * Returns the logical start time of the triggered program. Logical start time is when the schedule decides to launch
-   * the program when the cron expression is satisfied.
+   * Returns the logical start time of the triggered program. Logical start time is when the
+   * schedule decides to launch the program when the cron expression is satisfied.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC)
    */

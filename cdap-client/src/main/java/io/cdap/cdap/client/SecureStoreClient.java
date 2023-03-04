@@ -43,6 +43,7 @@ import java.util.List;
  * Provides ways to get/set Secure keys.
  */
 public class SecureStoreClient {
+
   private static final Gson GSON = new Gson();
   private static final String SECURE_KEYS = "securekeys";
 
@@ -65,16 +66,19 @@ public class SecureStoreClient {
    * @param secureKeyId {@link SecureKeyId} secure key name
    * @param keyCreateRequest {@link SecureKeyCreateRequest}
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws SecureKeyAlreadyExistsException if the secure key already exists
    * @throws NamespaceNotFoundException if namespace is not found
    */
-  public void createKey(SecureKeyId secureKeyId, SecureKeyCreateRequest keyCreateRequest) throws IOException,
-    UnauthenticatedException, AlreadyExistsException, NamespaceNotFoundException, UnauthorizedException {
+  public void createKey(SecureKeyId secureKeyId, SecureKeyCreateRequest keyCreateRequest)
+      throws IOException,
+      UnauthenticatedException, AlreadyExistsException, NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
-    HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(keyCreateRequest), null,
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_CONFLICT);
+    HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(keyCreateRequest),
+        null,
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+        HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new SecureKeyAlreadyExistsException(secureKeyId);
     }
@@ -89,14 +93,15 @@ public class SecureStoreClient {
    * @param secureKeyId {@link SecureKeyId} secure key name
    * @return the secure data in a utf-8 encoded byte array
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
   public String getData(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException, UnauthorizedException {
+      SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new SecureKeyNotFoundException(secureKeyId);
     }
@@ -109,15 +114,17 @@ public class SecureStoreClient {
    * @param secureKeyId {@link SecureKeyId} secure key name
    * @return {@link SecureStoreMetadata} metadata associated with the key
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
-  public SecureStoreMetadata getKeyMetadata(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException, UnauthorizedException {
+  public SecureStoreMetadata getKeyMetadata(SecureKeyId secureKeyId)
+      throws IOException, UnauthenticatedException,
+      SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(),
-                                            String.format("%s/metadata", getSecureKeyPath(secureKeyId)));
+        String.format("%s/metadata", getSecureKeyPath(secureKeyId)));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new SecureKeyNotFoundException(secureKeyId);
     }
@@ -126,16 +133,18 @@ public class SecureStoreClient {
 
   /**
    * Delete the secure key
+   *
    * @param secureKeyId {@link SecureKeyId} secure key name
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws SecureKeyNotFoundException if secure key or the namespace is not found
    */
   public void deleteKey(SecureKeyId secureKeyId) throws IOException, UnauthenticatedException,
-    SecureKeyNotFoundException, UnauthorizedException {
+      SecureKeyNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(secureKeyId.getParent(), getSecureKeyPath(secureKeyId));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new SecureKeyNotFoundException(secureKeyId);
     }
@@ -143,21 +152,25 @@ public class SecureStoreClient {
 
   /**
    * List all the secure keys in the namespace
+   *
    * @param namespaceId {@link NamespaceId} namespace id
    * @return list of key names and descriptions
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws NamespaceNotFoundException if the given namespace is not found
    */
-  public List<SecureStoreMetadata> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
-    NamespaceNotFoundException, UnauthorizedException {
+  public List<SecureStoreMetadata> listKeys(NamespaceId namespaceId)
+      throws IOException, UnauthenticatedException,
+      NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespaceId, SECURE_KEYS);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SecureStoreMetadata>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SecureStoreMetadata>>() {
+    }).getResponseObject();
   }
 
   private static String getSecureKeyPath(SecureKeyId secureKeyId) {

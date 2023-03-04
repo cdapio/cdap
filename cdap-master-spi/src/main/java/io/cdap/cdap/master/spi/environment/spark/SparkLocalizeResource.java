@@ -23,6 +23,7 @@ import java.net.URI;
  * Represents a resource that will be localized in master environment.
  */
 public class SparkLocalizeResource {
+
   private final URI uri;
   private final boolean isArchive;
 
@@ -53,9 +54,9 @@ public class SparkLocalizeResource {
 
   @Override
   public String toString() {
-    return "SparkLocalizeResource{" +
-      "uri=" + uri +
-      ", isArchive=" + isArchive +
-      '}';
+    return "SparkLocalizeResource{"
+        + "uri=" + uri
+        + ", isArchive=" + isArchive
+        + '}';
   }
 }

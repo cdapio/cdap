@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * An abstraction on persistent storage of consumer information.
  */
 public class MetricsConsumerMetaTable {
+
   private static final byte[] MESSAGE_ID_COLUMN = Bytes.toBytes("m");
 
   private static final byte[] PROCESS_COUNT = Bytes.toBytes("pct");
@@ -40,7 +41,8 @@ public class MetricsConsumerMetaTable {
     this.metaTable = metaTable;
   }
 
-  public <T extends MetricsMetaKey> void saveMetricsProcessorStats(Map<T, TopicProcessMeta> messageIds) {
+  public <T extends MetricsMetaKey> void saveMetricsProcessorStats(
+      Map<T, TopicProcessMeta> messageIds) {
     SortedMap<byte[], SortedMap<byte[], byte[]>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<T, TopicProcessMeta> entry : messageIds.entrySet()) {
       TopicProcessMeta metaInfo = entry.getValue();

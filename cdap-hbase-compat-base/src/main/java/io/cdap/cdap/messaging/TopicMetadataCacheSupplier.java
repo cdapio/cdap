@@ -27,18 +27,21 @@ import org.apache.tephra.coprocessor.ReferenceCountedSupplier;
  * Supplies instances of {@link TopicMetadataCache} implementations.
  */
 public class TopicMetadataCacheSupplier implements CacheSupplier<TopicMetadataCache> {
+
   private static final ReferenceCountedSupplier<TopicMetadataCache> referenceCountedSupplier =
-    new ReferenceCountedSupplier<>(TopicMetadataCache.class.getSimpleName());
+      new ReferenceCountedSupplier<>(TopicMetadataCache.class.getSimpleName());
 
   private final Supplier<TopicMetadataCache> supplier;
 
-  public TopicMetadataCacheSupplier(final RegionCoprocessorEnvironment env, final CConfigurationReader cConfReader,
-                                    final String hbaseNamespacePrefix, final String metadataTableNamespace,
-                                    final ScanBuilder scanBuilder) {
+  public TopicMetadataCacheSupplier(final RegionCoprocessorEnvironment env,
+      final CConfigurationReader cConfReader,
+      final String hbaseNamespacePrefix, final String metadataTableNamespace,
+      final ScanBuilder scanBuilder) {
     this.supplier = new Supplier<TopicMetadataCache>() {
       @Override
       public TopicMetadataCache get() {
-        return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix, metadataTableNamespace, scanBuilder);
+        return new TopicMetadataCache(env, cConfReader, hbaseNamespacePrefix,
+            metadataTableNamespace, scanBuilder);
       }
     };
   }

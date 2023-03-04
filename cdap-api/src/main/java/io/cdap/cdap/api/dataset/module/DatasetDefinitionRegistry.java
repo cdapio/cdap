@@ -26,20 +26,23 @@ import io.cdap.cdap.api.dataset.DatasetDefinition;
  */
 @Beta
 public interface DatasetDefinitionRegistry {
+
   /**
    * Adds {@link io.cdap.cdap.api.dataset.DatasetDefinition} to the registry.
    *
    * After it was added it is available thru {@link #get(String)} method.
    *
    * @param def definition to add
-   * @throws IllegalArgumentException if registry already contains dataset type of the same name as given definition
+   * @throws IllegalArgumentException if registry already contains dataset type of the same name
+   *     as given definition
    */
   void add(DatasetDefinition def);
 
   /**
    * Gets {@link DatasetDefinition} previously added to the registry.
-   * @param datasetTypeName dataset type name, should be same as
-   *                        {@link io.cdap.cdap.api.dataset.DatasetDefinition#getName()}
+   *
+   * @param datasetTypeName dataset type name, should be same as {@link
+   *     io.cdap.cdap.api.dataset.DatasetDefinition#getName()}
    * @param <T> type of the returned {@link DatasetDefinition}
    * @return instance of {@link DatasetDefinition}
    * @throws IllegalArgumentException if registry does not contain dataset type of a given name

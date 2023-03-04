@@ -27,12 +27,12 @@ import javax.annotation.Nullable;
 public interface ServiceDiscoverer {
 
   /**
-   * Discover the base URL for a Service of an Application running in a Namespace, relative to which Service endpoints
-   * can be accessed
+   * Discover the base URL for a Service of an Application running in a Namespace, relative to which
+   * Service endpoints can be accessed
    *
-   * @param namespaceId   Namespace of the application
+   * @param namespaceId Namespace of the application
    * @param applicationId Application name
-   * @param serviceId     Service name
+   * @param serviceId Service name
    * @return URL for the discovered service or null if the service is not found
    */
   @Nullable
@@ -44,14 +44,15 @@ public interface ServiceDiscoverer {
    * Discover the base URL for a Service, relative to which Service endpoints can be accessed
    *
    * @param applicationId Application name
-   * @param serviceId     Service name
+   * @param serviceId Service name
    * @return URL for the discovered service or null if the service is not found
    */
   @Nullable
   URL getServiceURL(String applicationId, String serviceId);
 
   /**
-   * Discover the base URL for a Service in the same application, relative to which Service endpoints can be accessed
+   * Discover the base URL for a Service in the same application, relative to which Service
+   * endpoints can be accessed
    *
    * @param serviceId Service Name
    * @return URL for the discovered service or null if the service is not found
@@ -66,13 +67,14 @@ public interface ServiceDiscoverer {
    * @param applicationId Application name
    * @param serviceId Service name
    * @param methodPath Service method path as declared by the service handler
-   * @return a {@link HttpURLConnection} for communicating with the Service endpoint, or {@code null} if the service
-   *         is not found
-   * @throws IOException if Service is found but failed to open a connection to the given Service endpoint
+   * @return a {@link HttpURLConnection} for communicating with the Service endpoint, or {@code
+   *     null} if the service is not found
+   * @throws IOException if Service is found but failed to open a connection to the given
+   *     Service endpoint
    */
   @Nullable
   default HttpURLConnection openConnection(String namespaceId, String applicationId,
-                                           String serviceId, String methodPath) throws IOException {
+      String serviceId, String methodPath) throws IOException {
     throw new UnsupportedOperationException("Connection is not supported");
   }
 }

@@ -72,11 +72,12 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
       protected void configure() {
         bind(HBaseTableUtil.class).toProvider(HBaseTableUtilProvider.class);
         bind(TableFactory.class)
-          .annotatedWith(Names.named(CachingTableFactory.DELEGATE_TABLE_FACTORY))
-          .to(HBaseTableFactory.class);
+            .annotatedWith(Names.named(CachingTableFactory.DELEGATE_TABLE_FACTORY))
+            .to(HBaseTableFactory.class);
 
         // The cache must be in singleton scope
-        bind(MessageTableCacheProvider.class).to(DefaultMessageTableCacheProvider.class).in(Scopes.SINGLETON);
+        bind(MessageTableCacheProvider.class).to(DefaultMessageTableCacheProvider.class)
+            .in(Scopes.SINGLETON);
         bind(TableFactory.class).to(CachingTableFactory.class);
 
         // Bind http handlers
@@ -91,7 +92,7 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
   @VisibleForTesting
   public static void bindHandlers(Binder binder, String bindingName) {
     Multibinder<HttpHandler> handlerBinder =
-      Multibinder.newSetBinder(binder, HttpHandler.class, Names.named(bindingName));
+        Multibinder.newSetBinder(binder, HttpHandler.class, Names.named(bindingName));
 
     handlerBinder.addBinding().to(MetadataHandler.class);
     handlerBinder.addBinding().to(StoreHandler.class);
@@ -138,9 +139,10 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
   }
 
   /**
-   * A guice provider for {@link HBaseTableUtil}. We don't use {@link HBaseTableUtilFactory} as a provider
-   * directly because the {@code @Inject} constructor of {@link HBaseTableUtilFactory} requires a
-   * injection of NamespaceQueryAdmin, which is unnecessary for Messaging service purpose.
+   * A guice provider for {@link HBaseTableUtil}. We don't use {@link HBaseTableUtilFactory} as a
+   * provider directly because the {@code @Inject} constructor of {@link HBaseTableUtilFactory}
+   * requires a injection of NamespaceQueryAdmin, which is unnecessary for Messaging service
+   * purpose.
    */
   private static final class HBaseTableUtilProvider implements Provider<HBaseTableUtil> {
 

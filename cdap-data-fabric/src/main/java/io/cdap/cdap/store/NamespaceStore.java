@@ -23,8 +23,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Store for namespaces. This interface is by default implemented by {@link DefaultNamespaceStore}, unless
- * explicitly overridden for testing.
+ * Store for namespaces. This interface is by default implemented by {@link DefaultNamespaceStore},
+ * unless explicitly overridden for testing.
  */
 @ImplementedBy(DefaultNamespaceStore.class)
 public interface NamespaceStore {
@@ -33,9 +33,9 @@ public interface NamespaceStore {
    * Creates a new namespace.
    *
    * @param metadata {@link NamespaceMeta} representing the namespace metadata
-   * @return existing {@link NamespaceMeta} if a namespace with the specified name existed already, null if the
-   * a namespace with the specified name did not exist, and was created successfully
-   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
+   * @return existing {@link NamespaceMeta} if a namespace with the specified name existed already,
+   *     null if the a namespace with the specified name did not exist, and was created successfully
+   *     These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
    */
   @Nullable
   NamespaceMeta create(NamespaceMeta metadata);
@@ -60,9 +60,9 @@ public interface NamespaceStore {
    * Deletes a namespace from the namespace metadata store.
    *
    * @param id {@link NamespaceId} of the namespace to delete
-   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if the specified namespace did not
-   * exist
-   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
+   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if the
+   *     specified namespace did not exist These semantics of return type are borrowed from {@link
+   *     java.util.concurrent.ConcurrentHashMap#remove}
    */
   @Nullable
   NamespaceMeta delete(NamespaceId id);
@@ -76,6 +76,7 @@ public interface NamespaceStore {
 
   /**
    * Counts all namespaces.
+   *
    * @return long of the count
    */
   long getNamespaceCount();

@@ -19,8 +19,8 @@ package io.cdap.cdap.proto.security;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Represents a {@link Role} that can be added to a {@link Principal user} or {@link Principal group}.
- * This is used in Role Based Access Control such as Apache Sentry.
+ * Represents a {@link Role} that can be added to a {@link Principal user} or {@link Principal
+ * group}. This is used in Role Based Access Control such as Apache Sentry.
  */
 @Beta
 public class Role extends Principal {

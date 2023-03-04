@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class PluginClass {
+
   private final String type;
   private final String name;
   private final String category;
@@ -55,8 +56,8 @@ public class PluginClass {
   }
 
   private PluginClass(String type, String name, @Nullable String category,
-                      String className, String configFieldName, Map<String, PluginPropertyField> properties,
-                      Requirements requirements, String description) {
+      String className, String configFieldName, Map<String, PluginPropertyField> properties,
+      Requirements requirements, String description) {
     this.type = type;
     this.name = name;
     this.category = category;
@@ -72,8 +73,8 @@ public class PluginClass {
    */
   @Deprecated
   public PluginClass(String type, String name, String className,
-                     @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
-                     Requirements requirements, String description) {
+      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+      Requirements requirements, String description) {
     this(type, name, null, className, configfieldName, properties, requirements, description);
   }
 
@@ -81,8 +82,9 @@ public class PluginClass {
    * @deprecated use {@link Builder} to create the object
    */
   @Deprecated
-  public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
-                     Map<String, PluginPropertyField> properties) {
+  public PluginClass(String type, String name, String description, String className,
+      @Nullable String configfieldName,
+      Map<String, PluginPropertyField> properties) {
     this(type, name, className, configfieldName, properties, Requirements.EMPTY, description);
   }
 
@@ -127,8 +129,8 @@ public class PluginClass {
   }
 
   /**
-   * Returns the category of the plugin.
-   * If a plugin does not belong to any category, {@code null} will be returned.
+   * Returns the category of the plugin. If a plugin does not belong to any category, {@code null}
+   * will be returned.
    */
   @Nullable
   public String getCategory() {
@@ -150,8 +152,8 @@ public class PluginClass {
   }
 
   /**
-   * Returns the name of the field that extends from {@link PluginConfig} in the plugin class.
-   * If no such field, {@code null} will be returned.
+   * Returns the name of the field that extends from {@link PluginConfig} in the plugin class. If no
+   * such field, {@code null} will be returned.
    */
   @Nullable
   public String getConfigFieldName() {
@@ -159,7 +161,8 @@ public class PluginClass {
   }
 
   /**
-   * Returns a map from config property name to {@link PluginPropertyField} that are supported by the plugin class.
+   * Returns a map from config property name to {@link PluginPropertyField} that are supported by
+   * the plugin class.
    */
   public Map<String, PluginPropertyField> getProperties() {
     return properties;
@@ -184,38 +187,40 @@ public class PluginClass {
     PluginClass that = (PluginClass) o;
 
     return Objects.equals(type, that.type)
-      && Objects.equals(name, that.name)
-      && Objects.equals(category, that.category)
-      && Objects.equals(description, that.description)
-      && Objects.equals(className, that.className)
-      && Objects.equals(configFieldName, that.configFieldName)
-      && Objects.equals(properties, that.properties)
-      && Objects.equals(requirements, that.requirements);
+        && Objects.equals(name, that.name)
+        && Objects.equals(category, that.category)
+        && Objects.equals(description, that.description)
+        && Objects.equals(className, that.className)
+        && Objects.equals(configFieldName, that.configFieldName)
+        && Objects.equals(properties, that.properties)
+        && Objects.equals(requirements, that.requirements);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, category, description, className, configFieldName, properties, requirements);
+    return Objects.hash(type, name, category, description, className, configFieldName, properties,
+        requirements);
   }
 
   @Override
   public String toString() {
-    return "PluginClass{" +
-      "type='" + type + '\'' +
-      ", name='" + name + '\'' +
-      ", category='" + category + '\'' +
-      ", description='" + description + '\'' +
-      ", className='" + className + '\'' +
-      ", configFieldName='" + configFieldName + '\'' +
-      ", properties=" + properties +
-      ", requirements=" + requirements +
-      '}';
+    return "PluginClass{"
+        + "type='" + type + '\''
+        + ", name='" + name + '\''
+        + ", category='" + category + '\''
+        + ", description='" + description + '\''
+        + ", className='" + className + '\''
+        + ", configFieldName='" + configFieldName + '\''
+        + ", properties=" + properties
+        + ", requirements=" + requirements
+        + '}';
   }
 
   /**
    * A builder to create {@link PluginClass} instance.
    */
   public static final class Builder {
+
     private String type;
     private String name;
     private String category;
@@ -323,7 +328,7 @@ public class PluginClass {
      */
     public PluginClass build() {
       PluginClass pluginClass = new PluginClass(type, name, category, className, configFieldName,
-                                                properties, requirements, description);
+          properties, requirements, description);
       pluginClass.validate();
       return pluginClass;
     }

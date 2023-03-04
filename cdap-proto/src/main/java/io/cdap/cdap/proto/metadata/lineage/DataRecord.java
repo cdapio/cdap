@@ -23,6 +23,7 @@ import java.util.Objects;
  * Class to serialize data in {@link LineageRecord}.
  */
 public class DataRecord {
+
   private final NamespacedEntityId entityId;
 
   public DataRecord(NamespacedEntityId entityId) {
@@ -48,8 +49,8 @@ public class DataRecord {
 
   @Override
   public String toString() {
-    return "DataRecord{" +
-      "entityId=" + entityId +
-      '}';
+    return "DataRecord{"
+        + "entityId=" + entityId
+        + '}';
   }
 }

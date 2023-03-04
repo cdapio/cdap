@@ -56,30 +56,30 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new MessagingClientModule(),
-      new NamespaceQueryAdminModule(),
-      getDataFabricModule(),
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new SupportBundleServiceModule(),
-      new DFSLocationModule()
+        new MessagingClientModule(),
+        new NamespaceQueryAdminModule(),
+        getDataFabricModule(),
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new SupportBundleServiceModule(),
+        new DFSLocationModule()
     );
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     services.add(injector.getInstance(SupportBundleInternalService.class));
     Binding<ZKClientService> zkBinding = injector.getExistingBinding(
-      Key.get(ZKClientService.class));
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -89,8 +89,8 @@ public class SupportBundleServiceMain extends AbstractServiceMain<EnvironmentOpt
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.SUPPORT_BUNDLE_SERVICE);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.SUPPORT_BUNDLE_SERVICE);
   }
 
 }

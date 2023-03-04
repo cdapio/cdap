@@ -19,8 +19,8 @@ package io.cdap.cdap.etl.api;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Used to emit one or more key-value pairs to output ports. Values emitted to a port will only be received by
- * stages connected to that specific port.
+ * Used to emit one or more key-value pairs to output ports. Values emitted to a port will only be
+ * received by stages connected to that specific port.
  *
  * @param <T> Type of error record
  */
@@ -28,7 +28,8 @@ import io.cdap.cdap.api.annotation.Beta;
 public interface MultiOutputEmitter<T> extends AlertEmitter, ErrorEmitter<T> {
 
   /**
-   * Emit an output record to the specified port. Only stages connected to that port will receive the record.
+   * Emit an output record to the specified port. Only stages connected to that port will receive
+   * the record.
    *
    * @param port the port to emit the output record to
    * @param value the output record

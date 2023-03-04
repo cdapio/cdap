@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
  * The nosql structured row represents a row in the nosql table.
  */
 public final class NoSqlStructuredRow implements StructuredRow {
+
   private final Row row;
   private final StructuredTableSchema tableSchema;
   private final Map<String, Object> keyFields;
@@ -149,14 +150,16 @@ public final class NoSqlStructuredRow implements StructuredRow {
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
           throw new IllegalStateException(
-            String.format("The type %s of the primary key %s is not a valid key type", type, key));
+              String.format("The type %s of the primary key %s is not a valid key type", type,
+                  key));
       }
     }
     return builder.build();
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T getFieldValue(String fieldName, FieldType.Type expectedType) throws InvalidFieldException {
+  private <T> T getFieldValue(String fieldName, FieldType.Type expectedType)
+      throws InvalidFieldException {
     switch (expectedType) {
       case INTEGER:
         return (T) row.getInt(fieldName);

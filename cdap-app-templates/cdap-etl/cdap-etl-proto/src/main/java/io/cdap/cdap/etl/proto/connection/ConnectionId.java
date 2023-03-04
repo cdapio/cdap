@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
  * Connection id to identify a connection
  */
 public class ConnectionId {
+
   private static final Pattern MACRO_CHARS = Pattern.compile("[${}()]");
   private static final String REGEX = "[^a-zA-Z0-9_]";
   private static final String REPLACED_CHAR = "_";
@@ -51,18 +52,19 @@ public class ConnectionId {
   }
 
   /**
-   * Get connection id for the given connection name. The connection name should not contain any characters specific
-   * to macro evaluation.
-   * Connection id will be lower case and only contains a-z, 0-9 and underscore.
-   * The length requirement is <=50, since the metadata tag has a restriction of 50 characters.
+   * Get connection id for the given connection name. The connection name should not contain any
+   * characters specific to macro evaluation. Connection id will be lower case and only contains
+   * a-z, 0-9 and underscore. The length requirement is <=50, since the metadata tag has a
+   * restriction of 50 characters.
    *
    * @param name name of the connection.
    * @return connection id.
    */
   public static String getConnectionId(String name) {
     if (MACRO_CHARS.matcher(name).find()) {
-      throw new ConnectionBadRequestException(String.format("The connection name %s should not contain characters " +
-                                                              "'$', '{', '}', '(', ')'.", name));
+      throw new ConnectionBadRequestException(
+          String.format("The connection name %s should not contain characters "
+              + "'$', '{', '}', '(', ')'.", name));
     }
 
     name = name.trim();
@@ -74,7 +76,9 @@ public class ConnectionId {
     }
     if (name.isEmpty()) {
       throw new ConnectionBadRequestException(
-        String.format("The connection name %s should contain at least one alphanumeric character or '_'.", name));
+          String.format(
+              "The connection name %s should contain at least one alphanumeric character or '_'.",
+              name));
     }
     return name;
   }
@@ -89,9 +93,9 @@ public class ConnectionId {
     }
 
     ConnectionId that = (ConnectionId) o;
-    return Objects.equals(namespace, that.namespace) &&
-      Objects.equals(connection, that.connection) &&
-      Objects.equals(connectionId, that.connectionId);
+    return Objects.equals(namespace, that.namespace)
+        && Objects.equals(connection, that.connection)
+        && Objects.equals(connectionId, that.connectionId);
   }
 
   @Override

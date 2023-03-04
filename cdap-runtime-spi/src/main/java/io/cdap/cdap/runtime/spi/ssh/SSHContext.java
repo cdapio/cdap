@@ -26,7 +26,8 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * This context provides ssh keys and access to {@link SSHSession} for interacting with remote hosts.
+ * This context provides ssh keys and access to {@link SSHSession} for interacting with remote
+ * hosts.
  */
 public interface SSHContext {
 
@@ -52,32 +53,33 @@ public interface SSHContext {
   SSHKeyPair generate(String user, int bits) throws KeyException;
 
   /**
-   * Sets the SSH key pair for the platform to communicate with the cluster in future.
-   * This method can only be called during the {@link Provisioner#createCluster(ProvisionerContext)} call.
+   * Sets the SSH key pair for the platform to communicate with the cluster in future. This method
+   * can only be called during the {@link Provisioner#createCluster(ProvisionerContext)} call.
    *
    * @param sshKeyPair the {@link SSHKeyPair} to use
    */
   void setSSHKeyPair(SSHKeyPair sshKeyPair);
 
   /**
-   * Returns the {@link SSHKeyPair} that were set earlier via the {@link #setSSHKeyPair(SSHKeyPair)} method during the
-   * {@link Provisioner#createCluster(ProvisionerContext)} time.
+   * Returns the {@link SSHKeyPair} that were set earlier via the {@link #setSSHKeyPair(SSHKeyPair)}
+   * method during the {@link Provisioner#createCluster(ProvisionerContext)} time.
    *
    * @return an {@link Optional} of {@link SSHKeyPair}
    */
   Optional<SSHKeyPair> getSSHKeyPair();
 
   /**
-   * Creates a {@link SSHSession} to the given host. It uses the {@link SSHKeyPair}
-   * set via the {@link #setSSHKeyPair(SSHKeyPair)} method.
+   * Creates a {@link SSHSession} to the given host. It uses the {@link SSHKeyPair} set via the
+   * {@link #setSSHKeyPair(SSHKeyPair)} method.
    *
    * @param host hostname to ssh to
    * @return a new {@link SSHSession}
    * @throws IOException if failed to create a new session to the host
    */
   default SSHSession createSSHSession(String host) throws IOException {
-    return createSSHSession(getSSHKeyPair().orElseThrow(() -> new IllegalStateException("No SSHKeyPair available")),
-                            host);
+    return createSSHSession(
+        getSSHKeyPair().orElseThrow(() -> new IllegalStateException("No SSHKeyPair available")),
+        host);
   }
 
   /**
@@ -89,11 +91,12 @@ public interface SSHContext {
    */
   default SSHSession createSSHSession(SSHKeyPair keyPair, String host) throws IOException {
     return createSSHSession(keyPair.getPublicKey().getUser(), keyPair.getPrivateKeySupplier(),
-                            host, 22, Collections.emptyMap());
+        host, 22, Collections.emptyMap());
   }
 
   /**
-   * Creates a {@link SSHSession} to the given host, on a specific port, and with extra sets of ssh configurations.
+   * Creates a {@link SSHSession} to the given host, on a specific port, and with extra sets of ssh
+   * configurations.
    *
    * @param user user name for ssh
    * @param privateKeySupplier a {@link Supplier} to private key used for ssh
@@ -104,5 +107,5 @@ public interface SSHContext {
    * @throws IOException if failed to create a new session to the host
    */
   SSHSession createSSHSession(String user, Supplier<byte[]> privateKeySupplier, String host,
-                              int port, Map<String, String> configs) throws IOException;
+      int port, Map<String, String> configs) throws IOException;
 }

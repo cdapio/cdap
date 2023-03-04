@@ -25,6 +25,7 @@ import java.util.Set;
  * {@link Indexer} that returns the {@link MetadataEntry} value as the only index.
  */
 public class ValueOnlyIndexer implements Indexer {
+
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     return Collections.singleton(entry.getValue());

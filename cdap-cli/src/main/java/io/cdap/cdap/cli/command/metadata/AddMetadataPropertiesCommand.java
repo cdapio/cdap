@@ -42,7 +42,7 @@ public class AddMetadataPropertiesCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     MetadataEntity metadataEntity =
-      MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
+        MetadataCommandHelper.toMetadataEntity(arguments.get(ArgumentName.ENTITY.toString()));
     Map<String, String> properties = parseMap(arguments.get("properties"), "<properties>");
     client.addProperties(metadataEntity, properties);
     output.println("Successfully added metadata properties");

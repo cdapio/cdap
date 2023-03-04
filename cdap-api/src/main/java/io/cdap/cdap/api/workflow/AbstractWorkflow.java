@@ -32,7 +32,7 @@ import java.util.Map;
  * <p>
  * Example of configuring a workflow:
  *
- *  <pre>
+ * <pre>
  *    <code>
  *      {@literal @}Override
  *      public void configure() {
@@ -46,7 +46,7 @@ import java.util.Map;
  * See the Purchase example application.
  */
 public abstract class AbstractWorkflow extends AbstractPluginConfigurable<WorkflowConfigurer>
-  implements Workflow, ProgramLifecycle<WorkflowContext> {
+    implements Workflow, ProgramLifecycle<WorkflowContext> {
 
   private WorkflowConfigurer configurer;
   private WorkflowContext context;
@@ -96,6 +96,7 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
 
   /**
    * Adds a custom action to the {@link Workflow}.
+   *
    * @param action the action to be added
    */
   protected final void addAction(CustomAction action) {
@@ -104,6 +105,7 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
 
   /**
    * Adds a MapReduce program to the {@link Workflow}.
+   *
    * @param mapReduce the name of MapReduce program to be added
    */
   protected final void addMapReduce(String mapReduce) {
@@ -112,6 +114,7 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
 
   /**
    * Adds a Spark program to the {@link Workflow}.
+   *
    * @param spark the name of the Spark program to be added
    */
   protected final void addSpark(String spark) {
@@ -120,6 +123,7 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
 
   /**
    * Adds a fork to the {@link Workflow}.
+   *
    * @return the {@link WorkflowForkConfigurer} to configure actions in the fork
    */
   protected final WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
@@ -128,20 +132,23 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
 
   /**
    * Adds a condition to the {@link Workflow}.
+   *
    * @param predicate the {@link Predicate} to be evaluated to determine which branch to take
    * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
    */
   protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
-    Predicate<WorkflowContext> predicate) {
+      Predicate<WorkflowContext> predicate) {
     return configurer.condition(predicate);
   }
 
   /**
    * Adds a condition to the {@link Workflow}.
+   *
    * @param condition the {@link Condition} to be evaluated to determine which branch to take
    * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
    */
-  protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
+  protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(
+      Condition condition) {
     return configurer.condition(condition);
   }
 
@@ -149,14 +156,15 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
    * Adds a local dataset instance to the {@link Workflow}.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
    * @param properties dataset instance properties
    */
-  protected final void createLocalDataset(String datasetName, String typeName, DatasetProperties properties) {
+  protected final void createLocalDataset(String datasetName, String typeName,
+      DatasetProperties properties) {
     configurer.createLocalDataset(datasetName, typeName, properties);
   }
 
@@ -164,8 +172,8 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
    * Adds a local dataset instance with {@link DatasetProperties#EMPTY} to the {@link Workflow}.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName name of the dataset instance
    * @param typeName name of the dataset type
@@ -179,30 +187,32 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
    * represented by the datasetClass parameter in the current namespace.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName name of the dataset instance
    * @param datasetClass dataset class to create the Dataset type from
    * @param props dataset instance properties
    */
   protected final void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass,
-                                          DatasetProperties props) {
+      DatasetProperties props) {
     configurer.createLocalDataset(datasetName, datasetClass, props);
   }
 
   /**
    * Adds a local dataset instance with {@link DatasetProperties#EMPTY} to the {@link Workflow}.
-   * Also deploys the dataset type represented by the datasetClass parameter in the current namespace.
+   * Also deploys the dataset type represented by the datasetClass parameter in the current
+   * namespace.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
-   * is complete. User can decide to keep the local datasets even after the run is complete by specifying
-   * the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
+   * is complete. User can decide to keep the local datasets even after the run is complete by
+   * specifying the runtime arguments - <code>dataset.dataset_name.keep.local=true</code>.
    *
    * @param datasetName name of the dataset instance
    * @param datasetClass dataset class to create the Dataset type from
    */
-  protected final void createLocalDataset(String datasetName, Class<? extends Dataset> datasetClass) {
+  protected final void createLocalDataset(String datasetName,
+      Class<? extends Dataset> datasetClass) {
     createLocalDataset(datasetName, datasetClass, DatasetProperties.EMPTY);
   }
 

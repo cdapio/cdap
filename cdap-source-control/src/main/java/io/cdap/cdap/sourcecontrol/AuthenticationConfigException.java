@@ -17,10 +17,11 @@
 package io.cdap.cdap.sourcecontrol;
 
 /**
- * Exception thrown when an error is encountered while setting up authentication credentials for the remote
- * Git repo.
+ * Exception thrown when an error is encountered while setting up authentication credentials for the
+ * remote Git repo.
  */
 public class AuthenticationConfigException extends Exception {
+
   public AuthenticationConfigException(String message, Exception cause) {
     super(message, cause);
   }

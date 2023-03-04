@@ -22,11 +22,11 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Stores and retrieves secrets and associated metadata for the secrets. It must not be used to store
- * secrets/sensitive information in plain text.
+ * Stores and retrieves secrets and associated metadata for the secrets. It must not be used to
+ * store secrets/sensitive information in plain text.
  *
- * The implementation of this class must be thread safe as store and retrieve methods can be called from multiple
- * threads.
+ * The implementation of this class must be thread safe as store and retrieve methods can be called
+ * from multiple threads.
  */
 public interface SecretStore {
 
@@ -39,7 +39,8 @@ public interface SecretStore {
    * @throws SecretNotFoundException if secret is not found in provided namespace
    * @throws IOException if unable to retrieve the secret
    */
-  <T> T get(String namespace, String name, Decoder<T> decoder) throws SecretNotFoundException, IOException;
+  <T> T get(String namespace, String name, Decoder<T> decoder)
+      throws SecretNotFoundException, IOException;
 
   /**
    * Provides list of all the secrets for which data is stored.
@@ -51,7 +52,8 @@ public interface SecretStore {
   <T> Collection<T> list(String namespace, Decoder<T> decoder) throws IOException;
 
   /**
-   * Persists provided data in the store for a given secret. If the secret already exists, it will be replaced.
+   * Persists provided data in the store for a given secret. If the secret already exists, it will
+   * be replaced.
    *
    * @param namespace the namespace to which secret belong to
    * @param name the name of the secret

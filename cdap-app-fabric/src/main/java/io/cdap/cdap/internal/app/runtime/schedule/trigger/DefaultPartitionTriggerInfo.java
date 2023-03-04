@@ -22,14 +22,16 @@ import java.io.Serializable;
 /**
  * The dataset partition trigger information to be passed to the triggered program.
  */
-public class DefaultPartitionTriggerInfo extends AbstractTriggerInfo implements PartitionTriggerInfo, Serializable {
+public class DefaultPartitionTriggerInfo extends AbstractTriggerInfo implements
+    PartitionTriggerInfo, Serializable {
+
   private final String datasetNamespace;
   private final String datasetName;
   private final int expectedNumPartitions;
   private final int actualNumPartitions;
 
   public DefaultPartitionTriggerInfo(String datasetNamespace, String datasetName,
-                                     int expectedNumPartitions, int actualNumPartitions) {
+      int expectedNumPartitions, int actualNumPartitions) {
     super(Type.PARTITION);
     this.datasetNamespace = datasetNamespace;
     this.datasetName = datasetName;

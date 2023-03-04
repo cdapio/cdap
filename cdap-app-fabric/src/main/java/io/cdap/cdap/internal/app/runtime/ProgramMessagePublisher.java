@@ -26,7 +26,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * A {@link MessagePublisher} for program to use, which doesn't allow publishing to system namespace.
+ * A {@link MessagePublisher} for program to use, which doesn't allow publishing to system
+ * namespace.
  */
 final class ProgramMessagePublisher extends AbstractMessagePublisher {
 
@@ -38,9 +39,10 @@ final class ProgramMessagePublisher extends AbstractMessagePublisher {
 
   @Override
   protected void publish(TopicId topicId, Iterator<byte[]> payloads)
-    throws IOException, TopicNotFoundException, AccessException {
+      throws IOException, TopicNotFoundException, AccessException {
     if (NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
-      throw new IllegalArgumentException("Publish to '" + topicId.getNamespace() + "' namespace is not allowed");
+      throw new IllegalArgumentException(
+          "Publish to '" + topicId.getNamespace() + "' namespace is not allowed");
     }
     delegate.publish(topicId.getNamespace(), topicId.getTopic(), payloads);
   }

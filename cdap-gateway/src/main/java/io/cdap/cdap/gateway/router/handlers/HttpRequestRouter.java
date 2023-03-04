@@ -68,9 +68,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ChannelInboundHandler} for forwarding incoming request to appropriate CDAP service endpoint
- * based on the request. This class doesn't need to be thread safe as Netty will make sure there is no
- * concurrent calls to ChannelHandler and each call always have a happens-before relationship to the previous call.
+ * A {@link ChannelInboundHandler} for forwarding incoming request to appropriate CDAP service
+ * endpoint based on the request. This class doesn't need to be thread safe as Netty will make sure
+ * there is no concurrent calls to ChannelHandler and each call always have a happens-before
+ * relationship to the previous call.
  */
 public class HttpRequestRouter extends ChannelDuplexHandler {
 
@@ -100,7 +101,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
 
         // For "/" request, response with 200. This is for load balancer health check
         if ("/".equals(request.uri())) {
-          HttpResponse response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
+          HttpResponse response = new DefaultFullHttpResponse(request.protocolVersion(),
+              HttpResponseStatus.OK);
           HttpUtil.setContentLength(response, 0L);
           inboundChannel.writeAndFlush(response);
           return;
@@ -129,7 +131,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         };
 
         currentMessageSender = getMessageSender(
-          inboundChannel, getDiscoverable(request)
+            inboundChannel, getDiscoverable(request)
         );
       }
 
@@ -171,8 +173,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     HttpResponse response = cause instanceof HandlerException
-      ? ((HandlerException) cause).createFailureResponse()
-      : createErrorResponse(cause);
+        ? ((HandlerException) cause).createFailureResponse()
+        : createErrorResponse(cause);
     HttpUtil.setKeepAlive(response, false);
     ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
   }
@@ -213,7 +215,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     EndpointStrategy strategy = serviceLookup.getDiscoverable(httpRequest);
     if (strategy == null) {
       throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                                 "No endpoint strategy found for request " + getRequestLine(httpRequest));
+          "No endpoint strategy found for request " + getRequestLine(httpRequest));
     }
     // Do a non-blocking pick first. If the service has been discovered before, this should return an endpoint
     // immediately.
@@ -227,7 +229,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     discoverable = strategy.pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                                 "No discoverable found for request " + getRequestLine(httpRequest));
+          "No discoverable found for request " + getRequestLine(httpRequest));
     }
     return discoverable;
   }
@@ -237,8 +239,9 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
    * {@link Discoverable}.
    */
   private MessageSender getMessageSender(Channel inboundChannel,
-                                         Discoverable discoverable) {
-    Queue<MessageSender> senders = messageSenders.computeIfAbsent(discoverable, k -> new LinkedList<>());
+      Discoverable discoverable) {
+    Queue<MessageSender> senders = messageSenders.computeIfAbsent(discoverable,
+        k -> new LinkedList<>());
 
     MessageSender sender = senders.poll();
 
@@ -259,15 +262,17 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   private HttpResponse createPipeliningNotSupported() {
-    FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.NOT_IMPLEMENTED);
-    response.content().writeCharSequence("HTTP pipelining is not supported", StandardCharsets.UTF_8);
+    FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+        HttpResponseStatus.NOT_IMPLEMENTED);
+    response.content()
+        .writeCharSequence("HTTP pipelining is not supported", StandardCharsets.UTF_8);
     HttpUtil.setContentLength(response, response.content().readableBytes());
     return response;
   }
 
   private static HttpResponse createErrorResponse(Throwable cause) {
     FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                                            HttpResponseStatus.INTERNAL_SERVER_ERROR);
+        HttpResponseStatus.INTERNAL_SERVER_ERROR);
     if (cause.getMessage() != null) {
       response.content().writeCharSequence(cause.getMessage(), StandardCharsets.UTF_8);
     }
@@ -289,7 +294,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
     private boolean closed;
     private boolean connecting;
 
-    private MessageSender(final CConfiguration cConf, final Channel inboundChannel, final Discoverable discoverable) {
+    private MessageSender(final CConfiguration cConf, final Channel inboundChannel,
+        final Discoverable discoverable) {
       this.discoverable = discoverable;
       this.pendingMessages = new LinkedList<>();
 
@@ -306,32 +312,34 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       // It must be create using the same EventLoopGroup as the inbound channel to make
       // sure thread safety between the inbound and outbound channels callbacks.
       this.clientBootstrap = new Bootstrap()
-        .group(inboundChannel.eventLoop())
-        .channel(NioSocketChannel.class)
-        .option(ChannelOption.SO_KEEPALIVE, true)
-        .handler(new ChannelInitializer<SocketChannel>() {
-          @Override
-          protected void initChannel(SocketChannel ch) throws Exception {
-            ch.closeFuture().addListener(onCloseResetListener);
-            ChannelPipeline pipeline = ch.pipeline();
+          .group(inboundChannel.eventLoop())
+          .channel(NioSocketChannel.class)
+          .option(ChannelOption.SO_KEEPALIVE, true)
+          .handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+              ch.closeFuture().addListener(onCloseResetListener);
+              ChannelPipeline pipeline = ch.pipeline();
 
-            SslHandler sslHandler = getSslHandler(discoverable, ch.alloc());
-            if (sslHandler != null) {
-              pipeline.addLast("ssl", sslHandler);
+              SslHandler sslHandler = getSslHandler(discoverable, ch.alloc());
+              if (sslHandler != null) {
+                pipeline.addLast("ssl", sslHandler);
+              }
+              pipeline.addLast("idle-state-handler",
+                  new IdleStateHandler(0, 0,
+                      cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS)));
+              pipeline.addLast("codec", new HttpClientCodec());
+              pipeline.addLast("forwarder", new OutboundHandler(inboundChannel));
             }
-            pipeline.addLast("idle-state-handler",
-                             new IdleStateHandler(0, 0, cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS)));
-            pipeline.addLast("codec", new HttpClientCodec());
-            pipeline.addLast("forwarder", new OutboundHandler(inboundChannel));
-          }
-        });
+          });
     }
 
     /**
      * Sends a message to the outbound channel.
      *
      * @param msg the message to be sent
-     * @param writeCompletedListener a {@link ChannelFutureListener} to be notified when the write completed
+     * @param writeCompletedListener a {@link ChannelFutureListener} to be notified when the
+     *     write completed
      */
     void send(Object msg, ChannelFutureListener writeCompletedListener) {
       if (outboundChannel != null) {
@@ -405,7 +413,8 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
      * @return the {@link SslContext} or {@code null} if SSL is not needed
      */
     @Nullable
-    private SslHandler getSslHandler(Discoverable discoverable, ByteBufAllocator alloc) throws SSLException {
+    private SslHandler getSslHandler(Discoverable discoverable, ByteBufAllocator alloc)
+        throws SSLException {
       if (!URIScheme.HTTPS.isMatch(discoverable)) {
         return null;
       }
@@ -417,21 +426,23 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
         context = sslContext;
         if (context == null) {
           sslContext = context = SslContextBuilder.forClient()
-                                                  .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+              .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
         }
         return context.newHandler(alloc);
       }
     }
 
     /**
-     * Process the message by sending to the given channel or have a failure call to the message callback,
-     * depending on the state of this sender.
+     * Process the message by sending to the given channel or have a failure call to the message
+     * callback, depending on the state of this sender.
      */
-    private void processMessage(OutboundMessage message, ChannelFuture channelFuture) throws Exception {
+    private void processMessage(OutboundMessage message, ChannelFuture channelFuture)
+        throws Exception {
       Channel channel = channelFuture.channel();
 
       if (closed) {
-        message.writeCompletedListener.operationComplete(channel.newFailedFuture(new ClosedChannelException()));
+        message.writeCompletedListener.operationComplete(
+            channel.newFailedFuture(new ClosedChannelException()));
         return;
       }
       if (channelFuture.isSuccess()) {
@@ -443,9 +454,11 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
   }
 
   /**
-   * A wrapper for a message and the {@link ChannelPromise} to use for writing to a {@link Channel}.
+   * A wrapper for a message and the {@link ChannelPromise} to use for writing to a {@link
+   * Channel}.
    */
   private static final class OutboundMessage {
+
     private final Object message;
     private final ChannelFutureListener writeCompletedListener;
 

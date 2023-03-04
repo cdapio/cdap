@@ -45,6 +45,7 @@ public class SystemServiceLiveInfo {
    *
    */
   public static class Builder {
+
     private final List<Containers.ContainerInfo> containers = new ArrayList<>();
 
     public Builder addContainer(Containers.ContainerInfo containerInfo) {

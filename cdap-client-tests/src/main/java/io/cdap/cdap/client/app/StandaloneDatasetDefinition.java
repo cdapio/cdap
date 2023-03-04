@@ -30,11 +30,13 @@ import java.util.Map;
 /**
  *
  */
-public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<StandaloneDataset, DatasetAdmin> {
+public class StandaloneDatasetDefinition extends
+    AbstractDatasetDefinition<StandaloneDataset, DatasetAdmin> {
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public StandaloneDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+  public StandaloneDatasetDefinition(String name,
+      DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
     super(name);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
@@ -43,20 +45,20 @@ public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<Stand
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
-      .datasets(tableDef.configure("objects", properties))
-      .build();
+        .properties(properties.getProperties())
+        .datasets(tableDef.configure("objects", properties))
+        .build();
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return tableDef.getAdmin(datasetContext, spec.getSpecification("objects"), classLoader);
   }
 
   @Override
   public StandaloneDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
     KeyValueTable table = tableDef.getDataset(datasetContext, kvTableSpec, arguments, classLoader);
 

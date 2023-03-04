@@ -27,13 +27,15 @@ import javax.annotation.Nullable;
  * Response for a sample request
  */
 public class SampleResponse {
+
   private final ConnectorDetail detail;
   // schema for the sample, this is a separate field since we don't want to serialize each record with schema.
   // if the sample is empty, schema is null
   private final Schema schema;
   private final List<StructuredRecord> sample;
 
-  public SampleResponse(ConnectorDetail connectorDetail, @Nullable Schema schema, List<StructuredRecord> sample) {
+  public SampleResponse(ConnectorDetail connectorDetail, @Nullable Schema schema,
+      List<StructuredRecord> sample) {
     this.detail = connectorDetail;
     this.schema = schema;
     this.sample = sample;
@@ -63,9 +65,9 @@ public class SampleResponse {
     }
 
     SampleResponse that = (SampleResponse) o;
-    return Objects.equals(detail, that.detail) &&
-             Objects.equals(schema, that.schema) &&
-             Objects.equals(sample, that.sample);
+    return Objects.equals(detail, that.detail)
+        && Objects.equals(schema, that.schema)
+        && Objects.equals(sample, that.sample);
   }
 
   @Override

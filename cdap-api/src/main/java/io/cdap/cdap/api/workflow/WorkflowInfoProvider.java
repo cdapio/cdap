@@ -24,15 +24,15 @@ import javax.annotation.Nullable;
 public interface WorkflowInfoProvider {
 
   /**
-   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
-   * if the program is executed as a part of the Workflow; returns {@code null} otherwise.
+   * @return the {@link WorkflowToken} associated with the current {@link Workflow}, if the program
+   *     is executed as a part of the Workflow; returns {@code null} otherwise.
    */
   @Nullable
   WorkflowToken getWorkflowToken();
 
   /**
-   * @return information about the enclosing {@link Workflow} run, if the program is executed
-   * as a part of the Workflow; returns {@code null} otherwise.
+   * @return information about the enclosing {@link Workflow} run, if the program is executed as a
+   *     part of the Workflow; returns {@code null} otherwise.
    */
   @Nullable
   WorkflowInfo getWorkflowInfo();

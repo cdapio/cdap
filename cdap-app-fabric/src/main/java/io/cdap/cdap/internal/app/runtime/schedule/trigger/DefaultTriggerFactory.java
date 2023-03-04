@@ -63,30 +63,32 @@ public class DefaultTriggerFactory implements TriggerFactory {
 
   @Override
   public Trigger onProgramStatus(String namespace, String application, String appVersion,
-                                 ProgramType programType, String program, ProgramStatus... programStatuses) {
+      ProgramType programType, String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ApplicationId(namespace, application, appVersion)
-                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
-                                    programStatuses);
+        .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
+        programStatuses);
   }
 
   @Override
-  public Trigger onProgramStatus(String programNamespace, String application, ProgramType programType,
-                                 String program, ProgramStatus... programStatuses) {
+  public Trigger onProgramStatus(String programNamespace, String application,
+      ProgramType programType,
+      String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ApplicationId(programNamespace, application)
-                                      .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
-                                    programStatuses);
+        .program(io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
+        programStatuses);
   }
 
   @Override
   public Trigger onProgramStatus(String application, ProgramType programType, String program,
-                                 ProgramStatus... programStatuses) {
+      ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ProgramId(namespaceId.getNamespace(), application,
-                                                  io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
-                                    programStatuses);
+        io.cdap.cdap.proto.ProgramType.valueOf(programType.name()), program),
+        programStatuses);
   }
 
   @Override
-  public Trigger onProgramStatus(ProgramType programType, String program, ProgramStatus... programStatuses) {
+  public Trigger onProgramStatus(ProgramType programType, String program,
+      ProgramStatus... programStatuses) {
     return new ProgramStatusTriggerBuilder(programType.name(), program, programStatuses);
   }
 }

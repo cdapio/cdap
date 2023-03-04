@@ -27,6 +27,7 @@ import java.util.Set;
  * Service to access {@link ProgramHeartbeatTable} in transaction
  */
 public class ProgramHeartbeatService {
+
   private final TransactionRunner transactionRunner;
 
 
@@ -44,9 +45,10 @@ public class ProgramHeartbeatService {
    * @return collection of run record meta
    */
   public Collection<RunRecordDetail> scan(long startTimestampInSeconds,
-                                          long endTimestampInSeconds, Set<String> namespaces) {
+      long endTimestampInSeconds, Set<String> namespaces) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return new ProgramHeartbeatTable(context).scan(startTimestampInSeconds, endTimestampInSeconds, namespaces);
+      return new ProgramHeartbeatTable(context).scan(startTimestampInSeconds, endTimestampInSeconds,
+          namespaces);
     });
   }
 
@@ -54,13 +56,14 @@ public class ProgramHeartbeatService {
    * Performs the {@link ProgramHeartbeatTable#findRunningAtTimestamp(long, Set)}
    *
    * @param runningOnTimestamp timestamp to query
-   * @param namespaces         set of namespaces to scan for the supplied timestamp
+   * @param namespaces set of namespaces to scan for the supplied timestamp
    * @return collection of run record meta
    */
   public Collection<RunRecordDetail> findRunningAtTimestamp(long runningOnTimestamp,
-                                                            Set<String> namespaces) {
+      Set<String> namespaces) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return new ProgramHeartbeatTable(context).findRunningAtTimestamp(runningOnTimestamp, namespaces);
+      return new ProgramHeartbeatTable(context).findRunningAtTimestamp(runningOnTimestamp,
+          namespaces);
     });
   }
 }

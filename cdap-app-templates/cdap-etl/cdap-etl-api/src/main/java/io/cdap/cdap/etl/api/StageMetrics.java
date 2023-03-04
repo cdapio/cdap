@@ -24,8 +24,8 @@ import io.cdap.cdap.api.metrics.Metrics;
 public interface StageMetrics extends Metrics {
 
   /**
-   * Increases the value of the specific metric by delta. Metrics name will be prefixed by the
-   * stage id, hence it will be aggregated for the current stage.
+   * Increases the value of the specific metric by delta. Metrics name will be prefixed by the stage
+   * id, hence it will be aggregated for the current stage.
    *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
@@ -34,8 +34,8 @@ public interface StageMetrics extends Metrics {
   void count(String metricName, int delta);
 
   /**
-   * Increases the value of the specific metric by delta. Metrics name will be prefixed by the
-   * stage id, hence it will be aggregated for the current stage.
+   * Increases the value of the specific metric by delta. Metrics name will be prefixed by the stage
+   * id, hence it will be aggregated for the current stage.
    *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
@@ -50,8 +50,8 @@ public interface StageMetrics extends Metrics {
   }
 
   /**
-   * Sets the specific metric to the provided value. Metrics name will be prefixed by the
-   * stage id, hence it will be aggregated for the current stage.
+   * Sets the specific metric to the provided value. Metrics name will be prefixed by the stage id,
+   * hence it will be aggregated for the current stage.
    *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.
@@ -60,8 +60,8 @@ public interface StageMetrics extends Metrics {
   void gauge(String metricName, long value);
 
   /**
-   * Increases the value of the specific metric by delta. Metrics emitted will be aggregated
-   * for the whole ETL pipeline.
+   * Increases the value of the specific metric by delta. Metrics emitted will be aggregated for the
+   * whole ETL pipeline.
    *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
@@ -69,8 +69,8 @@ public interface StageMetrics extends Metrics {
   void pipelineCount(String metricName, int delta);
 
   /**
-   * Sets the specific metric to the provided value. Metrics emitted will be aggregated
-   * for the whole ETL pipeline.
+   * Sets the specific metric to the provided value. Metrics emitted will be aggregated for the
+   * whole ETL pipeline.
    *
    * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.

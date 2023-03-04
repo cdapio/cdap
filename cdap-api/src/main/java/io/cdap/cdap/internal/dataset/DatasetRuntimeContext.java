@@ -47,7 +47,8 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
     // For user dataset, there is always one being set.
     return new DatasetRuntimeContext() {
       @Override
-      public void onMethodEntry(boolean constructor, @Nullable Class<? extends Annotation> annotation) {
+      public void onMethodEntry(boolean constructor,
+          @Nullable Class<? extends Annotation> annotation) {
         // no-op
       }
 
@@ -64,7 +65,8 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
   }
 
   /**
-   * Sets the current {@link DatasetRuntimeContext}. This method can only be initiated from system class.
+   * Sets the current {@link DatasetRuntimeContext}. This method can only be initiated from system
+   * class.
    */
   public static Cancellable setContext(DatasetRuntimeContext context) {
     final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
@@ -75,7 +77,8 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
     }
     // This is the guard against if someone tries to call this method outside of CDAP system (e.g. from user code)
     if (callerClasses[2].getClassLoader() != DatasetRuntimeContext.class.getClassLoader()
-      || !callerClasses[2].getName().equals("io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext")) {
+        || !callerClasses[2].getName()
+        .equals("io.cdap.cdap.data2.dataset2.DefaultDatasetRuntimeContext")) {
       throw new IllegalAccessError("Not allow to set context from " + callerClasses[2]);
     }
 
@@ -86,7 +89,8 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
       // This must be called from the same thread that call setContext
       Thread currentThread = Thread.currentThread();
       if (currentThread != callerThread) {
-        LOG.warn("Cancel is called from different thread. Expected {}, actual: {}", callerThread, currentThread);
+        LOG.warn("Cancel is called from different thread. Expected {}, actual: {}", callerThread,
+            currentThread);
         return;
       }
       CONTEXT_THREAD_LOCAL.set(oldContext);
@@ -97,18 +101,19 @@ public abstract class DatasetRuntimeContext implements AutoCloseable {
    * Method to call when a dataset method is invoked.
    *
    * @param constructor true if the call comes from constructor
-   * @param annotation one of the {@link ReadOnly}, {@link WriteOnly} or {@link ReadWrite} annotation
-   *                   on the method. Use {@code null} for method that is not annotated,
+   * @param annotation one of the {@link ReadOnly}, {@link WriteOnly} or {@link ReadWrite}
+   *     annotation on the method. Use {@code null} for method that is not annotated,
    */
   @SuppressWarnings("unused")
-  public abstract void onMethodEntry(boolean constructor, @Nullable Class<? extends Annotation> annotation);
+  public abstract void onMethodEntry(boolean constructor,
+      @Nullable Class<? extends Annotation> annotation);
 
   /**
    * Method to call when a dataset method is about to return.
    */
   @SuppressWarnings("unused")
   public abstract void onMethodExit();
-  
+
   @Override
   public abstract void close();
 }

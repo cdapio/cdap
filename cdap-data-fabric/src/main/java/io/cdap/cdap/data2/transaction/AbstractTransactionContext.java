@@ -28,12 +28,12 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * An abstract implementation of {@link TransactionContext} for governing general transaction lifecycle.
- * This class provides flexibility on the set of
- * {@link TransactionAware} to be participated in transactions.
+ * An abstract implementation of {@link TransactionContext} for governing general transaction
+ * lifecycle. This class provides flexibility on the set of {@link TransactionAware} to be
+ * participated in transactions.
  *
- * This abstract class extends from {@link TransactionContext} just for inheriting the type and public methods
- * signatures. It is not using any functionality from the parent class.
+ * This abstract class extends from {@link TransactionContext} just for inheriting the type and
+ * public methods signatures. It is not using any functionality from the parent class.
  */
 public abstract class AbstractTransactionContext extends TransactionContext {
 
@@ -55,8 +55,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
    * Adds the given {@link TransactionAware} to participating in transaction.
    *
    * @param txAware the {@link TransactionAware} to add
-   * @return {@code true} if the given {@link TransactionAware} needs to participate in current transaction,
-   *                      {@code false} otherwise
+   * @return {@code true} if the given {@link TransactionAware} needs to participate in current
+   *     transaction, {@code false} otherwise
    */
   protected abstract boolean doAddTransactionAware(TransactionAware txAware);
 
@@ -88,7 +88,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
 
   @Override
   public final boolean removeTransactionAware(TransactionAware txAware) {
-    Preconditions.checkState(currentTx == null, "Cannot remove TransactionAware while there is an active transaction.");
+    Preconditions.checkState(currentTx == null,
+        "Cannot remove TransactionAware while there is an active transaction.");
     return doRemoveTransactionAware(txAware);
   }
 
@@ -128,7 +129,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
   }
 
   @Override
-  public void abort(@Nullable TransactionFailureException cause) throws TransactionFailureException {
+  public void abort(@Nullable TransactionFailureException cause)
+      throws TransactionFailureException {
     if (currentTx == null) {
       // might be called by some generic exception handler even though already aborted/finished - we allow that
       return;
@@ -139,7 +141,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
         try {
           success = txAware.rollbackTx() && success;
         } catch (Throwable t) {
-          TransactionFailureException tfe = createTransactionFailure("roll back changes in", txAware, t);
+          TransactionFailureException tfe = createTransactionFailure("roll back changes in",
+              txAware, t);
           if (cause == null) {
             cause = tfe;
           } else {
@@ -157,8 +160,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       } catch (Throwable t) {
         if (cause == null) {
           cause = new TransactionFailureException(
-            String.format("Error while calling transaction service to %s transaction %d.",
-                          success ? "abort" : "invalidate", currentTx.getTransactionId()));
+              String.format("Error while calling transaction service to %s transaction %d.",
+                  success ? "abort" : "invalidate", currentTx.getTransactionId()));
         } else {
           cause.addSuppressed(t);
         }
@@ -186,7 +189,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       abort(e);
     } catch (Throwable e) {
       abort(new TransactionFailureException(
-        String.format("Exception from checkpoint for transaction %d.", currentTx.getTransactionId()), e));
+          String.format("Exception from checkpoint for transaction %d.",
+              currentTx.getTransactionId()), e));
     }
   }
 
@@ -215,8 +219,9 @@ public abstract class AbstractTransactionContext extends TransactionContext {
   }
 
   /**
-   * Collects the set of changes across all {@link TransactionAware}s by calling {@link TransactionAware#getTxChanges()}
-   * and checks if conflicts will arise when the transaction is going to be committed.
+   * Collects the set of changes across all {@link TransactionAware}s by calling {@link
+   * TransactionAware#getTxChanges()} and checks if conflicts will arise when the transaction is
+   * going to be committed.
    */
   private void checkForConflicts() throws TransactionFailureException {
     Set<byte[]> changes = new TreeSet<>(Bytes.BYTES_COMPARATOR);
@@ -239,12 +244,14 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       abort(e);
     } catch (Throwable e) {
       abort(new TransactionFailureException(
-        String.format("Exception from canCommit for transaction %d.", currentTx.getTransactionId()), e));
+          String.format("Exception from canCommit for transaction %d.",
+              currentTx.getTransactionId()), e));
     }
   }
 
   /**
-   * Calls {@link TransactionAware#commitTx()} on all {@link TransactionAware} to persist pending changes.
+   * Calls {@link TransactionAware#commitTx()} on all {@link TransactionAware} to persist pending
+   * changes.
    */
   private void persist() throws TransactionFailureException {
     for (TransactionAware txAware : getTransactionAwares()) {
@@ -271,7 +278,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       abort(e);
     } catch (Throwable e) {
       abort(new TransactionFailureException(
-        String.format("Exception from commit for transaction %d.", currentTx.getTransactionId()), e));
+          String.format("Exception from commit for transaction %d.", currentTx.getTransactionId()),
+          e));
     }
   }
 
@@ -284,7 +292,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       try {
         txAware.postTxCommit();
       } catch (Throwable t) {
-        TransactionFailureException tfe = createTransactionFailure("perform post-commit for", txAware, t);
+        TransactionFailureException tfe = createTransactionFailure("perform post-commit for",
+            txAware, t);
         if (cause == null) {
           cause = tfe;
         } else {
@@ -298,8 +307,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
   }
 
   protected TransactionFailureException createTransactionFailure(String action,
-                                                                 TransactionAware txAware,
-                                                                 Throwable cause) {
+      TransactionAware txAware,
+      Throwable cause) {
     String txAwareName;
     Throwable thrownForName = null;
     try {
@@ -309,8 +318,8 @@ public abstract class AbstractTransactionContext extends TransactionContext {
       txAwareName = "unknown";
     }
     TransactionFailureException tfe = new TransactionFailureException(
-      String.format("Unable to %s transaction-aware '%s' for transaction %d",
-                    action, txAwareName, currentTx.getTransactionId()), cause);
+        String.format("Unable to %s transaction-aware '%s' for transaction %d",
+            action, txAwareName, currentTx.getTransactionId()), cause);
     if (thrownForName != null) {
       tfe.addSuppressed(thrownForName);
     }

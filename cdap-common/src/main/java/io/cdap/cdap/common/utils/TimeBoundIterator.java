@@ -23,12 +23,13 @@ import com.google.common.collect.AbstractIterator;
 import java.util.Iterator;
 
 /**
- * An iterator that will act as if there are no more elements if a certain amount of time has passed, or there actually
- * are no more elements.
+ * An iterator that will act as if there are no more elements if a certain amount of time has
+ * passed, or there actually are no more elements.
  *
  * @param <T> type of element in the iterator
  */
 public class TimeBoundIterator<T> extends AbstractIterator<T> {
+
   private final Iterator<T> delegate;
   private final long timeBoundMillis;
   private final Stopwatch stopwatch;

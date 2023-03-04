@@ -23,6 +23,7 @@ import java.util.Objects;
  * Array components of the batch status request to POST /namespaces/{namespace}/status.
  */
 public class BatchProgram {
+
   protected final String appId;
   protected final ProgramType programType;
   protected final String programId;
@@ -34,7 +35,8 @@ public class BatchProgram {
   }
 
   public static BatchProgram from(ProgramRecord programRecord) {
-    return new BatchProgram(programRecord.getApp(), programRecord.getType(), programRecord.getName());
+    return new BatchProgram(programRecord.getApp(), programRecord.getType(),
+        programRecord.getName());
   }
 
   public String getAppId() {
@@ -50,7 +52,8 @@ public class BatchProgram {
   }
 
   /**
-   * Since this is often created through gson deserialization, check that all the fields are present and valid.
+   * Since this is often created through gson deserialization, check that all the fields are present
+   * and valid.
    *
    * @throws IllegalArgumentException if there is a field that is null or empty or invalid.
    */
@@ -59,7 +62,8 @@ public class BatchProgram {
       throw new IllegalArgumentException("'appId' must be specified.");
     }
     if (programType == null) {
-      throw new IllegalArgumentException("'programType' must be one of " + Arrays.toString(ProgramType.values()));
+      throw new IllegalArgumentException(
+          "'programType' must be one of " + Arrays.toString(ProgramType.values()));
     }
     if (programId == null || programId.isEmpty()) {
       throw new IllegalArgumentException("'programId' must be specified.");
@@ -77,9 +81,9 @@ public class BatchProgram {
 
     BatchProgram that = (BatchProgram) o;
 
-    return Objects.equals(appId, that.appId) &&
-      Objects.equals(programType, that.programType) &&
-      Objects.equals(programId, that.programId);
+    return Objects.equals(appId, that.appId)
+        && Objects.equals(programType, that.programType)
+        && Objects.equals(programId, that.programId);
   }
 
   @Override

@@ -17,30 +17,28 @@
 package io.cdap.cdap.proto.security;
 
 /**
- * Permissions that {@link Principal} must be granted to perform various actions on
- * {@link io.cdap.cdap.proto.id.EntityId}. Each class of permissions is represented by an enum.
- * {@link PermissionType} holds a list of all known permission types.
+ * Permissions that {@link Principal} must be granted to perform various actions on {@link
+ * io.cdap.cdap.proto.id.EntityId}. Each class of permissions is represented by an enum. {@link
+ * PermissionType} holds a list of all known permission types.
  */
 public interface Permission extends ActionOrPermission {
+
   /**
-   *
-   * @return if specific permission can be checked on parent. It's usually used for permission check when
-   * entity have not got an id yet, e.g. "create" permission. It still can be enforced on a specific entity
-   * if it's name is known.
+   * @return if specific permission can be checked on parent. It's usually used for permission check
+   *     when entity have not got an id yet, e.g. "create" permission. It still can be enforced on a
+   *     specific entity if it's name is known.
    */
   default boolean isCheckedOnParent() {
     return false;
   }
 
   /**
-   *
-   * @return type this permission belongs to. Permission type and name can be used to identify it using
-   * {@link PermissionType#valueOf(String, String)}
+   * @return type this permission belongs to. Permission type and name can be used to identify it
+   *     using {@link PermissionType#valueOf(String, String)}
    */
   PermissionType getPermissionType();
 
   /**
-   *
    * @return permission name. Usually it's just delegated to {@link Enum#name()}
    */
   String name();

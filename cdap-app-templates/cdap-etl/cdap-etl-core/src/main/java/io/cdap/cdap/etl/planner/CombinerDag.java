@@ -31,15 +31,16 @@ import org.slf4j.LoggerFactory;
 /**
  * A special DAG that can combine nodes within the dag into groups.
  *
- * Certain nodes are marked as uncombinable nodes, meaning they cannot be grouped together with any other node.
- * Nodes are grouped together if they have a common input node, and if no uncombinable node is accessible from any
- * node in the group.
+ * Certain nodes are marked as uncombinable nodes, meaning they cannot be grouped together with any
+ * other node. Nodes are grouped together if they have a common input node, and if no uncombinable
+ * node is accessible from any node in the group.
  *
- * In more intuitive language, branches with sinks attached to them are grouped together to try
- * and reduce the number of branches in the dag. This is used in Spark pipelines to consolidate multiple RDDs into
- * single RDDs in order to prevent reprocessing of data.
+ * In more intuitive language, branches with sinks attached to them are grouped together to try and
+ * reduce the number of branches in the dag. This is used in Spark pipelines to consolidate multiple
+ * RDDs into single RDDs in order to prevent reprocessing of data.
  */
 public class CombinerDag extends Dag {
+
   private static final Logger LOG = LoggerFactory.getLogger(CombinerDag.class);
   private final Set<String> uncombinableNodes;
   private final Supplier<String> groupIdGenerator;
@@ -59,17 +60,15 @@ public class CombinerDag extends Dag {
   }
 
   /**
-   * Group nodes in the dag together. This method will mutate the dag, with new nodes inserted where the group
-   * of nodes used to be. Groups have the following properties:
+   * Group nodes in the dag together. This method will mutate the dag, with new nodes inserted where
+   * the group of nodes used to be. Groups have the following properties:
    *
-   *   1. Contains only combinable nodes
-   *   2. Contains at least two sinks
-   *   3. Does not contain a source
-   *   4. There are no outgoing connections from any node in the group to a node outside the group
-   *   5. They do not overlap. Nodes in one group cannot belong to another group
-   *   6. Nodes in the group must either only have inputs from outside the group, or must only have inputs from
-   *      inside the group.
-   *   7. Nodes in the group must all share a common ancestor without passing through an uncombinable node
+   * 1. Contains only combinable nodes 2. Contains at least two sinks 3. Does not contain a source
+   * 4. There are no outgoing connections from any node in the group to a node outside the group 5.
+   * They do not overlap. Nodes in one group cannot belong to another group 6. Nodes in the group
+   * must either only have inputs from outside the group, or must only have inputs from inside the
+   * group. 7. Nodes in the group must all share a common ancestor without passing through an
+   * uncombinable node
    *
    * @return mapping of new node ids to the group of old node ids used to create the group.
    */
@@ -305,9 +304,9 @@ public class CombinerDag extends Dag {
     int numSinks = 0;
     for (String groupNode : mergedGroup) {
       if (uncombinableNodes.contains(groupNode)) {
-        LOG.debug("Planner tried to create an invalid group containing uncombinable node {}. " +
-                    "This group will be ignored.",
-                  groupNode);
+        LOG.debug("Planner tried to create an invalid group containing uncombinable node {}. "
+                + "This group will be ignored.",
+            groupNode);
         return;
       }
       if (sinks.contains(groupNode)) {
@@ -318,24 +317,24 @@ public class CombinerDag extends Dag {
       Set<String> interGroupInputs = Sets.intersection(inputs, mergedGroup);
       Set<String> intraGroupInputs = Sets.difference(inputs, mergedGroup);
       if (!interGroupInputs.isEmpty() && !intraGroupInputs.isEmpty()) {
-        LOG.debug("Planner tried to create an invalid group with nodes {}. " +
-                    "Node {} has inputs from both within the group and from outside the group. " +
-                    "This group will be ignored.", mergedGroup, groupNode);
+        LOG.debug("Planner tried to create an invalid group with nodes {}. "
+            + "Node {} has inputs from both within the group and from outside the group. "
+            + "This group will be ignored.", mergedGroup, groupNode);
         return;
       }
 
       Set<String> outputs = getNodeOutputs(groupNode);
       if (!Sets.difference(outputs, mergedGroup).isEmpty()) {
-        LOG.debug("Planner tried to create an invalid group with nodes {}. " +
-                    "Node {} is connected to a node outside the group. This group will be ignored.",
-                  mergedGroup, groupNode);
+        LOG.debug("Planner tried to create an invalid group with nodes {}. "
+                + "Node {} is connected to a node outside the group. This group will be ignored.",
+            mergedGroup, groupNode);
         return;
       }
     }
 
     if (numSinks < 2) {
-      LOG.debug("Planner tried to create a group using nodes {}, but it only contains {} sinks. " +
-                  "This group will be ignored.", mergedGroup, numSinks);
+      LOG.debug("Planner tried to create a group using nodes {}, but it only contains {} sinks. "
+          + "This group will be ignored.", mergedGroup, numSinks);
       return;
     }
 
@@ -350,6 +349,7 @@ public class CombinerDag extends Dag {
    * Primarily used for readability, to have sets of branches instead of sets of sets.
    */
   private static class Branch {
+
     private final Set<String> nodes;
 
     private Branch(Set<String> nodes) {

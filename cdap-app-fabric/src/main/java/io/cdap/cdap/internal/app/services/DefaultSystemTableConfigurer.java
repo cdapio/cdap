@@ -25,9 +25,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Configures system tables and prefixes all table ids to prevent clashes with CDAP platform tables.
+ * Configures system tables and prefixes all table ids to prevent clashes with CDAP platform
+ * tables.
  */
 public class DefaultSystemTableConfigurer implements SystemTableConfigurer {
+
   public static final String PREFIX = "app_";
   private final List<StructuredTableSpecification> specs;
 
@@ -39,8 +41,8 @@ public class DefaultSystemTableConfigurer implements SystemTableConfigurer {
   public void createTable(StructuredTableSpecification tableSpecification) {
     // prefix table ids to prevent clashes with the CDAP system.
     specs.add(new StructuredTableSpecification.Builder(tableSpecification)
-                .withId(new StructuredTableId(PREFIX + tableSpecification.getTableId().getName()))
-                .build());
+        .withId(new StructuredTableId(PREFIX + tableSpecification.getTableId().getName()))
+        .build());
   }
 
   public Collection<StructuredTableSpecification> getTableSpecs() {

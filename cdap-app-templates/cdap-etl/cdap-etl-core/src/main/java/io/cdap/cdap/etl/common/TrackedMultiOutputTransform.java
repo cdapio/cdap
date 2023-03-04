@@ -25,25 +25,29 @@ import io.cdap.cdap.etl.api.Transformation;
 
 
 /**
- * A {@link Transformation} that delegates transform operations while emitting metrics
- * around how many records were input into the transform and output by it.
+ * A {@link Transformation} that delegates transform operations while emitting metrics around how
+ * many records were input into the transform and output by it.
  *
  * @param <IN> Type of input object
  * @param <ERROR> Type of error object
  */
-public class TrackedMultiOutputTransform<IN, ERROR> implements MultiOutputTransformation<IN, ERROR>, Destroyable {
+public class TrackedMultiOutputTransform<IN, ERROR> implements MultiOutputTransformation<IN, ERROR>,
+    Destroyable {
+
   private final MultiOutputTransformation<IN, ERROR> transform;
   private final StageMetrics metrics;
   private final DataTracer dataTracer;
   private final StageStatisticsCollector collector;
 
-  public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform, StageMetrics metrics,
-                                     DataTracer dataTracer) {
+  public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform,
+      StageMetrics metrics,
+      DataTracer dataTracer) {
     this(transform, metrics, dataTracer, new NoopStageStatisticsCollector());
   }
 
-  public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform, StageMetrics metrics,
-                                     DataTracer dataTracer, StageStatisticsCollector collector) {
+  public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform,
+      StageMetrics metrics,
+      DataTracer dataTracer, StageStatisticsCollector collector) {
     this.transform = transform;
     this.metrics = metrics;
     this.dataTracer = dataTracer;
@@ -54,7 +58,8 @@ public class TrackedMultiOutputTransform<IN, ERROR> implements MultiOutputTransf
   public void transform(IN input, MultiOutputEmitter<ERROR> emitter) throws Exception {
     metrics.count(Constants.Metrics.RECORDS_IN, 1);
     collector.incrementInputRecordCount();
-    transform.transform(input, new TrackedMultiOutputEmitter<>(emitter, metrics, dataTracer, collector));
+    transform.transform(input,
+        new TrackedMultiOutputEmitter<>(emitter, metrics, dataTracer, collector));
   }
 
   @Override

@@ -26,11 +26,13 @@ import io.cdap.cdap.internal.io.TypeRepresentation;
 import java.lang.reflect.Type;
 
 /**
- * Utility for describing {@link ObjectStore} and similar datasets within application configuration.
+ * Utility for describing {@link ObjectStore} and similar datasets within application
+ * configuration.
  */
 public final class ObjectStores {
 
-  private ObjectStores() {}
+  private ObjectStores() {
+  }
 
   /**
    * Adds an {@link ObjectStore} dataset to be created at application deploy if it does not exist.
@@ -39,46 +41,48 @@ public final class ObjectStores {
    * @param datasetName dataset name
    * @param type type of objects to be stored in {@link ObjectStore}
    * @param props any additional dataset properties
-   * @throws UnsupportedTypeException
    */
   public static void createObjectStore(ApplicationConfigurer configurer,
-                                       String datasetName, Type type, DatasetProperties props)
-    throws UnsupportedTypeException {
+      String datasetName, Type type, DatasetProperties props)
+      throws UnsupportedTypeException {
 
     configurer.createDataset(datasetName, ObjectStore.class, objectStoreProperties(type, props));
   }
 
   /**
-   * Same as {@link #createObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
-   * properties.
+   * Same as {@link #createObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but
+   * with empty properties.
    */
-  public static void createObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
-    throws UnsupportedTypeException {
+  public static void createObjectStore(ApplicationConfigurer configurer, String datasetName,
+      Type type)
+      throws UnsupportedTypeException {
 
     createObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
   }
 
   /**
    * Adds {@link IndexedObjectStore} dataset to be created at application deploy if not exists.
+   *
    * @param configurer application configurer
    * @param datasetName dataset name
    * @param type type of objects to be stored in {@link IndexedObjectStore}
    * @param props any additional dataset properties
-   * @throws UnsupportedTypeException
    */
   public static void createIndexedObjectStore(ApplicationConfigurer configurer,
-                                              String datasetName, Type type, DatasetProperties props)
-    throws UnsupportedTypeException {
+      String datasetName, Type type, DatasetProperties props)
+      throws UnsupportedTypeException {
 
-    configurer.createDataset(datasetName, IndexedObjectStore.class, objectStoreProperties(type, props));
+    configurer.createDataset(datasetName, IndexedObjectStore.class,
+        objectStoreProperties(type, props));
   }
 
   /**
-   * Same as {@link #createIndexedObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
-   * properties.
+   * Same as {@link #createIndexedObjectStore(ApplicationConfigurer, String, Type,
+   * DatasetProperties)} but with empty properties.
    */
-  public static void createIndexedObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
-    throws UnsupportedTypeException {
+  public static void createIndexedObjectStore(ApplicationConfigurer configurer, String datasetName,
+      Type type)
+      throws UnsupportedTypeException {
 
     createIndexedObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
   }
@@ -88,17 +92,16 @@ public final class ObjectStores {
    *
    * @param type type of objects to be stored in dataset
    * @return {@link DatasetProperties} for the dataset
-   * @throws UnsupportedTypeException
    */
   public static DatasetProperties objectStoreProperties(Type type, DatasetProperties props)
-    throws UnsupportedTypeException {
+      throws UnsupportedTypeException {
     Schema schema = new ReflectionSchemaGenerator().generate(type);
     TypeRepresentation typeRep = new TypeRepresentation(type);
     return DatasetProperties.builder()
-      .add("schema", schema.toString())
-      .add("type", new Gson().toJson(typeRep))
-      .addAll(props.getProperties())
-      .build();
+        .add("schema", schema.toString())
+        .add("type", new Gson().toJson(typeRep))
+        .addAll(props.getProperties())
+        .build();
   }
 
 }

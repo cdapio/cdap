@@ -21,6 +21,7 @@ import io.cdap.cdap.common.NotFoundException;
  * Thrown when a tethered peer is not found.
  */
 public class PeerNotFoundException extends NotFoundException {
+
   public PeerNotFoundException(String peerName) {
     super(String.format("Peer %s not found", peerName));
   }

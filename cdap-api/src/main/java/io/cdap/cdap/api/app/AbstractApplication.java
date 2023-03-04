@@ -32,8 +32,8 @@ import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
 /**
- * A support class for {@link Application Applications} which reduces repetition and results in
- * a more readable configuration.
+ * A support class for {@link Application Applications} which reduces repetition and results in a
+ * more readable configuration.
  *
  * <p>
  * Implement the {@link #configure()} method to define your application.
@@ -42,8 +42,10 @@ import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
  * @param <T> {@link Config} config class that represents the configuration of the Application.
  * @see io.cdap.cdap.api.app
  */
-public abstract class AbstractApplication<T extends Config> extends AbstractPluginConfigurable<ApplicationConfigurer>
-  implements Application<T> {
+public abstract class AbstractApplication<T extends Config> extends
+    AbstractPluginConfigurable<ApplicationConfigurer>
+    implements Application<T> {
+
   private ApplicationContext<T> context;
   private ApplicationConfigurer configurer;
   private TriggerFactory triggerFactory;
@@ -141,20 +143,22 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * @param handler handler for the Service
    * @param handlers more handlers for the Service
    */
-  protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
+  protected void addService(String name, HttpServiceHandler handler,
+      HttpServiceHandler... handlers) {
     configurer.addService(new BasicService(name, handler, handlers));
   }
 
   /**
    * Get a ScheduleBuilder for the specified program.
-   * @param scheduleName the name of the schedule
-   * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be scheduled
-   * @param programName the name of the program
    *
+   * @param scheduleName the name of the schedule
+   * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be
+   *     scheduled
+   * @param programName the name of the program
    * @return The {@link ScheduleBuilder} used to build the schedule
    */
   protected ScheduleBuilder buildSchedule(String scheduleName, ProgramType programType,
-                                          String programName) {
+      String programName) {
     return configurer.buildSchedule(scheduleName, programType, programName);
   }
 
@@ -168,9 +172,9 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   }
 
   /**
-   * Emit the given {@link Metadata} for the application in the given scope
-   * Note the tags and properties emitted in SYSTEM scope will get overridden by the platform system metadata if
-   * the tags or property keys are same.
+   * Emit the given {@link Metadata} for the application in the given scope Note the tags and
+   * properties emitted in SYSTEM scope will get overridden by the platform system metadata if the
+   * tags or property keys are same.
    *
    * @param metadata the metadata to emit
    * @param scope the metadata scope

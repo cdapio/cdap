@@ -39,7 +39,7 @@ public final class SparkHttpServiceHandlerSpecification implements PropertyProvi
   private final List<ServiceHttpEndpoint> endpoints;
 
   public SparkHttpServiceHandlerSpecification(String className, Map<String, String> properties,
-                                              Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
+      Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
     this.className = className;
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));

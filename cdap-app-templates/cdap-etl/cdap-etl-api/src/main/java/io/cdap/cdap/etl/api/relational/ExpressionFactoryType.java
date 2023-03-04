@@ -19,7 +19,9 @@ package io.cdap.cdap.etl.api.relational;
 /**
  * Marker interface for expression factory types denoting expression type. Any expression facotry
  * type is also a capability.
+ *
  * @param <T> expression type for a factory of this type
  */
 public interface ExpressionFactoryType<T> extends Capability {
+
 }

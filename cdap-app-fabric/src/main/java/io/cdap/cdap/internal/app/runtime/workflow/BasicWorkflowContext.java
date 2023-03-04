@@ -61,22 +61,23 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   private boolean consolidateFieldOperations;
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec,
-                       WorkflowToken token, Program program, ProgramOptions programOptions, CConfiguration cConf,
-                       MetricsCollectionService metricsCollectionService,
-                       DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                       DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
-                       @Nullable PluginInstantiator pluginInstantiator,
-                       SecureStore secureStore, SecureStoreManager secureStoreManager,
-                       MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification,
-                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                       NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                       RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
+      WorkflowToken token, Program program, ProgramOptions programOptions, CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      DatasetFramework datasetFramework, TransactionSystemClient txClient,
+      DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
+      @Nullable PluginInstantiator pluginInstantiator,
+      SecureStore secureStore, SecureStoreManager secureStoreManager,
+      MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification,
+      MetadataReader metadataReader, MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+      RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, new HashSet<>(),
-          datasetFramework, txClient, false,
-          metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
-                                                             ProgramRunners.getRunId(programOptions).getId()),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+        datasetFramework, txClient, false,
+        metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
+            ProgramRunners.getRunId(programOptions).getId()),
+        secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader,
+        metadataPublisher,
+        namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.workflowSpec = workflowSpec;
     this.conditionSpecification = conditionSpecification;
     this.token = token;

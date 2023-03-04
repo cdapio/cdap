@@ -46,13 +46,15 @@ public class LogQueryService extends AbstractIdleService {
 
   @Inject
   LogQueryService(CConfiguration cConf, SConfiguration sConf,
-                  @Named(Constants.Service.LOG_QUERY) Set<HttpHandler> handlers,
-                  DiscoveryService discoveryService, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      @Named(Constants.Service.LOG_QUERY) Set<HttpHandler> handlers,
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.LOG_QUERY)
-      .setHttpHandlers(handlers)
-      .setHost(cConf.get(Constants.LogQuery.ADDRESS))
-      .setPort(cConf.getInt(Constants.LogQuery.PORT));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.LOG_QUERY)
+        .setHttpHandlers(handlers)
+        .setHost(cConf.get(Constants.LogQuery.ADDRESS))
+        .setPort(cConf.getInt(Constants.LogQuery.PORT));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -65,11 +67,12 @@ public class LogQueryService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.LOG_QUERY));
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.LOG_QUERY));
     httpServer.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.LOG_QUERY, httpServer)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.LOG_QUERY, httpServer)));
 
   }
 

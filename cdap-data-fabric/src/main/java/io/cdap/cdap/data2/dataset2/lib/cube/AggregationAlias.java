@@ -21,6 +21,7 @@ import java.util.Map;
  * Class to encapsulate dimension name aliases
  */
 public class AggregationAlias {
+
   private final Map<String, String> dimensionAliasMap;
 
   public AggregationAlias(Map<String, String> dimensionAliasMap) {
@@ -28,14 +29,15 @@ public class AggregationAlias {
   }
 
   /**
-   * If dimension name has an alias return the alias name, else return the dimension name. This is useful when
-   * associating dimension name in aggregation with a value of a different dimension.
-   * Example for the aggregation group "workflow" the dimension name "run" in aggregation
-   * should use the value of dimension "wfr" (workflow-run-id)
-   * @param dimensionName
+   * If dimension name has an alias return the alias name, else return the dimension name. This is
+   * useful when associating dimension name in aggregation with a value of a different dimension.
+   * Example for the aggregation group "workflow" the dimension name "run" in aggregation should use
+   * the value of dimension "wfr" (workflow-run-id)
+   *
    * @return dimension name alias or dimension name
    */
   public String getAlias(String dimensionName) {
-    return dimensionAliasMap.containsKey(dimensionName) ? dimensionAliasMap.get(dimensionName) : dimensionName;
+    return dimensionAliasMap.containsKey(dimensionName) ? dimensionAliasMap.get(dimensionName)
+        : dimensionName;
   }
 }

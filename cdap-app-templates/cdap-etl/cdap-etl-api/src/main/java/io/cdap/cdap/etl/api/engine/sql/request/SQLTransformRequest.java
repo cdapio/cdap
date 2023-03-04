@@ -26,6 +26,7 @@ import java.util.Map;
  * Defines a request to perform relational transformation by SQL engine
  */
 public class SQLTransformRequest implements Serializable {
+
   private final Map<String, SQLDataset> inputDataSets;
 
   private final String outputDatasetName;
@@ -33,7 +34,7 @@ public class SQLTransformRequest implements Serializable {
   private final Schema outputSchema;
 
   public SQLTransformRequest(Map<String, SQLDataset> inputDataSets, String outputDatasetName,
-                             Relation outputRelation, Schema outputDataSetSchema) {
+      Relation outputRelation, Schema outputDataSetSchema) {
     this.inputDataSets = inputDataSets;
     this.outputDatasetName = outputDatasetName;
     this.outputRelation = outputRelation;
@@ -48,7 +49,6 @@ public class SQLTransformRequest implements Serializable {
   }
 
   /**
-   *
    * @return primary output dataset name
    */
   public String getOutputDatasetName() {
@@ -56,7 +56,6 @@ public class SQLTransformRequest implements Serializable {
   }
 
   /**
-   *
    * @return output dataset to transform
    */
   public Relation getOutputRelation() {
@@ -64,7 +63,6 @@ public class SQLTransformRequest implements Serializable {
   }
 
   /**
-   *
    * @return output SQLDataset schema
    */
   public Schema getOutputSchema() {

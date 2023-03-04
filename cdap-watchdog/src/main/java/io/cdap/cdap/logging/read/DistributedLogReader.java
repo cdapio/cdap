@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * Reads logs in a distributed setup, using kafka for latest logs and files for older logs.
  */
 public final class DistributedLogReader implements LogReader {
+
   private static final Logger LOG = LoggerFactory.getLogger(DistributedLogReader.class);
 
   private final KafkaLogReader kafkaLogReader;
@@ -45,19 +46,21 @@ public final class DistributedLogReader implements LogReader {
    */
   @Inject
   DistributedLogReader(CConfiguration cConf,
-                       KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
-                       StringPartitioner partitioner,
-                       TransactionRunner txRunner) {
+      KafkaLogReader kafkaLogReader, FileLogReader fileLogReader,
+      StringPartitioner partitioner,
+      TransactionRunner txRunner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
-    String prefix = Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + cConf.get(Constants.Logging.KAFKA_TOPIC);
+    String prefix = Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + cConf.get(
+        Constants.Logging.KAFKA_TOPIC);
     this.checkpointManager = new KafkaCheckpointManager(txRunner, prefix);
     this.partitioner = partitioner;
   }
 
   @Override
-  public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                         final Filter filter, final Callback callback) {
+  public void getLogNext(final LoggingContext loggingContext, final ReadRange readRange,
+      final int maxEvents,
+      final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
@@ -85,8 +88,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange, final int maxEvents,
-                              final Filter filter, final Callback callback) {
+  public void getLogPrev(final LoggingContext loggingContext, final ReadRange readRange,
+      final int maxEvents,
+      final Filter filter, final Callback callback) {
     // If latest logs are not requested, try reading from file.
     if (readRange != ReadRange.LATEST) {
       long checkpointTime = getCheckpointTime(loggingContext);
@@ -111,8 +115,9 @@ public final class DistributedLogReader implements LogReader {
   }
 
   @Override
-  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
-                                            Filter filter) {
+  public CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs,
+      long toTimeMs,
+      Filter filter) {
     return fileLogReader.getLog(loggingContext, fromTimeMs, toTimeMs, filter);
   }
 

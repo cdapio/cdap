@@ -29,7 +29,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public class DatasetExecutorServiceManager extends AbstractMasterServiceManager {
 
   @Inject
-  DatasetExecutorServiceManager(CConfiguration cConf, TwillRunner twillRunner, DiscoveryServiceClient discoveryClient) {
+  DatasetExecutorServiceManager(CConfiguration cConf, TwillRunner twillRunner,
+      DiscoveryServiceClient discoveryClient) {
     super(cConf, discoveryClient, Constants.Service.DATASET_EXECUTOR, twillRunner);
   }
 

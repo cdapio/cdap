@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * Configuration parameters to be used by a {@link PartitionConsumer}.
  */
 public class ConsumerConfiguration {
+
   /**
    * Instance of ConsumerConfiguration with default parameters
    */
@@ -35,7 +36,7 @@ public class ConsumerConfiguration {
   private final int maxRetries;
 
   private ConsumerConfiguration(Predicate<PartitionDetail> partitionPredicate,
-                                int maxWorkingSetSize, long timeout, int maxRetries) {
+      int maxWorkingSetSize, long timeout, int maxRetries) {
     this.partitionPredicate = partitionPredicate;
     this.maxWorkingSetSize = maxWorkingSetSize;
     this.timeout = timeout;
@@ -43,16 +44,16 @@ public class ConsumerConfiguration {
   }
 
   /**
-   * @return A predicate to be applied on {@link PartitionDetail}s to determine which partitions to include in the
-   *         partition consumption.
+   * @return A predicate to be applied on {@link PartitionDetail}s to determine which partitions to
+   *     include in the partition consumption.
    */
   public Predicate<PartitionDetail> getPartitionPredicate() {
     return partitionPredicate;
   }
 
   /**
-   * @return An upper bound on the size of the working set of partitions that get serialized as part of the consumer's
-   *         state.
+   * @return An upper bound on the size of the working set of partitions that get serialized as part
+   *     of the consumer's state.
    */
   public int getMaxWorkingSetSize() {
     return maxWorkingSetSize;
@@ -60,17 +61,19 @@ public class ConsumerConfiguration {
 
   /**
    * Defines an expiration timeout, in seconds, of IN_PROGRESS partitions
-   * @return number of seconds that a partition can be in progress before it is deemed failed. Once a partition is
-   *         deemed failed, it is either marked as AVAILABLE for retry or discarded, depending on the configured number
-   *         of retries.
+   *
+   * @return number of seconds that a partition can be in progress before it is deemed failed. Once
+   *     a partition is deemed failed, it is either marked as AVAILABLE for retry or discarded,
+   *     depending on the configured number of retries.
    */
   public long getTimeout() {
     return timeout;
   }
 
   /**
-   * @return The maximum number of retries that a partition can be attempted to be processed. Once a partition has
-   *         reached this many failures, it is discarded, rather than marked as AVAILABLE for reprocessing.
+   * @return The maximum number of retries that a partition can be attempted to be processed. Once a
+   *     partition has reached this many failures, it is discarded, rather than marked as AVAILABLE
+   *     for reprocessing.
    */
   public int getMaxRetries() {
     return maxRetries;
@@ -87,6 +90,7 @@ public class ConsumerConfiguration {
    * A Builder to construct ConsumerConfiguration instances.
    */
   public static class Builder {
+
     /**
      * Default values
      */
@@ -108,7 +112,8 @@ public class ConsumerConfiguration {
     }
 
     /**
-     * Sets the maximum working set size of the ConsumerConfiguration. See {@link #getMaxWorkingSetSize()}.
+     * Sets the maximum working set size of the ConsumerConfiguration. See {@link
+     * #getMaxWorkingSetSize()}.
      */
     public Builder setMaxWorkingSetSize(int maxWorkingSetSize) {
       this.maxWorkingSetSize = maxWorkingSetSize;

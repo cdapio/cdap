@@ -46,17 +46,19 @@ public class ListPrivilegesCommand extends AbstractAuthCommand {
     String principalType = arguments.get(ArgumentName.PRINCIPAL_TYPE.toString());
     String principalName = arguments.get(ArgumentName.PRINCIPAL_NAME.toString());
     Table table = Table.builder()
-      .setHeader("Authorizable", "Action")
-      .setRows(Lists.newArrayList(client.listGrants(new Principal(principalName, Principal.PrincipalType.valueOf
-        (principalType.toUpperCase())))), grantedPermission
-        -> Lists.newArrayList(grantedPermission.getAuthorizable().toString(),
-                              grantedPermission.getPermission().name())).build();
+        .setHeader("Authorizable", "Action")
+        .setRows(Lists.newArrayList(
+            client.listGrants(new Principal(principalName, Principal.PrincipalType.valueOf
+                (principalType.toUpperCase())))), grantedPermission
+            -> Lists.newArrayList(grantedPermission.getAuthorizable().toString(),
+            grantedPermission.getPermission().name())).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("list privileges for <%s> <%s>", ArgumentName.PRINCIPAL_TYPE, ArgumentName.PRINCIPAL_NAME);
+    return String.format("list privileges for <%s> <%s>", ArgumentName.PRINCIPAL_TYPE,
+        ArgumentName.PRINCIPAL_NAME);
   }
 
   @Override

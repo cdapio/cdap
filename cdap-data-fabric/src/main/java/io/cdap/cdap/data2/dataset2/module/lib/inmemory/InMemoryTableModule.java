@@ -25,6 +25,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
  * Registers in-memory implementations of the basic datasets
  */
 public class InMemoryTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new InMemoryTableDefinition("table"));

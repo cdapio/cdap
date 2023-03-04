@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  * a {@link Configuration}.
  */
 public final class WrapperUtil {
+
   private static final Logger LOG = LoggerFactory.getLogger(WrapperUtil.class);
 
   private WrapperUtil() {
@@ -48,7 +49,8 @@ public final class WrapperUtil {
     }
 
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(conf);
-    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(conf);
+    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider()
+        .get(conf);
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
 
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);

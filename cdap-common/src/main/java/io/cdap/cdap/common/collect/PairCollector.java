@@ -20,11 +20,10 @@ import com.google.common.collect.Multimap;
 import java.util.Map;
 
 /**
- * This can be used to collect with different strategies while iterating
- * over a stream of elements. For every element in the stream, add the
- * element to the collector. The collector then indicates whether more
- * elements are needed (for instance, to collect the first N elements only,
- * use a collector that returns false after the Nth element has been added.
+ * This can be used to collect with different strategies while iterating over a stream of elements.
+ * For every element in the stream, add the element to the collector. The collector then indicates
+ * whether more elements are needed (for instance, to collect the first N elements only, use a
+ * collector that returns false after the Nth element has been added.
  *
  * @param <KEY> Type of key.
  * @param <VALUE> Type of value.

@@ -22,11 +22,11 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 
 /**
- * This class describes how a dataset is partitioned, by means of the fields of a partition key and their types.
- * The ordering of fields in the partitioning matters: It is the order in which partition keys are indexed in the
- * meta data. As a best practice, a Partitioning should name the fields in the order of how frequently they are
- * used in partition filters, because partition filters that contain a condition for the first field in the
- * Partitioning perform best.
+ * This class describes how a dataset is partitioned, by means of the fields of a partition key and
+ * their types. The ordering of fields in the partitioning matters: It is the order in which
+ * partition keys are indexed in the meta data. As a best practice, a Partitioning should name the
+ * fields in the order of how frequently they are used in partition filters, because partition
+ * filters that contain a condition for the first field in the Partitioning perform best.
  */
 public class Partitioning {
 
@@ -69,14 +69,16 @@ public class Partitioning {
     };
 
     /**
-     * Parse a string into a value of this field type. For example, {@link FieldType#INT} delegates this
-     * to {@link Integer#parseInt}.
+     * Parse a string into a value of this field type. For example, {@link FieldType#INT} delegates
+     * this to {@link Integer#parseInt}.
+     *
      * @param value the string to parse
      */
     public abstract Comparable parse(String value);
 
     /**
      * Validate that a value has the correct type for this field type.
+     *
      * @param value the value to validate
      * @throws IllegalArgumentException if the value is of wrong type.
      */
@@ -84,8 +86,9 @@ public class Partitioning {
 
     protected void validate(Comparable value, Class<? extends Comparable> expectedClass) {
       if (!expectedClass.equals(value.getClass())) {
-        throw new IllegalArgumentException(String.format("Value %s of type %s cannot be assigned to a %s field",
-                                                         value, value.getClass().getSimpleName(), this));
+        throw new IllegalArgumentException(
+            String.format("Value %s of type %s cannot be assigned to a %s field",
+                value, value.getClass().getSimpleName(), this));
       }
     }
   }
@@ -107,9 +110,9 @@ public class Partitioning {
   }
 
   /**
-   * This returns a map associating all the fields of this partitioning with their respective types. Iterators
-   * over the key set or the entry set of this map will yield the same order in which the fields were added to
-   * the partitioning.
+   * This returns a map associating all the fields of this partitioning with their respective types.
+   * Iterators over the key set or the entry set of this map will yield the same order in which the
+   * fields were added to the partitioning.
    *
    * @return all fields and their types
    */
@@ -136,16 +139,16 @@ public class Partitioning {
 
     private final LinkedHashMap<String, FieldType> fields = new LinkedHashMap<>();
 
-    private Builder() { }
+    private Builder() {
+    }
 
     /**
      * Add a field with a given name and type.
      *
      * @param name the field name
      * @param type the type of the field
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists,
-     *         or if the type is null.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists, or if the type is null.
      */
     @SuppressWarnings("ConstantConditions")
     public Builder addField(@Nonnull String name, @Nonnull FieldType type) {
@@ -156,7 +159,8 @@ public class Partitioning {
         throw new IllegalArgumentException("Field type cannot be null.");
       }
       if (fields.containsKey(name)) {
-        throw new IllegalArgumentException(String.format("Field '%s' already exists in partitioning.", name));
+        throw new IllegalArgumentException(
+            String.format("Field '%s' already exists in partitioning.", name));
       }
       fields.put(name, type);
       return this;
@@ -166,8 +170,8 @@ public class Partitioning {
      * Add field of type STRING.
      *
      * @param name the field name
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists.
      */
     public Builder addStringField(String name) {
       return addField(name, FieldType.STRING);
@@ -177,8 +181,8 @@ public class Partitioning {
      * Add field of type INT.
      *
      * @param name the field name
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists.
      */
     public Builder addIntField(String name) {
       return addField(name, FieldType.INT);
@@ -188,8 +192,8 @@ public class Partitioning {
      * Add field of type LONG.
      *
      * @param name the field name
-     *
-     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already exists.
+     * @throws java.lang.IllegalArgumentException if the field name is null, empty, or already
+     *     exists.
      */
     public Builder addLongField(String name) {
       return addField(name, FieldType.LONG);

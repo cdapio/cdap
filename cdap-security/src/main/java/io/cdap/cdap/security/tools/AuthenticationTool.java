@@ -50,10 +50,11 @@ import org.apache.commons.cli.ParseException;
  */
 public class AuthenticationTool {
 
-  public static void main(String[] args) throws ParseException, NoSuchAlgorithmException, IOException {
+  public static void main(String[] args)
+      throws ParseException, NoSuchAlgorithmException, IOException {
     Options options = new Options()
-      .addOption(new Option("h", "help", false, "Print this usage message."))
-      .addOption(new Option("g", "generateKey", true, "Generates a key and save it to a file"));
+        .addOption(new Option("h", "help", false, "Print this usage message."))
+        .addOption(new Option("g", "generateKey", true, "Generates a key and save it to a file"));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -78,21 +79,25 @@ public class AuthenticationTool {
       cConf.unset(Constants.Zookeeper.QUORUM);
 
       Injector injector = Guice.createInjector(
-        new ConfigModule(cConf),
-        new IOModule(),
-        new InMemoryDiscoveryModule(),
-        CoreSecurityRuntimeModule.getDistributedModule(cConf));
+          new ConfigModule(cConf),
+          new IOModule(),
+          new InMemoryDiscoveryModule(),
+          CoreSecurityRuntimeModule.getDistributedModule(cConf));
 
-      Codec<KeyIdentifier> codec = injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { }));
-      FileBasedKeyManager keyManager = new FileBasedKeyManager(injector.getInstance(CConfiguration.class),
-                                                               injector.getInstance(KeyIdentifierCodec.class));
+      Codec<KeyIdentifier> codec = injector.getInstance(
+          Key.get(new TypeLiteral<Codec<KeyIdentifier>>() {
+          }));
+      FileBasedKeyManager keyManager = new FileBasedKeyManager(
+          injector.getInstance(CConfiguration.class),
+          injector.getInstance(KeyIdentifierCodec.class));
 
       KeyIdentifier keyIdentifier = keyManager.generateKey(keyManager.createKeyGenerator(),
-                                                           new Random().nextInt(Integer.MAX_VALUE));
+          new Random().nextInt(Integer.MAX_VALUE));
       try {
         Files.write(keyFile.toPath(), codec.encode(keyIdentifier), StandardOpenOption.CREATE_NEW);
       } catch (FileAlreadyExistsException e) {
-        System.err.println("File " + keyFile + " already exists. Please specify a different file path.");
+        System.err.println(
+            "File " + keyFile + " already exists. Please specify a different file path.");
       }
       return;
     }

@@ -44,7 +44,7 @@ public class LookupTableConfig {
    * @param cacheEnabled true if caching is desired
    */
   public LookupTableConfig(TableType type, CacheConfig cacheConfig,
-                           Map<String, String> datasetProperties, boolean cacheEnabled) {
+      Map<String, String> datasetProperties, boolean cacheEnabled) {
     this.type = type;
     this.cacheConfig = cacheConfig;
     this.datasetProperties = datasetProperties;

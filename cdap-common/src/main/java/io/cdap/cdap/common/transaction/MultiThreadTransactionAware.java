@@ -29,22 +29,23 @@ import org.apache.tephra.TransactionAware;
  *
  * @param <T> type of {@link TransactionAware} used in each thread.
  */
-public abstract class MultiThreadTransactionAware<T extends TransactionAware> implements TransactionAware {
+public abstract class MultiThreadTransactionAware<T extends TransactionAware> implements
+    TransactionAware {
 
   private final LoadingCache<Thread, T> perThreadTransactionAwares =
-    CacheBuilder.newBuilder().weakKeys()
-      .removalListener((RemovalListener<Thread, T>) notification -> {
-        T value = notification.getValue();
-        if (value != null) {
-          MultiThreadTransactionAware.this.onRemoval(value);
-        }
-      })
-      .build(new CacheLoader<Thread, T>() {
-        @Override
-        public T load(Thread thread) throws Exception {
-          return createTransactionAwareForCurrentThread();
-        }
-      });
+      CacheBuilder.newBuilder().weakKeys()
+          .removalListener((RemovalListener<Thread, T>) notification -> {
+            T value = notification.getValue();
+            if (value != null) {
+              MultiThreadTransactionAware.this.onRemoval(value);
+            }
+          })
+          .build(new CacheLoader<Thread, T>() {
+            @Override
+            public T load(Thread thread) throws Exception {
+              return createTransactionAwareForCurrentThread();
+            }
+          });
 
   protected abstract T createTransactionAwareForCurrentThread();
 

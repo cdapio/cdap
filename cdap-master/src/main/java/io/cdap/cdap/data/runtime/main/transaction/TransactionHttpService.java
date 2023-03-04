@@ -35,10 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Transaction Http service implemented using the common http netty framework.
- * Currently only used for PingHandler.
+ * Transaction Http service implemented using the common http netty framework. Currently only used
+ * for PingHandler.
  */
 public class TransactionHttpService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(TransactionHttpService.class);
 
   private final NettyHttpService httpService;
@@ -47,15 +48,16 @@ public class TransactionHttpService extends AbstractIdleService {
 
   @Inject
   public TransactionHttpService(CConfiguration cConf, SConfiguration sConf,
-                                @Named(Constants.Service.TRANSACTION_HTTP) Set<HttpHandler> handlers,
-                                DiscoveryService discoveryService,
-                                CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      @Named(Constants.Service.TRANSACTION_HTTP) Set<HttpHandler> handlers,
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     // netty http server config
     String address = cConf.get(Constants.Transaction.Container.ADDRESS);
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.TRANSACTION_HTTP)
-      .setHttpHandlers(handlers)
-      .setHost(address);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.TRANSACTION_HTTP)
+        .setHttpHandlers(handlers)
+        .setHost(address);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -71,7 +73,8 @@ public class TransactionHttpService extends AbstractIdleService {
     httpService.start();
     // Register the service
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TRANSACTION_HTTP, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.TRANSACTION_HTTP, httpService)));
     LOG.info("Transaction HTTP started successfully on {}", httpService.getBindAddress());
   }
 

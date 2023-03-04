@@ -32,6 +32,7 @@ import java.util.Objects;
  * Common ETL Config.
  */
 public class ETLConfig extends Config {
+
   private Boolean stageLoggingEnabled;
   private final ETLStage source;
   private final List<ETLStage> sinks;
@@ -40,7 +41,7 @@ public class ETLConfig extends Config {
   private final Resources resources;
 
   protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                      List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
+      List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
@@ -66,7 +67,8 @@ public class ETLConfig extends Config {
       if (transforms != null && !transforms.isEmpty()) {
         connections.add(new Connection(source.getName(), transforms.get(0).getName()));
         for (int i = 0; i < transforms.size() - 1; i++) {
-          connections.add(new Connection(transforms.get(i).getName(), transforms.get(i + 1).getName()));
+          connections.add(
+              new Connection(transforms.get(i).getName(), transforms.get(i + 1).getName()));
         }
         toSink = transforms.get(transforms.size() - 1).getName();
       }
@@ -78,18 +80,20 @@ public class ETLConfig extends Config {
   }
 
   public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                   List<Connection> connections, Resources resources) {
+      List<Connection> connections, Resources resources) {
     this(source, ImmutableList.of(sink), transforms, connections, resources, true);
   }
 
   public ETLConfig getCompatibleConfig() {
     int pluginNum = 1;
-    ETLStage sourceStage = source.getCompatibleStage("source." + source.getName() +  "." + pluginNum);
+    ETLStage sourceStage = source.getCompatibleStage(
+        "source." + source.getName() + "." + pluginNum);
     List<ETLStage> transformStages = new ArrayList<>();
     if (transforms != null) {
       for (ETLStage transform : transforms) {
         pluginNum++;
-        transformStages.add(transform.getCompatibleStage("transform." + transform.getName() + "." + pluginNum));
+        transformStages.add(
+            transform.getCompatibleStage("transform." + transform.getName() + "." + pluginNum));
       }
     }
     List<ETLStage> sinkStages = new ArrayList<>();
@@ -97,7 +101,8 @@ public class ETLConfig extends Config {
       pluginNum++;
       sinkStages.add(sink.getCompatibleStage("sink." + sink.getName() + "." + pluginNum));
     }
-    List<Connection> connectionList = connections == null ? new ArrayList<Connection>() : connections;
+    List<Connection> connectionList =
+        connections == null ? new ArrayList<Connection>() : connections;
     return new ETLConfig(sourceStage, sinkStages, transformStages, connectionList, resources, true);
   }
 
@@ -126,9 +131,9 @@ public class ETLConfig extends Config {
   }
 
   protected <T extends io.cdap.cdap.etl.proto.v2.ETLConfig.Builder> T upgradeBase(T builder,
-                                                                                  UpgradeContext upgradeContext,
-                                                                                  String sourceType,
-                                                                                  String sinkType) {
+      UpgradeContext upgradeContext,
+      String sourceType,
+      String sinkType) {
     builder.setResources(getResources()).addConnections(getConnections());
 
     if (!isStageLoggingEnabled()) {
@@ -147,14 +152,14 @@ public class ETLConfig extends Config {
 
   @Override
   public String toString() {
-    return "ETLConfig{" +
-      "stageLoggingEnabled=" + stageLoggingEnabled +
-      ", source=" + source +
-      ", sinks=" + sinks +
-      ", transforms=" + transforms +
-      ", connections=" + connections +
-      ", resources=" + resources +
-      "} " + super.toString();
+    return "ETLConfig{"
+        + "stageLoggingEnabled=" + stageLoggingEnabled
+        + ", source=" + source
+        + ", sinks=" + sinks
+        + ", transforms=" + transforms
+        + ", connections=" + connections
+        + ", resources=" + resources
+        + "} " + super.toString();
   }
 
   @Override
@@ -168,12 +173,12 @@ public class ETLConfig extends Config {
 
     ETLConfig that = (ETLConfig) o;
 
-    return Objects.equals(source, that.source) &&
-      Objects.equals(sinks, that.sinks) &&
-      Objects.equals(transforms, that.transforms) &&
-      Objects.equals(connections, that.connections) &&
-      Objects.equals(resources, that.resources) &&
-      isStageLoggingEnabled() == that.isStageLoggingEnabled();
+    return Objects.equals(source, that.source)
+        && Objects.equals(sinks, that.sinks)
+        && Objects.equals(transforms, that.transforms)
+        && Objects.equals(connections, that.connections)
+        && Objects.equals(resources, that.resources)
+        && isStageLoggingEnabled() == that.isStageLoggingEnabled();
   }
 
   @Override
@@ -188,6 +193,7 @@ public class ETLConfig extends Config {
    */
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {
+
     protected ETLStage source;
     protected List<ETLStage> sinks;
     protected List<ETLStage> transforms;

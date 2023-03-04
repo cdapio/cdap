@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.common;
  * Constants used in ETL Applications.
  */
 public final class Constants {
+
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
   public static final String STUDIO_SERVICE_NAME = "studio";
@@ -40,7 +41,7 @@ public final class Constants {
   public static final String DATASET_AGGREGATE_ENABLED = "spark.cdap.pipeline.aggregate.dataset.enable";
   public static final String DISABLE_ELT_PUSHDOWN = "cdap.pipeline.pushdown.disable";
   public static final String DATASET_AGGREGATE_IGNORE_PARTITIONS =
-    "spark.cdap.pipeline.aggregate.dataset.partitions.ignore";
+      "spark.cdap.pipeline.aggregate.dataset.partitions.ignore";
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";
   // Can be used as a runtime argument for streaming pipeline to disable at least once processing.
   public static final String CDAP_STREAMING_ATLEASTONCE_ENABLED = "cdap.streaming.atleastonce.enabled";
@@ -59,6 +60,7 @@ public final class Constants {
    * Connector constants
    */
   public static final class Connector {
+
     public static final String PLUGIN_TYPE = "connector";
     public static final String ORIGINAL_NAME = "original";
     public static final String TYPE = "type";
@@ -71,6 +73,7 @@ public final class Constants {
    * Various metric constants.
    */
   public static final class Metrics {
+
     public static final String TOTAL_TIME = "process.time.total";
     public static final String MIN_TIME = "process.time.min";
     public static final String MAX_TIME = "process.time.max";
@@ -89,6 +92,7 @@ public final class Constants {
     public static final String STAGES_COUNT_PREFIX = STAGES_COUNT + ".";
 
     public static final class Connection {
+
       public static final String CONNECTION_COUNT = "connections.count";
       public static final String CONNECTION_DELETED_COUNT = "connections.deleted.count";
       public static final String CONNECTION_GET_COUNT = "connections.get.count";
@@ -98,9 +102,8 @@ public final class Constants {
     }
 
     /**
-     * NOTES:
-     * tag names must be unique (keeping all possible here helps to ensure that)
-     * tag names better be short to reduce the serialized metric value size
+     * NOTES: tag names must be unique (keeping all possible here helps to ensure that) tag names
+     * better be short to reduce the serialized metric value size
      */
     public static final class Tag {
 
@@ -113,20 +116,22 @@ public final class Constants {
      * Metric constants for different modes of DataStreamsStateSpec
      */
     public static final class AtleastOnceProcessing {
+
       public static final String STREAMING_ATLEASTONCE_DISABLED_COUNT = "streaming.atleastonce.disabled.count";
       public static final String STREAMING_ATLEASTONCE_CHECKPOINTING_COUNT =
-        "streaming.atleastonce.checkpointing.count";
+          "streaming.atleastonce.checkpointing.count";
       public static final String STREAMING_ATLEASTONCE_STORE_COUNT = "streaming.atleastonce.store.count";
     }
 
     public static final String STREAMING_MULTI_SOURCE_PIPELINE_RUNS_COUNT =
-      "streaming.multi.source.pipeline.runs.count";
+        "streaming.multi.source.pipeline.runs.count";
   }
 
   /**
    * Constants related to the stage statistics.
    */
   public static final class StageStatistics {
+
     public static final String PREFIX = "stage.statistics";
     public static final String INPUT_RECORDS = "input.records";
     public static final String OUTPUT_RECORDS = "output.records";

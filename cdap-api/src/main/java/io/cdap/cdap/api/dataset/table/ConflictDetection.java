@@ -17,8 +17,8 @@
 package io.cdap.cdap.api.dataset.table;
 
 /**
-* Conflict detection level of a table.
-*/
+ * Conflict detection level of a table.
+ */
 public enum ConflictDetection {
   ROW,
   COLUMN,

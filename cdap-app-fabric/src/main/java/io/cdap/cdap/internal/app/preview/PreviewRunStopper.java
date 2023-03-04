@@ -22,8 +22,10 @@ import io.cdap.cdap.proto.id.ApplicationId;
  * Interface to kill the preview runner service.
  */
 public interface PreviewRunStopper {
+
   /**
    * Stops the preview as identified by the application id.
+   *
    * @param preview id of the preview application to be stopped
    * @throws Exception if any error while stopping
    */

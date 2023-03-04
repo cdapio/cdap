@@ -43,6 +43,7 @@ import org.apache.spark.sql.types.StructType;
  * Pull Dataset implementation for unit test
  */
 public class MockPullProducer implements SQLDatasetProducer {
+
   private static final Gson GSON = new Gson();
 
   private final SQLDatasetDescription datasetDescription;
@@ -71,7 +72,8 @@ public class MockPullProducer implements SQLDatasetProducer {
   @Override
   public RecordCollection produce(SQLDataset dataset) {
     // Create a spark session and write RDD as JSON
-    TypeToken<HashSet<StructuredRecord>> typeToken = new TypeToken<HashSet<StructuredRecord>>() { };
+    TypeToken<HashSet<StructuredRecord>> typeToken = new TypeToken<HashSet<StructuredRecord>>() {
+    };
     Type setOfStructuredRecordType = typeToken.getType();
 
     // Read records from JSON and adjust data types
@@ -86,7 +88,8 @@ public class MockPullProducer implements SQLDatasetProducer {
     JavaSparkContext jsc = JavaSparkContext.fromSparkContext(SparkContext.getOrCreate());
     SQLContext sqlContext = new SQLContext(sc);
     StructType sparkSchema = DataFrames.toDataType(this.datasetDescription.getSchema());
-    JavaRDD<Row> rdd = jsc.parallelize(new ArrayList<>(records)).map(sr -> DataFrames.toRow(sr, sparkSchema));
+    JavaRDD<Row> rdd = jsc.parallelize(new ArrayList<>(records))
+        .map(sr -> DataFrames.toRow(sr, sparkSchema));
     Dataset<Row> ds = sqlContext.createDataFrame(rdd.rdd(), sparkSchema);
     return new SparkRecordCollectionImpl(ds);
   }
@@ -95,6 +98,7 @@ public class MockPullProducer implements SQLDatasetProducer {
    * Structured Record entries read using GSON will contain Doubles instead of Integers.
    *
    * This functions builds a new Structured Record with the correct data type.
+   *
    * @param record the structured record we need to adjust
    * @param schema Schema to use
    * @return a new Structured record with Double/Float values adjusted into integers.
@@ -107,7 +111,7 @@ public class MockPullProducer implements SQLDatasetProducer {
 
       // Adjust doubles and floats into integers.
       if (value instanceof Double) {
-         value = ((Double) value).intValue();
+        value = ((Double) value).intValue();
       }
       if (value instanceof Float) {
         value = ((Float) value).intValue();

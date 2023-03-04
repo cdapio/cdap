@@ -60,9 +60,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link DatasetContext} that allows to dynamically load datasets
- * into a started {@link TransactionContext}. Datasets acquired from this context are distinct from any
- * Datasets instantiated outside this class.
+ * Implementation of {@link DatasetContext} that allows to dynamically load datasets into a started
+ * {@link TransactionContext}. Datasets acquired from this context are distinct from any Datasets
+ * instantiated outside this class.
  */
 public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
@@ -81,36 +81,36 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   /**
    * See {@link DynamicDatasetCache}.
    *
-   * @param staticDatasets  if non-null, a map from dataset name to runtime arguments. These datasets will be
-   *                        instantiated immediately, and they will participate in every transaction started
-   *                        through {@link #newTransactionContext()}.
+   * @param staticDatasets if non-null, a map from dataset name to runtime arguments. These
+   *     datasets will be instantiated immediately, and they will participate in every transaction
+   *     started through {@link #newTransactionContext()}.
    */
   public SingleThreadDatasetCache(final SystemDatasetInstantiator instantiator,
-                                  final TransactionSystemClient txClient,
-                                  final NamespaceId namespace,
-                                  Map<String, String> runtimeArguments,
-                                  @Nullable final MetricsContext metricsContext,
-                                  @Nullable Map<String, Map<String, String>> staticDatasets) {
+      final TransactionSystemClient txClient,
+      final NamespaceId namespace,
+      Map<String, String> runtimeArguments,
+      @Nullable final MetricsContext metricsContext,
+      @Nullable Map<String, Map<String, String>> staticDatasets) {
     super(instantiator, txClient, namespace, runtimeArguments);
     this.metricsContext = metricsContext;
 
     // This is a dataset cache for the actual dataset instance. Different access type of the same dataset id will
     // give the same instance.
-    LoadingCache<DatasetCacheKey, Dataset> datasetInstanceCache = CacheBuilder.newBuilder().removalListener(
-      new RemovalListener<DatasetCacheKey, Dataset>() {
-        @ParametersAreNonnullByDefault
-        @Override
-        public void onRemoval(RemovalNotification<DatasetCacheKey, Dataset> notification) {
-          closeDataset(notification.getKey(), notification.getValue());
-        }
-      }).build(new CacheLoader<DatasetCacheKey, Dataset>() {
-        @ParametersAreNonnullByDefault
-        @Override
-        public Dataset load(DatasetCacheKey key) throws Exception {
-          return createDatasetInstance(key, false);
-        }
-      });
-
+    LoadingCache<DatasetCacheKey, Dataset> datasetInstanceCache = CacheBuilder.newBuilder()
+        .removalListener(
+            new RemovalListener<DatasetCacheKey, Dataset>() {
+              @ParametersAreNonnullByDefault
+              @Override
+              public void onRemoval(RemovalNotification<DatasetCacheKey, Dataset> notification) {
+                closeDataset(notification.getKey(), notification.getValue());
+              }
+            }).build(new CacheLoader<DatasetCacheKey, Dataset>() {
+          @ParametersAreNonnullByDefault
+          @Override
+          public Dataset load(DatasetCacheKey key) throws Exception {
+            return createDatasetInstance(key, false);
+          }
+        });
 
     // This is the cache used by this class and the cache key is access type aware.
     // It gets the dataset instance from the datasetInstanceCache above.
@@ -121,34 +121,36 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     // or we perform invalidateAll, hence we don't need to worry about closing dataset on one entry, while having
     // another entry that pointing to the same dataset instance.
     this.datasetCache = CacheBuilder.newBuilder().removalListener(
-      new RemovalListener<AccessAwareDatasetCacheKey, Dataset>() {
-        @ParametersAreNonnullByDefault
-        @Override
-        public void onRemoval(RemovalNotification<AccessAwareDatasetCacheKey, Dataset> notification) {
-          if (notification.getKey() != null) {
-            // Invalidate the dataset instance cache, which will result in closing the dataset.
-            datasetInstanceCache.invalidate(notification.getKey().getDatasetCacheKey());
+        new RemovalListener<AccessAwareDatasetCacheKey, Dataset>() {
+          @ParametersAreNonnullByDefault
+          @Override
+          public void onRemoval(
+              RemovalNotification<AccessAwareDatasetCacheKey, Dataset> notification) {
+            if (notification.getKey() != null) {
+              // Invalidate the dataset instance cache, which will result in closing the dataset.
+              datasetInstanceCache.invalidate(notification.getKey().getDatasetCacheKey());
+            }
           }
-        }
-      }).build(new CacheLoader<AccessAwareDatasetCacheKey, Dataset>() {
-        @ParametersAreNonnullByDefault
-        @Override
-        public Dataset load(AccessAwareDatasetCacheKey key) throws Exception {
-          DatasetCacheKey cacheKey = key.getDatasetCacheKey();
-          Dataset instance = datasetInstanceCache.get(cacheKey);
-          instantiator.writeLineage(new DatasetId(cacheKey.getNamespace(), cacheKey.getName()),
-                                    cacheKey.getAccessType());
-          return instance;
-        }
-      });
+        }).build(new CacheLoader<AccessAwareDatasetCacheKey, Dataset>() {
+      @ParametersAreNonnullByDefault
+      @Override
+      public Dataset load(AccessAwareDatasetCacheKey key) throws Exception {
+        DatasetCacheKey cacheKey = key.getDatasetCacheKey();
+        Dataset instance = datasetInstanceCache.get(cacheKey);
+        instantiator.writeLineage(new DatasetId(cacheKey.getNamespace(), cacheKey.getName()),
+            cacheKey.getAccessType());
+        return instance;
+      }
+    });
 
     // add all the static datasets to the cache. This makes sure that a) the cache is preloaded and
     // b) if any static datasets cannot be loaded, the problem show right away (and not later). See
     // also the javadoc of this c'tor, which states that all static datasets get loaded right away.
     if (staticDatasets != null) {
       for (Map.Entry<String, Map<String, String>> entry : staticDatasets.entrySet()) {
-        this.staticDatasets.put(new DatasetCacheKey(namespace.getNamespace(), entry.getKey(), entry.getValue()),
-                                getDataset(entry.getKey(), entry.getValue()));
+        this.staticDatasets.put(
+            new DatasetCacheKey(namespace.getNamespace(), entry.getKey(), entry.getValue()),
+            getDataset(entry.getKey(), entry.getValue()));
       }
     }
   }
@@ -160,14 +162,14 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         dataset.close();
       } catch (Throwable e) {
         LOG.warn(String.format("Error closing dataset '%s' of type %s",
-                               String.valueOf(key), dataset.getClass().getName()), e);
+            String.valueOf(key), dataset.getClass().getName()), e);
       }
     }
   }
 
   @Override
   public <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
 
     Dataset dataset;
     try {
@@ -184,11 +186,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       throw e;
     } catch (Throwable t) {
       throw new DatasetInstantiationException(
-        String.format("Could not instantiate dataset '%s:%s'", key.getNamespace(), key.getName()), t);
+          String.format("Could not instantiate dataset '%s:%s'", key.getNamespace(), key.getName()),
+          t);
     }
     // make sure the dataset exists and is of the right type
     if (dataset == null) {
-      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", key.getName()));
+      throw new DatasetInstantiationException(
+          String.format("Dataset '%s' does not exist", key.getName()));
     }
     T typedDataset;
     try {
@@ -197,8 +201,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       typedDataset = t;
     } catch (Throwable t) { // must be ClassCastException
       throw new DatasetInstantiationException(
-        String.format("Could not cast dataset '%s' to requested type. Actual type is %s.",
-                      key.getName(), dataset.getClass().getName()), t);
+          String.format("Could not cast dataset '%s' to requested type. Actual type is %s.",
+              key.getName(), dataset.getClass().getName()), t);
     }
 
     // any transaction aware that is not in the active tx-awares is added to the current tx context (if there is one).
@@ -213,9 +217,10 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       } else if (existing != dataset) {
         // this better be the same dataset, otherwise the cache did not work
         throw new IllegalStateException(
-          String.format("Unexpected state: Cache returned %s for %s, which is different from the " +
-                          "active transaction aware %s for the same key. This should never happen.",
-                        dataset, key, existing));
+            String.format(
+                "Unexpected state: Cache returned %s for %s, which is different from the "
+                    + "active transaction aware %s for the same key. This should never happen.",
+                dataset, key, existing));
       }
     }
     return typedDataset;
@@ -274,14 +279,16 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
 
     // we can only hope that dataset.toString() is meaningful
-    LOG.warn("Attempt to discard a dataset that was not acquired through this context: {}", dataset);
+    LOG.warn("Attempt to discard a dataset that was not acquired through this context: {}",
+        dataset);
   }
 
   @Override
   public TransactionContext newTransactionContext() throws TransactionFailureException {
     if (txContext != null && txContext.getCurrentTransaction() != null) {
-      throw new TransactionFailureException("Attempted to start a transaction within active transaction " +
-                                              txContext.getCurrentTransaction().getTransactionId());
+      throw new TransactionFailureException(
+          "Attempted to start a transaction within active transaction "
+              + txContext.getCurrentTransaction().getTransactionId());
     }
     dismissTransactionContext();
     txContext = new DelayedDiscardingTransactionContext(txClient, activeTxAwares.values());
@@ -299,15 +306,15 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public Iterable<TransactionAware> getStaticTransactionAwares() {
     return staticDatasets.values().stream()
-      .filter(TransactionAware.class::isInstance)
-      .map(TransactionAware.class::cast)::iterator;
+        .filter(TransactionAware.class::isInstance)
+        .map(TransactionAware.class::cast)::iterator;
   }
 
   @Override
   public Iterable<TransactionAware> getTransactionAwares() {
     return (txContext == null)
-      ? NO_TX_AWARES
-      : Stream.concat(activeTxAwares.values().stream(), extraTxAwares.stream())::iterator;
+        ? NO_TX_AWARES
+        : Stream.concat(activeTxAwares.values().stream(), extraTxAwares.stream())::iterator;
   }
 
   @Override
@@ -335,7 +342,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   public void removeExtraTransactionAware(TransactionAware txAware) {
     if (extraTxAwares.contains(txAware)) {
       Preconditions.checkState(txContext == null || txContext.getCurrentTransaction() == null,
-                               "Cannot remove TransactionAware while there is an active transaction.");
+          "Cannot remove TransactionAware while there is an active transaction.");
       extraTxAwares.remove(txAware);
     }
   }
@@ -375,7 +382,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     Dataset dataset = instantiator.getDataset(datasetId, key.getArguments(), key.getAccessType());
     if (dataset instanceof MeteredDataset && metricsContext != null) {
       ((MeteredDataset) dataset).setMetricsCollector(
-        metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
+          metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
     }
 
     if (recordLineage) {
@@ -385,12 +392,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   /**
-   * This is an implementation of TransactionContext that delays the discarding of a transaction-aware
-   * dataset until after the transaction is complete. This is needed in cases where a client calls
-   * {@link DatasetContext#discardDataset(Dataset)} in the middle of a transaction: The client indicates
-   * that it does not need that dataset any more. But it is participating in the current transaction,
-   * and needs to continue to do so until the transaction has ended. Therefore this class will put
-   * that dataset on a toDiscard set, which is inspected after every transaction.
+   * This is an implementation of TransactionContext that delays the discarding of a
+   * transaction-aware dataset until after the transaction is complete. This is needed in cases
+   * where a client calls {@link DatasetContext#discardDataset(Dataset)} in the middle of a
+   * transaction: The client indicates that it does not need that dataset any more. But it is
+   * participating in the current transaction, and needs to continue to do so until the transaction
+   * has ended. Therefore this class will put that dataset on a toDiscard set, which is inspected
+   * after every transaction.
    */
   private final class DelayedDiscardingTransactionContext extends AbstractTransactionContext {
 
@@ -398,7 +406,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     private final Set<TransactionAware> toDiscard;
     private final Iterable<TransactionAware> allTxAwares;
 
-    DelayedDiscardingTransactionContext(TransactionSystemClient txClient, Iterable<TransactionAware> txAwares) {
+    DelayedDiscardingTransactionContext(TransactionSystemClient txClient,
+        Iterable<TransactionAware> txAwares) {
       super(txClient);
       this.regularTxAwares = Sets.newIdentityHashSet();
       this.toDiscard = Sets.newIdentityHashSet();
@@ -430,7 +439,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
 
     /**
-     * Discards all datasets marked for discarding, through the dataset cache, and set the tx context to null.
+     * Discards all datasets marked for discarding, through the dataset cache, and set the tx
+     * context to null.
      */
     @Override
     protected void cleanup() {
@@ -451,8 +461,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   /**
-   * Cache key the wrap around {@link DatasetCacheKey}. Unlike the {@link DatasetCacheKey}, the comparison includes the
-   * {@link DatasetCacheKey#accessType}.
+   * Cache key the wrap around {@link DatasetCacheKey}. Unlike the {@link DatasetCacheKey}, the
+   * comparison includes the {@link DatasetCacheKey#accessType}.
    */
   private static final class AccessAwareDatasetCacheKey {
 
@@ -476,7 +486,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       }
 
       AccessAwareDatasetCacheKey other = (AccessAwareDatasetCacheKey) o;
-      return Objects.equals(key, other.key) && Objects.equals(key.getAccessType(), other.key.getAccessType());
+      return Objects.equals(key, other.key) && Objects.equals(key.getAccessType(),
+          other.key.getAccessType());
     }
 
     @Override

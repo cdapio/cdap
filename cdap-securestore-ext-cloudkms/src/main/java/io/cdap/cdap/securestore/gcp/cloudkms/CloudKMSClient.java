@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
  * Wrapper on {@link CloudKMS} client.
  */
 class CloudKMSClient implements Closeable {
+
   private static final Logger LOG = LoggerFactory.getLogger(CloudKMSClient.class);
   // When created in the global location, Cloud KMS resources are available from zones spread around the world.
   private static final String LOCATION_ID = "global";
@@ -59,8 +60,9 @@ class CloudKMSClient implements Closeable {
   private static final String PROJECT_ID = "project.id";
   private static final String SERVICE_ACCOUNT_FILE = "service.account.file";
   private static final String METADATA_SERVER_API = "metadata.server.api";
-  private static final String DEFAULT_METADATA_SERVER_API = "http://metadata.google.internal/computeMetadata" +
-    "/v1/project/project-id";
+  private static final String DEFAULT_METADATA_SERVER_API =
+      "http://metadata.google.internal/computeMetadata"
+          + "/v1/project/project-id";
   private static final String KEYRING_ID = "keyring.id";
   private static final String DEFAULT_KEYRING_ID = "cdap";
 
@@ -77,9 +79,10 @@ class CloudKMSClient implements Closeable {
    * @throws IOException if cloud kms client can not be created
    */
   CloudKMSClient(Map<String, String> properties) throws IOException {
-    String metadataServerApi = properties.getOrDefault(METADATA_SERVER_API, DEFAULT_METADATA_SERVER_API);
+    String metadataServerApi = properties.getOrDefault(METADATA_SERVER_API,
+        DEFAULT_METADATA_SERVER_API);
     this.projectId = properties.containsKey(PROJECT_ID) ? properties.get(PROJECT_ID) :
-      getSystemProjectId(metadataServerApi);
+        getSystemProjectId(metadataServerApi);
     String serviceAccountFile = properties.getOrDefault(SERVICE_ACCOUNT_FILE, null);
     this.cloudKMS = createCloudKMS(serviceAccountFile);
     this.keyringId = properties.getOrDefault(KEYRING_ID, DEFAULT_KEYRING_ID);
@@ -87,8 +90,8 @@ class CloudKMSClient implements Closeable {
   }
 
   /**
-   * Get project id from the metadata server. Makes a request to the metadata server that lives on the VM,
-   * as described at https://cloud.google.com/compute/docs/storing-retrieving-metadata.
+   * Get project id from the metadata server. Makes a request to the metadata server that lives on
+   * the VM, as described at https://cloud.google.com/compute/docs/storing-retrieving-metadata.
    */
   private String getSystemProjectId(String metadataServerApi) throws IOException {
     URL url = new URL(metadataServerApi);
@@ -97,7 +100,8 @@ class CloudKMSClient implements Closeable {
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestProperty("Metadata-Flavor", "Google");
       connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
+      try (Reader reader = new InputStreamReader(connection.getInputStream(),
+          StandardCharsets.UTF_8)) {
         return CharStreams.toString(reader);
       }
     } finally {
@@ -130,8 +134,8 @@ class CloudKMSClient implements Closeable {
     }
 
     return new CloudKMS.Builder(transport, jsonFactory, credential)
-      .setApplicationName(CLOUD_KMS)
-      .build();
+        .setApplicationName(CLOUD_KMS)
+        .build();
   }
 
   /**
@@ -145,16 +149,17 @@ class CloudKMSClient implements Closeable {
 
     try {
       cloudKMS.projects().locations().keyRings()
-        .create(parent, new KeyRing())
-        .setKeyRingId(keyringId)
-        .execute();
+          .create(parent, new KeyRing())
+          .setKeyRingId(keyringId)
+          .execute();
     } catch (GoogleJsonResponseException e) {
       // if key ring already exists, then do not throw any exception.
       if (e.getDetails() != null && e.getDetails().getCode() == 409) {
         LOG.trace(String.format("Key ring %s already exists", keyringId));
         return;
       }
-      throw new IOException(String.format("Exception occurred while creating key ring %s", keyringId), e);
+      throw new IOException(
+          String.format("Exception occurred while creating key ring %s", keyringId), e);
     }
   }
 
@@ -170,7 +175,8 @@ class CloudKMSClient implements Closeable {
       return;
     }
 
-    String parent = String.format("projects/%s/locations/%s/keyRings/%s", projectId, LOCATION_ID, keyringId);
+    String parent = String.format("projects/%s/locations/%s/keyRings/%s", projectId, LOCATION_ID,
+        keyringId);
 
     CryptoKey cryptoKey = new CryptoKey();
     // This will allow the API access to the key for symmetric encryption and decryption.
@@ -178,9 +184,9 @@ class CloudKMSClient implements Closeable {
 
     try {
       cloudKMS.projects().locations().keyRings().cryptoKeys()
-        .create(parent, cryptoKey)
-        .setCryptoKeyId(cryptoKeyId)
-        .execute();
+          .create(parent, cryptoKey)
+          .setCryptoKeyId(cryptoKeyId)
+          .execute();
     } catch (GoogleJsonResponseException e) {
       // Crypto key is shared for all the secrets in a namespace. If the crypto key already exists, then do not throw
       // any exception. This will happen if another key for the same namespace is being created.
@@ -189,7 +195,7 @@ class CloudKMSClient implements Closeable {
         return;
       }
 
-      throw new IOException("Error occurred while creating cryptographic key for namespace %s" , e);
+      throw new IOException("Error occurred while creating cryptographic key for namespace %s", e);
     }
 
     // In-memory cache to keep list of crypto keys created so far.
@@ -204,13 +210,14 @@ class CloudKMSClient implements Closeable {
    * @throws IOException there's an error in encrypting secret
    */
   byte[] encrypt(String cryptoKeyId, byte[] secret) throws IOException {
-    String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", projectId, LOCATION_ID,
-                                        keyringId, cryptoKeyId);
+    String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
+        projectId, LOCATION_ID,
+        keyringId, cryptoKeyId);
     // secret must not be longer than 64KiB.
     EncryptRequest request = new EncryptRequest().encodePlaintext(secret);
     EncryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
-      .encrypt(resourceName, request)
-      .execute();
+        .encrypt(resourceName, request)
+        .execute();
 
     byte[] encryptedData = response.decodeCiphertext();
     if (encryptedData == null) {
@@ -230,12 +237,12 @@ class CloudKMSClient implements Closeable {
    */
   byte[] decrypt(String cryptoKeyId, byte[] encryptedSecret) throws IOException {
     String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
-                                        projectId, LOCATION_ID, keyringId, cryptoKeyId);
+        projectId, LOCATION_ID, keyringId, cryptoKeyId);
 
     DecryptRequest request = new DecryptRequest().encodeCiphertext(encryptedSecret);
     DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
-      .decrypt(resourceName, request)
-      .execute();
+        .decrypt(resourceName, request)
+        .execute();
 
     byte[] decrypted = response.decodePlaintext();
     if (decrypted == null) {

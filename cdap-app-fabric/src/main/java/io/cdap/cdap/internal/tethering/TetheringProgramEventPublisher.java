@@ -63,16 +63,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reads program status messages from TMS and writes to them to peer specific topics.
- * {@link TetheringAgentService} is responsible for reading status messages from the peer specific topics and
- * sending updates to the respective peers.
+ * Reads program status messages from TMS and writes to them to peer specific topics. {@link
+ * TetheringAgentService} is responsible for reading status messages from the peer specific topics
+ * and sending updates to the respective peers.
  */
-public class TetheringProgramEventPublisher extends AbstractRetryableScheduledService  {
+public class TetheringProgramEventPublisher extends AbstractRetryableScheduledService {
+
   private static final Logger LOG = LoggerFactory.getLogger(TetheringProgramEventPublisher.class);
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
   static final String SUBSCRIBER = "tether.agent";
 
   private final TetheringStore store;
@@ -90,8 +92,9 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   private String lastProgramUpdateMessageId;
 
   @Inject
-  TetheringProgramEventPublisher(CConfiguration cConf, TetheringStore store, MessagingService messagingService,
-                                 ProgramRunRecordFetcher programRunRecordFetcher, TransactionRunner transactionRunner) {
+  TetheringProgramEventPublisher(CConfiguration cConf, TetheringStore store,
+      MessagingService messagingService,
+      ProgramRunRecordFetcher programRunRecordFetcher, TransactionRunner transactionRunner) {
     super(RetryStrategies.fromConfiguration(cConf, "tethering.agent."));
     this.store = store;
     this.messagingService = messagingService;
@@ -104,19 +107,21 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
     this.programStateTopicPrefix = cConf.get(Constants.Tethering.PROGRAM_STATE_TOPIC_PREFIX);
     // TetheringAgentService reads messages published by TetheringProgramEventPublisher, so use the same
     // poll interval here
-    this.pollInterval = TimeUnit.SECONDS.toMillis(cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
+    this.pollInterval = TimeUnit.SECONDS.toMillis(
+        cConf.getLong(Constants.Tethering.CONNECTION_INTERVAL));
   }
 
   @Override
   protected void doStartUp() {
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-      lastProgramUpdateMessageId = appMetadataStore.retrieveSubscriberState(programUpdateTopic, SUBSCRIBER);
+      lastProgramUpdateMessageId = appMetadataStore.retrieveSubscriberState(programUpdateTopic,
+          SUBSCRIBER);
       if (lastProgramUpdateMessageId == null) {
         // Initialize subscriber based on last message fetched by RuntimeProgramStatusSubscriberService.
         // This is to avoid fetching existing program history from before TetheringAgent was added
         String messageId = appMetadataStore.retrieveSubscriberState(programUpdateTopic,
-                                                                    RuntimeProgramStatusSubscriberService.SUBSCRIBER);
+            RuntimeProgramStatusSubscriberService.SUBSCRIBER);
         appMetadataStore.persistSubscriberState(programUpdateTopic, SUBSCRIBER, messageId);
         lastProgramUpdateMessageId = messageId;
       }
@@ -126,17 +131,17 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   @Override
   protected long runTask() throws IOException {
     List<PeerInfo> peers = store.getPeers().stream()
-      // Ignore peers that are not in ACCEPTED state.
-      .filter(p -> p.getTetheringStatus() == TetheringStatus.ACCEPTED)
-      .collect(Collectors.toList());
+        // Ignore peers that are not in ACCEPTED state.
+        .filter(p -> p.getTetheringStatus() == TetheringStatus.ACCEPTED)
+        .collect(Collectors.toList());
 
     PeerProgramUpdates peerProgramUpdates = getPeerProgramUpdates();
     persistNotifications(peerProgramUpdates, peers);
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
       appMetadataStore.persistSubscriberState(programUpdateTopic,
-                                              SUBSCRIBER,
-                                              lastProgramUpdateMessageId);
+          SUBSCRIBER,
+          lastProgramUpdateMessageId);
 
     });
 
@@ -149,27 +154,31 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
   private PeerProgramUpdates getPeerProgramUpdates() {
     Map<String, List<Notification>> peerToNotifications = new HashMap<>();
     String lastMessageId = lastProgramUpdateMessageId;
-    try (CloseableIterator<Message> iterator = messageFetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                                    programUpdateTopic,
-                                                                    programUpdateFetchSize,
-                                                                    lastProgramUpdateMessageId)) {
+    try (CloseableIterator<Message> iterator = messageFetcher.fetch(
+        NamespaceId.SYSTEM.getNamespace(),
+        programUpdateTopic,
+        programUpdateFetchSize,
+        lastProgramUpdateMessageId)) {
       while (iterator.hasNext()) {
         Message message = iterator.next();
-        Notification notification = message.decodePayload(r -> GSON.fromJson(r, Notification.class));
+        Notification notification = message.decodePayload(
+            r -> GSON.fromJson(r, Notification.class));
         if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
           continue;
         }
         Map<String, String> properties = notification.getProperties();
         String programRunId = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
         try {
-          RunRecord runRecord = runRecordFetcher.getRunRecordMeta(GSON.fromJson(programRunId, ProgramRunId.class));
+          RunRecord runRecord = runRecordFetcher.getRunRecordMeta(
+              GSON.fromJson(programRunId, ProgramRunId.class));
           if (runRecord.getPeerName() == null) {
             continue;
           }
           String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
           LOG.debug("Received message for peer {} about program run {} in state {}",
-                    runRecord.getPeerName(), programRunId, programStatus);
-          peerToNotifications.computeIfAbsent(runRecord.getPeerName(), n -> new ArrayList<>()).add(notification);
+              runRecord.getPeerName(), programRunId, programStatus);
+          peerToNotifications.computeIfAbsent(runRecord.getPeerName(), n -> new ArrayList<>())
+              .add(notification);
         } catch (NotFoundException | IOException e) {
           LOG.error("Unable to fetch runRecord for programRunId {}", programRunId, e);
         }
@@ -182,11 +191,13 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
     return new PeerProgramUpdates(peerToNotifications, lastMessageId);
   }
 
-  private void persistNotifications(PeerProgramUpdates peerProgramUpdates, List<PeerInfo> peers) throws IOException {
-    for (PeerInfo peer: peers) {
+  private void persistNotifications(PeerProgramUpdates peerProgramUpdates, List<PeerInfo> peers)
+      throws IOException {
+    for (PeerInfo peer : peers) {
       String peerName = peer.getName();
-      List<String> notifications = peerProgramUpdates.peerToNotifications.getOrDefault(peerName, new ArrayList<>())
-        .stream().map(n -> GSON.toJson(n)).collect(Collectors.toList());
+      List<String> notifications = peerProgramUpdates.peerToNotifications.getOrDefault(peerName,
+              new ArrayList<>())
+          .stream().map(n -> GSON.toJson(n)).collect(Collectors.toList());
       publishMessages(programStateTopicPrefix + peerName, notifications);
     }
     lastProgramUpdateMessageId = peerProgramUpdates.lastMessageId;
@@ -199,7 +210,7 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
     Retries.runWithRetries(() -> {
       try {
         messagePublisher.publish(NamespaceId.SYSTEM.getNamespace(), topic,
-                                 messages.toArray(new String[0]));
+            messages.toArray(new String[0]));
       } catch (TopicNotFoundException e) {
         // Create the topic if it doesn't exist and retry publish
         createTopicIfNeeded(new TopicId(NamespaceId.SYSTEM.getNamespace(), topic));
@@ -221,12 +232,14 @@ public class TetheringProgramEventPublisher extends AbstractRetryableScheduledSe
    * Program status notifications for tethered peers.
    */
   private static class PeerProgramUpdates {
+
     // List of notifications for each tethered peer
     private final Map<String, List<Notification>> peerToNotifications;
     // Last message id read from TMS
     private final String lastMessageId;
 
-    private PeerProgramUpdates(Map<String, List<Notification>> peerToNotifications, String lastMessageId) {
+    private PeerProgramUpdates(Map<String, List<Notification>> peerToNotifications,
+        String lastMessageId) {
       this.peerToNotifications = peerToNotifications;
       this.lastMessageId = lastMessageId;
     }

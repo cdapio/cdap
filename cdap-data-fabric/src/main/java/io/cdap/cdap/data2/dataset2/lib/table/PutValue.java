@@ -18,9 +18,11 @@ package io.cdap.cdap.data2.dataset2.lib.table;
 
 
 /**
- * Represents a normal (full) write to a datastore for in-memory buffering, overwriting the previously stored value.
+ * Represents a normal (full) write to a datastore for in-memory buffering, overwriting the
+ * previously stored value.
  */
 public class PutValue implements Update<byte[]> {
+
   private final byte[] bytes;
 
   public PutValue(byte[] bytes) {

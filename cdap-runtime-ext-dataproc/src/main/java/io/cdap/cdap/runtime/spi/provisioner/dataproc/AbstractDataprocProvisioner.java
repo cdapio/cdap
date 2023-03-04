@@ -62,13 +62,15 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   private static final String LABELS_PROPERTY = "labels";
   private static final Pattern SIMPLE_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)$");
   private static final Pattern CLUSTER_VERSION_PATTERN = Pattern.compile("^([0-9][0-9.]*)-.*");
-  protected static final DataprocImageVersion DATAPROC_1_5_VERSION = new DataprocImageVersion("1.5");
+  protected static final DataprocImageVersion DATAPROC_1_5_VERSION = new DataprocImageVersion(
+      "1.5");
   public static final String LABEL_VERSON = "cdap-version";
   public static final String LABEL_PROFILE = "cdap-profile";
   public static final String LABEL_REUSE_KEY = "cdap-reuse-key";
   public static final String LABEL_REUSE_UNTIL = "cdap-reuse-until";
   /**
    * In reuse scenario we can't find "our" cluster by cluster name, so let's put it into the label
+   *
    * @see {@link DataprocProvisioner#getAllocatedClusterName(ProvisionerContext)}
    */
   public static final String LABEL_RUN_KEY = "cdap-run-key";
@@ -92,8 +94,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
     // invalidate twill and launcher jar cache.
     if (Files.exists(DataprocUtils.CACHE_DIR_PATH)) {
       DataprocUtils.deleteDirectoryWithRetries(DataprocUtils.CACHE_DIR_PATH.toFile(),
-                                               "Unable to delete local cache directory %s for " +
-                                                 "twill.jar and launcher.jar");
+          "Unable to delete local cache directory %s for "
+              + "twill.jar and launcher.jar");
     }
   }
 
@@ -103,7 +105,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   @Override
-  public final ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+  public final ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster)
+      throws Exception {
     Map<String, String> properties = createContextProperties(context);
     DataprocConf conf = DataprocConf.create(properties);
     RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
@@ -131,9 +134,10 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       }
 
       // Due to historical reasons bucket is used if conf.getGcsBucket is not provided
-      String bucket = conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
+      String bucket =
+          conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
-        .setCredentials(conf.getDataprocCredentials()).build().getService();
+          .setCredentials(conf.getDataprocCredentials()).build().getService();
       String runId = context.getProgramRunInfo().getRun();
       String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runId);
       DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
@@ -148,8 +152,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   /**
-   * Gets the default cluster name for the given context. See {@link #getAllocatedClusterName} to get
-   * the name of actually allocated cluster (if any).
+   * Gets the default cluster name for the given context. See {@link #getAllocatedClusterName} to
+   * get the name of actually allocated cluster (if any).
    *
    * @param context the context
    * @return a string that is a valid cluster name
@@ -165,16 +169,18 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
    * @throws Exception if failed to delete cluster
    */
   protected abstract void doDeleteCluster(ProvisionerContext context,
-                                          Cluster cluster, DataprocConf conf) throws Exception;
+      Cluster cluster, DataprocConf conf) throws Exception;
 
   /**
-   * Returns the {@link ProvisionerSystemContext} that was passed to the {@link #initialize(ProvisionerSystemContext)}
-   * method. The system properties will be reloaded via the {@link ProvisionerSystemContext#reloadProperties()}
-   * method upon every time when this method is called.
+   * Returns the {@link ProvisionerSystemContext} that was passed to the {@link
+   * #initialize(ProvisionerSystemContext)} method. The system properties will be reloaded via the
+   * {@link ProvisionerSystemContext#reloadProperties()} method upon every time when this method is
+   * called.
    */
   protected ProvisionerSystemContext getSystemContext() {
     ProvisionerSystemContext context = Objects.requireNonNull(
-      systemContext, "System context is not available. Please make sure the initialize method has been called.");
+        systemContext,
+        "System context is not available. Please make sure the initialize method has been called.");
     context.reloadProperties();
     return context;
   }
@@ -196,41 +202,46 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
       String clusterName = getClusterName(context);
       String projectId = conf.getProjectId();
       String region = conf.getRegion();
-      String bucket = conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
+      String bucket =
+          conf.getGcsBucket() != null ? conf.getGcsBucket() : properties.get(DataprocUtils.BUCKET);
 
       Map<String, String> systemLabels = getSystemLabels();
       return Optional.of(
-        new DataprocRuntimeJobManager(
-          new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(), getRootUrl(conf), projectId,
-                                  region, bucket, systemLabels),
-          Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
+          new DataprocRuntimeJobManager(
+              new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
+                  getRootUrl(conf), projectId,
+                  region, bucket, systemLabels),
+              Collections.unmodifiableMap(properties), context.getCDAPVersionInfo()));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
   }
 
   protected String getRootUrl(DataprocConf conf) {
-    return Optional.ofNullable(conf.getRootUrl()).orElse(ClusterControllerSettings.getDefaultEndpoint());
+    return Optional.ofNullable(conf.getRootUrl())
+        .orElse(ClusterControllerSettings.getDefaultEndpoint());
   }
 
   @Override
   public Capabilities getCapabilities() {
-    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
+    return new Capabilities(
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 
   /**
-   * Returns {@code true} if the given property name from the system context properties
-   * is a default property name for the dataproc config context.
+   * Returns {@code true} if the given property name from the system context properties is a default
+   * property name for the dataproc config context.
    */
   protected boolean isDefaultContextProperty(String property) {
     if (DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(property).find()) {
       return true;
     }
-    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, DataprocUtils.BUCKET, DataprocConf.TOKEN_ENDPOINT_KEY,
-                           DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
-                           DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
-                           DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
-                           DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
+    return ImmutableSet.of(DataprocConf.RUNTIME_JOB_MANAGER, DataprocUtils.BUCKET,
+        DataprocConf.TOKEN_ENDPOINT_KEY,
+        DataprocUtils.TROUBLESHOOTING_DOCS_URL_KEY,
+        DataprocConf.ENCRYPTION_KEY_NAME, DataprocConf.ROOT_URL,
+        DataprocConf.COMPUTE_HTTP_REQUEST_CONNECTION_TIMEOUT,
+        DataprocConf.COMPUTE_HTTP_REQUEST_READ_TIMEOUT).contains(property);
   }
 
   /**
@@ -241,9 +252,9 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
     // Copy set of default context properties from the system context
     return systemProps.entrySet().stream()
-      .filter(e -> e.getValue() != null)
-      .filter(e -> isDefaultContextProperty(e.getKey()))
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        .filter(e -> e.getValue() != null)
+        .filter(e -> isDefaultContextProperty(e.getKey()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   protected final Map<String, String> createContextProperties(ProvisionerContext context) {
@@ -258,8 +269,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
 
     // Add default properties
     getDefaultContextProperties().entrySet().stream()
-      .filter(e -> !contextProperties.containsKey(e.getKey()))
-      .forEach(e -> contextProperties.put(e.getKey(), e.getValue()));
+        .filter(e -> !contextProperties.containsKey(e.getKey()))
+        .forEach(e -> contextProperties.put(e.getKey(), e.getValue()));
     return contextProperties;
   }
 
@@ -290,15 +301,16 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
   }
 
   /**
-   * Returns the project id based on the given context and the system context. If none is provided, a {@code null}
-   * value will be returned.
+   * Returns the project id based on the given context and the system context. If none is provided,
+   * a {@code null} value will be returned.
    */
   @Nullable
   private String getProjectId(ProvisionerContext context) {
     // Default the project id from system config if missing or if it is auto-detect
     String projectId = context.getProperties().get(DataprocConf.PROJECT_ID_KEY);
     if (Strings.isNullOrEmpty(projectId) || DataprocConf.AUTO_DETECT.equals(projectId)) {
-      projectId = getSystemContext().getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, projectId);
+      projectId = getSystemContext().getProperties()
+          .getOrDefault(DataprocConf.PROJECT_ID_KEY, projectId);
     }
     return projectId;
   }
@@ -320,7 +332,8 @@ public abstract class AbstractDataprocProvisioner implements Provisioner {
         return new DataprocImageVersion(version);
       }
     } catch (IllegalArgumentException iae) {
-      LOG.warn("Unable to determine dataproc image version for image version string {}", imageVersion, iae);
+      LOG.warn("Unable to determine dataproc image version for image version string {}",
+          imageVersion, iae);
     }
 
     return null;

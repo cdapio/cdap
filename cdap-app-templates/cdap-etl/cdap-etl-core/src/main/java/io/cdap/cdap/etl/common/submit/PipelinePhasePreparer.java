@@ -58,9 +58,10 @@ import javax.annotation.Nullable;
 import org.apache.tephra.TransactionFailureException;
 
 /**
- * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of the pipeline phase
- * and set any arguments that should be visible to subsequent stages. These configure and prepare operations must be
- * performed in topological order to ensure that arguments set by one stage are available to subsequent stages.
+ * For each stage, call prepareRun() in topological order. prepareRun will setup the input/output of
+ * the pipeline phase and set any arguments that should be visible to subsequent stages. These
+ * configure and prepare operations must be performed in topological order to ensure that arguments
+ * set by one stage are available to subsequent stages.
  */
 public abstract class PipelinePhasePreparer {
 
@@ -70,8 +71,9 @@ public abstract class PipelinePhasePreparer {
   protected final PipelineRuntime pipelineRuntime;
   protected Map<String, List<FieldOperation>> stageOperations;
 
-  public PipelinePhasePreparer(PluginContext pluginContext, Metrics metrics, MacroEvaluator macroEvaluator,
-                               PipelineRuntime pipelineRuntime) {
+  public PipelinePhasePreparer(PluginContext pluginContext, Metrics metrics,
+      MacroEvaluator macroEvaluator,
+      PipelineRuntime pipelineRuntime) {
     this.pluginContext = pluginContext;
     this.metrics = metrics;
     this.macroEvaluator = macroEvaluator;
@@ -79,13 +81,14 @@ public abstract class PipelinePhasePreparer {
   }
 
   /**
-   * Prepare all the stages in the given phase and return Finishers that must be run when the pipeline completes.
+   * Prepare all the stages in the given phase and return Finishers that must be run when the
+   * pipeline completes.
    *
    * @param phaseSpec the pipeline phase to prepare
    * @return list of finishers that should be run when the pipeline ends
    */
   public List<Finisher> prepare(PhaseSpec phaseSpec)
-    throws TransactionFailureException, InstantiationException, IOException {
+      throws TransactionFailureException, InstantiationException, IOException {
     PipelinePluginInstantiator pluginInstantiator = getPluginInstantiator(phaseSpec);
     PipelinePhase phase = phaseSpec.getPhase();
 
@@ -95,20 +98,25 @@ public abstract class PipelinePhasePreparer {
       StageSpec stageSpec = phase.getStage(stageName);
       String pluginType = stageSpec.getPluginType();
       boolean isConnectorSource =
-        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
+          Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources()
+              .contains(stageName);
       boolean isConnectorSink =
-        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
+          Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSinks()
+              .contains(stageName);
 
       SubmitterPlugin submitterPlugin;
       if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
         BatchConfigurable<BatchSourceContext> batchSource =
-          pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+            pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSource(batchSource, stageSpec);
-      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || AlertPublisher.PLUGIN_TYPE.equals(pluginType) ||
-        isConnectorSink) {
-        BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || AlertPublisher.PLUGIN_TYPE.equals(
+          pluginType)
+          || isConnectorSink) {
+        BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(
+            stageName, macroEvaluator);
         submitterPlugin = createSink(batchSink, stageSpec);
-      } else if (Transform.PLUGIN_TYPE.equals(pluginType) || ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
+      } else if (Transform.PLUGIN_TYPE.equals(pluginType) || ErrorTransform.PLUGIN_TYPE.equals(
+          pluginType)) {
         Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createTransform(transform, stageSpec);
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
@@ -120,8 +128,9 @@ public abstract class PipelinePhasePreparer {
           BatchReducibleAggregator<?, ?, ?, ?> aggregator = (BatchReducibleAggregator) plugin;
           submitterPlugin = createReducibleAggregator(aggregator, stageSpec);
         } else {
-          throw new IllegalStateException(String.format("Aggregator stage '%s' is of an unsupported class '%s'.",
-                                                        stageSpec.getName(), plugin.getClass().getName()));
+          throw new IllegalStateException(
+              String.format("Aggregator stage '%s' is of an unsupported class '%s'.",
+                  stageSpec.getName(), plugin.getClass().getName()));
         }
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -133,13 +142,15 @@ public abstract class PipelinePhasePreparer {
           validateAutoJoiner(batchJoiner, stageSpec);
           submitterPlugin = createAutoJoiner(batchJoiner, stageSpec);
         } else {
-          throw new IllegalStateException(String.format("Join stage '%s' is of an unsupported class '%s'.",
-                                                        stageSpec.getName(), plugin.getClass().getName()));
+          throw new IllegalStateException(
+              String.format("Join stage '%s' is of an unsupported class '%s'.",
+                  stageSpec.getName(), plugin.getClass().getName()));
         }
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
-        SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName,
+            macroEvaluator);
         submitterPlugin = createSplitterTransform(splitterTransform, stageSpec);
-      }  else {
+      } else {
         submitterPlugin = create(pluginInstantiator, stageSpec);
       }
 
@@ -154,11 +165,13 @@ public abstract class PipelinePhasePreparer {
 
   /**
    * Gets plugin instantiator instance.
+   *
    * @param phaseSpec Phase Spec definition
    * @return {@link PipelinePluginInstantiator} instance
    */
   protected PipelinePluginInstantiator getPluginInstantiator(PhaseSpec phaseSpec) {
-    return new PipelinePluginInstantiator(pluginContext, metrics, phaseSpec, new MultiConnectorFactory());
+    return new PipelinePluginInstantiator(pluginContext, metrics, phaseSpec,
+        new MultiConnectorFactory());
   }
 
   private void validateAutoJoiner(AutoJoiner autoJoiner, StageSpec stageSpec) {
@@ -167,62 +180,75 @@ public abstract class PipelinePhasePreparer {
     // point all macros should be evaluated and the definition should be non-null.
     String stageName = stageSpec.getName();
     String pluginName = stageSpec.getPlugin().getName();
-    FailureCollector failureCollector = new LoggingFailureCollector(stageSpec.getName(), stageSpec.getInputSchemas());
-    AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas(), failureCollector);
+    FailureCollector failureCollector = new LoggingFailureCollector(stageSpec.getName(),
+        stageSpec.getInputSchemas());
+    AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas(),
+        failureCollector);
     JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
     failureCollector.getOrThrowException();
     if (joinDefinition == null) {
       throw new IllegalArgumentException(String.format(
-        "Joiner stage '%s' using plugin '%s' did not provide a join definition. " +
-          "Check with the plugin developer to make sure it is implemented correctly.",
-        stageName, pluginName));
+          "Joiner stage '%s' using plugin '%s' did not provide a join definition. "
+              + "Check with the plugin developer to make sure it is implemented correctly.",
+          stageName, pluginName));
     }
 
     // validate that the stages mentioned in the join definition are actually inputs into the joiner.
     Set<String> inputStages = stageSpec.getInputSchemas().keySet();
     Set<String> joinStages = joinDefinition.getStages().stream()
-      .map(JoinStage::getStageName)
-      .collect(Collectors.toSet());
+        .map(JoinStage::getStageName)
+        .collect(Collectors.toSet());
     Set<String> missingInputs = Sets.difference(inputStages, joinStages);
     if (!missingInputs.isEmpty()) {
       throw new IllegalArgumentException(
-        String.format("Joiner stage '%s' using plugin '%s' did not include input stage %s in the join. " +
-                        "Check with the plugin developer to make sure it is implemented correctly.",
-                      stageName, pluginName, String.join(", ", missingInputs)));
+          String.format(
+              "Joiner stage '%s' using plugin '%s' did not include input stage %s in the join. "
+                  + "Check with the plugin developer to make sure it is implemented correctly.",
+              stageName, pluginName, String.join(", ", missingInputs)));
     }
     Set<String> extraInputs = Sets.difference(joinStages, inputStages);
     if (!extraInputs.isEmpty()) {
       throw new IllegalArgumentException(
-        String.format("Joiner stage '%s' using plugin '%s' is trying to join stage %s, which is not an input. " +
-                        "Check with the plugin developer to make sure it is implemented correctly.",
-                      stageName, pluginName, String.join(", ", missingInputs)));
+          String.format(
+              "Joiner stage '%s' using plugin '%s' is trying to join stage %s, which is not an input. "
+
+                  + "Check with the plugin developer to make sure it is implemented correctly.",
+              stageName, pluginName, String.join(", ", missingInputs)));
     }
   }
 
   // for map reduce engine, spark related plugin cannot be created
   @Nullable
-  protected abstract SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec)
-    throws InstantiationException;
+  protected abstract SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator,
+      StageSpec stageSpec)
+      throws InstantiationException;
 
   // for streaming pipeline, batch source cannot be created
   @Nullable
   protected abstract SubmitterPlugin createSource(BatchConfigurable<BatchSourceContext> batchSource,
-                                                  StageSpec stageSpec);
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createSink(BatchConfigurable<BatchSinkContext> batchSink, StageSpec stageSpec);
+  protected abstract SubmitterPlugin createSink(BatchConfigurable<BatchSinkContext> batchSink,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createTransform(Transform<?, ?> transform, StageSpec stageSpec);
+  protected abstract SubmitterPlugin createTransform(Transform<?, ?> transform,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createSplitterTransform(SplitterTransform<?, ?> splitterTransform,
-                                                             StageSpec stageSpec);
+  protected abstract SubmitterPlugin createSplitterTransform(
+      SplitterTransform<?, ?> splitterTransform,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec);
+  protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createReducibleAggregator(BatchReducibleAggregator<?, ?, ?, ?> aggregator,
-                                                               StageSpec stageSpec);
+  protected abstract SubmitterPlugin createReducibleAggregator(
+      BatchReducibleAggregator<?, ?, ?, ?> aggregator,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec);
+  protected abstract SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner,
+      StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec);
+  protected abstract SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner,
+      StageSpec stageSpec);
 
 }

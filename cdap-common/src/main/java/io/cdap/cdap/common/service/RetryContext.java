@@ -40,6 +40,7 @@ public class RetryContext {
    * Builder for {@link RetryContext}
    */
   public static class Builder {
+
     private int retryAttempt;
 
     /**

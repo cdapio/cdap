@@ -37,7 +37,8 @@ public class DummyMetadataConsumer implements MetadataConsumer {
   }
 
   @Override
-  public void consumeLineage(MetadataConsumerContext context, ProgramRun programRun, LineageInfo lineageInfo) {
+  public void consumeLineage(MetadataConsumerContext context, ProgramRun programRun,
+      LineageInfo lineageInfo) {
     logger.info("Inside dummy consume lineage");
   }
 }

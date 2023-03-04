@@ -20,9 +20,9 @@ package io.cdap.cdap.data2.metadata.lineage;
  * Represents the type of Dataset access by a Program.
  */
 public enum AccessType {
-  READ ('r'),
-  WRITE ('w'),
-  READ_WRITE ('a'),
+  READ('r'),
+  WRITE('w'),
+  READ_WRITE('a'),
   UNKNOWN('u');
 
   private final char type;
@@ -39,11 +39,11 @@ public enum AccessType {
     switch (type) {
       case 'r':
         return READ;
-      case 'w' :
+      case 'w':
         return WRITE;
-      case 'a' :
+      case 'a':
         return READ_WRITE;
-      case 'u' :
+      case 'u':
         return UNKNOWN;
     }
     throw new IllegalArgumentException("Invalid access type " + type);

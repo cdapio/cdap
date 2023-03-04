@@ -25,13 +25,15 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 /**
  * Batch Aggregator Context.
  */
-public class DefaultAggregatorContext extends AbstractBatchContext implements BatchAggregatorContext {
+public class DefaultAggregatorContext extends AbstractBatchContext implements
+    BatchAggregatorContext {
+
   private Integer numPartitions;
   private Class<?> groupKeyClass;
   private Class<?> groupValueClass;
 
   public DefaultAggregatorContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
-                                  DatasetContext datasetContext, Admin admin) {
+      DatasetContext datasetContext, Admin admin) {
     super(pipelineRuntime, stageSpec, datasetContext, admin);
   }
 
@@ -39,7 +41,7 @@ public class DefaultAggregatorContext extends AbstractBatchContext implements Ba
   public void setNumPartitions(int numPartitions) {
     if (numPartitions < 1) {
       throw new IllegalArgumentException(String.format(
-        "Invalid value for numPartitions %d. It must be a positive integer.", numPartitions));
+          "Invalid value for numPartitions %d. It must be a positive integer.", numPartitions));
     }
     this.numPartitions = numPartitions;
   }

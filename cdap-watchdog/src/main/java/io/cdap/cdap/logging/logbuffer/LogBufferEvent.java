@@ -23,6 +23,7 @@ import java.util.Objects;
  * Log event with file offset.
  */
 public final class LogBufferEvent {
+
   private final ILoggingEvent logEvent;
   private final int eventSize;
   private final LogBufferFileOffset offset;
@@ -54,9 +55,9 @@ public final class LogBufferEvent {
       return false;
     }
     LogBufferEvent event = (LogBufferEvent) o;
-    return eventSize == event.eventSize &&
-      Objects.equals(logEvent, event.logEvent) &&
-      Objects.equals(offset, event.offset);
+    return eventSize == event.eventSize
+        && Objects.equals(logEvent, event.logEvent)
+        && Objects.equals(offset, event.offset);
   }
 
   @Override
@@ -66,10 +67,10 @@ public final class LogBufferEvent {
 
   @Override
   public String toString() {
-    return "LogBufferEvent{" +
-      "logEvent=" + logEvent +
-      ", eventSize=" + eventSize +
-      ", offset=" + offset +
-      '}';
+    return "LogBufferEvent{"
+        + "logEvent=" + logEvent
+        + ", eventSize=" + eventSize
+        + ", offset=" + offset
+        + '}';
   }
 }

@@ -28,6 +28,7 @@ import java.util.Optional;
  * Creates DataprocClients.
  */
 public class DefaultDataprocClientFactory implements DataprocClientFactory {
+
   private final ComputeFactory computeFactory;
 
   public DefaultDataprocClientFactory() {
@@ -39,22 +40,26 @@ public class DefaultDataprocClientFactory implements DataprocClientFactory {
   }
 
   @Override
-  public DataprocClient create(DataprocConf conf, boolean requireSSH) throws IOException, GeneralSecurityException {
+  public DataprocClient create(DataprocConf conf, boolean requireSSH)
+      throws IOException, GeneralSecurityException {
     ClusterControllerClient clusterControllerClient = getClusterControllerClient(conf);
     return requireSSH ? new SSHDataprocClient(conf, clusterControllerClient, computeFactory) :
-      new RuntimeMonitorDataprocClient(conf, clusterControllerClient, computeFactory);
+        new RuntimeMonitorDataprocClient(conf, clusterControllerClient, computeFactory);
   }
 
-  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
+  private static ClusterControllerClient getClusterControllerClient(DataprocConf conf)
+      throws IOException {
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(
+        conf.getDataprocCredentials());
 
-    String rootUrl = Optional.ofNullable(conf.getRootUrl()).orElse(ClusterControllerSettings.getDefaultEndpoint());
+    String rootUrl = Optional.ofNullable(conf.getRootUrl())
+        .orElse(ClusterControllerSettings.getDefaultEndpoint());
     String regionalEndpoint = conf.getRegion() + "-" + rootUrl;
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
-      .setCredentialsProvider(credentialsProvider)
-      .setEndpoint(regionalEndpoint)
-      .build();
+        .setCredentialsProvider(credentialsProvider)
+        .setEndpoint(regionalEndpoint)
+        .build();
     return ClusterControllerClient.create(controllerSettings);
   }
 }

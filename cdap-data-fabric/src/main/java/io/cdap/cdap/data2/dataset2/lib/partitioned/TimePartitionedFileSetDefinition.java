@@ -44,8 +44,8 @@ import java.util.TimeZone;
 public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefinition {
 
   public TimePartitionedFileSetDefinition(String name,
-                                          DatasetDefinition<? extends FileSet, ?> filesetDef,
-                                          DatasetDefinition<? extends IndexedTable, ?> tableDef) {
+      DatasetDefinition<? extends FileSet, ?> filesetDef,
+      DatasetDefinition<? extends IndexedTable, ?> tableDef) {
     super(name, filesetDef, tableDef);
   }
 
@@ -53,39 +53,41 @@ public class TimePartitionedFileSetDefinition extends PartitionedFileSetDefiniti
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     // add the partition key to the properties.
     properties = PartitionedFileSetProperties
-      .builder()
-      .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
-      .addAll(properties.getProperties())
-      .build();
+        .builder()
+        .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
+        .addAll(properties.getProperties())
+        .build();
     return super.configure(instanceName, properties);
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName,
-                                          DatasetProperties properties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+      DatasetProperties properties,
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     // add the partition key to the properties.
     properties = PartitionedFileSetProperties
-      .builder()
-      .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
-      .addAll(properties.getProperties())
-      .build();
+        .builder()
+        .setPartitioning(TimePartitionedFileSetDataset.PARTITIONING)
+        .addAll(properties.getProperties())
+        .build();
     return super.reconfigure(instanceName, properties, currentSpec);
   }
 
   @Override
   public PartitionedFileSet getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                       Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     // make any necessary updates to the arguments
     arguments = updateArgumentsIfNeeded(arguments);
 
     FileSet fileset = filesetDef.getDataset(datasetContext, spec.getSpecification(FILESET_NAME),
-                                            arguments, classLoader);
-    IndexedTable table = indexedTableDef.getDataset(datasetContext, spec.getSpecification(PARTITION_TABLE_NAME),
-                                                    arguments, classLoader);
+        arguments, classLoader);
+    IndexedTable table = indexedTableDef.getDataset(datasetContext,
+        spec.getSpecification(PARTITION_TABLE_NAME),
+        arguments, classLoader);
 
-    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec, arguments);
+    return new TimePartitionedFileSetDataset(datasetContext, spec.getName(), fileset, table, spec,
+        arguments);
   }
 
   // if the arguments do not contain an output path, but an output partition time, generate an output path from that;

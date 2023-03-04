@@ -38,15 +38,18 @@ import java.util.Optional;
  * Table methods for {@link DefaultConfigStore} and {@link PreferencesTable}.
  */
 public class ConfigTable {
+
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
   private final StructuredTable table;
 
   public ConfigTable(StructuredTableContext context) {
     this.table = context.getTable(StoreDefinition.ConfigStore.CONFIGS);
   }
 
-  public void create(String namespace, String type, Config config) throws IOException, ConfigExistsException {
+  public void create(String namespace, String type, Config config)
+      throws IOException, ConfigExistsException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, config.getName());
     Optional<StructuredRow> row = table.read(primaryKey);
     if (row.isPresent()) {
@@ -59,7 +62,8 @@ public class ConfigTable {
     table.upsert(toFields(namespace, type, config));
   }
 
-  public void delete(String namespace, String type, String name) throws IOException, ConfigNotFoundException {
+  public void delete(String namespace, String type, String name)
+      throws IOException, ConfigNotFoundException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
     if (!row.isPresent()) {
@@ -83,13 +87,16 @@ public class ConfigTable {
     }
   }
 
-  public Config get(String namespace, String type, String name) throws IOException, ConfigNotFoundException {
+  public Config get(String namespace, String type, String name)
+      throws IOException, ConfigNotFoundException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
-    return row.map(this::fromRow).orElseThrow(() -> new ConfigNotFoundException(namespace, type, name));
+    return row.map(this::fromRow)
+        .orElseThrow(() -> new ConfigNotFoundException(namespace, type, name));
   }
 
-  public void update(String namespace, String type, Config config) throws IOException, ConfigNotFoundException {
+  public void update(String namespace, String type, Config config)
+      throws IOException, ConfigNotFoundException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, config.getName());
     Optional<StructuredRow> row = table.read(primaryKey);
     if (!row.isPresent()) {
@@ -101,13 +108,15 @@ public class ConfigTable {
   private Config fromRow(StructuredRow row) {
     String name = row.getString(StoreDefinition.ConfigStore.NAME_FIELD);
     String string = row.getString(StoreDefinition.ConfigStore.PROPERTIES_FIELD);
-    Map<String, String> properties = string != null ? GSON.fromJson(string, MAP_TYPE) : Collections.emptyMap();
+    Map<String, String> properties =
+        string != null ? GSON.fromJson(string, MAP_TYPE) : Collections.emptyMap();
     return new Config(name, properties);
   }
 
   private List<Field<?>> toFields(String namespace, String type, Config config) {
     List<Field<?>> fields = getPrimaryKey(namespace, type, config.getName());
-    fields.add(Fields.stringField(StoreDefinition.ConfigStore.PROPERTIES_FIELD, GSON.toJson(config.getProperties())));
+    fields.add(Fields.stringField(StoreDefinition.ConfigStore.PROPERTIES_FIELD,
+        GSON.toJson(config.getProperties())));
     return fields;
   }
 

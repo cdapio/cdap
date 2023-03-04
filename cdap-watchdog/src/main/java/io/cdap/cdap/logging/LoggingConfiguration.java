@@ -20,6 +20,7 @@ package io.cdap.cdap.logging;
  * Logging configuration helper.
  */
 public final class LoggingConfiguration {
+
   // Common between Distributed and Single Node
   public static final String LOG_PATTERN = "log.pattern";
   public static final String LOG_BASE_DIR = "log.base.dir";
@@ -31,10 +32,11 @@ public final class LoggingConfiguration {
   public static final String KAFKA_PRODUCER_BUFFER_MS = "kafka.producer.buffer.ms";
 
   public static final String DEFAULT_LOG_PATTERN =
-    "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
+      "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "sync";
 
   public static final long DEFAULT_KAFKA_PRODUCER_BUFFER_MS = 1000;
 
-  private LoggingConfiguration() {}
+  private LoggingConfiguration() {
+  }
 }

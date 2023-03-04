@@ -30,11 +30,14 @@ import java.util.Map;
 /**
  * Implementation of {@link BatchActionContext} within a pipeline.
  */
-public class WorkflowBackedActionContext extends AbstractBatchContext implements BatchActionContext {
+public class WorkflowBackedActionContext extends AbstractBatchContext implements
+    BatchActionContext {
+
   private final WorkflowContext workflowContext;
 
-  public WorkflowBackedActionContext(WorkflowContext workflowContext, PipelineRuntime pipelineRuntime,
-                                     StageSpec stageSpec) {
+  public WorkflowBackedActionContext(WorkflowContext workflowContext,
+      PipelineRuntime pipelineRuntime,
+      StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, workflowContext, workflowContext.getAdmin());
     this.workflowContext = workflowContext;
   }

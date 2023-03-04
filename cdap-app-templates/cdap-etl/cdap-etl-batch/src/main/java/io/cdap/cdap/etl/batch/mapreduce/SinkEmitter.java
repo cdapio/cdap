@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  * @param <VAL_OUT> type of output value
  */
 public class SinkEmitter<KEY_OUT, VAL_OUT> implements Emitter<Object> {
+
   private static final Logger LOG = LoggerFactory.getLogger(SinkEmitter.class);
   private final OutputWriter outputWriter;
   private final String stageName;

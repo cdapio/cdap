@@ -60,7 +60,8 @@ import java.util.stream.Stream;
 @Plugin(type = BatchSQLEngine.PLUGIN_TYPE)
 @Name(MockSQLEngineWithStageSettings.NAME)
 public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Object, Object, Object>
-  implements SQLEngine<Object, Object, Object, Object>, Serializable {
+    implements SQLEngine<Object, Object, Object, Object>, Serializable {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   public static final String NAME = "MockSQLEngineWithStageSettings";
   private static final Gson GSON = new Gson();
@@ -76,6 +77,7 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
    * Config for the source.
    */
   public static class Config extends PluginConfig {
+
     private String name;
     private String inputDirName;
     private String outputDirName;
@@ -95,8 +97,9 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
   }
 
   @Override
-  public SQLPushDataset<StructuredRecord, Object, Object> getPushProvider(SQLPushRequest pushRequest)
-    throws SQLEngineException {
+  public SQLPushDataset<StructuredRecord, Object, Object> getPushProvider(
+      SQLPushRequest pushRequest)
+      throws SQLEngineException {
     if (!calledPrepareRun) {
       throw new SQLEngineException("prepareRun not called");
     }
@@ -104,8 +107,9 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
   }
 
   @Override
-  public SQLPullDataset<StructuredRecord, Object, Object> getPullProvider(SQLPullRequest pullRequest)
-    throws SQLEngineException {
+  public SQLPullDataset<StructuredRecord, Object, Object> getPullProvider(
+      SQLPullRequest pullRequest)
+      throws SQLEngineException {
     if (!calledPrepareRun) {
       throw new SQLEngineException("prepareRun not called");
     }
@@ -174,11 +178,11 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
   }
 
   public static ETLPlugin getPlugin(String name,
-                                    String inputDirName,
-                                    String outputDirName,
-                                    Schema outputSchema,
-                                    String includedStages,
-                                    String excludedStages) {
+      String inputDirName,
+      String outputDirName,
+      Schema outputSchema,
+      String includedStages,
+      String excludedStages) {
     Map<String, String> properties = new HashMap<>();
     properties.put("name", name);
     properties.put("inputDirName", inputDirName);
@@ -192,23 +196,30 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("name", new PluginPropertyField("name", "", "string", true, false));
-    properties.put("inputDirName", new PluginPropertyField("inputDirName", "", "string", true, false));
-    properties.put("outputDirName", new PluginPropertyField("outputDirName", "", "string", true, false));
-    properties.put("outputSchema", new PluginPropertyField("outputSchema", "", "string", true, false));
-    properties.put("includedStages", new PluginPropertyField("includedStages", "", "string", true, false));
-    properties.put("excludedStages", new PluginPropertyField("excludedStages", "", "string", true, false));
-    return new PluginClass(BatchSQLEngine.PLUGIN_TYPE, NAME, "", MockSQLEngineWithStageSettings.class.getName(),
-                           "config", properties);
+    properties.put("inputDirName",
+        new PluginPropertyField("inputDirName", "", "string", true, false));
+    properties.put("outputDirName",
+        new PluginPropertyField("outputDirName", "", "string", true, false));
+    properties.put("outputSchema",
+        new PluginPropertyField("outputSchema", "", "string", true, false));
+    properties.put("includedStages",
+        new PluginPropertyField("includedStages", "", "string", true, false));
+    properties.put("excludedStages",
+        new PluginPropertyField("excludedStages", "", "string", true, false));
+    return new PluginClass(BatchSQLEngine.PLUGIN_TYPE, NAME, "",
+        MockSQLEngineWithStageSettings.class.getName(),
+        "config", properties);
   }
 
   /**
-   * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
+   * Used to write the input records for the pipeline run. Should be called after the pipeline has
+   * been created.
    *
    * @param fileName file to write the records into
-   * @param records  records that should be the input for the pipeline
+   * @param records records that should be the input for the pipeline
    */
   public static void writeInput(String fileName,
-                                Iterable<StructuredRecord> records) throws Exception {
+      Iterable<StructuredRecord> records) throws Exception {
     Function<StructuredRecord, String> mapper = input -> {
       try {
         return StructuredRecordStringConverter.toJsonString(input);
@@ -226,25 +237,24 @@ public class MockSQLEngineWithStageSettings extends BatchSQLEngine<Object, Objec
    * Counts all lines in a directory used for Hadoop as output
    *
    * @param directory File specitying the directory
-   * @return
-   * @throws IOException
    */
   public static int countLinesInDirectory(File directory) throws IOException {
     int lines = 0;
 
     return (int) java.nio.file.Files.walk(directory.toPath())
-      .filter(java.nio.file.Files::isRegularFile)
-      .filter(path -> !path.toString().endsWith(".crc") && !path.toString().endsWith("_SUCCESS")) // Filters some
-      // hadoop files.
-      .map(path -> {
-        try {
-          return Files.readLines(path.toFile(), Charsets.UTF_8);
-        } catch (IOException e) {
-          throw new RuntimeException("Unable to read file in directory", e);
-        }
-      })
-      .flatMap(Collection::stream)
-      .filter(l -> !l.isEmpty()) // Only consider not empty output files and lines.
-      .count();
+        .filter(java.nio.file.Files::isRegularFile)
+        .filter(path -> !path.toString().endsWith(".crc") && !path.toString()
+            .endsWith("_SUCCESS")) // Filters some
+        // hadoop files.
+        .map(path -> {
+          try {
+            return Files.readLines(path.toFile(), Charsets.UTF_8);
+          } catch (IOException e) {
+            throw new RuntimeException("Unable to read file in directory", e);
+          }
+        })
+        .flatMap(Collection::stream)
+        .filter(l -> !l.isEmpty()) // Only consider not empty output files and lines.
+        .count();
   }
 }

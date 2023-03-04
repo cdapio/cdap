@@ -48,9 +48,9 @@ public class RemoteHadoopProvisioner implements Provisioner {
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteHadoopProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "remote-hadoop", "Remote Hadoop Provisioner",
-    "Runs programs on a pre-existing Hadoop cluster. The cluster must contain compatible software, must not use "
-      + "Kerberos, and must be accessible via ssh and https (ports 22 and 443).");
+      "remote-hadoop", "Remote Hadoop Provisioner",
+      "Runs programs on a pre-existing Hadoop cluster. The cluster must contain compatible software, must not use "
+          + "Kerberos, and must be accessible via ssh and https (ports 22 and 443).");
 
   @Override
   public ProvisionerSpecification getSpec() {
@@ -76,15 +76,16 @@ public class RemoteHadoopProvisioner implements Provisioner {
 
   }
 
-  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
+  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host)
+      throws IOException {
     try {
       return provisionerContext.getSSHContext().createSSHSession(host);
     } catch (IOException ioe) {
       if (Throwables.getRootCause(ioe) instanceof ConnectException) {
         throw new IOException(String.format(
-          "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh " +
-            "on port 22.", host),
-          ioe);
+            "Failed to connect to host %s. Ensure that firewall rules exist that allow ssh "
+                + "on port 22.", host),
+            ioe);
       }
       throw ioe;
     }
@@ -92,14 +93,15 @@ public class RemoteHadoopProvisioner implements Provisioner {
 
   private String getMasterExternalIp(Cluster cluster) {
     Node masterNode = cluster.getNodes().stream()
-      .filter(node -> Node.Type.MASTER == node.getType())
-      .findFirst().orElseThrow(() ->
-        new IllegalArgumentException("Cluster has no node of master type: " + cluster));
+        .filter(node -> Node.Type.MASTER == node.getType())
+        .findFirst().orElseThrow(() ->
+            new IllegalArgumentException("Cluster has no node of master type: " + cluster));
 
     String ip = masterNode.getIpAddress();
     if (ip == null) {
-      throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
-        masterNode.getId(), cluster));
+      throw new IllegalArgumentException(
+          String.format("External IP is not defined for node '%s' in cluster %s",
+              masterNode.getId(), cluster));
     }
     return ip;
   }
@@ -108,8 +110,9 @@ public class RemoteHadoopProvisioner implements Provisioner {
   public Cluster createCluster(ProvisionerContext context) {
     RemoteHadoopConf conf = RemoteHadoopConf.fromProperties(context.getProperties());
     context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
-    Collection<Node> nodes = Collections.singletonList(new Node(conf.getHost(), Node.Type.MASTER, conf.getHost(),
-                                                                0, Collections.emptyMap()));
+    Collection<Node> nodes = Collections.singletonList(
+        new Node(conf.getHost(), Node.Type.MASTER, conf.getHost(),
+            0, Collections.emptyMap()));
     Map<String, String> properties = new HashMap<>();
     String principal = conf.getKerberosPrincipal();
     String keytab = conf.getKerberosKeytabPath();
@@ -145,8 +148,8 @@ public class RemoteHadoopProvisioner implements Provisioner {
       LOG.debug("Completed remote cluster clean up for program {} run {}", programName, runId);
     } catch (IOException e) {
       LOG.warn("Unable to clean up resources for program {} run {} on the remote cluster. "
-                 + "The run directory may need to be manually deleted on cluster node {}.",
-               programName, runId, remoteIP, e);
+              + "The run directory may need to be manually deleted on cluster node {}.",
+          programName, runId, remoteIP, e);
     }
   }
 
@@ -158,6 +161,7 @@ public class RemoteHadoopProvisioner implements Provisioner {
 
   @Override
   public Capabilities getCapabilities() {
-    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
+    return new Capabilities(
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 }

@@ -22,10 +22,11 @@ import io.cdap.cdap.etl.api.batch.PostAction;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link PostAction} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around {@link PostAction} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  */
 public class WrappedPostAction extends PostAction implements PluginWrapper<PostAction> {
+
   private final PostAction postAction;
   private final Caller caller;
 

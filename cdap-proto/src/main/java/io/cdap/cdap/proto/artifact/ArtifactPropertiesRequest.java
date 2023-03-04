@@ -27,9 +27,11 @@ import java.util.Objects;
  * A request to get properties for an artifact.
  */
 public class ArtifactPropertiesRequest extends ArtifactSummary {
+
   private final List<String> properties;
 
-  public ArtifactPropertiesRequest(String name, String version, ArtifactScope scope, List<String> properties) {
+  public ArtifactPropertiesRequest(String name, String version, ArtifactScope scope,
+      List<String> properties) {
     super(name, version, scope);
     this.properties = Collections.unmodifiableList(new ArrayList<>(properties));
   }

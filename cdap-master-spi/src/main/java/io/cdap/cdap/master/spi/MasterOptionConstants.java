@@ -20,6 +20,7 @@ package io.cdap.cdap.master.spi;
  * ProgramOptionConstants shared with master SPI.
  */
 public class MasterOptionConstants {
+
   /**
    * Option for name of the runtime namespace for the program run.
    */

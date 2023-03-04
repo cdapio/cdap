@@ -28,13 +28,13 @@ import org.apache.hadoop.security.UserGroupInformation;
  */
 @ImplementedBy(DefaultImpersonator.class)
 public interface Impersonator {
+
   /**
    * Executes a callable as the user, configurable at a namespace level
    *
    * @param entityId the entity to use to lookup the user to impersonate
    * @param callable the callable to execute
    * @param <T> return type of the callable
-   *
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
@@ -46,13 +46,13 @@ public interface Impersonator {
    * @param entityId the entity to use to lookup the user to impersonate
    * @param callable the callable to execute
    * @param <T> return type of the callable
-   * @param impersonatedOpType {@link ImpersonatedOpType} representing the type of the operation which is
-   * being impersonated
-   *
+   * @param impersonatedOpType {@link ImpersonatedOpType} representing the type of the operation
+   *     which is being impersonated
    * @return the return value of the callable
    * @throws Exception if the callable throws any exception
    */
-  <T> T doAs(NamespacedEntityId entityId, Callable<T> callable, ImpersonatedOpType impersonatedOpType) throws Exception;
+  <T> T doAs(NamespacedEntityId entityId, Callable<T> callable,
+      ImpersonatedOpType impersonatedOpType) throws Exception;
 
   /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}

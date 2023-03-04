@@ -21,4 +21,5 @@ package io.cdap.cdap.proto.security;
  * backwards compatibility.
  */
 public interface ActionOrPermission {
+
 }

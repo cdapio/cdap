@@ -56,9 +56,9 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
-                                    MetricsSystemClient metricsSystemClient,
-                                    MetadataServiceClient metadataServiceClient,
-                                    Scheduler programScheduler) {
+      MetricsSystemClient metricsSystemClient,
+      MetadataServiceClient metadataServiceClient,
+      Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
@@ -69,8 +69,9 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   @Override
   public void process(ApplicationDeployable appSpec) throws Exception {
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId(),
-                                                                                    appSpec.getSpecification());
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(
+        appSpec.getApplicationId(),
+        appSpec.getSpecification());
 
     // TODO: this should also delete logs and run records (or not?), and do it for all program types [CDAP-2187]
 
@@ -107,8 +108,9 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         tags.put(typeTag, programId.getProgram());
 
         long endTs = System.currentTimeMillis() / 1000;
-        MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
-                                                              new ArrayList<>(tags.keySet()));
+        MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(),
+            tags,
+            new ArrayList<>(tags.keySet()));
         metricsSystemClient.delete(deleteQuery);
       }
     }

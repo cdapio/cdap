@@ -31,10 +31,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
- * {@link Action} on an {@link EntityId}.
+ * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to
+ * perform an {@link Action} on an {@link EntityId}.
  */
 public class UnauthorizedException extends AccessException implements HttpErrorStatusProvider {
+
   @Nullable
   private final String principal;
   private final Set<String> missingPermissions;
@@ -47,41 +48,46 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   public UnauthorizedException(Principal principal, ActionOrPermission action, EntityId entityId) {
     this(principal.toString(), Collections.singleton(action.toString()),
-         getEntityLabel(entityId), null, true, true, null);
+        getEntityLabel(entityId), null, true, true, null);
   }
 
-  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId) {
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
+      EntityId entityId) {
     this(principal, actions, entityId, (EntityType) null);
   }
 
-  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId,
-                               @Nullable EntityType childType) {
-    this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId, childType),
-         null, true, true, null);
-  }
   public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
-                               EntityId entityId, Throwable ex) {
+      EntityId entityId,
+      @Nullable EntityType childType) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
-         ex, true, true, null);
+            .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId, childType),
+        null, true, true, null);
+  }
+
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
+      EntityId entityId, Throwable ex) {
+    this(principal.toString(), actions.stream().map(action -> action.toString())
+            .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
+        ex, true, true, null);
   }
 
   public UnauthorizedException(Principal principal, EntityId entityId) {
     this(principal.toString(), Collections.emptySet(), getEntityLabel(entityId), null, true,
-         true, null);
+        true, null);
   }
 
-  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions, EntityId entityId,
-                               boolean mustHaveAllPermissions) {
+  public UnauthorizedException(Principal principal, Set<? extends ActionOrPermission> actions,
+      EntityId entityId,
+      boolean mustHaveAllPermissions) {
     this(principal.toString(), actions.stream().map(action -> action.toString())
-           .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
-         null, mustHaveAllPermissions, true, null);
+            .collect(Collectors.toCollection(LinkedHashSet::new)), getEntityLabel(entityId),
+        null, mustHaveAllPermissions, true, null);
   }
 
-  public UnauthorizedException(@Nullable String principal, Set<String> missingPermissions, @Nullable String entity,
-                               @Nullable Throwable ex, boolean requiresAllPermissions, boolean includePrincipal,
-                               @Nullable String addendum) {
+  public UnauthorizedException(@Nullable String principal, Set<String> missingPermissions,
+      @Nullable String entity,
+      @Nullable Throwable ex, boolean requiresAllPermissions, boolean includePrincipal,
+      @Nullable String addendum) {
     super(ex);
     this.principal = principal;
     this.missingPermissions = Collections.unmodifiableSet(missingPermissions);
@@ -91,7 +97,8 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
     // Construct the message.
     StringBuilder messageBuilder = new StringBuilder();
     if (includePrincipal) {
-      messageBuilder.append(String.format("Principal '%s' has insufficient privileges ", principal));
+      messageBuilder.append(
+          String.format("Principal '%s' has insufficient privileges ", principal));
     } else {
       messageBuilder.append("Insufficient privileges ");
     }
@@ -101,7 +108,8 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
     } else {
       messageBuilder.append("perform ");
       if (missingPermissions.size() == 1) {
-        messageBuilder.append(String.format("action '%s' on ", missingPermissions.iterator().next()));
+        messageBuilder.append(
+            String.format("action '%s' on ", missingPermissions.iterator().next()));
       } else {
         if (!requiresAllPermissions) {
           messageBuilder.append("any one of the ");
@@ -136,7 +144,7 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   private static String getEntityLabel(EntityId entityId, @Nullable EntityType childType) {
     return childType == null ? String.format("entity '%s'", entityId.toString())
-      : String.format("%s in entity '%s'", childType.name().toLowerCase(), entityId.toString());
+        : String.format("%s in entity '%s'", childType.name().toLowerCase(), entityId.toString());
   }
 
   @Override
@@ -150,7 +158,9 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
   }
 
   /**
-   * Returns the string which represents the user principal identity who failed the authorization check.
+   * Returns the string which represents the user principal identity who failed the authorization
+   * check.
+   *
    * @return The principal string
    */
   @Nullable
@@ -160,6 +170,7 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   /**
    * Returns all permissions which were missing for the authorization check.
+   *
    * @return The missing permissions
    */
   public Set<String> getMissingPermissions() {
@@ -168,6 +179,7 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   /**
    * Returns the string which represents the entity upon which the permission check failed.
+   *
    * @return The entity string
    */
   @Nullable
@@ -177,6 +189,7 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   /**
    * Returns whether this exception includes the principal in the error message or not.
+   *
    * @return whether to include the principal in the exception message
    */
   public boolean includePrincipal() {
@@ -185,6 +198,7 @@ public class UnauthorizedException extends AccessException implements HttpErrorS
 
   /**
    * Returns the custom addendum message for this exception message.
+   *
    * @return The custom addendum message
    */
   @Nullable

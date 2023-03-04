@@ -47,47 +47,51 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
 
 /**
- * Initializes a TransformExecutor and runs transforms. This is used in both the mapper and reducer since they
- * do mostly the same thing, except the mapper needs to write to an aggregator or to sinks, whereas the reducer
- * needs to read from an aggregator and write to sinks.
+ * Initializes a TransformExecutor and runs transforms. This is used in both the mapper and reducer
+ * since they do mostly the same thing, except the mapper needs to write to an aggregator or to
+ * sinks, whereas the reducer needs to read from an aggregator and write to sinks.
  *
- * @param <KEY>   the type of key to send into the transform executor
+ * @param <KEY> the type of key to send into the transform executor
  * @param <VALUE> the type of value to send into the transform executor
  */
 public class TransformRunner<KEY, VALUE> {
+
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
-    .create();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+      .create();
   private final PipeTransformExecutor<KeyValue<KEY, VALUE>> transformExecutor;
   private final OutputWriter<Object, Object> outputWriter;
 
   public TransformRunner(MapReduceTaskContext<Object, Object> context,
-                         Metrics metrics) throws Exception {
+      Metrics metrics) throws Exception {
     JobContext jobContext = context.getHadoopContext();
     Configuration hConf = jobContext.getConfiguration();
 
     // figure out whether we are writing to a single output or to multiple outputs
     Map<String, String> properties = context.getSpecification().getProperties();
-    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID),
+        BatchPhaseSpec.class);
     this.outputWriter = getSinkWriter(context, phaseSpec.getPhase(), hConf);
 
     // instantiate and initialize all transformations and setup the TransformExecutor
     PipelinePluginInstantiator pluginInstantiator =
-      new PipelinePluginInstantiator(context, metrics, phaseSpec, new MultiConnectorFactory());
+        new PipelinePluginInstantiator(context, metrics, phaseSpec, new MultiConnectorFactory());
     // stage name -> runtime args for that stage
     Map<String, String> runtimeArgs = GSON.fromJson(
-      hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);
+        hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);
 
     // input alias name -> stage name mapping
     Map<String, String> inputAliasToStage = GSON.fromJson(hConf.get(ETLMapReduce.INPUT_ALIAS_KEY),
-                                                          ETLMapReduce.INPUT_ALIAS_TYPE);
+        ETLMapReduce.INPUT_ALIAS_TYPE);
     InputContext inputContext = context.getInputContext();
     // inputContext can be null (in case of reducers)
-    String sourceStage = (inputContext != null) ? inputAliasToStage.get(inputContext.getInputName()) : null;
+    String sourceStage =
+        (inputContext != null) ? inputAliasToStage.get(inputContext.getInputName()) : null;
 
     PipelinePhase phase = phaseSpec.getPhase();
-    Set<StageSpec> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+    Set<StageSpec> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+        BatchJoiner.PLUGIN_TYPE);
     if (!reducers.isEmpty()) {
       String reducerName = reducers.iterator().next().getName();
       // if we're in the mapper, get the part of the pipeline starting from sources and ending at aggregator
@@ -100,17 +104,18 @@ public class TransformRunner<KEY, VALUE> {
     }
 
     MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
-      new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
-                                              new BasicArguments(context.getWorkflowToken(), runtimeArgs),
-                                              sourceStage, phaseSpec.pipelineContainsCondition(), outputWriter);
+        new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
+            new BasicArguments(context.getWorkflowToken(), runtimeArgs),
+            sourceStage, phaseSpec.pipelineContainsCondition(), outputWriter);
     this.transformExecutor = transformExecutorFactory.create(phase);
   }
 
   // this is needed because we need to write to the context differently depending on the number of outputs
   private OutputWriter<Object, Object> getSinkWriter(MapReduceTaskContext<Object, Object> context,
-                                                     PipelinePhase pipelinePhase,
-                                                     Configuration hConf) {
-    Set<StageSpec> reducers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+      PipelinePhase pipelinePhase,
+      Configuration hConf) {
+    Set<StageSpec> reducers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+        BatchJoiner.PLUGIN_TYPE);
     JobContext hadoopContext = context.getHadoopContext();
     if (!reducers.isEmpty() && hadoopContext instanceof Mapper.Context) {
       return new SingleOutputWriter<>(context);
@@ -120,9 +125,10 @@ public class TransformRunner<KEY, VALUE> {
 
     // should never happen, this is set in initialize
     Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
-    Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, ETLMapReduce.SINK_OUTPUTS_TYPE);
-    return hasSingleOutput(sinkOutputs) ?
-      new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
+    Map<String, SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr,
+        ETLMapReduce.SINK_OUTPUTS_TYPE);
+    return hasSingleOutput(sinkOutputs)
+        ? new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
   }
 
   private boolean hasSingleOutput(Map<String, SinkOutput> sinkOutputs) {

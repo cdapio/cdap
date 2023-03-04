@@ -29,7 +29,8 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * A {@link StorageProvider} implementation that uses CDAP {@link Table} dataset as the storage engine.
+ * A {@link StorageProvider} implementation that uses CDAP {@link Table} dataset as the storage
+ * engine.
  */
 public class NoSqlStorageProvider implements StorageProvider {
 
@@ -38,10 +39,11 @@ public class NoSqlStorageProvider implements StorageProvider {
 
   @Inject
   NoSqlStorageProvider(CConfiguration cConf,
-                       @Named(Constants.Dataset.TABLE_TYPE_NO_TX) DatasetDefinition registryTableDef,
-                       @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition,
-                       TransactionSystemClient txClient, MetricsCollectionService metricsCollectionService) {
-    this.admin = new NoSqlStructuredTableAdmin(tableDefinition, new NoSqlStructuredTableRegistry(registryTableDef));
+      @Named(Constants.Dataset.TABLE_TYPE_NO_TX) DatasetDefinition registryTableDef,
+      @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition,
+      TransactionSystemClient txClient, MetricsCollectionService metricsCollectionService) {
+    this.admin = new NoSqlStructuredTableAdmin(tableDefinition,
+        new NoSqlStructuredTableRegistry(registryTableDef));
     this.txRunner = new NoSqlTransactionRunner(admin, txClient, metricsCollectionService, cConf);
   }
 

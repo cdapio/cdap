@@ -23,6 +23,7 @@ import java.util.Iterator;
  * Uniquely identifies a support bundle entity.
  */
 public class SupportBundleEntityId extends EntityId {
+
   // the name of the entity
   protected final String supportBundleName;
 

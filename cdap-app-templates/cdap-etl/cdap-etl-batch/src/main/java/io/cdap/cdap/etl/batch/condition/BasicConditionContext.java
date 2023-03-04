@@ -43,11 +43,13 @@ import org.slf4j.LoggerFactory;
  * Default implementation of the {@link ConditionContext}.
  */
 public class BasicConditionContext extends AbstractStageContext implements ConditionContext {
+
   private static final Logger LOG = LoggerFactory.getLogger(BasicConditionContext.class);
   private final WorkflowContext context;
   private final Map<String, StageStatistics> stageStatistics;
 
-  public BasicConditionContext(WorkflowContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+  public BasicConditionContext(WorkflowContext context, PipelineRuntime pipelineRuntime,
+      StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec);
     this.context = context;
     this.stageStatistics = ImmutableMap.copyOf(createStageStatistics(context));
@@ -57,7 +59,8 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   private Map<String, StageStatistics> createStageStatistics(WorkflowContext context) {
     Map<String, StageStatistics> stageStatistics = new HashMap<>();
     WorkflowToken token = context.getToken();
-    for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM, WorkflowToken.Scope.USER)) {
+    for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM,
+        WorkflowToken.Scope.USER)) {
       Map<String, List<NodeValue>> all = token.getAll(scope);
       for (Map.Entry<String, List<NodeValue>> entry : all.entrySet()) {
         if (!entry.getKey().startsWith(Constants.StageStatistics.PREFIX + ".")) {
@@ -67,17 +70,21 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
 
         String stageName;
         if (stageKey.endsWith(Constants.StageStatistics.INPUT_RECORDS)) {
-          stageName = stageKey.substring(0, stageKey.length() - Constants.StageStatistics.INPUT_RECORDS.length() - 1);
+          stageName = stageKey.substring(0,
+              stageKey.length() - Constants.StageStatistics.INPUT_RECORDS.length() - 1);
         } else if (stageKey.endsWith(Constants.StageStatistics.OUTPUT_RECORDS)) {
-          stageName = stageKey.substring(0, stageKey.length() - Constants.StageStatistics.OUTPUT_RECORDS.length() - 1);
+          stageName = stageKey.substring(0,
+              stageKey.length() - Constants.StageStatistics.OUTPUT_RECORDS.length() - 1);
         } else if (stageKey.endsWith(Constants.StageStatistics.ERROR_RECORDS)) {
-          stageName = stageKey.substring(0, stageKey.length() - Constants.StageStatistics.ERROR_RECORDS.length() - 1);
+          stageName = stageKey.substring(0,
+              stageKey.length() - Constants.StageStatistics.ERROR_RECORDS.length() - 1);
         } else {
           // should not happen
-          LOG.warn(String.format("Ignoring key '%s' in the Workflow token while generating stage statistics " +
-                                   "because it is not in the form " +
-                                   "'stage.statistics.<stage_name>.<input|output|error>.records'.",
-                                 stageKey));
+          LOG.warn(String.format(
+              "Ignoring key '%s' in the Workflow token while generating stage statistics "
+                  + "because it is not in the form "
+                  + "'stage.statistics.<stage_name>.<input|output|error>.records'.",
+              stageKey));
           continue;
         }
 
@@ -102,8 +109,9 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
         } else {
           numOfErrorRecords = value;
         }
-        stageStatistics.put(stageName, new BasicStageStatistics(numOfInputRecords, numOfOutputRecords,
-                                                                numOfErrorRecords));
+        stageStatistics.put(stageName,
+            new BasicStageStatistics(numOfInputRecords, numOfOutputRecords,
+                numOfErrorRecords));
       }
     }
     return stageStatistics;
@@ -121,7 +129,7 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws Exception {
+      Map<String, String> properties) throws Exception {
     context.getAdmin().put(namespace, name, data, description, properties);
   }
 
@@ -136,7 +144,8 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   }
 
   @Override
-  public void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException {
+  public void execute(int timeoutInSeconds, TxRunnable runnable)
+      throws TransactionFailureException {
     context.execute(timeoutInSeconds, runnable);
   }
 

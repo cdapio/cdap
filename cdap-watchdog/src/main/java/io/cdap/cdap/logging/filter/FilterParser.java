@@ -26,6 +26,7 @@ import java.io.StringReader;
  * Parses string expression into a @{link Filter}.
  */
 public final class FilterParser {
+
   private enum Operator {
     AND, OR
   }
@@ -110,7 +111,8 @@ public final class FilterParser {
             return tokenizer.sval;
 
           default:
-            throw new IllegalStateException(String.format("Expected operand but got %s", (char) tokenizer.ttype));
+            throw new IllegalStateException(
+                String.format("Expected operand but got %s", (char) tokenizer.ttype));
         }
       }
     } catch (IOException e) {
@@ -129,7 +131,8 @@ public final class FilterParser {
             return;
 
           default:
-            throw new IllegalStateException(String.format("Expected operator = but got %s", (char) tokenizer.ttype));
+            throw new IllegalStateException(
+                String.format("Expected operator = but got %s", (char) tokenizer.ttype));
         }
       }
     } catch (IOException e) {
@@ -148,7 +151,8 @@ public final class FilterParser {
             return Operator.valueOf(tokenizer.sval);
 
           default:
-            throw new IllegalStateException(String.format("Expected operator = but got %s", (char) tokenizer.ttype));
+            throw new IllegalStateException(
+                String.format("Expected operator = but got %s", (char) tokenizer.ttype));
         }
       }
     } catch (IOException e) {
@@ -170,7 +174,8 @@ public final class FilterParser {
       case OR:
         return new OrFilter(ImmutableList.of(operand1, operand2));
       default:
-        throw new UnsupportedOperationException(String.format("Operator %s not supported", operator));
+        throw new UnsupportedOperationException(
+            String.format("Operator %s not supported", operator));
     }
   }
 }

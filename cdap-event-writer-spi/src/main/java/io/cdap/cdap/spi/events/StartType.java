@@ -58,8 +58,9 @@ public enum StartType {
   public static StartType valueOfCategoryName(String categoryName) {
     StartType type = CATEGORY_MAP.get(categoryName);
     if (type == null) {
-      throw new IllegalArgumentException(String.format("Unknown category name '%s'. Must be one of %s",
-                                                       categoryName, String.join(",", CATEGORY_MAP.keySet())));
+      throw new IllegalArgumentException(
+          String.format("Unknown category name '%s'. Must be one of %s",
+              categoryName, String.join(",", CATEGORY_MAP.keySet())));
     }
     return type;
   }

@@ -34,10 +34,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Retries SQL operations in case they fail due to conflict.
- * This class is based on {@link Transactions#createTransactionalWithRetry}.
+ * Retries SQL operations in case they fail due to conflict. This class is based on {@link
+ * Transactions#createTransactionalWithRetry}.
  */
 public class RetryingSqlTransactionRunner implements TransactionRunner {
+
   private static final Logger LOG = LoggerFactory.getLogger(RetryingSqlTransactionRunner.class);
   // From https://www.postgresql.org/docs/9.6/transaction-iso.html, "40001" is the code for serialization failures
   private static final String TRANSACTION_CONFLICT_SQL_STATE = "40001";
@@ -52,24 +53,28 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
 
   @Inject
   public RetryingSqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
-                                      MetricsCollectionService metricsCollectionService, CConfiguration cConf,
-                                      int scanFetchSize) {
+      MetricsCollectionService metricsCollectionService, CConfiguration cConf,
+      int scanFetchSize) {
     this.transactionRunner =
-      new SqlTransactionRunner(tableAdmin, dataSource, metricsCollectionService,
-                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED),
-                               scanFetchSize);
+        new SqlTransactionRunner(tableAdmin, dataSource, metricsCollectionService,
+            cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED),
+            scanFetchSize);
     this.metricsCollectionService = metricsCollectionService;
-    this.maxRetries = cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES);
+    this.maxRetries = cConf.getInt(
+        Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_MAX_RETRIES);
     this.delayMillisTransactionFailure =
-      cConf.getLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_TRANSACTION_FAILURE_DELAY_MILLIS);
+        cConf.getLong(
+            Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_TRANSACTION_FAILURE_DELAY_MILLIS);
     this.delayMillisConnectionFailure =
-      cConf.getLong(Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_CONNECTION_FAILURE_DELAY_MILLIS);
+        cConf.getLong(
+            Constants.Dataset.DATA_STORAGE_SQL_TRANSACTION_RUNNER_CONNECTION_FAILURE_DELAY_MILLIS);
   }
 
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     int retries = 0;
-    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
+    MetricsContext metricsCollector = metricsCollectionService.getContext(
+        Constants.Metrics.STORAGE_METRICS_TAGS);
     while (true) {
       try {
         getSqlTransactionRunner().run(runnable);
@@ -82,7 +87,8 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
           metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_CONFLICT, 1L);
           ++retries;
           applyDelay(retries, delayMillisTransactionFailure, e);
-        } else if (!Strings.isNullOrEmpty(sqlState) && sqlState.startsWith(CONNECTION_EXCEPTION_SQL_STATE_PREFIX)) {
+        } else if (!Strings.isNullOrEmpty(sqlState) && sqlState.startsWith(
+            CONNECTION_EXCEPTION_SQL_STATE_PREFIX)) {
           LOG.debug("Connection failed with sql state: {}.", sqlState, e);
           ++retries;
           applyDelay(retries, delayMillisConnectionFailure, e);
@@ -93,7 +99,8 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
     }
   }
 
-  private void applyDelay(long retryCount, long delayMillis, TransactionException e) throws TransactionException {
+  private void applyDelay(long retryCount, long delayMillis, TransactionException e)
+      throws TransactionException {
     long delay = retryCount > maxRetries ? -1 : delayMillis;
     if (delay < 0) {
       throw e;

@@ -20,9 +20,11 @@ import java.io.IOException;
 
 /**
  * Encodes the object of provided type.
+ *
  * @param <T> type of the object to be encoded
  */
 public interface Encoder<T> {
+
   /**
    * Encodes the provided data.
    *

@@ -20,6 +20,7 @@ package io.cdap.cdap.logging.meta;
  * Kafka offset for log processing.
  */
 public class KafkaOffset implements Comparable<KafkaOffset> {
+
   private final long nextOffset;
   private final long nextEventTime;
 
@@ -47,10 +48,10 @@ public class KafkaOffset implements Comparable<KafkaOffset> {
 
   @Override
   public String toString() {
-    return "KafkaOffset{" +
-      "nextOffset=" + nextOffset +
-      ", nextEventTime=" + nextEventTime +
-      '}';
+    return "KafkaOffset{"
+        + "nextOffset=" + nextOffset
+        + ", nextEventTime=" + nextEventTime
+        + '}';
   }
 
   @Override

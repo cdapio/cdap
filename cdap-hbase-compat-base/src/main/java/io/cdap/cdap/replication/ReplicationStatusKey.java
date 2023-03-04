@@ -34,7 +34,8 @@ public final class ReplicationStatusKey {
   public ReplicationStatusKey(String rowType, String regionName, UUID regionServerID) {
     byte[] rowKey;
     rowKey = Bytes.add(Bytes.toBytes(Bytes.toBytes(rowType).length), Bytes.toBytes(rowType));
-    rowKey = Bytes.add(rowKey, Bytes.toBytes(Bytes.toBytes(regionName).length), Bytes.toBytes(regionName));
+    rowKey = Bytes.add(rowKey, Bytes.toBytes(Bytes.toBytes(regionName).length),
+        Bytes.toBytes(regionName));
     rowKey = Bytes.add(rowKey, Bytes.toBytes(regionServerID));
     this.rowType = rowType;
     this.regionName = regionName;

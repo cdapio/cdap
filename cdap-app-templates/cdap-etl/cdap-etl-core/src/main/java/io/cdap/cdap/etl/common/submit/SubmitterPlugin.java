@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * @param <U> type of context provided by the context provider
  */
 public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
+
   private static final Logger LOG = LoggerFactory.getLogger(SubmitterPlugin.class);
   private final String stageName;
   private final Transactional transactional;
@@ -37,14 +38,16 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   private final PrepareAction<U> prepareAction;
 
   public SubmitterPlugin(String stageName, Transactional transactional,
-                         SubmitterLifecycle<T> delegate,
-                         ContextProvider<U> contextProvider) {
-    this(stageName, transactional, delegate, contextProvider, x -> { });
+      SubmitterLifecycle<T> delegate,
+      ContextProvider<U> contextProvider) {
+    this(stageName, transactional, delegate, contextProvider, x -> {
+    });
   }
+
   public SubmitterPlugin(String stageName, Transactional transactional,
-                         SubmitterLifecycle<T> delegate,
-                         ContextProvider<U> contextProvider,
-                         PrepareAction<U> prepareAction) {
+      SubmitterLifecycle<T> delegate,
+      ContextProvider<U> contextProvider,
+      PrepareAction<U> prepareAction) {
     this.stageName = stageName;
     this.transactional = transactional;
     this.delegate = delegate;

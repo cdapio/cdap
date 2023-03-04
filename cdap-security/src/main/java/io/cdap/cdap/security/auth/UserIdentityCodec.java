@@ -36,8 +36,10 @@ import java.io.IOException;
  * Utility to handle serialization and deserialization of {@link UserIdentity} objects.
  */
 public class UserIdentityCodec implements Codec<UserIdentity> {
+
   private static final TypeToken<UserIdentity> ACCESS_TOKEN_IDENTIFIER_TYPE =
-    new TypeToken<UserIdentity>() { };
+      new TypeToken<UserIdentity>() {
+      };
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;
@@ -55,7 +57,7 @@ public class UserIdentityCodec implements Codec<UserIdentity> {
 
     encoder.writeInt(UserIdentity.Schemas.getVersion());
     DatumWriter<UserIdentity> writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                                            UserIdentity.Schemas.getCurrentSchema());
+        UserIdentity.Schemas.getCurrentSchema());
     writer.encode(identifier, encoder);
     return bos.toByteArray();
   }
@@ -65,7 +67,7 @@ public class UserIdentityCodec implements Codec<UserIdentity> {
     ByteArrayInputStream bis = new ByteArrayInputStream(data);
     Decoder decoder = new BinaryDecoder(bis);
     DatumReader<UserIdentity> reader = readerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                                            UserIdentity.Schemas.getCurrentSchema());
+        UserIdentity.Schemas.getCurrentSchema());
     int readVersion = decoder.readInt();
     Schema readSchema = UserIdentity.Schemas.getSchemaVersion(readVersion);
     if (readSchema == null) {

@@ -28,6 +28,7 @@ public class GCPWorkloadIdentityCredential {
    * Represents the source of the credential.
    */
   public class CredentialSource {
+
     @SerializedName("file")
     private final String file;
 
@@ -70,8 +71,9 @@ public class GCPWorkloadIdentityCredential {
   @SerializedName("credential_source")
   private final CredentialSource credentialSource;
 
-  public GCPWorkloadIdentityCredential(CredentialType type, String audience, String serviceAccountImpersonationURL,
-                                       TokenType subjectTokenType, String tokenURL, String credentialSourceFile) {
+  public GCPWorkloadIdentityCredential(CredentialType type, String audience,
+      String serviceAccountImpersonationURL,
+      TokenType subjectTokenType, String tokenURL, String credentialSourceFile) {
     this.type = type;
     this.audience = audience;
     this.serviceAccountImpersonationURL = serviceAccountImpersonationURL;

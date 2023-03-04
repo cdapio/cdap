@@ -34,10 +34,11 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 public interface MasterEnvironment {
 
   /**
-   * This method will be invoked to initialize this {@link MasterEnvironment}.
-   * It will be called before any other method is called.
+   * This method will be invoked to initialize this {@link MasterEnvironment}. It will be called
+   * before any other method is called.
    *
-   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP environment
+   * @param context a {@link MasterEnvironmentContext} to provide information about the CDAP
+   *     environment
    * @throws Exception if initialization failed
    */
   default void initialize(MasterEnvironmentContext context) throws Exception {
@@ -45,8 +46,8 @@ public interface MasterEnvironment {
   }
 
   /**
-   * This method will be invoked to destroy this {@link MasterEnvironment}.
-   * This will be the last method called on this instance.
+   * This method will be invoked to destroy this {@link MasterEnvironment}. This will be the last
+   * method called on this instance.
    */
   default void destroy() {
     // no-op by default
@@ -62,13 +63,15 @@ public interface MasterEnvironment {
   /**
    * Creates a new instance of {@link MasterEnvironmentRunnable} from the given class name.
    *
-   * @param context a {@link MasterEnvironmentRunnableContext} to provide access to CDAP resources.
-   * @param runnableClass the {@link MasterEnvironmentRunnable} class to create an instance from
+   * @param context a {@link MasterEnvironmentRunnableContext} to provide access to CDAP
+   *     resources.
+   * @param runnableClass the {@link MasterEnvironmentRunnable} class to create an instance
+   *     from
    * @return a new instance of the given class
    * @throws Exception if failed to create a new instance
    */
   MasterEnvironmentRunnable createRunnable(MasterEnvironmentRunnableContext context,
-                                           Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception;
+      Class<? extends MasterEnvironmentRunnable> runnableClass) throws Exception;
 
   /**
    * Returns the name of this environment implementation.
@@ -96,27 +99,32 @@ public interface MasterEnvironment {
    * @param sparkSubmitContext Spark submit context for master environment
    * @throws Exception if there is any error in generating spark submit config
    */
-  default SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext) throws Exception {
+  default SparkConfig generateSparkSubmitConfig(SparkSubmitContext sparkSubmitContext)
+      throws Exception {
     throw new UnsupportedOperationException("Method not implemented");
   }
 
   /**
-   * Called during namespace creation.
-   * Namespace creation is rolled back if this method throws an exception.
+   * Called during namespace creation. Namespace creation is rolled back if this method throws an
+   * exception.
+   *
    * @deprecated use {@link NamespaceListener#onNamespaceCreation(NamespaceDetail)} instead.
    */
   @Deprecated
-  default void onNamespaceCreation(String namespace, Map<String, String> properties) throws Exception {
+  default void onNamespaceCreation(String namespace, Map<String, String> properties)
+      throws Exception {
     // no-op by default
   }
 
   /**
-   * Called during namespace deletion.
-   * Namespace deletion is rolled back if this method throws an exception.
+   * Called during namespace deletion. Namespace deletion is rolled back if this method throws an
+   * exception.
+   *
    * @deprecated use {@link NamespaceListener#onNamespaceDeletion(NamespaceDetail)} instead.
    */
   @Deprecated
-  default void onNamespaceDeletion(String namespace, Map<String, String> properties) throws Exception {
+  default void onNamespaceDeletion(String namespace, Map<String, String> properties)
+      throws Exception {
     // no-op by default
   }
 }

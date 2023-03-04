@@ -122,9 +122,11 @@ public final class JsonEncoder implements Encoder {
   }
 
   /**
-   * Wrapper used to ensure that BigDecimals are generated as plain values (with no scientific notation).
+   * Wrapper used to ensure that BigDecimals are generated as plain values (with no scientific
+   * notation).
    */
   private static class BigDecimalWrapper extends Number {
+
     BigDecimal wrapped;
 
     protected static BigDecimalWrapper wrap(BigDecimal value) {

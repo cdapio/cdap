@@ -17,9 +17,9 @@
 package io.cdap.cdap.api.annotation;
 
 /**
- * Declares how transactions are controlled for a method: IMPLICIT means that the platform encloses the
- * method execution into a transaction, whereas EXPLICIT means that the method itself is in control of
- * executing transactions.
+ * Declares how transactions are controlled for a method: IMPLICIT means that the platform encloses
+ * the method execution into a transaction, whereas EXPLICIT means that the method itself is in
+ * control of executing transactions.
  */
 public enum TransactionControl {
   EXPLICIT,

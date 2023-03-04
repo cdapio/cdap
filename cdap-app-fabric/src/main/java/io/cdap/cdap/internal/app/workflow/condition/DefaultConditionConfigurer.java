@@ -40,16 +40,19 @@ import javax.annotation.Nullable;
  * Default implementation of the {@link ConditionConfigurer}
  */
 public class DefaultConditionConfigurer extends AbstractConfigurer implements ConditionConfigurer {
+
   private final Condition condition;
   private String name;
   private String description;
   private Map<String, String> properties;
 
-  private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                                     @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                     FeatureFlagsProvider featureFlagsProvider) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+  private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace,
+      Id.Artifact artifactId,
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.condition = condition;
     this.name = condition.getClass().getSimpleName();
     this.description = "";
@@ -58,7 +61,8 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
 
   @Override
   public void setName(String name) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "Name of the Condition cannot be null or empty");
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(name),
+        "Name of the Condition cannot be null or empty");
     this.name = name;
   }
 
@@ -77,18 +81,21 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
   private DefaultConditionSpecification createSpecification() {
     Set<String> datasets = new HashSet<>();
     Reflections.visit(condition, condition.getClass(), new PropertyFieldExtractor(properties),
-                      new DataSetFieldExtractor(datasets));
-    return new DefaultConditionSpecification(condition.getClass().getName(), name, description, properties, datasets);
+        new DataSetFieldExtractor(datasets));
+    return new DefaultConditionSpecification(condition.getClass().getName(), name, description,
+        properties, datasets);
   }
 
-  public static ConditionSpecification configureCondition(Condition condition, Id.Namespace deployNamespace,
-                                                          Id.Artifact artifactId, PluginFinder pluginFinder,
-                                                          PluginInstantiator pluginInstantiator,
-                                                          @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                                          FeatureFlagsProvider featureFlagsProvider) {
-    DefaultConditionConfigurer configurer = new DefaultConditionConfigurer(condition, deployNamespace, artifactId,
-                                                                           pluginFinder, pluginInstantiator,
-                                                                           runtimeInfo, featureFlagsProvider);
+  public static ConditionSpecification configureCondition(Condition condition,
+      Id.Namespace deployNamespace,
+      Id.Artifact artifactId, PluginFinder pluginFinder,
+      PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
+    DefaultConditionConfigurer configurer = new DefaultConditionConfigurer(condition,
+        deployNamespace, artifactId,
+        pluginFinder, pluginInstantiator,
+        runtimeInfo, featureFlagsProvider);
 
     condition.configure(configurer);
     return configurer.createSpecification();

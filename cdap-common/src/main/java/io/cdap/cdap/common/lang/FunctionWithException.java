@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
  * @param <E> exception type
  */
 public interface FunctionWithException<F, T, E extends Exception> {
+
   @Nullable
   T apply(@Nullable F input) throws E;
 }

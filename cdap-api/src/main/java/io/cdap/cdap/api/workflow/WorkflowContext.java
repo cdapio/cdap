@@ -32,17 +32,21 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import java.util.Map;
 
 /**
- * Represents the runtime context of a {@link Workflow}. This context is also
- * available to {@link Condition}.
+ * Represents the runtime context of a {@link Workflow}. This context is also available to {@link
+ * Condition}.
  */
-public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional, MessagingContext,
-  ServiceDiscoverer, DatasetContext, PluginContext, SecureStore, LineageRecorder, MetadataReader, MetadataWriter {
+public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional,
+    MessagingContext,
+    ServiceDiscoverer, DatasetContext, PluginContext, SecureStore, LineageRecorder, MetadataReader,
+    MetadataWriter {
 
   WorkflowSpecification getWorkflowSpecification();
 
   /**
    * Returns {@link ConditionSpecification} associated with the condition node in the Workflow.
-   * @throws UnsupportedOperationException if it is not called from {@link Predicate} or {@link Condition}
+   *
+   * @throws UnsupportedOperationException if it is not called from {@link Predicate} or {@link
+   *     Condition}
    */
   ConditionSpecification getConditionSpecification();
 
@@ -54,9 +58,9 @@ public interface WorkflowContext extends SchedulableProgramContext, RuntimeConte
   WorkflowToken getToken();
 
   /**
-   * Return an immutable {@link Map} of node ids to {@link WorkflowNodeState}. This can be used
-   * from {@link AbstractWorkflow#destroy} method to determine the status of all nodes
-   * executed by the Workflow in the current run.
+   * Return an immutable {@link Map} of node ids to {@link WorkflowNodeState}. This can be used from
+   * {@link AbstractWorkflow#destroy} method to determine the status of all nodes executed by the
+   * Workflow in the current run.
    */
   @Beta
   Map<String, WorkflowNodeState> getNodeStates();
@@ -64,18 +68,20 @@ public interface WorkflowContext extends SchedulableProgramContext, RuntimeConte
   /**
    * Return the state of the workflow. This method can be used from {@link AbstractWorkflow#destroy}
    * to determine the status of the {@link Workflow}.
+   *
    * @return a {@link ProgramState}
    */
   @Beta
   ProgramState getState();
 
   /**
-   * Call this method to consolidate the field lineage operations at Workflow level, rather than emitting
-   * them from nodes running inside the Workflow. This method should be called from {@link AbstractWorkflow#initialize}
-   * method at which point no node has been executed yet. Calling this method means Workflow is taking
-   * responsibility of emitting the field operations. In {@link AbstractWorkflow#destroy} method of the Workflow,
-   * field operations will be available as {@link WorkflowNodeState} by calling {@link #getNodeStates} method.
-   * If workflow does not call {@link LineageRecorder#record} method, then no field lineage will be emitted.
+   * Call this method to consolidate the field lineage operations at Workflow level, rather than
+   * emitting them from nodes running inside the Workflow. This method should be called from {@link
+   * AbstractWorkflow#initialize} method at which point no node has been executed yet. Calling this
+   * method means Workflow is taking responsibility of emitting the field operations. In {@link
+   * AbstractWorkflow#destroy} method of the Workflow, field operations will be available as {@link
+   * WorkflowNodeState} by calling {@link #getNodeStates} method. If workflow does not call {@link
+   * LineageRecorder#record} method, then no field lineage will be emitted.
    */
   @Beta
   void enableFieldLineageConsolidation();

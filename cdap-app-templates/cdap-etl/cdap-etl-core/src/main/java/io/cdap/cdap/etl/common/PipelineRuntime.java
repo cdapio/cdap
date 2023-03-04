@@ -33,11 +33,12 @@ import java.io.Serializable;
 import java.util.Optional;
 
 /**
- * Holds common information, services, and contexts required at runtime by plugins. This exists mainly so that we
- * don't have modify several layers of constructors whenever anything is added to {@link StageContext}. Instead, it
- * can just be added here.
+ * Holds common information, services, and contexts required at runtime by plugins. This exists
+ * mainly so that we don't have modify several layers of constructors whenever anything is added to
+ * {@link StageContext}. Instead, it can just be added here.
  */
 public class PipelineRuntime implements Serializable {
+
   private final String namespace;
   private final String pipelineName;
   private final long logicalStartTime;
@@ -51,35 +52,43 @@ public class PipelineRuntime implements Serializable {
   private final FeatureFlagsProvider featureFlagProvider;
 
   public PipelineRuntime(SparkClientContext context) {
-    this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), context.getMetrics(), context, context, context, context, context, context);
+    this(context.getNamespace(), context.getApplicationSpecification().getName(),
+        context.getLogicalStartTime(),
+        new BasicArguments(context), context.getMetrics(), context, context, context, context,
+        context, context);
   }
 
   public PipelineRuntime(CustomActionContext context, Metrics metrics) {
-    this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context, context, context);
+    this(context.getNamespace(), context.getApplicationSpecification().getName(),
+        context.getLogicalStartTime(),
+        new BasicArguments(context), metrics, context, context, context, context, context, context);
   }
 
   public PipelineRuntime(MapReduceTaskContext context, Metrics metrics, BasicArguments arguments) {
-    this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         arguments, metrics, context, context, context, null, null, context);
+    this(context.getNamespace(), context.getApplicationSpecification().getName(),
+        context.getLogicalStartTime(),
+        arguments, metrics, context, context, context, null, null, context);
   }
 
   public PipelineRuntime(MapReduceContext context, Metrics metrics) {
-    this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context), metrics, context, context, context, context, context, context);
+    this(context.getNamespace(), context.getApplicationSpecification().getName(),
+        context.getLogicalStartTime(),
+        new BasicArguments(context), metrics, context, context, context, context, context, context);
   }
 
   public PipelineRuntime(WorkflowContext context, Metrics metrics) {
-    this(context.getNamespace(), context.getApplicationSpecification().getName(), context.getLogicalStartTime(),
-         new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context, context, context,
-         context, context, context);
+    this(context.getNamespace(), context.getApplicationSpecification().getName(),
+        context.getLogicalStartTime(),
+        new BasicArguments(context.getToken(), context.getRuntimeArguments()), metrics, context,
+        context, context,
+        context, context, context);
   }
 
-  public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime, BasicArguments arguments,
-                         Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
-                         SecureStore secureStore, MetadataReader metadataReader, MetadataWriter metadataWriter,
-                         FeatureFlagsProvider featureFlagsProvider) {
+  public PipelineRuntime(String namespace, String pipelineName, long logicalStartTime,
+      BasicArguments arguments,
+      Metrics metrics, PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer,
+      SecureStore secureStore, MetadataReader metadataReader, MetadataWriter metadataWriter,
+      FeatureFlagsProvider featureFlagsProvider) {
     this.namespace = namespace;
     this.pipelineName = pipelineName;
     this.logicalStartTime = logicalStartTime;
@@ -92,7 +101,7 @@ public class PipelineRuntime implements Serializable {
     this.secureStore = secureStore;
     this.featureFlagProvider = featureFlagsProvider;
   }
-  
+
   public String getNamespace() {
     return namespace;
   }
@@ -130,7 +139,8 @@ public class PipelineRuntime implements Serializable {
   }
 
   /**
-   * @return an {@link Optional} of {@link MetadataReader} which is present is metadataReader is not null
+   * @return an {@link Optional} of {@link MetadataReader} which is present is metadataReader is not
+   *     null
    */
   public Optional<MetadataReader> getMetadataReader() {
     if (metadataReader != null) {
@@ -140,7 +150,8 @@ public class PipelineRuntime implements Serializable {
   }
 
   /**
-   * @return an {@link Optional} of {@link MetadataWriter} which is present is metadataWriter is not null
+   * @return an {@link Optional} of {@link MetadataWriter} which is present is metadataWriter is not
+   *     null
    */
   public Optional<MetadataWriter> getMetadataWriter() {
     if (metadataWriter != null) {

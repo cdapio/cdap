@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
  * An ordered, optionally explorable, named table.
  */
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>,
-  Dataset, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
+    Dataset, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
   /**
    * Type name
@@ -41,21 +41,22 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   String TYPE = "table";
 
   /**
-   * Property set to configure time-to-live on data within this dataset. The value given is in seconds.
-   * Once a cell's data has surpassed the given value in age,
-   * the cell's data will no longer be visible and may be garbage collected.
+   * Property set to configure time-to-live on data within this dataset. The value given is in
+   * seconds. Once a cell's data has surpassed the given value in age, the cell's data will no
+   * longer be visible and may be garbage collected.
    */
   String PROPERTY_TTL = "dataset.table.ttl";
 
   /**
    * Property set to configure read-less increment support for a dataset.  When not set, calling the
-   * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write operation.
+   * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write
+   * operation.
    */
   String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
 
   /**
-   * Property set to configure name of the column family. This property only applies to implementations that support
-   * it. If not set, a default column family will be used.
+   * Property set to configure name of the column family. This property only applies to
+   * implementations that support it. If not set, a default column family will be used.
    */
   String PROPERTY_COLUMN_FAMILY = "dataset.table.column.family";
 
@@ -65,18 +66,20 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   String DEFAULT_COLUMN_FAMILY = "d";
 
   /**
-   * Property set to configure transaction conflict detection level. This property only applies to implementations
-   * that support transaction. The property value must be obtained by {@link ConflictDetection#name()}.
+   * Property set to configure transaction conflict detection level. This property only applies to
+   * implementations that support transaction. The property value must be obtained by {@link
+   * ConflictDetection#name()}.
    *
    * @see ConflictDetection
    */
   String PROPERTY_CONFLICT_LEVEL = "conflict.level";
 
   /**
-   * Property set to configure schema for the table. Schema is currently not enforced when writing to a Table,
-   * but is used when exploring a Table. Field names from the schema will be read from columns of the same name.
-   * For example, if the schema contains an integer field named "count", the value for that field will be read
-   * from the "count" column. The schema can only contain simple types.
+   * Property set to configure schema for the table. Schema is currently not enforced when writing
+   * to a Table, but is used when exploring a Table. Field names from the schema will be read from
+   * columns of the same name. For example, if the schema contains an integer field named "count",
+   * the value for that field will be read from the "count" column. The schema can only contain
+   * simple types.
    */
   String PROPERTY_SCHEMA = DatasetProperties.SCHEMA;
 
@@ -88,12 +91,12 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Reads values of all columns of the specified row.
    * <p>
-   * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less
-   * efficient than calling the same method with columns as parameters because it can require making a
-   * round trip to the persistent store.
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method can
+   * be less efficient than calling the same method with columns as parameters because it can
+   * require making a round trip to the persistent store.
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param row row to read from
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
@@ -113,8 +116,8 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Reads the values of the specified columns of the specified row.
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param row row to read from
    * @param columns collection of columns to read; if empty, will return an empty Row.
@@ -124,11 +127,11 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   Row get(byte[] row, byte[][] columns);
 
   /**
-   * Reads the values of all columns in the specified row that are
-   * between the specified start (inclusive) and stop (exclusive) columns.
+   * Reads the values of all columns in the specified row that are between the specified start
+   * (inclusive) and stop (exclusive) columns.
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
@@ -141,8 +144,8 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Reads values of columns as defined by {@link Get} parameter.
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param get defines read selection
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
@@ -151,9 +154,10 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   Row get(Get get);
 
   /**
-   * Reads values for the rows and columns defined by the {@link Get} parameters.  When running in distributed mode,
-   * and retrieving multiple rows at the same time, this method should be preferred to multiple {@link Table#get(Get)}
-   * calls, as the operations will be batched into a single remote call per server.
+   * Reads values for the rows and columns defined by the {@link Get} parameters.  When running in
+   * distributed mode, and retrieving multiple rows at the same time, this method should be
+   * preferred to multiple {@link Table#get(Get)} calls, as the operations will be batched into a
+   * single remote call per server.
    *
    * @param gets defines the rows and columns to read
    * @return a list of {@link Row} instances
@@ -172,8 +176,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Writes the specified values for the specified columns of the specified row.
    * <p>
-   * NOTE: Depending on the implementation, this can work faster than calling {@link #put(byte[], byte[], byte[])}
-   * multiple times (especially in transactions that alter many columns of one row).
+   * NOTE: Depending on the implementation, this can work faster than calling {@link #put(byte[],
+   * byte[], byte[])} multiple times (especially in transactions that alter many columns of one
+   * row).
    *
    * @param row row to write to
    * @param columns columns to write to
@@ -191,9 +196,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Deletes all columns of the specified row.
    * <p>
-   * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less
-   * efficient than calling the same method with columns as parameters because it can require a round trip to
-   * the persistent store.
+   * NOTE: Depending on the implementation of this interface and use-case, calling this method can
+   * be less efficient than calling the same method with columns as parameters because it can
+   * require a round trip to the persistent store.
    *
    * @param row row to delete
    */
@@ -210,8 +215,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Deletes specified columns of the specified row.
    * <p>
-   * NOTE: Depending on the implementation, this can work faster than calling {@link #delete(byte[], byte[])}
-   * multiple times (especially in transactions that delete many columns of the same rows).
+   * NOTE: Depending on the implementation, this can work faster than calling {@link #delete(byte[],
+   * byte[])} multiple times (especially in transactions that delete many columns of the same
+   * rows).
    *
    * @param row row to delete from
    * @param columns names of columns to delete; if empty, nothing will be deleted
@@ -232,43 +238,49 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @param column column to increment
    * @param amount amount to increment by
    * @return new value of the column
-   * @throws NumberFormatException if stored value for the column is not in the serialized long value format
+   * @throws NumberFormatException if stored value for the column is not in the serialized long
+   *     value format
    */
   long incrementAndGet(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments the specified columns of the row by the specified amounts and returns the new values.
+   * Increments the specified columns of the row by the specified amounts and returns the new
+   * values.
    * <p>
-   * NOTE: Depending on the implementation, this can work faster than calling
-   * {@link #incrementAndGet(byte[], byte[], long)}
-   * multiple times (especially in a transaction that increments multiple columns of the same rows)
+   * NOTE: Depending on the implementation, this can work faster than calling {@link
+   * #incrementAndGet(byte[], byte[], long)} multiple times (especially in a transaction that
+   * increments multiple columns of the same rows)
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param row row whose values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (in the same order as the columns)
    * @return {@link Row} with a subset of changed columns
-   * @throws NumberFormatException if stored value for the column is not in the serialized long value format
+   * @throws NumberFormatException if stored value for the column is not in the serialized long
+   *     value format
    */
   Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts);
 
   /**
-   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter and
-   * returns the new values
+   * Increments the specified columns of a row by the specified amounts defined by the {@link
+   * Increment} parameter and returns the new values
    * <p>
-   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
-   *       in returned data structures from this method.
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and
+   * present in returned data structures from this method.
    *
    * @param increment defines changes
    * @return {@link Row} with a subset of changed columns
-   * @throws NumberFormatException if stored value for the column is not in the serialized long value format
+   * @throws NumberFormatException if stored value for the column is not in the serialized long
+   *     value format
    */
   Row incrementAndGet(Increment increment);
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
+   * Increments (atomically) the specified row and columns by the specified amounts, without
+   * returning the new value.
+   *
    * @param row row which values to increment
    * @param column column to increment
    * @param amount amount to increment by
@@ -276,21 +288,26 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   void increment(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
+   * Increments (atomically) the specified row and columns by the specified amounts, without
+   * returning the new values.
    *
-   * NOTE: depending on the implementation this may work faster than calling
-   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
-   *  @param row row which values to increment
+   * NOTE: depending on the implementation this may work faster than calling {@link
+   * #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of
+   * rows)
+   *
+   * @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
    */
   void increment(byte[] row, byte[][] columns, long[] amounts);
 
   /**
-   * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
+   * Increments (atomically) the specified row and columns by the specified amounts, without
+   * returning the new values.
    *
-   * NOTE: depending on the implementation this may work faster than calling
-   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   * NOTE: depending on the implementation this may work faster than calling {@link
+   * #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of
+   * rows)
    *
    * @param increment the row and column increment amounts
    */
@@ -300,7 +317,8 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * Scans table.
    *
    * @param startRow start row inclusive; {@code null} means start from first row of the table
-   * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the table
+   * @param stopRow stop row exclusive; {@code null} means scan all rows to the end of the
+   *     table
    * @return instance of {@link Scanner}
    */
   Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow);
@@ -316,24 +334,26 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Returns splits for a range of keys in the table.
-   * 
-   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
-   *                  If less than or equal to zero, any number of splits can be returned.
-   * @param start if non-null, the returned splits will only cover keys that are greater or equal
+   *
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits
+   *     will be returned. If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or
+   *     equal
    * @param stop if non-null, the returned splits will only cover keys that are less
    * @return list of {@link Split}
    */
   List<Split> getSplits(int numSplits, @Nullable byte[] start, @Nullable byte[] stop);
 
   /**
-   * Compares-and-swaps (atomically) the value of the specified row and column by looking for
-   * an expected value and, if found, replacing it with the new value.
+   * Compares-and-swaps (atomically) the value of the specified row and column by looking for an
+   * expected value and, if found, replacing it with the new value.
    *
    * @param key row to modify
    * @param keyColumn column to modify
    * @param oldValue expected value before change
    * @param newValue value to set
-   * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
+   * @return true if compare and swap succeeded, false otherwise (stored value is different from
+   *     expected)
    */
   boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue);
 

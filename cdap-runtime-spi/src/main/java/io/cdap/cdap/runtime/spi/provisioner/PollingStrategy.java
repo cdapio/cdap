@@ -18,16 +18,17 @@
 package io.cdap.cdap.runtime.spi.provisioner;
 
 /**
- * Defines how CDAP should poll for cluster status while waiting for a cluster to change state.
- * For example, if it takes at least two minutes to create a cluster,
- * a provisioner can use a strategy where it first waits two minutes, then polls every ten seconds.
- * See {@link PollingStrategies} for some common strategies.
+ * Defines how CDAP should poll for cluster status while waiting for a cluster to change state. For
+ * example, if it takes at least two minutes to create a cluster, a provisioner can use a strategy
+ * where it first waits two minutes, then polls every ten seconds. See {@link PollingStrategies} for
+ * some common strategies.
  */
 public interface PollingStrategy {
 
   /**
-   * Return the number of milliseconds to wait before the next poll, given the time that polling began, and the number
-   * of polls already attempted. Returning 0 or less means the next poll will be tried immediately.
+   * Return the number of milliseconds to wait before the next poll, given the time that polling
+   * began, and the number of polls already attempted. Returning 0 or less means the next poll will
+   * be tried immediately.
    *
    * @param numPolls the number of times the status was polled already. Starts at 0.
    * @param startTime the timestamp in milliseconds that polling began.

@@ -24,35 +24,42 @@ import io.cdap.cdap.logging.filter.Filter;
  * Interface to read logs.
  */
 public interface LogReader {
+
   /**
    * Read log events of a program after a given offset.
+   *
    * @param loggingContext context to look up log events.
-   * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the latest log events.
+   * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the
+   *     latest log events.
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
    */
   void getLogNext(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
-                       Callback callback);
+      Callback callback);
 
   /**
    * Read log events of a program before a given offset.
+   *
    * @param loggingContext context to look up log events.
-   * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the latest log events.
+   * @param readRange range for reading log events. Use {@link ReadRange#LATEST} to get the
+   *     latest log events.
    * @param maxEvents max log events to return.
    * @param filter filter to select log events
    * @param callback callback to handle the log events.
    */
   void getLogPrev(LoggingContext loggingContext, ReadRange readRange, int maxEvents, Filter filter,
-                       Callback callback);
+      Callback callback);
 
   /**
-    * Returns log events for a given LoggingContext between given times.
-    * @param loggingContext context to look up log events.
-    * @param fromTimeMs start time.
-    * @param toTimeMs end time.
-    * @param filter filter to select log events
-    * @return CloseableIterator of log events
-    */
-  CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs, Filter filter);
+   * Returns log events for a given LoggingContext between given times.
+   *
+   * @param loggingContext context to look up log events.
+   * @param fromTimeMs start time.
+   * @param toTimeMs end time.
+   * @param filter filter to select log events
+   * @return CloseableIterator of log events
+   */
+  CloseableIterator<LogEvent> getLog(LoggingContext loggingContext, long fromTimeMs, long toTimeMs,
+      Filter filter);
 }

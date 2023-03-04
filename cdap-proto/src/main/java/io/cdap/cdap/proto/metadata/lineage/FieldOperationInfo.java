@@ -20,19 +20,19 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.util.Objects;
 
 /**
- * Represents an operation in the lineage for a field. An operation is
- * given by its name and description, along with the inputs it operates on
- * and the outputs it emits.
+ * Represents an operation in the lineage for a field. An operation is given by its name and
+ * description, along with the inputs it operates on and the outputs it emits.
  */
 @Beta
 public class FieldOperationInfo {
+
   private final String name;
   private final String description;
   private final FieldOperationInput inputs;
   private final FieldOperationOutput outputs;
 
   public FieldOperationInfo(String name, String description, FieldOperationInput inputs,
-                            FieldOperationOutput outputs) {
+      FieldOperationOutput outputs) {
     this.name = name;
     this.description = description;
     this.inputs = inputs;
@@ -64,10 +64,10 @@ public class FieldOperationInfo {
       return false;
     }
     FieldOperationInfo that = (FieldOperationInfo) o;
-    return Objects.equals(name, that.name) &&
-            Objects.equals(description, that.description) &&
-            Objects.equals(inputs, that.inputs) &&
-            Objects.equals(outputs, that.outputs);
+    return Objects.equals(name, that.name)
+        && Objects.equals(description, that.description)
+        && Objects.equals(inputs, that.inputs)
+        && Objects.equals(outputs, that.outputs);
   }
 
   @Override

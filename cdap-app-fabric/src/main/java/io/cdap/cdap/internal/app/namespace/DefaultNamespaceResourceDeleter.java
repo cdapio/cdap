@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
  * Abstract class for deleting namespace components
  */
 public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceResourceDeleter.class);
 
   private final Impersonator impersonator;
@@ -60,14 +61,15 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final ProfileService profileService;
 
   @Inject
-  DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
-                                  DatasetFramework dsFramework,
-                                  MetricsSystemClient metricsSystemClient,
-                                  ApplicationLifecycleService applicationLifecycleService,
-                                  SourceControlManagementService sourceControlService,
-                                  ArtifactRepository artifactRepository,
-                                  StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                                  MessagingService messagingService, ProfileService profileService) {
+  DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store,
+      PreferencesService preferencesService,
+      DatasetFramework dsFramework,
+      MetricsSystemClient metricsSystemClient,
+      ApplicationLifecycleService applicationLifecycleService,
+      SourceControlManagementService sourceControlService,
+      ArtifactRepository artifactRepository,
+      StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+      MessagingService messagingService, ProfileService profileService) {
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesService = preferencesService;
@@ -130,7 +132,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     Map<String, String> tags = new LinkedHashMap<>();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
-                                                          new ArrayList<>(tags.keySet()));
+        new ArrayList<>(tags.keySet()));
     metricsSystemClient.delete(deleteQuery);
   }
 }

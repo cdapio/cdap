@@ -26,12 +26,14 @@ import java.util.Objects;
  * Information about a cluster.
  */
 public class Cluster {
+
   private final String name;
   private final ClusterStatus status;
   private final Collection<Node> nodes;
   private final Map<String, String> properties;
 
-  public Cluster(String name, ClusterStatus status, Collection<Node> nodes, Map<String, String> properties) {
+  public Cluster(String name, ClusterStatus status, Collection<Node> nodes,
+      Map<String, String> properties) {
     this.name = name;
     this.status = status;
     this.nodes = Collections.unmodifiableList(new ArrayList<>(nodes));
@@ -69,10 +71,10 @@ public class Cluster {
 
     Cluster that = (Cluster) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(status, that.status) &&
-      Objects.equals(nodes, that.nodes) &&
-      Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(status, that.status)
+        && Objects.equals(nodes, that.nodes)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -82,11 +84,11 @@ public class Cluster {
 
   @Override
   public String toString() {
-    return "Cluster{" +
-      "name='" + name + '\'' +
-      ", status=" + status +
-      ", nodes=" + nodes +
-      ", properties=" + properties +
-      '}';
+    return "Cluster{"
+        + "name='" + name + '\''
+        + ", status=" + status
+        + ", nodes=" + nodes
+        + ", properties=" + properties
+        + '}';
   }
 }

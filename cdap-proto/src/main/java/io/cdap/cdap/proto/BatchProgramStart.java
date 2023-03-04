@@ -23,6 +23,7 @@ import java.util.Map;
  * Array components of the batch start request to POST /namespaces/{namespace}/start.
  */
 public class BatchProgramStart extends BatchProgram {
+
   private final Map<String, String> runtimeargs;
 
   public BatchProgramStart(BatchProgram program) {
@@ -37,7 +38,8 @@ public class BatchProgramStart extends BatchProgram {
     this(appId, programType, programId, Collections.<String, String>emptyMap());
   }
 
-  public BatchProgramStart(String appId, ProgramType programType, String programId, Map<String, String> runtimeargs) {
+  public BatchProgramStart(String appId, ProgramType programType, String programId,
+      Map<String, String> runtimeargs) {
     super(appId, programType, programId);
     this.runtimeargs = runtimeargs;
   }

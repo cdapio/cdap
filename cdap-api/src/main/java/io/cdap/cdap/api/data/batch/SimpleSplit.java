@@ -31,6 +31,7 @@ public final class SimpleSplit extends Split {
 
   /**
    * Sets an attribute.
+   *
    * @param name Name of the attribute.
    * @param value Value of the attribute.
    */
@@ -40,6 +41,7 @@ public final class SimpleSplit extends Split {
 
   /**
    * Gets an attribute value.
+   *
    * @param name Name of the attribute to get the value of.
    * @return value Value of the attribute, or null if not found.
    */
@@ -49,6 +51,7 @@ public final class SimpleSplit extends Split {
 
   /**
    * Gets an attribute value.
+   *
    * @param name Name of the attribute to get the value of.
    * @param defaultValue The value to return if the attribute is not found.
    * @return Value of the attribute, or the default value if the value is not found

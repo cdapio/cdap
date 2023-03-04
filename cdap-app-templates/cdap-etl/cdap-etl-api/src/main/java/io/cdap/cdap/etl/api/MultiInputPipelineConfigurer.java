@@ -23,15 +23,18 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import java.util.Map;
 
 /**
- * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
- * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
- * Similar to {@link PipelineConfigurer} except it exposes {@link MultiInputStageConfigurer}
+ * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a
+ * pipeline is created. Using this as a layer between plugins and CDAP's PluginConfigurer in case
+ * pipelines need etl specific methods. Similar to {@link PipelineConfigurer} except it exposes
+ * {@link MultiInputStageConfigurer}
  */
 @Beta
-public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer, FeatureFlagsProvider {
+public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetConfigurer,
+    FeatureFlagsProvider {
 
   /**
    * Get multi input stage configurer for the pipeline stage
+   *
    * @return multi input stage configurer
    */
   MultiInputStageConfigurer getMultiInputStageConfigurer();
@@ -42,8 +45,8 @@ public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetC
   Engine getEngine();
 
   /**
-   * Set pipeline properties that will be applied to each run of the pipeline.
-   * Depending on the engine used, the properties will be added to the SparkConf for each run or the mapreduce
+   * Set pipeline properties that will be applied to each run of the pipeline. Depending on the
+   * engine used, the properties will be added to the SparkConf for each run or the mapreduce
    * Configuration for each run.
    *
    * @param properties the properties to set

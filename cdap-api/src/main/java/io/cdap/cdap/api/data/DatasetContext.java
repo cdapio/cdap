@@ -21,9 +21,9 @@ import io.cdap.cdap.api.dataset.Dataset;
 import java.util.Map;
 
 /**
- * This interface provides methods that instantiate or dismiss a Dataset during the runtime
- * of a program. If the same arguments are provided for the same dataset, then the
- * returned instance is the same as returned by previous calls.
+ * This interface provides methods that instantiate or dismiss a Dataset during the runtime of a
+ * program. If the same arguments are provided for the same dataset, then the returned instance is
+ * the same as returned by previous calls.
  */
 public interface DatasetContext {
 
@@ -34,9 +34,8 @@ public interface DatasetContext {
    * @param <T> The type of the Dataset
    * @return An instance of the specified Dataset, never null.
    * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-   *         cannot be loaded; the default constructor throws an exception; or the Dataset
-   *         cannot be opened (for example, one of the underlying tables in the DataFabric
-   *         cannot be accessed).
+   *     cannot be loaded; the default constructor throws an exception; or the Dataset cannot be
+   *     opened (for example, one of the underlying tables in the DataFabric cannot be accessed).
    */
   <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException;
 
@@ -48,11 +47,11 @@ public interface DatasetContext {
    * @param <T> The type of the Dataset
    * @return An instance of the specified Dataset, never null.
    * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-   *         cannot be loaded; the default constructor throws an exception; or the Dataset
-   *         cannot be opened (for example, one of the underlying tables in the DataFabric
-   *         cannot be accessed).
+   *     cannot be loaded; the default constructor throws an exception; or the Dataset cannot be
+   *     opened (for example, one of the underlying tables in the DataFabric cannot be accessed).
    */
-  <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException;
+  <T extends Dataset> T getDataset(String namespace, String name)
+      throws DatasetInstantiationException;
 
   /**
    * Get an instance of the specified Dataset.
@@ -62,11 +61,11 @@ public interface DatasetContext {
    * @param <T> The type of the Dataset
    * @return An instance of the specified Dataset, never null.
    * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-   *         cannot be loaded; the default constructor throws an exception; or the Dataset
-   *         cannot be opened (for example, one of the underlying tables in the DataFabric
-   *         cannot be accessed).
+   *     cannot be loaded; the default constructor throws an exception; or the Dataset cannot be
+   *     opened (for example, one of the underlying tables in the DataFabric cannot be accessed).
    */
-  <T extends Dataset> T getDataset(String name, Map<String, String> arguments) throws DatasetInstantiationException;
+  <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException;
 
   /**
    * Get an instance of the specified Dataset.
@@ -77,22 +76,19 @@ public interface DatasetContext {
    * @param <T> The type of the Dataset
    * @return An instance of the specified Dataset, never null.
    * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-   *         cannot be loaded; the default constructor throws an exception; or the Dataset
-   *         cannot be opened (for example, one of the underlying tables in the DataFabric
-   *         cannot be accessed).
+   *     cannot be loaded; the default constructor throws an exception; or the Dataset cannot be
+   *     opened (for example, one of the underlying tables in the DataFabric cannot be accessed).
    */
   <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
-    throws DatasetInstantiationException;
+      throws DatasetInstantiationException;
 
   /**
-   * Calling this means that the dataset is not used by the caller any more,
-   * and the DatasetContext is free to dismiss or reuse it. The dataset must
-   * have been acquired through this context using {@link #getDataset(String)}
-   * or {@link #getDataset(String, Map)}. It is up to the implementation of the
-   * context whether this dataset is discarded, or whether it is reused as the
-   * result for subsequent {@link #getDataset} calls with the same arguments.
-   * This may be influenced by resource constraints, expiration policy, or
-   * advanced configuration.
+   * Calling this means that the dataset is not used by the caller any more, and the DatasetContext
+   * is free to dismiss or reuse it. The dataset must have been acquired through this context using
+   * {@link #getDataset(String)} or {@link #getDataset(String, Map)}. It is up to the implementation
+   * of the context whether this dataset is discarded, or whether it is reused as the result for
+   * subsequent {@link #getDataset} calls with the same arguments. This may be influenced by
+   * resource constraints, expiration policy, or advanced configuration.
    *
    * @param dataset The dataset to be released.
    */
@@ -100,19 +96,16 @@ public interface DatasetContext {
   void releaseDataset(Dataset dataset);
 
   /**
-   * Calling this means that the dataset is not used by the caller any more,
-   * and the DatasetContext must close and discard it as soon as possible.
-   * The dataset must have been acquired through this context using
-   * {@link #getDataset(String)} or {@link #getDataset(String, Map)}.
+   * Calling this means that the dataset is not used by the caller any more, and the DatasetContext
+   * must close and discard it as soon as possible. The dataset must have been acquired through this
+   * context using {@link #getDataset(String)} or {@link #getDataset(String, Map)}.
    * <p>
-   * It is guaranteed that no subsequent
-   * invocation of {@link #getDataset} will return the same object. The only
-   * exception is if getDataset() is called again before the dataset could be
-   * effectively discarded. For example, if the dataset participates in a
-   * transaction, then the system can only discard it after that transaction
-   * has completed. If getDataset() is called again during the same transaction,
-   * then the DatasetContext will return the same object, and this effectively
-   * cancels the discardDataset(), because the dataset was reacquired before it
+   * It is guaranteed that no subsequent invocation of {@link #getDataset} will return the same
+   * object. The only exception is if getDataset() is called again before the dataset could be
+   * effectively discarded. For example, if the dataset participates in a transaction, then the
+   * system can only discard it after that transaction has completed. If getDataset() is called
+   * again during the same transaction, then the DatasetContext will return the same object, and
+   * this effectively cancels the discardDataset(), because the dataset was reacquired before it
    * could be discarded.
    * </p>
    *

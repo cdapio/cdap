@@ -29,24 +29,29 @@ import java.util.List;
  * Interface for fetching schedule(s)
  */
 public interface ScheduleFetcher {
+
   /**
    * Get schedule details for the given {@code scheduleId}
+   *
    * @param scheduleId the id of the schedule to fetch {@code ScheduleDetail} for
    * @return the schedule detail
    * @throws IOException if failed to get the detail of the given schedule
    * @throws ScheduleNotFoundException if the given schedule doesn't exist.
    */
-  ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException, UnauthorizedException;
+  ScheduleDetail get(ScheduleId scheduleId)
+      throws IOException, ScheduleNotFoundException, UnauthorizedException;
 
   /**
    *
    */
   /**
    * Get the list of schedules for the given program id
+   *
    * @param programId the id of the program to get the list of schedules for
    * @return a list of schedules set on the program
    * @throws IOException if failed to get the list of schedules for the given program
    * @throws ProgramNotFoundException if the given program id doesn't exist
    */
-  List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthorizedException;
+  List<ScheduleDetail> list(ProgramId programId)
+      throws IOException, ProgramNotFoundException, UnauthorizedException;
 }

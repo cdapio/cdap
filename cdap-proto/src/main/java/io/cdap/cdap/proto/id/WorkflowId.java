@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.ProgramType;
  * Uniquely identifies a workflow.
  */
 public class WorkflowId extends ProgramId implements ParentedId<ApplicationId> {
+
   public WorkflowId(String namespace, String application, String program) {
     super(namespace, application, ProgramType.WORKFLOW, program);
   }

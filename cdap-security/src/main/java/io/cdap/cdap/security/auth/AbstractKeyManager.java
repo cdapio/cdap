@@ -36,10 +36,12 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * AbstractKeyManager that provides the basic functionality that all key managers share. This includes
- * generation of keys and MACs, and validation of MACs. Subclasses are expected to override the init method.
+ * AbstractKeyManager that provides the basic functionality that all key managers share. This
+ * includes generation of keys and MACs, and validation of MACs. Subclasses are expected to override
+ * the init method.
  */
 public abstract class AbstractKeyManager extends AbstractIdleService implements KeyManager {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractKeyManager.class);
 
   protected ThreadLocal<Mac> threadLocalMac;
@@ -48,19 +50,18 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
   protected final String keyAlgo;
   protected final int keyLength;
   /**
-   * Time duration (in milliseconds) after which an active secret key should be retired. A value or zero or less
-   * means no expiration.
+   * Time duration (in milliseconds) after which an active secret key should be retired. A value or
+   * zero or less means no expiration.
    */
   protected long keyExpirationPeriod;
 
 
   /**
    * An AbstractKeyManager that has common functionality of all keymanagers.
-   * @param conf
    */
   public AbstractKeyManager(CConfiguration conf) {
     this(conf.get(Constants.Security.TOKEN_DIGEST_ALGO),
-         conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH));
+        conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH));
   }
 
   public AbstractKeyManager(String keyAlgo, int keyLength) {
@@ -85,8 +86,8 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
   }
 
   /**
-   * Extended classes must override this method to initialize/read the key(s) used for signing tokens.
-   * @throws IOException
+   * Extended classes must override this method to initialize/read the key(s) used for signing
+   * tokens.
    */
   protected abstract void doInit() throws IOException;
 
@@ -107,6 +108,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
 
   /**
    * Generates a new KeyIdentifier and sets that to be the current key being used.
+   *
    * @return A new KeyIdentifier.
    */
   protected final KeyIdentifier generateKey() {
@@ -130,7 +132,8 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
   public final KeyIdentifier generateKey(KeyGenerator keyGenerator, int keyId) {
     long now = System.currentTimeMillis();
     SecretKey key = keyGenerator.generateKey();
-    return new KeyIdentifier(key, keyId, keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
+    return new KeyIdentifier(key, keyId,
+        keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
   }
 
 
@@ -146,9 +149,10 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
 
   @Override
   public final <T> void validateMAC(Codec<T> codec, Signed<T> signedMessage)
-    throws InvalidDigestException, InvalidKeyException {
+      throws InvalidDigestException, InvalidKeyException {
     try {
-      byte[] newDigest = generateMAC(signedMessage.getKeyId(), codec.encode(signedMessage.getMessage()));
+      byte[] newDigest = generateMAC(signedMessage.getKeyId(),
+          codec.encode(signedMessage.getMessage()));
       if (!Bytes.equals(signedMessage.getDigestBytes(), newDigest)) {
         throw new InvalidDigestException("Token signature is not valid!");
       }
@@ -166,11 +170,12 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
 
   /**
    * Computes a digest for the given input message, using the key identified by the given ID.
+   *
    * @param keyId Identifier of the secret key to use.
    * @param message The data over which we should generate a digest.
    * @return The computed digest.
-   * @throws InvalidKeyException If the input {@code keyId} does not match a known key or the key is not accepted
-   * by the internal {@code Mac} implementation.
+   * @throws InvalidKeyException If the input {@code keyId} does not match a known key or the
+   *     key is not accepted by the internal {@code Mac} implementation.
    */
   protected final byte[] generateMAC(int keyId, byte[] message) throws InvalidKeyException {
     KeyIdentifier key = getKey(keyId);

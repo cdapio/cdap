@@ -41,11 +41,10 @@ import org.apache.hadoop.io.serializer.SerializationFactory;
 import org.apache.hadoop.io.serializer.Serializer;
 
 /**
- * General reflection utils.
- * This is a copy of ReflectionUtils in hadoop-common-2.3.0.jar.
- * This copy has been modified not to cache constructors in method {@link #newInstance(Class, Configuration)}.
- * Caching of constructors causes {@link PluginClassLoader}s to be retained when running that use plugins,
- * thus causing OOM.
+ * General reflection utils. This is a copy of ReflectionUtils in hadoop-common-2.3.0.jar. This copy
+ * has been modified not to cache constructors in method {@link #newInstance(Class, Configuration)}.
+ * Caching of constructors causes {@link PluginClassLoader}s to be retained when running that use
+ * plugins, thus causing OOM.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -70,10 +69,9 @@ public class ReflectionUtils {
   }
 
   /**
-   * This code is to support backward compatibility and break the compile  
-   * time dependency of core on mapred.
-   * This should be made deprecated along with the mapred package HADOOP-1230. 
-   * Should be removed when mapred package is removed.
+   * This code is to support backward compatibility and break the compile time dependency of core on
+   * mapred. This should be made deprecated along with the mapred package HADOOP-1230. Should be
+   * removed when mapred package is removed.
    */
   private static void setJobConf(Object theObject, Configuration conf) {
     //If JobConf and JobConfigurable are in classpath, AND
@@ -82,20 +80,20 @@ public class ReflectionUtils {
     //invoke configure on theObject
     try {
       Class<?> jobConfClass =
-        conf.getClassByNameOrNull("org.apache.hadoop.mapred.JobConf");
+          conf.getClassByNameOrNull("org.apache.hadoop.mapred.JobConf");
       if (jobConfClass == null) {
         return;
       }
 
       Class<?> jobConfigurableClass =
-        conf.getClassByNameOrNull("org.apache.hadoop.mapred.JobConfigurable");
+          conf.getClassByNameOrNull("org.apache.hadoop.mapred.JobConfigurable");
       if (jobConfigurableClass == null) {
         return;
       }
-      if (jobConfClass.isAssignableFrom(conf.getClass()) &&
-        jobConfigurableClass.isAssignableFrom(theObject.getClass())) {
+      if (jobConfClass.isAssignableFrom(conf.getClass())
+          && jobConfigurableClass.isAssignableFrom(theObject.getClass())) {
         Method configureMethod =
-          jobConfigurableClass.getMethod("configure", jobConfClass);
+            jobConfigurableClass.getMethod("configure", jobConfClass);
         configureMethod.invoke(theObject, conf);
       }
     } catch (Exception e) {
@@ -103,7 +101,8 @@ public class ReflectionUtils {
     }
   }
 
-  /** Create an object for the given class and initialize it from conf
+  /**
+   * Create an object for the given class and initialize it from conf
    *
    * @param theClass class of which an object is created
    * @param conf Configuration
@@ -124,7 +123,7 @@ public class ReflectionUtils {
   }
 
   private static ThreadMXBean threadBean =
-    ManagementFactory.getThreadMXBean();
+      ManagementFactory.getThreadMXBean();
 
   public static void setContentionTracing(boolean val) {
     threadBean.setThreadContentionMonitoringEnabled(val);
@@ -144,21 +143,21 @@ public class ReflectionUtils {
    * @param title a string title for the stack trace
    */
   public static synchronized void printThreadInfo(PrintWriter stream,
-                                                  String title) {
+      String title) {
     final int stackDepth = 20;
     boolean contention = threadBean.isThreadContentionMonitoringEnabled();
     long[] threadIds = threadBean.getAllThreadIds();
     stream.println("Process Thread Dump: " + title);
     stream.println(threadIds.length + " active threads");
-    for (long tid: threadIds) {
+    for (long tid : threadIds) {
       ThreadInfo info = threadBean.getThreadInfo(tid, stackDepth);
       if (info == null) {
         stream.println("  Inactive");
         continue;
       }
-      stream.println("Thread " +
-                       getTaskName(info.getThreadId(),
-                                   info.getThreadName()) + ":");
+      stream.println("Thread "
+          + getTaskName(info.getThreadId(),
+          info.getThreadName()) + ":");
       Thread.State state = info.getThreadState();
       stream.println("  State: " + state);
       stream.println("  Blocked count: " + info.getBlockedCount());
@@ -169,14 +168,14 @@ public class ReflectionUtils {
       }
       if (state == Thread.State.WAITING) {
         stream.println("  Waiting on " + info.getLockName());
-      } else  if (state == Thread.State.BLOCKED) {
+      } else if (state == Thread.State.BLOCKED) {
         stream.println("  Blocked on " + info.getLockName());
-        stream.println("  Blocked by " +
-                         getTaskName(info.getLockOwnerId(),
-                                     info.getLockOwnerName()));
+        stream.println("  Blocked by "
+            + getTaskName(info.getLockOwnerId(),
+            info.getLockOwnerName()));
       }
       stream.println("  Stack:");
-      for (StackTraceElement frame: info.getStackTrace()) {
+      for (StackTraceElement frame : info.getStackTrace()) {
         stream.println("    " + frame.toString());
       }
     }
@@ -187,13 +186,14 @@ public class ReflectionUtils {
 
   /**
    * Log the current thread stacks at INFO level.
+   *
    * @param log the logger that logs the stack trace
    * @param title a descriptive title for the call stacks
-   * @param minInterval the minimum time from the last 
+   * @param minInterval the minimum time from the last
    */
   public static void logThreadInfo(Log log,
-                                   String title,
-                                   long minInterval) {
+      String title,
+      long minInterval) {
     boolean dumpStack = false;
     if (log.isInfoEnabled()) {
       synchronized (ReflectionUtils.class) {
@@ -226,8 +226,10 @@ public class ReflectionUtils {
    * A pair of input/output buffers that we use to clone writables.
    */
   private static class CopyInCopyOutBuffer {
+
     DataOutputBuffer outBuffer = new DataOutputBuffer();
     DataInputBuffer inBuffer = new DataInputBuffer();
+
     /**
      * Move the data from the output buffer to the input buffer.
      */
@@ -240,7 +242,7 @@ public class ReflectionUtils {
    * Allocate a buffer for each thread that tries to clone objects.
    */
   private static ThreadLocal<CopyInCopyOutBuffer> cloneBuffers
-    = new ThreadLocal<CopyInCopyOutBuffer>() {
+      = new ThreadLocal<CopyInCopyOutBuffer>() {
     @Override
     protected synchronized CopyInCopyOutBuffer initialValue() {
       return new CopyInCopyOutBuffer();
@@ -256,14 +258,14 @@ public class ReflectionUtils {
 
   /**
    * Make a copy of the writable object using serialization to a buffer
+   *
    * @param src the object to copy from
    * @param dst the object to copy into, which is destroyed
    * @return dst param (the copy)
-   * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public static <T> T copy(Configuration conf,
-                           T src, T dst) throws IOException {
+      T src, T dst) throws IOException {
     CopyInCopyOutBuffer buffer = cloneBuffers.get();
     buffer.outBuffer.reset();
     SerializationFactory factory = getFactory(conf);
@@ -280,7 +282,7 @@ public class ReflectionUtils {
 
   @Deprecated
   public static void cloneWritableInto(Writable dst,
-                                       Writable src) throws IOException {
+      Writable src) throws IOException {
     CopyInCopyOutBuffer buffer = cloneBuffers.get();
     buffer.outBuffer.reset();
     src.write(buffer.outBuffer);
@@ -289,8 +291,7 @@ public class ReflectionUtils {
   }
 
   /**
-   * Gets all the declared fields of a class including fields declared in
-   * superclasses.
+   * Gets all the declared fields of a class including fields declared in superclasses.
    */
   public static List<Field> getDeclaredFieldsIncludingInherited(Class<?> clazz) {
     List<Field> fields = new ArrayList<Field>();
@@ -305,8 +306,7 @@ public class ReflectionUtils {
   }
 
   /**
-   * Gets all the declared methods of a class including methods declared in
-   * superclasses.
+   * Gets all the declared methods of a class including methods declared in superclasses.
    */
   public static List<Method> getDeclaredMethodsIncludingInherited(Class<?> clazz) {
     List<Method> methods = new ArrayList<Method>();

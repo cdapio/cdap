@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
  * Authentication context for master services which utilize internal authentication.
  */
 public class SystemAuthenticationContext implements AuthenticationContext {
+
   private static final Logger LOG = LoggerFactory.getLogger(SystemAuthenticationContext.class);
 
   public static final String SYSTEM_IDENTITY = "system";
@@ -69,9 +70,11 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     if (userId != null && userCredential != null) {
       return new Principal(userId, Principal.PrincipalType.USER, userCredential);
     } else if (userId != null && userCredential == null) {
-      LOG.warn("Unexpected SecurityRequestContext state, userId = {} while userCredential = NULL", userId);
+      LOG.warn("Unexpected SecurityRequestContext state, userId = {} while userCredential = NULL",
+          userId);
     } else if (userId == null && userCredential != null) {
-      LOG.warn("Unexpected SecurityRequestContext state, userId = NULL while userCredential = {}", userCredential);
+      LOG.warn("Unexpected SecurityRequestContext state, userId = NULL while userCredential = {}",
+          userCredential);
     }
 
     try {
@@ -81,13 +84,14 @@ public class SystemAuthenticationContext implements AuthenticationContext {
     }
     long currentTimestamp = System.currentTimeMillis();
     UserIdentity identity = new UserIdentity(userId, UserIdentity.IdentifierType.INTERNAL,
-                                             Collections.emptyList(), currentTimestamp,
-                                             currentTimestamp + DEFAULT_EXPIRATION);
+        Collections.emptyList(), currentTimestamp,
+        currentTimestamp + DEFAULT_EXPIRATION);
     AccessToken accessToken = tokenManager.signIdentifier(identity);
     String encodedAccessToken;
     try {
       encodedAccessToken = Base64.getEncoder().encodeToString(accessTokenCodec.encode(accessToken));
-      Credential credential = new Credential(encodedAccessToken, Credential.CredentialType.INTERNAL);
+      Credential credential = new Credential(encodedAccessToken,
+          Credential.CredentialType.INTERNAL);
       return new Principal(userId, Principal.PrincipalType.USER, credential);
     } catch (IOException e) {
       throw new RuntimeException("Unexpected failure while creating internal system identity", e);

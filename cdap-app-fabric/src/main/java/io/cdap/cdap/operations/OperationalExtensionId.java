@@ -22,6 +22,7 @@ import java.util.Objects;
  * Uniquely identifies an operational extension.
  */
 public class OperationalExtensionId {
+
   private final String serviceName;
   private final String statType;
 
@@ -49,8 +50,8 @@ public class OperationalExtensionId {
 
     OperationalExtensionId that = (OperationalExtensionId) o;
 
-    return Objects.equals(serviceName, that.serviceName) &&
-      Objects.equals(statType, that.statType);
+    return Objects.equals(serviceName, that.serviceName)
+        && Objects.equals(statType, that.statType);
   }
 
   @Override
@@ -60,9 +61,9 @@ public class OperationalExtensionId {
 
   @Override
   public String toString() {
-    return "OperationalExtensionId{" +
-      "serviceName='" + serviceName + '\'' +
-      ", statType='" + statType + '\'' +
-      '}';
+    return "OperationalExtensionId{"
+        + "serviceName='" + serviceName + '\''
+        + ", statType='" + statType + '\''
+        + '}';
   }
 }

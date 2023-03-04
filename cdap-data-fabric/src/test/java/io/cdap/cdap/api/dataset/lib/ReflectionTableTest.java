@@ -128,13 +128,13 @@ public class ReflectionTableTest {
 
       User that = (User) o;
 
-      return Objects.equal(firstName, that.firstName) &&
-        Objects.equal(lastName, that.lastName) &&
-        Objects.equal(id, that.id) &&
-        Objects.equal(timestamp, that.timestamp) &&
-        Objects.equal(salary, that.salary) &&
-        Objects.equal(lastPurchase, that.lastPurchase) &&
-        Arrays.equals(blob, that.blob);
+      return Objects.equal(firstName, that.firstName)
+          && Objects.equal(lastName, that.lastName)
+          && Objects.equal(id, that.id)
+          && Objects.equal(timestamp, that.timestamp)
+          && Objects.equal(salary, that.salary)
+          && Objects.equal(lastPurchase, that.lastPurchase)
+          && Arrays.equals(blob, that.blob);
     }
 
     @Override
@@ -184,12 +184,12 @@ public class ReflectionTableTest {
 
       User2 that = (User2) o;
 
-      return Objects.equal(firstName, that.firstName) &&
-        Objects.equal(id, that.id) &&
-        Objects.equal(salary, that.salary) &&
-        Objects.equal(lastPurchase, that.lastPurchase) &&
-        Objects.equal(blob, that.blob) &&
-        Objects.equal(newField, that.newField);
+      return Objects.equal(firstName, that.firstName)
+          && Objects.equal(id, that.id)
+          && Objects.equal(salary, that.salary)
+          && Objects.equal(lastPurchase, that.lastPurchase)
+          && Objects.equal(blob, that.blob)
+          && Objects.equal(newField, that.newField);
     }
 
     @Override

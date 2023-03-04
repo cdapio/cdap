@@ -26,10 +26,12 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * A {@link RuntimeException} that wraps exceptions from Dataproc operation and provide a {@link #toString()}
- * implementation that doesn't include this exception class name and with the root cause error message.
+ * A {@link RuntimeException} that wraps exceptions from Dataproc operation and provide a {@link
+ * #toString()} implementation that doesn't include this exception class name and with the root
+ * cause error message.
  */
 public class DataprocRuntimeException extends RuntimeException implements ErrorTagProvider {
+
   private final Set<ErrorTag> errorTags = new HashSet<>();
 
   public DataprocRuntimeException(String message, ErrorTag... tags) {
@@ -52,32 +54,34 @@ public class DataprocRuntimeException extends RuntimeException implements ErrorT
     this(operationId, null, cause, tags);
   }
 
-  public DataprocRuntimeException(@Nullable String operationId, @Nullable String troubleshootingMessage,
-                                  Throwable cause, ErrorTag... tags) {
+  public DataprocRuntimeException(@Nullable String operationId,
+      @Nullable String troubleshootingMessage,
+      Throwable cause, ErrorTag... tags) {
     super(createMessage(operationId, troubleshootingMessage, cause), cause);
     errorTags.addAll(Arrays.asList(tags));
   }
 
   @Override
   public String toString() {
-    return String.format("ErrorTags: %s,  Msg: %s", errorTags, getMessage() != null ? getMessage() : "");
+    return String.format("ErrorTags: %s,  Msg: %s", errorTags,
+        getMessage() != null ? getMessage() : "");
   }
 
   private static String createMessage(@Nullable String operationId,
-                                      @Nullable String troubleShootingMessage, Throwable cause) {
+      @Nullable String troubleShootingMessage, Throwable cause) {
     StringBuilder message = new StringBuilder();
     if (operationId != null) {
       message.append("Dataproc operation ")
-        .append(operationId)
-        .append(" failure: ")
-        .append(Throwables.getRootCause(cause).getMessage());
+          .append(operationId)
+          .append(" failure: ")
+          .append(Throwables.getRootCause(cause).getMessage());
     } else {
       message.append("Dataproc operation failure: ")
-        .append(Throwables.getRootCause(cause).getMessage());
+          .append(Throwables.getRootCause(cause).getMessage());
     }
     if (!Strings.isNullOrEmpty(troubleShootingMessage)) {
       message.append("\n")
-        .append(troubleShootingMessage);
+          .append(troubleShootingMessage);
     }
     return message.toString();
   }

@@ -41,8 +41,9 @@ public class GoogleComputeFactory implements ComputeFactory {
       httpRequest.setConnectTimeout(connectTimeout);
       httpRequest.setReadTimeout(readTimeout);
     };
-    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), timeoutRequestInitializer)
-      .setApplicationName("cdap")
-      .build();
+    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(),
+        timeoutRequestInitializer)
+        .setApplicationName("cdap")
+        .build();
   }
 }

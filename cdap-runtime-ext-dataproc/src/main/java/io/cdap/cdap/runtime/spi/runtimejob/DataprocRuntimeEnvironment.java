@@ -42,8 +42,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Dataproc runtime job environment . This class will provide implementation of {@link TwillRunner},
- * {@link DiscoveryService} and {@link DiscoveryServiceClient} to the runtime job.
- * All the public methods in this class are called through reflection from {@link DataprocJobMain}.
+ * {@link DiscoveryService} and {@link DiscoveryServiceClient} to the runtime job. All the public
+ * methods in this class are called through reflection from {@link DataprocJobMain}.
  */
 @SuppressWarnings("unused")
 public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
@@ -124,8 +124,8 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
   }
 
   /**
-   * Adds a log appender for writing to stdout. This is for Dataproc job agent to include logs from the job main
-   * in the job output.
+   * Adds a log appender for writing to stdout. This is for Dataproc job agent to include logs from
+   * the job main in the job output.
    */
   private static void addConsoleAppender() {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
@@ -148,7 +148,8 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
       joranConfigurator.setContext(loggerContext);
       joranConfigurator.doConfigure(url);
     } catch (JoranException e) {
-      LOG.warn("Failed to configure log appender, logs will be missing from the Dataproc Job output");
+      LOG.warn(
+          "Failed to configure log appender, logs will be missing from the Dataproc Job output");
     }
   }
 }

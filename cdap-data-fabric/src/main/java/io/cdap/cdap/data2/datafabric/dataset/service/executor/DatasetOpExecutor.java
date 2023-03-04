@@ -20,7 +20,6 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
-import java.io.IOException;
 
 /**
  * Executes various Dataset operations.
@@ -32,7 +31,6 @@ public interface DatasetOpExecutor {
    *
    * @param datasetInstanceId {@link DatasetId} of the dataset instance.
    * @return true if dataset exists
-   * @throws IOException
    */
   boolean exists(DatasetId datasetInstanceId) throws Exception;
 
@@ -42,10 +40,10 @@ public interface DatasetOpExecutor {
    * @param datasetInstanceId {@link DatasetId} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param props Data set instance properties
-   * @throws IOException
    */
-  DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetProperties props)
-    throws Exception;
+  DatasetCreationResponse create(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
+      DatasetProperties props)
+      throws Exception;
 
   /**
    * Creates a dataset.
@@ -54,27 +52,24 @@ public interface DatasetOpExecutor {
    * @param typeMeta dataset type meta
    * @param props dataset instance properties
    * @param existing the existing dataset spec
-   * @throws IOException
    */
   DatasetCreationResponse update(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta,
-                                 DatasetProperties props, DatasetSpecification existing) throws Exception;
+      DatasetProperties props, DatasetSpecification existing) throws Exception;
 
   /**
    * Drops dataset.
    *
-   *
    * @param datasetInstanceId {@link DatasetId} of the dataset instance.
    * @param typeMeta Data set type meta
    * @param spec Data set instance spec
-   * @throws IOException
    */
-  void drop(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec) throws Exception;
+  void drop(DatasetId datasetInstanceId, DatasetTypeMeta typeMeta, DatasetSpecification spec)
+      throws Exception;
 
   /**
    * Deletes all data of the dataset.
    *
    * @param datasetInstanceId {@link DatasetId} of the dataset instance.
-   * @throws IOException
    */
   void truncate(DatasetId datasetInstanceId) throws Exception;
 
@@ -82,7 +77,6 @@ public interface DatasetOpExecutor {
    * Upgrades dataset.
    *
    * @param datasetInstanceId {@link DatasetId} of the dataset instance.
-   * @throws IOException
    */
   void upgrade(DatasetId datasetInstanceId) throws Exception;
 

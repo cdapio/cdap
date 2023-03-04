@@ -80,34 +80,36 @@ public final class ApplicationSpecificationAdapter {
 
   public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
     return builder
-      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-      .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
-      .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
-      .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
-      .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
-      .registerTypeAdapter(WorkflowNode.class, new WorkflowNodeCodec())
-      .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
-      .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
-      .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
-      .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
-      .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
-      .registerTypeAdapter(Trigger.class, new TriggerCodec())
-      .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
-      .registerTypeAdapter(Constraint.class, new ConstraintCodec())
-      .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
-      .registerTypeAdapter(Requirements.class, new RequirementsCodec());
+        .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+        .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
+        .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
+        .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
+        .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
+        .registerTypeAdapter(WorkflowNode.class, new WorkflowNodeCodec())
+        .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
+        .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
+        .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
+        .registerTypeAdapter(WorkerSpecification.class, new WorkerSpecificationCodec())
+        .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
+        .registerTypeAdapter(Trigger.class, new TriggerCodec())
+        .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
+        .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+        .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
+        .registerTypeAdapter(Requirements.class, new RequirementsCodec());
   }
 
   /**
-   * Get the set of {@link ProgramId}s contained from the given {@link JsonReader} that points
-   * to a json serialized {@link ApplicationSpecification}.
+   * Get the set of {@link ProgramId}s contained from the given {@link JsonReader} that points to a
+   * json serialized {@link ApplicationSpecification}.
    *
    * @param appId the {@link ApplicationId} for the specification
    * @param reader the reader for reading the json serialized application specification
    * @return a set of program ids in the spec
-   * @throws IllegalArgumentException if the given {@link ApplicationId} doesn't match with the name in the json spec
+   * @throws IllegalArgumentException if the given {@link ApplicationId} doesn't match with the
+   *     name in the json spec
    */
-  public static Set<ProgramId> getProgramIds(ApplicationId appId, JsonReader reader) throws IOException {
+  public static Set<ProgramId> getProgramIds(ApplicationId appId, JsonReader reader)
+      throws IOException {
     Set<ProgramId> result = new HashSet<>();
     reader.beginObject();
     while (reader.peek() != JsonToken.END_OBJECT) {
@@ -122,7 +124,8 @@ public final class ApplicationSpecificationAdapter {
           reader.beginObject();
           while (reader.peek() != JsonToken.END_OBJECT) {
             String programName = reader.nextName();
-            ProgramType programType = ProgramType.valueOf(name.substring(0, name.length() - 1).toUpperCase());
+            ProgramType programType = ProgramType.valueOf(
+                name.substring(0, name.length() - 1).toUpperCase());
             result.add(appId.program(programType, programName));
             reader.skipValue();
           }
@@ -132,8 +135,9 @@ public final class ApplicationSpecificationAdapter {
           String appName = reader.nextString();
           if (!appId.getApplication().equals(appName)) {
             throw new IllegalArgumentException(
-              String.format("Application name in the specification is '%s' and it doesn't " +
-                              "match with the provided application id '%s'", appName, appId.getApplication()));
+                String.format("Application name in the specification is '%s' and it doesn't "
+                        + "match with the provided application id '%s'", appName,
+                    appId.getApplication()));
           }
           break;
         default:
@@ -177,8 +181,8 @@ public final class ApplicationSpecificationAdapter {
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
       Class<?> rawType = type.getRawType();
       // note: we want ordered maps to remain ordered
-      if (!Map.class.isAssignableFrom(rawType) ||
-        SortedMap.class.isAssignableFrom(rawType)) {
+      if (!Map.class.isAssignableFrom(rawType)
+          || SortedMap.class.isAssignableFrom(rawType)) {
         return null;
       }
       // For non-parameterized Map, use the default TypeAdapter

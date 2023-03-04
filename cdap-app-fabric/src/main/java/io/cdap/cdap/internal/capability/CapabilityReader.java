@@ -30,33 +30,24 @@ public interface CapabilityReader {
 
   /**
    * Throws {@link CapabilityNotAvailableException} if all capabilities are not enabled
-   *
-   * @param capabilities
-   * @return
-   * @throws IOException
    */
-  void checkAllEnabled(Collection<String> capabilities) throws IOException, CapabilityNotAvailableException;
+  void checkAllEnabled(Collection<String> capabilities)
+      throws IOException, CapabilityNotAvailableException;
 
   /**
    * Get the configuration map for the capabilities if present
-   *
-   * @param capabilities
-   * @return
-   * @throws IOException
    */
   Map<String, CapabilityConfig> getConfigs(Collection<String> capabilities) throws IOException;
 
   /**
    * Throws {@link CapabilityNotAvailableException} if all capabilities in the spec are not enabled
-   *
-   * @param appSpec
-   * @return
-   * @throws IOException
    */
-  default void checkAllEnabled(ApplicationSpecification appSpec) throws IOException, CapabilityNotAvailableException {
+  default void checkAllEnabled(ApplicationSpecification appSpec)
+      throws IOException, CapabilityNotAvailableException {
     Set<String> capabilities = appSpec.getPlugins().entrySet().stream()
-      .flatMap(pluginEntry -> pluginEntry.getValue().getPluginClass().getRequirements().getCapabilities().stream())
-      .collect(Collectors.toSet());
+        .flatMap(pluginEntry -> pluginEntry.getValue().getPluginClass().getRequirements()
+            .getCapabilities().stream())
+        .collect(Collectors.toSet());
     checkAllEnabled(capabilities);
   }
 }

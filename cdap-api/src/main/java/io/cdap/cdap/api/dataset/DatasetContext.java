@@ -41,9 +41,9 @@ public class DatasetContext {
 
   @Override
   public String toString() {
-    return "DatasetContext{" +
-      "namespaceId='" + namespaceId + '\'' +
-      '}';
+    return "DatasetContext{"
+        + "namespaceId='" + namespaceId + '\''
+        + '}';
   }
 
   /**

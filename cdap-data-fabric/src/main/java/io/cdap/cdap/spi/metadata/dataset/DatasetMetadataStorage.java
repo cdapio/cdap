@@ -70,7 +70,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
 
   @Inject
   DatasetMetadataStorage(TransactionSystemClient txClient,
-                         @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+      @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
     super(txClient, tableDefinition);
   }
 
@@ -105,14 +105,16 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
         return remove(context, remove);
       default:
         throw new IllegalStateException(
-          String.format("Unknown MetadataMutation type %s for %s", mutation.getType(), mutation.getEntity()));
+            String.format("Unknown MetadataMutation type %s for %s", mutation.getType(),
+                mutation.getEntity()));
     }
   }
 
   @Override
-  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations, MutationOptions options) {
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations,
+      MutationOptions options) {
     return execute(context -> mutations.stream()
-      .map(mutation -> apply(context, mutation)).collect(Collectors.toList()));
+        .map(mutation -> apply(context, mutation)).collect(Collectors.toList()));
   }
 
   private MetadataChange remove(MetadataDatasetContext context, MetadataMutation.Remove remove) {
@@ -124,11 +126,12 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
       Set<String> userPropertiesToRemove = new HashSet<>();
       Set<String> systemPropertiesToRemove = new HashSet<>();
       remove.getRemovals().forEach(removal -> (TAG == removal.getKind()
-        ? USER == removal.getScope() ? userTagsToRemove : systemTagsToRemove
-        : USER == removal.getScope() ? userPropertiesToRemove : systemPropertiesToRemove)
-        .add(removal.getName()));
+          ? USER == removal.getScope() ? userTagsToRemove : systemTagsToRemove
+          : USER == removal.getScope() ? userPropertiesToRemove : systemPropertiesToRemove)
+          .add(removal.getName()));
       userChange = removeInScope(context, USER, entity, userTagsToRemove, userPropertiesToRemove);
-      systemChange = removeInScope(context, SYSTEM, entity, systemTagsToRemove, systemPropertiesToRemove);
+      systemChange = removeInScope(context, SYSTEM, entity, systemTagsToRemove,
+          systemPropertiesToRemove);
     } else {
       Set<MetadataScope> scopes = remove.getScopes();
       Set<MetadataKind> kinds = remove.getKinds();
@@ -140,8 +143,8 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   private MetadataDataset.Change removeScope(MetadataDatasetContext context,
-                                             MetadataScope scope, MetadataEntity entity,
-                                             Set<MetadataScope> scopesToRemoves, Set<MetadataKind> kindsToRemove) {
+      MetadataScope scope, MetadataEntity entity,
+      Set<MetadataScope> scopesToRemoves, Set<MetadataKind> kindsToRemove) {
     MetadataDataset dataset = context.getDataset(scope);
     if (scopesToRemoves.contains(scope)) {
       if (MetadataKind.ALL.equals(kindsToRemove)) {
@@ -160,8 +163,8 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   private MetadataDataset.Change removeInScope(MetadataDatasetContext context,
-                                               MetadataScope scope, MetadataEntity entity,
-                                               Set<String> tagsToRemove, Set<String> propertiesToRemove) {
+      MetadataScope scope, MetadataEntity entity,
+      Set<String> tagsToRemove, Set<String> propertiesToRemove) {
     MetadataDataset dataset = context.getDataset(scope);
     MetadataDataset.Record before = null;
     MetadataDataset.Record after = null;
@@ -184,24 +187,26 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   private MetadataChange update(MetadataDatasetContext context,
-                                MetadataEntity entity, Metadata updates) {
+      MetadataEntity entity, Metadata updates) {
     Set<String> userTagsToAdd = new HashSet<>();
     Set<String> systemTagsToAdd = new HashSet<>();
     Map<String, String> userPropertiesToAdd = new HashMap<>();
     Map<String, String> systemPropertiesToAdd = new HashMap<>();
-    updates.getTags().forEach(tag -> (USER == tag.getScope() ? userTagsToAdd : systemTagsToAdd).add(tag.getName()));
+    updates.getTags().forEach(
+        tag -> (USER == tag.getScope() ? userTagsToAdd : systemTagsToAdd).add(tag.getName()));
     updates.getProperties().forEach(
-      (key, value) -> (USER == key.getScope() ? userPropertiesToAdd : systemPropertiesToAdd).put(key.getName(), value));
+        (key, value) -> (USER == key.getScope() ? userPropertiesToAdd : systemPropertiesToAdd).put(
+            key.getName(), value));
     MetadataDataset.Change userChange =
-      addInScope(context, USER, entity, userTagsToAdd, userPropertiesToAdd);
+        addInScope(context, USER, entity, userTagsToAdd, userPropertiesToAdd);
     MetadataDataset.Change systemChange =
-      addInScope(context, SYSTEM, entity, systemTagsToAdd, systemPropertiesToAdd);
+        addInScope(context, SYSTEM, entity, systemTagsToAdd, systemPropertiesToAdd);
     return combineChanges(entity, userChange, systemChange);
   }
 
   private MetadataDataset.Change addInScope(MetadataDatasetContext context,
-                                            MetadataScope scope, MetadataEntity entity,
-                                            Set<String> tagsToAdd, Map<String, String> propertiesToAdd) {
+      MetadataScope scope, MetadataEntity entity,
+      Set<String> tagsToAdd, Map<String, String> propertiesToAdd) {
 
     MetadataDataset dataset = context.getDataset(scope);
     MetadataDataset.Record before = null, after = null;
@@ -230,25 +235,27 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   private MetadataChange create(MetadataDatasetContext context, MetadataEntity entity,
-                                Metadata metadata, Map<ScopedNameOfKind, MetadataDirective> directives) {
+      Metadata metadata, Map<ScopedNameOfKind, MetadataDirective> directives) {
     Set<String> newUserTags = new HashSet<>();
     Set<String> newSystemTags = new HashSet<>();
     Map<String, String> newUserProperties = new HashMap<>();
     Map<String, String> newSystemProperties = new HashMap<>();
-    metadata.getTags().forEach(tag -> (USER == tag.getScope() ? newUserTags : newSystemTags).add(tag.getName()));
+    metadata.getTags()
+        .forEach(tag -> (USER == tag.getScope() ? newUserTags : newSystemTags).add(tag.getName()));
     metadata.getProperties().forEach(
-      (key, value) -> (USER == key.getScope() ? newUserProperties : newSystemProperties).put(key.getName(), value));
+        (key, value) -> (USER == key.getScope() ? newUserProperties : newSystemProperties).put(
+            key.getName(), value));
     MetadataDataset.Change userChange =
-      replaceInScope(context, USER, entity, newUserTags, newUserProperties, directives);
+        replaceInScope(context, USER, entity, newUserTags, newUserProperties, directives);
     MetadataDataset.Change systemChange =
-      replaceInScope(context, SYSTEM, entity, newSystemTags, newSystemProperties, directives);
+        replaceInScope(context, SYSTEM, entity, newSystemTags, newSystemProperties, directives);
     return combineChanges(entity, userChange, systemChange);
   }
 
   private MetadataDataset.Change replaceInScope(MetadataDatasetContext context,
-                                                MetadataScope scope, MetadataEntity entity,
-                                                Set<String> newTags, Map<String, String> newProperties,
-                                                Map<ScopedNameOfKind, MetadataDirective> directives) {
+      MetadataScope scope, MetadataEntity entity,
+      Set<String> newTags, Map<String, String> newProperties,
+      Map<ScopedNameOfKind, MetadataDirective> directives) {
     MetadataDataset dataset = context.getDataset(scope);
     MetadataDataset.Record before = dataset.getMetadata(entity);
     if (newTags.isEmpty() && newProperties.isEmpty()) {
@@ -257,31 +264,34 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     }
     Set<String> existingTags = before.getTags();
     Set<String> tagsToKeepOrPreserve = directives.entrySet().stream()
-      .filter(entry -> entry.getKey().getScope() == scope && entry.getKey().getKind() == TAG
-        && (entry.getValue() == MetadataDirective.KEEP || entry.getValue() == MetadataDirective.PRESERVE))
-      .map(Map.Entry::getKey)
-      .map(ScopedName::getName)
-      .filter(existingTags::contains)
-      .collect(Collectors.toSet());
+        .filter(entry -> entry.getKey().getScope() == scope && entry.getKey().getKind() == TAG
+            && (entry.getValue() == MetadataDirective.KEEP
+            || entry.getValue() == MetadataDirective.PRESERVE))
+        .map(Map.Entry::getKey)
+        .map(ScopedName::getName)
+        .filter(existingTags::contains)
+        .collect(Collectors.toSet());
     newTags = Sets.union(newTags, tagsToKeepOrPreserve);
 
     Map<String, String> existingProperties = before.getProperties();
     Map<String, String> propertiesToKeepOrPreserve = directives.entrySet().stream()
-      .filter(entry -> entry.getKey().getScope() == scope && entry.getKey().getKind() == PROPERTY)
-      .filter(entry -> existingProperties.containsKey(entry.getKey().getName()))
-      .filter(entry -> entry.getValue() == MetadataDirective.PRESERVE
-        || entry.getValue() == MetadataDirective.KEEP && !newProperties.containsKey(entry.getKey().getName()))
-      .map(Map.Entry::getKey)
-      .map(ScopedName::getName)
-      .collect(Collectors.toMap(name -> name, existingProperties::get));
+        .filter(entry -> entry.getKey().getScope() == scope && entry.getKey().getKind() == PROPERTY)
+        .filter(entry -> existingProperties.containsKey(entry.getKey().getName()))
+        .filter(entry -> entry.getValue() == MetadataDirective.PRESERVE
+            || entry.getValue() == MetadataDirective.KEEP && !newProperties.containsKey(
+            entry.getKey().getName()))
+        .map(Map.Entry::getKey)
+        .map(ScopedName::getName)
+        .collect(Collectors.toMap(name -> name, existingProperties::get));
     newProperties.putAll(propertiesToKeepOrPreserve);
 
     Set<String> tagsToRemove = Sets.difference(before.getTags(), newTags);
     Set<String> tagsToAdd = Sets.difference(newTags, before.getTags());
-    Set<String> propertiesToRemove = Sets.difference(before.getProperties().keySet(), newProperties.keySet());
+    Set<String> propertiesToRemove = Sets.difference(before.getProperties().keySet(),
+        newProperties.keySet());
     @SuppressWarnings("ConstantConditions")
     Map<String, String> propertiesToAdd = Maps.filterEntries(
-      newProperties, entry -> !entry.getValue().equals(existingProperties.get(entry.getKey())));
+        newProperties, entry -> !entry.getValue().equals(existingProperties.get(entry.getKey())));
 
     MetadataDataset.Record after = before;
     if (!tagsToRemove.isEmpty()) {
@@ -307,14 +317,16 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   private Metadata read(MetadataDatasetContext context, Read read) {
     MetadataDataset.Record userMetadata = readScope(context, MetadataScope.USER, read);
     MetadataDataset.Record systemMetadata = readScope(context, MetadataScope.SYSTEM, read);
-    return mergeDisjointMetadata(new Metadata(USER, userMetadata.getTags(), userMetadata.getProperties()),
-                                 new Metadata(SYSTEM, systemMetadata.getTags(), systemMetadata.getProperties()));
+    return mergeDisjointMetadata(
+        new Metadata(USER, userMetadata.getTags(), userMetadata.getProperties()),
+        new Metadata(SYSTEM, systemMetadata.getTags(), systemMetadata.getProperties()));
   }
 
   private MetadataDataset.Record readScope(MetadataDatasetContext context,
-                                           MetadataScope scope, Read read) {
+      MetadataScope scope, Read read) {
     MetadataEntity entity = read.getEntity();
-    if (read.getSelection() == null && (!read.getScopes().contains(scope) || read.getKinds().isEmpty())) {
+    if (read.getSelection() == null && (!read.getScopes().contains(scope) || read.getKinds()
+        .isEmpty())) {
       return new MetadataDataset.Record(entity);
     }
     Set<ScopedNameOfKind> selectionForScope = null;
@@ -330,17 +342,17 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     if (selectionForScope != null) {
       // request is for a specific set of tags and properties
       Set<String> tagsToRead = selectionForScope.stream()
-        .filter(entry -> TAG == entry.getKind())
-        .map(ScopedName::getName)
-        .collect(Collectors.toSet());
+          .filter(entry -> TAG == entry.getKind())
+          .map(ScopedName::getName)
+          .collect(Collectors.toSet());
       Set<String> propertiesToRead = selectionForScope.stream()
-        .filter(entry -> PROPERTY == entry.getKind())
-        .map(ScopedName::getName)
-        .collect(Collectors.toSet());
+          .filter(entry -> PROPERTY == entry.getKind())
+          .map(ScopedName::getName)
+          .collect(Collectors.toSet());
       Set<String> tags = tagsToRead.isEmpty() ? Collections.emptySet()
-        : Sets.intersection(tagsToRead, dataset.getTags(entity));
+          : Sets.intersection(tagsToRead, dataset.getTags(entity));
       Map<String, String> properties = propertiesToRead.isEmpty() ? Collections.emptyMap()
-        : Maps.filterKeys(dataset.getProperties(entity), propertiesToRead::contains);
+          : Maps.filterKeys(dataset.getProperties(entity), propertiesToRead::contains);
       return new MetadataDataset.Record(entity, properties, tags);
     }
     if (MetadataKind.ALL.equals(read.getKinds())) {
@@ -353,52 +365,57 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
       return new MetadataDataset.Record(entity, Collections.emptyMap(), dataset.getTags(entity));
     }
     if (requestKind == PROPERTY) {
-      return new MetadataDataset.Record(entity, dataset.getProperties(entity), Collections.emptySet());
+      return new MetadataDataset.Record(entity, dataset.getProperties(entity),
+          Collections.emptySet());
     }
-    throw new IllegalStateException("Encountered metadata read request for unknown kind " + requestKind);
+    throw new IllegalStateException(
+        "Encountered metadata read request for unknown kind " + requestKind);
   }
 
   @Override
   public SearchResponse search(SearchRequest request) {
     Cursor cursor = request.getCursor() != null && !request.getCursor().isEmpty()
-      ? Cursor.fromString(request.getCursor()) : null;
+        ? Cursor.fromString(request.getCursor()) : null;
     Set<String> namespaces = cursor == null ? request.getNamespaces() : cursor.getNamespaces();
-    ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes = determineNamespaceAndScopes(namespaces);
+    ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes = determineNamespaceAndScopes(
+        namespaces);
     CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request, cursor);
     String query = cursor != null ? cursor.getQuery()
-      : request.getQuery() == null || request.getQuery().isEmpty() ? "*" : request.getQuery();
+        : request.getQuery() == null || request.getQuery().isEmpty() ? "*" : request.getQuery();
     Set<String> types = cursor != null ? cursor.getTypes() : request.getTypes();
     types = types == null ? Collections.emptySet() : types;
     Sorting sorting = cursor == null ? request.getSorting()
-      : cursor.getSorting() == null ? null : Sorting.of(cursor.getSorting());
+        : cursor.getSorting() == null ? null : Sorting.of(cursor.getSorting());
     SortInfo sortInfo = sorting == null ? SortInfo.DEFAULT
-      : new SortInfo(sorting.getKey(), SortInfo.SortOrder.valueOf(sorting.getOrder().name()));
+        : new SortInfo(sorting.getKey(), SortInfo.SortOrder.valueOf(sorting.getOrder().name()));
     boolean showHidden = cursor != null ? cursor.isShowHidden() : request.isShowHidden();
     MetadataScope scope = cursor != null ? cursor.getScope() : request.getScope();
 
     MetadataSearchResponse response = search(new io.cdap.cdap.data2.metadata.dataset.SearchRequest(
-      namespaceAndScopes.getFirst(),
-      query, types, sortInfo,
-      cursorOffsetAndLimits.getOffsetToRequest(),
-      cursorOffsetAndLimits.getLimitToRequest(),
-      request.isCursorRequested() ? 1 : 0,
-      cursorOffsetAndLimits.getCursor(),
-      showHidden,
-      namespaceAndScopes.getSecond()
+        namespaceAndScopes.getFirst(),
+        query, types, sortInfo,
+        cursorOffsetAndLimits.getOffsetToRequest(),
+        cursorOffsetAndLimits.getLimitToRequest(),
+        request.isCursorRequested() ? 1 : 0,
+        cursorOffsetAndLimits.getCursor(),
+        showHidden,
+        namespaceAndScopes.getSecond()
     ), scope);
 
     // translate results back and limit them to at most what was requested (see above where we add 1)
     int limitToRespond = cursorOffsetAndLimits.getLimitToRespond();
     int offsetToRespond = cursorOffsetAndLimits.getOffsetToRespond();
     List<MetadataRecord> results =
-      response.getResults().stream().limit(limitToRespond).map(record -> {
-        Metadata metadata = Metadata.EMPTY;
-        for (Map.Entry<MetadataScope, io.cdap.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
-          Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
-          metadata = mergeDisjointMetadata(metadata, toAdd);
-        }
-        return new MetadataRecord(record.getMetadataEntity(), metadata);
-      }).collect(Collectors.toList());
+        response.getResults().stream().limit(limitToRespond).map(record -> {
+          Metadata metadata = Metadata.EMPTY;
+          for (Map.Entry<MetadataScope, io.cdap.cdap.api.metadata.Metadata> entry : record.getMetadata()
+              .entrySet()) {
+            Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(),
+                entry.getValue().getProperties());
+            metadata = mergeDisjointMetadata(metadata, toAdd);
+          }
+          return new MetadataRecord(record.getMetadataEntity(), metadata);
+        }).collect(Collectors.toList());
 
     Cursor newCursor = null;
     if (response.getCursors() != null && !response.getCursors().isEmpty()) {
@@ -407,14 +424,16 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
         // the new cursor's offset is the previous cursor's offset plus the number of results
         newCursor = new Cursor(cursor, cursor.getOffset() + results.size(), actualCursor);
       } else {
-        newCursor = new Cursor(offsetToRespond + results.size(), limitToRespond, showHidden, scope, namespaces, types,
-                               sorting == null ? null : sorting.toString(), actualCursor, query);
+        newCursor = new Cursor(offsetToRespond + results.size(), limitToRespond, showHidden, scope,
+            namespaces, types,
+            sorting == null ? null : sorting.toString(), actualCursor, query);
       }
     }
     // adjust the total results by the difference of requested offset and the true offset that we respond back
-    int totalResults = offsetToRespond - cursorOffsetAndLimits.getOffsetToRequest() + response.getTotal();
+    int totalResults =
+        offsetToRespond - cursorOffsetAndLimits.getOffsetToRequest() + response.getTotal();
     return new SearchResponse(request, newCursor == null ? null : newCursor.toString(),
-                              offsetToRespond, limitToRespond, totalResults, results);
+        offsetToRespond, limitToRespond, totalResults, results);
   }
 
   @VisibleForTesting
@@ -444,7 +463,8 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   @VisibleForTesting
-  static ImmutablePair<NamespaceId, Set<EntityScope>> determineNamespaceAndScopes(Set<String> namespaces) {
+  static ImmutablePair<NamespaceId, Set<EntityScope>> determineNamespaceAndScopes(
+      Set<String> namespaces) {
     // if the request does not specify namespaces at all, then it searches all, including system
     if (namespaces == null || namespaces.isEmpty()) {
       return ImmutablePair.of(null, EnumSet.allOf(EntityScope.class));
@@ -463,42 +483,46 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     // we have at least one non-system namespace
     if (userNamespaces.size() > 1) {
       throw new UnsupportedOperationException(String.format(
-        "This implementation supports at most one non-system namespace, but %s were requested", userNamespaces));
+          "This implementation supports at most one non-system namespace, but %s were requested",
+          userNamespaces));
     }
     // we have exactly one non-system namespace
     NamespaceId namespace = new NamespaceId(userNamespaces.iterator().next());
     return hasSystem
-      ? ImmutablePair.of(namespace, EnumSet.allOf(EntityScope.class))
-      : ImmutablePair.of(namespace, EnumSet.of(EntityScope.USER));
+        ? ImmutablePair.of(namespace, EnumSet.allOf(EntityScope.class))
+        : ImmutablePair.of(namespace, EnumSet.of(EntityScope.USER));
   }
 
   private MetadataChange combineChanges(MetadataEntity entity,
-                                        MetadataDataset.Change userChange,
-                                        MetadataDataset.Change sysChange) {
+      MetadataDataset.Change userChange,
+      MetadataDataset.Change sysChange) {
 
     Metadata userBefore = new Metadata(USER, userChange.getExisting().getTags(),
-                                       userChange.getExisting().getProperties());
+        userChange.getExisting().getProperties());
     Metadata sysBefore = new Metadata(SYSTEM, sysChange.getExisting().getTags(),
-                                      sysChange.getExisting().getProperties());
+        sysChange.getExisting().getProperties());
     Metadata before = mergeDisjointMetadata(userBefore, sysBefore);
 
-    Metadata userAfter = new Metadata(USER, userChange.getLatest().getTags(), userChange.getLatest().getProperties());
-    Metadata sysAfter = new Metadata(SYSTEM, sysChange.getLatest().getTags(), sysChange.getLatest().getProperties());
+    Metadata userAfter = new Metadata(USER, userChange.getLatest().getTags(),
+        userChange.getLatest().getProperties());
+    Metadata sysAfter = new Metadata(SYSTEM, sysChange.getLatest().getTags(),
+        sysChange.getLatest().getProperties());
     Metadata after = mergeDisjointMetadata(userAfter, sysAfter);
 
     return new MetadataChange(entity, before, after);
   }
 
   /**
-   * Helper method to merge disjoint metadata objects. This is used to merge the metadata fro (up to) two
-   * metadata records returned by the datasets (one per scope) into a single Metadata object.
+   * Helper method to merge disjoint metadata objects. This is used to merge the metadata fro (up
+   * to) two metadata records returned by the datasets (one per scope) into a single Metadata
+   * object.
    */
   private static Metadata mergeDisjointMetadata(Metadata meta, Metadata other) {
     return new Metadata(Sets.union(meta.getTags(), other.getTags()),
-                        // this will not conflict because the two metadata are mutually disjoint
-                        ImmutableMap.<ScopedName, String>builder()
-                          .putAll(meta.getProperties())
-                          .putAll(other.getProperties()).build());
+        // this will not conflict because the two metadata are mutually disjoint
+        ImmutableMap.<ScopedName, String>builder()
+            .putAll(meta.getProperties())
+            .putAll(other.getProperties()).build());
   }
 
   @Override
@@ -507,11 +531,12 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
   }
 
   /**
-   * Helper class to represent adjustments made to the search request parameters
-   * before delegating to the MetadataDataset, based on whether the request has
-   * a cursor and whether it requests a cursor, or not.
+   * Helper class to represent adjustments made to the search request parameters before delegating
+   * to the MetadataDataset, based on whether the request has a cursor and whether it requests a
+   * cursor, or not.
    */
   static class CursorAndOffsetInfo {
+
     private final String cursor;
     private final int offsetToRequest;
     private final int offsetToRespond;
@@ -519,15 +544,15 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     private final int limitToRespond;
 
     /**
-     * @param cursor          the cursor to pass to the metadata dataset
+     * @param cursor the cursor to pass to the metadata dataset
      * @param offsetToRequest the offset to request from the metadata dataset
      * @param offsetToRespond the offset to return in the search response
-     * @param limitToRequest  the result limit to request from the metadata dataset
-     * @param limitToRespond  the result limit to return in the search response
+     * @param limitToRequest the result limit to request from the metadata dataset
+     * @param limitToRespond the result limit to return in the search response
      */
     CursorAndOffsetInfo(String cursor,
-                        int offsetToRequest, int offsetToRespond,
-                        int limitToRequest, int limitToRespond) {
+        int offsetToRequest, int offsetToRespond,
+        int limitToRequest, int limitToRespond) {
       this.cursor = cursor;
       this.offsetToRequest = offsetToRequest;
       this.offsetToRespond = offsetToRespond;

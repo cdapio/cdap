@@ -32,24 +32,25 @@ import javax.ws.rs.PathParam;
  */
 public class MockOauthHandler extends AbstractHttpHandler {
 
-    private static final Gson GSON = new Gson();
-    private final Map<String, Map<String, OAuthInfo>> credentials;
+  private static final Gson GSON = new Gson();
+  private final Map<String, Map<String, OAuthInfo>> credentials;
 
-    public MockOauthHandler(Map<String, Map<String, OAuthInfo>> credentials) {
-        this.credentials = credentials;
+  public MockOauthHandler(Map<String, Map<String, OAuthInfo>> credentials) {
+    this.credentials = credentials;
+  }
+
+  @Path("/v3/namespaces/system/apps/" + Constants.PIPELINEID + "/services/"
+      + Constants.STUDIO_SERVICE_NAME
+      + "/methods/v1/oauth/provider/{provider}/credential/{credentialId}")
+  @GET
+  public void getOAuth(HttpRequest request, HttpResponder responder,
+      @PathParam("provider") String provider,
+      @PathParam("credentialId") String credentialId) {
+    Map<String, OAuthInfo> providerCredentials = credentials.get(provider);
+    if (providerCredentials == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      return;
     }
-
-    @Path("/v3/namespaces/system/apps/" + Constants.PIPELINEID + "/services/" +
-            Constants.STUDIO_SERVICE_NAME + "/methods/v1/oauth/provider/{provider}/credential/{credentialId}")
-    @GET
-    public void getOAuth(HttpRequest request, HttpResponder responder,
-                         @PathParam("provider") String provider,
-                         @PathParam("credentialId") String credentialId) {
-        Map<String, OAuthInfo> providerCredentials = credentials.get(provider);
-        if (providerCredentials == null) {
-            responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-            return;
-        }
 
         OAuthInfo oAuthInfo = providerCredentials.get(credentialId);
         if (oAuthInfo == null) {

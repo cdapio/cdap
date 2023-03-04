@@ -301,8 +301,8 @@ public final class DataFrames {
         collection = Arrays.asList((Object[]) value);
       } else {
         throw new IllegalArgumentException(
-          "Value type " + value.getClass() +
-            " is not supported as array type value. It must either be a Collection or an array");
+          "Value type " + value.getClass()
+            + " is not supported as array type value. It must either be a Collection or an array");
       }
 
       List<Object> result = new ArrayList<>(collection.size());

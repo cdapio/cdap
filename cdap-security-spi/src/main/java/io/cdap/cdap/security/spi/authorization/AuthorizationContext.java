@@ -29,8 +29,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * A context for {@link AccessController} extensions to interact with CDAP. This context is available to
- * {@link AccessController} extensions in the {@link AccessController#initialize(AuthorizationContext)} method.
+ * A context for {@link AccessController} extensions to interact with CDAP. This context is
+ * available to {@link AccessController} extensions in the {@link AccessController#initialize(AuthorizationContext)}
+ * method.
  *
  * Extensions can use this class to:
  * <ol>
@@ -40,41 +41,51 @@ import java.util.Properties;
  *   <li>Determine the authentication details of the {@link Principal} making the authorization request.</li>
  * </ol>
  */
-public interface AuthorizationContext extends DatasetContext, Admin, Transactional, AuthenticationContext, SecureStore {
+public interface AuthorizationContext extends DatasetContext, Admin, Transactional,
+    AuthenticationContext, SecureStore {
+
   /**
-   * Returns the properties for the authorization extension. These properties are composed of all the properties
-   * defined in {@code cdap-site.xml} with the prefix {@code security.authorization.extension.config.}.
+   * Returns the properties for the authorization extension. These properties are composed of all
+   * the properties defined in {@code cdap-site.xml} with the prefix {@code
+   * security.authorization.extension.config.}.
    *
    * @return the {@link Properties} for the authorization extension
    */
   Properties getExtensionProperties();
 
   /**
-   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   * Currently messaging is not supported. Calling this method always result in {@link
+   * UnsupportedOperationException}.
    */
   @Override
   void createTopic(String topic) throws TopicAlreadyExistsException, IOException;
 
   /**
-   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   * Currently messaging is not supported. Calling this method always result in {@link
+   * UnsupportedOperationException}.
    */
   @Override
-  void createTopic(String topic, Map<String, String> properties) throws TopicAlreadyExistsException, IOException;
+  void createTopic(String topic, Map<String, String> properties)
+      throws TopicAlreadyExistsException, IOException;
 
   /**
-   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   * Currently messaging is not supported. Calling this method always result in {@link
+   * UnsupportedOperationException}.
    */
   @Override
   Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException;
 
   /**
-   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   * Currently messaging is not supported. Calling this method always result in {@link
+   * UnsupportedOperationException}.
    */
   @Override
-  void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException;
+  void updateTopic(String topic, Map<String, String> properties)
+      throws TopicNotFoundException, IOException;
 
   /**
-   * Currently messaging is not supported. Calling this method always result in {@link UnsupportedOperationException}.
+   * Currently messaging is not supported. Calling this method always result in {@link
+   * UnsupportedOperationException}.
    */
   @Override
   void deleteTopic(String topic) throws TopicNotFoundException, IOException;

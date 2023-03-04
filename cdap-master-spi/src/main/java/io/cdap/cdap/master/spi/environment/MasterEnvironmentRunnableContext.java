@@ -25,6 +25,7 @@ import org.apache.twill.filesystem.LocationFactory;
  * Context object available to {@link MasterEnvironmentRunnable} for access to CDAP resources.
  */
 public interface MasterEnvironmentRunnableContext {
+
   /**
    * Returns the {@link LocationFactory} used by the CDAP.
    */
@@ -41,5 +42,5 @@ public interface MasterEnvironmentRunnableContext {
    *
    * @return the twill runnable instance
    */
-   TwillRunnable instantiateTwillRunnable(String className);
+  TwillRunnable instantiateTwillRunnable(String className);
 }

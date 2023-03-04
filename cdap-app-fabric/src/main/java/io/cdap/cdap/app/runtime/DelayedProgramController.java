@@ -34,10 +34,11 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 
 /**
- * A {@link ProgramController} that delegates all methods to another {@link ProgramController}, in which can be
- * set later. All method calls on this instance should be non-blocking.
+ * A {@link ProgramController} that delegates all methods to another {@link ProgramController}, in
+ * which can be set later. All method calls on this instance should be non-blocking.
  */
-public final class DelayedProgramController implements ProgramController, Delegator<ProgramController> {
+public final class DelayedProgramController implements ProgramController,
+    Delegator<ProgramController> {
 
   private final ProgramRunId programRunId;
   private final RunId runId;
@@ -57,14 +58,16 @@ public final class DelayedProgramController implements ProgramController, Delega
   }
 
   /**
-   * Force this program controller into ERROR state if the delegating program controller hasn't been set.
+   * Force this program controller into ERROR state if the delegating program controller hasn't been
+   * set.
    */
   void failed(Throwable t) {
     delegateFuture.complete(new FailedProgramController(programRunId, t));
   }
 
   /**
-   * Returns the {@link ProgramController} being delegated to. This method will block until the delegates is available.
+   * Returns the {@link ProgramController} being delegated to. This method will block until the
+   * delegates is available.
    */
   @Override
   public ProgramController getDelegate() {
@@ -168,24 +171,25 @@ public final class DelayedProgramController implements ProgramController, Delega
    * Makes a method call on the delegating {@link ProgramController} when it is available.
    */
   private ListenableFuture<ProgramController> callDelegate(
-    Function<ProgramController, ListenableFuture<ProgramController>> callFunc
+      Function<ProgramController, ListenableFuture<ProgramController>> callFunc
   ) {
     SettableFuture<ProgramController> resultFuture = SettableFuture.create();
     delegateFuture.whenComplete((programController, throwable) -> {
       if (throwable != null) {
         resultFuture.setException(throwable);
       }
-      Futures.addCallback(callFunc.apply(programController), new FutureCallback<ProgramController>() {
-        @Override
-        public void onSuccess(ProgramController result) {
-          resultFuture.set(result);
-        }
+      Futures.addCallback(callFunc.apply(programController),
+          new FutureCallback<ProgramController>() {
+            @Override
+            public void onSuccess(ProgramController result) {
+              resultFuture.set(result);
+            }
 
-        @Override
-        public void onFailure(Throwable t) {
-          resultFuture.setException(t);
-        }
-      });
+            @Override
+            public void onFailure(Throwable t) {
+              resultFuture.setException(t);
+            }
+          });
     });
     return resultFuture;
   }

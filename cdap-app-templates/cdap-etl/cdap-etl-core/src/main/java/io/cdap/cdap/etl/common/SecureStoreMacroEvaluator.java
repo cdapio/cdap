@@ -47,15 +47,17 @@ public class SecureStoreMacroEvaluator implements MacroEvaluator {
     if (!FUNCTION_NAME.equals(macroFunction)) {
       // This shouldn't happen
       throw new IllegalArgumentException("Invalid function name " + macroFunction
-                                           + ". Expecting " + FUNCTION_NAME);
+          + ". Expecting " + FUNCTION_NAME);
     }
     if (args.length != 1) {
-      throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 argument");
+      throw new InvalidMacroException(
+          "Macro '" + FUNCTION_NAME + "' should have exactly 1 argument");
     }
     try {
       return Bytes.toString(secureStore.get(namespace, args[0]).get());
     } catch (Exception e) {
-      throw new InvalidMacroException("Failed to resolve macro '" + FUNCTION_NAME + "(" + args[0] + ")'", e);
+      throw new InvalidMacroException(
+          "Failed to resolve macro '" + FUNCTION_NAME + "(" + args[0] + ")'", e);
     }
   }
 }

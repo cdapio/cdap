@@ -40,10 +40,11 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
- * Dataset for namespace metadata. It does not wrap its operations in a transaction.
- * It is up to the caller to decide what operations belong in a transaction.
+ * Dataset for namespace metadata. It does not wrap its operations in a transaction. It is up to the
+ * caller to decide what operations belong in a transaction.
  */
 public final class NamespaceTable {
+
   private static final Gson GSON = new Gson();
 
   private final StructuredTable table;
@@ -59,9 +60,11 @@ public final class NamespaceTable {
    * @param metadata the namespace metadata for the namespace
    */
   public void create(NamespaceMeta metadata) throws IOException {
-    Field<String> nameField = Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD, metadata.getName());
+    Field<String> nameField = Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+        metadata.getName());
     Field<String> metadataField =
-      Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD, GSON.toJson(metadata));
+        Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD,
+            GSON.toJson(metadata));
     table.upsert(Arrays.asList(nameField, metadataField));
   }
 
@@ -73,10 +76,11 @@ public final class NamespaceTable {
    */
   @Nullable
   public NamespaceMeta get(NamespaceId id) throws IOException {
-    return table.read(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
-                                                               id.getEntityName())))
-      .map(this::getNamespaceMeta)
-      .orElse(null);
+    return table.read(
+            Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+                id.getEntityName())))
+        .map(this::getNamespaceMeta)
+        .orElse(null);
   }
 
   /**
@@ -85,8 +89,9 @@ public final class NamespaceTable {
    * @param id id of the namespace
    */
   public void delete(NamespaceId id) throws IOException {
-    table.delete(Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
-                                                          id.getEntityName())));
+    table.delete(
+        Collections.singleton(Fields.stringField(StoreDefinition.NamespaceStore.NAMESPACE_FIELD,
+            id.getEntityName())));
   }
 
   /**
@@ -96,14 +101,16 @@ public final class NamespaceTable {
    */
   public List<NamespaceMeta> list() throws IOException {
     try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), Integer.MAX_VALUE)) {
-      return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
-        .map(this::getNamespaceMeta)
-        .collect(Collectors.toList());
+      return StreamSupport.stream(
+              Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
+          .map(this::getNamespaceMeta)
+          .collect(Collectors.toList());
     }
   }
 
   /**
    * Count all namespaces
+   *
    * @return long of all namespaces except for system.
    * @throws IOException from StructuredTable.count
    */
@@ -113,6 +120,7 @@ public final class NamespaceTable {
 
   /**
    * Count namespaces for a particular range.
+   *
    * @param ranges list of ranges
    * @return long of all namespaces based on range
    * @throws IOException from StructuredTable.count
@@ -123,8 +131,9 @@ public final class NamespaceTable {
 
   @Nullable
   private NamespaceMeta getNamespaceMeta(StructuredRow row) {
-    return Optional.ofNullable(row.getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD))
-      .map(field -> GSON.fromJson(field, NamespaceMeta.class))
-      .orElse(null);
+    return Optional.ofNullable(
+            row.getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD))
+        .map(field -> GSON.fromJson(field, NamespaceMeta.class))
+        .orElse(null);
   }
 }

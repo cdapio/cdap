@@ -26,11 +26,13 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
  * Creates DefaultAggregatorContexts.
  */
 public class AggregatorContextProvider implements ContextProvider<DefaultAggregatorContext> {
+
   private final PipelineRuntime pipelineRuntime;
   private final StageSpec stageSpec;
   private final Admin admin;
 
-  public AggregatorContextProvider(PipelineRuntime pipelineRuntime, StageSpec stageSpec, Admin admin) {
+  public AggregatorContextProvider(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
+      Admin admin) {
     this.pipelineRuntime = pipelineRuntime;
     this.stageSpec = stageSpec;
     this.admin = admin;

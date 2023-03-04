@@ -31,8 +31,9 @@ import java.util.Iterator;
 public interface Aggregator<GROUP_KEY, GROUP_VALUE, OUT> {
 
   /**
-   * Emit the group key(s) for a given input value. If no group key is emitted, the input value
-   * is filtered out. If multiple group keys are emitted, the input value will be present in multiple groups.
+   * Emit the group key(s) for a given input value. If no group key is emitted, the input value is
+   * filtered out. If multiple group keys are emitted, the input value will be present in multiple
+   * groups.
    *
    * @param groupValue the value to group
    * @param emitter the emitter to emit zero or more group keys for the input
@@ -48,6 +49,7 @@ public interface Aggregator<GROUP_KEY, GROUP_VALUE, OUT> {
    * @param emitter the emitter to emit aggregate values for the group
    * @throws Exception if there is some error aggregating
    */
-  void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues, Emitter<OUT> emitter) throws Exception;
+  void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues, Emitter<OUT> emitter)
+      throws Exception;
 
 }

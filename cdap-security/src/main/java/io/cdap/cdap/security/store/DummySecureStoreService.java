@@ -25,13 +25,14 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A dummy class that is loaded when the user has set the provider to "none".
- * All operations on this class throw an UnsupportedOperationException.
+ * A dummy class that is loaded when the user has set the provider to "none". All operations on this
+ * class throw an UnsupportedOperationException.
  */
 public class DummySecureStoreService extends AbstractIdleService implements SecureStoreService {
 
-  private static final String SECURE_STORE_SETUP = "Secure store is not configured. To use secure store please set " +
-    "\"security.store.provider\" property in cdap-site.xml.";
+  private static final String SECURE_STORE_SETUP =
+      "Secure store is not configured. To use secure store please set "
+          + "\"security.store.provider\" property in cdap-site.xml.";
 
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws IOException {
@@ -45,7 +46,7 @@ public class DummySecureStoreService extends AbstractIdleService implements Secu
 
   @Override
   public void put(String namespace, String name, String data, @Nullable String description,
-                  Map<String, String> properties) throws IOException {
+      Map<String, String> properties) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 

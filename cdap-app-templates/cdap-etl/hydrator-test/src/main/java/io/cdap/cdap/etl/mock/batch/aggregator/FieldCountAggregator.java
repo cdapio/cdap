@@ -36,13 +36,15 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Groups on a specific field and adds count field. Used to test that the right values are going to the
- * right groups, to test multiple group keys for the same value, and to test setting the group key class
- * at runtime, and to test setting a supported non-writable class.
+ * Groups on a specific field and adds count field. Used to test that the right values are going to
+ * the right groups, to test multiple group keys for the same value, and to test setting the group
+ * key class at runtime, and to test setting a supported non-writable class.
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name("FieldCount")
-public class FieldCountAggregator extends BatchAggregator<Object, StructuredRecord, StructuredRecord> {
+public class FieldCountAggregator extends
+    BatchAggregator<Object, StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private Schema schema;
@@ -81,16 +83,16 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
 
   @Override
   public void aggregate(Object groupKey, Iterator<StructuredRecord> groupValues,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+      Emitter<StructuredRecord> emitter) throws Exception {
     long count = 0;
     while (groupValues.hasNext()) {
       groupValues.next();
       count++;
     }
     emitter.emit(StructuredRecord.builder(schema)
-                   .set(config.fieldName, groupKey)
-                   .set("ct", count)
-                   .build());
+        .set(config.fieldName, groupKey)
+        .set("ct", count)
+        .build());
   }
 
   @Override
@@ -105,6 +107,7 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
    * Conf for the aggregator.
    */
   public static class Config extends PluginConfig {
+
     @Macro
     private final String fieldName;
 
@@ -127,9 +130,9 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
       }
 
       return Schema.recordOf(
-        fieldName + ".count",
-        fieldSchema,
-        Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
+          fieldName + ".count",
+          fieldSchema,
+          Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
     }
   }
 
@@ -145,7 +148,8 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
     return PluginClass.builder().setName("FieldCount").setType(BatchAggregator.PLUGIN_TYPE)
-             .setDescription("").setClassName(FieldCountAggregator.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(FieldCountAggregator.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

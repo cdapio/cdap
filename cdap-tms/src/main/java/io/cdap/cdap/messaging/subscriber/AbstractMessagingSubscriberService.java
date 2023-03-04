@@ -32,15 +32,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An abstract base class for implementing message consumption from TMS.
- * This service allows optional transactional fetch from TMS.
- * It always process messages and persisting consumer states in the same transaction.
+ * An abstract base class for implementing message consumption from TMS. This service allows
+ * optional transactional fetch from TMS. It always process messages and persisting consumer states
+ * in the same transaction.
  *
  * @param <T> the type that each message will be decoded to.
  */
-public abstract class AbstractMessagingSubscriberService<T> extends AbstractMessagingPollingService<T> {
+public abstract class AbstractMessagingSubscriberService<T> extends
+    AbstractMessagingPollingService<T> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      AbstractMessagingSubscriberService.class);
 
   private final int txTimeoutSeconds;
 
@@ -50,13 +52,15 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * @param topicId the topic to consume from
    * @param fetchSize number of messages to fetch in each batch
    * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
-   * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty result
+   * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty
+   *     result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
-   * @param metricsContext the {@link MetricsContext} for emitting metrics about the message consumption.
+   * @param metricsContext the {@link MetricsContext} for emitting metrics about the message
+   *     consumption.
    */
   protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
-                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
-                                               RetryStrategy retryStrategy, MetricsContext metricsContext) {
+      int txTimeoutSeconds, long emptyFetchDelayMillis,
+      RetryStrategy retryStrategy, MetricsContext metricsContext) {
     super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
     this.txTimeoutSeconds = txTimeoutSeconds;
   }
@@ -67,32 +71,33 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   protected abstract TransactionRunner getTransactionRunner();
 
   /**
-   * Loads last persisted message id. This method will be called from a transaction.
-   * The returned message id will be used as the starting message id (exclusive) for the first fetch.
+   * Loads last persisted message id. This method will be called from a transaction. The returned
+   * message id will be used as the starting message id (exclusive) for the first fetch.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances.
-   * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
-   *         in the topic.
+   * @return the last persisted message id or {@code null} to have first fetch starts from the first
+   *     available message in the topic.
    * @throws Exception if failed to load the message id
    */
   @Nullable
   protected abstract String loadMessageId(StructuredTableContext context) throws Exception;
 
   /**
-   * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(StructuredTableContext, Iterator)}.
+   * Persists the given message id. This method will be called from a transaction, which is the same
+   * transaction for the call to {@link #processMessages(StructuredTableContext, Iterator)}.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(StructuredTableContext, Iterator)}
-   *                  has been processed
-   *                  up to.
+   * @param messageId the message id that the {@link #processMessages(StructuredTableContext,
+   *     Iterator)} has been processed up to.
    * @throws Exception if failed to persist the message id
    * @see #processMessages(StructuredTableContext, Iterator)
    */
-  protected abstract void storeMessageId(StructuredTableContext context, String messageId) throws Exception;
+  protected abstract void storeMessageId(StructuredTableContext context, String messageId)
+      throws Exception;
 
   /**
-   * Whether the message should run in its own transaction because it is expected to be an expensive operation.
+   * Whether the message should run in its own transaction because it is expected to be an expensive
+   * operation.
    *
    * @param message the message to process
    * @return whether the message should be processed in its own transaction
@@ -102,22 +107,26 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   }
 
   /**
-   * Processes the give list of messages. This method will be called from the same transaction as the
-   * {@link #storeMessageId(StructuredTableContext, String)} call. If {@link Exception} is raised from this method,
-   * the messages as provided through the {@code messages} parameter will be replayed in the next call.
+   * Processes the give list of messages. This method will be called from the same transaction as
+   * the {@link #storeMessageId(StructuredTableContext, String)} call. If {@link Exception} is
+   * raised from this method, the messages as provided through the {@code messages} parameter will
+   * be replayed in the next call.
    *
-   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for the transaction
-   * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
-   *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
+   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for
+   *     the transaction
+   * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link
+   *     ImmutablePair#first} as the message id, and the {@link ImmutablePair#second} as the decoded
+   *     message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(StructuredTableContext, String)
    */
   protected abstract void processMessages(StructuredTableContext structuredTableContext,
-                                          Iterator<ImmutablePair<String, T>> messages) throws Exception;
+      Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
-   * Perform post processing after a batch of messages has been processed and before the next batch of
-   * messages is fetched. This will take place outside of the transaction used when processing messages.
+   * Perform post processing after a batch of messages has been processed and before the next batch
+   * of messages is fetched. This will take place outside of the transaction used when processing
+   * messages.
    */
   @Override
   protected void postProcess() {
@@ -139,8 +148,9 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
     // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
     long timeBoundMillis = 900L * txTimeoutSeconds;
     iterator = TransactionRunners.run(getTransactionRunner(), context -> {
-      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(),
-                                                                                              timeBoundMillis);
+      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(
+          messages.iterator(),
+          timeBoundMillis);
       MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
       processMessages(context, trackingIterator);
       String lastMessageId = trackingIterator.getLastMessageId();
@@ -183,7 +193,8 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
         // pretend we've gone through all messages already. The next time we try to process a batch of messages,
         // this expensive one will be the first message.
         if (consumedCount > 0) {
-          LOG.debug("Ending message batch early to process {} in a separate tx", message.getSecond());
+          LOG.debug("Ending message batch early to process {} in a separate tx",
+              message.getSecond());
           return endOfData();
         }
         // if we should process this message in a separate tx and we haven't processed any messages yet,

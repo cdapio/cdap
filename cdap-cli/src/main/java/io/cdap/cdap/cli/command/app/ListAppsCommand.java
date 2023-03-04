@@ -57,27 +57,31 @@ public class ListAppsCommand extends AbstractAuthCommand {
       }
     }
     Table table = Table.builder()
-      .setHeader("id", "appVersion", "description", "artifactName", "artifactVersion", "artifactScope", "principal")
-      .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion),
-        new RowMaker<ApplicationRecord>() {
-          @Override
-          public List<?> makeRow(ApplicationRecord object) {
-            return Lists.newArrayList(object.getName(), object.getAppVersion(), object.getDescription(),
-              object.getArtifact().getName(), object.getArtifact().getVersion(), object.getArtifact().getScope(),
-              object.getOwnerPrincipal());
-          }
-        }).build();
+        .setHeader("id", "appVersion", "description", "artifactName", "artifactVersion",
+            "artifactScope", "principal")
+        .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion),
+            new RowMaker<ApplicationRecord>() {
+              @Override
+              public List<?> makeRow(ApplicationRecord object) {
+                return Lists.newArrayList(object.getName(), object.getAppVersion(),
+                    object.getDescription(),
+                    object.getArtifact().getName(), object.getArtifact().getVersion(),
+                    object.getArtifact().getScope(),
+                    object.getOwnerPrincipal());
+              }
+            }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("list apps [<%s>] [<%s>]", ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION);
+    return String.format("list apps [<%s>] [<%s>]", ArgumentName.ARTIFACT_NAME,
+        ArgumentName.ARTIFACT_VERSION);
   }
 
   @Override
   public String getDescription() {
     return String.format("Lists all %s, optionally filtered by artifact name and version",
-      ElementType.APP.getNamePlural());
+        ElementType.APP.getNamePlural());
   }
 }

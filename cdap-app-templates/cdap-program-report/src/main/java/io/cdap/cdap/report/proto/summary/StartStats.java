@@ -22,6 +22,7 @@ import com.google.common.base.Objects;
  * Represents the statistics of the start time of all program runs.
  */
 public class StartStats {
+
   private final long oldest;
   private final long newest;
 
@@ -54,8 +55,8 @@ public class StartStats {
     }
 
     StartStats that = (StartStats) o;
-    return Objects.equal(oldest, that.oldest) &&
-      Objects.equal(newest, that.newest);
+    return Objects.equal(oldest, that.oldest)
+        && Objects.equal(newest, that.newest);
   }
 
   @Override

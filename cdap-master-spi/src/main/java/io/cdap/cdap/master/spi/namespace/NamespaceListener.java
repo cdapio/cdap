@@ -22,25 +22,26 @@ import java.util.Collection;
  * A listener that responds to namespace updates.
  */
 public interface NamespaceListener {
+
   /**
-   * Performs initialization actions for all namespaces.
-   * This method will be retried in case of failure, so it must be implemented in an idempotent way.
+   * Performs initialization actions for all namespaces. This method will be retried in case of
+   * failure, so it must be implemented in an idempotent way.
    */
   default void onStart(Collection<NamespaceDetail> namespaceDetails) throws Exception {
     // no-op by default
   }
 
   /**
-   * Called during namespace creation.
-   * This method may be retried in case of failure, so it must be implemented in an idempotent way.
+   * Called during namespace creation. This method may be retried in case of failure, so it must be
+   * implemented in an idempotent way.
    */
   default void onNamespaceCreation(NamespaceDetail namespaceDetail) throws Exception {
     // no-op by default
   }
 
   /**
-   * Called during namespace deletion.
-   * This method may be retried in case of failure, so it must be implemented in an idempotent way.
+   * Called during namespace deletion. This method may be retried in case of failure, so it must be
+   * implemented in an idempotent way.
    */
   default void onNamespaceDeletion(NamespaceDetail namespaceDetail) throws Exception {
     // no-op by default

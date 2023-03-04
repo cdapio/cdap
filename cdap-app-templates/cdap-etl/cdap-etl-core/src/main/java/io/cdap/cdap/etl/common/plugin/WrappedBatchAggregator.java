@@ -26,22 +26,24 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link BatchAggregator} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around {@link BatchAggregator} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  *
  * @param <GROUP_KEY> group key type. Must be a supported type
  * @param <GROUP_VALUE> group value type. Must be a supported type
  * @param <OUT> output object type
  */
 public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
-  extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
-  implements PluginWrapper<BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>> {
+    extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
+    implements PluginWrapper<BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>> {
+
   private final BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
-  public WrappedBatchAggregator(BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator, Caller caller,
-                                OperationTimer operationTimer) {
+  public WrappedBatchAggregator(BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator,
+      Caller caller,
+      OperationTimer operationTimer) {
     this.aggregator = aggregator;
     this.caller = caller;
     this.operationTimer = operationTimer;
@@ -104,7 +106,7 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT>
 
   @Override
   public void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues,
-                        Emitter<OUT> emitter) throws Exception {
+      Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {
       caller.call((Callable<Void>) () -> {

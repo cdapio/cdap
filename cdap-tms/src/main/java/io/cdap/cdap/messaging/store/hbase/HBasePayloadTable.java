@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.client.Table;
  * HBase implementation of {@link PayloadTable}.
  */
 final class HBasePayloadTable extends AbstractPayloadTable {
+
   private static final byte[] COL = Bytes.toBytes('c');
 
   private final HBaseTableUtil tableUtil;
@@ -54,8 +55,8 @@ final class HBasePayloadTable extends AbstractPayloadTable {
   private final HBaseExceptionHandler exceptionHandler;
 
   HBasePayloadTable(HBaseTableUtil tableUtil, Table table, byte[] columnFamily,
-                    AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
-                    int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
+      AbstractRowKeyDistributor rowKeyDistributor, ExecutorService scanExecutor,
+      int scanCacheRows, HBaseExceptionHandler exceptionHandler) throws IOException {
     this.tableUtil = tableUtil;
     this.table = table;
     this.mutator = tableUtil.createBufferedMutator(table, HBaseTableUtil.DEFAULT_WRITE_BUFFER_SIZE);
@@ -68,14 +69,15 @@ final class HBasePayloadTable extends AbstractPayloadTable {
 
   @Override
   public CloseableIterator<RawPayloadTableEntry> read(byte[] startRow, byte[] stopRow,
-                                                      final int limit) throws IOException {
+      final int limit) throws IOException {
     Scan scan = tableUtil.buildScan()
-      .setStartRow(startRow)
-      .setStopRow(stopRow)
-      .setCaching(scanCacheRows)
-      .build();
+        .setStartRow(startRow)
+        .setStopRow(stopRow)
+        .setCaching(scanCacheRows)
+        .build();
 
-    final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor, scanExecutor);
+    final ResultScanner scanner = DistributedScanner.create(table, scan, rowKeyDistributor,
+        scanExecutor);
     return new AbstractCloseableIterator<RawPayloadTableEntry>() {
       private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
       private boolean closed;
@@ -97,7 +99,8 @@ final class HBasePayloadTable extends AbstractPayloadTable {
           return endOfData();
         }
         maxLimit--;
-        return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()), result.getValue(columnFamily, COL));
+        return tableEntry.set(rowKeyDistributor.getOriginalKey(result.getRow()),
+            result.getValue(columnFamily, COL));
       }
 
       @Override
@@ -118,8 +121,8 @@ final class HBasePayloadTable extends AbstractPayloadTable {
     while (entries.hasNext()) {
       RawPayloadTableEntry tableEntry = entries.next();
       Put put = tableUtil.buildPut(rowKeyDistributor.getDistributedKey(tableEntry.getKey()))
-        .add(columnFamily, COL, tableEntry.getValue())
-        .build();
+          .add(columnFamily, COL, tableEntry.getValue())
+          .build();
       batchPuts.add(put);
     }
 

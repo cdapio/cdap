@@ -28,20 +28,23 @@ import io.cdap.cdap.client.ProgramClient;
  */
 public class StartDebugProgramCommand extends StartProgramCommand {
 
-  public StartDebugProgramCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public StartDebugProgramCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(elementType, programClient, cliConfig);
     this.isDebug = true;
   }
 
   @Override
   public String getPattern() {
-    return String.format("start-debug %s <%s> [<%s>]", elementType.getShortName(), elementType.getArgumentName(),
-                         ArgumentName.RUNTIME_ARGS);
+    return String.format("start-debug %s <%s> [<%s>]", elementType.getShortName(),
+        elementType.getArgumentName(),
+        ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Starts %s in debug mode. '<%s>' is specified in the format 'key1=a key2=b'.",
-                         Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
+    return String.format(
+        "Starts %s in debug mode. '<%s>' is specified in the format 'key1=a key2=b'.",
+        Fragment.of(Article.A, elementType.getName()), ArgumentName.RUNTIME_ARGS);
   }
 }

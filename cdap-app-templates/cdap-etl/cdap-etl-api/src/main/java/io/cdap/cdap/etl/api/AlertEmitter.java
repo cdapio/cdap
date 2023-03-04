@@ -24,8 +24,8 @@ import java.util.Map;
 public interface AlertEmitter {
 
   /**
-   * Emit an alert. If an {@link AlertPublisher} is placed after this stage, it will be able to publish the alerts.
-   * Otherwise the alerts are simply dropped.
+   * Emit an alert. If an {@link AlertPublisher} is placed after this stage, it will be able to
+   * publish the alerts. Otherwise the alerts are simply dropped.
    *
    * @param payload the alert payload
    */

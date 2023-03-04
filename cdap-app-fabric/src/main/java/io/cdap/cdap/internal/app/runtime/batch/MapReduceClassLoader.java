@@ -60,12 +60,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ClassLoader} for YARN application isolation. Classes from
- * the application JARs are loaded in preference to the parent loader.
+ * A {@link ClassLoader} for YARN application isolation. Classes from the application JARs are
+ * loaded in preference to the parent loader.
  *
  * The delegation order is:
  *
- * ProgramClassLoader -> Plugin Lib ClassLoader -> Plugins Export-Package ClassLoaders -> System ClassLoader
+ * ProgramClassLoader -> Plugin Lib ClassLoader -> Plugins Export-Package ClassLoaders -> System
+ * ClassLoader
  */
 public class MapReduceClassLoader extends CombineClassLoader implements AutoCloseable {
 
@@ -78,59 +79,64 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   private MapReduceTaskContextProvider taskContextProvider;
 
   /**
-   * Finds the {@link MapReduceClassLoader} from the {@link ClassLoader} inside the given {@link Configuration}.
+   * Finds the {@link MapReduceClassLoader} from the {@link ClassLoader} inside the given {@link
+   * Configuration}.
    *
-   * @throws IllegalArgumentException if no {@link MapReduceClassLoader} can be found from the {@link Configuration}.
+   * @throws IllegalArgumentException if no {@link MapReduceClassLoader} can be found from the
+   *     {@link Configuration}.
    */
   public static MapReduceClassLoader getFromConfiguration(Configuration configuration) {
     return Delegators.getDelegate(configuration.getClassLoader(), MapReduceClassLoader.class);
   }
 
   /**
-   * Constructor. It creates classloader for MapReduce from information
-   * gathered through {@link MapReduceContextConfig}. This method is called by {@link MapReduceContainerLauncher}.
+   * Constructor. It creates classloader for MapReduce from information gathered through {@link
+   * MapReduceContextConfig}. This method is called by {@link MapReduceContainerLauncher}.
    */
   @SuppressWarnings("unused")
   public MapReduceClassLoader() {
     this(new Parameters(), new TaskContextProviderFactory() {
       @Override
       public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
-                                                 MapReduceClassLoader mapReduceClassLoader) {
-        Preconditions.checkState(!MapReduceTaskContextProvider.isLocal(hConf), "Expected to be in distributed mode.");
+          MapReduceClassLoader mapReduceClassLoader) {
+        Preconditions.checkState(!MapReduceTaskContextProvider.isLocal(hConf),
+            "Expected to be in distributed mode.");
         return new DistributedMapReduceTaskContextProvider(cConf, hConf, mapReduceClassLoader);
       }
     });
   }
 
   /**
-   * Constructs a ClassLoader that load classes from the programClassLoader, then from the plugin lib ClassLoader,
-   * followed by plugin Export-Package ClassLoader and with the system ClassLoader last.
-   * This constructor should only be called from {@link MapReduceRuntimeService} only.
+   * Constructs a ClassLoader that load classes from the programClassLoader, then from the plugin
+   * lib ClassLoader, followed by plugin Export-Package ClassLoader and with the system ClassLoader
+   * last. This constructor should only be called from {@link MapReduceRuntimeService} only.
    */
   MapReduceClassLoader(final Injector injector, CConfiguration cConf, Configuration hConf,
-                       ClassLoader programClassLoader, Map<String, Plugin> plugins,
-                       @Nullable PluginInstantiator pluginInstantiator) {
+      ClassLoader programClassLoader, Map<String, Plugin> plugins,
+      @Nullable PluginInstantiator pluginInstantiator) {
     this(new Parameters(cConf, hConf,
-                        programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
+        programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
       @Override
       public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
-                                                 MapReduceClassLoader mapReduceClassLoader) {
+          MapReduceClassLoader mapReduceClassLoader) {
         return new MapReduceTaskContextProvider(injector, mapReduceClassLoader);
       }
     });
   }
 
   /**
-   * Constructs a ClassLoader based on the given {@link Parameters} and also uses the given
-   * {@link TaskContextProviderFactory} to create {@link MapReduceTaskContextProvider} on demand.
+   * Constructs a ClassLoader based on the given {@link Parameters} and also uses the given {@link
+   * TaskContextProviderFactory} to create {@link MapReduceTaskContextProvider} on demand.
    */
-  private MapReduceClassLoader(final Parameters parameters, final TaskContextProviderFactory contextProviderFactory) {
+  private MapReduceClassLoader(final Parameters parameters,
+      final TaskContextProviderFactory contextProviderFactory) {
     super(null, createDelegates(parameters));
     this.parameters = parameters;
     this.taskContextProviderSupplier = new Supplier<MapReduceTaskContextProvider>() {
       @Override
       public MapReduceTaskContextProvider get() {
-        return contextProviderFactory.create(parameters.getCConf(), parameters.getHConf(), MapReduceClassLoader.this);
+        return contextProviderFactory.create(parameters.getCConf(), parameters.getHConf(),
+            MapReduceClassLoader.this);
       }
     };
   }
@@ -144,16 +150,17 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     LoggingContextAccessor.setLoggingContext(loggingContext);
 
     synchronized (this) {
-      taskContextProvider = Optional.fromNullable(taskContextProvider).or(taskContextProviderSupplier);
+      taskContextProvider = Optional.fromNullable(taskContextProvider)
+          .or(taskContextProviderSupplier);
     }
     taskContextProvider.startAndWait();
     return taskContextProvider;
   }
 
   /**
-   * Creates logging context for MapReduce program. If the program is started
-   * by Workflow an instance of {@link WorkflowProgramLoggingContext} is returned,
-   * otherwise an instance of {@link MapReduceLoggingContext} is returned.
+   * Creates logging context for MapReduce program. If the program is started by Workflow an
+   * instance of {@link WorkflowProgramLoggingContext} is returned, otherwise an instance of {@link
+   * MapReduceLoggingContext} is returned.
    */
   private LoggingContext createMapReduceLoggingContext() {
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
@@ -161,7 +168,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     RunId runId = ProgramRunners.getRunId(contextConfig.getProgramOptions());
 
     return LoggingContextHelper.getLoggingContextWithRunId(programId.run(runId),
-                                                           contextConfig.getProgramOptions().getArguments().asMap());
+        contextConfig.getProgramOptions().getArguments().asMap());
   }
 
   /**
@@ -203,15 +210,15 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    */
   private static List<ClassLoader> createDelegates(Parameters parameters) {
     return ImmutableList.of(
-      parameters.getProgramClassLoader(),
-      parameters.getFilteredPluginsClassLoader(),
-      MapReduceClassLoader.class.getClassLoader()
+        parameters.getProgramClassLoader(),
+        parameters.getFilteredPluginsClassLoader(),
+        MapReduceClassLoader.class.getClassLoader()
     );
   }
 
   /**
-   * A container class for holding parameters for the construction of the MapReduceClassLoader.
-   * It is needed because we need all parameters available when calling super constructor.
+   * A container class for holding parameters for the construction of the MapReduceClassLoader. It
+   * is needed because we need all parameters available when calling super constructor.
    */
   private static final class Parameters {
 
@@ -233,23 +240,24 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     }
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
-      this(contextConfig.getCConf(), contextConfig.getHConf(), programClassLoader, contextConfig.getPlugins(),
-           createPluginInstantiator(contextConfig, programClassLoader));
+      this(contextConfig.getCConf(), contextConfig.getHConf(), programClassLoader,
+          contextConfig.getPlugins(),
+          createPluginInstantiator(contextConfig, programClassLoader));
     }
 
     /**
      * Creates from the given ProgramClassLoader with plugin classloading support.
      */
     Parameters(CConfiguration cConf, Configuration hConf,
-               ClassLoader programClassLoader,
-               Map<String, Plugin> plugins,
-               @Nullable PluginInstantiator pluginInstantiator) {
+        ClassLoader programClassLoader,
+        Map<String, Plugin> plugins,
+        @Nullable PluginInstantiator pluginInstantiator) {
       this.cConf = cConf;
       this.hConf = hConf;
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
       this.filteredPluginsClassLoader = PluginClassLoaders.createFilteredPluginsClassLoader(plugins,
-                                                                                            pluginInstantiator);
+          pluginInstantiator);
     }
 
     ClassLoader getProgramClassLoader() {
@@ -290,9 +298,10 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
         LOG.info("Create ProgramClassLoader from {}", programLocation);
 
         ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-          programLocation, () -> DirUtils.createTempDir(new File(System.getProperty("user.dir"))));
+            programLocation,
+            () -> DirUtils.createTempDir(new File(System.getProperty("user.dir"))));
         return new ProgramClassLoader(contextConfig.getCConf(), classLoaderFolder.getDir(),
-                                      FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
+            FilterClassLoader.create(contextConfig.getHConf().getClassLoader()));
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);
         throw Throwables.propagate(e);
@@ -304,18 +313,19 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
      */
     @Nullable
     private static PluginInstantiator createPluginInstantiator(MapReduceContextConfig contextConfig,
-                                                               ClassLoader programClassLoader) {
+        ClassLoader programClassLoader) {
       String pluginArchive = contextConfig.getHConf().get(Constants.Plugin.ARCHIVE);
       if (pluginArchive == null) {
         return null;
       }
-      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader, new File(pluginArchive));
+      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader,
+          new File(pluginArchive));
     }
   }
 
   /**
-   * A private interface to help abstract out which type of {@link MapReduceTaskContextProvider} is created,
-   * depending on the runtime environment.
+   * A private interface to help abstract out which type of {@link MapReduceTaskContextProvider} is
+   * created, depending on the runtime environment.
    */
   private interface TaskContextProviderFactory {
 
@@ -323,6 +333,6 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
      * Returns a new instance of {@link MapReduceTaskContextProvider}.
      */
     MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
-                                        MapReduceClassLoader mapReduceClassLoader);
+        MapReduceClassLoader mapReduceClassLoader);
   }
 }

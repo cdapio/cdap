@@ -36,15 +36,16 @@ import javax.annotation.Nullable;
  * This class uses Java Reflection to inspect fields in any Java class to generate RECORD schema.
  * <p/>
  * <p>
- * If the given type is a class, it will uses the class fields (includes all the fields in parent classes)
- * to generate the schema. All fields, no matter what access it is would be included, except transient or
- * synthetic one.
+ * If the given type is a class, it will uses the class fields (includes all the fields in parent
+ * classes) to generate the schema. All fields, no matter what access it is would be included,
+ * except transient or synthetic one.
  * </p>
  * <p/>
  * <p>
- * If the given type is an interface, it will uses all getter methods (methods that prefix with "get" or "is",
- * followed by a name with no arguments) to generate fields for the record schema.
- * E.g. for the method {@code String getFirstName()}, a field name "firstName" of type String would be generated.
+ * If the given type is an interface, it will uses all getter methods (methods that prefix with
+ * "get" or "is", followed by a name with no arguments) to generate fields for the record schema.
+ * E.g. for the method {@code String getFirstName()}, a field name "firstName" of type String would
+ * be generated.
  * </p>
  */
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
@@ -60,13 +61,14 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
   }
 
   @Override
-  protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords, boolean acceptRecursion)
-    throws UnsupportedTypeException {
+  protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords,
+      boolean acceptRecursion)
+      throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
     Map<String, TypeToken<?>> recordFieldTypes =
-      typeToken.getRawType().isInterface() ?
-        collectByMethods(typeToken, new TreeMap<>()) :
-        collectByFields(typeToken, new TreeMap<>());
+        typeToken.getRawType().isInterface()
+            ? collectByMethods(typeToken, new TreeMap<>()) :
+            collectByFields(typeToken, new TreeMap<>());
 
     // Recursively generate field type schema.
     List<Schema.Field> fields = new ArrayList<>();
@@ -92,7 +94,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     return Schema.recordOf(recordName, Collections.unmodifiableList(fields));
   }
 
-  private Map<String, TypeToken<?>> collectByFields(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
+  private Map<String, TypeToken<?>> collectByFields(TypeToken<?> typeToken,
+      Map<String, TypeToken<?>> fieldTypes) {
     // Collect the field types
     for (TypeToken<?> classType : typeToken.getTypes().classes()) {
       Class<?> rawType = classType.getRawType();
@@ -103,7 +106,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
       for (Field field : rawType.getDeclaredFields()) {
         int modifiers = field.getModifiers();
-        if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers) || field.isSynthetic()) {
+        if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers)
+            || field.isSynthetic()) {
           continue;
         }
         TypeToken<?> fieldType = classType.resolveType(field.getGenericType());
@@ -113,7 +117,8 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
     return fieldTypes;
   }
 
-  private Map<String, TypeToken<?>> collectByMethods(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {
+  private Map<String, TypeToken<?>> collectByMethods(TypeToken<?> typeToken,
+      Map<String, TypeToken<?>> fieldTypes) {
     for (Method method : typeToken.getRawType().getMethods()) {
       if (method.getDeclaringClass().equals(Object.class)) {
         // Ignore all object methods
@@ -121,17 +126,18 @@ public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
       }
       String methodName = method.getName();
       if (!(methodName.startsWith("get") || methodName.startsWith("is"))
-           || method.isSynthetic() || Modifier.isStatic(method.getModifiers())
-           || method.getParameterTypes().length != 0) {
+          || method.isSynthetic() || Modifier.isStatic(method.getModifiers())
+          || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
-      String fieldName = methodName.startsWith("get") ?
-                           methodName.substring("get".length()) : methodName.substring("is".length());
+      String fieldName = methodName.startsWith("get")
+          ? methodName.substring("get".length()) : methodName.substring("is".length());
       if (fieldName.isEmpty()) {
         continue;
       }
-      fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1));
+      fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)),
+          fieldName.substring(1));
       if (fieldTypes.containsKey(fieldName)) {
         continue;
       }

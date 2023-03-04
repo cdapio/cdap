@@ -85,8 +85,8 @@ public abstract class ProtoConstraint implements Constraint {
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
-        && getClass() == o.getClass()
-        && getMaxConcurrency() == ((ConcurrencyConstraint) o).getMaxConcurrency();
+          && getClass() == o.getClass()
+          && getMaxConcurrency() == ((ConcurrencyConstraint) o).getMaxConcurrency();
     }
 
     @Override
@@ -134,8 +134,8 @@ public abstract class ProtoConstraint implements Constraint {
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
-        && getClass() == o.getClass()
-        && getMillisAfterTrigger() == ((DelayConstraint) o).getMillisAfterTrigger();
+          && getClass() == o.getClass()
+          && getMillisAfterTrigger() == ((DelayConstraint) o).getMillisAfterTrigger();
     }
 
     @Override
@@ -174,8 +174,8 @@ public abstract class ProtoConstraint implements Constraint {
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
-        && getClass() == o.getClass()
-        && getMillisSinceLastRun() == ((LastRunConstraint) o).getMillisSinceLastRun();
+          && getClass() == o.getClass()
+          && getMillisSinceLastRun() == ((LastRunConstraint) o).getMillisSinceLastRun();
     }
 
     @Override
@@ -199,8 +199,8 @@ public abstract class ProtoConstraint implements Constraint {
     protected final String endTime;
 
     public TimeRangeConstraint(String startTime,
-                               String endTime,
-                               TimeZone timeZone) {
+        String endTime,
+        TimeZone timeZone) {
       super(Type.TIME_RANGE, true);
       this.startTime = startTime;
       this.endTime = endTime;
@@ -240,16 +240,19 @@ public abstract class ProtoConstraint implements Constraint {
       try {
         startDate = formatter.parse(startTime);
       } catch (ParseException e) {
-        throw new IllegalArgumentException(String.format("Failed to parse start time '%s'", startTime), e);
+        throw new IllegalArgumentException(
+            String.format("Failed to parse start time '%s'", startTime), e);
       }
       try {
         endDate = formatter.parse(endTime);
       } catch (ParseException e) {
-        throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime), e);
+        throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime),
+            e);
       }
       if (startDate.compareTo(endDate) == 0) {
-        throw new IllegalArgumentException(String.format("The start time (%s) must not equal the end time (%s).",
-                                                         startTime, endTime));
+        throw new IllegalArgumentException(
+            String.format("The start time (%s) must not equal the end time (%s).",
+                startTime, endTime));
       }
       return new ValidationResult(calendar, startDate, endDate);
     }
@@ -257,10 +260,10 @@ public abstract class ProtoConstraint implements Constraint {
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
-        && getClass() == o.getClass()
-        && getStartTime().equals(((TimeRangeConstraint) o).getStartTime())
-        && getEndTime().equals(((TimeRangeConstraint) o).getEndTime())
-        && Objects.equals(getTimeZone(), ((TimeRangeConstraint) o).getTimeZone());
+          && getClass() == o.getClass()
+          && getStartTime().equals(((TimeRangeConstraint) o).getStartTime())
+          && getEndTime().equals(((TimeRangeConstraint) o).getEndTime())
+          && Objects.equals(getTimeZone(), ((TimeRangeConstraint) o).getTimeZone());
     }
 
     @Override
@@ -277,6 +280,7 @@ public abstract class ProtoConstraint implements Constraint {
      * Helper class to capture the intermediate values of validation, to avoid code duplication.
      */
     protected static class ValidationResult {
+
       private final Calendar calendar;
       private final Date startDate;
       private final Date endDate;
@@ -313,10 +317,12 @@ public abstract class ProtoConstraint implements Constraint {
       throw new IllegalArgumentException(name + " must be specified");
     }
     if (minValue != null && value.compareTo(minValue) < 0) {
-      throw new IllegalArgumentException(name + " must be greater than or equal to" + minValue + " but is " + value);
+      throw new IllegalArgumentException(
+          name + " must be greater than or equal to" + minValue + " but is " + value);
     }
     if (maxValue != null && value.compareTo(maxValue) > 0) {
-      throw new IllegalArgumentException(name + " must be less than or equal to " + maxValue + " but is " + value);
+      throw new IllegalArgumentException(
+          name + " must be less than or equal to " + maxValue + " but is " + value);
     }
   }
 }

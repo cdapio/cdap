@@ -35,5 +35,6 @@ public abstract class AbstractVerifier<T> implements Verifier<T> {
     }
     return VerifyResult.success();
   }
+
   protected abstract String getName(T input);
 }

@@ -42,14 +42,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The Guice module for providing bindings for {@link DiscoveryService} and {@link DiscoveryServiceClient} that uses
- * ZooKeeper as the service discovery mechanism.
+ * The Guice module for providing bindings for {@link DiscoveryService} and {@link
+ * DiscoveryServiceClient} that uses ZooKeeper as the service discovery mechanism.
  */
 public final class ZKDiscoveryModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(ZKDiscoveryService.class).toProvider(ZKDiscoveryServiceProvider.class).in(Scopes.SINGLETON);
+    bind(ZKDiscoveryService.class).toProvider(ZKDiscoveryServiceProvider.class)
+        .in(Scopes.SINGLETON);
 
     bind(DiscoveryService.class).to(ZKDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(ProgramDiscoveryServiceClient.class).in(Scopes.SINGLETON);
@@ -77,8 +78,8 @@ public final class ZKDiscoveryModule extends PrivateModule {
   }
 
   /**
-   * A DiscoveryServiceClient implementation that will namespace correctly for program service discovery.
-   * Otherwise it'll delegate to default one.
+   * A DiscoveryServiceClient implementation that will namespace correctly for program service
+   * discovery. Otherwise it'll delegate to default one.
    */
   private static final class ProgramDiscoveryServiceClient implements DiscoveryServiceClient {
 
@@ -92,22 +93,23 @@ public final class ZKDiscoveryModule extends PrivateModule {
 
     @Inject
     ProgramDiscoveryServiceClient(ZKClient zkClient,
-                                  CConfiguration configuration,
-                                  ZKDiscoveryService masterDiscoveryService) {
+        CConfiguration configuration,
+        ZKDiscoveryService masterDiscoveryService) {
       this.zkClient = zkClient;
       this.masterDiscoveryService = masterDiscoveryService;
       this.twillNamespace = configuration.get(Constants.CFG_TWILL_ZK_NAMESPACE);
       this.clients = CacheBuilder.newBuilder()
-        .expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
-        .removalListener((RemovalListener<String, ZKDiscoveryService>) notification ->
-          Optional.ofNullable(notification.getValue()).ifPresent(ZKDiscoveryService::close))
-        .build(createClientLoader());
+          .expireAfterAccess(CACHE_EXPIRES_MINUTES, TimeUnit.MINUTES)
+          .removalListener((RemovalListener<String, ZKDiscoveryService>) notification ->
+              Optional.ofNullable(notification.getValue()).ifPresent(ZKDiscoveryService::close))
+          .build(createClientLoader());
     }
 
     @Override
     public ServiceDiscovered discover(final String name) {
       for (ProgramType programType : ProgramType.values()) {
-        if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverableTypeName() + ".")) {
+        if (programType.isDiscoverable() && name.startsWith(
+            programType.getDiscoverableTypeName() + ".")) {
           return clients.getUnchecked(name).discover(name);
         }
       }
@@ -119,7 +121,8 @@ public final class ZKDiscoveryModule extends PrivateModule {
         @Override
         public ZKDiscoveryService load(String key) {
           ProgramId programID = ServiceDiscoverable.getId(key);
-          String ns = String.format("%s/%s", twillNamespace, TwillAppNames.toTwillAppName(programID));
+          String ns = String.format("%s/%s", twillNamespace,
+              TwillAppNames.toTwillAppName(programID));
           LOG.info("Create ZKDiscoveryClient for {}", ns);
           return new ZKDiscoveryService(ZKClients.namespace(zkClient, ns));
         }

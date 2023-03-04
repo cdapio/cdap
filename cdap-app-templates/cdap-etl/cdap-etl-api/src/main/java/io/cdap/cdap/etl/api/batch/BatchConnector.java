@@ -39,7 +39,8 @@ public interface BatchConnector<KEY_IN, VAL_IN> extends Connector {
    * @param context context for the connector
    * @throws IOException if unable to retrieve the input format provider
    */
-  InputFormatProvider getInputFormatProvider(ConnectorContext context, SampleRequest request) throws IOException;
+  InputFormatProvider getInputFormatProvider(ConnectorContext context, SampleRequest request)
+      throws IOException;
 
   /**
    * Transform the sampled key and value back to StructuredRecord

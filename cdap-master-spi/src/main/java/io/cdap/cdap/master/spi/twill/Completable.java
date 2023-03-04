@@ -26,6 +26,7 @@ import org.apache.twill.api.TwillRunnable;
  * Annotation to denote a {@link TwillRunnable} that completes.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.TYPE })
+@Target({ElementType.TYPE})
 public @interface Completable {
+
 }

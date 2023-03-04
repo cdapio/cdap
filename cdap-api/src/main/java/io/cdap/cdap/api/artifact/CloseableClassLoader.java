@@ -20,8 +20,8 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * A {@link ClassLoader} that implements {@link Closeable} for resource cleanup. All classloading is done
- * by the delegate {@link ClassLoader}.
+ * A {@link ClassLoader} that implements {@link Closeable} for resource cleanup. All classloading is
+ * done by the delegate {@link ClassLoader}.
  */
 public class CloseableClassLoader extends ClassLoader implements Closeable {
 

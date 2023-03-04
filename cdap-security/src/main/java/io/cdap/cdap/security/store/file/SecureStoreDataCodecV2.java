@@ -32,18 +32,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Version 2 codec for {@link SecureStoreData} and providing the {@link java.security.KeyStore} scheme.
+ * Version 2 codec for {@link SecureStoreData} and providing the {@link java.security.KeyStore}
+ * scheme.
  *
- * Version 2 codec uses PKCS12 KeyStore and directly converts the hex-encoded namespace and key name to a key alias in
- * <hex-encoded-namespace>-<key> format. When encoding and decoding a {@link SecureStoreData} struct, each piece of
- * metadata along with its length is written in binary format. See {@link #encode(SecureStoreData)} and
- * {@link #decode(byte[])} for details.
+ * Version 2 codec uses PKCS12 KeyStore and directly converts the hex-encoded namespace and key name
+ * to a key alias in <hex-encoded-namespace>-<key> format. When encoding and decoding a {@link
+ * SecureStoreData} struct, each piece of metadata along with its length is written in binary
+ * format. See {@link #encode(SecureStoreData)} and {@link #decode(byte[])} for details.
  */
 public class SecureStoreDataCodecV2 implements FileSecureStoreCodec {
 
-  /** Scheme for KeyStore instance. */
+  /**
+   * Scheme for KeyStore instance.
+   */
   private static final String SCHEME_PKCS12 = "PKCS12";
-  /** Separator between key namespace and key name in key alias. */
+  /**
+   * Separator between key namespace and key name in key alias.
+   */
   private static final String NAME_SEPARATOR = ":";
 
   @Override
@@ -55,8 +60,9 @@ public class SecureStoreDataCodecV2 implements FileSecureStoreCodec {
   public String getKeyAliasFromInfo(KeyInfo keyInfo) {
     // Namespaces can be case-sensitive, while key names cannot. As we cannot assume the backing implementation of
     // KeyStore supports case-sensitive aliases, the namespace must be hex-encoded during alias generation.
-    return Bytes.toHexString(keyInfo.getNamespace().getBytes(StandardCharsets.UTF_8)) + NAME_SEPARATOR
-      + keyInfo.getName();
+    return Bytes.toHexString(keyInfo.getNamespace().getBytes(StandardCharsets.UTF_8))
+        + NAME_SEPARATOR
+        + keyInfo.getName();
   }
 
   @Override

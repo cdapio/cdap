@@ -39,9 +39,10 @@ public class LineageInfo {
   private final Long endTimeMs;
   private final String lineageId;
 
-  private LineageInfo(Set<Asset> sources, Set<Asset> targets, Map<Asset, Set<Asset>> sourceToTargets,
-                      Map<Asset, Set<Asset>> targetToSources, @Nullable Long startTimeMs,
-                      @Nullable Long endTimeMs, String lineageId) {
+  private LineageInfo(Set<Asset> sources, Set<Asset> targets,
+      Map<Asset, Set<Asset>> sourceToTargets,
+      Map<Asset, Set<Asset>> targetToSources, @Nullable Long startTimeMs,
+      @Nullable Long endTimeMs, String lineageId) {
     this.sources = Collections.unmodifiableSet(new HashSet<>(sources));
     this.targets = Collections.unmodifiableSet(new HashSet<>(targets));
     this.sourceToTargets = Collections.unmodifiableMap(new HashMap<>(sourceToTargets));
@@ -104,15 +105,15 @@ public class LineageInfo {
 
   @Override
   public String toString() {
-    return "LineageInfo{" +
-      "sources=" + sources +
-      ", targets=" + targets +
-      ", sourceToTargets=" + sourceToTargets +
-      ", targetToSources=" + targetToSources +
-      ", startTimeMs=" + startTimeMs +
-      ", endTimeMs=" + endTimeMs +
-      ", lineageId=" + lineageId +
-      '}';
+    return "LineageInfo{"
+        + "sources=" + sources
+        + ", targets=" + targets
+        + ", sourceToTargets=" + sourceToTargets
+        + ", targetToSources=" + targetToSources
+        + ", startTimeMs=" + startTimeMs
+        + ", endTimeMs=" + endTimeMs
+        + ", lineageId=" + lineageId
+        + '}';
   }
 
   @Override
@@ -124,18 +125,19 @@ public class LineageInfo {
       return false;
     }
     LineageInfo that = (LineageInfo) o;
-    return sources.equals(that.sources) &&
-      targets.equals(that.targets) &&
-      sourceToTargets.equals(that.sourceToTargets) &&
-      targetToSources.equals(that.targetToSources) &&
-      Objects.equals(startTimeMs, that.startTimeMs) &&
-      Objects.equals(endTimeMs, that.endTimeMs) &&
-      Objects.equals(lineageId, that.lineageId);
+    return sources.equals(that.sources)
+        && targets.equals(that.targets)
+        && sourceToTargets.equals(that.sourceToTargets)
+        && targetToSources.equals(that.targetToSources)
+        && Objects.equals(startTimeMs, that.startTimeMs)
+        && Objects.equals(endTimeMs, that.endTimeMs)
+        && Objects.equals(lineageId, that.lineageId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs, lineageId);
+    return Objects.hash(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs,
+        lineageId);
   }
 
   public static LineageInfo.Builder builder() {
@@ -146,6 +148,7 @@ public class LineageInfo {
    * A builder to create {@link LineageInfo} instance.
    */
   public static final class Builder {
+
     private Set<Asset> sources;
     private Set<Asset> targets;
     private final Map<Asset, Set<Asset>> sourceToTargets;
@@ -239,8 +242,9 @@ public class LineageInfo {
      */
     public Builder setSourceToTargets(Map<Asset, Set<Asset>> sourceToTargets) {
       this.sourceToTargets.clear();
-      sourceToTargets.keySet().forEach(key -> this.sourceToTargets.put(key, Collections.unmodifiableSet(
-        new HashSet<>(sourceToTargets.get(key)))));
+      sourceToTargets.keySet()
+          .forEach(key -> this.sourceToTargets.put(key, Collections.unmodifiableSet(
+              new HashSet<>(sourceToTargets.get(key)))));
       return this;
     }
 
@@ -275,8 +279,9 @@ public class LineageInfo {
      */
     public Builder setTargetToSources(Map<Asset, Set<Asset>> targetToSources) {
       this.targetToSources.clear();
-      targetToSources.keySet().forEach(key -> this.targetToSources.put(key, Collections.unmodifiableSet(
-        new HashSet<>(targetToSources.get(key)))));
+      targetToSources.keySet()
+          .forEach(key -> this.targetToSources.put(key, Collections.unmodifiableSet(
+              new HashSet<>(targetToSources.get(key)))));
       return this;
     }
 
@@ -307,7 +312,8 @@ public class LineageInfo {
      * Creates a new instance of {@link LineageInfo}.
      */
     public LineageInfo build() {
-      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTimeMs, endTimeMs, lineageId);
+      return new LineageInfo(sources, targets, sourceToTargets, targetToSources, startTimeMs,
+          endTimeMs, lineageId);
     }
   }
 }

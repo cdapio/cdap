@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
  * {@link io.cdap.cdap.api.dataset.module.DatasetModule} for {@link io.cdap.cdap.api.dataset.lib.FileSet}.
  */
 public class FileSetModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     // file dataset

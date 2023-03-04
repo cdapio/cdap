@@ -20,4 +20,5 @@ package io.cdap.cdap.api.dataset.lib;
  * Represents a partition of a partitioned file set for writing.
  */
 public interface TimePartitionOutput extends TimePartition, PartitionOutput {
+
 }

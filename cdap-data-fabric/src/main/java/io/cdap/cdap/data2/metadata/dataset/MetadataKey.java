@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Key used to store Metadata values and indexes
  */
 class MetadataKey {
+
   private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
   private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
 
@@ -61,8 +62,8 @@ class MetadataKey {
   }
 
   /**
-   * Creates a key for metadata value row in the format:
-   * [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key] for value index rows
+   * Creates a key for metadata value row in the format: [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key]
+   * for value index rows
    */
   static MDSKey createValueRowKey(MetadataEntity metadataEntity, @Nullable String key) {
     MDSKey.Builder builder = getMDSKeyPrefix(metadataEntity, VALUE_ROW_PREFIX);
@@ -73,8 +74,8 @@ class MetadataKey {
   }
 
   /**
-   * Creates a key for metadata index row in the format:
-   * [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index] for value index rows
+   * Creates a key for metadata index row in the format: [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index]
+   * for value index rows
    */
   static MDSKey createIndexRowKey(MetadataEntity targetId, String key, @Nullable String index) {
     MDSKey.Builder builder = getMDSKeyPrefix(targetId, INDEX_ROW_PREFIX);
@@ -132,8 +133,8 @@ class MetadataKey {
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
       // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
       // if it is a versioned entity then ignore the version
-      if (MetadataUtil.isVersionedEntityType(metadataEntity.getType()) &&
-        keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
+      if (MetadataUtil.isVersionedEntityType(metadataEntity.getType())
+          && keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
         continue;
       }
       builder.add(keyValue.getKey());
@@ -141,6 +142,7 @@ class MetadataKey {
     }
     return builder;
   }
+
   private MetadataKey() {
   }
 }

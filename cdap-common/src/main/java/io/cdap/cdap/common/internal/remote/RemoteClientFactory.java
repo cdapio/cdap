@@ -26,37 +26,42 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
  * A factory to create {@link RemoteClient}.
  */
 public class RemoteClientFactory {
+
   public static final HttpRequestConfig NO_VERIFY_HTTP_REQUEST_CONFIG = new HttpRequestConfig(15000,
-                                                                                              15000,
-                                                                                              false);
+      15000,
+      false);
   private final DiscoveryServiceClient discoveryClient;
   private final InternalAuthenticator internalAuthenticator;
   private final RemoteAuthenticator remoteAuthenticator;
   private final String pathPrefix;
 
   @VisibleForTesting
-  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator) {
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
+      InternalAuthenticator internalAuthenticator) {
     this(discoveryClient, internalAuthenticator, new NoOpRemoteAuthenticator(), "");
   }
 
   @Inject
-  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator,
-                             RemoteAuthenticator remoteAuthenticator) {
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
+      InternalAuthenticator internalAuthenticator,
+      RemoteAuthenticator remoteAuthenticator) {
     this(discoveryClient, internalAuthenticator, remoteAuthenticator, "");
   }
 
-  public RemoteClientFactory(DiscoveryServiceClient discoveryClient, InternalAuthenticator internalAuthenticator,
-                             RemoteAuthenticator remoteAuthenticator, String pathPrefix) {
+  public RemoteClientFactory(DiscoveryServiceClient discoveryClient,
+      InternalAuthenticator internalAuthenticator,
+      RemoteAuthenticator remoteAuthenticator, String pathPrefix) {
     this.discoveryClient = discoveryClient;
     this.internalAuthenticator = internalAuthenticator;
     this.remoteAuthenticator = remoteAuthenticator;
     this.pathPrefix = pathPrefix;
   }
 
-  public RemoteClient createRemoteClient(String discoverableServiceName, HttpRequestConfig httpRequestConfig,
-                                         String basePath) {
+  public RemoteClient createRemoteClient(String discoverableServiceName,
+      HttpRequestConfig httpRequestConfig,
+      String basePath) {
     basePath = basePath.startsWith("/") ? pathPrefix + basePath : pathPrefix + "/" + basePath;
     return new RemoteClient(internalAuthenticator, discoveryClient, discoverableServiceName,
-                            httpRequestConfig, basePath, remoteAuthenticator);
+        httpRequestConfig, basePath, remoteAuthenticator);
   }
 }

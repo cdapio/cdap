@@ -22,6 +22,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
  * Convenience class to group config keys for memory, cores, and instances for each system service.
  */
 public class ServiceResourceKeys {
+
   private final String serviceName;
   private final String memoryKey;
   private final String vcoresKey;
@@ -29,8 +30,9 @@ public class ServiceResourceKeys {
   private final String maxInstancesKey;
   protected final CConfiguration cConf;
 
-  public ServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey, String vcoresKey,
-                             String instancesKey, String maxInstancesKey) {
+  public ServiceResourceKeys(CConfiguration cConf, String serviceName, String memoryKey,
+      String vcoresKey,
+      String instancesKey, String maxInstancesKey) {
     this.cConf = cConf;
     this.serviceName = serviceName;
     this.memoryKey = memoryKey;

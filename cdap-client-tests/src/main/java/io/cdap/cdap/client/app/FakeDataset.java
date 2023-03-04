@@ -31,7 +31,7 @@ import java.util.List;
  *
  */
 public class FakeDataset extends AbstractDataset
-  implements BatchReadable<byte[], byte[]>, RecordScannable<KeyValue<byte[], byte[]>> {
+    implements BatchReadable<byte[], byte[]>, RecordScannable<KeyValue<byte[], byte[]>> {
 
   public static final String TYPE_NAME = "fakeType";
 

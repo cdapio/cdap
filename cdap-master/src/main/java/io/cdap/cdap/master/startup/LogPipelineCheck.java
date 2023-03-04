@@ -37,7 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Checks for log appender configurations. This class will be automatically picked up by the MasterStartupTool.
+ * Checks for log appender configurations. This class will be automatically picked up by the
+ * MasterStartupTool.
  */
 @SuppressWarnings("unused")
 class LogPipelineCheck extends AbstractMasterCheck {
@@ -59,7 +60,8 @@ class LogPipelineCheck extends AbstractMasterCheck {
     // We need to use reflection to load the LogPipelineLoader class and call validate on it
 
     // Collects all URLS used by the CDAP system classloader
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(),
+        new ArrayList<URL>());
     for (File libJar : LoggingUtil.getExtensionJars(cConf)) {
       urls.add(libJar.toURI().toURL());
     }
@@ -82,7 +84,8 @@ class LogPipelineCheck extends AbstractMasterCheck {
     Object cConf = cConfClass.getMethod("create").invoke(null);
     cConfClass.getMethod("clear").invoke(cConf);
 
-    InputStream input = new ByteArrayInputStream(writer.toString().getBytes(StandardCharsets.UTF_8));
+    InputStream input = new ByteArrayInputStream(
+        writer.toString().getBytes(StandardCharsets.UTF_8));
     cConfClass.getMethod("addResource", InputStream.class).invoke(cConf, input);
 
     Class<?> loaderClass = classLoader.loadClass(LogPipelineLoader.class.getName());
@@ -101,7 +104,8 @@ class LogPipelineCheck extends AbstractMasterCheck {
       // that would make the code unnecessarily complicate since we know that only InvalidPipelineException
       // will be throw from the validate method.
       if (InvalidPipelineException.class.getName().equals(cause.getClass().getName())) {
-        InvalidPipelineException ex = new InvalidPipelineException(cause.getMessage(), cause.getCause());
+        InvalidPipelineException ex = new InvalidPipelineException(cause.getMessage(),
+            cause.getCause());
         ex.setStackTrace(cause.getStackTrace());
         throw ex;
       }

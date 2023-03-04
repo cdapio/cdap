@@ -20,6 +20,7 @@ package io.cdap.cdap.sourcecontrol;
  * Exception thrown when we find changes other than added files
  */
 public class UnexpectedRepositoryChangesException extends Exception {
+
   public UnexpectedRepositoryChangesException(String message) {
     super(message);
   }

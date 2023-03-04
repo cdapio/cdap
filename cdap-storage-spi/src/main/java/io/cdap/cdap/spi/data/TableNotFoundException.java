@@ -25,6 +25,7 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
  */
 @Beta
 public class TableNotFoundException extends RuntimeException {
+
   private final StructuredTableId id;
 
   public TableNotFoundException(StructuredTableId id) {

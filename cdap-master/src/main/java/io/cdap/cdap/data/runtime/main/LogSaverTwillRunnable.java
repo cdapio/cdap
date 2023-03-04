@@ -61,6 +61,7 @@ import org.slf4j.LoggerFactory;
  * Twill wrapper for running LogSaver through Twill.
  */
 public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
+
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTwillRunnable.class);
 
   private Injector injector;
@@ -93,34 +94,37 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, TwillContext twillContext) {
-    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.LOGSAVER, twillContext.getInstanceId());
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf,
+      TwillContext twillContext) {
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.LOGSAVER,
+        twillContext.getInstanceId());
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new DFSLocationModule(),
-      new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new DistributedLogFrameworkModule(twillContext.getInstanceId(), twillContext.getInstanceCount()),
-      new KafkaLogAppenderModule(),
-      new AuditModule(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new MessagingClientModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new DFSLocationModule(),
+        new NamespaceQueryAdminModule(),
+        new DataFabricModules(txClientId).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new DistributedLogFrameworkModule(twillContext.getInstanceId(),
+            twillContext.getInstanceCount()),
+        new KafkaLogAppenderModule(),
+        new AuditModule(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new MessagingClientModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          }
         }
-      }
     );
   }
 }

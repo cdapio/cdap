@@ -51,20 +51,21 @@ import org.slf4j.LoggerFactory;
  * todo: once we have couple methods, refactor out from "util" into smth more sensible
  */
 public final class DatasetsUtil {
+
   private static final Logger LOG = LoggerFactory.getLogger(DatasetsUtil.class);
 
-  private DatasetsUtil() {}
+  private DatasetsUtil() {
+  }
 
   /**
-   * Gets instance of {@link Dataset}, while add instance to
-   * {@link DatasetFramework} and creating the physical data set
-   * if that one doesn't exist.
+   * Gets instance of {@link Dataset}, while add instance to {@link DatasetFramework} and creating
+   * the physical data set if that one doesn't exist.
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetFramework datasetFramework,
-                                                         DatasetId datasetInstanceId, String typeName,
-                                                         DatasetProperties props,
-                                                         @Nullable Map<String, String> arguments)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+      DatasetId datasetInstanceId, String typeName,
+      DatasetProperties props,
+      @Nullable Map<String, String> arguments)
+      throws DatasetManagementException, IOException, UnauthorizedException {
     createIfNotExists(datasetFramework, datasetInstanceId, typeName, props);
     if (arguments == null) {
       arguments = Collections.emptyMap();
@@ -73,15 +74,15 @@ public final class DatasetsUtil {
   }
 
   /**
-   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset doesn't exist,
-   * it will be created using the given {@link DatasetFramework}.
+   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset
+   * doesn't exist, it will be created using the given {@link DatasetFramework}.
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetContext datasetContext,
-                                                         DatasetFramework datasetFramework,
-                                                         DatasetId datasetId,
-                                                         String datasetTypename,
-                                                         DatasetProperties datasetProperties)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+      DatasetFramework datasetFramework,
+      DatasetId datasetId,
+      String datasetTypename,
+      DatasetProperties datasetProperties)
+      throws DatasetManagementException, IOException, UnauthorizedException {
 
     try {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
@@ -92,20 +93,21 @@ public final class DatasetsUtil {
   }
 
   /**
-   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset doesn't exist,
-   * it will be created using the given {@link DatasetFramework}.
+   * Gets a {@link Dataset} instance through the given {@link DatasetContext}. If the dataset
+   * doesn't exist, it will be created using the given {@link DatasetFramework}.
    */
   public static <T extends Dataset> T getOrCreateDataset(DatasetContext datasetContext,
-                                                         DatasetFramework datasetFramework,
-                                                         DatasetId datasetId,
-                                                         String datasetTypename,
-                                                         Supplier<DatasetProperties> datasetPropertiesSupplier)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+      DatasetFramework datasetFramework,
+      DatasetId datasetId,
+      String datasetTypename,
+      Supplier<DatasetProperties> datasetPropertiesSupplier)
+      throws DatasetManagementException, IOException, UnauthorizedException {
 
     try {
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     } catch (DatasetInstantiationException e) {
-      createIfNotExists(datasetFramework, datasetId, datasetTypename, datasetPropertiesSupplier.get());
+      createIfNotExists(datasetFramework, datasetId, datasetTypename,
+          datasetPropertiesSupplier.get());
       return datasetContext.getDataset(datasetId.getNamespace(), datasetId.getDataset());
     }
   }
@@ -114,9 +116,9 @@ public final class DatasetsUtil {
    * Creates instance of the data set if not exists
    */
   public static void createIfNotExists(DatasetFramework datasetFramework,
-                                       DatasetId datasetInstanceId, String typeName,
-                                       DatasetProperties props)
-    throws DatasetManagementException, IOException, UnauthorizedException {
+      DatasetId datasetInstanceId, String typeName,
+      DatasetProperties props)
+      throws DatasetManagementException, IOException, UnauthorizedException {
 
     if (!datasetFramework.hasInstance(datasetInstanceId)) {
       try {
@@ -125,7 +127,7 @@ public final class DatasetsUtil {
         // Do nothing: someone created this instance in between, just continuing
       } catch (DatasetManagementException e) {
         LOG.error("Could NOT add dataset instance {} of type {} with props {}",
-                  datasetInstanceId, typeName, props, e);
+            datasetInstanceId, typeName, props, e);
         throw Throwables.propagate(e);
       }
     }
@@ -133,14 +135,17 @@ public final class DatasetsUtil {
 
 
   /**
-   * For a dataset spec that does not contain the original properties, we attempt to reconstruct them from
-   * the properties at the top-level of the spec. For most datasets, these will be identical, however, there
-   * are a few known dataset types whose {@link DatasetDefinition#configure(String, DatasetProperties)} method
-   * adds additional properties. As of release 3.3, the set of built-in such dataset types is known. Any dataset
-   * created or reconfigured beginning with 3.4 will have the original properties stored in the spec.
+   * For a dataset spec that does not contain the original properties, we attempt to reconstruct
+   * them from the properties at the top-level of the spec. For most datasets, these will be
+   * identical, however, there are a few known dataset types whose {@link
+   * DatasetDefinition#configure(String, DatasetProperties)} method adds additional properties. As
+   * of release 3.3, the set of built-in such dataset types is known. Any dataset created or
+   * reconfigured beginning with 3.4 will have the original properties stored in the spec.
+   *
    * @param spec a dataset spec that does not contain the original properties
-   * @return the input spec if it is null or if it has original properties; otherwise a spec that has the
-   *         original properties with which the dataset was created or reconfigured, at best effort.
+   * @return the input spec if it is null or if it has original properties; otherwise a spec that
+   *     has the original properties with which the dataset was created or reconfigured, at best
+   *     effort.
    */
   @VisibleForTesting
   public static DatasetSpecification fixOriginalProperties(@Nullable DatasetSpecification spec) {
@@ -156,7 +161,8 @@ public final class DatasetsUtil {
         props.remove(FileSetDataset.FILESET_VERSION_PROPERTY);
 
         // TPFS adds the partitioning
-      } else if (TimePartitionedFileSet.class.getName().equals(type) || "timePartitionedFileSet".equals(type)) {
+      } else if (TimePartitionedFileSet.class.getName().equals(type)
+          || "timePartitionedFileSet".equals(type)) {
         props.remove(PartitionedFileSetProperties.PARTITIONING_FIELDS);
         for (String key : spec.getProperties().keySet()) {
           if (key.startsWith(PartitionedFileSetProperties.PARTITIONING_FIELD_PREFIX)) {
@@ -165,7 +171,8 @@ public final class DatasetsUtil {
         }
 
         // ObjectMappedTable adds the table schema and its row field name
-      } else if (ObjectMappedTable.class.getName().endsWith(type) || "objectMappedTable".equals(type)) {
+      } else if (ObjectMappedTable.class.getName().endsWith(type) || "objectMappedTable".equals(
+          type)) {
         props.remove(Table.PROPERTY_SCHEMA);
         props.remove(Table.PROPERTY_SCHEMA_ROW_FIELD);
       }
@@ -174,16 +181,16 @@ public final class DatasetsUtil {
   }
 
   public static boolean isUserDataset(DatasetId datasetInstanceId) {
-    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
-      !isSystemDatasetInUserNamespace(datasetInstanceId);
+    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())
+        && !isSystemDatasetInUserNamespace(datasetInstanceId);
   }
 
   public static boolean isSystemDatasetInUserNamespace(DatasetId datasetInstanceId) {
-    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
-      ("system.queue.config".equals(datasetInstanceId.getEntityName()) ||
-      datasetInstanceId.getEntityName().startsWith("system.sharded.queue") ||
-      datasetInstanceId.getEntityName().startsWith("system.queue") ||
-      datasetInstanceId.getEntityName().startsWith("system.stream"));
+    return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())
+        && ("system.queue.config".equals(datasetInstanceId.getEntityName())
+        || datasetInstanceId.getEntityName().startsWith("system.sharded.queue")
+        || datasetInstanceId.getEntityName().startsWith("system.queue")
+        || datasetInstanceId.getEntityName().startsWith("system.stream"));
   }
 
   /**

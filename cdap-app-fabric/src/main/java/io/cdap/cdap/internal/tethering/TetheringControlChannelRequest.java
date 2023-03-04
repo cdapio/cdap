@@ -22,16 +22,17 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Sent from TetheringAgentService to TetheringServerHandler.
- * Contains last TetheringControlMessage received and list of program status update notifications.
+ * Sent from TetheringAgentService to TetheringServerHandler. Contains last TetheringControlMessage
+ * received and list of program status update notifications.
  */
 public class TetheringControlChannelRequest {
+
   @Nullable
   private final String lastControlMessageId;
   private final List<Notification> notificationList;
 
   public TetheringControlChannelRequest(@Nullable String lastControlMessageId,
-                                        @Nullable List<Notification> notificationList) {
+      @Nullable List<Notification> notificationList) {
     this.lastControlMessageId = lastControlMessageId;
     if (notificationList == null) {
       notificationList = new ArrayList<>();

@@ -26,6 +26,7 @@ import java.util.Objects;
  * Uniquely identifies a messaging topic.
  */
 public class TopicId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   private final String topic;
   private transient Integer hashCode;
   private transient byte[] idBytes;

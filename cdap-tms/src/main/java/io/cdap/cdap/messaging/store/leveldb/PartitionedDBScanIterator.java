@@ -29,6 +29,7 @@ import java.util.function.BiFunction;
  * @param <T> type of object to scan
  */
 public class PartitionedDBScanIterator<T> extends AbstractCloseableIterator<T> {
+
   private final Iterator<LevelDBPartition> partitionIter;
   private final byte[] startRow;
   private final byte[] stopRow;
@@ -36,15 +37,17 @@ public class PartitionedDBScanIterator<T> extends AbstractCloseableIterator<T> {
   private boolean closed;
   private CloseableIterator<Map.Entry<byte[], byte[]>> currentPartition;
 
-  public PartitionedDBScanIterator(Iterator<LevelDBPartition> partitionIter, byte[] startRow, byte[] stopRow,
-                                   BiFunction<byte[], byte[], T> decodeFunction) throws IOException {
+  public PartitionedDBScanIterator(Iterator<LevelDBPartition> partitionIter, byte[] startRow,
+      byte[] stopRow,
+      BiFunction<byte[], byte[], T> decodeFunction) throws IOException {
     this.partitionIter = partitionIter;
     this.startRow = startRow;
     this.stopRow = stopRow;
     this.decodeFunction = decodeFunction;
     this.closed = false;
-    this.currentPartition = partitionIter.hasNext() ?
-      new DBScanIterator(partitionIter.next().getLevelDB(), startRow, stopRow) : CloseableIterator.empty();
+    this.currentPartition = partitionIter.hasNext()
+        ? new DBScanIterator(partitionIter.next().getLevelDB(), startRow, stopRow)
+        : CloseableIterator.empty();
   }
 
   @Override
@@ -56,7 +59,8 @@ public class PartitionedDBScanIterator<T> extends AbstractCloseableIterator<T> {
     if (!currentPartition.hasNext()) {
       while (partitionIter.hasNext()) {
         try {
-          currentPartition = new DBScanIterator(partitionIter.next().getLevelDB(), startRow, stopRow);
+          currentPartition = new DBScanIterator(partitionIter.next().getLevelDB(), startRow,
+              stopRow);
         } catch (IOException e) {
           throw new RuntimeException(e);
         }

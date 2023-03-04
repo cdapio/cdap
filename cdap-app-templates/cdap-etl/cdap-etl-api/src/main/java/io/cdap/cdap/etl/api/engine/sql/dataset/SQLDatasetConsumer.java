@@ -17,10 +17,12 @@
 package io.cdap.cdap.etl.api.engine.sql.dataset;
 
 /**
- * SQL Dataset which exposes a method to get a consumer to be used to write
- * records into the SQL engine.
+ * SQL Dataset which exposes a method to get a consumer to be used to write records into the SQL
+ * engine.
  */
 public interface SQLDatasetConsumer {
+
   SQLDatasetDescription getDescription();
+
   SQLDataset consume(RecordCollection collection);
 }

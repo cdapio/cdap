@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class TetheringClientHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(TetheringClientHandler.class);
   private static final Gson GSON = new Gson();
 
@@ -64,11 +65,12 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   private final String programStateTopicPrefix;
 
   @Inject
-  TetheringClientHandler(CConfiguration cConf, TetheringStore store, ContextAccessEnforcer contextAccessEnforcer,
-                         NamespaceQueryAdmin namespaceQueryAdmin,
-                         @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
-                           RemoteAuthenticator remoteAuthenticator,
-                         MessagingService messagingService) {
+  TetheringClientHandler(CConfiguration cConf, TetheringStore store,
+      ContextAccessEnforcer contextAccessEnforcer,
+      NamespaceQueryAdmin namespaceQueryAdmin,
+      @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+          RemoteAuthenticator remoteAuthenticator,
+      MessagingService messagingService) {
     this.store = store;
     this.contextAccessEnforcer = contextAccessEnforcer;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -85,14 +87,16 @@ public class TetheringClientHandler extends AbstractHttpHandler {
   public void createTethering(FullHttpRequest request, HttpResponder responder) throws Exception {
     contextAccessEnforcer.enforce(InstanceId.SELF, InstancePermission.TETHER);
     String content = request.content().toString(StandardCharsets.UTF_8);
-    TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content, TetheringCreationRequest.class);
+    TetheringCreationRequest tetheringCreationRequest = GSON.fromJson(content,
+        TetheringCreationRequest.class);
     List<NamespaceAllocation> namespaces = tetheringCreationRequest.getNamespaceAllocations();
     validateNamespaces(namespaces);
     PeerMetadata peerMetadata = new PeerMetadata(namespaces, tetheringCreationRequest.getMetadata(),
-                                                 tetheringCreationRequest.getDescription());
+        tetheringCreationRequest.getDescription());
     validateEndpoint(tetheringCreationRequest.getEndpoint());
-    PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(), tetheringCreationRequest.getEndpoint(),
-                                     TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
+    PeerInfo peerInfo = new PeerInfo(tetheringCreationRequest.getPeer(),
+        tetheringCreationRequest.getEndpoint(),
+        TetheringStatus.PENDING, peerMetadata, System.currentTimeMillis());
     tetheringClient.createTethering(peerInfo);
     store.addPeer(peerInfo);
     createPeerProgramStatusTopic(peerInfo.getName());
@@ -110,7 +114,7 @@ public class TetheringClientHandler extends AbstractHttpHandler {
 
   private void createPeerProgramStatusTopic(String peer) throws IOException {
     TopicId topic = new TopicId(NamespaceId.SYSTEM.getNamespace(),
-                                programStateTopicPrefix + peer);
+        programStateTopicPrefix + peer);
     try {
       messagingService.createTopic(new TopicMetadata(topic, Collections.emptyMap()));
     } catch (TopicAlreadyExistsException ex) {
@@ -127,7 +131,8 @@ public class TetheringClientHandler extends AbstractHttpHandler {
     try {
       new URL(endpoint).toURI();
     } catch (Exception e) {
-      throw new BadRequestException(String.format("Endpoint %s is not a valid URI: %s", endpoint, e.getMessage()), e);
+      throw new BadRequestException(
+          String.format("Endpoint %s is not a valid URI: %s", endpoint, e.getMessage()), e);
     }
   }
 }

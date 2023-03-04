@@ -40,12 +40,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link HttpServiceResponder} which delegates calls to
- * the HttpServiceResponder's methods to the matching methods for a {@link HttpResponder}.
- * A response is buffered until execute() is called. This allows you to send the correct response upon
- * a transaction failure, and to not always delegating to the user response.
+ * Implementation of {@link HttpServiceResponder} which delegates calls to the
+ * HttpServiceResponder's methods to the matching methods for a {@link HttpResponder}. A response is
+ * buffered until execute() is called. This allows you to send the correct response upon a
+ * transaction failure, and to not always delegating to the user response.
  */
 public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder implements Closeable {
+
   private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
 
   private final HttpResponder responder;
@@ -60,8 +61,9 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    *
    * @param responder the responder which will be bound to
    */
-  public DelayedHttpServiceResponder(HttpResponder responder, BodyProducerFactory bodyProducerFactory,
-                                     ServiceTaskExecutor taskExecutor, MetricsContext metricsContext) {
+  public DelayedHttpServiceResponder(HttpResponder responder,
+      BodyProducerFactory bodyProducerFactory,
+      ServiceTaskExecutor taskExecutor, MetricsContext metricsContext) {
     this.responder = responder;
     this.taskExecutor = taskExecutor;
     this.metricsContext = metricsContext;
@@ -69,10 +71,11 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   }
 
   /**
-   * Instantiates the class from another {@link DelayedHttpServiceResponder}
-   * with a different {@link BodyProducerFactory}.
+   * Instantiates the class from another {@link DelayedHttpServiceResponder} with a different {@link
+   * BodyProducerFactory}.
    */
-  DelayedHttpServiceResponder(DelayedHttpServiceResponder other, BodyProducerFactory bodyProducerFactory) {
+  DelayedHttpServiceResponder(DelayedHttpServiceResponder other,
+      BodyProducerFactory bodyProducerFactory) {
     this.responder = other.responder;
     this.bodyProducerFactory = bodyProducerFactory;
     this.taskExecutor = other.taskExecutor;
@@ -82,22 +85,24 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
   @Override
   protected void doSend(int status, String contentType,
-                        @Nullable ByteBuf content,
-                        @Nullable HttpContentProducer contentProducer,
-                        @Nullable HttpHeaders headers) {
+      @Nullable ByteBuf content,
+      @Nullable HttpContentProducer contentProducer,
+      @Nullable HttpHeaders headers) {
     Preconditions.checkState(!closed,
-     "Responder is already closed. " +
-       "This may due to either using a HttpServiceResponder inside HttpContentProducer or " +
-       "not using HttpServiceResponder provided to the HttpContentConsumer onFinish/onError method.");
+        "Responder is already closed. "
+            + "This may due to either using a HttpServiceResponder inside HttpContentProducer or "
+            + "not using HttpServiceResponder provided to the HttpContentConsumer onFinish/onError method.");
 
     if (bufferedResponse != null) {
-      LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
+      LOG.warn(
+          "Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
     }
     bufferedResponse = new BufferedResponse(status, contentType, content, contentProducer, headers);
   }
 
   /**
-   * Returns {@code true} if there is a buffered response. This means any of the send methods was called.
+   * Returns {@code true} if there is a buffered response. This means any of the send methods was
+   * called.
    */
   public boolean hasBufferedResponse() {
     return bufferedResponse != null;
@@ -111,8 +116,8 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   }
 
   /**
-   * Since calling one of the send methods multiple times logs a warning, upon transaction failures this
-   * method is called to allow setting the failure response without an additional warning.
+   * Since calling one of the send methods multiple times logs a warning, upon transaction failures
+   * this method is called to allow setting the failure response without an additional warning.
    */
   public void setFailure(Throwable t) {
     LOG.error("Exception occurred while handling request:", t);
@@ -123,14 +128,15 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
       code = statusProvider.getStatusCode();
       message = statusProvider.getMessage();
     } else {
-      message = "Exception occurred while handling request: " + Throwables.getRootCause(t).getMessage();
+      message =
+          "Exception occurred while handling request: " + Throwables.getRootCause(t).getMessage();
       code = HttpResponseStatus.INTERNAL_SERVER_ERROR.code();
     }
     ByteBuf content = Unpooled.copiedBuffer(message, StandardCharsets.UTF_8);
 
     bufferedResponse = new BufferedResponse(code,
-                                            "text/plain; charset=" + Charsets.UTF_8.name(),
-                                            content, null, null);
+        "text/plain; charset=" + Charsets.UTF_8.name(),
+        content, null, null);
   }
 
   /**
@@ -141,31 +147,32 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
   }
 
   /**
-   * Calls to other responder methods in this class only cache the response to be sent. The response is actually
-   * sent only when this method is called.
+   * Calls to other responder methods in this class only cache the response to be sent. The response
+   * is actually sent only when this method is called.
    *
    * @param keepAlive {@code true} to keep the connection open; {@code false} otherwise
    */
   public void execute(boolean keepAlive) {
     Preconditions.checkState(bufferedResponse != null,
-                             "Can not call execute before one of the other responder methods are called.");
+        "Can not call execute before one of the other responder methods are called.");
 
     try {
       HttpContentProducer contentProducer = bufferedResponse.getContentProducer();
       HttpHeaders headers = new DefaultHttpHeaders().add(bufferedResponse.getHeaders());
-      headers.set(HttpHeaderNames.CONNECTION, keepAlive ? HttpHeaderValues.KEEP_ALIVE : HttpHeaderValues.CLOSE);
+      headers.set(HttpHeaderNames.CONNECTION,
+          keepAlive ? HttpHeaderValues.KEEP_ALIVE : HttpHeaderValues.CLOSE);
       if (!headers.contains(HttpHeaderNames.CONTENT_TYPE)) {
         headers.set(HttpHeaderNames.CONTENT_TYPE, bufferedResponse.getContentType());
       }
 
       if (contentProducer != null) {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
-                              new ReleasingBodyProducer(bodyProducerFactory.create(contentProducer, taskExecutor),
-                                                        taskExecutor),
-                              headers);
+            new ReleasingBodyProducer(bodyProducerFactory.create(contentProducer, taskExecutor),
+                taskExecutor),
+            headers);
       } else {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
-                              bufferedResponse.getContentBuffer(), headers);
+            bufferedResponse.getContentBuffer(), headers);
         taskExecutor.releaseCallResources();
       }
       emitMetrics(bufferedResponse.getStatus());
@@ -212,9 +219,9 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
     private final HttpHeaders headers;
 
     private BufferedResponse(int status, String contentType,
-                             @Nullable ByteBuf contentBuffer,
-                             @Nullable HttpContentProducer contentProducer,
-                             @Nullable HttpHeaders headers) {
+        @Nullable ByteBuf contentBuffer,
+        @Nullable HttpContentProducer contentProducer,
+        @Nullable HttpHeaders headers) {
       this.status = status;
       this.contentType = contentType;
       this.contentBuffer = contentBuffer == null ? Unpooled.EMPTY_BUFFER : contentBuffer;
@@ -248,6 +255,7 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
    * Wrapper around a delegate BodyProducer that releases resources after it is finished.
    */
   private static class ReleasingBodyProducer extends BodyProducer {
+
     private final BodyProducer delegate;
     private final ServiceTaskExecutor taskExecutor;
 

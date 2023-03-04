@@ -27,10 +27,12 @@ import java.util.Map;
  * {@link ArtifactManager} for use in integration tests.
  */
 public class RemoteArtifactManager implements ArtifactManager {
+
   private final ArtifactClient artifactClient;
   private final ArtifactId artifactId;
 
-  public RemoteArtifactManager(ClientConfig clientConfig, RESTClient restClient, ArtifactId artifactId) {
+  public RemoteArtifactManager(ClientConfig clientConfig, RESTClient restClient,
+      ArtifactId artifactId) {
     this.artifactClient = new ArtifactClient(clientConfig, restClient);
     this.artifactId = artifactId;
   }

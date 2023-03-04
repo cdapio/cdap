@@ -60,7 +60,7 @@ public final class RouterAuditLookUp {
   }
 
   private final PatternPathRouterWithGroups<AuditLogConfig> patternMatcher =
-    PatternPathRouterWithGroups.create(MAX_PARTS);
+      PatternPathRouterWithGroups.create(MAX_PARTS);
 
   private RouterAuditLookUp() {
     numberOfPaths = createMatcher();
@@ -69,7 +69,7 @@ public final class RouterAuditLookUp {
   @Nullable
   public AuditLogConfig getAuditLogContent(String path, HttpMethod httpMethod) throws Exception {
     List<PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig>> destinations =
-      patternMatcher.getDestinations(path);
+        patternMatcher.getDestinations(path);
     for (PatternPathRouterWithGroups.RoutableDestination<AuditLogConfig> entry : destinations) {
       AuditLogConfig destination = entry.getDestination();
       if (destination.getHttpMethod().equals(httpMethod)) {
@@ -104,7 +104,7 @@ public final class RouterAuditLookUp {
 
         String methodPathStr = methodPath.value();
         String completePath = classPathStr.endsWith("/") || methodPathStr.startsWith("/")
-          ? classPathStr + methodPathStr : classPathStr + "/" + methodPathStr;
+            ? classPathStr + methodPathStr : classPathStr + "/" + methodPathStr;
         List<AuditDetail> auditContents = Arrays.asList(auditPolicy.value());
         List<String> headerNames = new ArrayList<>();
         if (auditContents.contains(AuditDetail.HEADERS)) {
@@ -121,9 +121,9 @@ public final class RouterAuditLookUp {
         }
 
         AuditLogConfig auditLogConfig = new AuditLogConfig(httpMethod,
-                                                           auditContents.contains(AuditDetail.REQUEST_BODY),
-                                                           auditContents.contains(AuditDetail.RESPONSE_BODY),
-                                                           headerNames);
+            auditContents.contains(AuditDetail.REQUEST_BODY),
+            auditContents.contains(AuditDetail.RESPONSE_BODY),
+            headerNames);
         LOG.trace("Audit log lookup: bootstrapped with path: {}", completePath);
         patternMatcher.add(completePath, auditLogConfig);
 

@@ -57,8 +57,8 @@ public final class DefaultAuditPublisher implements AuditPublisher {
     this.messagingService = messagingService;
     this.auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
     this.retryStrategy = RetryStrategies.timeLimit(
-      cConf.getLong(Constants.Audit.PUBLISH_TIMEOUT_MS), TimeUnit.MILLISECONDS,
-      RetryStrategies.exponentialDelay(10, 200, TimeUnit.MILLISECONDS));
+        cConf.getLong(Constants.Audit.PUBLISH_TIMEOUT_MS), TimeUnit.MILLISECONDS,
+        RetryStrategies.exponentialDelay(10, 200, TimeUnit.MILLISECONDS));
   }
 
   @Override
@@ -67,15 +67,18 @@ public final class DefaultAuditPublisher implements AuditPublisher {
   }
 
   @Override
-  public void publish(MetadataEntity metadataEntity, AuditType auditType, AuditPayload auditPayload) {
+  public void publish(MetadataEntity metadataEntity, AuditType auditType,
+      AuditPayload auditPayload) {
     String userId = Objects.firstNonNull(SecurityRequestContext.getUserId(), "");
     AuditMessage auditMessage = new AuditMessage(System.currentTimeMillis(), metadataEntity, userId,
-                                                 auditType, auditPayload);
+        auditType, auditPayload);
     LOG.trace("Publishing audit message {}", auditMessage);
 
-    StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic).addPayload(GSON.toJson(auditMessage)).build();
+    StoreRequest storeRequest = StoreRequestBuilder.of(auditTopic)
+        .addPayload(GSON.toJson(auditMessage)).build();
     try {
-      Retries.callWithRetries(() -> messagingService.publish(storeRequest), retryStrategy, Retries.ALWAYS_TRUE);
+      Retries.callWithRetries(() -> messagingService.publish(storeRequest), retryStrategy,
+          Retries.ALWAYS_TRUE);
     } catch (TopicNotFoundException e) {
       LOG.error("Missing topic for audit publish: {}", auditTopic);
     } catch (Exception e) {

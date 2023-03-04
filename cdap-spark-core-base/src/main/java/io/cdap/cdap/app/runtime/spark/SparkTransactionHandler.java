@@ -313,11 +313,11 @@ public final class SparkTransactionHandler extends AbstractHttpHandler {
 
     @Override
     public String toString() {
-      return "JobTransaction{" +
-        "jobId=" + jobId +
-        ", stageIds=" + stageIds +
-        ", transaction=" + (transaction == null ? null : transaction.orNull()) +
-        '}';
+      return "JobTransaction{"
+        + "jobId=" + jobId
+        + ", stageIds=" + stageIds
+        + ", transaction=" + (transaction == null ? null : transaction.orNull())
+        + '}';
     }
   }
 }

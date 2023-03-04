@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * Sql transaction runner will set the transaction isolation level and start a transaction.
  */
 public class SqlTransactionRunner implements TransactionRunner {
+
   private static final Logger LOG = LoggerFactory.getLogger(SqlTransactionRunner.class);
 
   private final StructuredTableAdmin admin;
@@ -42,8 +43,8 @@ public class SqlTransactionRunner implements TransactionRunner {
   private final int scanFetchSize;
 
   public SqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
-                              MetricsCollectionService metricsCollectionService,
-                              boolean emitTimeMetrics, int scanFetchSize) {
+      MetricsCollectionService metricsCollectionService,
+      boolean emitTimeMetrics, int scanFetchSize) {
     this.admin = tableAdmin;
     this.dataSource = dataSource;
     this.metricsCollectionService = metricsCollectionService;
@@ -62,12 +63,14 @@ public class SqlTransactionRunner implements TransactionRunner {
     }
 
     try {
-      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
+      MetricsContext metricsCollector = metricsCollectionService.getContext(
+          Constants.Metrics.STORAGE_METRICS_TAGS);
       metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_COUNT, 1L);
       connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
       connection.setAutoCommit(false);
-      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics,
-          this.scanFetchSize));
+      runnable.run(
+          new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics,
+              this.scanFetchSize));
       connection.commit();
     } catch (Exception e) {
       Throwable cause = e.getCause();

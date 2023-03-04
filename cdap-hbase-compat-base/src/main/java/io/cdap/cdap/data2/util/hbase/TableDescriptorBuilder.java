@@ -28,6 +28,7 @@ import java.util.Set;
  * Builder for {@link TableDescriptor}.
  */
 public class TableDescriptorBuilder {
+
   private final String namespace;
   private final String tableName;
 

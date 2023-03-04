@@ -24,17 +24,19 @@ import java.util.Map;
  * An Interface that provides methods to publish metrics to different sinks.
  */
 public interface MetricsPublisher extends Closeable {
+
   /**
    * Function that publishes a collection of metrics with a common set of context tags.
    *
    * @param metrics List of {@link MetricValue} to be published.
-   * @param tags    Map of tags that specify the context of the metrics that are published.
+   * @param tags Map of tags that specify the context of the metrics that are published.
    * @throws Exception when there are error during publishing.
    */
   void publish(Collection<MetricValue> metrics, Map<String, String> tags) throws Exception;
 
   /**
-   * Function that publishes a collection of metric values that already have tags and timestamp attached.
+   * Function that publishes a collection of metric values that already have tags and timestamp
+   * attached.
    *
    * @param metrics Collection of {@link MetricValues} to be published.
    * @throws Exception when there are error during publishing.

@@ -59,7 +59,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation for {@link io.cdap.cdap.api.service.worker.SystemAppTaskContext}
  */
-public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer implements SystemAppTaskContext {
+public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer implements
+    SystemAppTaskContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSystemAppTaskContext.class);
 
@@ -77,10 +78,11 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   private final ClassLoader artifactClassLoader;
   private final FeatureFlagsProvider featureFlagsProvider;
 
-  DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher, PluginFinder pluginFinder,
-                              SecureStore secureStore, String artifactNameSpace, ArtifactId artifactId,
-                              ClassLoader artifactClassLoader, ArtifactManagerFactory artifactManagerFactory,
-                              String serviceName, RemoteClientFactory remoteClientFactory) {
+  DefaultSystemAppTaskContext(CConfiguration cConf, PreferencesFetcher preferencesFetcher,
+      PluginFinder pluginFinder,
+      SecureStore secureStore, String artifactNameSpace, ArtifactId artifactId,
+      ClassLoader artifactClassLoader, ArtifactManagerFactory artifactManagerFactory,
+      String serviceName, RemoteClientFactory remoteClientFactory) {
     super(artifactNameSpace);
     this.cConf = cConf;
     this.serviceName = serviceName;
@@ -90,16 +92,18 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
     this.secureStore = secureStore;
     this.remoteClientFactory = remoteClientFactory;
     this.artifactClassLoader = artifactClassLoader;
-    this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace), retryStrategy);
+    this.artifactManager = artifactManagerFactory.create(new NamespaceId(artifactNameSpace),
+        retryStrategy);
     this.pluginsDir = createTempFolder();
     this.instantiator = new PluginInstantiator(cConf, artifactClassLoader, pluginsDir, true);
-    this.protoArtifactId = Artifacts.toProtoArtifactId(new NamespaceId(artifactNameSpace), artifactId);
+    this.protoArtifactId = Artifacts.toProtoArtifactId(new NamespaceId(artifactNameSpace),
+        artifactId);
     this.featureFlagsProvider = new DefaultFeatureFlagsProvider(cConf);
   }
 
   private File createTempFolder() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     try {
       return Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
     } catch (IOException e) {
@@ -113,30 +117,35 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   }
 
   @Override
-  public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved) throws Exception {
+  public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
+      throws Exception {
     try {
-      return Retries.callWithRetries(() -> preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties(),
-                                     retryStrategy);
+      return Retries.callWithRetries(
+          () -> preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties(),
+          retryStrategy);
     } catch (NotFoundException nfe) {
-      throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
+      throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace),
+          nfe);
     }
   }
 
   @Override
   public PluginConfigurer createPluginConfigurer(String namespace) {
-    return new DefaultPluginConfigurer(protoArtifactId, new NamespaceId(namespace), instantiator, pluginFinder);
+    return new DefaultPluginConfigurer(protoArtifactId, new NamespaceId(namespace), instantiator,
+        pluginFinder);
   }
 
   @Override
   public ServicePluginConfigurer createServicePluginConfigurer(String namespace) {
     return new DefaultServicePluginConfigurer(protoArtifactId, new NamespaceId(namespace),
-                                              instantiator, pluginFinder,
-                                              artifactClassLoader);
-   }
+        instantiator, pluginFinder,
+        artifactClassLoader);
+  }
 
   @Override
-  public Map<String, String> evaluateMacros(String namespace, Map<String, String> macros, MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException {
     MacroParser macroParser = new MacroParser(evaluator, options);
     Map<String, String> evaluated = new HashMap<>();
 

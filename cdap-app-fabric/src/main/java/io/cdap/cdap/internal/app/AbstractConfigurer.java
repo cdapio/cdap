@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  * Abstract base implementation for application and program configurer.
  */
 public abstract class AbstractConfigurer extends DefaultDatasetConfigurer
-  implements PluginConfigurer, FeatureFlagsProvider {
+    implements PluginConfigurer, FeatureFlagsProvider {
 
   private final DefaultPluginConfigurer pluginConfigurer;
   private final Map<String, Plugin> extraPlugins;
@@ -53,29 +53,29 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer
   protected final Id.Namespace deployNamespace;
 
   protected AbstractConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
-                               PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
-                               @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                               FeatureFlagsProvider featureFlagsProvider) {
+      PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider) {
     this.deployNamespace = deployNamespace;
     this.extraPlugins = new HashMap<>();
     this.featureFlagsProvider = featureFlagsProvider;
 
     if (runtimeInfo != null && ClusterMode.ISOLATED.name().equals(
-      runtimeInfo.getSystemArguments().get(ProgramOptionConstants.CLUSTER_MODE))) {
+        runtimeInfo.getSystemArguments().get(ProgramOptionConstants.CLUSTER_MODE))) {
       this.pluginConfigurer = new RemotePluginConfigurer(
-        artifactId.toEntityId(), deployNamespace.toEntityId(), pluginInstantiator, pluginFinder,
-        runtimeInfo.getExistingAppSpec().getPlugins(),
-        runtimeInfo.getSystemArguments().get(ProgramOptionConstants.PLUGIN_DIR));
+          artifactId.toEntityId(), deployNamespace.toEntityId(), pluginInstantiator, pluginFinder,
+          runtimeInfo.getExistingAppSpec().getPlugins(),
+          runtimeInfo.getSystemArguments().get(ProgramOptionConstants.PLUGIN_DIR));
     } else {
       this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
-                                                          deployNamespace.toEntityId(), pluginInstantiator,
-                                                          pluginFinder);
+          deployNamespace.toEntityId(), pluginInstantiator,
+          pluginFinder);
     }
   }
 
   public Map<String, Plugin> getPlugins() {
     Map<String, Plugin> plugins = pluginConfigurer.getPlugins().entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPlugin()));
+        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getPlugin()));
 
     plugins.putAll(extraPlugins);
     return plugins;
@@ -86,30 +86,33 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer
     // We don't allow adding different plugin with same id. Adding same plugin to an id is allowed as it just
     // means that the plugin is being registered again.
     Map<String, MapDifference.ValueDifference<Plugin>> differentPlugins =
-      Maps.difference(existingPlugins, pluginsToAdd).entriesDiffering();
+        Maps.difference(existingPlugins, pluginsToAdd).entriesDiffering();
     Preconditions.checkArgument(differentPlugins.isEmpty(),
-                                "Plugins %s have been used already. Use different ids or remove duplicates",
-                                differentPlugins.entrySet());
+        "Plugins %s have been used already. Use different ids or remove duplicates",
+        differentPlugins.entrySet());
     extraPlugins.putAll(pluginsToAdd);
   }
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                         PluginSelector selector) {
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
     return pluginConfigurer.usePlugin(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Nullable
   @Override
-  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                                     PluginSelector selector) {
+  public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector) {
     return pluginConfigurer.usePluginClass(pluginType, pluginName, pluginId, properties, selector);
   }
 
   @Override
-  public Map<String, String> evaluateMacros(Map<String, String> properties, MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
+  public Map<String, String> evaluateMacros(Map<String, String> properties,
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException {
     return pluginConfigurer.evaluateMacros(properties, evaluator, options);
   }
 

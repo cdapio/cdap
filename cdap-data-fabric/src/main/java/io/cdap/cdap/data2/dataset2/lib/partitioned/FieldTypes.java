@@ -25,13 +25,14 @@ import io.cdap.cdap.api.dataset.lib.Partitioning.FieldType;
 public class FieldTypes {
 
   /**
-   * Parse a string into a value of this field type. For example, {@link FieldType#INT} delegates this
-   * to {@link Integer#parseInt}.
+   * Parse a string into a value of this field type. For example, {@link FieldType#INT} delegates
+   * this to {@link Integer#parseInt}.
+   *
    * @param str the string to parse
    */
   public static <T extends Comparable> T parse(String str, FieldType type) {
     Comparable value;
-    switch(type) {
+    switch (type) {
       case STRING:
         value = str;
         break;
@@ -51,11 +52,12 @@ public class FieldTypes {
 
   /**
    * Convert a value of this field type to a byte array.
+   *
    * @param value the value to convert
    * @param <T> the Java type represented by this field type
    */
   public static <T extends Comparable> byte[] toBytes(T value, FieldType type) {
-    switch(type) {
+    switch (type) {
       case STRING:
         if (value instanceof String) {
           return Bytes.toBytes((String) value);
@@ -77,16 +79,17 @@ public class FieldTypes {
         throw new IllegalArgumentException("Unhandled field type: " + type.name());
     }
     throw new IllegalArgumentException(String.format(
-      "Incompatible value %s of type %s for field type %s.", value, value.getClass(), type.name()));
+        "Incompatible value %s of type %s for field type %s.", value, value.getClass(),
+        type.name()));
   }
 
   /**
-   * @return the number of bytes that need to be read to deserialize a value of this field type
-   *   at the given position in the byte array. For integer and long values, this is constant,
-   *   but for strings, this is variable depending on the length of the string.
+   * @return the number of bytes that need to be read to deserialize a value of this field type at
+   *     the given position in the byte array. For integer and long values, this is constant, but
+   *     for strings, this is variable depending on the length of the string.
    */
   public static int determineLengthInBytes(byte[] bytes, int offset, FieldType type) {
-    switch(type) {
+    switch (type) {
       case STRING:
         for (int i = offset; i < bytes.length; i++) {
           if (bytes[i] == 0) {
@@ -107,9 +110,10 @@ public class FieldTypes {
    * Deserialize a value of this field type, starting at given offset in the byte array, consuming
    * the given number of bytes.
    */
-  public static <T extends Comparable> T fromBytes(byte[] bytes, int offset, int length, FieldType type) {
+  public static <T extends Comparable> T fromBytes(byte[] bytes, int offset, int length,
+      FieldType type) {
     Comparable value;
-    switch(type) {
+    switch (type) {
       case STRING:
         value = Bytes.toString(bytes, offset, length);
         break;
@@ -131,7 +135,7 @@ public class FieldTypes {
    * @return the type name used by the Hive DDL to represent this field type
    */
   public static String toHiveType(FieldType type) {
-    switch(type) {
+    switch (type) {
       case STRING:
         return "STRING";
       case LONG:

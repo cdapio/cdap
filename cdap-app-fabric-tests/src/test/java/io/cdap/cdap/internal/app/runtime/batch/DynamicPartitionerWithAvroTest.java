@@ -204,12 +204,13 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
             partitions.put(partition.getPartitionKey(), partition);
             // check that the mapreduce wrote the output partition metadata to all the output partitions
             Assert.assertEquals(getExpectedMetadata(precreatePartitions, partitionWriteOption),
-                                partition.getMetadata().asMap());
+                partition.getMetadata().asMap());
             // if files were precreated, and the option is to append, expect the empty file to exist
             // if partition write option is configured to overwrite, then the file is expected to not exist
             Location preexistingFile = partition.getLocation().append("file");
-            if (precreatePartitions &&
-              partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND) {
+            if (precreatePartitions
+                && partitionWriteOption
+                == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND) {
               Assert.assertTrue(preexistingFile.exists());
               try (InputStream inputStream = preexistingFile.getInputStream()) {
                 Assert.assertEquals(-1, inputStream.read());

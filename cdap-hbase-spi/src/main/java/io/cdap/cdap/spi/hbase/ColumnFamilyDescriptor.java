@@ -47,13 +47,13 @@ public final class ColumnFamilyDescriptor {
   }
 
   public ColumnFamilyDescriptor(String name, int maxVersions, CompressionType compressionType,
-                                BloomType bloomType, Map<String, String> properties) {
+      BloomType bloomType, Map<String, String> properties) {
     this.name = name;
     this.maxVersions = maxVersions;
     this.compressionType = compressionType;
     this.bloomType = bloomType;
     this.properties = properties == null ? Collections.<String, String>emptyMap()
-      : Collections.unmodifiableMap(properties);
+        : Collections.unmodifiableMap(properties);
   }
 
   public String getName() {

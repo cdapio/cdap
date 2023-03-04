@@ -92,15 +92,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Mapreduce task runtime context which delegates to BasicMapReduceContext for non task-specific methods.
- * It currently also extends MapReduceContext to support backwards compatibility. Mapper and Reducer tasks could
- * implement ProgramLifeCycle<MapReduceContext> in order to to get a MapReduceContext object.
+ * Mapreduce task runtime context which delegates to BasicMapReduceContext for non task-specific
+ * methods. It currently also extends MapReduceContext to support backwards compatibility. Mapper
+ * and Reducer tasks could implement ProgramLifeCycle<MapReduceContext> in order to to get a
+ * MapReduceContext object.
  *
- * @param <KEYOUT>   output key type
+ * @param <KEYOUT> output key type
  * @param <VALUEOUT> output value type
  */
 public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
-  implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
+    implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
 
   private static final Logger LOG = LoggerFactory.getLogger(BasicMapReduceTaskContext.class);
 
@@ -127,29 +128,29 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final List<ProgramLifecycle> programLifecycles = new ArrayList<>();
 
   BasicMapReduceTaskContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
-                            @Nullable MapReduceMetrics.TaskType type, @Nullable String taskId,
-                            MapReduceSpecification spec,
-                            @Nullable WorkflowProgramInfo workflowProgramInfo,
-                            DiscoveryServiceClient discoveryServiceClient,
-                            MetricsCollectionService metricsCollectionService,
-                            TransactionSystemClient txClient,
-                            @Nullable Transaction transaction,
-                            DatasetFramework dsFramework,
-                            @Nullable PluginInstantiator pluginInstantiator,
-                            Map<String, File> localizedResources,
-                            SecureStore secureStore,
-                            SecureStoreManager secureStoreManager,
-                            AccessEnforcer accessEnforcer,
-                            AuthenticationContext authenticationContext,
-                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
-                            MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
-                            RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
+      @Nullable MapReduceMetrics.TaskType type, @Nullable String taskId,
+      MapReduceSpecification spec,
+      @Nullable WorkflowProgramInfo workflowProgramInfo,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService,
+      TransactionSystemClient txClient,
+      @Nullable Transaction transaction,
+      DatasetFramework dsFramework,
+      @Nullable PluginInstantiator pluginInstantiator,
+      Map<String, File> localizedResources,
+      SecureStore secureStore,
+      SecureStoreManager secureStoreManager,
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext,
+      MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
+      MetadataReader metadataReader, MetadataPublisher metadataPublisher,
+      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+      RemoteClientFactory remoteClientFactory, AppStateStoreProvider appStateStoreProvider) {
     super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient,
-          true, metricsCollectionService, createMetricsTags(programOptions,
-                                                            taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
+        true, metricsCollectionService, createMetricsTags(programOptions,
+            taskId, type, workflowProgramInfo), secureStore,
+        secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
+        namespaceQueryAdmin, fieldLineageWriter, remoteClientFactory, appStateStoreProvider);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
@@ -167,7 +168,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   @Override
-  public <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException {
+  public <K, V> void write(String namedOutput, K key, V value)
+      throws IOException, InterruptedException {
     if (multipleOutputs == null) {
       throw new IOException("MultipleOutputs has not been initialized.");
     }
@@ -271,7 +273,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     final MessagingContext context = super.getMessagingContext();
 
     // TODO: CDAP-7807 Make it available for any topic
-    final TopicId allowedTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
+    final TopicId allowedTopic = NamespaceId.SYSTEM.topic(
+        cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
 
     return new MessagingContext() {
       @Override
@@ -279,20 +282,22 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
         return new AbstractMessagePublisher() {
           @Override
           protected void publish(TopicId topicId,
-                                 Iterator<byte[]> payloads)
-            throws IOException, TopicNotFoundException, UnauthorizedException {
+              Iterator<byte[]> payloads)
+              throws IOException, TopicNotFoundException, UnauthorizedException {
             if (!allowedTopic.equals(topicId)) {
-              throw new UnsupportedOperationException("Publish to topic '" + topicId.getTopic() + "' is not supported");
+              throw new UnsupportedOperationException(
+                  "Publish to topic '" + topicId.getTopic() + "' is not supported");
             }
 
             // Use MessagingService directly so that we can publish to system namespace
             // If there is transaction, use storePayload. Otherwise publish without transaction
             if (transaction == null) {
-              getMessagingService().publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
+              getMessagingService().publish(
+                  StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
             } else {
               getMessagingService().storePayload(StoreRequestBuilder.of(topicId)
-                                                   .setTransaction(transaction.getWritePointer())
-                                                   .addPayloads(payloads).build());
+                  .setTransaction(transaction.getWritePointer())
+                  .addPayloads(payloads).build());
             }
           }
         };
@@ -311,17 +316,19 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   private static Map<String, String> createMetricsTags(ProgramOptions programOptions,
-                                                       @Nullable String taskId,
-                                                       @Nullable MapReduceMetrics.TaskType type,
-                                                       @Nullable WorkflowProgramInfo workflowProgramInfo) {
+      @Nullable String taskId,
+      @Nullable MapReduceMetrics.TaskType type,
+      @Nullable WorkflowProgramInfo workflowProgramInfo) {
     Map<String, String> tags = Maps.newHashMap();
     if (type != null) {
       tags.put(Constants.Metrics.Tag.MR_TASK_TYPE, type.getId());
 
       if (taskId != null) {
         String taskMetricsPreference =
-          programOptions.getUserArguments().asMap().get(SystemArguments.METRICS_CONTEXT_TASK_INCLUDED);
-        boolean taskLevelPreference = taskMetricsPreference == null ? false : Boolean.valueOf(taskMetricsPreference);
+            programOptions.getUserArguments().asMap()
+                .get(SystemArguments.METRICS_CONTEXT_TASK_INCLUDED);
+        boolean taskLevelPreference =
+            taskMetricsPreference == null ? false : Boolean.valueOf(taskMetricsPreference);
         if (taskLevelPreference) {
           tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
         }
@@ -345,8 +352,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     if (transaction == null) {
       return;
     }
-    Iterable<TransactionAware> txAwares = Iterables.concat(getDatasetCache().getStaticTransactionAwares(),
-                                                           getDatasetCache().getExtraTransactionAwares());
+    Iterable<TransactionAware> txAwares = Iterables.concat(
+        getDatasetCache().getStaticTransactionAwares(),
+        getDatasetCache().getExtraTransactionAwares());
     for (TransactionAware txAware : txAwares) {
       this.txAwares.add(txAware);
       txAware.startTx(transaction);
@@ -355,7 +363,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
-                                          AccessType accessType) throws DatasetInstantiationException {
+      AccessType accessType) throws DatasetInstantiationException {
     T dataset = super.getDataset(name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;
@@ -363,22 +371,23 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   @Override
   public <T extends Dataset> T getDataset(String namespace, String name,
-                                          Map<String, String> arguments,
-                                          AccessType accessType) throws DatasetInstantiationException {
+      Map<String, String> arguments,
+      AccessType accessType) throws DatasetInstantiationException {
     T dataset = super.getDataset(namespace, name, adjustRuntimeArguments(arguments), accessType);
     startDatasetTransaction(dataset);
     return dataset;
   }
 
   /**
-   * In MapReduce tasks, table datasets must have the runtime argument HBaseTable.SAFE_INCREMENTS as true.
+   * In MapReduce tasks, table datasets must have the runtime argument HBaseTable.SAFE_INCREMENTS as
+   * true.
    */
   private Map<String, String> adjustRuntimeArguments(Map<String, String> args) {
     if (args.containsKey(HBaseTable.SAFE_INCREMENTS)) {
       return args;
     }
     return ImmutableMap.<String, String>builder()
-      .putAll(args).put(HBaseTable.SAFE_INCREMENTS, String.valueOf(true)).build();
+        .putAll(args).put(HBaseTable.SAFE_INCREMENTS, String.valueOf(true)).build();
   }
 
   /**
@@ -390,8 +399,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
       if (transaction == null) {
         throw new IllegalStateException(
-          "Transaction is not supported in the current runtime. Cannot set transaction on dataset "
-            + txAware.getTransactionAwareName());
+            "Transaction is not supported in the current runtime. Cannot set transaction on dataset "
+                + txAware.getTransactionAwareName());
       }
 
       if (txAwares.add(txAware)) {
@@ -420,8 +429,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   /**
-   * Calls postTxCommit on all the transaction-aware datasets participating in this context.
-   * If any Throwable is encountered, it is suppressed and logged.
+   * Calls postTxCommit on all the transaction-aware datasets participating in this context. If any
+   * Throwable is encountered, it is suppressed and logged.
    */
   public void postTxCommit() throws Exception {
     if (transaction == null) {
@@ -433,7 +442,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
         txAware.postTxCommit();
       } catch (Throwable t) {
         LOG.error("Unable to perform post-commit in transaction-aware '{}' for transaction {}.",
-                  txAware.getTransactionAwareName(), transaction.getTransactionId(), t);
+            txAware.getTransactionAwareName(), transaction.getTransactionId(), t);
       }
     }
   }
@@ -446,8 +455,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   /**
-   * Return {@link AuthenticationContext} to determine the {@link Principal} for authorization check.
-   * */
+   * Return {@link AuthenticationContext} to determine the {@link Principal} for authorization
+   * check.
+   */
   public AuthenticationContext getAuthenticationContext() {
     return authenticationContext;
   }
@@ -466,7 +476,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link BatchReadable} that reads data from the given dataset.
    */
   <K, V> BatchReadable<K, V> getBatchReadable(@Nullable String datasetNamespace, String datasetName,
-                                              Map<String, String> datasetArgs) {
+      Map<String, String> datasetArgs) {
     Dataset dataset;
     if (datasetNamespace == null) {
       dataset = getDataset(datasetName, datasetArgs, AccessType.READ);
@@ -474,10 +484,10 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
       dataset = getDataset(datasetNamespace, datasetName, datasetArgs, AccessType.READ);
     }
     // Must be BatchReadable.
-    Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
+    Preconditions.checkArgument(dataset instanceof BatchReadable,
+        "Dataset '%s' is not a BatchReadable.", datasetName);
 
-    @SuppressWarnings("unchecked")
-    final BatchReadable<K, V> delegate = (BatchReadable<K, V>) dataset;
+    @SuppressWarnings("unchecked") final BatchReadable<K, V> delegate = (BatchReadable<K, V>) dataset;
     return new BatchReadable<K, V>() {
       @Override
       public List<Split> getSplits() {
@@ -516,14 +526,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
    * Returns a {@link CloseableBatchWritable} that writes data to the given dataset.
    */
   <K, V> CloseableBatchWritable<K, V> getBatchWritable(String namespace, String datasetName,
-                                                       Map<String, String> datasetArgs) {
+      Map<String, String> datasetArgs) {
     Dataset dataset = getDataset(namespace, datasetName, datasetArgs, AccessType.WRITE);
     // Must be BatchWritable.
     Preconditions.checkArgument(dataset instanceof BatchWritable,
-                                "Dataset '%s:%s' is not a BatchWritable.", namespace, datasetName);
+        "Dataset '%s:%s' is not a BatchWritable.", namespace, datasetName);
 
-    @SuppressWarnings("unchecked") final
-    BatchWritable<K, V> delegate = (BatchWritable<K, V>) dataset;
+    @SuppressWarnings("unchecked") final BatchWritable<K, V> delegate = (BatchWritable<K, V>) dataset;
     return new CloseableBatchWritable<K, V>() {
       @Override
       public void write(K k, V v) {

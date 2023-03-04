@@ -26,6 +26,7 @@ import java.util.Set;
  */
 @Beta
 public class ArtifactInfo extends ArtifactSummary {
+
   private final ArtifactClasses classes;
   private final Map<String, String> properties;
   private final Set<ArtifactRange> parents;
@@ -35,12 +36,12 @@ public class ArtifactInfo extends ArtifactSummary {
   }
 
   public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties,
-                      Set<ArtifactRange> parents) {
+      Set<ArtifactRange> parents) {
     this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties, parents);
   }
 
   public ArtifactInfo(String name, String version, ArtifactScope scope,
-                      ArtifactClasses classes, Map<String, String> properties) {
+      ArtifactClasses classes, Map<String, String> properties) {
     super(name, version, scope);
     this.classes = classes;
     this.properties = properties;
@@ -48,7 +49,7 @@ public class ArtifactInfo extends ArtifactSummary {
   }
 
   public ArtifactInfo(String name, String version, ArtifactScope scope, ArtifactClasses classes,
-                      Map<String, String> properties, Set<ArtifactRange> parents) {
+      Map<String, String> properties, Set<ArtifactRange> parents) {
     super(name, version, scope);
     this.classes = classes;
     this.properties = properties;
@@ -78,9 +79,9 @@ public class ArtifactInfo extends ArtifactSummary {
 
     ArtifactInfo that = (ArtifactInfo) o;
 
-    return super.equals(that) &&
-      Objects.equals(classes, that.classes) &&
-      Objects.equals(properties, that.properties);
+    return super.equals(that)
+        && Objects.equals(classes, that.classes)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -90,12 +91,12 @@ public class ArtifactInfo extends ArtifactSummary {
 
   @Override
   public String toString() {
-    return "ArtifactInfo{" +
-      "name='" + name + '\'' +
-      ", version='" + version + '\'' +
-      ", scope=" + scope +
-      ", classes=" + classes +
-      ", properties=" + properties +
-      '}';
+    return "ArtifactInfo{"
+        + "name='" + name + '\''
+        + ", version='" + version + '\''
+        + ", scope=" + scope
+        + ", classes=" + classes
+        + ", properties=" + properties
+        + '}';
   }
 }

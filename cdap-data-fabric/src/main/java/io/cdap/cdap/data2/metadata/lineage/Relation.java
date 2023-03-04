@@ -29,6 +29,7 @@ import org.apache.twill.api.RunId;
  * Represents a Dataset access by a Program.
  */
 public class Relation {
+
   private final NamespacedEntityId data;
   private final ProgramId program;
   private final AccessType access;
@@ -79,11 +80,11 @@ public class Relation {
       return false;
     }
     Relation relation = (Relation) o;
-    return Objects.equals(data, relation.data) &&
-      Objects.equals(program, relation.program) &&
-      Objects.equals(access, relation.access) &&
-      Objects.equals(run, relation.run) &&
-      Objects.equals(components, relation.components);
+    return Objects.equals(data, relation.data)
+        && Objects.equals(program, relation.program)
+        && Objects.equals(access, relation.access)
+        && Objects.equals(run, relation.run)
+        && Objects.equals(components, relation.components);
   }
 
   @Override
@@ -93,12 +94,12 @@ public class Relation {
 
   @Override
   public String toString() {
-    return "Relation{" +
-      "data=" + data +
-      ", program=" + program +
-      ", access=" + access +
-      ", runs=" + run +
-      ", components=" + components +
-      '}';
+    return "Relation{"
+        + "data=" + data
+        + ", program=" + program
+        + ", access=" + access
+        + ", runs=" + run
+        + ", components=" + components
+        + '}';
   }
 }

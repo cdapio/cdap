@@ -94,8 +94,9 @@ public class CDAPOperationalStatsTest {
       @Override
       public Boolean call() throws Exception {
         transactions.collect();
-        return transactions.getNumCommittingChangeSets() > 0 && transactions.getNumInProgressTransactions() > 0 &&
-          transactions.getNumInvalidTransactions() > 0;
+        return transactions.getNumCommittingChangeSets() > 0
+            && transactions.getNumInProgressTransactions() > 0
+            && transactions.getNumInvalidTransactions() > 0;
       }
     }, 1, TimeUnit.MINUTES, 3, TimeUnit.SECONDS);
     Assert.assertTrue(transactions.getNumInProgressTransactions() >= 1);

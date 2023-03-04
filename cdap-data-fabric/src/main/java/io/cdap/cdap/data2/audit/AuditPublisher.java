@@ -22,7 +22,8 @@ import io.cdap.cdap.proto.audit.AuditType;
 import io.cdap.cdap.proto.id.EntityId;
 
 /**
- * AuditPublisher is used to publish non-data changes to entities that need to be logged for audit purpose.
+ * AuditPublisher is used to publish non-data changes to entities that need to be logged for audit
+ * purpose.
  */
 public interface AuditPublisher {
 

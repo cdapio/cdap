@@ -32,7 +32,8 @@ import org.apache.tephra.TransactionSystemClient;
  */
 public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransactionsMXBean {
 
-  private static final List<String> METRICS = Arrays.asList("system.committing.size", "system.committed.size");
+  private static final List<String> METRICS = Arrays.asList("system.committing.size",
+      "system.committed.size");
 
   private TransactionSystemClient txClient;
   private MetricsSystemClient metricsSystemClient;
@@ -86,8 +87,9 @@ public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransacti
 
   @Override
   public void collect() throws Exception {
-    Collection<MetricTimeSeries> collection = metricsSystemClient.query(Constants.Metrics.TRANSACTION_MANAGER_CONTEXT,
-                                                                        METRICS);
+    Collection<MetricTimeSeries> collection = metricsSystemClient.query(
+        Constants.Metrics.TRANSACTION_MANAGER_CONTEXT,
+        METRICS);
     for (MetricTimeSeries metricTimeSeries : collection) {
       if (metricTimeSeries.getMetricName().equals("system.committing.size")) {
         numCommittingChangeSets = (int) aggregateMetricValue(metricTimeSeries);

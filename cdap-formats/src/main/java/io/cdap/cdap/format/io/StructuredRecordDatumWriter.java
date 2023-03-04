@@ -38,18 +38,18 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   // Known Java type to schema type mapping
   // Doesn't have map and array as those need to use instanceof to check
   private static final Map<Class<?>, Schema.Type> TYPE_TO_SCHEMA = new IdentityHashMap<>(
-    ImmutableMap.<Class<?>, Schema.Type>builder()
-      .put(Boolean.class, Schema.Type.BOOLEAN)
-      .put(Byte.class, Schema.Type.INT)
-      .put(Short.class, Schema.Type.INT)
-      .put(Integer.class, Schema.Type.INT)
-      .put(Long.class, Schema.Type.LONG)
-      .put(Float.class, Schema.Type.FLOAT)
-      .put(Double.class, Schema.Type.DOUBLE)
-      .put(String.class, Schema.Type.STRING)
-      .put(byte[].class, Schema.Type.BYTES)
-      .put(StructuredRecord.class, Schema.Type.RECORD)
-      .build()
+      ImmutableMap.<Class<?>, Schema.Type>builder()
+          .put(Boolean.class, Schema.Type.BOOLEAN)
+          .put(Byte.class, Schema.Type.INT)
+          .put(Short.class, Schema.Type.INT)
+          .put(Integer.class, Schema.Type.INT)
+          .put(Long.class, Schema.Type.LONG)
+          .put(Float.class, Schema.Type.FLOAT)
+          .put(Double.class, Schema.Type.DOUBLE)
+          .put(String.class, Schema.Type.STRING)
+          .put(byte[].class, Schema.Type.BYTES)
+          .put(StructuredRecord.class, Schema.Type.RECORD)
+          .build()
   );
 
   @Override
@@ -111,8 +111,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   }
 
   /**
-   * Encodes a enum value. This method will encode with the enum index of the enum value according to the Schema.
-   * Sub-class can override this to have different behavior.
+   * Encodes a enum value. This method will encode with the enum index of the enum value according
+   * to the Schema. Sub-class can override this to have different behavior.
    *
    * @param encoder The encoder to use
    * @param enumSchema The {@link Schema} for the enum field
@@ -133,33 +133,36 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param size Number of array elements
    * @throws IOException If failed to encode
    */
-  protected void encodeArrayBegin(Encoder encoder, Schema elementSchema, int size) throws IOException {
+  protected void encodeArrayBegin(Encoder encoder, Schema elementSchema, int size)
+      throws IOException {
     encoder.writeInt(size);
   }
 
   /**
-   * Encodes an element of an array. This method will encode the element by calling the
-   * {@link #encode(Encoder, Schema, Object)} method with the element schema.
+   * Encodes an element of an array. This method will encode the element by calling the {@link
+   * #encode(Encoder, Schema, Object)} method with the element schema.
    *
    * @param encoder The encoder to use
    * @param elementSchema The {@link Schema} of the array element
    * @param element the value to encode
    * @throws IOException If failed to encode
    */
-  protected void encodeArrayElement(Encoder encoder, Schema elementSchema, Object element) throws IOException {
+  protected void encodeArrayElement(Encoder encoder, Schema elementSchema, Object element)
+      throws IOException {
     encode(encoder, elementSchema, element);
   }
 
   /**
-   * Encodes the ending of an array. This method writes out {@code 0} to signal the end of the array.
-   * Sub-class can override this to have different behavior
+   * Encodes the ending of an array. This method writes out {@code 0} to signal the end of the
+   * array. Sub-class can override this to have different behavior
    *
    * @param encoder The encoder to use
    * @param elementSchema The {@link Schema} of the array element
    * @param size Number of array elements
    * @throws IOException If failed to encode
    */
-  protected void encodeArrayEnd(Encoder encoder, Schema elementSchema, int size) throws IOException {
+  protected void encodeArrayEnd(Encoder encoder, Schema elementSchema, int size)
+      throws IOException {
     encoder.writeInt(0);
   }
 
@@ -173,14 +176,15 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param size size of the map
    * @throws IOException If failed to encode
    */
-  protected void encodeMapBegin(Encoder encoder, Schema keySchema, Schema valueSchema, int size) throws IOException {
+  protected void encodeMapBegin(Encoder encoder, Schema keySchema, Schema valueSchema, int size)
+      throws IOException {
     encoder.writeInt(size);
   }
 
   /**
-   * Encodes a map entry. This method will write out the key based on the key schema, followed by the value based on
-   * the value schema by calling the {@link #encode(Encoder, Schema, Object)} method.
-   * Sub-class can override this to have different behavior.
+   * Encodes a map entry. This method will write out the key based on the key schema, followed by
+   * the value based on the value schema by calling the {@link #encode(Encoder, Schema, Object)}
+   * method. Sub-class can override this to have different behavior.
    *
    * @param encoder The encoder to use
    * @param keySchema The {@link Schema} of the map key
@@ -189,14 +193,14 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @throws IOException If failed to encode
    */
   protected void encodeMapEntry(Encoder encoder, Schema keySchema,
-                                Schema valueSchema, Map.Entry<?, ?> entry) throws IOException {
+      Schema valueSchema, Map.Entry<?, ?> entry) throws IOException {
     encode(encoder, keySchema, entry.getKey());
     encode(encoder, valueSchema, entry.getValue());
   }
 
   /**
-   * Encodes the ending of a {@link Map}. This method writes out {@code 0} to signal the end of the map.
-   * Sub-class can override this to have different behavior.
+   * Encodes the ending of a {@link Map}. This method writes out {@code 0} to signal the end of the
+   * map. Sub-class can override this to have different behavior.
    *
    * @param encoder The encoder to use
    * @param keySchema The {@link Schema} of the map key
@@ -204,13 +208,14 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param size size of the map
    * @throws IOException If failed to encode
    */
-  protected void encodeMapEnd(Encoder encoder, Schema keySchema, Schema valueSchema, int size) throws IOException {
+  protected void encodeMapEnd(Encoder encoder, Schema keySchema, Schema valueSchema, int size)
+      throws IOException {
     encoder.writeInt(0);
   }
 
   /**
-   * Encodes the beginning of record. This method is an no-op.
-   * Sub-class can override this to have different behavior.
+   * Encodes the beginning of record. This method is an no-op. Sub-class can override this to have
+   * different behavior.
    *
    * @param encoder The encoder to use
    * @param schema The {@link Schema} of the record
@@ -221,29 +226,31 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   }
 
   /**
-   * Encodes a record field. This method will encode the field based on the field schema by calling the
-   * {@link #encode(Encoder, Schema, Object)} method.
-   * Sub-class can override this to have different behavior.
+   * Encodes a record field. This method will encode the field based on the field schema by calling
+   * the {@link #encode(Encoder, Schema, Object)} method. Sub-class can override this to have
+   * different behavior.
    *
    * @param encoder The encoder to use
    * @param field The {@link Schema.Field} to encode
    * @param value the field value to encode
    * @throws IOException If failed to encode
    */
-  protected void encodeRecordField(Encoder encoder, Schema.Field field, Object value) throws IOException {
+  protected void encodeRecordField(Encoder encoder, Schema.Field field, Object value)
+      throws IOException {
     try {
       encode(encoder, field.getSchema(), value);
     } catch (ClassCastException e) {
       // happens if the record is constructed incorrectly.
       throw new IllegalArgumentException(
-        String.format("A value for field '%s' is of type '%s', which does not match schema '%s'. ",
-                      field.getName(), value.getClass().getName(), field.getSchema()));
+          String.format(
+              "A value for field '%s' is of type '%s', which does not match schema '%s'. ",
+              field.getName(), value.getClass().getName(), field.getSchema()));
     }
   }
 
   /**
-   * Encodes the ending of record. This method is an no-op.
-   * Sub-class can override this to have different behavior.
+   * Encodes the ending of record. This method is an no-op. Sub-class can override this to have
+   * different behavior.
    *
    * @param encoder The encoder to use
    * @param schema The {@link Schema} of the record
@@ -266,9 +273,9 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   }
 
   /**
-   * Encodes a union value. This method will write out the index of the matching schema in the union schema,
-   * followed by encoding the value.
-   * Sub-class can override this to have different behavior.
+   * Encodes a union value. This method will write out the index of the matching schema in the union
+   * schema, followed by encoding the value. Sub-class can override this to have different
+   * behavior.
    *
    * @param encoder The encoder to use
    * @param schema The union schema
@@ -276,7 +283,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param value The value to encode
    * @throws IOException If failed to encode
    */
-  protected void encodeUnion(Encoder encoder, Schema schema, int matchingIdx, Object value) throws IOException {
+  protected void encodeUnion(Encoder encoder, Schema schema, int matchingIdx, Object value)
+      throws IOException {
     encoder.writeInt(matchingIdx);
     encode(encoder, schema.getUnionSchema(matchingIdx), value);
   }
@@ -301,7 +309,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encodeArrayEnd(encoder, elementSchema, size);
   }
 
-  private void encodeMap(Encoder encoder, Schema keySchema, Schema valueSchema, Object map) throws IOException {
+  private void encodeMap(Encoder encoder, Schema keySchema, Schema valueSchema, Object map)
+      throws IOException {
     if (!(map instanceof Map)) {
       throw new IOException("Expects Map type. Got: " + map.getClass());
     }
@@ -314,7 +323,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encodeMapEnd(encoder, keySchema, valueSchema, size);
   }
 
-  private void encodeRecord(Encoder encoder, Schema recordSchema, Object record) throws IOException {
+  private void encodeRecord(Encoder encoder, Schema recordSchema, Object record)
+      throws IOException {
     if (!(record instanceof StructuredRecord)) {
       throw new IOException("Expected StructuredRecord type. Got: " + record.getClass());
     }
@@ -343,7 +353,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
   private void encodeBytes(Encoder encoder, Object value) throws IOException {
     if (value instanceof ByteBuffer) {
       encodeBytes(encoder, (ByteBuffer) value);
-    } else if (value.getClass().isArray() && value.getClass().getComponentType().equals(byte.class)) {
+    } else if (value.getClass().isArray() && value.getClass().getComponentType()
+        .equals(byte.class)) {
       byte[] bytes = (byte[]) value;
       encoder.writeBytes(bytes, 0, bytes.length);
     } else {
@@ -353,7 +364,8 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
 
   private void encodeBytes(Encoder encoder, ByteBuffer buffer) throws IOException {
     if (buffer.hasArray()) {
-      encoder.writeBytes(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
+      encoder.writeBytes(buffer.array(), buffer.arrayOffset() + buffer.position(),
+          buffer.remaining());
     } else {
       byte[] buf = Bytes.getBytes(buffer);
       buffer.mark();

@@ -24,6 +24,7 @@ import java.util.Set;
  * Represents the data access relations between Programs and Datasets.
  */
 public class Lineage {
+
   private final Set<Relation> relations;
 
   public Lineage(Iterable<? extends Relation> relations) {
@@ -53,8 +54,8 @@ public class Lineage {
 
   @Override
   public String toString() {
-    return "Lineage{" +
-      "relations=" + relations +
-      '}';
+    return "Lineage{"
+        + "relations=" + relations
+        + '}';
   }
 }

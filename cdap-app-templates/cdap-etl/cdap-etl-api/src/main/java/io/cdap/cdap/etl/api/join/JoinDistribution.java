@@ -49,11 +49,13 @@ public class JoinDistribution {
     List<JoinError> errors = new ArrayList<>();
 
     if (stages.size() > 2) {
-      errors.add(new JoinError("Only two stages can be joined if a distribution factor is specified"));
+      errors.add(
+          new JoinError("Only two stages can be joined if a distribution factor is specified"));
     }
 
     if (skewedStageName == null) {
-      errors.add(new DistributionStageError("Distribution requires skewed stage name to be defined"));
+      errors.add(
+          new DistributionStageError("Distribution requires skewed stage name to be defined"));
     }
 
     if (distributionFactor < 1) {
@@ -61,21 +63,25 @@ public class JoinDistribution {
     }
 
     //If skewedStageName does not match any of the names in stages
-    JoinStage leftStage = stages.stream().filter(s -> s.getStageName().equals(skewedStageName)).findFirst()
-      .orElse(null);
+    JoinStage leftStage = stages.stream().filter(s -> s.getStageName().equals(skewedStageName))
+        .findFirst()
+        .orElse(null);
 
     if (leftStage == null) {
       errors.add(
-        new DistributionStageError(String.format("Skewed stage '%s' does not match any of the specified " +
-          "stages", skewedStageName)));
+          new DistributionStageError(
+              String.format("Skewed stage '%s' does not match any of the specified "
+                  + "stages", skewedStageName)));
     } else if (!leftStage.isRequired()) {
       errors.add(
-        new DistributionStageError(String.format("Distribution only supports inner or left outer joins, the skewed " +
-          "stage '%s' must be required", skewedStageName)));
+          new DistributionStageError(
+              String.format("Distribution only supports inner or left outer joins, the skewed "
+                  + "stage '%s' must be required", skewedStageName)));
     }
 
     if (stages.stream().anyMatch(JoinStage::isBroadcast)) {
-      errors.add(new BroadcastError("Distribution cannot be used if either stage will be broadcast"));
+      errors.add(
+          new BroadcastError("Distribution cannot be used if either stage will be broadcast"));
     }
 
     return errors;

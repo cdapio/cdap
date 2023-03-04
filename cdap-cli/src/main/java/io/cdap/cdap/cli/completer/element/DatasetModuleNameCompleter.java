@@ -39,19 +39,19 @@ public class DatasetModuleNameCompleter extends StringsCompleter {
 
   @Inject
   public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient,
-                                    final CLIConfig cliConfig) {
+      final CLIConfig cliConfig) {
     super(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
           List<DatasetModuleMeta> list = datasetModuleClient.list(cliConfig.getCurrentNamespace());
           return Lists.newArrayList(
-            Iterables.transform(list, new Function<DatasetModuleMeta, String>() {
-              @Override
-              public String apply(DatasetModuleMeta input) {
-                return input.getName();
-              }
-            })
+              Iterables.transform(list, new Function<DatasetModuleMeta, String>() {
+                @Override
+                public String apply(DatasetModuleMeta input) {
+                  return input.getName();
+                }
+              })
           );
         } catch (IOException | UnauthenticatedException | UnauthorizedException e) {
           return new ArrayList<>();

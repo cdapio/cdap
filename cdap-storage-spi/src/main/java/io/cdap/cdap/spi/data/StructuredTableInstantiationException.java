@@ -24,9 +24,11 @@ import io.cdap.cdap.spi.data.table.StructuredTableId;
  */
 @Beta
 public class StructuredTableInstantiationException extends RuntimeException {
+
   private final StructuredTableId tableId;
 
-  public StructuredTableInstantiationException(StructuredTableId tableId, String message, Throwable cause) {
+  public StructuredTableInstantiationException(StructuredTableId tableId, String message,
+      Throwable cause) {
     super(message, cause);
     this.tableId = tableId;
   }

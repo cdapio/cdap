@@ -31,10 +31,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
- * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It uses
- * the studio service for getting connection information at runtime.
+ * A {@link MacroEvaluator} for resolving the {@code ${conn(connection-name)}} macro function. It
+ * uses the studio service for getting connection information at runtime.
  */
 public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvaluator {
+
   public static final String FUNCTION_NAME = "conn";
   private static final String SERVICE_NAME = "Connection";
 
@@ -50,16 +51,19 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
   }
 
   /**
-   * Evaluates the connection macro function by calling the Connection service to retrieve the connection information.
+   * Evaluates the connection macro function by calling the Connection service to retrieve the
+   * connection information.
    *
-   * @param args should contains exactly one arguments. The argument should contain the connection name
+   * @param args should contains exactly one arguments. The argument should contain the
+   *     connection name
    * @return the json representation of the properties of the connection
    */
   @Override
   Map<String, String> evaluateMacroMap(String macroFunction,
-                                       String... args) throws InvalidMacroException, IOException, RetryableException {
+      String... args) throws InvalidMacroException, IOException, RetryableException {
     if (args.length != 1) {
-      throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
+      throw new InvalidMacroException(
+          "Macro '" + FUNCTION_NAME + "' should have exactly 1 arguments");
     }
 
     // only encode the connection name here since / will get encoded to %2f and some router cannot recognize it
@@ -68,11 +72,12 @@ public class ConnectionMacroEvaluator extends AbstractServiceRetryableMacroEvalu
     String connName = URLEncoder.encode(args[0], StandardCharsets.UTF_8.name());
 
     HttpURLConnection urlConn = serviceDiscoverer.openConnection(NamespaceId.SYSTEM.getNamespace(),
-                                                                 Constants.PIPELINEID,
-                                                                 Constants.STUDIO_SERVICE_NAME,
-                                                                 String.format("v1/contexts/%s/connections/%s",
-                                                                               namespace, connName));
-    Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn), Connection.class);
+        Constants.PIPELINEID,
+        Constants.STUDIO_SERVICE_NAME,
+        String.format("v1/contexts/%s/connections/%s",
+            namespace, connName));
+    Connection connection = gson.fromJson(validateAndRetrieveContent(SERVICE_NAME, urlConn),
+        Connection.class);
     return connection.getPlugin().getProperties();
   }
 

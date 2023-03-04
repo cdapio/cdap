@@ -25,8 +25,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 
 /**
- * Convert HBase tabular data into a format that is consumable by Map/Reduce with respect to
- * row key distribution strategy
+ * Convert HBase tabular data into a format that is consumable by Map/Reduce with respect to row key
+ * distribution strategy
  */
 public class WdTableInputFormat extends TableInputFormat {
 
@@ -47,7 +47,8 @@ public class WdTableInputFormat extends TableInputFormat {
           rowKeyDistributor.init(conf.get(ROW_KEY_DISTRIBUTOR_PARAMS));
         }
       } catch (Exception e) {
-        throw new RuntimeException("Cannot create row key distributor, " + ROW_KEY_DISTRIBUTOR_CLASS + ": " + clazz, e);
+        throw new RuntimeException(
+            "Cannot create row key distributor, " + ROW_KEY_DISTRIBUTOR_CLASS + ": " + clazz, e);
       }
     }
   }

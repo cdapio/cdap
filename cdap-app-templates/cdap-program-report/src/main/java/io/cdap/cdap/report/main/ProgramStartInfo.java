@@ -23,13 +23,14 @@ import javax.annotation.Nullable;
  * Fields provided at program start
  */
 public class ProgramStartInfo {
+
   private Map<String, String> runtimeArguments;
   private ArtifactId artifactId;
   private String principal;
   private Map<String, String> systemArguments;
 
   public ProgramStartInfo(Map<String, String> arguments, ArtifactId artifactId, String principal,
-                          Map<String, String> systemArguments) {
+      Map<String, String> systemArguments) {
     this.runtimeArguments = arguments;
     this.artifactId = artifactId;
     this.principal = principal;
@@ -53,7 +54,6 @@ public class ProgramStartInfo {
 
   /**
    * null when kerberos is not enabled in the cluster
-   * @return
    */
   @Nullable
   public String getPrincipal() {

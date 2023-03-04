@@ -30,22 +30,26 @@ import java.util.Set;
 /**
  * Codec to serialize and deserialize {@link CustomActionSpecification}.
  */
-public class CustomActionSpecificationCodec extends AbstractSpecificationCodec<CustomActionSpecification> {
+public class CustomActionSpecificationCodec extends
+    AbstractSpecificationCodec<CustomActionSpecification> {
+
   @Override
   public CustomActionSpecification deserialize(JsonElement json, Type typeOfT,
-                                               JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
     return new DefaultCustomActionSpecification(className, name, description, properties, datasets);
   }
 
   @Override
-  public JsonElement serialize(CustomActionSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(CustomActionSpecification src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));

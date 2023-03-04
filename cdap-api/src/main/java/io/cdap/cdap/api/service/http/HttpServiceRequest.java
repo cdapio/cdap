@@ -50,14 +50,15 @@ public interface HttpServiceRequest {
    * Returns all of the values for a specified header
    *
    * @param key the header to find
-   * @return all of the values for that header; an empty list will be returned if there is no such header
+   * @return all of the values for that header; an empty list will be returned if there is no such
+   *     header
    */
   List<String> getHeaders(String key);
 
   /**
    * @param key the header to find
-   * @return the value of the specified header; if the header maps to multiple values, return the first value;
-   * if there is no such header, a {@code null} value will be returned.
+   * @return the value of the specified header; if the header maps to multiple values, return the
+   *     first value; if there is no such header, a {@code null} value will be returned.
    */
   @Nullable
   String getHeader(String key);

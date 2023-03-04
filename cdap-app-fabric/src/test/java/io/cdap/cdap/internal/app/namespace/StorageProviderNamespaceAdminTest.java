@@ -121,8 +121,9 @@ public class StorageProviderNamespaceAdminTest {
     namespaceStore.create(customSpaceMeta);
     try {
       storageProviderNamespaceAdmin.create(customSpaceMeta);
-      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
-                    "location does not exist at this point.");
+      Assert.fail(
+          "Expected exception to be thrown while creating namespace with custom location since the custom "
+              + "location does not exist at this point.");
     } catch (IOException e) {
       // expected
     }
@@ -135,8 +136,9 @@ public class StorageProviderNamespaceAdminTest {
     Assert.assertTrue(dir1.mkdir());
     try {
       storageProviderNamespaceAdmin.create(customSpaceMeta);
-      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
-                    "location is not empty.");
+      Assert.fail(
+          "Expected exception to be thrown while creating namespace with custom location since the custom "
+              + "location is not empty.");
     } catch (IOException e) {
       // expected
     }
@@ -148,9 +150,10 @@ public class StorageProviderNamespaceAdminTest {
     Assert.assertTrue(randomFile.createNewFile());
     try {
       storageProviderNamespaceAdmin.create(new NamespaceMeta.Builder(customSpaceMeta)
-                                             .setRootDirectory(randomFile.toString()).build());
-      Assert.fail("Expected exception to be thrown while creating namespace with custom location since the custom " +
-                    "location is not a directory");
+          .setRootDirectory(randomFile.toString()).build());
+      Assert.fail(
+          "Expected exception to be thrown while creating namespace with custom location since the custom "
+              + "location is not a directory");
     } catch (IOException e) {
       // expected
     }
@@ -170,8 +173,9 @@ public class StorageProviderNamespaceAdminTest {
     storageProviderNamespaceAdmin.delete(customSpace);
     namespaceStore.delete(customSpace);
     // the data inside the custom location should have been deleted
-    Assert.assertFalse("Data inside the custom location still exists.", (dir1.exists() || dir2.exists() ||
-      file1.exists()));
+    Assert.assertFalse("Data inside the custom location still exists.",
+        (dir1.exists() || dir2.exists()
+            || file1.exists()));
     // but custom namespace location should still exists
     Assert.assertTrue(custom.exists());
     Assert.assertTrue(custom.delete());

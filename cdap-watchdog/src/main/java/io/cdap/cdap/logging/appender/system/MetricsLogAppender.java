@@ -32,21 +32,22 @@ import java.util.Map;
  * An {@link Appender} that emits metrics about the logging events.
  */
 public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
+
   private static final Map<String, String> EMPTY_MAP = new HashMap<>();
   private static final String SYSTEM_METRIC_PREFIX = "services.log";
   private static final String APP_METRIC_PREFIX = "app.log";
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
-    ImmutableMap.<String, String>builder()
-      .put(Constants.Logging.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
-      .put(Constants.Logging.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
-      .put(Constants.Logging.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
-      .put(Constants.Logging.TAG_WORKFLOW_MAP_REDUCE_ID, Constants.Metrics.Tag.MAPREDUCE)
-      .put(Constants.Logging.TAG_WORKFLOW_SPARK_ID, Constants.Metrics.Tag.SPARK)
-      .put(Constants.Logging.TAG_USER_SERVICE_ID, Constants.Metrics.Tag.SERVICE)
-      .put(Constants.Logging.TAG_HANDLER_ID, Constants.Metrics.Tag.HANDLER)
-      .put(Constants.Logging.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
-      .put(Constants.Logging.TAG_INSTANCE_ID, Constants.Metrics.Tag.INSTANCE_ID)
-      .build();
+      ImmutableMap.<String, String>builder()
+          .put(Constants.Logging.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
+          .put(Constants.Logging.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
+          .put(Constants.Logging.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
+          .put(Constants.Logging.TAG_WORKFLOW_MAP_REDUCE_ID, Constants.Metrics.Tag.MAPREDUCE)
+          .put(Constants.Logging.TAG_WORKFLOW_SPARK_ID, Constants.Metrics.Tag.SPARK)
+          .put(Constants.Logging.TAG_USER_SERVICE_ID, Constants.Metrics.Tag.SERVICE)
+          .put(Constants.Logging.TAG_HANDLER_ID, Constants.Metrics.Tag.HANDLER)
+          .put(Constants.Logging.TAG_WORKER_ID, Constants.Metrics.Tag.WORKER)
+          .put(Constants.Logging.TAG_INSTANCE_ID, Constants.Metrics.Tag.INSTANCE_ID)
+          .build();
 
   private MetricsContext metricsContext;
 
@@ -64,8 +65,9 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
       // It is performing pipeline validation
       this.metricsContext = new NoopMetricsContext();
     } else {
-      throw new IllegalStateException("Expected logger context instance of " + AppenderContext.class.getName() +
-                                        " but get " + context.getClass().getName());
+      throw new IllegalStateException(
+          "Expected logger context instance of " + AppenderContext.class.getName()
+              + " but get " + context.getClass().getName());
     }
   }
 
@@ -75,10 +77,11 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
     Map<String, String> metricsTags = getMetricsTagsMap(eventObject.getMDCPropertyMap());
     if (!metricsTags.isEmpty()) {
       String metricName = getMetricName(metricsTags.get(Constants.Metrics.Tag.NAMESPACE),
-                                        eventObject.getLevel().toString().toLowerCase());
+          eventObject.getLevel().toString().toLowerCase());
       // Don't increment metrics for logs from MetricsProcessor to avoid possibility of infinite loop
-      if (!(metricsTags.containsKey(Constants.Metrics.Tag.COMPONENT) &&
-        metricsTags.get(Constants.Metrics.Tag.COMPONENT).equals(Constants.Service.METRICS_PROCESSOR))) {
+      if (!(metricsTags.containsKey(Constants.Metrics.Tag.COMPONENT)
+          && metricsTags.get(Constants.Metrics.Tag.COMPONENT)
+          .equals(Constants.Service.METRICS_PROCESSOR))) {
         // todo this is inefficient as childContext implementation creates new map should use metricsCollectionService
         MetricsContext childContext = metricsContext.childContext(metricsTags);
         childContext.increment(metricName, 1);
@@ -87,9 +90,9 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
   }
 
   private String getMetricName(String namespace, String logLevel) {
-    return namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
-      SYSTEM_METRIC_PREFIX + "." + logLevel :
-      APP_METRIC_PREFIX + "." + logLevel;
+    return namespace.equals(NamespaceId.SYSTEM.getNamespace())
+        ? SYSTEM_METRIC_PREFIX + "." + logLevel :
+        APP_METRIC_PREFIX + "." + logLevel;
   }
 
   // should improve the client logic around workflow run ids to avoid this complexity
@@ -105,36 +108,40 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
 
     if (NamespaceId.SYSTEM.getNamespace().equals(namespaceId)) {
       if (propertyMap.containsKey(Constants.Logging.TAG_SERVICE_ID)) {
-        metricsTags.put(Constants.Metrics.Tag.COMPONENT, propertyMap.get(Constants.Logging.TAG_SERVICE_ID));
+        metricsTags.put(Constants.Metrics.Tag.COMPONENT,
+            propertyMap.get(Constants.Logging.TAG_SERVICE_ID));
       }
     } else {
       // get application id
       if (propertyMap.containsKey(Constants.Logging.TAG_APPLICATION_ID)) {
-        metricsTags.put(Constants.Metrics.Tag.APP, propertyMap.get(Constants.Logging.TAG_APPLICATION_ID));
+        metricsTags.put(Constants.Metrics.Tag.APP,
+            propertyMap.get(Constants.Logging.TAG_APPLICATION_ID));
         // if workflow
         if (propertyMap.containsKey(Constants.Logging.TAG_WORKFLOW_ID)) {
           if (propertyMap.containsKey(Constants.Logging.TAG_RUN_ID)) {
             // For Workflow logs, we need to add a tag 'wfr' which corresponds to workflow run id.
-            metricsTags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID, propertyMap.get(Constants.Logging.TAG_RUN_ID));
+            metricsTags.put(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
+                propertyMap.get(Constants.Logging.TAG_RUN_ID));
           }
           // For programs that are launched by Workflow,
           // they use WorkflowProgramLoggingContext and they have two run-ids
           if (propertyMap.containsKey(Constants.Logging.TAG_WORKFLOW_PROGRAM_RUN_ID)) {
             metricsTags.put(Constants.Metrics.Tag.RUN_ID,
-                            propertyMap.get(Constants.Logging.TAG_WORKFLOW_PROGRAM_RUN_ID));
+                propertyMap.get(Constants.Logging.TAG_WORKFLOW_PROGRAM_RUN_ID));
           }
         } else {
           // For all other programs, use the run id in ApplicationLoggingContext
           if (propertyMap.containsKey(Constants.Logging.TAG_RUN_ID)) {
             // For Workflow logs, we need to add a tag 'wfr' which corresponds to workflow run id.
-            metricsTags.put(Constants.Metrics.Tag.RUN_ID, propertyMap.get(Constants.Logging.TAG_RUN_ID));
+            metricsTags.put(Constants.Metrics.Tag.RUN_ID,
+                propertyMap.get(Constants.Logging.TAG_RUN_ID));
           }
         }
         // For all tags other than namespace, app id, and run id
         for (Map.Entry<String, String> logTagToMetricTag : LOG_TAG_TO_METRICS_TAG_MAP.entrySet()) {
           if (propertyMap.containsKey(logTagToMetricTag.getKey())) {
             metricsTags.put(logTagToMetricTag.getValue(),
-                            propertyMap.get(logTagToMetricTag.getKey()));
+                propertyMap.get(logTagToMetricTag.getKey()));
           }
         }
       }

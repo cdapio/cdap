@@ -42,14 +42,16 @@ final class BodyProducerAdapter extends BodyProducer {
   private boolean completed;
 
   BodyProducerAdapter(HttpContentProducer delegate, ServiceTaskExecutor taskExecutor,
-                      Cancellable contextReleaser, TransactionControl defaultTxControl) {
+      Cancellable contextReleaser, TransactionControl defaultTxControl) {
     this.delegate = delegate;
     this.taskExecutor = taskExecutor;
     this.contextReleaser = contextReleaser;
     this.useTxOnFinish = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentProducer.class, delegate, "onFinish") == TransactionControl.IMPLICIT;
+        defaultTxControl, HttpContentProducer.class, delegate, "onFinish")
+        == TransactionControl.IMPLICIT;
     this.useTxOnError = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentProducer.class, delegate, "onError", Throwable.class) == TransactionControl.IMPLICIT;
+        defaultTxControl, HttpContentProducer.class, delegate, "onError", Throwable.class)
+        == TransactionControl.IMPLICIT;
   }
 
   @Override
@@ -63,8 +65,9 @@ final class BodyProducerAdapter extends BodyProducer {
 
   @Override
   public ByteBuf nextChunk() throws Exception {
-    return taskExecutor.execute(() -> Unpooled.copiedBuffer(delegate.nextChunk(taskExecutor.getTransactional())),
-                                false);
+    return taskExecutor.execute(
+        () -> Unpooled.copiedBuffer(delegate.nextChunk(taskExecutor.getTransactional())),
+        false);
   }
 
   @Override

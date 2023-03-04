@@ -30,6 +30,7 @@ import java.util.Map;
  * @param <T> the type of object to emit
  */
 public class DefaultEmitter<T> implements Emitter<T> {
+
   private final List<T> entryList;
   private final List<InvalidEntry<T>> errorList;
   private final List<Map<String, String>> alerts;

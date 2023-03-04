@@ -62,11 +62,13 @@ public class PauseResumeWorklowApp extends AbstractApplication {
     public void run() {
       LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
       try {
-        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                      ".simple.action.file"));
+        File file = new File(
+            getContext().getRuntimeArguments().get(getContext().getSpecification().getName()
+                + ".simple.action.file"));
         file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                          ".simple.action.donefile"));
+        File doneFile = new File(
+            getContext().getRuntimeArguments().get(getContext().getSpecification().getName()
+                + ".simple.action.donefile"));
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);
         }

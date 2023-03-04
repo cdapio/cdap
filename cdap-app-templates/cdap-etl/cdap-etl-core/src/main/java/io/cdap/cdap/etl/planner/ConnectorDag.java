@@ -33,11 +33,12 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 /**
- * A special DAG that can insert connector nodes into a normal dag based on some rules.
- * A connector node is a boundary at which the dag can be split into smaller dags.
- * A connector basically translates to a local dataset in between mapreduce jobs in the final workflow.
+ * A special DAG that can insert connector nodes into a normal dag based on some rules. A connector
+ * node is a boundary at which the dag can be split into smaller dags. A connector basically
+ * translates to a local dataset in between mapreduce jobs in the final workflow.
  */
 public class ConnectorDag extends Dag {
+
   private final Set<String> reduceNodes;
   private final Set<String> isolationNodes;
   private final Set<String> multiPortNodes;
@@ -45,10 +46,10 @@ public class ConnectorDag extends Dag {
   private final Map<String, String> connectors;
 
   private ConnectorDag(Collection<Connection> connections,
-                       Set<String> reduceNodes,
-                       Set<String> isolationNodes,
-                       Set<String> multiPortNodes,
-                       Map<String, String> connectors) {
+      Set<String> reduceNodes,
+      Set<String> isolationNodes,
+      Set<String> multiPortNodes,
+      Map<String, String> connectors) {
     super(connections);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
     this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
@@ -56,8 +57,9 @@ public class ConnectorDag extends Dag {
     this.connectors = new HashMap<>(connectors);
   }
 
-  public ConnectorDag(Dag dag, Set<String> reduceNodes, Set<String> isolationNodes, Set<String> multiPortNodes,
-                      Map<String, String> connectors) {
+  public ConnectorDag(Dag dag, Set<String> reduceNodes, Set<String> isolationNodes,
+      Set<String> multiPortNodes,
+      Map<String, String> connectors) {
     super(dag);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
     this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
@@ -68,18 +70,18 @@ public class ConnectorDag extends Dag {
   /**
    * Insert connector nodes into the dag.
    *
-   * A connector node is a boundary at which the pipeline can be split into sub dags.
-   * It is treated as a sink within one subdag and as a source in another subdag.
-   * A connector is inserted in front of a reduce node (aggregator plugin type, etc)
-   * when there is a path from some source to one or more reduce nodes or sinks.
-   * This is required because in a single mapper, we can't write to both a sink and do a reduce.
-   * We also can't have 2 reducers in a single mapreduce job.
-   * A connector is also inserted in front of any node if the inputs into the node come from multiple sources.
-   * A connector is also inserted in front of a reduce node that has another reduce node as its input.
+   * A connector node is a boundary at which the pipeline can be split into sub dags. It is treated
+   * as a sink within one subdag and as a source in another subdag. A connector is inserted in front
+   * of a reduce node (aggregator plugin type, etc) when there is a path from some source to one or
+   * more reduce nodes or sinks. This is required because in a single mapper, we can't write to both
+   * a sink and do a reduce. We also can't have 2 reducers in a single mapreduce job. A connector is
+   * also inserted in front of any node if the inputs into the node come from multiple sources. A
+   * connector is also inserted in front of a reduce node that has another reduce node as its
+   * input.
    *
-   * After splitting, the result will be a collection of subdags, with each subdag representing a single
-   * mapreduce job (or possibly map-only job). Or in spark, each subdag would be a series of operations from
-   * one rdd to another rdd.
+   * After splitting, the result will be a collection of subdags, with each subdag representing a
+   * single mapreduce job (or possibly map-only job). Or in spark, each subdag would be a series of
+   * operations from one rdd to another rdd.
    *
    * @return the nodes that had connectors inserted in front of them
    */
@@ -126,9 +128,10 @@ public class ConnectorDag extends Dag {
         continue;
       }
 
-      Set<String> accessibleByNode = accessibleFrom(node, Sets.union(connectors.keySet(), reduceNodes));
+      Set<String> accessibleByNode = accessibleFrom(node,
+          Sets.union(connectors.keySet(), reduceNodes));
       Set<String> sinksAndReduceNodes = Sets.intersection(
-        accessibleByNode, Sets.union(connectors.keySet(), Sets.union(sinks, reduceNodes)));
+          accessibleByNode, Sets.union(connectors.keySet(), Sets.union(sinks, reduceNodes)));
       // don't count this node
       sinksAndReduceNodes = Sets.difference(sinksAndReduceNodes, ImmutableSet.of(node));
 
@@ -149,7 +152,8 @@ public class ConnectorDag extends Dag {
           source ---> reduce1 ---> reduce2.connector      =>     reduce2.connector ---> reduce2 ---> sink
      */
     for (String reduceNode : reduceNodes) {
-      Set<String> accessibleByNode = accessibleFrom(reduceNode, Sets.union(connectors.keySet(), reduceNodes));
+      Set<String> accessibleByNode = accessibleFrom(reduceNode,
+          Sets.union(connectors.keySet(), reduceNodes));
       Set<String> accessibleReduceNodes = Sets.intersection(accessibleByNode, reduceNodes);
 
       // Sets.difference because we don't want to add ourselves
@@ -198,7 +202,8 @@ public class ConnectorDag extends Dag {
     // map contains connector branch head inputs -> connector heads
     Map<Set<String>, Set<ConnectorHead>> connectorsToMerge = new HashMap<>();
     // stop at reduce and isolation nodes. This is so that each branch will not contain multiple connectors
-    Set<String> stopNodes = Sets.union(connectors.keySet(), Sets.union(isolationNodes, reduceNodes));
+    Set<String> stopNodes = Sets.union(connectors.keySet(),
+        Sets.union(isolationNodes, reduceNodes));
     for (String connector : connectors.keySet()) {
       List<String> branch = getBranch(connector, stopNodes);
       String branchHead = branch.iterator().next();
@@ -296,7 +301,8 @@ public class ConnectorDag extends Dag {
                    |--> reduce2.connector    reduce2.connector --> reduce2 --> sink.connector
      */
     for (String sink : sinks) {
-      Set<String> sourcesAndReduceNodes = Sets.union(connectors.keySet(), Sets.union(sources, reduceNodes));
+      Set<String> sourcesAndReduceNodes = Sets.union(connectors.keySet(),
+          Sets.union(sources, reduceNodes));
       Set<String> parents = parentsOf(sink, sourcesAndReduceNodes);
 
       Set<String> parentSources = Sets.intersection(sourcesAndReduceNodes, parents);
@@ -311,14 +317,15 @@ public class ConnectorDag extends Dag {
   }
 
   /**
-   * Isolate the specified node by inserting a connector in front of and behind the node.
-   * If all inputs into the the node are sources, a connector will not be inserted in front.
-   * If all outputs from the node are sinks, a connector will not be inserted after.
-   * Other connectors count as both a source and a sink.
+   * Isolate the specified node by inserting a connector in front of and behind the node. If all
+   * inputs into the the node are sources, a connector will not be inserted in front. If all outputs
+   * from the node are sinks, a connector will not be inserted after. Other connectors count as both
+   * a source and a sink.
    */
   private void isolate(String node, Set<String> addedAlready) {
     if (!nodes.contains(node)) {
-      throw new IllegalArgumentException(String.format("Cannot isolate node %s because it is not in the dag.", node));
+      throw new IllegalArgumentException(
+          String.format("Cannot isolate node %s because it is not in the dag.", node));
     }
 
     /*
@@ -408,7 +415,8 @@ public class ConnectorDag extends Dag {
       dags.add(subdag);
     }
 
-    Set<String> remainingSources = new TreeSet<>(Sets.intersection(remainingNodes, possibleNewSources));
+    Set<String> remainingSources = new TreeSet<>(
+        Sets.intersection(remainingNodes, possibleNewSources));
 
     /* Since there can be remaining sources from subdags which don't overlap, they should be split as seperate subdags.
      For example:
@@ -461,7 +469,8 @@ public class ConnectorDag extends Dag {
         for (String otherSource : otherSources) {
           Dag otherSubdag = remainingDags.get(otherSource);
           // If there is a path from the other source to our current dag, add those nodes to our current dag
-          Set<String> otherNonSourceNodes = Sets.difference(otherSubdag.getNodes(), otherSubdag.getSources());
+          Set<String> otherNonSourceNodes = Sets.difference(otherSubdag.getNodes(),
+              otherSubdag.getSources());
           // Don't count the sources when looking for subdag overlap.
           // This is to prevent a subdag with a connector as a sink
           // and another subdag with that same connector as a source from getting merged
@@ -512,11 +521,11 @@ public class ConnectorDag extends Dag {
   private void insertInFront(String name, String inFrontOf) {
     if (!nodes.contains(inFrontOf)) {
       throw new IllegalArgumentException(
-        String.format("Cannot insert in front of node %s because it does not exist.", inFrontOf));
+          String.format("Cannot insert in front of node %s because it does not exist.", inFrontOf));
     }
     if (!nodes.add(name)) {
       throw new IllegalArgumentException(
-        String.format("Cannot insert node %s because it already exists.", name));
+          String.format("Cannot insert node %s because it already exists.", name));
     }
 
     Set<String> inputs = incomingConnections.get(inFrontOf);
@@ -531,10 +540,10 @@ public class ConnectorDag extends Dag {
 
   @Override
   public String toString() {
-    return "ConnectorDag{" +
-      "reduceNodes=" + reduceNodes +
-      ", connectors=" + connectors +
-      "} " + super.toString();
+    return "ConnectorDag{"
+        + "reduceNodes=" + reduceNodes
+        + ", connectors=" + connectors
+        + "} " + super.toString();
   }
 
   @Override
@@ -551,8 +560,8 @@ public class ConnectorDag extends Dag {
 
     ConnectorDag that = (ConnectorDag) o;
 
-    return Objects.equals(reduceNodes, that.reduceNodes) &&
-      Objects.equals(connectors, that.connectors);
+    return Objects.equals(reduceNodes, that.reduceNodes)
+        && Objects.equals(connectors, that.connectors);
   }
 
   @Override
@@ -564,6 +573,7 @@ public class ConnectorDag extends Dag {
    * Just a container to hold a connector and the head of the branch it is on
    */
   private static class ConnectorHead {
+
     private final String connector;
     private final String branchHead;
 
@@ -581,6 +591,7 @@ public class ConnectorDag extends Dag {
    * Builder for a connector dag
    */
   public static class Builder {
+
     private final Set<Connection> connections;
     private final Set<String> reduceNodes;
     private final Set<String> isolationNodes;
@@ -628,8 +639,9 @@ public class ConnectorDag extends Dag {
 
     public Builder addConnectors(String... nodes) {
       if (nodes.length % 2 != 0) {
-        throw new IllegalArgumentException("must specify an even number of nodes, alternating between the " +
-                                             "connector name and the original node it was placed in front of.");
+        throw new IllegalArgumentException(
+            "must specify an even number of nodes, alternating between the "
+                + "connector name and the original node it was placed in front of.");
       }
       for (int i = 0; i < nodes.length; i += 2) {
         connectors.put(nodes[i], nodes[i + 1]);
@@ -660,7 +672,8 @@ public class ConnectorDag extends Dag {
 
     public ConnectorDag build() {
       if (dag == null) {
-        return new ConnectorDag(connections, reduceNodes, isolationNodes, multiPortNodes, connectors);
+        return new ConnectorDag(connections, reduceNodes, isolationNodes, multiPortNodes,
+            connectors);
       }
       return new ConnectorDag(dag, reduceNodes, isolationNodes, multiPortNodes, connectors);
     }

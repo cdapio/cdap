@@ -36,7 +36,8 @@ public class ProgramRunDispatcherFactory {
   private ProgramRunDispatcher remoteProgramRunDispatcher;
 
   @Inject
-  public ProgramRunDispatcherFactory(CConfiguration cConf, InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher) {
+  public ProgramRunDispatcherFactory(CConfiguration cConf,
+      InMemoryProgramRunDispatcher inMemoryProgramRunDispatcher) {
     this.inMemoryProgramRunDispatcher = inMemoryProgramRunDispatcher;
     this.workerPoolEnabled = cConf.getBoolean(Constants.SystemWorker.POOL_ENABLE);
     this.remoteDispatchProgramTypes = new HashSet<>();
@@ -62,7 +63,8 @@ public class ProgramRunDispatcherFactory {
 
   public ProgramRunDispatcher getProgramRunDispatcher(ProgramType type) {
     // Returns InMemoryProgramRunDispatcher if remoteDispatcher is not set.
-    return workerPoolEnabled && remoteDispatchProgramTypes.contains(type) && remoteProgramRunDispatcher != null
-      ? remoteProgramRunDispatcher : inMemoryProgramRunDispatcher;
+    return workerPoolEnabled && remoteDispatchProgramTypes.contains(type)
+        && remoteProgramRunDispatcher != null
+        ? remoteProgramRunDispatcher : inMemoryProgramRunDispatcher;
   }
 }

@@ -38,7 +38,7 @@ final class DirectMessagePublisher extends AbstractMessagePublisher {
 
   @Override
   public void publish(TopicId topicId, Iterator<byte[]> payloads)
-    throws IOException, TopicNotFoundException, UnauthorizedException {
+      throws IOException, TopicNotFoundException, UnauthorizedException {
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(payloads).build());
   }
 }

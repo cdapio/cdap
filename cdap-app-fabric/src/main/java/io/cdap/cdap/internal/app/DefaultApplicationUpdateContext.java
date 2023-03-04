@@ -69,14 +69,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Default implementation of {@link ApplicationUpdateContext}.
  *
- * Used during update of an Application config via provided helper methods used during an update action like
- * upgrade/downgrade.
+ * Used during update of an Application config via provided helper methods used during an update
+ * action like upgrade/downgrade.
  */
 public class DefaultApplicationUpdateContext implements ApplicationUpdateContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultApplicationUpdateContext.class);
   private static final Gson GSON = new GsonBuilder().
-    registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
+      registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
   private final ArtifactId applicationArtifactId;
   private final String configString;
@@ -89,10 +89,10 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   private final ApplicationSpecification appSpec;
 
   public DefaultApplicationUpdateContext(NamespaceId namespaceId, ApplicationId applicationId,
-                                         ArtifactId applicationArtifactId, ArtifactRepository artifactRepository,
-                                         String configString, List<ApplicationConfigUpdateAction> updateActions,
-                                         Set<ArtifactScope> allowedArtifactScopes,
-                                         boolean allowSnapshot, ApplicationSpecification appSpec) {
+      ArtifactId applicationArtifactId, ArtifactRepository artifactRepository,
+      String configString, List<ApplicationConfigUpdateAction> updateActions,
+      Set<ArtifactScope> allowedArtifactScopes,
+      boolean allowSnapshot, ApplicationSpecification appSpec) {
     this.namespaceId = namespaceId;
     this.applicationId = applicationId;
     this.artifactRepository = artifactRepository;
@@ -112,22 +112,25 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   @Override
   public <C extends Config> C getConfig(Type configType) {
     // Given configtype has to be derived from Config class.
-    Preconditions.checkArgument(Config.class.isAssignableFrom(TypeToken.of(configType).getRawType()),
-                                "Application config type " + configType + " is not supported. " +
-                                "Type must extend Config and cannot be parameterized.");
+    Preconditions.checkArgument(
+        Config.class.isAssignableFrom(TypeToken.of(configType).getRawType()),
+        "Application config type " + configType + " is not supported. "
+            + "Type must extend Config and cannot be parameterized.");
     if (configString.isEmpty()) {
       try {
         return ((Class<C>) TypeToken.of(configType).getRawType()).newInstance();
       } catch (Exception e) {
-        throw new IllegalArgumentException("Issue in creating config class of type " + configType.getTypeName(), e);
+        throw new IllegalArgumentException(
+            "Issue in creating config class of type " + configType.getTypeName(), e);
       }
     }
 
     try {
       return GSON.fromJson(configString, configType);
     } catch (JsonSyntaxException e) {
-      throw new IllegalArgumentException("Invalid JSON application configuration was provided. Please check the"
-                                         + " syntax.", e);
+      throw new IllegalArgumentException(
+          "Invalid JSON application configuration was provided. Please check the"
+              + " syntax.", e);
     }
   }
 
@@ -138,11 +141,12 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
 
   @Override
   public List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName,
-                                             @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception {
+      @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception {
     // Find candidate plugins from all allowed artifact scopes for this update operation.
     List<ArtifactId> candidates = new ArrayList<>();
-    for (ArtifactScope scope: this.allowedArtifactScopes) {
-      candidates.addAll(getScopedPluginArtifacts(pluginType, pluginName, scope, pluginRange, limit));
+    for (ArtifactScope scope : this.allowedArtifactScopes) {
+      candidates.addAll(
+          getScopedPluginArtifacts(pluginType, pluginName, scope, pluginRange, limit));
     }
     return candidates;
   }
@@ -153,35 +157,37 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   }
 
   private List<ArtifactId> getScopedPluginArtifacts(String pluginType, String pluginName,
-                                                    ArtifactScope pluginScope,
-                                                    @Nullable ArtifactVersionRange pluginRange, int limit)
-    throws Exception {
+      ArtifactScope pluginScope,
+      @Nullable ArtifactVersionRange pluginRange, int limit)
+      throws Exception {
     List<ArtifactId> pluginArtifacts = new ArrayList<>();
     NamespaceId pluginArtifactNamespace =
-      ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
+        ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
 
     Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = input -> {
       // Check if it is from the scoped namespace and should check if plugin is in given range if provided.
-      return (pluginArtifactNamespace.equals(input.getParent()) &&
-             (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
+      return (pluginArtifactNamespace.equals(input.getParent())
+          && (pluginRange == null || pluginRange.versionIsInRange(
+          new ArtifactVersion(input.getVersion()))));
     };
 
     try {
       // TODO: Pass ArtifactSortOrder as argument for better flexibility.
       Map<ArtifactDescriptor, PluginClass> plugins =
-        artifactRepository.getPlugins(pluginArtifactNamespace,
-                                      Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
-                                      pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
+          artifactRepository.getPlugins(pluginArtifactNamespace,
+              Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
+              pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactId plugin = pluginsEntry.getKey().getArtifactId();
         // Consider if it is a non-snapshot version artifact or it is a snapshot version than allowSnapshot is true.
-        if ((plugin.getVersion().isSnapshot() && allowSnapshot) || !plugin.getVersion().isSnapshot()) {
+        if ((plugin.getVersion().isSnapshot() && allowSnapshot) || !plugin.getVersion()
+            .isSnapshot()) {
           pluginArtifacts.add(plugin);
         }
       }
     } catch (PluginNotExistsException e) {
       LOG.trace("No plugin found for plugin {} of type {} in scope {} for app {}",
-                pluginName, pluginType, pluginScope, applicationId, e);
+          pluginName, pluginType, pluginScope, applicationId, e);
       return Collections.emptyList();
     } catch (Exception e) {
       throw e;

@@ -44,6 +44,7 @@ import org.apache.avro.io.DecoderFactory;
  */
 @Path("/v1/logs")
 public class LogBufferHandler extends AbstractHttpHandler {
+
   private final ConcurrentLogBufferWriter writer;
 
   public LogBufferHandler(ConcurrentLogBufferWriter writer) {
@@ -53,7 +54,7 @@ public class LogBufferHandler extends AbstractHttpHandler {
   @POST
   @Path("/partitions/{partition-id}/publish")
   public void publish(FullHttpRequest request, HttpResponder responder,
-                      @PathParam("partition-id") int partitionId) throws Exception {
+      @PathParam("partition-id") int partitionId) throws Exception {
     LogBufferRequest bufferRequest = createLogBufferRequest(request, partitionId);
     writer.process(bufferRequest);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -63,14 +64,17 @@ public class LogBufferHandler extends AbstractHttpHandler {
    * Creates a {@link LogBufferRequest} instance based on the given {@link HttpRequest}.
    */
   @SuppressWarnings("unchecked")
-  private LogBufferRequest createLogBufferRequest(FullHttpRequest request, int partitionId) throws Exception {
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
-    DatumReader<List<ByteBuffer>> datumReader = new GenericDatumReader<>(Schema.createArray(Schema.create(Schema.Type
-                                                                                                            .BYTES)));
+  private LogBufferRequest createLogBufferRequest(FullHttpRequest request, int partitionId)
+      throws Exception {
+    Decoder decoder = DecoderFactory.get()
+        .directBinaryDecoder(new ByteBufInputStream(request.content()), null);
+    DatumReader<List<ByteBuffer>> datumReader = new GenericDatumReader<>(
+        Schema.createArray(Schema.create(Schema.Type
+            .BYTES)));
     List<ByteBuffer> events = datumReader.read(null, decoder);
     //return new LogBufferRequest(partitionId, events);
     return new LogBufferRequest(partitionId,
-                                events.stream().map(ByteBuffers::getByteArray).collect(Collectors.toList()));
+        events.stream().map(ByteBuffers::getByteArray).collect(Collectors.toList()));
   }
 
   @Override

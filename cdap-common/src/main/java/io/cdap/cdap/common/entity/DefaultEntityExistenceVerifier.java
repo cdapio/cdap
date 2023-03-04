@@ -26,11 +26,12 @@ import java.util.Map;
  * Default implementation of {@link EntityExistenceVerifier}.
  */
 public class DefaultEntityExistenceVerifier implements EntityExistenceVerifier<EntityId> {
+
   private final Map<Class<? extends EntityId>, EntityExistenceVerifier<? extends EntityId>> existenceVerifiers;
 
   @Inject
   DefaultEntityExistenceVerifier(Map<Class<? extends EntityId>,
-                                     EntityExistenceVerifier<? extends EntityId>> existenceVerifiers) {
+      EntityExistenceVerifier<? extends EntityId>> existenceVerifiers) {
     this.existenceVerifiers = existenceVerifiers;
   }
 

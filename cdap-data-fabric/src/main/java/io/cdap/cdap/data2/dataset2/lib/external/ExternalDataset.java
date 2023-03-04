@@ -27,10 +27,12 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Represents a data source/sink that is external to CDAP. No physical manifestation of this dataset exists in CDAP.
+ * Represents a data source/sink that is external to CDAP. No physical manifestation of this dataset
+ * exists in CDAP.
  */
 @Beta
 public class ExternalDataset implements Dataset, InputFormatProvider, OutputFormatProvider {
+
   /**
    * Type name
    */
@@ -45,9 +47,9 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
     this.inputFormatClassName = runtimeArgs.get("input.format.class");
     this.outputFormatClassName = runtimeArgs.get("output.format.class");
     this.inputFormatConfiguration =
-      this.inputFormatClassName != null ? runtimeArgs : Collections.<String, String>emptyMap();
+        this.inputFormatClassName != null ? runtimeArgs : Collections.<String, String>emptyMap();
     this.outputFormatConfiguration =
-      this.outputFormatClassName != null ? runtimeArgs : Collections.<String, String>emptyMap();
+        this.outputFormatClassName != null ? runtimeArgs : Collections.<String, String>emptyMap();
   }
 
   @Override
@@ -77,6 +79,7 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
 
   /**
    * Record read access to this dataset. This method does nothing, but the
+   *
    * @ReadOnly annotation causes recording of a read access to this dataset.
    */
   @ReadOnly
@@ -86,6 +89,7 @@ public class ExternalDataset implements Dataset, InputFormatProvider, OutputForm
 
   /**
    * Record write access to this dataset. This method does nothing, but the
+   *
    * @WriteOnly annotation causes recording of a write access to this dataset.
    */
   @WriteOnly

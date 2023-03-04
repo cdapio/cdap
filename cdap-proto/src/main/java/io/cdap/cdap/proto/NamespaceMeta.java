@@ -28,16 +28,17 @@ import javax.annotation.Nullable;
 public final class NamespaceMeta {
 
   public static final NamespaceMeta DEFAULT =
-    new NamespaceMeta.Builder()
-      .setName(NamespaceId.DEFAULT)
-      .setDescription("This is the default namespace, which is automatically created, and is always available.")
-      .build();
+      new NamespaceMeta.Builder()
+          .setName(NamespaceId.DEFAULT)
+          .setDescription(
+              "This is the default namespace, which is automatically created, and is always available.")
+          .build();
 
   public static final NamespaceMeta SYSTEM =
-    new NamespaceMeta.Builder()
-      .setName(NamespaceId.SYSTEM)
-      .setDescription("The system namespace, which is used for internal purposes.")
-      .build();
+      new NamespaceMeta.Builder()
+          .setName(NamespaceId.SYSTEM)
+          .setDescription("The system namespace, which is used for internal purposes.")
+          .build();
 
   private final String name;
   private final String description;
@@ -60,8 +61,8 @@ public final class NamespaceMeta {
   }
 
   /**
-   * Get the namespace generation. The generation is set when the namespace is created. If the namespace is deleted
-   * and then created again, it will have a higher generation.
+   * Get the namespace generation. The generation is set when the namespace is created. If the
+   * namespace is deleted and then created again, it will have a higher generation.
    *
    * @return the namespace generation
    */
@@ -77,6 +78,7 @@ public final class NamespaceMeta {
    * Builder used to build {@link NamespaceMeta}
    */
   public static final class Builder {
+
     private String name;
     private String description;
     private String schedulerQueueName;
@@ -189,7 +191,8 @@ public final class NamespaceMeta {
 
     public NamespaceMeta build() {
       // combine the keytab URI with the version if the version is not 0
-      String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
+      String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion
+          : keytabURIWithoutVersion + "#" + keytabURIVersion;
       return build(uri);
     }
 
@@ -212,10 +215,10 @@ public final class NamespaceMeta {
       }
 
       return new NamespaceMeta(name, description, generation,
-                               new NamespaceConfig(schedulerQueueName, rootDirectory,
-                                                   hbaseNamespace, hiveDatabase,
-                                                   principal, groupName, keytabURI,
-                                                   configMap));
+          new NamespaceConfig(schedulerQueueName, rootDirectory,
+              hbaseNamespace, hiveDatabase,
+              principal, groupName, keytabURI,
+              configMap));
     }
   }
 
@@ -233,9 +236,9 @@ public final class NamespaceMeta {
     }
     NamespaceMeta other = (NamespaceMeta) o;
     return Objects.equals(name, other.name)
-      && generation == other.generation
-      && Objects.equals(description, other.description)
-      && Objects.equals(config, other.config);
+        && generation == other.generation
+        && Objects.equals(description, other.description)
+        && Objects.equals(config, other.config);
   }
 
   @Override
@@ -245,11 +248,11 @@ public final class NamespaceMeta {
 
   @Override
   public String toString() {
-    return "NamespaceMeta{" +
-      "name='" + name + '\'' +
-      ", description='" + description + '\'' +
-      ", generation=" + generation +
-      ", config=" + config +
-      '}';
+    return "NamespaceMeta{"
+        + "name='" + name + '\''
+        + ", description='" + description + '\''
+        + ", generation=" + generation
+        + ", config=" + config
+        + '}';
   }
 }

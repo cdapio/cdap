@@ -31,10 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reads the bootstrap config from a file. If there was an error reading the file, no bootstrapping will be
- * performed. If the file does not exist, the default bootstrap steps will be executed.
+ * Reads the bootstrap config from a file. If there was an error reading the file, no bootstrapping
+ * will be performed. If the file does not exist, the default bootstrap steps will be executed.
  */
 public class FileBootstrapConfigProvider implements BootstrapConfigProvider {
+
   private static final Logger LOG = LoggerFactory.getLogger(FileBootstrapConfigProvider.class);
   private static final Gson GSON = new Gson();
   private final File bootstrapFile;
@@ -52,15 +53,15 @@ public class FileBootstrapConfigProvider implements BootstrapConfigProvider {
       }
     } catch (FileNotFoundException e) {
       LOG.info("Bootstrap file {} does not exist. Default bootstrapping will be done.",
-               bootstrapFile.getAbsolutePath());
+          bootstrapFile.getAbsolutePath());
       return BootstrapConfig.DEFAULT;
     } catch (JsonParseException e) {
       LOG.warn("Could not parse bootstrap file {}. No bootstrapping will be done.",
-               bootstrapFile.getAbsolutePath(), e);
+          bootstrapFile.getAbsolutePath(), e);
       return BootstrapConfig.EMPTY;
     } catch (IOException e) {
       LOG.warn("Could not read bootstrap file {}. No bootstrapping will be done.",
-               bootstrapFile.getAbsolutePath(), e);
+          bootstrapFile.getAbsolutePath(), e);
       return BootstrapConfig.EMPTY;
     }
   }

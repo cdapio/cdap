@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
  * Launches a pool of task workers.
  */
 public class TaskWorkerServiceLauncher extends AbstractScheduledService {
+
   private static final Logger LOG = LoggerFactory.getLogger(TaskWorkerServiceLauncher.class);
   private static final String STATEFUL_DISK_NAME = "task-worker-data";
 
@@ -68,7 +69,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
 
   @Inject
   public TaskWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
-                                   TwillRunner twillRunner) {
+      TwillRunner twillRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.twillRunner = twillRunner;
@@ -103,13 +104,13 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
   @Override
   protected Scheduler scheduler() {
     return Scheduler.newFixedRateSchedule(0,
-                                          cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
+        cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL), TimeUnit.SECONDS);
   }
 
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("task-worker-service-launcher-scheduler"));
+        Threads.createDaemonThreadFactory("task-worker-service-launcher-scheduler"));
     return executor;
   }
 
@@ -127,7 +128,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
     if (activeController == null) {
       try {
         Path tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                               cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+            cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
         Files.createDirectories(tmpDir);
 
         Path runDir = Files.createTempDirectory(tmpDir, "task.worker.launcher");
@@ -146,26 +147,30 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
           }
 
           ResourceSpecification taskworkerResourceSpec = ResourceSpecification.Builder.with()
-            .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
-            .setMemory(cConf.getInt(Constants.TaskWorker.CONTAINER_MEMORY_MB), ResourceSpecification.SizeUnit.MEGA)
-            .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
-            .build();
+              .setVirtualCores(cConf.getInt(Constants.TaskWorker.CONTAINER_CORES))
+              .setMemory(cConf.getInt(Constants.TaskWorker.CONTAINER_MEMORY_MB),
+                  ResourceSpecification.SizeUnit.MEGA)
+              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+              .build();
 
           ResourceSpecification artifactLocalizerResourceSpec = ResourceSpecification.Builder.with()
-            .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
-            .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
-                       ResourceSpecification.SizeUnit.MEGA)
-            .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
-            .build();
+              .setVirtualCores(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_CORES))
+              .setMemory(cConf.getInt(Constants.ArtifactLocalizer.CONTAINER_MEMORY_MB),
+                  ResourceSpecification.SizeUnit.MEGA)
+              .setInstances(cConf.getInt(Constants.TaskWorker.CONTAINER_COUNT))
+              .build();
 
-          LOG.info("Starting TaskWorker pool with {} instances", taskworkerResourceSpec.getInstances());
+          LOG.info("Starting TaskWorker pool with {} instances",
+              taskworkerResourceSpec.getInstances());
 
           TwillPreparer twillPreparer = twillRunner.prepare(
-            new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(), taskworkerResourceSpec,
-                                           artifactLocalizerResourceSpec));
+              new TaskWorkerTwillApplication(cConfPath.toUri(), hConfPath.toUri(),
+                  taskworkerResourceSpec,
+                  artifactLocalizerResourceSpec));
 
           Map<String, String> configMap = new HashMap<>();
-          configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+          configMap.put(ProgramOptionConstants.RUNTIME_NAMESPACE,
+              NamespaceId.SYSTEM.getNamespace());
           twillPreparer.withConfiguration(Collections.unmodifiableMap(configMap));
 
           String priorityClass = cConf.get(Constants.TaskWorker.CONTAINER_PRIORITY_CLASS_NAME);
@@ -175,47 +180,50 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
 
           if (twillPreparer instanceof DependentTwillPreparer) {
             twillPreparer = ((DependentTwillPreparer) twillPreparer)
-              .dependentRunnableNames(TaskWorkerTwillRunnable.class.getSimpleName(),
-                                      ArtifactLocalizerTwillRunnable.class.getSimpleName());
+                .dependentRunnableNames(TaskWorkerTwillRunnable.class.getSimpleName(),
+                    ArtifactLocalizerTwillRunnable.class.getSimpleName());
           }
 
           if (twillPreparer instanceof StatefulTwillPreparer) {
             int diskSize = cConf.getInt(Constants.TaskWorker.CONTAINER_DISK_SIZE_GB);
             twillPreparer = ((StatefulTwillPreparer) twillPreparer)
-              .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
-                                    new StatefulDisk(STATEFUL_DISK_NAME, diskSize,
-                                                     cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
-            
+                .withStatefulRunnable(TaskWorkerTwillRunnable.class.getSimpleName(), false,
+                    new StatefulDisk(STATEFUL_DISK_NAME, diskSize,
+                        cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
+
             if (cConf.getBoolean(Constants.TaskWorker.CONTAINER_DISK_READONLY)) {
               twillPreparer = ((StatefulTwillPreparer) twillPreparer)
-                .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(), STATEFUL_DISK_NAME);
+                  .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
+                      STATEFUL_DISK_NAME);
             }
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {
             SecurityContext securityContext = createSecurityContext();
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
-              .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(), securityContext);
+                .withSecurityContext(TaskWorkerTwillRunnable.class.getSimpleName(),
+                    securityContext);
             // Mount secret in ArtifactLocalizer sidecar which only run trusted code,
             // so requests originated by ArtifactLocalizer can run with system identity when internal auth
             // is enabled.
             twillPreparer = ((SecureTwillPreparer) twillPreparer)
                 .withSecretDisk(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                                new SecretDisk(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME),
-                                               cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH)));
+                    new SecretDisk(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_NAME),
+                        cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH)));
             if (cConf.getBoolean(Constants.Twill.Security.WORKER_MOUNT_SECRET)) {
               String secretName = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_NAME);
               String secretPath = cConf.get(Constants.Twill.Security.WORKER_SECRET_DISK_PATH);
               twillPreparer = ((SecureTwillPreparer) twillPreparer)
-                .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(), new SecretDisk(secretName, secretPath));
+                  .withSecretDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
+                      new SecretDisk(secretName, secretPath));
             }
           }
 
           // Set JVM options for task worker and artifact localizer
           twillPreparer.setJVMOptions(TaskWorkerTwillRunnable.class.getSimpleName(),
-                                      cConf.get(Constants.TaskWorker.CONTAINER_JVM_OPTS));
+              cConf.get(Constants.TaskWorker.CONTAINER_JVM_OPTS));
           twillPreparer.setJVMOptions(ArtifactLocalizerTwillRunnable.class.getSimpleName(),
-                                      cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
+              cConf.get(Constants.ArtifactLocalizer.CONTAINER_JVM_OPTS));
 
           activeController = twillPreparer.start(5, TimeUnit.MINUTES);
           activeController.onRunning(() -> deleteDir(runDir), Threads.SAME_THREAD_EXECUTOR);
@@ -226,7 +234,7 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
         }
       } catch (Exception e) {
         LOG.warn(String.format("Failed to launch TaskWorker pool, retry in %d",
-                               cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
+            cConf.getInt(Constants.TaskWorker.POOL_CHECK_INTERVAL)), e);
       }
     }
     this.twillController = activeController;

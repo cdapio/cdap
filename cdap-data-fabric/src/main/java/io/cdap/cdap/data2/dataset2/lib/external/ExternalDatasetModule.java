@@ -23,6 +23,7 @@ import io.cdap.cdap.api.dataset.module.DatasetModule;
  * Dataset module for {@link ExternalDataset}.
  */
 public class ExternalDatasetModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new ExternalDatasetDefinition(ExternalDataset.TYPE));

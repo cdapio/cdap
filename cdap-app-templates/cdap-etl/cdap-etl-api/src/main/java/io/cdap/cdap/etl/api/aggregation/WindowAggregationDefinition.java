@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
  * Specifies how a window aggregation operation should be executed.
  */
 public class WindowAggregationDefinition {
+
   private List<Expression> partitionExpressions;
   private Map<String, Expression> aggregateExpressions;
   private Map<String, Expression> selectExpressions;
@@ -40,14 +41,14 @@ public class WindowAggregationDefinition {
   private String following;
 
   private WindowAggregationDefinition(Map<String, Expression> selectExpressions,
-                                      List<Expression> partitionExpressions,
-                                      Map<String, Expression> aggregateExpressions,
-                                      @Nullable List<OrderByExpression> orderByExpressions,
-                                      WindowFrameType windowFrameType,
-                                      @Nullable boolean unboundedPreceding,
-                                      @Nullable boolean unboundedFollowing,
-                                      @Nullable String preceding,
-                                      @Nullable String following) {
+      List<Expression> partitionExpressions,
+      Map<String, Expression> aggregateExpressions,
+      @Nullable List<OrderByExpression> orderByExpressions,
+      WindowFrameType windowFrameType,
+      @Nullable boolean unboundedPreceding,
+      @Nullable boolean unboundedFollowing,
+      @Nullable String preceding,
+      @Nullable String following) {
     this.selectExpressions = selectExpressions;
     this.partitionExpressions = partitionExpressions;
     this.aggregateExpressions = aggregateExpressions;
@@ -155,14 +156,16 @@ public class WindowAggregationDefinition {
    * A class to combine an {@link Expression} and a {@link OrderBy} into a single object.
    */
   public static class OrderByExpression {
+
     private final Expression expression;
     private final OrderBy orderBy;
 
     /**
-     * Creates a new {@link OrderByExpression} using the specified {@link Expression} and {@link orderBy}.
+     * Creates a new {@link OrderByExpression} using the specified {@link Expression} and {@link
+     * orderBy}.
      *
      * @param expression the expression using which ordering of records is to be performed
-     * @param orderBy    the function to be applied on the records to choose order
+     * @param orderBy the function to be applied on the records to choose order
      */
     public OrderByExpression(Expression expression, OrderBy orderBy) {
       this.expression = expression;
@@ -193,7 +196,8 @@ public class WindowAggregationDefinition {
         return false;
       }
       OrderByExpression that = (OrderByExpression) o;
-      return Objects.equals(getExpression(), that.getExpression()) && getOrderBy() == that.getOrderBy();
+      return Objects.equals(getExpression(), that.getExpression())
+          && getOrderBy() == that.getOrderBy();
     }
 
     @Override
@@ -203,10 +207,11 @@ public class WindowAggregationDefinition {
   }
 
   /**
-   * Builds a WindowAggregationDefinition using fields to partition  and fields to select.
-   * The fields to select must be specified.
+   * Builds a WindowAggregationDefinition using fields to partition  and fields to select. The
+   * fields to select must be specified.
    */
   public static class Builder {
+
     private List<Expression> partitionExpressions;
     private Map<String, Expression> aggregateExpressions;
     private Map<String, Expression> selectExpressions;
@@ -303,8 +308,8 @@ public class WindowAggregationDefinition {
     }
 
     /**
-     * Sets the list of expressions to perform partition to the specified expressions.
-     * Any existing partition expression list is overwritten.
+     * Sets the list of expressions to perform partition to the specified expressions. Any existing
+     * partition expression list is overwritten.
      *
      * @param partitionExpressions {@link Expression}s.
      * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
@@ -314,8 +319,8 @@ public class WindowAggregationDefinition {
     }
 
     /**
-     * Sets the aggregate function to perform aggregation to the specified expressions.
-     * Any existing aggregation expression key is overwritten.
+     * Sets the aggregate function to perform aggregation to the specified expressions. Any existing
+     * aggregation expression key is overwritten.
      *
      * @param key {@link String} to put in aggregate expressions
      * @param expression {@link Expression} aggregate function of key in aggregate expressions
@@ -337,8 +342,9 @@ public class WindowAggregationDefinition {
     }
 
     /**
-     * Sets the list of expressions to perform order by to the specified expressions.
-     * Any existing order by expression list is overwritten.
+     * Sets the list of expressions to perform order by to the specified expressions. Any existing
+     * order by expression list is overwritten.
+     *
      * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
      */
     public Builder orderBy(Expression expression, OrderBy orderBy) {
@@ -347,8 +353,8 @@ public class WindowAggregationDefinition {
     }
 
     /**
-     * Sets the list of expressions to select to the specified expressions.
-     * Any existing list of select expressions is overwritten.
+     * Sets the list of expressions to select to the specified expressions. Any existing list of
+     * select expressions is overwritten.
      *
      * @param selectExpressions to use
      * @return a {@link Builder} with the currently built {@link WindowAggregationDefinition}.
@@ -366,14 +372,19 @@ public class WindowAggregationDefinition {
      */
     public WindowAggregationDefinition build() {
       if (selectExpressions.isEmpty()) {
-        throw new IllegalStateException("Can't build a WindowAggregationDefinition without select fields");
+        throw new IllegalStateException(
+            "Can't build a WindowAggregationDefinition without select fields");
       } else if (partitionExpressions.isEmpty()) {
-        throw new IllegalStateException("Can't build a WindowAggregationDefinition without fields to partition");
+        throw new IllegalStateException(
+            "Can't build a WindowAggregationDefinition without fields to partition");
       } else if (aggregateExpressions.isEmpty()) {
-        throw new IllegalStateException("Can't build a WindowAggregationDefinition without fields to Aggregate");
+        throw new IllegalStateException(
+            "Can't build a WindowAggregationDefinition without fields to Aggregate");
       }
-      return new WindowAggregationDefinition(selectExpressions, partitionExpressions, aggregateExpressions,
-        orderByExpressions, windowFrameType, unboundedPreceding, unboundedFollowing, preceding, following);
+      return new WindowAggregationDefinition(selectExpressions, partitionExpressions,
+          aggregateExpressions,
+          orderByExpressions, windowFrameType, unboundedPreceding, unboundedFollowing, preceding,
+          following);
     }
   }
 }

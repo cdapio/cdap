@@ -26,8 +26,8 @@ import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.visibility.Authorizations;
 
 /**
- * Builder for creating {@link Scan}. This builder should be used for cross HBase versions compatibility.
- * All methods on this class are just delegating to calls to {@link Scan} object.
+ * Builder for creating {@link Scan}. This builder should be used for cross HBase versions
+ * compatibility. All methods on this class are just delegating to calls to {@link Scan} object.
  */
 public interface ScanBuilder {
 

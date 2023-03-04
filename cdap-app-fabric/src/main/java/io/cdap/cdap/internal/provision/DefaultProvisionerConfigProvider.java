@@ -39,15 +39,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each module dir and
- * expects a "configuration-groups" in the json file. "icon" and "beta" fields are optional.
+ * Default implementation of the ProvsionerConfigProvider. It expects a json file for from each
+ * module dir and expects a "configuration-groups" in the json file. "icon" and "beta" fields are
+ * optional.
  */
 public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvider {
+
   private static final Logger LOG = LoggerFactory.getLogger(DefaultProvisionerConfigProvider.class);
   private static final Gson GSON = new GsonBuilder().create();
 
   @Override
-  public Map<String, ProvisionerConfig> loadProvisionerConfigs(Collection<Provisioner> provisioners) {
+  public Map<String, ProvisionerConfig> loadProvisionerConfigs(
+      Collection<Provisioner> provisioners) {
     Map<String, ProvisionerConfig> results = new HashMap<>();
 
     for (Provisioner provisioner : provisioners) {
@@ -57,9 +60,11 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
         if (reader == null) {
           continue;
         }
-        results.put(provisionerName, GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
+        results.put(provisionerName,
+            GSON.fromJson(new JsonReader(reader), ProvisionerConfig.class));
       } catch (Exception e) {
-        LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.", provisionerName, e);
+        LOG.warn("Exception reading JSON config file for provisioner {}. Ignoring file.",
+            provisionerName, e);
       }
     }
 
@@ -67,12 +72,14 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
   }
 
   /**
-   * Find the json config file with name [provisioner_name].json under the provisioner ext directory.
-   * The ext directory can be found by the classloader of the provisioner.
-   * If the json config file is not found in the ext directory, try to locate it from the provisioner classloader.
+   * Find the json config file with name [provisioner_name].json under the provisioner ext
+   * directory. The ext directory can be found by the classloader of the provisioner. If the json
+   * config file is not found in the ext directory, try to locate it from the provisioner
+   * classloader.
    *
    * @param provisioner the {@link Provisioner}
-   * @return a {@link Reader} for reading the config file, or {@code null} if the config file cannot be located
+   * @return a {@link Reader} for reading the config file, or {@code null} if the config file cannot
+   *     be located
    */
   @Nullable
   private Reader openConfigReader(Provisioner provisioner) throws IOException, URISyntaxException {
@@ -109,7 +116,8 @@ public class DefaultProvisionerConfigProvider implements ProvisionerConfigProvid
       return new InputStreamReader(resource.openStream(), StandardCharsets.UTF_8);
     }
 
-    LOG.debug("Unable to find JSON config file {} for provisioner {}", configFilePath, provisionerName);
+    LOG.debug("Unable to find JSON config file {} for provisioner {}", configFilePath,
+        provisionerName);
     return null;
   }
 }

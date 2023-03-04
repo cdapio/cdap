@@ -45,16 +45,17 @@ public class NamespaceConfig {
   // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
   // compatibility
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
-                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
-                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI) {
-    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName, keytabURI,
-         new HashMap<>());
+      @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+      @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI) {
+    this(schedulerQueueName, rootDirectory, hbaseNamespace, hiveDatabase, principal, groupName,
+        keytabURI,
+        new HashMap<>());
   }
 
   public NamespaceConfig(String schedulerQueueName, @Nullable String rootDirectory,
-                         @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
-                         @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
-                         Map<String, String> existingConfigs) {
+      @Nullable String hbaseNamespace, @Nullable String hiveDatabase,
+      @Nullable String principal, @Nullable String groupName, @Nullable String keytabURI,
+      Map<String, String> existingConfigs) {
     Map<String, String> configs = new HashMap<>(existingConfigs);
     configs.put(SCHEDULER_QUEUE_NAME, schedulerQueueName);
 
@@ -81,7 +82,6 @@ public class NamespaceConfig {
     if (keytabURI != null) {
       configs.put(KEYTAB_URI, keytabURI);
     }
-
 
     this.configs = Collections.unmodifiableMap(configs);
   }
@@ -216,9 +216,9 @@ public class NamespaceConfig {
 
   @Override
   public String toString() {
-    return "NamespaceConfig{" +
-      "configs=" + configs +
-      '}';
+    return "NamespaceConfig{"
+        + "configs=" + configs
+        + '}';
   }
 
   /**

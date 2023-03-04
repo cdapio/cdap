@@ -35,6 +35,7 @@ import org.apache.twill.filesystem.Location;
 @Name(FilesetDeletePostAction.NAME)
 @Description("Post run action that deletes files in a FileSet that match a configurable regex if the run succeeded.")
 public class FilesetDeletePostAction extends PostAction {
+
   public static final String NAME = "FilesetDelete";
   private final Conf config;
 
@@ -42,6 +43,7 @@ public class FilesetDeletePostAction extends PostAction {
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     public static final String FILESET_NAME = "filesetName";
     public static final String DELETE_REGEX = "deleteRegex";
     public static final String DIRECTORY = "directory";

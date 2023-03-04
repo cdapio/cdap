@@ -57,14 +57,14 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      new DFSLocationModule(),
-      new MessagingClientModule(),
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      getDataFabricModule(),
-      new RuntimeServerModule(),
-      new AuthorizationEnforcementModule().getDistributedModules()
+        new DFSLocationModule(),
+        new MessagingClientModule(),
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        getDataFabricModule(),
+        new RuntimeServerModule(),
+        new AuthorizationEnforcementModule().getDistributedModules()
     );
   }
 
@@ -77,9 +77,9 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
     services.add(new AbstractIdleService() {
       @Override
       protected void startUp() throws Exception {
@@ -93,7 +93,8 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
     });
     services.add(injector.getInstance(RuntimeProgramStatusSubscriberService.class));
     services.add(injector.getInstance(RuntimeServer.class));
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -103,7 +104,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.RUNTIME);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.RUNTIME);
   }
 }

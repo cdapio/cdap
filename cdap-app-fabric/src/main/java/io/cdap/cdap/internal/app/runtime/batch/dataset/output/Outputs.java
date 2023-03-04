@@ -29,13 +29,15 @@ import java.util.Map;
  * Utility class to help deal with Outputs.
  */
 public final class Outputs {
-  private Outputs() { }
+
+  private Outputs() {
+  }
 
   /**
    * Transforms a list of {@link Output}s to {@link ProvidedOutput}.
    */
   public static List<ProvidedOutput> transform(List<Output.DatasetOutput> outputs,
-                                               final AbstractContext abstractContext) {
+      final AbstractContext abstractContext) {
     // we don't want to use Lists.transform, to catch any errors with transform earlier on
     List<ProvidedOutput> providedOutputs = new ArrayList<>(outputs.size());
     for (Output.DatasetOutput output : outputs) {
@@ -45,16 +47,17 @@ public final class Outputs {
   }
 
   public static ProvidedOutput transform(Output.DatasetOutput datasetOutput,
-                                         AbstractContext abstractContext) {
+      AbstractContext abstractContext) {
     String datasetNamespace = datasetOutput.getNamespace();
     if (datasetNamespace == null) {
       datasetNamespace = abstractContext.getNamespace();
     }
     String datasetName = datasetOutput.getName();
     Map<String, String> args = datasetOutput.getArguments();
-    Dataset dataset = abstractContext.getDataset(datasetNamespace, datasetName, args, AccessType.WRITE);
+    Dataset dataset = abstractContext.getDataset(datasetNamespace, datasetName, args,
+        AccessType.WRITE);
     DatasetOutputFormatProvider datasetOutputFormatProvider =
-      new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
+        new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
     return new ProvidedOutput(datasetOutput, datasetOutputFormatProvider);
   }
 }

@@ -34,12 +34,14 @@ import java.util.regex.Pattern;
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name(WordCountAggregator.NAME)
 @Description("Counts how many times each word appears in all records input to the aggregator.")
-public class WordCountAggregator extends BatchAggregator<String, StructuredRecord, StructuredRecord> {
+public class WordCountAggregator extends
+    BatchAggregator<String, StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "WordCount";
   public static final Schema OUTPUT_SCHEMA = Schema.recordOf(
-    "wordCount",
-    Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("count", Schema.of(Schema.Type.LONG))
+      "wordCount",
+      Schema.Field.of("word", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("count", Schema.of(Schema.Type.LONG))
   );
   private static final Pattern WHITESPACE = Pattern.compile("\\s");
   private final Conf config;
@@ -48,6 +50,7 @@ public class WordCountAggregator extends BatchAggregator<String, StructuredRecor
    * Config properties for the plugin.
    */
   public static class Conf extends PluginConfig {
+
     @Description("The field from the input records containing the words to count.")
     private String field;
   }
@@ -67,14 +70,16 @@ public class WordCountAggregator extends BatchAggregator<String, StructuredRecor
       Schema.Field inputField = inputSchema.getField(config.field);
       if (inputField == null) {
         throw new IllegalArgumentException(
-          String.format("Field '%s' does not exist in input schema %s.", config.field, inputSchema));
+            String.format("Field '%s' does not exist in input schema %s.", config.field,
+                inputSchema));
       }
       Schema fieldSchema = inputField.getSchema();
-      Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+      Schema.Type fieldType =
+          fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
       if (fieldType != Schema.Type.STRING) {
         throw new IllegalArgumentException(
-          String.format("Field '%s' is of illegal type %s. Must be of type %s.",
-                        config.field, fieldType, Schema.Type.STRING));
+            String.format("Field '%s' is of illegal type %s. Must be of type %s.",
+                config.field, fieldType, Schema.Type.STRING));
       }
     }
     // set the output schema so downstream stages will know their input schema.
@@ -95,12 +100,13 @@ public class WordCountAggregator extends BatchAggregator<String, StructuredRecor
 
   @Override
   public void aggregate(String groupKey, Iterator<StructuredRecord> groupValues,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+      Emitter<StructuredRecord> emitter) throws Exception {
     long count = 0;
     while (groupValues.hasNext()) {
       groupValues.next();
       count++;
     }
-    emitter.emit(StructuredRecord.builder(OUTPUT_SCHEMA).set("word", groupKey).set("count", count).build());
+    emitter.emit(
+        StructuredRecord.builder(OUTPUT_SCHEMA).set("word", groupKey).set("count", count).build());
   }
 }

@@ -20,6 +20,7 @@ package io.cdap.cdap.report.proto;
  * Represents a request to save a program run report in an HTTP request.
  */
 public class ReportSaveRequest {
+
   private final String name;
   private final String description;
 

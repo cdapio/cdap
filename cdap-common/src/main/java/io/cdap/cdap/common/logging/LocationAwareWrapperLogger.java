@@ -410,7 +410,7 @@ final class LocationAwareWrapperLogger implements Logger, LocationAwareLogger {
 
   @Override
   public void log(@Nullable Marker marker, String fqcn, int level,
-                  String message, @Nullable Object[] args, @Nullable Throwable t) {
+      String message, @Nullable Object[] args, @Nullable Throwable t) {
     try {
       beforeLog();
       log_internal(marker, fqcn, level, message, args, t);
@@ -420,7 +420,7 @@ final class LocationAwareWrapperLogger implements Logger, LocationAwareLogger {
   }
 
   private void log_internal(@Nullable Marker marker, String fqcn, int level,
-                  String message, @Nullable Object[] args, @Nullable Throwable t) {
+      String message, @Nullable Object[] args, @Nullable Throwable t) {
     if (logger instanceof LocationAwareLogger) {
       ((LocationAwareLogger) logger).log(marker, fqcn, level, message, args, t);
       return;

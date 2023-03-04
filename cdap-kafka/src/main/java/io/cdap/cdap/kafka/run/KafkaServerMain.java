@@ -43,12 +43,13 @@ import org.slf4j.LoggerFactory;
  * Runs embedded Kafka server.
  */
 public class KafkaServerMain extends DaemonMain {
+
   private static final Logger LOG = LoggerFactory.getLogger(KafkaServerMain.class);
 
   private Properties kafkaProperties;
   private EmbeddedKafkaServer kafkaServer;
 
-  public static void main(String [] args) throws Exception {
+  public static void main(String[] args) throws Exception {
     new KafkaServerMain().doMain(args);
   }
 
@@ -62,19 +63,20 @@ public class KafkaServerMain extends DaemonMain {
     if (zkNamespace != null) {
       ZKClientService client = ZKClientService.Builder.of(zkConnectStr).build();
       try {
-        Services.startAndWait(client, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                              TimeUnit.MILLISECONDS,
-                              String.format("Connection timed out while trying to start ZooKeeper client. Please " +
-                                            "verify that the ZooKeeper quorum settings are correct in " +
-                                            "cdap-site.xml. Currently configured as: %s",
-                                            client.getConnectString()));
+        Services.startAndWait(client,
+            cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
+            TimeUnit.MILLISECONDS,
+            String.format("Connection timed out while trying to start ZooKeeper client. Please "
+                    + "verify that the ZooKeeper quorum settings are correct in "
+                    + "cdap-site.xml. Currently configured as: %s",
+                client.getConnectString()));
 
         String path = "/" + zkNamespace;
         LOG.info(String.format("Creating zookeeper namespace %s", path));
 
         ZKOperations.ignoreError(
-          client.create(path, null, CreateMode.PERSISTENT),
-          KeeperException.NodeExistsException.class, path).get();
+            client.create(path, null, CreateMode.PERSISTENT),
+            KeeperException.NodeExistsException.class, path).get();
 
         client.stopAndWait();
         zkConnectStr = String.format("%s/%s", zkConnectStr, zkNamespace);
@@ -94,7 +96,8 @@ public class KafkaServerMain extends DaemonMain {
     Preconditions.checkState(port > 0, "Port number is invalid.");
 
     String hostname = kafkaProperties.getProperty("host.name");
-    InetAddress address = Networks.resolve(hostname, new InetSocketAddress("localhost", 0).getAddress());
+    InetAddress address = Networks.resolve(hostname,
+        new InetSocketAddress("localhost", 0).getAddress());
     if (hostname != null) {
       if (address.isAnyLocalAddress()) {
         kafkaProperties.remove("host.name");
@@ -122,7 +125,7 @@ public class KafkaServerMain extends DaemonMain {
     Service.State state = kafkaServer.startAndWait();
 
     if (state != Service.State.RUNNING) {
-      throw new  IllegalStateException("Kafka server has not started... terminating.");
+      throw new IllegalStateException("Kafka server has not started... terminating.");
     }
 
     LOG.info("Embedded kafka server started successfully.");

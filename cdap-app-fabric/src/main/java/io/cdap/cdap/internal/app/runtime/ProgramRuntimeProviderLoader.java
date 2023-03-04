@@ -29,11 +29,13 @@ import java.util.ServiceLoader;
 import java.util.Set;
 
 /**
- * A singleton class for discovering {@link ProgramRuntimeProvider} through the runtime extension mechanism that uses
- * the Java {@link ServiceLoader} architecture.
+ * A singleton class for discovering {@link ProgramRuntimeProvider} through the runtime extension
+ * mechanism that uses the Java {@link ServiceLoader} architecture.
  */
 @Singleton
-public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<ProgramType, ProgramRuntimeProvider> {
+public class ProgramRuntimeProviderLoader extends
+    AbstractExtensionLoader<ProgramType, ProgramRuntimeProvider> {
+
   private final CConfiguration cConf;
 
   @VisibleForTesting
@@ -44,10 +46,12 @@ public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<Progra
   }
 
   @Override
-  public Set<ProgramType> getSupportedTypesForProvider(ProgramRuntimeProvider programRuntimeProvider) {
+  public Set<ProgramType> getSupportedTypesForProvider(
+      ProgramRuntimeProvider programRuntimeProvider) {
     // See if the provide supports the required program type
     ProgramRuntimeProvider.SupportedProgramType supportedTypes =
-      programRuntimeProvider.getClass().getAnnotation(ProgramRuntimeProvider.SupportedProgramType.class);
+        programRuntimeProvider.getClass()
+            .getAnnotation(ProgramRuntimeProvider.SupportedProgramType.class);
     ImmutableSet.Builder<ProgramType> types = ImmutableSet.builder();
 
     for (ProgramType programType : supportedTypes.value()) {

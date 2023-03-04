@@ -26,12 +26,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A ClassLoader that do class loading by delegating to another ClassLoader. It holds the delegating ClassLoader
- * with a {@link WeakReference} so that garbage collection of the delegating ClassLoader is possible.
+ * A ClassLoader that do class loading by delegating to another ClassLoader. It holds the delegating
+ * ClassLoader with a {@link WeakReference} so that garbage collection of the delegating ClassLoader
+ * is possible.
  */
-public class WeakReferenceDelegatorClassLoader extends URLClassLoader implements Delegator<ClassLoader> {
+public class WeakReferenceDelegatorClassLoader extends URLClassLoader implements
+    Delegator<ClassLoader> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WeakReferenceDelegatorClassLoader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      WeakReferenceDelegatorClassLoader.class);
   private static final URL[] EMPTY_URLS = new URL[0];
 
   private final WeakReference<ClassLoader> delegate;
@@ -39,7 +42,8 @@ public class WeakReferenceDelegatorClassLoader extends URLClassLoader implements
   public WeakReferenceDelegatorClassLoader(ClassLoader classLoader) {
     // Wrap the parent with a weak reference as well.
     super(EMPTY_URLS,
-          classLoader.getParent() == null ? null : new WeakReferenceDelegatorClassLoader(classLoader.getParent()));
+        classLoader.getParent() == null ? null
+            : new WeakReferenceDelegatorClassLoader(classLoader.getParent()));
     this.delegate = new WeakReference<>(classLoader);
   }
 
@@ -81,7 +85,9 @@ public class WeakReferenceDelegatorClassLoader extends URLClassLoader implements
     ClassLoader classLoader = delegate.get();
     if (classLoader == null) {
       classLoader = getClass().getClassLoader();
-      LOG.warn("Delegating ClassLoader is already Garbage Collected. Using system ClassLoader instead: " + classLoader);
+      LOG.warn(
+          "Delegating ClassLoader is already Garbage Collected. Using system ClassLoader instead: "
+              + classLoader);
     }
     return classLoader;
   }

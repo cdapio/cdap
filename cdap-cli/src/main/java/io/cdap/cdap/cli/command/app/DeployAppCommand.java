@@ -39,7 +39,8 @@ public class DeployAppCommand extends AbstractAuthCommand {
   private final FilePathResolver resolver;
 
   @Inject
-  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver, CLIConfig cliConfig) {
+  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.applicationClient = applicationClient;
     this.resolver = resolver;
@@ -48,8 +49,10 @@ public class DeployAppCommand extends AbstractAuthCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     File file = resolver.resolvePathToFile(arguments.get(ArgumentName.APP_JAR_FILE.toString()));
-    Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
-    Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
+    Preconditions.checkArgument(file.exists(),
+        "File " + file.getAbsolutePath() + " does not exist");
+    Preconditions.checkArgument(file.canRead(),
+        "File " + file.getAbsolutePath() + " is not readable");
     String appConfig = arguments.getOptional(ArgumentName.APP_CONFIG.toString(), "");
     applicationClient.deploy(cliConfig.getCurrentNamespace(), file, appConfig);
     output.println("Successfully deployed application");
@@ -58,12 +61,13 @@ public class DeployAppCommand extends AbstractAuthCommand {
   @Override
   public String getPattern() {
     return String.format("deploy app <%s> [<%s>]", ArgumentName.APP_JAR_FILE,
-                         ArgumentName.APP_CONFIG);
+        ArgumentName.APP_CONFIG);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Deploys %s, optionally with a serialized configuration string", Fragment.of(
-      Article.A, ElementType.APP.getName()));
+    return String.format("Deploys %s, optionally with a serialized configuration string",
+        Fragment.of(
+            Article.A, ElementType.APP.getName()));
   }
 }

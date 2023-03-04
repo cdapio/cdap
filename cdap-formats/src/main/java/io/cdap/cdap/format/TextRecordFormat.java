@@ -31,6 +31,7 @@ import java.util.Map;
  * A {@link RecordFormat} that interprets the entire input as a single string.
  */
 public class TextRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord> {
+
   public static final String CHARSET = "charset";
   private Charset charset = Charsets.UTF_8;
   private String fieldName = "body";

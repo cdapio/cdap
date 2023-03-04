@@ -69,13 +69,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link ChannelInboundHandler} for inspecting authentication access token for all
- * incoming HTTP requests to the router.
+ * A {@link ChannelInboundHandler} for inspecting authentication access token for all incoming HTTP
+ * requests to the router.
  */
 public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationHandler.class);
-  private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(Constants.Router.AUDIT_LOGGER_NAME);
+  private static final Logger AUDIT_LOGGER = LoggerFactory.getLogger(
+      Constants.Router.AUDIT_LOGGER_NAME);
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -87,8 +88,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final UserIdentityExtractor userIdentityExtractor;
 
   public AuthenticationHandler(CConfiguration cConf, SConfiguration sConf,
-                               DiscoveryServiceClient discoveryServiceClient,
-                               UserIdentityExtractor userIdentityExtractor) {
+      DiscoveryServiceClient discoveryServiceClient,
+      UserIdentityExtractor userIdentityExtractor) {
     this.cConf = cConf;
     this.sConf = sConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
@@ -122,13 +123,13 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       Credential credential = getUserCredential(userIdentityPair);
 
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
-      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
-        credential != null) {
+      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true)
+          && credential != null) {
         request.headers().set(Constants.Security.Headers.RUNTIME_TOKEN,
-                              String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
+            String.format("%s %s", credential.getType().getQualifiedName(), credential.getValue()));
       }
       request.headers().set(Constants.Security.Headers.USER_ID,
-                            userIdentityPair.getUserIdentity().getUsername());
+          userIdentityPair.getUserIdentity().getUsername());
       String clientIP = Networks.getIP(ctx.channel().remoteAddress());
       if (clientIP != null) {
         request.headers().set(Constants.Security.Headers.USER_IP, clientIP);
@@ -141,25 +142,28 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     try {
       HttpHeaders headers = new DefaultHttpHeaders();
       JsonObject jsonObject = new JsonObject();
-      if (extractionResponse.getState().equals(UserIdentityExtractionState.ERROR_MISSING_CREDENTIAL)) {
+      if (extractionResponse.getState()
+          .equals(UserIdentityExtractionState.ERROR_MISSING_CREDENTIAL)) {
         headers.add(HttpHeaderNames.WWW_AUTHENTICATE, String.format("Bearer realm=\"%s\"", realm));
         LOG.debug("Authentication failed due to missing credentials");
       } else {
         String shortError = extractionResponse.getState().toString();
         String errorDescription = extractionResponse.getErrorDescription();
         headers.add(HttpHeaderNames.WWW_AUTHENTICATE,
-                    String.format("Bearer realm=\"%s\" error=\"%s\" error_description=\"%s\"", realm, shortError,
-                                  errorDescription));
+            String.format("Bearer realm=\"%s\" error=\"%s\" error_description=\"%s\"", realm,
+                shortError,
+                errorDescription));
         jsonObject.addProperty("error", shortError);
         jsonObject.addProperty("error_description", errorDescription);
-        LOG.debug("Authentication failed due to error {}, reason={};", shortError, errorDescription);
+        LOG.debug("Authentication failed due to error {}, reason={};", shortError,
+            errorDescription);
       }
 
       jsonObject.add("auth_uri", getAuthenticationURLs());
 
       ByteBuf content = Unpooled.copiedBuffer(jsonObject.toString(), StandardCharsets.UTF_8);
       HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                                                          HttpResponseStatus.UNAUTHORIZED, content);
+          HttpResponseStatus.UNAUTHORIZED, content);
       HttpUtil.setContentLength(response, content.readableBytes());
       HttpUtil.setKeepAlive(response, false);
       response.headers().setAll(headers);
@@ -198,7 +202,8 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     final String protocol = getProtocol(cConf);
     final int port = getPort(cConf);
 
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
+    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(
+        Constants.Service.EXTERNAL_AUTHENTICATION);
     addAuthServerUrls(serviceDiscovered, protocol, port, result);
     if (result.size() > 0) {
       return result;
@@ -207,15 +212,16 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     // For bootstrapping, the service discovery takes time to fill in the cache from ZK, hence use a callback
     // and a timed future to get the result
     final SettableFuture<JsonArray> future = SettableFuture.create();
-    Cancellable cancellable = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        addAuthServerUrls(serviceDiscovered, protocol, port, result);
-        if (result.size() > 0) {
-          future.set(result);
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+    Cancellable cancellable = serviceDiscovered.watchChanges(
+        new ServiceDiscovered.ChangeListener() {
+          @Override
+          public void onChange(ServiceDiscovered serviceDiscovered) {
+            addAuthServerUrls(serviceDiscovered, protocol, port, result);
+            if (result.size() > 0) {
+              future.set(result);
+            }
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
     try {
       return future.get(2, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
@@ -239,18 +245,21 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     if (userIdentity.getIdentifierType() == UserIdentity.IdentifierType.INTERNAL) {
       return new Credential(userCredential, Credential.CredentialType.INTERNAL);
     }
-    if (userCredential == null ||
-      !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED, false)) {
+    if (userCredential == null
+        || !sConf.getBoolean(Constants.Security.Authentication.USER_CREDENTIAL_ENCRYPTION_ENABLED,
+        false)) {
       return new Credential(userCredential, Credential.CredentialType.EXTERNAL);
     }
     String encryptedCredential = new TinkCipher(sConf).encryptStringToBase64(userCredential, null);
     return new Credential(encryptedCredential, Credential.CredentialType.EXTERNAL_ENCRYPTED);
   }
 
-  private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port, JsonArray result) {
+  private void addAuthServerUrls(Iterable<Discoverable> discoverables, String protocol, int port,
+      JsonArray result) {
     for (Discoverable discoverable : discoverables) {
-      String url = String.format("%s://%s:%d/%s", protocol, discoverable.getSocketAddress().getHostName(), port,
-                                 GrantAccessToken.Paths.GET_TOKEN);
+      String url = String.format("%s://%s:%d/%s", protocol,
+          discoverable.getSocketAddress().getHostName(), port,
+          GrantAccessToken.Paths.GET_TOKEN);
       result.add(new JsonPrimitive(url));
     }
   }
@@ -276,8 +285,9 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     try {
       return Pattern.compile(pattern);
     } catch (PatternSyntaxException e) {
-      throw new IllegalArgumentException("Invalid regular expression " + pattern + " for configuration "
-                                           + Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, e);
+      throw new IllegalArgumentException(
+          "Invalid regular expression " + pattern + " for configuration "
+              + Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, e);
     }
   }
 
@@ -296,7 +306,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
   private static int getPort(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED)
-      ? cConf.getInt(Constants.Security.AuthenticationServer.SSL_PORT)
-      : cConf.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
+        ? cConf.getInt(Constants.Security.AuthenticationServer.SSL_PORT)
+        : cConf.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
   }
 }

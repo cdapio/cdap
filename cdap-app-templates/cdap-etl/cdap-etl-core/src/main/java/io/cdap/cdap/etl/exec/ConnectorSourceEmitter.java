@@ -23,17 +23,18 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import java.util.Set;
 
 /**
- * Just like a PipeEmitter, except it doesn't need to add stage name itself, since the ConnectorSource does it.
+ * Just like a PipeEmitter, except it doesn't need to add stage name itself, since the
+ * ConnectorSource does it.
  */
 public class ConnectorSourceEmitter extends PipeEmitter {
 
   // stageName passed into the constructor will be the name of the connector, something like 'myagg.connector'.
   // however, it is not used anywhere by this emitter, and is only here because the superclass requires it.
   private ConnectorSourceEmitter(String stageName,
-                                 Set<PipeStage<RecordInfo>> outputConsumers,
-                                 Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
-                                 Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
-                                 Set<PipeStage<RecordInfo<Alert>>> alertConsumers) {
+      Set<PipeStage<RecordInfo>> outputConsumers,
+      Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
+      Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
+      Set<PipeStage<RecordInfo<Alert>>> alertConsumers) {
     super(stageName, outputConsumers, outputPortConsumers, errorConsumers, alertConsumers);
   }
 
@@ -67,7 +68,7 @@ public class ConnectorSourceEmitter extends PipeEmitter {
     @Override
     public PipeEmitter build() {
       return new ConnectorSourceEmitter(stageName, outputConsumers, outputPortConsumers,
-                                        errorConsumers, alertConsumers);
+          errorConsumers, alertConsumers);
     }
   }
 }

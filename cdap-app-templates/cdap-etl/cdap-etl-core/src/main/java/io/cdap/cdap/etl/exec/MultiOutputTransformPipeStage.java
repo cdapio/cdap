@@ -29,12 +29,13 @@ import io.cdap.cdap.etl.common.RecordInfo;
  * @param <T> the type of input object
  */
 public class MultiOutputTransformPipeStage<T> extends PipeStage<RecordInfo<T>> {
+
   private final MultiOutputTransformation<T, Object> transform;
   private final MultiOutputEmitter<Object> emitter;
 
   public MultiOutputTransformPipeStage(String stageName,
-                                       MultiOutputTransformation<T, Object> transform,
-                                       MultiOutputEmitter<Object> emitter) {
+      MultiOutputTransformation<T, Object> transform,
+      MultiOutputEmitter<Object> emitter) {
     super(stageName);
     this.transform = transform;
     this.emitter = emitter;

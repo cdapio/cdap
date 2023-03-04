@@ -22,10 +22,11 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * An {@link Indexer} that returns lexicographically inverted indexes. The indexes returned have each character's
- * ASCII value subtracted from the maximum ASCII value of a character (127).
+ * An {@link Indexer} that returns lexicographically inverted indexes. The indexes returned have
+ * each character's ASCII value subtracted from the maximum ASCII value of a character (127).
  */
 public class InvertedValueIndexer implements Indexer {
+
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     return Collections.singleton(lexInvert(entry.getValue()));

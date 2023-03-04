@@ -35,7 +35,9 @@ import org.apache.avro.io.DecoderFactory;
  * A {@link RecordFormat} that interprets the input as avro encoded binary data.
  */
 public class AvroRecordFormat extends RecordFormat<ByteBuffer, StructuredRecord> {
-  private final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(ByteBuffer.wrap(new byte[0]));
+
+  private final ByteBufferInputStream byteBufferInput = new ByteBufferInputStream(
+      ByteBuffer.wrap(new byte[0]));
   private final DecoderFactory decoderFactory = DecoderFactory.get();
 
   private Schema formatSchema;

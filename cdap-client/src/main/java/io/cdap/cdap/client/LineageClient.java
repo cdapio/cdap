@@ -48,8 +48,8 @@ import javax.inject.Inject;
 public class LineageClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .create();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .create();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -70,12 +70,13 @@ public class LineageClient {
    * @param datasetInstance the dataset for which to retrieve lineage
    * @param startTime start time for the query, in seconds
    * @param endTime end time for the query, in seconds
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @param levels number of levels to compute lineage for, or {@code null} to use the
+   *     LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, long startTime, long endTime,
-                                  @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+      @Nullable Integer levels)
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), levels);
   }
 
@@ -85,13 +86,15 @@ public class LineageClient {
    * @param datasetInstance the dataset for which to retrieve lineage
    * @param startTime start time for the query, in seconds, or in 'now - xs' format
    * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @param levels number of levels to compute lineage for, or {@code null} to use the
+   *     LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, String startTime, String endTime,
-                                  @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
+      @Nullable Integer levels)
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    return getLineage(datasetInstance, startTime, endTime, Collections.<CollapseType>emptySet(),
+        levels);
   }
 
   /**
@@ -101,13 +104,15 @@ public class LineageClient {
    * @param startTime start time for the query, in seconds
    * @param endTime end time for the query, in seconds
    * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @param levels number of levels to compute lineage for, or {@code null} to use the
+   *     LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, long startTime, long endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
+      Set<CollapseType> collapseTypes, @Nullable Integer levels)
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    return getLineage(datasetInstance, Long.toString(startTime), Long.toString(endTime),
+        collapseTypes, levels);
   }
 
   /**
@@ -117,14 +122,15 @@ public class LineageClient {
    * @param startTime start time for the query, in seconds, or in 'now - xs' format
    * @param endTime end time for the query, in seconds, or in 'now - xs' format
    * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
+   * @param levels number of levels to compute lineage for, or {@code null} to use the
+   *     LineageHandler's default value
    * @return {@link LineageRecord} for the specified dataset.
    */
   public LineageRecord getLineage(DatasetId datasetInstance, String startTime, String endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+      Set<CollapseType> collapseTypes, @Nullable Integer levels)
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     String path = String.format("datasets/%s/lineage?start=%s&end=%s", datasetInstance.getDataset(),
-                                URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
+        URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
     for (CollapseType collapseType : collapseTypes) {
       path = String.format("%s&collapse=%s", path, collapseType);
     }
@@ -144,11 +150,12 @@ public class LineageClient {
    * @return {@link FieldLineageSummary} for the specified dataset.
    */
   public FieldLineageSummary getFieldLineage(DatasetId datasetId, long startTime, long endTime,
-                                             String direction)
-    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("datasets/%s/lineage/allfieldlineage?start=%s&end=%s", datasetId.getDataset(),
-                                URLEncoder.encode(Long.toString(startTime), "UTF-8"),
-                                URLEncoder.encode(Long.toString(endTime), "UTF-8"));
+      String direction)
+      throws IOException, BadRequestException, NotFoundException, UnauthenticatedException, UnauthorizedException {
+    String path = String.format("datasets/%s/lineage/allfieldlineage?start=%s&end=%s",
+        datasetId.getDataset(),
+        URLEncoder.encode(Long.toString(startTime), "UTF-8"),
+        URLEncoder.encode(Long.toString(endTime), "UTF-8"));
     if (direction != null) {
       path = String.format("%s&direction=%s", path, URLEncoder.encode(direction, "UTF-8"));
     }
@@ -156,11 +163,12 @@ public class LineageClient {
   }
 
   private <T> T getLineage(NamespacedEntityId namespacedId, String path, Class<T> type)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    URL lineageURL = config.resolveNamespacedURLV3(new NamespaceId(namespacedId.getNamespace()), path);
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+    URL lineageURL = config.resolveNamespacedURLV3(new NamespaceId(namespacedId.getNamespace()),
+        path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
-                                               config.getAccessToken(),
-                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+        config.getAccessToken(),
+        HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }

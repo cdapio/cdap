@@ -45,7 +45,8 @@ public class StructuredRecordDatumReader extends GenericDatumReader<StructuredRe
   }
 
   @Override
-  protected Object read(Object old, org.apache.avro.Schema expected, ResolvingDecoder in) throws IOException {
+  protected Object read(Object old, org.apache.avro.Schema expected, ResolvingDecoder in)
+      throws IOException {
     if (expected.getType() != org.apache.avro.Schema.Type.UNION) {
       return super.read(old, expected, in);
     }
@@ -83,7 +84,8 @@ public class StructuredRecordDatumReader extends GenericDatumReader<StructuredRe
   }
 
   @Override
-  protected Object readArray(Object old, org.apache.avro.Schema expected, ResolvingDecoder in) throws IOException {
+  protected Object readArray(Object old, org.apache.avro.Schema expected, ResolvingDecoder in)
+      throws IOException {
     Schema tmpSchema = currentSchema;
     try {
       currentSchema = currentSchema.getComponentSchema();
@@ -94,7 +96,8 @@ public class StructuredRecordDatumReader extends GenericDatumReader<StructuredRe
   }
 
   @Override
-  protected Object readMap(Object old, org.apache.avro.Schema expected, ResolvingDecoder in) throws IOException {
+  protected Object readMap(Object old, org.apache.avro.Schema expected, ResolvingDecoder in)
+      throws IOException {
     Schema tmpSchema = currentSchema;
     try {
       currentSchema = tmpSchema.getMapSchema().getValue();
@@ -105,7 +108,8 @@ public class StructuredRecordDatumReader extends GenericDatumReader<StructuredRe
   }
 
   @Override
-  protected Object readRecord(Object old, org.apache.avro.Schema expected, ResolvingDecoder in) throws IOException {
+  protected Object readRecord(Object old, org.apache.avro.Schema expected, ResolvingDecoder in)
+      throws IOException {
     StructuredRecord.Builder builder = StructuredRecord.builder(currentSchema);
 
     for (org.apache.avro.Schema.Field f : in.readFieldOrder()) {
@@ -129,7 +133,8 @@ public class StructuredRecordDatumReader extends GenericDatumReader<StructuredRe
   private Schema getFieldSchema(String fieldName, Schema recordSchema) {
     Schema.Field field = recordSchema.getField(fieldName);
     if (field == null) {
-      throw new IllegalArgumentException("Field '" + fieldName + "' not exists in record '" + recordSchema + "'");
+      throw new IllegalArgumentException(
+          "Field '" + fieldName + "' not exists in record '" + recordSchema + "'");
     }
     return field.getSchema();
   }

@@ -123,13 +123,15 @@ public class SqlStructuredRow implements StructuredRow {
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
           throw new IllegalStateException(
-            String.format("The type %s of the primary key %s is not a valid key type", type, key));
+              String.format("The type %s of the primary key %s is not a valid key type", type,
+                  key));
       }
     }
     return result;
   }
 
-  private void validateField(String fieldName, Set<FieldType.Type> validTypes) throws InvalidFieldException {
+  private void validateField(String fieldName, Set<FieldType.Type> validTypes)
+      throws InvalidFieldException {
     FieldType.Type type = tableSchema.getType(fieldName);
     if (type == null || !validTypes.contains(type)) {
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName);

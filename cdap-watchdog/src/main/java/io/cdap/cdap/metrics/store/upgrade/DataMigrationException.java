@@ -19,6 +19,7 @@ package io.cdap.cdap.metrics.store.upgrade;
  * Thrown during failure while migrating data
  */
 public class DataMigrationException extends Exception {
+
   private final String exceptionMsg;
 
   public DataMigrationException(String msg) {

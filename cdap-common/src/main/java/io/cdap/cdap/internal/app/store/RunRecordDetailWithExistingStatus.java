@@ -25,23 +25,25 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- *  This class is used to store {@link RunRecordDetail} with ProgramRunStatus
- *  of existing record with same ProgramRunId.
+ * This class is used to store {@link RunRecordDetail} with ProgramRunStatus of existing record with
+ * same ProgramRunId.
  */
 public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
 
   private final ProgramRunStatus existingStatus;
 
-  private RunRecordDetailWithExistingStatus(ProgramRunId programRunId, long startTs, @Nullable Long runTs,
-                                            @Nullable Long stopTs, @Nullable Long suspendTs, @Nullable Long resumeTs,
-                                            @Nullable Long stoppingTs, @Nullable Long terminateTs,
-                                            ProgramRunStatus status, @Nullable Map<String, String> properties,
-                                            @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                                            ProgramRunCluster cluster, ProfileId profileId, @Nullable String peerName,
-                                            byte[] sourceId, @Nullable ArtifactId artifactId,
-                                            @Nullable String principal, @Nullable ProgramRunStatus existingStatus) {
-    super(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs, status, properties,
-          systemArgs, twillRunId, cluster, profileId, peerName, sourceId, artifactId, principal);
+  private RunRecordDetailWithExistingStatus(ProgramRunId programRunId, long startTs,
+      @Nullable Long runTs,
+      @Nullable Long stopTs, @Nullable Long suspendTs, @Nullable Long resumeTs,
+      @Nullable Long stoppingTs, @Nullable Long terminateTs,
+      ProgramRunStatus status, @Nullable Map<String, String> properties,
+      @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
+      ProgramRunCluster cluster, ProfileId profileId, @Nullable String peerName,
+      byte[] sourceId, @Nullable ArtifactId artifactId,
+      @Nullable String principal, @Nullable ProgramRunStatus existingStatus) {
+    super(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs, stoppingTs, terminateTs,
+        status, properties,
+        systemArgs, twillRunId, cluster, profileId, peerName, sourceId, artifactId, principal);
     this.existingStatus = existingStatus;
   }
 
@@ -52,14 +54,15 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
 
   /**
    * @param record existing record to copy fields from
-   * @return Builder to create a RunRecordDetailWithExistingStatus,
-   * initialized with values from the specified existing record
+   * @return Builder to create a RunRecordDetailWithExistingStatus, initialized with values from the
+   *     specified existing record
    */
   public static Builder buildWithExistingStatus(RunRecordDetail record) {
     return new Builder(record);
   }
 
   public static class Builder extends RunRecordDetail.ABuilder<Builder> {
+
     private final ProgramRunStatus existingStatus;
 
     private Builder(RunRecordDetail record) {
@@ -77,10 +80,11 @@ public final class RunRecordDetailWithExistingStatus extends RunRecordDetail {
       // we are not validating artifactId for null,
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
-      return new RunRecordDetailWithExistingStatus(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
-                                                   stoppingTs, terminateTs, status, properties, systemArgs,
-                                                   twillRunId, cluster, profileId, peerName, sourceId, artifactId,
-                                                   principal, existingStatus);
+      return new RunRecordDetailWithExistingStatus(programRunId, startTs, runTs, stopTs, suspendTs,
+          resumeTs,
+          stoppingTs, terminateTs, status, properties, systemArgs,
+          twillRunId, cluster, profileId, peerName, sourceId, artifactId,
+          principal, existingStatus);
     }
   }
 }

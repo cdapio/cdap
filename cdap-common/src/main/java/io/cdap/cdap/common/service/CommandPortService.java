@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class acts as a simple TCP server that accepts textual command and produce textual response.
- * The serving loop is single thread and can only serve one client at a time. {@link CommandHandler}s
- * binded to commands are invoked from the serving thread and is expected to return promptly to not
- * blocking the serving thread.
+ * The serving loop is single thread and can only serve one client at a time. {@link
+ * CommandHandler}s binded to commands are invoked from the serving thread and is expected to return
+ * promptly to not blocking the serving thread.
  *
  * Sample usage:
  * <pre>
@@ -70,6 +70,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
 
   /**
    * Returns a {@link Builder} to build instance of this class.
+   *
    * @param serviceName Name of the service name to build
    * @return A {@link Builder}.
    */
@@ -131,17 +132,20 @@ public final class CommandPortService extends AbstractExecutionThreadService {
     while (isRunning()) {
       try {
         Socket socket = serverSocket.accept();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+        BufferedWriter writer = new BufferedWriter(
+            new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
         try {
           // Read the client command and dispatch
-          String command = new LineReader(new InputStreamReader(socket.getInputStream(), "UTF-8")).readLine();
+          String command = new LineReader(
+              new InputStreamReader(socket.getInputStream(), "UTF-8")).readLine();
           CommandHandler handler = handlers.get(command);
 
           if (handler != null) {
             try {
               handler.handle(writer);
             } catch (Throwable t) {
-              LOG.error(String.format("Exception thrown from CommandHandler for command %s", command), t);
+              LOG.error(
+                  String.format("Exception thrown from CommandHandler for command %s", command), t);
             }
           }
         } finally {
@@ -160,6 +164,7 @@ public final class CommandPortService extends AbstractExecutionThreadService {
    * Builder for creating {@link CommandPortService}.
    */
   public static final class Builder {
+
     private final ImmutableMap.Builder<String, CommandHandler> handlerBuilder;
     private final StringBuilder helpStringBuilder;
     private boolean hasHelp;
@@ -172,7 +177,8 @@ public final class CommandPortService extends AbstractExecutionThreadService {
      */
     private Builder(String serviceName) {
       handlerBuilder = ImmutableMap.builder();
-      helpStringBuilder = new StringBuilder(String.format("Help for %s command port service", serviceName));
+      helpStringBuilder = new StringBuilder(
+          String.format("Help for %s command port service", serviceName));
     }
 
     /**
@@ -222,8 +228,8 @@ public final class CommandPortService extends AbstractExecutionThreadService {
   public interface CommandHandler {
 
     /**
-     * Invoked when the command that tied to this handler has been received
-     * by the {@link CommandPortService}.
+     * Invoked when the command that tied to this handler has been received by the {@link
+     * CommandPortService}.
      *
      * @param respondWriter The {@link Writer} for writing response back to client
      * @throws IOException If I/O errors occurs when writing to the given writer.

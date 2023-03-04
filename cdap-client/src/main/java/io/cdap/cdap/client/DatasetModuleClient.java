@@ -67,13 +67,16 @@ public class DatasetModuleClient {
    *
    * @return list of {@link DatasetModuleMeta}s.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<DatasetModuleMeta> list(NamespaceId namespace)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
-    return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
-                                       new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(
+        restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
+        new TypeToken<List<DatasetModuleMeta>>() {
+        }).getResponseObject();
   }
 
   /**
@@ -87,17 +90,19 @@ public class DatasetModuleClient {
    * @throws IOException if a network error occurred
    */
   public void add(DatasetModuleId module, String className, File moduleJarFile)
-    throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
+      throws BadRequestException, AlreadyExistsException, IOException, UnauthenticatedException {
 
-    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
+    URL url = config.resolveNamespacedURLV3(module.getParent(),
+        String.format("data/modules/%s", module.getModule()));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(),
-                                              HttpURLConnection.HTTP_BAD_REQUEST,
-                                              HttpURLConnection.HTTP_CONFLICT);
+        HttpURLConnection.HTTP_BAD_REQUEST,
+        HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(String.format("Module jar file does not exist: %s", moduleJarFile));
+      throw new BadRequestException(
+          String.format("Module jar file does not exist: %s", moduleJarFile));
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new DatasetModuleAlreadyExistsException(module);
     }
@@ -108,19 +113,22 @@ public class DatasetModuleClient {
    *
    * @param module the dataset module to delete
    * @throws DatasetModuleCannotBeDeletedException if the dataset module cannot be deleted,
-   * usually due to other dataset modules or dataset instances using the dataset module
-   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
+   *     usually due to other dataset modules or dataset instances using the dataset module
+   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was
+   *     not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void delete(DatasetModuleId module)
-    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
-    IOException, UnauthenticatedException, UnauthorizedException {
+      throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException,
+      IOException, UnauthenticatedException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
+    URL url = config.resolveNamespacedURLV3(module.getParent(),
+        String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_CONFLICT,
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_CONFLICT,
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new DatasetModuleCannotBeDeletedException(module);
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -133,29 +141,33 @@ public class DatasetModuleClient {
    *
    * @param module the dataset module to check
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
-  public boolean exists(DatasetModuleId module) throws IOException, UnauthenticatedException, UnauthorizedException {
-    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
+  public boolean exists(DatasetModuleId module)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    URL url = config.resolveNamespacedURLV3(module.getParent(),
+        String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
 
   /**
    * Deletes all dataset modules in a namespace.
    *
-   * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be deleted,
-   * usually due to existing dataset instances using the dataset module
+   * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be
+   *     deleted, usually due to existing dataset instances using the dataset module
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deleteAll(NamespaceId namespace)
-    throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws DatasetModuleCannotBeDeletedException, IOException, UnauthenticatedException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(namespace, "data/modules");
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_CONFLICT);
+        HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       // TODO: exception for all modules
       throw new DatasetModuleCannotBeDeletedException(null);
@@ -167,16 +179,19 @@ public class DatasetModuleClient {
    *
    * @param module the dataset module
    * @return {@link DatasetModuleMeta} of the dataset module
-   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
+   * @throws DatasetModuleNotFoundException if the dataset module with the specified name was
+   *     not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public DatasetModuleMeta get(DatasetModuleId module)
-    throws DatasetModuleNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws DatasetModuleNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(module.getParent(), String.format("data/modules/%s", module.getModule()));
+    URL url = config.resolveNamespacedURLV3(module.getParent(),
+        String.format("data/modules/%s", module.getModule()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetModuleNotFoundException(module);
     }

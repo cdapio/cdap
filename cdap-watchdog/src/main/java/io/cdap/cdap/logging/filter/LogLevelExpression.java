@@ -23,6 +23,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * Represents an expression that matches log level.
  */
 public class LogLevelExpression implements Filter {
+
   private final Level level;
 
   public LogLevelExpression(String level) {

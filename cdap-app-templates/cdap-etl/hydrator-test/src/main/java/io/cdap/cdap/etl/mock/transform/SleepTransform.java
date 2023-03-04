@@ -35,11 +35,13 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Sleeps for a configurable amount of time before emitting the input. This is used to test the time spent metric.
+ * Sleeps for a configurable amount of time before emitting the input. This is used to test the time
+ * spent metric.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name(SleepTransform.NAME)
 public class SleepTransform extends Transform<StructuredRecord, StructuredRecord> {
+
   public static final String NAME = "Sleep";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -49,7 +51,8 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer)
+      throws IllegalArgumentException {
     if (config.millis < 1) {
       throw new IllegalArgumentException("millis must be at least 1.");
     }
@@ -64,11 +67,13 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
     } catch (TopicAlreadyExistsException e) {
       // ok
     }
-    context.getMessagePublisher().publish(context.getNamespace(), "sleepTopic", Long.toString(config.millis));
+    context.getMessagePublisher()
+        .publish(context.getNamespace(), "sleepTopic", Long.toString(config.millis));
   }
 
   @Override
-  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     TimeUnit.MILLISECONDS.sleep(config.millis);
     emitter.emit(input);
   }
@@ -77,6 +82,7 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
    * Config for plugin
    */
   public static class Config extends PluginConfig {
+
     @Nullable
     private Long millis;
 
@@ -95,7 +101,7 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("millis", new PluginPropertyField("millis", "", "long", false, false));
     return PluginClass.builder().setName("Sleep").setType(Transform.PLUGIN_TYPE)
-             .setDescription("").setClassName(SleepTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(SleepTransform.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

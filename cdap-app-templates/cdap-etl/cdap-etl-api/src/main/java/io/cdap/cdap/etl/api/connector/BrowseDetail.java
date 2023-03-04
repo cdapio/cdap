@@ -25,11 +25,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * The browse result for the given request.
- * If the given path is browsable, this will contain entities in that path.
- * If it is not browsable, this will contain information on the path itself.
+ * The browse result for the given request. If the given path is browsable, this will contain
+ * entities in that path. If it is not browsable, this will contain information on the path itself.
  */
 public class BrowseDetail {
+
   // this count represents the total count of entities, when pagination is added in the future,
   // this count might not be equal to entities.size()
   private final int totalCount;
@@ -40,7 +40,7 @@ public class BrowseDetail {
   private final Set<String> propertyHeaders;
 
   private BrowseDetail(int totalCount, Set<BrowseEntityTypeInfo> sampleProperties,
-                       List<BrowseEntity> entities, Set<String> propertyHeaders) {
+      List<BrowseEntity> entities, Set<String> propertyHeaders) {
     this.totalCount = totalCount;
     this.sampleProperties = sampleProperties;
     this.entities = entities;
@@ -74,10 +74,10 @@ public class BrowseDetail {
     }
 
     BrowseDetail that = (BrowseDetail) o;
-    return totalCount == that.totalCount &&
-      Objects.equals(sampleProperties, that.sampleProperties) &&
-      Objects.equals(entities, that.entities) &&
-      Objects.equals(propertyHeaders, that.propertyHeaders);
+    return totalCount == that.totalCount
+        && Objects.equals(sampleProperties, that.sampleProperties)
+        && Objects.equals(entities, that.entities)
+        && Objects.equals(propertyHeaders, that.propertyHeaders);
   }
 
   @Override
@@ -96,6 +96,7 @@ public class BrowseDetail {
    * Builder for {@link BrowseDetail}
    */
   public static class Builder {
+
     private int totalCount;
     private Set<BrowseEntityTypeInfo> sampleProperties;
     private List<BrowseEntity> entities;

@@ -25,13 +25,14 @@ import org.eclipse.jgit.transport.URIish;
  * A {@link CredentialsProvider} that can refresh its credentials.
  */
 public abstract class RefreshableCredentialsProvider extends CredentialsProvider {
+
   /**
-   * Refresh or fetches the authentication credentials. Users must call refresh
-   * at lest once before using {@link RefreshableCredentialsProvider#get(URIish, List)} to ensure
-   * credentials from a remote service are initialized.
+   * Refresh or fetches the authentication credentials. Users must call refresh at lest once before
+   * using {@link RefreshableCredentialsProvider#get(URIish, List)} to ensure credentials from a
+   * remote service are initialized.
    *
    * @throws AuthenticationConfigException when the provided configuration is invalid.
-   * @throws IOException                   when there are network errors while refreshing the credentials.
+   * @throws IOException when there are network errors while refreshing the credentials.
    */
   abstract void refresh() throws AuthenticationConfigException, IOException;
 }

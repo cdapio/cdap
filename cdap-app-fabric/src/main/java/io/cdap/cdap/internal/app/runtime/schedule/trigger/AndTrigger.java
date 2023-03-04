@@ -60,14 +60,15 @@ public class AndTrigger extends AbstractSatisfiableCompositeTrigger {
   public SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId) {
     List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
     for (SatisfiableTrigger trigger : getTriggers()) {
-      if (trigger instanceof ProgramStatusTrigger &&
-        programId.isSameProgramExceptVersion(((ProgramStatusTrigger) trigger).getProgramId())) {
+      if (trigger instanceof ProgramStatusTrigger
+          && programId.isSameProgramExceptVersion(
+          ((ProgramStatusTrigger) trigger).getProgramId())) {
         // this program status trigger will never be satisfied, so the current AND trigger will never be satisfied
         return null;
       }
       if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
         SatisfiableTrigger updatedTrigger =
-          ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
+            ((AbstractSatisfiableCompositeTrigger) trigger).getTriggerWithDeletedProgram(programId);
         if (updatedTrigger == null) {
           // the updated composite trigger will never be satisfied, so the AND trigger will never be satisfied
           return null;

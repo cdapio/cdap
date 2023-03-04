@@ -31,7 +31,8 @@ import java.lang.reflect.Type;
 public final class BasicThrowableCodec extends AbstractSpecificationCodec<BasicThrowable> {
 
   @Override
-  public JsonElement serialize(BasicThrowable src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(BasicThrowable src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.addProperty("className", src.getClassName());
     json.addProperty("message", src.getMessage());
@@ -41,13 +42,15 @@ public final class BasicThrowableCodec extends AbstractSpecificationCodec<BasicT
   }
 
   @Override
-  public BasicThrowable deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+  public BasicThrowable deserialize(JsonElement json, Type typeOfT,
+      JsonDeserializationContext context)
+      throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     String className = jsonObj.get("className").getAsString();
     String message = jsonObj.get("message") == null ? null : jsonObj.get("message").getAsString();
     JsonArray stackTraces = jsonObj.get("stackTraces").getAsJsonArray();
-    StackTraceElement[] stackTraceElements = context.deserialize(stackTraces, StackTraceElement[].class);
+    StackTraceElement[] stackTraceElements = context.deserialize(stackTraces,
+        StackTraceElement[].class);
     JsonElement cause = jsonObj.get("cause");
     BasicThrowable basicThrowable = null;
     if (cause != null) {

@@ -38,12 +38,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Launches an HTTP server for fetching and cache artifacts from remote CDAP instances.
- * Artifacts belonging to each peer are cached using the following file structure:
+ * Launches an HTTP server for fetching and cache artifacts from remote CDAP instances. Artifacts
+ * belonging to each peer are cached using the following file structure:
  * /DATA_DIRECTORY/peers/<peer-name>/</peer>artifacts/<namespace>/<artifact-name>/<artifact-version>/
  * <last-modified-timestamp>.jar
  */
 public class ArtifactCacheService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactCacheService.class);
 
   private final NettyHttpService httpService;
@@ -55,21 +56,22 @@ public class ArtifactCacheService extends AbstractIdleService {
 
   @Inject
   public ArtifactCacheService(CConfiguration cConf, ArtifactCache cache, TetheringStore store,
-                              @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
-                                RemoteAuthenticator remoteAuthenticator,
-                              DiscoveryService discoveryService,
-                              CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      @Named(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR)
+          RemoteAuthenticator remoteAuthenticator,
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
     httpService = commonNettyHttpServiceFactory.builder("artifact.cache")
-      .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
-      .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
-      .setPort(cConf.getInt(Constants.ArtifactCache.PORT))
-      .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactCache.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactCache.WORKER_THREADS))
-      .build();
+        .setHttpHandlers(new ArtifactCacheHttpHandlerInternal(cache, store, remoteAuthenticator))
+        .setHost(cConf.get(Constants.ArtifactCache.ADDRESS))
+        .setPort(cConf.getInt(Constants.ArtifactCache.PORT))
+        .setBossThreadPoolSize(cConf.getInt(Constants.ArtifactCache.BOSS_THREADS))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.ArtifactCache.WORKER_THREADS))
+        .build();
     cacheCleanupInterval = cConf.getInt(Constants.ArtifactCache.CACHE_CLEANUP_INTERVAL_MIN);
     String cacheDir = cConf.get(Constants.ArtifactCache.LOCAL_DATA_DIR);
-    cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("peers"), cacheCleanupInterval);
+    cleaner = new ArtifactLocalizerCleaner(Paths.get(cacheDir).resolve("peers"),
+        cacheCleanupInterval);
   }
 
   @Override
@@ -77,10 +79,13 @@ public class ArtifactCacheService extends AbstractIdleService {
     LOG.info("Starting ArtifactCacheService");
     httpService.start();
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.ARTIFACT_CACHE_SERVICE, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.ARTIFACT_CACHE_SERVICE, httpService)));
     scheduledExecutorService = Executors
-      .newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("artifact-cache-cleaner"));
-    scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval, cacheCleanupInterval, TimeUnit.MINUTES);
+        .newSingleThreadScheduledExecutor(
+            Threads.createDaemonThreadFactory("artifact-cache-cleaner"));
+    scheduledExecutorService.scheduleAtFixedRate(cleaner, cacheCleanupInterval,
+        cacheCleanupInterval, TimeUnit.MINUTES);
     LOG.info("ArtifactCacheService started");
   }
 

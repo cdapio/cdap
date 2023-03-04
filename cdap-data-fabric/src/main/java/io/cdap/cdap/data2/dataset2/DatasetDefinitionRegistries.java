@@ -29,8 +29,8 @@ import javax.annotation.Nullable;
 public final class DatasetDefinitionRegistries {
 
   public static void register(String moduleClassName,
-                              @Nullable ClassLoader classLoader, DatasetDefinitionRegistry registry)
-    throws ClassNotFoundException, IllegalAccessException, InstantiationException, TypeConflictException {
+      @Nullable ClassLoader classLoader, DatasetDefinitionRegistry registry)
+      throws ClassNotFoundException, IllegalAccessException, InstantiationException, TypeConflictException {
 
     ClassLoader systemClassLoader = DatasetDefinitionRegistries.class.getClassLoader();
 
@@ -59,11 +59,12 @@ public final class DatasetDefinitionRegistries {
 
 
   /**
-   * Loads a {@link Class} from the given {@link ClassLoader} with the context ClassLoader
-   * set to the given ClassLoader and reset it after loading is done.
+   * Loads a {@link Class} from the given {@link ClassLoader} with the context ClassLoader set to
+   * the given ClassLoader and reset it after loading is done.
    */
   @SuppressWarnings("unchecked")
-  private static <T> Class<T> loadClass(ClassLoader classLoader, String className) throws ClassNotFoundException {
+  private static <T> Class<T> loadClass(ClassLoader classLoader, String className)
+      throws ClassNotFoundException {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
     try {
       return (Class<T>) classLoader.loadClass(className);

@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * Kubernetes Job cleaner that scans and deletes completed jobs across all namespaces.
  */
 class KubeJobCleaner implements MasterEnvironmentTask {
+
   private static final Logger LOG = LoggerFactory.getLogger(KubeJobCleaner.class);
   // The BatchV1Api client for interacting with the Kube API server. This needs to be a volatile to safeguard against
   // multiple concurrent client instance creation.
@@ -61,12 +62,14 @@ class KubeJobCleaner implements MasterEnvironmentTask {
         // for jobs. https://github.com/kubernetes/kubernetes/blob/master/pkg/apis/batch/v1/conversion.go
         // so instead, list all the jobs in all k8s namespace and delete completed (successful + failed) jobs one
         // by one.
-        V1JobList jobs = batchV1Api.listJobForAllNamespaces(null, continuationToken, null, selector, batchSize, null,
-                                                            null, null, (int) TimeUnit.MINUTES.toSeconds(10), null);
+        V1JobList jobs = batchV1Api.listJobForAllNamespaces(null, continuationToken, null, selector,
+            batchSize, null,
+            null, null, (int) TimeUnit.MINUTES.toSeconds(10), null);
         for (V1Job job : jobs.getItems()) {
           V1JobStatus jobStatus = job.getStatus();
           // Only attempt to delete completed jobs.
-          if (jobStatus != null && (jobStatus.getSucceeded() != null || jobStatus.getFailed() != null)) {
+          if (jobStatus != null && (jobStatus.getSucceeded() != null
+              || jobStatus.getFailed() != null)) {
             String jobName = job.getMetadata().getName();
             String kubeNamespace = job.getMetadata().getNamespace();
             V1DeleteOptions v1DeleteOptions = new V1DeleteOptions();
@@ -75,16 +78,20 @@ class KubeJobCleaner implements MasterEnvironmentTask {
               // Rely on k8s garbage collector to delete dependent pods in background while job resource is deleted
               // immediately - https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection
               LOG.debug("Cleaning up job {} in kubernetes environment", jobName);
-              batchV1Api.deleteNamespacedJob(jobName, kubeNamespace, null, null, null, null, null, v1DeleteOptions);
+              batchV1Api.deleteNamespacedJob(jobName, kubeNamespace, null, null, null, null, null,
+                  v1DeleteOptions);
               jobDeletionCount++;
             } catch (ApiException e) {
               if (e.getCode() == 404) {
                 // Ignore if status code is 404, this could happen in case there is some race condition while issuing
                 // delete for the same job.
-                LOG.trace("Ignoring job deletion for job {} because job was not found.", jobName, e);
+                LOG.trace("Ignoring job deletion for job {} because job was not found.", jobName,
+                    e);
               } else {
                 // catch the exception so that we can proceed with other job deletions.
-                LOG.warn("Failed to cleanup job resources for job {}. This attempt will be retried later.", jobName, e);
+                LOG.warn(
+                    "Failed to cleanup job resources for job {}. This attempt will be retried later.",
+                    jobName, e);
               }
             }
           }
@@ -99,12 +106,13 @@ class KubeJobCleaner implements MasterEnvironmentTask {
           // If interrupted during sleep, just break the loop
           break;
         }
-        LOG.warn("Error while listing jobs or creating batch api client for cleanup, " +
-                   "this attempt will be retried.", e);
+        LOG.warn("Error while listing jobs or creating batch api client for cleanup, "
+            + "this attempt will be retried.", e);
       }
     } while (retryCount != 0 && continuationToken != null);
 
-    LOG.trace("Completed an iteration of job clean by removing {} number of jobs.", jobDeletionCount);
+    LOG.trace("Completed an iteration of job clean by removing {} number of jobs.",
+        jobDeletionCount);
     return delayMillis;
   }
 

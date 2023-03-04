@@ -20,12 +20,12 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 /**
- * An {@link EndpointStrategy} that will always return the same endpoint once it's picked
- * until the endpoint is no longer valid, then it'll pick another one.
+ * An {@link EndpointStrategy} that will always return the same endpoint once it's picked until the
+ * endpoint is no longer valid, then it'll pick another one.
  *
- * If multiple threads calling the {@link #pick()}} method at the same time, it's possible
- * that they get different result if there was no endpoint being picked yet or the previously
- * picked endpoint is no longer value. The pick will be eventually settled to the same one.
+ * If multiple threads calling the {@link #pick()}} method at the same time, it's possible that they
+ * get different result if there was no endpoint being picked yet or the previously picked endpoint
+ * is no longer value. The pick will be eventually settled to the same one.
  */
 public final class StickyEndpointStrategy extends AbstractEndpointStrategy {
 

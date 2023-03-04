@@ -23,28 +23,30 @@ import javax.management.MXBean;
 /**
  * Interface for all operational stats emitted using the operational stats extension framework.
  *
- * To emit stats using this framework, create JMX {@link MXBean} interfaces, then have the implementations of those
- * interfaces extend this class. At runtime, all sub-classes of this class will be registered with the
- * {@link MBeanServer} with the <i>name</i> property determined by {@link #getServiceName()} and the <i>type</i>
- * property determined by {@link #getStatType()}.
+ * To emit stats using this framework, create JMX {@link MXBean} interfaces, then have the
+ * implementations of those interfaces extend this class. At runtime, all sub-classes of this class
+ * will be registered with the {@link MBeanServer} with the <i>name</i> property determined by
+ * {@link #getServiceName()} and the <i>type</i> property determined by {@link #getStatType()}.
  */
 public interface OperationalStats {
 
   /**
-   * Initializes the operational stats extension. Called immediately after loading the operational stats extension.
+   * Initializes the operational stats extension. Called immediately after loading the operational
+   * stats extension.
    *
    * @param injector an {@link Injector} to inject the necessary CDAP classes
    */
   void initialize(Injector injector);
 
   /**
-   * Returns the service name for which this operational stat is emitted. Service names are case-insensitive, and will
-   * be converted to lower case.
+   * Returns the service name for which this operational stat is emitted. Service names are
+   * case-insensitive, and will be converted to lower case.
    */
   String getServiceName();
 
   /**
-   * Returns the type of the stat. Stat types are case-insensitive, and will be converted to lower case.
+   * Returns the type of the stat. Stat types are case-insensitive, and will be converted to lower
+   * case.
    */
   String getStatType();
 

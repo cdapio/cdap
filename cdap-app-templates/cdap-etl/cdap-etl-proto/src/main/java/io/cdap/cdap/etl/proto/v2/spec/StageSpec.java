@@ -34,10 +34,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Specification for a pipeline stage.
  *
- * This is like an {@link ETLStage}, but has additional attributes calculated at configure time of the application.
- * The spec contains the input and output schema (if known) for the stage, as well as any output stages it writes to.
+ * This is like an {@link ETLStage}, but has additional attributes calculated at configure time of
+ * the application. The spec contains the input and output schema (if known) for the stage, as well
+ * as any output stages it writes to.
  */
 public class StageSpec implements Serializable {
+
   private static final long serialVersionUID = 4682820901456102283L;
   private static final Logger LOG = LoggerFactory.getLogger(StageSpec.class);
   private final String name;
@@ -56,9 +58,10 @@ public class StageSpec implements Serializable {
   private final Set<String> inputStages;
   private transient Map<String, Schema> fullInputSchemas;
 
-  private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas, @Nullable Schema outputSchema,
-                    Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
-                    boolean stageLoggingEnabled, boolean processTimingEnabled, int maxPreviewRecords) {
+  private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas,
+      @Nullable Schema outputSchema,
+      Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
+      boolean stageLoggingEnabled, boolean processTimingEnabled, int maxPreviewRecords) {
     this.name = name;
     this.plugin = plugin;
     this.inputSchemas = Collections.unmodifiableMap(new HashMap<>(inputSchemas));
@@ -139,37 +142,37 @@ public class StageSpec implements Serializable {
 
     StageSpec that = (StageSpec) o;
 
-    return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin) &&
-      Objects.equals(inputSchemas, that.inputSchemas) &&
-      Objects.equals(getInputStages(), that.getInputStages()) &&
-      Objects.equals(outputPorts, that.outputPorts) &&
-      Objects.equals(outputSchema, that.outputSchema) &&
-      Objects.equals(errorSchema, that.errorSchema) &&
-      stageLoggingEnabled == that.stageLoggingEnabled &&
-      processTimingEnabled == that.processTimingEnabled;
+    return Objects.equals(name, that.name)
+        && Objects.equals(plugin, that.plugin)
+        && Objects.equals(inputSchemas, that.inputSchemas)
+        && Objects.equals(getInputStages(), that.getInputStages())
+        && Objects.equals(outputPorts, that.outputPorts)
+        && Objects.equals(outputSchema, that.outputSchema)
+        && Objects.equals(errorSchema, that.errorSchema)
+        && stageLoggingEnabled == that.stageLoggingEnabled
+        && processTimingEnabled == that.processTimingEnabled;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, plugin, inputSchemas, getInputStages(),
-                        outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
+        outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
   }
 
   @Override
   public String toString() {
-    return "StageSpec{" +
-      "name='" + name + '\'' +
-      ", plugin=" + plugin +
-      ", inputSchemas=" + inputSchemas +
-      ", inputStages=" + inputStages +
-      ", outputPorts=" + outputPorts +
-      ", outputSchema=" + outputSchema +
-      ", errorSchema=" + errorSchema +
-      ", stageLoggingEnabled=" + stageLoggingEnabled +
-      ", processTimingEnabled=" + processTimingEnabled +
-      ", maxPreviewRecords=" + maxPreviewRecords +
-      '}';
+    return "StageSpec{"
+        + "name='" + name + '\''
+        + ", plugin=" + plugin
+        + ", inputSchemas=" + inputSchemas
+        + ", inputStages=" + inputStages
+        + ", outputPorts=" + outputPorts
+        + ", outputSchema=" + outputSchema
+        + ", errorSchema=" + errorSchema
+        + ", stageLoggingEnabled=" + stageLoggingEnabled
+        + ", processTimingEnabled=" + processTimingEnabled
+        + ", maxPreviewRecords=" + maxPreviewRecords
+        + '}';
   }
 
   public boolean isPreviewEnabled(RuntimeContext context) {
@@ -184,6 +187,7 @@ public class StageSpec implements Serializable {
    * Builder for a StageSpec.
    */
   public static class Builder {
+
     private final String name;
     private final PluginSpec plugin;
     private final boolean isSplitter;
@@ -225,7 +229,8 @@ public class StageSpec implements Serializable {
       return this;
     }
 
-    public Builder addOutput(String outputStageName, @Nullable String port, @Nullable Schema outputSchema) {
+    public Builder addOutput(String outputStageName, @Nullable String port,
+        @Nullable Schema outputSchema) {
       this.outputs.put(outputStageName, new Port(port, outputSchema));
       if (!isSplitter) {
         this.outputSchema = outputSchema;
@@ -268,8 +273,9 @@ public class StageSpec implements Serializable {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas, outputs,
-                           stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
+      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas,
+          outputs,
+          stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
     }
 
   }
@@ -278,6 +284,7 @@ public class StageSpec implements Serializable {
    * Represents an output port.
    */
   public static class Port implements Serializable {
+
     private static final long serialVersionUID = -8265114217209734806L;
     private final String port;
     private final Schema schema;
@@ -288,7 +295,8 @@ public class StageSpec implements Serializable {
     }
 
     /**
-     * @return the output port that the stage is connected to. A null port means all output is sent to the stage
+     * @return the output port that the stage is connected to. A null port means all output is sent
+     *     to the stage
      */
     @Nullable
     public String getPort() {
@@ -326,19 +334,22 @@ public class StageSpec implements Serializable {
   /**
    * Returns a copy of the StageSpec object with {@link StageSpec#maxPreviewRecords} field updated
    */
-  public static StageSpec createCopy(StageSpec stageSpec, int newMaxPreviewRecords, boolean isPreviewEnabled) {
+  public static StageSpec createCopy(StageSpec stageSpec, int newMaxPreviewRecords,
+      boolean isPreviewEnabled) {
     // if not a preview run, don't modify stageSpec
     if (!isPreviewEnabled) {
       return stageSpec;
     }
 
     if (newMaxPreviewRecords < stageSpec.getMaxPreviewRecords()) {
-      LOG.warn("Max preview records exceeds allowed limit. Setting maximum preview records to {} instead of {} ",
-               newMaxPreviewRecords, stageSpec.maxPreviewRecords);
+      LOG.warn(
+          "Max preview records exceeds allowed limit. Setting maximum preview records to {} instead of {} ",
+          newMaxPreviewRecords, stageSpec.maxPreviewRecords);
     }
-    return new StageSpec(stageSpec.name, stageSpec.plugin, stageSpec.inputSchemas, stageSpec.outputSchema,
-                         stageSpec.errorSchema, stageSpec.portSchemas, stageSpec.outputPorts,
-                         stageSpec.stageLoggingEnabled, stageSpec.processTimingEnabled,
-                         Math.min(stageSpec.maxPreviewRecords, newMaxPreviewRecords));
+    return new StageSpec(stageSpec.name, stageSpec.plugin, stageSpec.inputSchemas,
+        stageSpec.outputSchema,
+        stageSpec.errorSchema, stageSpec.portSchemas, stageSpec.outputPorts,
+        stageSpec.stageLoggingEnabled, stageSpec.processTimingEnabled,
+        Math.min(stageSpec.maxPreviewRecords, newMaxPreviewRecords));
   }
 }

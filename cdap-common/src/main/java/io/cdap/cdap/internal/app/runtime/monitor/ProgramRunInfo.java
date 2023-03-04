@@ -42,14 +42,15 @@ public class ProgramRunInfo {
   }
 
   /**
-   * Creates a {@link ProgramRunInfo} with the given state except for {@link ProgramRunStatus#STOPPING}, which should
-   * use {@link #ProgramRunInfo(long)} instead.
+   * Creates a {@link ProgramRunInfo} with the given state except for {@link
+   * ProgramRunStatus#STOPPING}, which should use {@link #ProgramRunInfo(long)} instead.
    *
    * @param programRunStatus the program run status
    */
   ProgramRunInfo(ProgramRunStatus programRunStatus) {
     if (programRunStatus == ProgramRunStatus.STOPPING) {
-      throw new IllegalArgumentException("The STOPPING state must associate with a termination timestamp.");
+      throw new IllegalArgumentException(
+          "The STOPPING state must associate with a termination timestamp.");
     }
     this.programRunStatus = programRunStatus;
     this.terminateTs = null;
@@ -60,8 +61,8 @@ public class ProgramRunInfo {
   }
 
   /**
-   * Returns the termination timestamp in seconds if the program run status is in {@link ProgramRunStatus#STOPPING}
-   * state.
+   * Returns the termination timestamp in seconds if the program run status is in {@link
+   * ProgramRunStatus#STOPPING} state.
    */
   public long getTerminateTimestamp() {
     if (programRunStatus != ProgramRunStatus.STOPPING) {
@@ -85,8 +86,8 @@ public class ProgramRunInfo {
     }
 
     ProgramRunInfo that = (ProgramRunInfo) o;
-    return Objects.equals(this.getProgramRunStatus(), that.getProgramRunStatus()) &&
-    Objects.equals(this.getTerminateTimestamp(), that.getTerminateTimestamp());
+    return Objects.equals(this.getProgramRunStatus(), that.getProgramRunStatus())
+        && Objects.equals(this.getTerminateTimestamp(), that.getTerminateTimestamp());
   }
 
   @Override
@@ -96,9 +97,9 @@ public class ProgramRunInfo {
 
   @Override
   public String toString() {
-    return "ProgramRunInfo" +
-      "{programRunStatus=" + programRunStatus +
-      ", terminateTs='" + terminateTs +
-      '}';
+    return "ProgramRunInfo"
+        + "{programRunStatus=" + programRunStatus
+        + ", terminateTs='" + terminateTs
+        + '}';
   }
 }

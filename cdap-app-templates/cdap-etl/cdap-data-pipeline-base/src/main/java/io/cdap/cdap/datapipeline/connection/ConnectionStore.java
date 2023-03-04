@@ -128,8 +128,8 @@ public class ConnectionStore {
       if (oldConnection != null) {
         if (oldConnection.isPreConfigured()) {
           throw new ConnectionConflictException(String.format(
-            "Connection %s in namespace %s has same id %s and is pre-configured. " +
-              "Preconfigured connections cannot be updated or overwritten.",
+            "Connection %s in namespace %s has same id %s and is pre-configured. "
+              + "Preconfigured connections cannot be updated or overwritten.",
             oldConnection.getName(), connectionId.getNamespace(), connectionId.getConnectionId()));
         }
 

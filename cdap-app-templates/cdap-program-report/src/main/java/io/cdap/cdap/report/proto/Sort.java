@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  * A class represents the field to sort the report by and the order of sorting by this field.
  */
 public class Sort extends ReportGenerationRequest.Field {
+
   private final Order order;
 
   public Sort(String fieldName, Order order) {
@@ -51,21 +52,22 @@ public class Sort extends ReportGenerationRequest.Field {
     ReportField sortField = ReportField.valueOfFieldName(getFieldName());
     if (sortField != null && !sortField.isSortable()) {
       errors.add(String.format("Field '%s' in sort is not sortable. Only fields: [%s] are sortable",
-                               getFieldName(), String.join(", ", ReportField.SORTABLE_FIELDS)));
+          getFieldName(), String.join(", ", ReportField.SORTABLE_FIELDS)));
     }
     if (order == null) {
       errors.add("'order' cannot be null, it can only be ASCENDING or DESCENDING");
     }
     return errors.isEmpty() ? null :
-      String.format("Sort %s contains these errors: %s", getFieldName(), String.join("; ", errors));
+        String.format("Sort %s contains these errors: %s", getFieldName(),
+            String.join("; ", errors));
   }
 
   @Override
   public String toString() {
-    return "Sort{" +
-      "fieldName=" + getFieldName() +
-      ", order=" + order +
-      '}';
+    return "Sort{"
+        + "fieldName=" + getFieldName()
+        + ", order=" + order
+        + '}';
   }
 
   /**

@@ -41,33 +41,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Guice bindings for classes relating to external authentication including the external authentication server
- * and identity extractors.
+ * Guice bindings for classes relating to external authentication including the external
+ * authentication server and identity extractors.
  */
 public class ExternalAuthenticationModule extends PrivateModule {
-  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
+
+  private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger(
+      "external-auth-access");
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<Codec<UserIdentity>>() { }).to(UserIdentityCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<UserIdentity>>() {
+    }).to(UserIdentityCodec.class).in(Scopes.SINGLETON);
     bind(ExternalAuthenticationServer.class).in(Scopes.SINGLETON);
 
-    MapBinder<String, Object> handlerBinder = MapBinder.newMapBinder(binder(), String.class, Object.class,
-                                                                     Names.named("security.handlers.map"));
+    MapBinder<String, Object> handlerBinder = MapBinder.newMapBinder(binder(), String.class,
+        Object.class,
+        Names.named("security.handlers.map"));
 
     bind(AuditLogHandler.class)
-      .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
-      .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
+        .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
+        .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.AUTHENTICATION_HANDLER)
-      .toProvider(AuthenticationHandlerProvider.class).in(Scopes.SINGLETON);
+        .toProvider(AuthenticationHandlerProvider.class).in(Scopes.SINGLETON);
     handlerBinder.addBinding(ExternalAuthenticationServer.HandlerType.GRANT_TOKEN_HANDLER)
-      .to(GrantAccessToken.class).in(Scopes.SINGLETON);
+        .to(GrantAccessToken.class).in(Scopes.SINGLETON);
 
     bind(UserIdentityExtractor.class).annotatedWith(Names.named(AccessTokenIdentityExtractor.NAME))
-      .to(AccessTokenIdentityExtractor.class);
+        .to(AccessTokenIdentityExtractor.class);
     bind(UserIdentityExtractor.class).annotatedWith(Names.named(ProxyUserIdentityExtractor.NAME))
-      .to(ProxyUserIdentityExtractor.class);
-    bind(UserIdentityExtractor.class).toProvider(UserIdentityExtractorProvider.class).in(Scopes.SINGLETON);
+        .to(ProxyUserIdentityExtractor.class);
+    bind(UserIdentityExtractor.class).toProvider(UserIdentityExtractorProvider.class)
+        .in(Scopes.SINGLETON);
     expose(UserIdentityExtractor.class);
     expose(ExternalAuthenticationServer.class);
   }
@@ -78,7 +83,8 @@ public class ExternalAuthenticationModule extends PrivateModule {
 
     @Inject
     private AuthenticationHandlerProvider(CConfiguration configuration) {
-      this.handlerClass = configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null, Handler.class);
+      this.handlerClass = configuration.getClass(Constants.Security.AUTH_HANDLER_CLASS, null,
+          Handler.class);
     }
 
     @Override
@@ -90,24 +96,26 @@ public class ExternalAuthenticationModule extends PrivateModule {
   }
 
   /**
-   * Provider for the {@link UserIdentityExtractor} class which supports either the {@link AccessTokenIdentityExtractor}
-   * or the {@link ProxyUserIdentityExtractor}.
+   * Provider for the {@link UserIdentityExtractor} class which supports either the {@link
+   * AccessTokenIdentityExtractor} or the {@link ProxyUserIdentityExtractor}.
    */
-  private static final class UserIdentityExtractorProvider implements Provider<UserIdentityExtractor> {
+  private static final class UserIdentityExtractorProvider implements
+      Provider<UserIdentityExtractor> {
+
     private final Provider<UserIdentityExtractor> accessTokenExtractorProvider;
     private final Provider<UserIdentityExtractor> proxyExtractorProvider;
     private final AuthenticationMode mode;
 
     @Inject
     private UserIdentityExtractorProvider(CConfiguration configuration,
-                                          @Named(AccessTokenIdentityExtractor.NAME)
-                                            Provider<UserIdentityExtractor> accessTokenExtractorProvider,
-                                          @Named(ProxyUserIdentityExtractor.NAME)
-                                            Provider<UserIdentityExtractor> proxyExtractorProvider) {
+        @Named(AccessTokenIdentityExtractor.NAME)
+            Provider<UserIdentityExtractor> accessTokenExtractorProvider,
+        @Named(ProxyUserIdentityExtractor.NAME)
+            Provider<UserIdentityExtractor> proxyExtractorProvider) {
       this.accessTokenExtractorProvider = accessTokenExtractorProvider;
       this.proxyExtractorProvider = proxyExtractorProvider;
       this.mode = configuration.getEnum(Constants.Security.Authentication.MODE,
-                                        AuthenticationMode.MANAGED);
+          AuthenticationMode.MANAGED);
     }
 
     @Override

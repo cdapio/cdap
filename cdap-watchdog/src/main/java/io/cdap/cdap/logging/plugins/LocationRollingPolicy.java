@@ -24,7 +24,8 @@ import org.apache.twill.filesystem.Location;
  * Location rolling policy
  */
 public interface LocationRollingPolicy extends RollingPolicy {
-   /**
+
+  /**
    * Update Active file location
    *
    * @param activeFileLocation Current open file to be rolled over

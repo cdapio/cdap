@@ -35,7 +35,7 @@ public final class TableDescriptor {
   private final Map<String, String> properties;
 
   public TableDescriptor(String namespace, String name, Set<ColumnFamilyDescriptor> families,
-                         Set<CoprocessorDescriptor> coprocessors, Map<String, String> properties) {
+      Set<CoprocessorDescriptor> coprocessors, Map<String, String> properties) {
     this.namespace = namespace;
     this.name = name;
 
@@ -50,7 +50,7 @@ public final class TableDescriptor {
     }
 
     this.properties = properties == null ? Collections.<String, String>emptyMap()
-      : Collections.unmodifiableMap(properties);
+        : Collections.unmodifiableMap(properties);
   }
 
   public String getNamespace() {

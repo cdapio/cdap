@@ -25,6 +25,7 @@ import io.cdap.cdap.internal.app.runtime.RemoteAppStateStoreProvider;
  * Module for bindings related to application state.
  */
 public class AppStateModule extends AbstractModule {
+
   @Override
   protected void configure() {
     bind(AppStateStoreProvider.class).to(RemoteAppStateStoreProvider.class).in(Scopes.SINGLETON);

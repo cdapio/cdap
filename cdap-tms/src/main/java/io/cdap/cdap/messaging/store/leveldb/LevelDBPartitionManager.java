@@ -33,14 +33,16 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.impl.Iq80DBFactory;
 
 /**
- * Manages partitions of a logical MessageTable.
- * Each partition is a physical LevelDB table in a directory structure like:
+ * Manages partitions of a logical MessageTable. Each partition is a physical LevelDB table in a
+ * directory structure like:
  *
- *   [base dir]/v2.[namespace].[tablename].[topic].[generation]/part.[start].[end]
+ * [base dir]/v2.[namespace].[tablename].[topic].[generation]/part.[start].[end]
  *
- * Each partition contains messages with a publish time between the start (inclusive) and end (exclusive) timestamps.
+ * Each partition contains messages with a publish time between the start (inclusive) and end
+ * (exclusive) timestamps.
  */
 public class LevelDBPartitionManager implements Closeable {
+
   private static final Iq80DBFactory LEVEL_DB_FACTORY = Iq80DBFactory.factory;
   private static final String PART_PREFIX = "part.";
   private final File topicDir;
@@ -58,7 +60,8 @@ public class LevelDBPartitionManager implements Closeable {
   }
 
   /**
-   * Prune partitions that have an end timestamp older than or equal to the given threshold timestamp.
+   * Prune partitions that have an end timestamp older than or equal to the given threshold
+   * timestamp.
    */
   public int prunePartitions(long thresholdTimestamp) throws IOException {
     File[] partitionDirs = topicDir.listFiles();
@@ -113,7 +116,8 @@ public class LevelDBPartitionManager implements Closeable {
       initPartitions();
     }
     Long partitionStartTime = partitions.floorKey(startTime);
-    return partitionStartTime == null ? partitions.values() : partitions.tailMap(partitionStartTime, true).values();
+    return partitionStartTime == null ? partitions.values()
+        : partitions.tailMap(partitionStartTime, true).values();
   }
 
   /**
@@ -123,7 +127,8 @@ public class LevelDBPartitionManager implements Closeable {
    * @param endTime inclusive end time
    * @return partitions responsible for data between the specified start and end times
    */
-  public Collection<LevelDBPartition> getPartitions(long startTime, long endTime) throws IOException {
+  public Collection<LevelDBPartition> getPartitions(long startTime, long endTime)
+      throws IOException {
     if (initialized.compareAndSet(false, true)) {
       initPartitions();
     }
@@ -192,8 +197,9 @@ public class LevelDBPartitionManager implements Closeable {
         // should not happen unless somebody manually created a directory here
         continue;
       }
-      LevelDBPartition partition = new LevelDBPartition(partitionDir, interval.startMillis, interval.endMillis,
-                                                        () -> LEVEL_DB_FACTORY.open(partitionDir, dbOptions));
+      LevelDBPartition partition = new LevelDBPartition(partitionDir, interval.startMillis,
+          interval.endMillis,
+          () -> LEVEL_DB_FACTORY.open(partitionDir, dbOptions));
       partitions.put(partition.getStartTime(), partition);
     }
   }
@@ -251,7 +257,8 @@ public class LevelDBPartitionManager implements Closeable {
       return createPartition(topicDir, 0, closestStartTime);
     }
     if (publishTime >= closestEndTime) {
-      return createPartition(topicDir, closestEndTime, Math.max(closestEndTime + partitionSizeMillis, publishTime));
+      return createPartition(topicDir, closestEndTime,
+          Math.max(closestEndTime + partitionSizeMillis, publishTime));
     }
     return createPartition(topicDir, closestStartTime, closestEndTime);
   }
@@ -268,12 +275,14 @@ public class LevelDBPartitionManager implements Closeable {
 
   private File ensureDirExists(File dir) throws IOException {
     if (!DirUtils.mkdirs(dir)) {
-      throw new IOException("Failed to create local directory " + dir + " for the messaging system.");
+      throw new IOException(
+          "Failed to create local directory " + dir + " for the messaging system.");
     }
     return dir;
   }
 
   private static class TimeInterval {
+
     private final long startMillis;
     private final long endMillis;
 

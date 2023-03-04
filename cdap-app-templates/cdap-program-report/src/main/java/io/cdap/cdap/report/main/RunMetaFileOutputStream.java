@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 
 class RunMetaFileOutputStream implements Closeable, Flushable {
+
   private static final Logger LOG = LoggerFactory.getLogger(RunMetaFileOutputStream.class);
 
   private final Location location;
@@ -47,13 +48,14 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
   private long fileSize;
 
   RunMetaFileOutputStream(Location location, String filePermissions,
-                          int syncIntervalBytes, long createTime, Closeable closeable) throws IOException {
+      int syncIntervalBytes, long createTime, Closeable closeable) throws IOException {
     this.location = location;
     this.closeable = closeable;
     Schema schema = ProgramRunInfoSerializer.SCHEMA;
     try {
       this.outputStream =
-        filePermissions.isEmpty() ? location.getOutputStream() : location.getOutputStream(filePermissions);
+          filePermissions.isEmpty() ? location.getOutputStream()
+              : location.getOutputStream(filePermissions);
       this.dataFileWriter = new DataFileWriter<>(new GenericDatumWriter<>(schema));
       this.dataFileWriter.create(schema, outputStream);
       this.dataFileWriter.setSyncInterval(syncIntervalBytes);
@@ -72,6 +74,7 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
 
   /**
    * get create time of the file
+   *
    * @return create time
    */
   long getCreateTime() {
@@ -80,6 +83,7 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
 
   /**
    * get the number of bytes written to output stream
+   *
    * @return file size
    */
   long getSize() {
@@ -94,7 +98,8 @@ class RunMetaFileOutputStream implements Closeable, Flushable {
   public void sync() throws IOException {
     flush();
     if (outputStream instanceof HdfsDataOutputStream) {
-      ((HdfsDataOutputStream) outputStream).hsync(EnumSet.of(HdfsDataOutputStream.SyncFlag.UPDATE_LENGTH));
+      ((HdfsDataOutputStream) outputStream).hsync(
+          EnumSet.of(HdfsDataOutputStream.SyncFlag.UPDATE_LENGTH));
     } else {
       outputStream.flush();
     }

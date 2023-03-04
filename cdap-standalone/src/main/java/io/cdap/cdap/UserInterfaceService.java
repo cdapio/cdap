@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * UserInterfaceService is a basic Server wrapper that launches node.js and our
- * UI server.js file. It then basically sits there waiting, doing nothing.
+ * UserInterfaceService is a basic Server wrapper that launches node.js and our UI server.js file.
+ * It then basically sits there waiting, doing nothing.
  *
  * All output is sent to our Logging service.
  */
@@ -73,7 +73,8 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     File confDir = new File("data", "conf");
     if (!confDir.exists()) {
-      Preconditions.checkState(confDir.mkdirs(), "Couldn't create directory for generated conf files for the UI");
+      Preconditions.checkState(confDir.mkdirs(),
+          "Couldn't create directory for generated conf files for the UI");
     }
 
     this.cConfJsonFile = new File(confDir, JSON_PATH);
@@ -86,11 +87,12 @@ final class UserInterfaceService extends AbstractExecutionThreadService {
     if (!uiPath.exists()) {
       uiPath = new File("ui", "server_dist/index.js");
     }
-    Preconditions.checkState(uiPath.exists(), "Missing server/index.js at " + uiPath.getAbsolutePath());
+    Preconditions.checkState(uiPath.exists(),
+        "Missing server/index.js at " + uiPath.getAbsolutePath());
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE,
-                                                uiPath.getAbsolutePath(),
-                                                "cConf=\"" + cConfJsonFile.getAbsolutePath() + "\"",
-                                                "sConf=\"" + sConfJsonFile.getAbsolutePath() + "\"");
+        uiPath.getAbsolutePath(),
+        "cConf=\"" + cConfJsonFile.getAbsolutePath() + "\"",
+        "sConf=\"" + sConfJsonFile.getAbsolutePath() + "\"");
     builder.redirectErrorStream(true);
     LOG.info("Starting UI...");
     process = builder.start();

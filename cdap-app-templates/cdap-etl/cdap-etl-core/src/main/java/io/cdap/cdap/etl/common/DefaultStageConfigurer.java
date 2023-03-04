@@ -30,11 +30,13 @@ import javax.annotation.Nullable;
 
 /**
  * This stores the input schemas that is passed to this stage from other stages in the pipeline and
- * the output schema that could be sent to the next stages from this stage.
- * Currently we only allow multiple input/output schema per stage except for {@link io.cdap.cdap.etl.api.Joiner}
- * where we allow multiple input schemas
+ * the output schema that could be sent to the next stages from this stage. Currently we only allow
+ * multiple input/output schema per stage except for {@link io.cdap.cdap.etl.api.Joiner} where we
+ * allow multiple input schemas
  */
-public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {
+public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer,
+    MultiOutputStageConfigurer {
+
   private String stageName;
   private Schema outputSchema;
   private Schema outputErrorSchema;

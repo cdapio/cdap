@@ -48,21 +48,23 @@ import org.slf4j.LoggerFactory;
  * HBase based implementation for {@link MetricsTable}.
  */
 // todo: re-use HBase table based dataset instead of having separate classes hierarchies, see CDAP-1193
-public class HBaseMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
+public class HBaseMetricsTableDefinition extends
+    AbstractTableDefinition<MetricsTable, DatasetAdmin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsTableDefinition.class);
   private static final Gson GSON = new Gson();
 
   // A logger for logging the incompatible config change for number of splits.
   // We only log it once per message (hence per table).
-  private static final Logger CONFIG_CHANGE_LOG = Loggers.sampling(LOG, LogSamplers.perMessage(() -> new LogSampler() {
-    private final AtomicBoolean logged = new AtomicBoolean(false);
+  private static final Logger CONFIG_CHANGE_LOG = Loggers.sampling(LOG,
+      LogSamplers.perMessage(() -> new LogSampler() {
+        private final AtomicBoolean logged = new AtomicBoolean(false);
 
-    @Override
-    public boolean accept(String message, int logLevel) {
-      return logged.compareAndSet(false, true);
-    }
-  }));
+        @Override
+        public boolean accept(String message, int logLevel) {
+          return logged.compareAndSet(false, true);
+        }
+      }));
 
   @Inject
   private Configuration hConf;
@@ -79,8 +81,9 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
   }
 
   @VisibleForTesting
-  HBaseMetricsTableDefinition(String name, Configuration hConf, Provider<HBaseTableUtil> hBaseTableUtilProvider,
-                              LocationFactory locationFactory, CConfiguration cConf) {
+  HBaseMetricsTableDefinition(String name, Configuration hConf,
+      Provider<HBaseTableUtil> hBaseTableUtilProvider,
+      LocationFactory locationFactory, CConfiguration cConf) {
     super(name);
     this.hConf = hConf;
     this.hBaseTableUtilProvider = hBaseTableUtilProvider;
@@ -99,32 +102,34 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
 
     // Disable auto split
     props.add(HBaseTableAdmin.SPLIT_POLICY,
-              cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
+        cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
     // configuring pre-splits
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
-              GSON.toJson(getMetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
+        GSON.toJson(
+            getMetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
     props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
-              cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
+        cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
 
     return DatasetSpecification.builder(name, getName())
-      .properties(props.build().getProperties())
-      .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
-      .build();
+        .properties(props.build().getProperties())
+        .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
+        .build();
   }
 
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+      Map<String, String> arguments, ClassLoader classLoader) throws IOException {
     int datasetSplits = spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16);
 
     // Detect if there is a cdap-site change on the number of splits, which we don't support.
     // Log a warning if that's the case.
     if (cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) != datasetSplits) {
       CONFIG_CHANGE_LOG.warn(
-        "Ignoring configuration {} with value {} from cdap-site.xml. " +
-          "The system table {} already has a splits value {}, which can not be changed.",
-        Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
-        spec.getName(), datasetSplits);
+          "Ignoring configuration {} with value {} from cdap-site.xml. "
+              + "The system table {} already has a splits value {}, which can not be changed.",
+          Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
+          cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
+          spec.getName(), datasetSplits);
     }
 
     return new HBaseMetricsTable(datasetContext, spec, hConf, getHBaseTableUtil(), cConf);
@@ -132,19 +137,21 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                               ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(datasetContext, spec, hConf, getHBaseTableUtil(), cConf, locationFactory);
+      ClassLoader classLoader) throws IOException {
+    return new HBaseTableAdmin(datasetContext, spec, hConf, getHBaseTableUtil(), cConf,
+        locationFactory);
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName, DatasetProperties properties,
-                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
-    throw new IncompatibleUpdateException("System Metrics Table properties can not be changed after creation.");
+      DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    throw new IncompatibleUpdateException(
+        "System Metrics Table properties can not be changed after creation.");
   }
 
   private static byte[][] getMetricsTableSplits(int splits) {
     RowKeyDistributorByHashPrefix rowKeyDistributor = new RowKeyDistributorByHashPrefix(
-      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+        new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
     return rowKeyDistributor.getSplitKeys(splits, splits);
   }
 

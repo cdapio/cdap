@@ -27,10 +27,12 @@ import javax.annotation.Nullable;
  * Plugin detail
  */
 public class PluginDetail extends PluginMeta {
+
   private final Schema schema;
 
-  public PluginDetail(String name, String type, Map<String, String> properties, ArtifactSelectorConfig artifact,
-                      @Nullable Schema schema) {
+  public PluginDetail(String name, String type, Map<String, String> properties,
+      ArtifactSelectorConfig artifact,
+      @Nullable Schema schema) {
     super(name, type, properties, artifact);
     this.schema = schema;
   }

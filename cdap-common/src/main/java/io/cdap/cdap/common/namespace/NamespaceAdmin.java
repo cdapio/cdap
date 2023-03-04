@@ -58,7 +58,7 @@ public interface NamespaceAdmin extends NamespaceQueryAdmin {
   /**
    * Update namespace properties for a given namespace.
    *
-   * @param namespaceId  the {@link NamespaceId} of the namespace to be updated
+   * @param namespaceId the {@link NamespaceId} of the namespace to be updated
    * @param namespaceMeta namespace meta to update
    * @throws NamespaceNotFoundException if the specified namespace is not found
    */

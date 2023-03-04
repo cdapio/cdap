@@ -44,7 +44,8 @@ public interface CDAPTransactionsMXBean {
   int getNumInvalidTransactions();
 
   /**
-   * Returns the number of committing change sets (that have not yet been committed) across all write pointers.
+   * Returns the number of committing change sets (that have not yet been committed) across all
+   * write pointers.
    */
   int getNumCommittingChangeSets();
 

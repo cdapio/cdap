@@ -27,35 +27,35 @@ public class AppRequestTest {
    */
   @Test
   public void testAppRequestDeserialize() throws Exception {
-    String appRequestWithSchedules = "{\n" +
-      "  \"artifact\": {\n" +
-      "     \"name\": \"cdap-notifiable-workflow\",\n" +
-      "     \"version\": \"1.0.0\",\n" +
-      "     \"scope\": \"system\"\n" +
-      "  },\n" +
-      "  \"config\": {\n" +
-      "     \"plugin\": {\n" +
-      "        \"name\": \"WordCount\",\n" +
-      "        \"type\": \"sparkprogram\",\n" +
-      "        \"artifact\": {\n" +
-      "           \"name\": \"word-count-program\",\n" +
-      "           \"scope\": \"user\",\n" +
-      "           \"version\": \"1.0.0\"\n" +
-      "        }\n" +
-      "     },\n" +
-      "\n" +
-      "     \"notificationEmailSender\": \"sender@example.domain.com\",\n" +
-      "     \"notificationEmailIds\": [\"recipient@example.domain.com\"],\n" +
-      "     \"notificationEmailSubject\": \"[Critical] Workflow execution failed.\",\n" +
-      "     \"notificationEmailBody\": \"Execution of Workflow running the WordCount program failed.\"\n" +
-      "  },\n" +
-      "  \"preview\" : {\n" +
-      "    \"programName\" : \"WordCount\",\n" +
-      "    \"programType\" : \"spark\"\n" +
-      "    },\n" +
-      "  \"principal\" : \"test2\",\n" +
-      "  \"app.deploy.update.schedules\":\"false\"\n" +
-      "}";
+    String appRequestWithSchedules = "{\n"
+        + "  \"artifact\": {\n"
+        + "     \"name\": \"cdap-notifiable-workflow\",\n"
+        + "     \"version\": \"1.0.0\",\n"
+        + "     \"scope\": \"system\"\n"
+        + "  },\n"
+        + "  \"config\": {\n"
+        + "     \"plugin\": {\n"
+        + "        \"name\": \"WordCount\",\n"
+        + "        \"type\": \"sparkprogram\",\n"
+        + "        \"artifact\": {\n"
+        + "           \"name\": \"word-count-program\",\n"
+        + "           \"scope\": \"user\",\n"
+        + "           \"version\": \"1.0.0\"\n"
+        + "        }\n"
+        + "     },\n"
+        + "\n"
+        + "     \"notificationEmailSender\": \"sender@example.domain.com\",\n"
+        + "     \"notificationEmailIds\": [\"recipient@example.domain.com\"],\n"
+        + "     \"notificationEmailSubject\": \"[Critical] Workflow execution failed.\",\n"
+        + "     \"notificationEmailBody\": \"Execution of Workflow running the WordCount program failed.\"\n"
+        + "  },\n"
+        + "  \"preview\" : {\n"
+        + "    \"programName\" : \"WordCount\",\n"
+        + "    \"programType\" : \"spark\"\n"
+        + "    },\n"
+        + "  \"principal\" : \"test2\",\n"
+        + "  \"app.deploy.update.schedules\":\"false\"\n"
+        + "}";
     AppRequest appRequest = GSON.fromJson(appRequestWithSchedules, AppRequest.class);
     Assert.assertNotNull(appRequest.getArtifact());
     Assert.assertEquals("cdap-notifiable-workflow", appRequest.getArtifact().getName());

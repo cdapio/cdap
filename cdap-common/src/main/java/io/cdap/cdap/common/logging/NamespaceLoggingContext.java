@@ -20,10 +20,12 @@ package io.cdap.cdap.common.logging;
  * Namespace logging context.
  */
 public abstract class NamespaceLoggingContext extends AbstractLoggingContext {
+
   public static final String TAG_NAMESPACE_ID = ".namespaceId";
 
   /**
    * Constructs NamespaceLoggingContext.
+   *
    * @param namespaceId namespace id
    */
   public NamespaceLoggingContext(final String namespaceId) {

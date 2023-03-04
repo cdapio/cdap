@@ -27,7 +27,8 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * A {@link ProgramRunRecordFetcher} that uses {@link AppMetadataStore} for fetching run records directly.
+ * A {@link ProgramRunRecordFetcher} that uses {@link AppMetadataStore} for fetching run records
+ * directly.
  */
 public class StoreProgramRunRecordFetcher implements ProgramRunRecordFetcher {
 
@@ -39,7 +40,8 @@ public class StoreProgramRunRecordFetcher implements ProgramRunRecordFetcher {
   }
 
   @Override
-  public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws IOException, NotFoundException {
+  public RunRecordDetail getRunRecordMeta(ProgramRunId runId)
+      throws IOException, NotFoundException {
     return Optional.ofNullable(TransactionRunners.run(txRunner, context -> {
       return AppMetadataStore.create(context).getRun(runId);
     }, IOException.class)).orElseThrow(() -> new NotFoundException(runId));
@@ -47,12 +49,13 @@ public class StoreProgramRunRecordFetcher implements ProgramRunRecordFetcher {
 
   @Override
   public RunRecordDetail getRunRecordMeta(ProgramReference programRef, String runId)
-    throws IOException, NotFoundException {
+      throws IOException, NotFoundException {
     return Optional.ofNullable(TransactionRunners.run(txRunner, context -> {
-      return AppMetadataStore.create(context).getRun(programRef, runId);
-    }, IOException.class))
-      .orElseThrow(
-        () -> new NotFoundException(
-          String.format("No run record found for program %s and runID: %s", programRef, runId)));
+          return AppMetadataStore.create(context).getRun(programRef, runId);
+        }, IOException.class))
+        .orElseThrow(
+            () -> new NotFoundException(
+                String.format("No run record found for program %s and runID: %s", programRef,
+                    runId)));
   }
 }

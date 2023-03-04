@@ -37,7 +37,7 @@ public final class SSHConfig {
   private final Map<String, String> configs;
 
   private SSHConfig(String host, int port, @Nullable InetSocketAddress proxyAddress, String user,
-                    Supplier<byte[]> privateKeySupplier, Map<String, String> configs) {
+      Supplier<byte[]> privateKeySupplier, Map<String, String> configs) {
     this.host = host;
     this.user = user;
     this.proxyAddress = proxyAddress;

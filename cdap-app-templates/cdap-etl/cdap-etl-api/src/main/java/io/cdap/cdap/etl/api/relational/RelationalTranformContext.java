@@ -21,31 +21,30 @@ import io.cdap.cdap.api.feature.FeatureFlagsProvider;
 import java.util.Set;
 
 /**
- * This interface provides sql engine, input relation(s) and a way to set tranformation results to
- * a {@link RelationalTransform#transform(RelationalTranformContext)} call
+ * This interface provides sql engine, input relation(s) and a way to set tranformation results to a
+ * {@link RelationalTransform#transform(RelationalTranformContext)} call
  */
 public interface RelationalTranformContext extends FeatureFlagsProvider {
+
   /**
-   *
    * @return relational engine to be used for tranformation
    */
   Engine getEngine();
 
   /**
-   *
    * @param inputStage input name
    * @return relation corresponding to the given input
    */
   Relation getInputRelation(String inputStage);
 
   /**
-   *
    * @return set of all input relation names
    */
   Set<String> getInputRelationNames();
 
   /**
    * Gets schema for input stage
+   *
    * @param inputStage input name
    * @return relation corresponding to the given input
    */
@@ -53,20 +52,18 @@ public interface RelationalTranformContext extends FeatureFlagsProvider {
 
   /**
    * Gets the output schema for this transform context
+   *
    * @return output schema
    */
   Schema getOutputSchema();
 
   /**
    * sets the primary output relation for the transform
-   * @param outputRelation
    */
   void setOutputRelation(Relation outputRelation);
 
   /**
    *
-   * @param portName
-   * @param outputDataSet
    */
   void setOutputRelation(String portName, Relation outputDataSet);
 }

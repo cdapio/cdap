@@ -26,6 +26,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
  * Evaluates the secure() macro function for provisioner properties.
  */
 public class ProvisionerMacroEvaluator implements MacroEvaluator {
+
   public static final String SECURE_FUNCTION = "secure";
   private final String namespace;
   private final SecureStore secureStore;
@@ -45,8 +46,9 @@ public class ProvisionerMacroEvaluator implements MacroEvaluator {
   public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
     if (!SECURE_FUNCTION.equals(macroFunction)) {
       // this should never happen, as the parser should be configured to skip all other functions
-      throw new UnsupportedOperationException(String.format("%s is not a supported macro function in provisioners.",
-                                                            macroFunction));
+      throw new UnsupportedOperationException(
+          String.format("%s is not a supported macro function in provisioners.",
+              macroFunction));
     }
     if (arguments.length != 1) {
       throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
@@ -54,7 +56,8 @@ public class ProvisionerMacroEvaluator implements MacroEvaluator {
     try {
       return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
     } catch (Exception e) {
-      throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
+      throw new InvalidMacroException(
+          "Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
     }
   }
 }

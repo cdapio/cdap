@@ -25,13 +25,15 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 /**
- * JSON codec for metadata mutations, this is needed to deserialize the correct subclasses of metadata mutataions.
+ * JSON codec for metadata mutations, this is needed to deserialize the correct subclasses of
+ * metadata mutataions.
  */
-public class MetadataMutationCodec implements JsonSerializer<MetadataMutation>, JsonDeserializer<MetadataMutation> {
+public class MetadataMutationCodec implements JsonSerializer<MetadataMutation>,
+    JsonDeserializer<MetadataMutation> {
 
   @Override
   public MetadataMutation deserialize(JsonElement json, Type typeOfT,
-                                      JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     if (!typeOfT.equals(MetadataMutation.class)) {
       return context.deserialize(json, typeOfT);
     }
@@ -47,13 +49,15 @@ public class MetadataMutationCodec implements JsonSerializer<MetadataMutation>, 
       case UPDATE:
         return context.deserialize(json, MetadataMutation.Update.class);
       default:
-        throw new IllegalArgumentException(String.format("Unsupported metadata mutation type %s, only " +
-                                                           "supported types are CREATE, REMOVE, DROP, UPDATE.", type));
+        throw new IllegalArgumentException(
+            String.format("Unsupported metadata mutation type %s, only "
+                + "supported types are CREATE, REMOVE, DROP, UPDATE.", type));
     }
   }
 
   @Override
-  public JsonElement serialize(MetadataMutation src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(MetadataMutation src, Type typeOfSrc,
+      JsonSerializationContext context) {
     return context.serialize(src);
   }
 }

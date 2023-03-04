@@ -45,19 +45,20 @@ public interface ProvisionerContext {
   ProgramRunInfo getProgramRunInfo();
 
   /**
-   * Get the provisioner properties for this program run. These properties will start off as the provisioner properties
-   * associated with the profile of the program run. The properties will then be overridden by any program preferences
-   * that are prefixed with 'system.profile.properties.', with the prefixed stripped. Those properties will then be
-   * overridden by any runtime arguments or schedule properties that are prefixed with 'system.profile.properties.',
-   * with the prefixed stripped.
+   * Get the provisioner properties for this program run. These properties will start off as the
+   * provisioner properties associated with the profile of the program run. The properties will then
+   * be overridden by any program preferences that are prefixed with 'system.profile.properties.',
+   * with the prefixed stripped. Those properties will then be overridden by any runtime arguments
+   * or schedule properties that are prefixed with 'system.profile.properties.', with the prefixed
+   * stripped.
    *
    * @return the provisioner properties for the program run
    */
   Map<String, String> getProperties();
 
   /**
-   * Returns the {@link SSHContext} for performing ssh operations. The context will be null if RunimeJobManager is
-   * used to submit and monitor job.
+   * Returns the {@link SSHContext} for performing ssh operations. The context will be null if
+   * RunimeJobManager is used to submit and monitor job.
    */
   @Nullable
   SSHContext getSSHContext();
@@ -81,10 +82,9 @@ public interface ProvisionerContext {
   VersionInfo getCDAPVersionInfo();
 
   /**
-   *
-   * @return version of CDAP pipeline was created or update with. Can be used to adjust default values for
-   * backwards compatibility. If pipeline was created before this field was introduced,
-   * null is returned.
+   * @return version of CDAP pipeline was created or update with. Can be used to adjust default
+   *     values for backwards compatibility. If pipeline was created before this field was
+   *     introduced, null is returned.
    */
   @Nullable
   VersionInfo getAppCDAPVersionInfo();

@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * Starts a program if it exists and is not running.
  */
 public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
+
   private static final Logger LOG = LoggerFactory.getLogger(ProgramStarter.class);
   private final ProgramLifecycleService programLifecycleService;
 
@@ -48,13 +49,14 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
     ProgramId programId = arguments.getId();
 
     Preconditions.checkArgument(programLifecycleService.getProgramSpecification(programId) != null,
-                                "Cannot start %s because it does not exist.", programId);
+        "Cannot start %s because it does not exist.", programId);
 
     try {
       // do nothing if the program is already running
       ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
       if (currentStatus != ProgramStatus.STOPPED) {
-        LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId, currentStatus);
+        LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId,
+            currentStatus);
         return;
       }
       programLifecycleService.run(programId, Collections.emptyMap(), false);
@@ -63,7 +65,8 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
       // ignore this, as it means the program is running as expected
     } catch (NotFoundException e) {
       // use a nicer error message
-      throw new IllegalArgumentException(String.format("Cannot start %s because it does not exist.", programId), e);
+      throw new IllegalArgumentException(
+          String.format("Cannot start %s because it does not exist.", programId), e);
     }
   }
 
@@ -71,6 +74,7 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
    * Arguments required to start a program
    */
   static class Arguments implements Validatable {
+
     private String namespace;
     private String application;
     private String type;
@@ -89,7 +93,8 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
       try {
         programType = ProgramType.valueOf(type.toUpperCase());
       } catch (IllegalArgumentException e) {
-        throw new IllegalArgumentException(String.format("Invalid program type '%s': %s", type, e.getMessage()), e);
+        throw new IllegalArgumentException(
+            String.format("Invalid program type '%s': %s", type, e.getMessage()), e);
       }
 
       NamespaceId namespaceId = new NamespaceId(namespace);

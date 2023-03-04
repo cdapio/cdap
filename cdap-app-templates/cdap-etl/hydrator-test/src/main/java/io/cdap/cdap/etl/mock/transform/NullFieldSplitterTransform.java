@@ -33,12 +33,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Splitter transform that sends all records that have a null value for a configurable field to one output port and all
- * other records to another port.
+ * Splitter transform that sends all records that have a null value for a configurable field to one
+ * output port and all other records to another port.
  */
 @Plugin(type = SplitterTransform.PLUGIN_TYPE)
 @Name("NullFieldSplitter")
-public class NullFieldSplitterTransform extends SplitterTransform<StructuredRecord, StructuredRecord> {
+public class NullFieldSplitterTransform extends
+    SplitterTransform<StructuredRecord, StructuredRecord> {
 
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
@@ -62,7 +63,8 @@ public class NullFieldSplitterTransform extends SplitterTransform<StructuredReco
   }
 
   @Override
-  public void transform(StructuredRecord input, MultiOutputEmitter<StructuredRecord> emitter) throws Exception {
+  public void transform(StructuredRecord input, MultiOutputEmitter<StructuredRecord> emitter)
+      throws Exception {
     String port = input.get(config.field) == null ? "null" : "non-null";
     emitter.emit(port, input);
   }
@@ -86,7 +88,8 @@ public class NullFieldSplitterTransform extends SplitterTransform<StructuredReco
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, true));
     return PluginClass.builder().setName("NullFieldSplitter").setType(SplitterTransform.PLUGIN_TYPE)
-             .setDescription("").setClassName(NullFieldSplitterTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(NullFieldSplitterTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

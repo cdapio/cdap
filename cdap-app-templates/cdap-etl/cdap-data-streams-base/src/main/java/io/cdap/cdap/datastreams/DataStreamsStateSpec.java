@@ -65,10 +65,10 @@ public class DataStreamsStateSpec {
 
   @Override
   public String toString() {
-    return "DataStreamsStateSpec{" +
-      "mode=" + mode +
-      ", checkpointDir='" + checkpointDir + '\'' +
-      '}';
+    return "DataStreamsStateSpec{"
+      + "mode=" + mode
+      + ", checkpointDir='" + checkpointDir + '\''
+      + '}';
   }
 
   public static Builder getBuilder(Mode mode) {

@@ -43,14 +43,18 @@ import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 /**
  * An output format that delegates writing to other output formats.
  *
- * It assumes the key is the name of the output that it should delegate to,
- * and the value is a KeyValue containing the actual key and value to send to the delegate.
+ * It assumes the key is the name of the output that it should delegate to, and the value is a
+ * KeyValue containing the actual key and value to send to the delegate.
  */
 public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Object>> {
+
   private static final Gson GSON = new Gson();
-  private static final Type SET_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, Set<String>>>() { }.getType();
+  private static final Type SET_TYPE = new TypeToken<Set<String>>() {
+  }.getType();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
+  private static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, Set<String>>>() {
+  }.getType();
   private static final String NAMES = "cdap.pipeline.multi.names";
   private static final String SINK_OUTPUTS = "cdap.pipeline.multi.sink.outputs";
   private static final String PREFIX = "cdap.pipeline.multi.";
@@ -59,21 +63,23 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
   private Map<String, OutputFormat<Object, Object>> delegates;
 
   public static void addOutputs(Configuration hConf, Map<String, OutputFormatProvider> outputs,
-                                Map<String, Set<String>> sinkOutputs) {
+      Map<String, Set<String>> sinkOutputs) {
     hConf.set(NAMES, GSON.toJson(outputs.keySet()));
     hConf.set(SINK_OUTPUTS, GSON.toJson(sinkOutputs));
     for (Map.Entry<String, OutputFormatProvider> entry : outputs.entrySet()) {
       OutputFormatProvider outputFormatProvider = entry.getValue();
       hConf.set(getClassNameKey(entry.getKey()), outputFormatProvider.getOutputFormatClassName());
-      hConf.set(getPropertiesKey(entry.getKey()), GSON.toJson(outputFormatProvider.getOutputFormatConfiguration()));
+      hConf.set(getPropertiesKey(entry.getKey()),
+          GSON.toJson(outputFormatProvider.getOutputFormatConfiguration()));
     }
   }
 
   @Override
   public RecordWriter<String, KeyValue<Object, Object>> getRecordWriter(TaskAttemptContext context)
-    throws IOException, InterruptedException {
+      throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-    Map<String, Set<String>> sinkOutputs = GSON.fromJson(conf.getRaw(SINK_OUTPUTS), SINK_OUTPUTS_TYPE);
+    Map<String, Set<String>> sinkOutputs = GSON.fromJson(conf.getRaw(SINK_OUTPUTS),
+        SINK_OUTPUTS_TYPE);
     Map<String, OutputFormat<Object, Object>> delegateFormats = getDelegates(conf);
     /*
         build a map of sinks to writers for that sink.
@@ -100,7 +106,8 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
 
   @Override
   public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-    for (Map.Entry<String, OutputFormat<Object, Object>> entry : getDelegates(context.getConfiguration()).entrySet()) {
+    for (Map.Entry<String, OutputFormat<Object, Object>> entry : getDelegates(
+        context.getConfiguration()).entrySet()) {
       String name = entry.getKey();
       OutputFormat<Object, Object> delegate = entry.getValue();
       JobContext namedContext = getNamedJobContext(context, name);
@@ -109,9 +116,11 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
   }
 
   @Override
-  public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+  public OutputCommitter getOutputCommitter(TaskAttemptContext context)
+      throws IOException, InterruptedException {
     Map<String, OutputCommitter> delegateCommitters = new HashMap<>();
-    for (Map.Entry<String, OutputFormat<Object, Object>> entry : getDelegates(context.getConfiguration()).entrySet()) {
+    for (Map.Entry<String, OutputFormat<Object, Object>> entry : getDelegates(
+        context.getConfiguration()).entrySet()) {
       String name = entry.getKey();
       OutputFormat<Object, Object> delegate = entry.getValue();
       TaskAttemptContext namedContext = getNamedTaskContext(context, name);
@@ -120,7 +129,8 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
     return new MultiOutputCommitter(delegateCommitters);
   }
 
-  private Map<String, OutputFormat<Object, Object>> getDelegates(Configuration conf) throws IOException {
+  private Map<String, OutputFormat<Object, Object>> getDelegates(Configuration conf)
+      throws IOException {
     if (delegates != null) {
       return delegates;
     }
@@ -131,23 +141,25 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
       try {
         //noinspection unchecked
         OutputFormat<Object, Object> delegate = (OutputFormat<Object, Object>) conf.getClassLoader()
-          .loadClass(delegateClassName)
-          .newInstance();
+            .loadClass(delegateClassName)
+            .newInstance();
         if (delegate instanceof Configurable) {
           ((Configurable) delegate).setConf(conf);
         }
         delegates.put(name, delegate);
       } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-        throw new IOException("Unable to instantiate delegate input format " + delegateClassName, e);
+        throw new IOException("Unable to instantiate delegate input format " + delegateClassName,
+            e);
       }
     }
     return delegates;
   }
 
-  static TaskAttemptContext getNamedTaskContext(TaskAttemptContext context, String name) throws IOException {
+  static TaskAttemptContext getNamedTaskContext(TaskAttemptContext context, String name)
+      throws IOException {
     Job job = getNamedJob(context, name);
     return new TaskAttemptContextImpl(job.getConfiguration(), context.getTaskAttemptID(),
-                                      new ContextStatusReporter(context));
+        new ContextStatusReporter(context));
   }
 
   static JobContext getNamedJobContext(JobContext context, String name) throws IOException {
@@ -179,6 +191,7 @@ public class MultiOutputFormat extends OutputFormat<String, KeyValue<Object, Obj
    * A StatusReporter that uses the task context to report status.
    */
   private static class ContextStatusReporter extends StatusReporter {
+
     private final TaskAttemptContext context;
 
     private ContextStatusReporter(TaskAttemptContext context) {

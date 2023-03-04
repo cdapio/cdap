@@ -17,10 +17,10 @@
 package io.cdap.cdap.etl.common.plugin;
 
 /**
- * Measures how long operations take.
- * To time an operation, {@link #start()} should be called at the start of the operation, and {@link #reset()} should
- * be called at the end of the operation. If the stopwatch needs to be paused in the middle of the operation,
- * a call to {@link #start()} can be made, with a subsequent call to {@link #start()} to resume the stopwatch.
+ * Measures how long operations take. To time an operation, {@link #start()} should be called at the
+ * start of the operation, and {@link #reset()} should be called at the end of the operation. If the
+ * stopwatch needs to be paused in the middle of the operation, a call to {@link #start()} can be
+ * made, with a subsequent call to {@link #start()} to resume the stopwatch.
  */
 public interface OperationTimer {
 
@@ -32,7 +32,8 @@ public interface OperationTimer {
   void start();
 
   /**
-   * Stops the timer. Future reads will return the fixed duration that had elapsed up to this point.
+   * Stops the timer. Future reads will return the fixed duration that had elapsed up to this
+   * point.
    *
    * @throws IllegalStateException if the timer is already stopped.
    */

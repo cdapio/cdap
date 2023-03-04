@@ -28,8 +28,8 @@ public interface ProgramCompletionNotifier {
    * Invoked when the given program completed.
    *
    * @param programRunId the program run that is completed
-   * @param completionStatus the status where the program completed with. It must be one of the end state
-   *                         as reflected by {@link ProgramRunStatus#isEndState()}.
+   * @param completionStatus the status where the program completed with. It must be one of the
+   *     end state as reflected by {@link ProgramRunStatus#isEndState()}.
    */
   void onProgramCompleted(ProgramRunId programRunId, ProgramRunStatus completionStatus);
 }

@@ -23,6 +23,7 @@ package io.cdap.cdap.error;
  * </p>
  */
 public final class Err {
+
   /**
    * private constructor to prevent caller from creating Err object.
    */
@@ -33,13 +34,15 @@ public final class Err {
   /**
    * Common Error messages that can be used in different contexts.
    */
-  public static final Errors NOT_AN_ID = new Errors("'%s' name is not an ID. ID should be non empty and can contain" +
-                                                      " only characters A-Za-z0-9_-");
+  public static final Errors NOT_AN_ID = new Errors(
+      "'%s' name is not an ID. ID should be non empty and can contain"
+          + " only characters A-Za-z0-9_-");
 
   /**
    * Defines Schema related error messages.
    */
   public static class Schema {
+
     /**
      * Preventing construction.
      */
@@ -47,8 +50,8 @@ public final class Err {
     }
 
     public static final Errors NOT_SUPPORTED_TYPE = new Errors(
-      "Type %s is not supported. " +
-        "Only Class or ParameterizedType are supported"
+        "Type %s is not supported. "
+            + "Only Class or ParameterizedType are supported"
     );
   }
 
@@ -56,6 +59,7 @@ public final class Err {
    * Defines Application level error messages.
    */
   public static class Application {
+
     /**
      * preventing construction
      */
@@ -63,8 +67,8 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no program defined; " +
-        "should have at least one program defined"
+        "Application %s has no program defined; "
+            + "should have at least one program defined"
     );
   }
 
@@ -72,6 +76,7 @@ public final class Err {
    * Defines Dataset specific error messages.
    */
   public static class DataSet {
+
     /**
      * Preventing Construction.
      */

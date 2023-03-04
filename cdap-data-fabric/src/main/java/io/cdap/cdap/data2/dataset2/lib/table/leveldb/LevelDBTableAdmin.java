@@ -32,9 +32,10 @@ public class LevelDBTableAdmin implements DatasetAdmin {
   private final String name;
 
   public LevelDBTableAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                           LevelDBTableService service, CConfiguration cConf) throws IOException {
+      LevelDBTableService service, CConfiguration cConf) throws IOException {
     this.service = service;
-    this.name = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName());
+    this.name = PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(),
+        spec.getName());
   }
 
   @Override

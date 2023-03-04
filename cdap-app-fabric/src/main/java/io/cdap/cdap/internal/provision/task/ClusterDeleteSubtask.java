@@ -32,7 +32,7 @@ import java.util.function.Function;
 public class ClusterDeleteSubtask extends ProvisioningSubtask {
 
   public ClusterDeleteSubtask(Provisioner provisioner, ProvisionerContext provisionerContext,
-                              Function<Cluster, Optional<ProvisioningOp.Status>> transition) {
+      Function<Cluster, Optional<ProvisioningOp.Status>> transition) {
     super(provisioner, provisionerContext, transition);
   }
 
@@ -40,7 +40,7 @@ public class ClusterDeleteSubtask extends ProvisioningSubtask {
   public Cluster execute(Cluster cluster) throws Exception {
     ClusterStatus clusterStatus = provisioner.deleteClusterWithStatus(provisionerContext, cluster);
     return new Cluster(cluster == null ? null : cluster.getName(), clusterStatus,
-                       cluster == null ? Collections.emptyList() : cluster.getNodes(),
-                       cluster == null ? Collections.emptyMap() : cluster.getProperties());
+        cluster == null ? Collections.emptyList() : cluster.getNodes(),
+        cluster == null ? Collections.emptyMap() : cluster.getProperties());
   }
 }

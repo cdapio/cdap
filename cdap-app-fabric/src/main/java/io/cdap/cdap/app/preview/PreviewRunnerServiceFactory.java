@@ -22,8 +22,10 @@ import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
  * Factory for creating {@link PreviewRunnerService} instances.
  */
 public interface PreviewRunnerServiceFactory {
+
   /**
    * Creates an instance of {@link PreviewRunnerService}.
+   *
    * @param runner runner used by service to run preview
    * @return an instance of {@link PreviewRunnerService}
    */

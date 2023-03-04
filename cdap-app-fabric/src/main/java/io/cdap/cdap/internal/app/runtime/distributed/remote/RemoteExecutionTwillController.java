@@ -52,7 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implementation of {@link TwillController} that uses {@link RemoteProcessController} to control a running program.
+ * Implementation of {@link TwillController} that uses {@link RemoteProcessController} to control a
+ * running program.
  */
 class RemoteExecutionTwillController implements TwillController {
 
@@ -70,10 +71,10 @@ class RemoteExecutionTwillController implements TwillController {
   private volatile boolean terminateOnServiceStop;
 
   RemoteExecutionTwillController(CConfiguration cConf, ProgramRunId programRunId,
-                                 CompletionStage<?> startupCompletionStage,
-                                 RemoteProcessController remoteProcessController,
-                                 ScheduledExecutorService scheduler, RemoteExecutionService service,
-                                 boolean terminateWithController) {
+      CompletionStage<?> startupCompletionStage,
+      RemoteProcessController remoteProcessController,
+      ScheduledExecutorService scheduler, RemoteExecutionService service,
+      boolean terminateWithController) {
     this.programRunId = programRunId;
     this.runId = RunIds.fromString(programRunId.getRun());
     this.pollCompletedMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
@@ -121,15 +122,17 @@ class RemoteExecutionTwillController implements TwillController {
     try {
       RuntimeJobStatus status;
       RetryStrategy retryStrategy = RetryStrategies.timeLimit(
-        5, TimeUnit.SECONDS, RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS));
+          5, TimeUnit.SECONDS, RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS));
 
       // Make sure the remote execution is completed
       // Give 5 seconds for the remote process to shutdown. After 5 seconds, issues a kill.
       long startTime = System.currentTimeMillis();
       while ((status = Retries.callWithRetries(
-        remoteProcessController::getStatus, retryStrategy, Exception.class::isInstance)) == RuntimeJobStatus.RUNNING) {
+          remoteProcessController::getStatus, retryStrategy, Exception.class::isInstance))
+          == RuntimeJobStatus.RUNNING) {
         if (System.currentTimeMillis() - startTime >= 5000) {
-          throw new IllegalStateException("Remote process for " + programRunId + " is still running");
+          throw new IllegalStateException(
+              "Remote process for " + programRunId + " is still running");
         }
         TimeUnit.SECONDS.sleep(1);
       }
@@ -230,7 +233,8 @@ class RemoteExecutionTwillController implements TwillController {
   }
 
   @Override
-  public Future<Set<String>> restartInstances(Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
+  public Future<Set<String>> restartInstances(
+      Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
     throw new UnsupportedOperationException();
   }
 
@@ -245,24 +249,29 @@ class RemoteExecutionTwillController implements TwillController {
   }
 
   @Override
-  public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("updateLogLevels is not supported"));
+  public Future<Map<String, LogEntry.Level>> updateLogLevels(
+      Map<String, LogEntry.Level> logLevels) {
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("updateLogLevels is not supported"));
   }
 
   @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(String runnableName,
-                                                             Map<String, LogEntry.Level> logLevelsForRunnable) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("updateLogLevels is not supported"));
+      Map<String, LogEntry.Level> logLevelsForRunnable) {
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("updateLogLevels is not supported"));
   }
 
   @Override
   public Future<String[]> resetLogLevels(String... loggerNames) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("resetLogLevels is not supported"));
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("resetLogLevels is not supported"));
   }
 
   @Override
   public Future<String[]> resetRunnableLogLevels(String runnableName, String... loggerNames) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("resetRunnableLogLevels is not supported"));
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("resetRunnableLogLevels is not supported"));
   }
 
   @Override
@@ -272,12 +281,14 @@ class RemoteExecutionTwillController implements TwillController {
 
   @Override
   public Future<Command> sendCommand(Command command) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("sendCommand is not supported"));
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("sendCommand is not supported"));
   }
 
   @Override
   public Future<Command> sendCommand(String runnableName, Command command) {
-    return Futures.immediateFailedFuture(new UnsupportedOperationException("sendCommand is not supported"));
+    return Futures.immediateFailedFuture(
+        new UnsupportedOperationException("sendCommand is not supported"));
   }
 
   @Override
@@ -287,7 +298,8 @@ class RemoteExecutionTwillController implements TwillController {
 
   @Override
   public void onTerminated(Runnable runnable, Executor executor) {
-    completion.whenCompleteAsync((remoteExecutionTwillController, throwable) -> runnable.run(), executor);
+    completion.whenCompleteAsync((remoteExecutionTwillController, throwable) -> runnable.run(),
+        executor);
   }
 
   @Override
@@ -296,7 +308,8 @@ class RemoteExecutionTwillController implements TwillController {
   }
 
   @Override
-  public void awaitTerminated(long timeout, TimeUnit timeoutUnit) throws TimeoutException, ExecutionException {
+  public void awaitTerminated(long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException, ExecutionException {
     Uninterruptibles.getUninterruptibly(completion, timeout, timeoutUnit);
   }
 

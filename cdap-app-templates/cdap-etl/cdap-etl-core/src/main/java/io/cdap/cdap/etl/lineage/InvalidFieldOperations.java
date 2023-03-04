@@ -21,19 +21,20 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * For a single stage, this class stores the invalid fields along with the
- * name of operations which are either using these fields as input or creating
- * these fields as output. Please see {@link StageOperationsValidator} for
- * checks that are done on the field before marking it as invalid.
+ * For a single stage, this class stores the invalid fields along with the name of operations which
+ * are either using these fields as input or creating these fields as output. Please see {@link
+ * StageOperationsValidator} for checks that are done on the field before marking it as invalid.
  */
 public class InvalidFieldOperations {
+
   // Map of invalid field names to the list of operations which are using them as input
   private final Map<String, List<String>> invalidInputs;
 
   // Map of invalid field names to the list of operations which created them as output
   private final Map<String, List<String>> invalidOutputs;
 
-  public InvalidFieldOperations(Map<String, List<String>> invalidInputs, Map<String, List<String>> invalidOutputs) {
+  public InvalidFieldOperations(Map<String, List<String>> invalidInputs,
+      Map<String, List<String>> invalidOutputs) {
     this.invalidInputs = invalidInputs;
     this.invalidOutputs = invalidOutputs;
   }
@@ -61,8 +62,8 @@ public class InvalidFieldOperations {
       return false;
     }
     InvalidFieldOperations that = (InvalidFieldOperations) o;
-    return Objects.equals(invalidInputs, that.invalidInputs) &&
-      Objects.equals(invalidOutputs, that.invalidOutputs);
+    return Objects.equals(invalidInputs, that.invalidInputs)
+        && Objects.equals(invalidOutputs, that.invalidOutputs);
   }
 
   @Override

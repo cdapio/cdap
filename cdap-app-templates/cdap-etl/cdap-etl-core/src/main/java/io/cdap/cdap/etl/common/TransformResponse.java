@@ -24,11 +24,12 @@ import java.util.Map;
  * class representing transform response.
  */
 public class TransformResponse {
+
   private final Map<String, Collection<Object>> sinksResults;
   private final Map<String, Collection<InvalidEntry<Object>>> mapTransformIdToErrorEmitter;
 
   public TransformResponse(Map<String, Collection<Object>> sinksResults,
-                           Map<String, Collection<InvalidEntry<Object>>> mapTransformIdToErrorEmitter) {
+      Map<String, Collection<InvalidEntry<Object>>> mapTransformIdToErrorEmitter) {
     this.sinksResults = sinksResults;
     this.mapTransformIdToErrorEmitter = mapTransformIdToErrorEmitter;
   }

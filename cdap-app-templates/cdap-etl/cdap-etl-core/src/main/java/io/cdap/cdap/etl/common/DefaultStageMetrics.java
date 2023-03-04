@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL context the metric
- * was emitted from.
+ * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL
+ * context the metric was emitted from.
  */
 public class DefaultStageMetrics implements StageMetrics, Externalizable {
 

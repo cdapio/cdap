@@ -211,8 +211,8 @@ public abstract class AbstractClientTest {
         return false;
       }
       ArtifactJarInfo that = (ArtifactJarInfo) o;
-      return Objects.equals(appClass, that.appClass) &&
-        Objects.equals(manifest, that.manifest);
+      return Objects.equals(appClass, that.appClass)
+          && Objects.equals(manifest, that.manifest);
     }
 
     @Override

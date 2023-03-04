@@ -22,18 +22,20 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Summary of a {@link DatasetSpecification}. This is returned by the dataset API when getting all dataset instances
- * in a namespace, as we want to hide some of the more detailed information. If more details are required,
- * they are available by getting a specific dataset instance, which will return a {@link DatasetMeta} object.
+ * Summary of a {@link DatasetSpecification}. This is returned by the dataset API when getting all
+ * dataset instances in a namespace, as we want to hide some of the more detailed information. If
+ * more details are required, they are available by getting a specific dataset instance, which will
+ * return a {@link DatasetMeta} object.
  */
 public class DatasetSpecificationSummary {
+
   private final String name;
   private final String type;
   private final String description;
   private final Map<String, String> properties;
 
   public DatasetSpecificationSummary(String name, String type, @Nullable String description,
-                                     Map<String, String> properties) {
+      Map<String, String> properties) {
     this.name = name;
     this.type = type;
     this.description = description;
@@ -69,10 +71,10 @@ public class DatasetSpecificationSummary {
       return false;
     }
     DatasetSpecificationSummary that = (DatasetSpecificationSummary) o;
-    return Objects.equals(name, that.name) &&
-      Objects.equals(type, that.type) &&
-      Objects.equals(description, that.description) &&
-      Objects.equals(properties, that.properties);
+    return Objects.equals(name, that.name)
+        && Objects.equals(type, that.type)
+        && Objects.equals(description, that.description)
+        && Objects.equals(properties, that.properties);
   }
 
   @Override
@@ -82,11 +84,11 @@ public class DatasetSpecificationSummary {
 
   @Override
   public String toString() {
-    return "DatasetSpecificationSummary{" +
-      "name='" + name + '\'' +
-      ", type='" + type + '\'' +
-      ", description='" + description + '\'' +
-      ", properties=" + properties +
-      '}';
+    return "DatasetSpecificationSummary{"
+        + "name='" + name + '\''
+        + ", type='" + type + '\''
+        + ", description='" + description + '\''
+        + ", properties=" + properties
+        + '}';
   }
 }

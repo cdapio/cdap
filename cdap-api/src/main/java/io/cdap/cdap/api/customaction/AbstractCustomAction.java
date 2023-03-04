@@ -20,7 +20,8 @@ import io.cdap.cdap.api.annotation.TransactionPolicy;
 import java.util.Map;
 
 /**
- * This abstract class provides a default implementation of {@link CustomAction} methods for easy extensions.
+ * This abstract class provides a default implementation of {@link CustomAction} methods for easy
+ * extensions.
  */
 public abstract class AbstractCustomAction implements CustomAction {
 
@@ -67,7 +68,9 @@ public abstract class AbstractCustomAction implements CustomAction {
   }
 
   /**
-   * Classes derived from {@link AbstractCustomAction} can override this method to initialize the {@link CustomAction}.
+   * Classes derived from {@link AbstractCustomAction} can override this method to initialize the
+   * {@link CustomAction}.
+   *
    * @throws Exception if there is any error in initializing the custom action
    */
   @TransactionPolicy(TransactionControl.IMPLICIT)

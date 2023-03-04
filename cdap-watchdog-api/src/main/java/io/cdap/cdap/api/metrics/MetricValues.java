@@ -23,10 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Carries the "raw" emitted metric data points: context, timestamp, collection of
- * {@link io.cdap.cdap.api.metrics.MetricValue}
+ * Carries the "raw" emitted metric data points: context, timestamp, collection of {@link
+ * io.cdap.cdap.api.metrics.MetricValue}
  */
 public class MetricValues {
+
   private final Map<String, String> tags;
   private final Collection<MetricValue> metrics;
 
@@ -35,7 +36,8 @@ public class MetricValues {
    */
   private final long timestamp;
 
-  public MetricValues(Map<String, String> tags, String name, long timestamp, long value, MetricType type) {
+  public MetricValues(Map<String, String> tags, String name, long timestamp, long value,
+      MetricType type) {
     this(tags, timestamp, Collections.singleton(new MetricValue(name, type, value)));
   }
 
@@ -59,10 +61,10 @@ public class MetricValues {
 
   @Override
   public String toString() {
-    return "MetricValues{" +
-      "tags=" + tags +
-      ", metrics=" + metrics +
-      ", timestamp=" + timestamp +
-      '}';
+    return "MetricValues{"
+        + "tags=" + tags
+        + ", metrics=" + metrics
+        + ", timestamp=" + timestamp
+        + '}';
   }
 }

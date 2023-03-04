@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
  * No op implementation of naemspace resource deleter
  */
 public class NoopNamespaceResourceDeleter implements NamespaceResourceDeleter {
+
   @Override
   public void deleteResources(NamespaceMeta namespaceMeta) throws Exception {
     // no - op

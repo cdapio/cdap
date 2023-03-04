@@ -33,9 +33,11 @@ import io.cdap.cdap.api.workflow.WorkflowInfoProvider;
 /**
  * Represents runtime context of the {@link CustomAction} in the Workflow.
  */
-public interface CustomActionContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, Transactional,
-  WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext, MetadataReader,
-  MetadataWriter, LineageRecorder {
+public interface CustomActionContext extends SchedulableProgramContext, RuntimeContext,
+    DatasetContext, Transactional,
+    WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext,
+    MetadataReader,
+    MetadataWriter, LineageRecorder {
 
   /**
    * Return the specification of the custom action.
@@ -44,8 +46,8 @@ public interface CustomActionContext extends SchedulableProgramContext, RuntimeC
 
   /**
    * Returns the logical start time of the batch job which triggers this instance of an action.
-   * Logical start time is the time when the triggering Batch job is supposed to start if it is started
-   * by the scheduler. Otherwise it would be the current time when the action runs.
+   * Logical start time is the time when the triggering Batch job is supposed to start if it is
+   * started by the scheduler. Otherwise it would be the current time when the action runs.
    */
   long getLogicalStartTime();
 

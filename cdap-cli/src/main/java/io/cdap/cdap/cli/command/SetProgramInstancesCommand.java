@@ -38,7 +38,8 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public SetProgramInstancesCommand(ElementType elementType, ProgramClient programClient, CLIConfig cliConfig) {
+  public SetProgramInstancesCommand(ElementType elementType, ProgramClient programClient,
+      CLIConfig cliConfig) {
     super(cliConfig);
     this.elementType = elementType;
     this.programClient = programClient;
@@ -59,7 +60,7 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         ProgramId workerId = appId.worker(workerName);
         programClient.setWorkerInstances(workerId, numInstances);
         output.printf("Successfully set worker '%s' of app '%s' to %d instances\n",
-                      workerName, appId.getEntityName(), numInstances);
+            workerName, appId.getEntityName(), numInstances);
         break;
       case SERVICE:
         if (programIdParts.length < 2) {
@@ -69,23 +70,25 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
         ServiceId service = appId.service(serviceName);
         programClient.setServiceInstances(service, numInstances);
         output.printf("Successfully set service '%s' of app '%s' to %d instances\n",
-                      serviceName, appId.getEntityName(), numInstances);
+            serviceName, appId.getEntityName(), numInstances);
         break;
       default:
         // TODO: remove this
-        throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);
+        throw new IllegalArgumentException(
+            "Unrecognized program element type for scaling: " + elementType);
     }
   }
 
   @Override
   public String getPattern() {
     return String.format("set %s instances <%s> <%s>", elementType.getName(),
-                         elementType.getArgumentName(), ArgumentName.NUM_INSTANCES);
+        elementType.getArgumentName(), ArgumentName.NUM_INSTANCES);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Sets the number of instances of %s", Fragment.of(Article.A, elementType.getName()));
+    return String.format("Sets the number of instances of %s",
+        Fragment.of(Article.A, elementType.getName()));
 
   }
 }

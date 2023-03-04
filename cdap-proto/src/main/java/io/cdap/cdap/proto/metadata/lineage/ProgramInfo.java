@@ -23,6 +23,7 @@ import java.util.Objects;
  * Represents the program information including when it was last executed.
  */
 public class ProgramInfo {
+
   private final ProgramId program;
   private final long lastExecutedTimeInSeconds;
 
@@ -48,8 +49,8 @@ public class ProgramInfo {
       return false;
     }
     ProgramInfo that = (ProgramInfo) o;
-    return lastExecutedTimeInSeconds == that.lastExecutedTimeInSeconds &&
-            Objects.equals(program, that.program);
+    return lastExecutedTimeInSeconds == that.lastExecutedTimeInSeconds
+        && Objects.equals(program, that.program);
   }
 
   @Override

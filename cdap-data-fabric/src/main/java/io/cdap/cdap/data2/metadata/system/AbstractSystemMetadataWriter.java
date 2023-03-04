@@ -31,12 +31,14 @@ import java.util.Set;
 /**
  * A class to write {@link MetadataScope#SYSTEM} metadata for an {@link NamespacedEntityId entity}.
  */
-public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter, SystemMetadataProvider {
+public abstract class AbstractSystemMetadataWriter implements SystemMetadataWriter,
+    SystemMetadataProvider {
 
   private final MetadataServiceClient metadataServiceClient;
   private final MetadataEntity metadataEntity;
 
-  AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient, NamespacedEntityId entityId) {
+  AbstractSystemMetadataWriter(MetadataServiceClient metadataServiceClient,
+      NamespacedEntityId entityId) {
     this.metadataServiceClient = metadataServiceClient;
     this.metadataEntity = entityId.toMetadataEntity();
   }
@@ -57,7 +59,8 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
       properties = new HashMap<>(properties);
       properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
-    return new MetadataMutation.Create(metadataEntity, new Metadata(MetadataScope.SYSTEM, tags, properties),
-                                       MetadataMutation.Create.CREATE_DIRECTIVES);
+    return new MetadataMutation.Create(metadataEntity,
+        new Metadata(MetadataScope.SYSTEM, tags, properties),
+        MetadataMutation.Create.CREATE_DIRECTIVES);
   }
 }

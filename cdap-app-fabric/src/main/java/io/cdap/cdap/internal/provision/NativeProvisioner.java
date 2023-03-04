@@ -49,13 +49,15 @@ import java.util.stream.Stream;
 public class NativeProvisioner implements Provisioner {
 
   public static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    Profile.NATIVE_NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
+      Profile.NATIVE_NAME, "Native",
+      "Runs programs on the CDAP master cluster. Does not provision any resources.");
   public static final Capabilities SYSTEM_DATASETS =
-    new Capabilities(Stream.of(Table.TYPE, KeyValueTable.TYPE, ObjectMappedTable.TYPE, ObjectStore.TYPE,
-                               IndexedObjectStore.TYPE, IndexedTable.TYPE, TimeseriesTable.TYPE,
-                               CounterTimeseriesTable.TYPE, TimePartitionedFileSet.TYPE, PartitionedFileSet.TYPE,
-                               ExternalDataset.TYPE, Cube.TYPE, "stream")
-                       .collect(Collectors.toSet()));
+      new Capabilities(
+          Stream.of(Table.TYPE, KeyValueTable.TYPE, ObjectMappedTable.TYPE, ObjectStore.TYPE,
+                  IndexedObjectStore.TYPE, IndexedTable.TYPE, TimeseriesTable.TYPE,
+                  CounterTimeseriesTable.TYPE, TimePartitionedFileSet.TYPE, PartitionedFileSet.TYPE,
+                  ExternalDataset.TYPE, Cube.TYPE, "stream")
+              .collect(Collectors.toSet()));
 
   @Override
   public ProvisionerSpecification getSpec() {
@@ -70,7 +72,7 @@ public class NativeProvisioner implements Provisioner {
   @Override
   public Cluster createCluster(ProvisionerContext context) {
     return new Cluster(context.getProgramRunInfo().getRun(), ClusterStatus.RUNNING,
-                       Collections.emptyList(), Collections.emptyMap());
+        Collections.emptyList(), Collections.emptyMap());
   }
 
   @Override

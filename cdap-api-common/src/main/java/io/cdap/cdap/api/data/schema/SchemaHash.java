@@ -48,9 +48,8 @@ public final class SchemaHash implements Serializable {
   }
 
   /**
-   * Creates a SchemaHash by reading the hash value from the given {@link ByteBuffer}.
-   * The position of the {@link ByteBuffer} will be moved to the byte after the hash
-   * value.
+   * Creates a SchemaHash by reading the hash value from the given {@link ByteBuffer}. The position
+   * of the {@link ByteBuffer} will be moved to the byte after the hash value.
    */
   public SchemaHash(ByteBuffer bytes) {
     hash = new byte[16];
@@ -98,7 +97,8 @@ public final class SchemaHash implements Serializable {
   private byte[] computeHash(Schema schema, boolean includeRecordName) {
     try {
       Set<String> knownRecords = new HashSet<>();
-      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), schema, knownRecords, includeRecordName);
+      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), schema, knownRecords,
+          includeRecordName);
       return md5.digest();
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
@@ -115,7 +115,7 @@ public final class SchemaHash implements Serializable {
    * @return The same {@link MessageDigest} in the parameter.
    */
   private MessageDigest updateHash(MessageDigest md5, Schema schema, Set<String> knownRecords,
-                                   boolean includeRecordName) {
+      boolean includeRecordName) {
     // Don't use enum.ordinal() as ordering in enum could change
     switch (schema.getType()) {
       case NULL:

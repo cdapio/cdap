@@ -19,11 +19,13 @@ package io.cdap.cdap.sourcecontrol.operationrunner;
 import io.cdap.cdap.proto.artifact.AppRequest;
 
 public class PullAppResponse<T> {
+
   private final String applicationName;
   private final String applicationFileHash;
   private final AppRequest<T> appRequest;
 
-  public PullAppResponse(String applicationName, String applicationFileHash, AppRequest<T> appRequest) {
+  public PullAppResponse(String applicationName, String applicationFileHash,
+      AppRequest<T> appRequest) {
     this.applicationName = applicationName;
     this.applicationFileHash = applicationFileHash;
     this.appRequest = appRequest;

@@ -27,15 +27,15 @@ import com.google.common.util.concurrent.Service;
 public interface CacheSupplier<T extends Service> extends Supplier<T> {
 
   /**
-   * @return Get an instance of T and if it is the first call, then the service will be started. Subsequent calls will
-   * get a reference to the same instance
+   * @return Get an instance of T and if it is the first call, then the service will be started.
+   *     Subsequent calls will get a reference to the same instance
    */
   @Override
   T get();
 
   /**
-   * Release the object obtained through {code Supplier#get()}. If this is last release call, then the service will
-   * be stopped.
+   * Release the object obtained through {code Supplier#get()}. If this is last release call, then
+   * the service will be stopped.
    */
   void release();
 }

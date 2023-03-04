@@ -28,6 +28,7 @@ import java.util.function.Predicate;
  * Query that specifies parameters to delete entries from {@link MetricStore}.
  */
 public class MetricDeleteQuery {
+
   private final long startTs;
   private final long endTs;
   private final List<String> metricNames;
@@ -35,17 +36,18 @@ public class MetricDeleteQuery {
   private final List<String> aggregationTags;
 
   /**
-   * Creates instance of {@link MetricDeleteQuery} that defines selection of data to delete from the metric store.
+   * Creates instance of {@link MetricDeleteQuery} that defines selection of data to delete from the
+   * metric store.
    *
    * @param startTs start time of the data selection, in seconds since epoch
    * @param endTs end time of the data selection, in seconds since epoch
    * @param metricNames ame of the metric names to delete, empty collection means delete all
    * @param sliceByTagValues the key value pair of the tag and value
-   * @param aggregationTags list of tags for the metric aggregation group, the order must be same as the prefix of the
-   *                        aggregation groups we defined in {@link MetricStore}
+   * @param aggregationTags list of tags for the metric aggregation group, the order must be
+   *     same as the prefix of the aggregation groups we defined in {@link MetricStore}
    */
   public MetricDeleteQuery(long startTs, long endTs, Collection<String> metricNames,
-                           Map<String, String> sliceByTagValues, List<String> aggregationTags) {
+      Map<String, String> sliceByTagValues, List<String> aggregationTags) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.metricNames = new ArrayList<>(metricNames);
@@ -75,12 +77,12 @@ public class MetricDeleteQuery {
 
   @Override
   public String toString() {
-    return "MetricDeleteQuery{" +
-      "startTs=" + startTs +
-      ", endTs=" + endTs +
-      ", metricNames=" + metricNames +
-      ", sliceByTagValues=" + sliceByTagValues +
-      ", aggregationTags=" + aggregationTags +
-      '}';
+    return "MetricDeleteQuery{"
+        + "startTs=" + startTs
+        + ", endTs=" + endTs
+        + ", metricNames=" + metricNames
+        + ", sliceByTagValues=" + sliceByTagValues
+        + ", aggregationTags=" + aggregationTags
+        + '}';
   }
 }

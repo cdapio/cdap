@@ -41,12 +41,15 @@ import io.cdap.cdap.proto.id.ProgramRunId;
  * {@link PrivateModule} for {@link EntityExistenceVerifier} bindings.
  */
 public class EntityVerifierModule extends PrivateModule {
+
   @Override
   protected void configure() {
     MapBinder<Class<? extends EntityId>, EntityExistenceVerifier<? extends EntityId>> existenceVerifiers =
-      MapBinder.newMapBinder(binder(),
-                             new TypeLiteral<Class<? extends EntityId>>() { },
-                             new TypeLiteral<EntityExistenceVerifier<? extends EntityId>>() { });
+        MapBinder.newMapBinder(binder(),
+            new TypeLiteral<Class<? extends EntityId>>() {
+            },
+            new TypeLiteral<EntityExistenceVerifier<? extends EntityId>>() {
+            });
 
     existenceVerifiers.addBinding(InstanceId.class).to(InstanceExistenceVerifier.class);
     existenceVerifiers.addBinding(NamespaceId.class).to(NamespaceExistenceVerifier.class);
@@ -57,7 +60,8 @@ public class EntityVerifierModule extends PrivateModule {
     existenceVerifiers.addBinding(DatasetId.class).to(DatasetExistenceVerifier.class);
 
     TypeLiteral<EntityExistenceVerifier<EntityId>> verifierType =
-      new TypeLiteral<EntityExistenceVerifier<EntityId>>() { };
+        new TypeLiteral<EntityExistenceVerifier<EntityId>>() {
+        };
     bind(verifierType).to(DefaultEntityExistenceVerifier.class);
     expose(verifierType);
   }

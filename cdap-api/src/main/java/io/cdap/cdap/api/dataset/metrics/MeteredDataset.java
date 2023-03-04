@@ -20,13 +20,15 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.metrics.MetricsCollector;
 
 /**
- * Defines interface to be implemented by {@link io.cdap.cdap.api.dataset.Dataset} implementations to
- * expose data ops metrics.
+ * Defines interface to be implemented by {@link io.cdap.cdap.api.dataset.Dataset} implementations
+ * to expose data ops metrics.
  */
 @Beta
 public interface MeteredDataset {
+
   /**
    * Sets data ops metrics collector
+   *
    * @param metricsCollector metrics collector
    */
   void setMetricsCollector(MetricsCollector metricsCollector);

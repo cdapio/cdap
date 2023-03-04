@@ -23,6 +23,7 @@ import java.util.Map;
  * Class that is used to return the statistics of a workflow
  */
 public class WorkflowStatistics {
+
   private final long startTime;
   private final long endTime;
   private final int runs;
@@ -31,8 +32,8 @@ public class WorkflowStatistics {
   private final Map<String, Map<String, String>> nodes;
 
   public WorkflowStatistics(long startTime, long endTime, int runs, double avgRunTime,
-                            List<PercentileInformation> percentileInformationList,
-                            Map<String, Map<String, String>> nodes) {
+      List<PercentileInformation> percentileInformationList,
+      Map<String, Map<String, String>> nodes) {
     this.startTime = startTime;
     this.endTime = endTime;
     this.runs = runs;
@@ -64,11 +65,9 @@ public class WorkflowStatistics {
   /**
    * Sample response of getNodes
    *
-   * @return
-   * {"FirstMapReduceProgram":{"avgRunTime":"3.6666666666666665",
-   * "88.6":"4","95.0":"4","runs":"3","type":"MapReduce"}, "FirstSparkProgram":{"avgRunTime":"3.5",
-   * "70.0":"4","95.0":"5","runs":"10","type":"Spark"}}
-   *
+   * @return {"FirstMapReduceProgram":{"avgRunTime":"3.6666666666666665",
+   *     "88.6":"4","95.0":"4","runs":"3","type":"MapReduce"}, "FirstSparkProgram":{"avgRunTime":"3.5",
+   *     "70.0":"4","95.0":"5","runs":"10","type":"Spark"}}
    */
   public Map<String, Map<String, String>> getNodes() {
     return nodes;

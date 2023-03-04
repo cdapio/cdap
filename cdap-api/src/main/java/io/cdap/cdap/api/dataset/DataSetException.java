@@ -20,6 +20,7 @@ package io.cdap.cdap.api.dataset;
  * Thrown when a data operation fails.
  */
 public class DataSetException extends RuntimeException {
+
   public DataSetException(String message) {
     super(message);
   }

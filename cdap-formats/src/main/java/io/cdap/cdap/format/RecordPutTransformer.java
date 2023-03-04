@@ -28,9 +28,10 @@ import javax.annotation.Nullable;
  * Transforms records into Puts.
  */
 public class RecordPutTransformer {
+
   private final String rowField;
   private final Schema outputSchema;
-  
+
   public RecordPutTransformer(String rowField, @Nullable Schema outputSchema) {
     if (outputSchema != null) {
       validateSchema(rowField, outputSchema);
@@ -43,7 +44,7 @@ public class RecordPutTransformer {
   private void validateSchema(String rowField, Schema outputSchema) {
     if (outputSchema.getType() != Schema.Type.RECORD) {
       throw new IllegalArgumentException(
-        String.format("Schema must be a record instead of '%s'.", outputSchema.getType()));
+          String.format("Schema must be a record instead of '%s'.", outputSchema.getType()));
     }
     Schema.Field schemaRowField = outputSchema.getField(rowField);
     if (schemaRowField == null) {
@@ -56,14 +57,15 @@ public class RecordPutTransformer {
     for (Schema.Field field : outputSchema.getFields()) {
       if (!field.getSchema().isSimpleOrNullableSimple()) {
         throw new IllegalArgumentException(
-          "Schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
+            "Schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
       }
     }
   }
 
   public Put toPut(StructuredRecord record) {
     Schema recordSchema = record.getSchema();
-    Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD, "input must be a record.");
+    Preconditions.checkArgument(recordSchema.getType() == Schema.Type.RECORD,
+        "input must be a record.");
 
     Schema.Field keyField = getKeyField(recordSchema);
     Preconditions.checkArgument(keyField != null, "Could not find key field in record.");
@@ -123,13 +125,15 @@ public class RecordPutTransformer {
           put.add(field.getName(), (String) val);
           break;
         default:
-          throw new IllegalArgumentException("Field " + field.getName() + " is of unsupported type " + type);
+          throw new IllegalArgumentException(
+              "Field " + field.getName() + " is of unsupported type " + type);
       }
     } catch (ClassCastException e) {
       // happens if the record is constructed incorrectly.
       throw new IllegalArgumentException(
-        String.format("A value for field '%s' is of type '%s', which does not match schema type '%s'. ",
-                      field.getName(), val.getClass().getName(), type));
+          String.format(
+              "A value for field '%s' is of type '%s', which does not match schema type '%s'. ",
+              field.getName(), val.getClass().getName(), type));
     }
   }
 

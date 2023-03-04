@@ -21,16 +21,17 @@ import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 
 /**
- * Defines some logic that runs at the end of a workflow run. The action is run regardless of whether the pipeline
- * successfully completed or not.
+ * Defines some logic that runs at the end of a workflow run. The action is run regardless of
+ * whether the pipeline successfully completed or not.
  */
 @Beta
 public abstract class PostAction implements PipelineConfigurable {
+
   public static final String PLUGIN_TYPE = "postaction";
 
   /**
-   * Configure the pipeline. This is run once when the pipeline is being published.
-   * This is where you perform any static logic, like creating required datasets, registering required plugins,
+   * Configure the pipeline. This is run once when the pipeline is being published. This is where
+   * you perform any static logic, like creating required datasets, registering required plugins,
    * and things of that nature.
    *
    * @param pipelineConfigurer the configurer used to add required datasets and streams

@@ -48,7 +48,8 @@ public class LocalPreferencesFetcherInternal implements PreferencesFetcher {
         break;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
-        detail = resolved ? service.getResolvedPreferences(namespaceId) : service.getPreferences(namespaceId);
+        detail = resolved ? service.getResolvedPreferences(namespaceId)
+            : service.getPreferences(namespaceId);
         break;
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
@@ -56,11 +57,13 @@ public class LocalPreferencesFetcherInternal implements PreferencesFetcher {
         break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        detail = resolved ? service.getResolvedPreferences(programId) : service.getPreferences(programId);
+        detail = resolved ? service.getResolvedPreferences(programId)
+            : service.getPreferences(programId);
         break;
       default:
         throw new UnsupportedOperationException(
-          String.format("Preferences cannot be used on this entity type: %s", entityId.getEntityType()));
+            String.format("Preferences cannot be used on this entity type: %s",
+                entityId.getEntityType()));
     }
     return detail;
   }

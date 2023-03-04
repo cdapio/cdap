@@ -48,7 +48,8 @@ public final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  public static synchronized LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
+  public static synchronized LocalFile getTwillJar(LocationFactory locationFactory)
+      throws IOException {
     Location location = locationFactory.create(Constants.Files.TWILL_JAR);
     if (location.exists()) {
       return getLocalFile(location, true);
@@ -57,11 +58,12 @@ public final class DataprocJarUtil {
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString().contains("spark-assembly");
+        return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString()
+            .contains("spark-assembly");
       }
     });
     bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
-                                                    TwillContainerMain.class, OptionSpec.class));
+        TwillContainerMain.class, OptionSpec.class));
     return getLocalFile(location, true);
   }
 
@@ -72,7 +74,8 @@ public final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  public static synchronized LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
+  public static synchronized LocalFile getLauncherJar(LocationFactory locationFactory)
+      throws IOException {
     Location location = locationFactory.create(Constants.Files.LAUNCHER_JAR);
     if (location.exists()) {
       return getLocalFile(location, false);
@@ -110,7 +113,7 @@ public final class DataprocJarUtil {
 
   static LocalFile getLocalFile(Location location, boolean archive) throws IOException {
     return new DefaultLocalFile(location.getName(), location.toURI(),
-                                location.lastModified(), location.length(), archive, null);
+        location.lastModified(), location.length(), archive, null);
   }
 
   private DataprocJarUtil() {

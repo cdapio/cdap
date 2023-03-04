@@ -23,26 +23,29 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Represents an operation that accepts a single input argument and returns no result.
- * Like the Consumer, Batching Consumer is expected to operate via side-effects.
- * This implements AutoCloseable so it must be closed. This class is not thread-safe.
+ * Represents an operation that accepts a single input argument and returns no result. Like the
+ * Consumer, Batching Consumer is expected to operate via side-effects. This implements
+ * AutoCloseable so it must be closed. This class is not thread-safe.
  *
- * This is a functional interface whose functional method is accept(Object). It accepts a batch of objects
- * and then calls the accept method of a child consumer which accepts a list of Objects.
+ * This is a functional interface whose functional method is accept(Object). It accepts a batch of
+ * objects and then calls the accept method of a child consumer which accepts a list of Objects.
  * Type parameters:
+ *
  * @param <T> – the type of the input to the operation
  */
 public class BatchingConsumer<T> implements Consumer<T>, AutoCloseable {
+
   private List<T> buffer;
-  private final int  batchSize;
+  private final int batchSize;
   private final Consumer<List<T>> child;
 
   /**
    * Constructs an instance of the BatchingConsumer
    *
-   * @param child - the child consumer. It accepts a list of objects of type T and performs given operation
-   * @param batchSize - the number of objects the BatchingConsumer accepts before passing a list of these
-   * objects to the child consumer
+   * @param child - the child consumer. It accepts a list of objects of type T and performs
+   *     given operation
+   * @param batchSize - the number of objects the BatchingConsumer accepts before passing a list
+   *     of these objects to the child consumer
    */
   public BatchingConsumer(Consumer<List<T>> child, int batchSize) {
     this.child = child;
@@ -51,9 +54,9 @@ public class BatchingConsumer<T> implements Consumer<T>, AutoCloseable {
   }
 
   /**
-   * Performs this operation on the given argument.
-   * Consumes batchSize number of input arguments, before calling the child consumer with a list
-   * of collected items in the batch.
+   * Performs this operation on the given argument. Consumes batchSize number of input arguments,
+   * before calling the child consumer with a list of collected items in the batch.
+   *
    * @param t - the input argument
    */
   public void accept(T t) {

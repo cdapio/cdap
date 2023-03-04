@@ -23,11 +23,12 @@ import javax.annotation.Nullable;
 
 /**
  * Simply returns the same {@link ClassLoader} for every dataset module. The assumption is that the
- * classloader has access to any dataset module that may be created.
- * This is true for a Program {@link ClassLoader} for example. Closing the given classloader is left to the caller.
- * It will not be closed when this class is closed.
+ * classloader has access to any dataset module that may be created. This is true for a Program
+ * {@link ClassLoader} for example. Closing the given classloader is left to the caller. It will not
+ * be closed when this class is closed.
  */
 public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
+
   private final ClassLoader classLoader;
 
   public ConstantClassLoaderProvider() {
@@ -35,13 +36,15 @@ public class ConstantClassLoaderProvider implements DatasetClassLoaderProvider {
   }
 
   public ConstantClassLoaderProvider(@Nullable ClassLoader classLoader) {
-    this.classLoader = classLoader == null ?
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()) :
-      classLoader;
+    this.classLoader = classLoader == null
+        ? Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
+        getClass().getClassLoader()) :
+        classLoader;
   }
 
   @Override
-  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader) throws IOException {
+  public ClassLoader get(DatasetModuleMeta moduleMeta, ClassLoader parentClassLoader)
+      throws IOException {
     return classLoader;
   }
 

@@ -238,8 +238,8 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
             distributionMetricsMap.put(metricValue.getName(), metricValue);
             continue;
           }
-          if (!COUNTER_METRIC_NAME.equals(metricValue.getName()) &&
-            !metricValue.getName().startsWith(GAUGE_METRIC_NAME_PREFIX)) {
+          if (!COUNTER_METRIC_NAME.equals(metricValue.getName())
+              && !metricValue.getName().startsWith(GAUGE_METRIC_NAME_PREFIX)) {
             continue;
           }
           // Increment the metric's value if it already exists, or insert the metric value
@@ -267,11 +267,11 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
     public boolean isMetricsProcessorDelayEmitted() {
       for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
         if (!systemMetricsMap.containsKey(
-          String.format(
-            "metrics.processor.0.METRICS_STORE.topic.metrics%s.oldest.delay.ms", i)) &&
-          !systemMetricsMap.containsKey(
             String.format(
-              "metrics.processor.0.METRICS_STORE.topic.metrics%s.latest.delay.ms", i))) {
+                "metrics.processor.0.METRICS_STORE.topic.metrics%s.oldest.delay.ms", i))
+            && !systemMetricsMap.containsKey(
+            String.format(
+                "metrics.processor.0.METRICS_STORE.topic.metrics%s.latest.delay.ms", i))) {
           return false;
         }
       }

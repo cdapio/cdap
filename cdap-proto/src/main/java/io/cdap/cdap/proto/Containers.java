@@ -39,12 +39,13 @@ public interface Containers {
   /**
    * ContainerTypes - System Service, and for various program types
    */
-  enum ContainerType { SYSTEM_SERVICE, SERVICE, MAPREDUCE, WORKFLOW, SPARK, WORKER }
+  enum ContainerType {SYSTEM_SERVICE, SERVICE, MAPREDUCE, WORKFLOW, SPARK, WORKER}
 
   /**
    * POJO holding information about container running in YARN.
    */
   final class ContainerInfo {
+
     private final String type;
     private final String name;
     private final Integer instance;
@@ -55,8 +56,8 @@ public interface Containers {
     private final Integer debugPort;
 
     public ContainerInfo(ContainerType type, String name,
-                         @Nullable Integer instance, @Nullable String container, @Nullable String host,
-                         @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
+        @Nullable Integer instance, @Nullable String container, @Nullable String host,
+        @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
       this.instance = instance;

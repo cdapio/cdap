@@ -20,11 +20,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * This interface represents the context in which a stage is running.
- * Ordinarily the context will be provided by the pipeline in which
- * the stage is embedded.
+ * This interface represents the context in which a stage is running. Ordinarily the context will be
+ * provided by the pipeline in which the stage is embedded.
  */
 public interface Context {
+
   /**
    * Used when you a {@link Stage} wants to send data to the downstream stage
    *
@@ -43,7 +43,8 @@ public interface Context {
   Object getDownStream();
 
   /**
-   * Returns a property value associated with the given key that was set by {@link #setProperty(String, Object)} call.
+   * Returns a property value associated with the given key that was set by {@link
+   * #setProperty(String, Object)} call.
    *
    * @param key the property key
    * @param <T> type of the value

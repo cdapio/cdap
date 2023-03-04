@@ -20,11 +20,13 @@ package io.cdap.cdap.report.proto;
  * ShareId representing the shared report id
  */
 public class ShareId {
+
   public final String shareId;
 
   public ShareId(String shareId) {
     this.shareId = shareId;
   }
+
   public String getShareId() {
     return shareId;
   }

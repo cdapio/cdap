@@ -20,18 +20,19 @@ import io.cdap.cdap.api.data.batch.Input;
 import java.util.Map;
 
 /**
- * Sources that want to employ optimization by an SQL Engine may push SQLEngine-specific inputs, which include a
- * fallback input in case the SQL Engine Input cannot be processed.
+ * Sources that want to employ optimization by an SQL Engine may push SQLEngine-specific inputs,
+ * which include a fallback input in case the SQL Engine Input cannot be processed.
  */
 public class SQLEngineInput extends Input {
+
   private final String stageName;
   private final String sqlEngineClassName;
   private final Map<String, String> arguments;
 
   public SQLEngineInput(String name,
-                        String stageName,
-                        String sqlEngineClassName,
-                        Map<String, String> arguments) {
+      String stageName,
+      String sqlEngineClassName,
+      Map<String, String> arguments) {
     super(name);
     this.stageName = stageName;
     this.sqlEngineClassName = sqlEngineClassName;
@@ -39,8 +40,9 @@ public class SQLEngineInput extends Input {
   }
 
   /**
-   * Gets the stage name for this input. This name is used to allocate metrics to the appropriate sink after the
-   * input is written into the SQL engine
+   * Gets the stage name for this input. This name is used to allocate metrics to the appropriate
+   * sink after the input is written into the SQL engine
+   *
    * @return the stage name
    */
   public String getStageName() {
@@ -49,6 +51,7 @@ public class SQLEngineInput extends Input {
 
   /**
    * Gets the class name for the SQL engine implementation
+   *
    * @return class name for the SQL engine implementation
    */
   public String getSqlEngineClassName() {
@@ -57,6 +60,7 @@ public class SQLEngineInput extends Input {
 
   /**
    * Get arguments used for input configuration
+   *
    * @return arguments used for input configuration
    */
   public Map<String, String> getArguments() {
@@ -65,9 +69,9 @@ public class SQLEngineInput extends Input {
 
   @Override
   public String toString() {
-    return "SQLEngineInput{" +
-      "name='" + getName() + '\'' +
-      ", sqlEngineClassName='" + sqlEngineClassName + '\'' +
-      "} ";
+    return "SQLEngineInput{"
+        + "name='" + getName() + '\''
+        + ", sqlEngineClassName='" + sqlEngineClassName + '\''
+        + "} ";
   }
 }

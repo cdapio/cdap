@@ -51,7 +51,8 @@ public final class NoopTwillRunnerService implements TwillRunnerService {
   }
 
   @Override
-  public TwillPreparer prepare(TwillRunnable runnable, ResourceSpecification resourceSpecification) {
+  public TwillPreparer prepare(TwillRunnable runnable,
+      ResourceSpecification resourceSpecification) {
     return new NoopTwillPreparer();
   }
 
@@ -78,13 +79,15 @@ public final class NoopTwillRunnerService implements TwillRunnerService {
 
   @Override
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater,
-                                               long initialDelay, long delay, TimeUnit unit) {
-    return () -> { };
+      long initialDelay, long delay, TimeUnit unit) {
+    return () -> {
+    };
   }
 
   @Override
   public Cancellable setSecureStoreRenewer(SecureStoreRenewer renewer, long initialDelay,
-                                           long delay, long retryDelay, TimeUnit unit) {
-    return () -> { };
+      long delay, long retryDelay, TimeUnit unit) {
+    return () -> {
+    };
   }
 }

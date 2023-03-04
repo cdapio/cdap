@@ -20,6 +20,7 @@ package io.cdap.cdap.common.builder;
  * Exception that is raised when there is an issue building the object.
  */
 public class BuilderException extends RuntimeException {
+
   /**
    * Basic construction of exception.
    */
@@ -29,6 +30,7 @@ public class BuilderException extends RuntimeException {
 
   /**
    * Construction of exception with reason specified.
+   *
    * @param reason for why the exception was thrown.
    */
   public BuilderException(String reason) {
@@ -37,6 +39,7 @@ public class BuilderException extends RuntimeException {
 
   /**
    * Construction of exception with a {@link Throwable}.
+   *
    * @param throwable instance.
    */
   public BuilderException(Throwable throwable) {
@@ -45,7 +48,8 @@ public class BuilderException extends RuntimeException {
 
   /**
    * Construction of exception with reason and throwable.
-   * @param reason   for why the exception is being thrown.
+   *
+   * @param reason for why the exception is being thrown.
    * @param throwable instance.
    */
   public BuilderException(String reason, Throwable throwable) {

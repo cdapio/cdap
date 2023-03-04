@@ -23,6 +23,7 @@ import javax.annotation.Nullable;
  * Request for launching a runnable task.
  */
 public class RunnableTaskRequest {
+
   private final String className;
   @Nullable
   private final RunnableTaskParam param;
@@ -30,11 +31,12 @@ public class RunnableTaskRequest {
   private final ArtifactId artifactId;
   @Nullable
   private final String namespace;
+
   @Nullable
 
   private RunnableTaskRequest(String className, @Nullable String param,
-                              @Nullable ArtifactId artifactId, @Nullable String namespace,
-                              @Nullable RunnableTaskRequest embeddedTaskRequest) {
+      @Nullable ArtifactId artifactId, @Nullable String namespace,
+      @Nullable RunnableTaskRequest embeddedTaskRequest) {
     this.className = className;
     this.param = new RunnableTaskParam(param, embeddedTaskRequest);
     this.artifactId = artifactId;
@@ -63,11 +65,11 @@ public class RunnableTaskRequest {
   @Override
   public String toString() {
     String requestString =
-      "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
+        "RunnableTaskRequest{className=%s, param=%s, artifactId=%s, namespace=%s}";
     return String.format(requestString, className, param == null ? null :
-                           param.getSimpleParam().length() > 500 ?
-                             param.getSimpleParam().substring(500) : param.getSimpleParam(),
-                         artifactId, namespace);
+            param.getSimpleParam().length() > 500
+                ? param.getSimpleParam().substring(500) : param.getSimpleParam(),
+        artifactId, namespace);
   }
 
   public static Builder getBuilder(String taskClassName) {
@@ -78,6 +80,7 @@ public class RunnableTaskRequest {
    * Builder for RunnableTaskRequest
    */
   public static class Builder {
+
     private final String className;
     @Nullable
     private String simpleParam;
@@ -113,7 +116,8 @@ public class RunnableTaskRequest {
     }
 
     public RunnableTaskRequest build() {
-      return new RunnableTaskRequest(className, simpleParam, artifactId, namespace, embeddedTaskRequest);
+      return new RunnableTaskRequest(className, simpleParam, artifactId, namespace,
+          embeddedTaskRequest);
     }
   }
 }

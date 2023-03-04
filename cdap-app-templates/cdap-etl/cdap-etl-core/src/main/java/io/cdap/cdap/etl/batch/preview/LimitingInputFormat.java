@@ -51,7 +51,8 @@ public class LimitingInputFormat<K, V> extends DelegatingInputFormat<K, V> {
   }
 
   @Override
-  public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException {
+  public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context)
+      throws IOException {
     return new LimitingRecordReader<>(getDelegate(context.getConfiguration()));
   }
 }

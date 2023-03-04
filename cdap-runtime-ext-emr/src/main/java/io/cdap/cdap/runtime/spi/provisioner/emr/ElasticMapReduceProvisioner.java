@@ -45,9 +45,10 @@ public class ElasticMapReduceProvisioner implements Provisioner {
 
   private static final Logger LOG = LoggerFactory.getLogger(ElasticMapReduceProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "aws-emr", "Amazon EMR",
-    "Amazon EMR provides a managed Hadoop framework that makes it easy, fast, and cost-effective to " +
-            "process vast amounts of data across dynamically scalable Amazon EC2 instances.");
+      "aws-emr", "Amazon EMR",
+      "Amazon EMR provides a managed Hadoop framework that makes it easy, fast, and cost-effective to "
+
+          + "process vast amounts of data across dynamically scalable Amazon EC2 instances.");
   private static final String CLUSTER_PREFIX = "cdap-";
 
   @Override
@@ -76,12 +77,14 @@ public class ElasticMapReduceProvisioner implements Provisioner {
         return client.getCluster(existing.get().getId()).get();
       }
       String clusterId = client.createCluster(clusterName);
-      return new Cluster(clusterId, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
+      return new Cluster(clusterId, ClusterStatus.CREATING, Collections.emptyList(),
+          Collections.emptyMap());
     }
   }
 
   @Override
-  public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+  public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster)
+      throws Exception {
     EMRConf conf = EMRConf.fromProvisionerContext(context);
     try (EMRClient client = EMRClient.fromConf(conf)) {
       return client.getClusterStatus(cluster.getName());
@@ -90,7 +93,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
 
   @Override
   public Cluster getClusterDetail(ProvisionerContext context,
-                                  Cluster cluster) throws Exception {
+      Cluster cluster) throws Exception {
     EMRConf conf = EMRConf.fromProvisionerContext(context);
     try (EMRClient client = EMRClient.fromConf(conf)) {
       Optional<Cluster> existing = client.getCluster(cluster.getName());
@@ -113,13 +116,15 @@ public class ElasticMapReduceProvisioner implements Provisioner {
 
   private String getMasterExternalIp(Cluster cluster) {
     Node masterNode = cluster.getNodes().stream()
-      .filter(node -> Node.Type.MASTER == node.getType())
-      .findFirst().orElseThrow(() -> new IllegalArgumentException("Cluster has no node of master type: " + cluster));
+        .filter(node -> Node.Type.MASTER == node.getType())
+        .findFirst().orElseThrow(
+            () -> new IllegalArgumentException("Cluster has no node of master type: " + cluster));
 
     String ip = masterNode.getIpAddress();
     if (ip == null) {
-      throw new IllegalArgumentException(String.format("External IP is not defined for node '%s' in cluster %s",
-                                                       masterNode.getId(), cluster));
+      throw new IllegalArgumentException(
+          String.format("External IP is not defined for node '%s' in cluster %s",
+              masterNode.getId(), cluster));
     }
     return ip;
   }
@@ -129,7 +134,8 @@ public class ElasticMapReduceProvisioner implements Provisioner {
   // We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters
   @VisibleForTesting
   static String getClusterName(ProgramRunInfo programRunInfo) {
-    String cleanedAppName = programRunInfo.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
+    String cleanedAppName = programRunInfo.getApplication().replaceAll("[^A-Za-z0-9\\-]", "")
+        .toLowerCase();
     // 51 is max length, need to subtract the prefix and 1 extra for the '-' separating app name and run id
     int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRunInfo.getRun().length();
     if (cleanedAppName.length() > maxAppLength) {
@@ -140,6 +146,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
 
   @Override
   public Capabilities getCapabilities() {
-    return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
+    return new Capabilities(
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
   }
 }

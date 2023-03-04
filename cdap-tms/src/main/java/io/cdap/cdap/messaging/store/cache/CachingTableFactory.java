@@ -40,8 +40,8 @@ public class CachingTableFactory extends ForwardingTableFactory {
 
   @Inject
   CachingTableFactory(CConfiguration cConf,
-                      @Named(DELEGATE_TABLE_FACTORY) TableFactory delegateTableFactory,
-                      MessageTableCacheProvider cacheProvider) {
+      @Named(DELEGATE_TABLE_FACTORY) TableFactory delegateTableFactory,
+      MessageTableCacheProvider cacheProvider) {
     this.cConf = cConf;
     this.delegateTableFactory = delegateTableFactory;
     this.cacheProvider = cacheProvider;

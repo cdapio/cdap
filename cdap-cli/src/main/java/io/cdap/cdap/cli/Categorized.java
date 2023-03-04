@@ -20,5 +20,6 @@ package io.cdap.cdap.cli;
  * Implement this to have a category.
  */
 public interface Categorized {
+
   String getCategory();
 }

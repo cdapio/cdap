@@ -24,18 +24,19 @@ import java.util.Map;
  */
 @Beta
 public interface HBaseDDLExecutorContext {
+
   /**
    * Returns the hadoop configuration with which the {@link HBaseDDLExecutor} was initialized.
-   * @param <T>
+   *
    * @return the configuration instance
    */
   <T> T getConfiguration();
 
   /**
-   * Returns the {@link Map} of properties associated with the HBase DDL executor extension.
-   * The properties for the extension can be specified in the <code>cdap-site.xml</code>
-   * prefixed with <code>cdap.hbase.spi.</code>. The returned {@link Map} will have all
-   * such properties, but with prefix <code>cdap.hbase.spi.</code> stripped.
+   * Returns the {@link Map} of properties associated with the HBase DDL executor extension. The
+   * properties for the extension can be specified in the <code>cdap-site.xml</code> prefixed with
+   * <code>cdap.hbase.spi.</code>. The returned {@link Map} will have all such properties, but with
+   * prefix <code>cdap.hbase.spi.</code> stripped.
    */
   Map<String, String> getProperties();
 }

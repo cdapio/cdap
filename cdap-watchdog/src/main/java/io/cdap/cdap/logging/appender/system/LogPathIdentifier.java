@@ -22,6 +22,7 @@ import java.util.Objects;
  * Identifier for CDAP Logging Context
  */
 public class LogPathIdentifier {
+
   private static final String META_SEPARATOR = ":";
 
   private final String namespaceId;
@@ -36,13 +37,14 @@ public class LogPathIdentifier {
     this.pathId1 = pathId1;
     this.pathId2 = pathId2;
     this.oldRowkey = String.format("%s%s%s%s%s",
-                                   namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
+        namespaceId, META_SEPARATOR, pathId1, META_SEPARATOR, pathId2);
     // add separator key at the end for new row key
     this.rowKey = String.format("%s%s", oldRowkey, META_SEPARATOR);
   }
 
   /**
    * NamespaceId String
+   *
    * @return namespace string
    */
   public String getNamespaceId() {
@@ -51,6 +53,7 @@ public class LogPathIdentifier {
 
   /**
    * first part of path id
+   *
    * @return first path id of logging context in a namespace
    */
   public String getPathId1() {
@@ -59,6 +62,7 @@ public class LogPathIdentifier {
 
   /**
    * second part of path id - used by {@link LogFileManager} to create directory
+   *
    * @return second path id of logging context in a namespace
    */
   public String getPathId2() {
@@ -67,6 +71,7 @@ public class LogPathIdentifier {
 
   /**
    * Rowkey combining the namespace and log file identifier separated by separator ":"
+   *
    * @return rowkey string
    */
   public String getRowkey() {
@@ -74,7 +79,9 @@ public class LogPathIdentifier {
   }
 
   /**
-   * Rowkey combining the namespace and log file identifier separated by separator ":" in old format
+   * Rowkey combining the namespace and log file identifier separated by separator ":" in old
+   * format
+   *
    * @return rowkey string
    */
   public String getOldRowkey() {
@@ -90,9 +97,9 @@ public class LogPathIdentifier {
       return false;
     }
     LogPathIdentifier that = (LogPathIdentifier) o;
-    return Objects.equals(namespaceId, that.namespaceId) &&
-      Objects.equals(pathId1, that.pathId1) &&
-      Objects.equals(pathId2, that.pathId2);
+    return Objects.equals(namespaceId, that.namespaceId)
+        && Objects.equals(pathId1, that.pathId1)
+        && Objects.equals(pathId2, that.pathId2);
   }
 
   @Override

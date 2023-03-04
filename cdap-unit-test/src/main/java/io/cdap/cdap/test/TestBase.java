@@ -177,11 +177,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Base class to inherit from for unit-test.
- * It provides testing functionality for {@link io.cdap.cdap.api.app.Application}.
- * To clean App Fabric state, you can use the {@link #clear} method.
+ * Base class to inherit from for unit-test. It provides testing functionality for {@link
+ * io.cdap.cdap.api.app.Application}. To clean App Fabric state, you can use the {@link #clear}
+ * method.
  * <p>
- * Custom configurations for CDAP can be set by using {@link ClassRule} and {@link TestConfiguration}.
+ * Custom configurations for CDAP can be set by using {@link ClassRule} and {@link
+ * TestConfiguration}.
  * </p>
  *
  * @see TestConfiguration
@@ -233,9 +234,10 @@ public class TestBase {
   public static void initialize() throws Exception {
     if (nestedStartCount++ > 0) {
       Assert.assertEquals(
-        "Test is loaded that requires custom configuration while other configuration is in place. " +
-          "Please check if test is part of the suite and apply configuration on the suite level",
-        customConfiguration, getCustomConfiguration());
+          "Test is loaded that requires custom configuration while other configuration is in place. "
+
+              + "Please check if test is part of the suite and apply configuration on the suite level",
+          customConfiguration, getCustomConfiguration());
       return;
     }
     File localDataDir = TMP_FOLDER.newFolder();
@@ -261,7 +263,8 @@ public class TestBase {
     hConf.reloadConfiguration();
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
-    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+    hConf.set("hadoop.tmp.dir",
+        new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
 
     // Windows specific requirements
     if (OSDetector.isWindows()) {
@@ -276,53 +279,55 @@ public class TestBase {
     }
 
     injector = Guice.createInjector(
-      createDataFabricModule(),
-      new TransactionExecutorModule(),
-      new DataSetsModules().getStandaloneModules(),
-      new DataSetServiceModules().getInMemoryModules(),
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getNoOpModule(),
-      new IOModule(),
-      new LocalLocationModule(),
-      new InMemoryDiscoveryModule(),
-      new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
-      new MonitorHandlerModule(false),
-      new AuthenticationContextModules().getMasterModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new SecureStoreServerModule(),
-      new MetadataReaderWriterModules().getInMemoryModules(),
-      new MetadataServiceModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
-        }
-      },
-      new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LocalLogAppenderModule(),
-      new LogReaderRuntimeModules().getInMemoryModules(),
-      new MessagingServerRuntimeModule().getInMemoryModules(),
-      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-      new PreviewManagerModule(false),
-      new PreviewRunnerManagerModule().getInMemoryModules(),
-      new MockProvisionerModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
-                    .build(ApplicationManagerFactory.class));
-          install(new FactoryModuleBuilder().implement(ArtifactManager.class, DefaultArtifactManager.class)
-                    .build(ArtifactManagerFactory.class));
-          bind(TemporaryFolder.class).toInstance(TMP_FOLDER);
-          bind(AuthorizationHandler.class).in(Scopes.SINGLETON);
+        createDataFabricModule(),
+        new TransactionExecutorModule(),
+        new DataSetsModules().getStandaloneModules(),
+        new DataSetServiceModules().getInMemoryModules(),
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getNoOpModule(),
+        new IOModule(),
+        new LocalLocationModule(),
+        new InMemoryDiscoveryModule(),
+        new AppFabricServiceRuntimeModule(cConf).getInMemoryModules(),
+        new MonitorHandlerModule(false),
+        new AuthenticationContextModules().getMasterModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new ProgramRunnerRuntimeModule().getInMemoryModules(),
+        new SecureStoreServerModule(),
+        new MetadataReaderWriterModules().getInMemoryModules(),
+        new MetadataServiceModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
+          }
+        },
+        new MetricsClientRuntimeModule().getInMemoryModules(),
+        new LocalLogAppenderModule(),
+        new LogReaderRuntimeModules().getInMemoryModules(),
+        new MessagingServerRuntimeModule().getInMemoryModules(),
+        new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
+        new PreviewManagerModule(false),
+        new PreviewRunnerManagerModule().getInMemoryModules(),
+        new MockProvisionerModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            install(new FactoryModuleBuilder().implement(ApplicationManager.class,
+                    DefaultApplicationManager.class)
+                .build(ApplicationManagerFactory.class));
+            install(new FactoryModuleBuilder().implement(ArtifactManager.class,
+                    DefaultArtifactManager.class)
+                .build(ArtifactManagerFactory.class));
+            bind(TemporaryFolder.class).toInstance(TMP_FOLDER);
+            bind(AuthorizationHandler.class).in(Scopes.SINGLETON);
 
-          // Needed by MonitorHandlerModuler
-          bind(TwillRunner.class).to(NoopTwillRunnerService.class);
-          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+            // Needed by MonitorHandlerModuler
+            bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+            bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+          }
         }
-      }
     );
 
     messagingService = injector.getInstance(MessagingService.class);
@@ -354,7 +359,6 @@ public class TestBase {
       ((Service) programScheduler).startAndWait();
     }
 
-
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
@@ -366,9 +370,10 @@ public class TestBase {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(user, Principal.PrincipalType.USER);
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
-                                               EnumSet.allOf(StandardPermission.class));
-      accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-                                               EnumSet.allOf(StandardPermission.class));
+          EnumSet.allOf(StandardPermission.class));
+      accessControllerInstantiator.get()
+          .grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
+              EnumSet.allOf(StandardPermission.class));
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
@@ -395,8 +400,9 @@ public class TestBase {
     // We need to set the port after starting the localizer service.
     cConf.setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
     // Set the artifact localizer port for the preview conf as well
-    injector.getInstance(Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
-      .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
+    injector.getInstance(
+            Key.get(CConfiguration.class, Names.named(PreviewConfigModule.PREVIEW_CCONF)))
+        .setInt(Constants.ArtifactLocalizer.PORT, artifactLocalizerService.getPort());
 
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     previewRunnerManager.startAndWait();
@@ -416,13 +422,9 @@ public class TestBase {
 
   /**
    * Method for enabling capability, copies the corresponding config file to appropriate location.
-   * Calling method should ensure necessary Artifact is loaded before calling
-   * Capability run is initiated immediately, but there may be a small wait for Application
-   * to be deployed due to asynchronous calls and program to be running if applicable
-   *
-   * @param capability
-   * @throws IOException
-   * @throws InterruptedException
+   * Calling method should ensure necessary Artifact is loaded before calling Capability run is
+   * initiated immediately, but there may be a small wait for Application to be deployed due to
+   * asynchronous calls and program to be running if applicable
    */
   protected static void enableCapability(String capability) throws Exception {
     copyConfigFile(capability);
@@ -434,10 +436,11 @@ public class TestBase {
     if (TestBase.class.getClassLoader().getResource(capabilityFileName) == null) {
       //create a basic file to enable
       File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR),
-                                     String.format("%s.json", capability));
-      CapabilityConfig capabilityConfig = new CapabilityConfig("Enable", CapabilityStatus.ENABLED, capability,
-                                                               Collections.emptyList(), Collections.emptyList(),
-                                                               Collections.emptyList());
+          String.format("%s.json", capability));
+      CapabilityConfig capabilityConfig = new CapabilityConfig("Enable", CapabilityStatus.ENABLED,
+          capability,
+          Collections.emptyList(), Collections.emptyList(),
+          Collections.emptyList());
       String content = new Gson().toJson(capabilityConfig);
       try (FileWriter writer = new FileWriter(capabilityFile)) {
         writer.write(content);
@@ -449,20 +452,18 @@ public class TestBase {
 
   /**
    *
-   * @param capability
-   * @throws IOException
-   * @throws InterruptedException
    */
   protected static void removeCapability(String capability) throws Exception {
-    File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR), String.format("%s.json", capability));
+    File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR),
+        String.format("%s.json", capability));
     capabilityFile.delete();
     injector.getInstance(CapabilityManagementService.class).runTask();
   }
 
   /**
-   * If a subclass has a {@link BeforeClass} method, this can be called within that method to determine whether this
-   * is the first time it was called. This is useful in test suites, where most initialization should only happen once
-   * at the very first init.
+   * If a subclass has a {@link BeforeClass} method, this can be called within that method to
+   * determine whether this is the first time it was called. This is useful in test suites, where
+   * most initialization should only happen once at the very first init.
    *
    * @return whether this is the first time the class has been initialized.
    */
@@ -481,8 +482,8 @@ public class TestBase {
   }
 
   /**
-   * By default after each test finished, it will stop all apps started during the test.
-   * Sub-classes can override this method to provide different behavior.
+   * By default after each test finished, it will stop all apps started during the test. Sub-classes
+   * can override this method to provide different behavior.
    */
   @After
   public void afterTest() throws Exception {
@@ -492,6 +493,7 @@ public class TestBase {
   }
 
   private static class MetricsManagerProvider implements Provider<MetricsManager> {
+
     private final MetricStore metricStore;
 
     @Inject
@@ -508,15 +510,16 @@ public class TestBase {
 
   private static Map<String, String> getCustomConfiguration() {
     return System.getProperties().stringPropertyNames().stream()
-      .filter(key -> key.startsWith(TestConfiguration.PROPERTY_PREFIX))
-      .collect(Collectors.toMap(
-        key -> key.substring(TestConfiguration.PROPERTY_PREFIX.length()),
-        key -> System.getProperty(key)
-      ));
+        .filter(key -> key.startsWith(TestConfiguration.PROPERTY_PREFIX))
+        .collect(Collectors.toMap(
+            key -> key.substring(TestConfiguration.PROPERTY_PREFIX.length()),
+            key -> System.getProperty(key)
+        ));
   }
 
-  private static CConfiguration createCConf(File localDataDir, Map<String, String> customConfiguration)
-    throws IOException, NoSuchAlgorithmException {
+  private static CConfiguration createCConf(File localDataDir,
+      Map<String, String> customConfiguration)
+      throws IOException, NoSuchAlgorithmException {
     CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, "");
@@ -525,7 +528,7 @@ public class TestBase {
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
-    for (Map.Entry<String, String> e: customConfiguration.entrySet()) {
+    for (Map.Entry<String, String> e : customConfiguration.entrySet()) {
       cConf.set(e.getKey(), e.getValue());
       LOG.info("Custom configuration set: {} = {}", e.getKey(), e.getValue());
     }
@@ -560,15 +563,16 @@ public class TestBase {
 
   private static Module createDataFabricModule() {
     return Modules.override(new DataFabricModules().getInMemoryModules())
-      .with(new AbstractModule() {
+        .with(new AbstractModule() {
 
-        @Override
-        protected void configure() {
-          // we inject a TxSystemClient that creates transaction objects with additional fields for validation
-          bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
-          bind(TransactionSystemClient.class).to(RevealingTxSystemClient.class).in(Scopes.SINGLETON);
-        }
-      });
+          @Override
+          protected void configure() {
+            // we inject a TxSystemClient that creates transaction objects with additional fields for validation
+            bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
+            bind(TransactionSystemClient.class).to(RevealingTxSystemClient.class)
+                .in(Scopes.SINGLETON);
+          }
+        });
   }
 
   private static void copyTempFile(String infileName, File outDir) throws IOException {
@@ -595,11 +599,12 @@ public class TestBase {
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
-      Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
+      Principal principal = new Principal(System.getProperty("user.name"),
+          Principal.PrincipalType.USER);
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
-                                               ImmutableSet.of(StandardPermission.UPDATE));
+          ImmutableSet.of(StandardPermission.UPDATE));
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
-                                               principal, ImmutableSet.of(StandardPermission.UPDATE));
+          principal, ImmutableSet.of(StandardPermission.UPDATE));
     }
 
     namespaceAdmin.delete(NamespaceId.DEFAULT);
@@ -629,8 +634,8 @@ public class TestBase {
   }
 
   /**
-   * Deploys an {@link Application}.
-   * Programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}. Programs defined in the application must be in the same or
+   * children package as the application.
    *
    * @param namespace the namespace to deploy the application to
    * @param applicationClz the application class
@@ -638,15 +643,15 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
-                                                        Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) throws AccessException {
+      Class<? extends Application> applicationClz,
+      File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(namespace, applicationClz, null, bundleEmbeddedJars);
   }
 
 
   /**
-   * Deploys an {@link Application} with a config.
-   * Programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application} with a config. Programs defined in the application must be in
+   * the same or children package as the application.
    *
    * @param namespace the namespace to deploy the application to
    * @param applicationClz the application class
@@ -655,38 +660,40 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(NamespaceId namespace,
-                                                        Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) throws AccessException {
-    ApplicationManager applicationManager = getTestManager().deployApplication(namespace, applicationClz, appConfig,
-                                                                               bundleEmbeddedJars);
+      Class<? extends Application> applicationClz, Config appConfig,
+      File... bundleEmbeddedJars) throws AccessException {
+    ApplicationManager applicationManager = getTestManager().deployApplication(namespace,
+        applicationClz, appConfig,
+        bundleEmbeddedJars);
     applicationManagers.add(applicationManager);
     return applicationManager;
   }
 
   /**
-   * Deploys an {@link Application}.
-   * Programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}. Programs defined in the application must be in the same or
+   * children package as the application.
    *
    * @param applicationClz the application class
    * @param bundleEmbeddedJars any extra jars to bundle in the application jar
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
-                                                        File... bundleEmbeddedJars) throws AccessException {
+      File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
   /**
-   * Deploys an {@link Application}.
-   * Programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}. Programs defined in the application must be in the same or
+   * children package as the application.
    *
    * @param applicationClz the application class
    * @param appConfig the application config
    * @param bundleEmbeddedJars any extra jars to bundle in the application jar
    * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
-                                                        File... bundleEmbeddedJars) throws AccessException {
+  protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
+      Config appConfig,
+      File... bundleEmbeddedJars) throws AccessException {
     return deployApplication(NamespaceId.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
@@ -698,7 +705,7 @@ public class TestBase {
    * @return An {@link ApplicationManager} to manage the deployed application
    */
   protected static ApplicationManager deployApplication(ApplicationId appId,
-                                                        AppRequest appRequest) throws Exception {
+      AppRequest appRequest) throws Exception {
     ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
     applicationManagers.add(appManager);
     return appManager;
@@ -706,9 +713,6 @@ public class TestBase {
 
   /**
    * Creates and returns {@link ApplicationManager} for the passed {@link ApplicationId}
-   * @param appId
-   * @return
-   * @throws Exception
    */
   protected static ApplicationManager getApplicationManager(ApplicationId appId) throws Exception {
     return getTestManager().getApplicationManager(appId);
@@ -718,10 +722,11 @@ public class TestBase {
    * Add the specified artifact.
    *
    * @param artifactId the id of the artifact to add
-   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
-   * @throws Exception
+   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps
+   *     or plugins
    */
-  protected static ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile) throws Exception {
+  protected static ArtifactManager addArtifact(ArtifactId artifactId, File artifactFile)
+      throws Exception {
     return getTestManager().addArtifact(artifactId, artifactFile);
   }
 
@@ -732,7 +737,8 @@ public class TestBase {
    * @param appClass the application class to build the artifact from
    * @return an {@link ArtifactManager} to manage the added artifact
    */
-  protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass) throws Exception {
+  protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass)
+      throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass);
   }
 
@@ -741,12 +747,13 @@ public class TestBase {
    *
    * @param artifactId the id of the artifact to add
    * @param appClass the application class to build the artifact from
-   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
-   *                       packages that contain classes that plugins for the application will implement.
+   * @param exportPackages the packages to export and place in the manifest of the jar to build.
+   *     This should include packages that contain classes that plugins for the application will
+   *     implement.
    * @return an {@link ArtifactManager} to manage the added artifact
    */
   protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
-                                                  String... exportPackages) throws Exception {
+      String... exportPackages) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
   }
 
@@ -759,20 +766,21 @@ public class TestBase {
    * @return an {@link ArtifactManager} to manage the added artifact
    */
   protected static ArtifactManager addAppArtifact(ArtifactId artifactId, Class<?> appClass,
-                                                  Manifest manifest) throws Exception {
+      Manifest manifest) throws Exception {
     return getTestManager().addAppArtifact(artifactId, appClass, manifest);
   }
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   * Build an artifact from the specified plugin classes and then add it. The jar created will
+   * include all classes in the same package as the give classes, plus any dependencies of the given
+   * classes. If another plugin in the same package as the given plugin requires a different set of
+   * dependent classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX
+   * having one set of dependencies and functionY having another set of dependencies. If you only
+   * add functionX, functionY will also be included in the created jar since it is in the same
+   * package. However, only functionX's dependencies will be traced and added to the jar, so you
+   * will run into issues when the platform tries to register functionY. In this scenario, you must
+   * be certain to include specify both functionX and functionY when calling this method.
    *
    * @param artifactId the id of the artifact to add
    * @param parent the parent artifact it extends
@@ -781,46 +789,50 @@ public class TestBase {
    * @return {@link ArtifactManager} to manage the added plugin artifact
    */
   protected static ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
-                                                     Class<?> pluginClass,
-                                                     Class<?>... pluginClasses) throws Exception {
+      Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
     return getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
   }
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   * Build an artifact from the specified plugin classes and then add it. The jar created will
+   * include all classes in the same package as the give classes, plus any dependencies of the given
+   * classes. If another plugin in the same package as the given plugin requires a different set of
+   * dependent classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX
+   * having one set of dependencies and functionY having another set of dependencies. If you only
+   * add functionX, functionY will also be included in the created jar since it is in the same
+   * package. However, only functionX's dependencies will be traced and added to the jar, so you
+   * will run into issues when the platform tries to register functionY. In this scenario, you must
+   * be certain to include specify both functionX and functionY when calling this method.
    *
    * @param artifactId the id of the artifact to add
    * @param parent the parent artifact it extends
-   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
-   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because
+   *     they cannot be found by inspecting the jar. This is true for 3rd party plugins, such as
+   *     jdbc drivers
    * @param pluginClass the plugin class to build the jar from
    * @param pluginClasses any additional plugin classes that should be included in the jar
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
   protected static ArtifactManager addPluginArtifact(ArtifactId artifactId, ArtifactId parent,
-                                                     Set<PluginClass> additionalPlugins,
-                                                     Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
-    return getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
+      Set<PluginClass> additionalPlugins,
+      Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    return getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass,
+        pluginClasses);
   }
 
   /**
-   * Build an artifact from the specified plugin classes and then add it. The
-   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
-   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
-   * classes, you must include both plugins. For example, suppose you have two plugins,
-   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
-   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
-   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
-   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   * Build an artifact from the specified plugin classes and then add it. The jar created will
+   * include all classes in the same package as the give classes, plus any dependencies of the given
+   * classes. If another plugin in the same package as the given plugin requires a different set of
+   * dependent classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX
+   * having one set of dependencies and functionY having another set of dependencies. If you only
+   * add functionX, functionY will also be included in the created jar since it is in the same
+   * package. However, only functionX's dependencies will be traced and added to the jar, so you
+   * will run into issues when the platform tries to register functionY. In this scenario, you must
+   * be certain to include specify both functionX and functionY when calling this method.
    *
    * @param artifactId the id of the artifact to add
    * @param parentArtifacts the parent artifacts it extends
@@ -829,9 +841,10 @@ public class TestBase {
    * @return an {@link ArtifactManager} to manage the added plugin artifact
    */
   protected static ArtifactManager addPluginArtifact(ArtifactId artifactId,
-                                                     Set<ArtifactRange> parentArtifacts, Class<?> pluginClass,
-                                                     Class<?>... pluginClasses) throws Exception {
-    return getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
+      Set<ArtifactRange> parentArtifacts, Class<?> pluginClass,
+      Class<?>... pluginClasses) throws Exception {
+    return getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass,
+        pluginClasses);
   }
 
   /**
@@ -852,10 +865,9 @@ public class TestBase {
    *
    * @param datasetModuleId the module id
    * @param datasetModule module class
-   * @throws Exception
    */
   protected static void deployDatasetModule(DatasetModuleId datasetModuleId,
-                                            Class<? extends DatasetModule> datasetModule) throws Exception {
+      Class<? extends DatasetModule> datasetModule) throws Exception {
     getTestManager().deployDatasetModule(datasetModuleId, datasetModule);
   }
 
@@ -864,10 +876,9 @@ public class TestBase {
    *
    * @param moduleName name of the module
    * @param datasetModule module class
-   * @throws Exception
    */
   protected static void deployDatasetModule(String moduleName,
-                                            Class<? extends DatasetModule> datasetModule) throws Exception {
+      Class<? extends DatasetModule> datasetModule) throws Exception {
     deployDatasetModule(NamespaceId.DEFAULT.datasetModule(moduleName), datasetModule);
   }
 
@@ -880,8 +891,9 @@ public class TestBase {
    * @param <T> type of the dataset admin
    * @return a DatasetAdmin to manage the dataset instance
    */
-  protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName, DatasetId datasetId,
-                                                                 DatasetProperties props) throws Exception {
+  protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
+      DatasetId datasetId,
+      DatasetProperties props) throws Exception {
     return getTestManager().addDatasetInstance(datasetTypeName, datasetId, props);
   }
 
@@ -895,9 +907,10 @@ public class TestBase {
    * @return a DatasetAdmin to manage the dataset instance
    */
   protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
-                                                                 String datasetInstanceName,
-                                                                 DatasetProperties props) throws Exception {
-    return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName), props);
+      String datasetInstanceName,
+      DatasetProperties props) throws Exception {
+    return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName),
+        props);
   }
 
   /**
@@ -909,7 +922,7 @@ public class TestBase {
    * @return a DatasetAdmin to manage the dataset instance
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(DatasetId datasetId,
-                                                                String datasetTypeName) throws Exception {
+      String datasetTypeName) throws Exception {
     return addDatasetInstance(datasetTypeName, datasetId, DatasetProperties.EMPTY);
   }
 
@@ -922,9 +935,9 @@ public class TestBase {
    * @return a DatasetAdmin to manage the dataset instance
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
-                                                                String datasetInstanceName) throws Exception {
+      String datasetInstanceName) throws Exception {
     return addDatasetInstance(datasetTypeName, NamespaceId.DEFAULT.dataset(datasetInstanceName),
-                              DatasetProperties.EMPTY);
+        DatasetProperties.EMPTY);
   }
 
   /**
@@ -941,7 +954,6 @@ public class TestBase {
    *
    * @param datasetId the id of the dataset to get
    * @return Dataset Manager of Dataset instance of type <T>
-   * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(DatasetId datasetId) throws Exception {
     return getTestManager().getDataset(datasetId);
@@ -952,7 +964,6 @@ public class TestBase {
    *
    * @param datasetInstanceName instance name of dataset
    * @return Dataset Manager of Dataset instance of type {@literal <}T>
-   * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
     return getDataset(NamespaceId.DEFAULT.dataset(datasetInstanceName));
@@ -974,7 +985,8 @@ public class TestBase {
    * @param scheduleId the ID of the schedule to add
    * @param scheduleDetail the {@link ScheduleDetail} describing the new schedule.
    */
-  protected final void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+  protected final void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail)
+      throws Exception {
     getTestManager().addSchedule(scheduleId, scheduleDetail);
   }
 
@@ -993,9 +1005,11 @@ public class TestBase {
    * @param scheduleId the ID of the schedule to add
    * @param scheduleDetail the {@link ScheduleDetail} describing the updated schedule.
    */
-  protected final void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+  protected final void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail)
+      throws Exception {
     getTestManager().updateSchedule(scheduleId, scheduleDetail);
   }
+
   /**
    * Returns a {@link MessagingContext} for interacting with the messaging system.
    */
@@ -1044,10 +1058,10 @@ public class TestBase {
 
   /**
    * Returns an {@link AccessController} for performing authorization operations.
-   * @return
    */
   @Beta
-  protected static AccessController getAccessController() throws IOException, InvalidAccessControllerException {
+  protected static AccessController getAccessController()
+      throws IOException, InvalidAccessControllerException {
     return accessControllerInstantiator.get();
   }
 
@@ -1078,6 +1092,7 @@ public class TestBase {
   protected static CConfiguration getConfiguration() {
     return cConf;
   }
+
   /**
    * Returns the {@link PreferencesService} used in tests.
    */
@@ -1108,16 +1123,18 @@ public class TestBase {
     // Change all services bind address to local host
     String localhost = InetAddress.getLoopbackAddress().getHostName();
     StreamSupport.stream(previewCConf.spliterator(), false)
-      .map(Map.Entry::getKey)
-      .filter(s -> s.endsWith(".bind.address"))
-      .forEach(key -> previewCConf.set(key, localhost));
+        .map(Map.Entry::getKey)
+        .filter(s -> s.endsWith(".bind.address"))
+        .forEach(key -> previewCConf.set(key, localhost));
 
-    Path previewDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+    Path previewDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview")
+        .toAbsolutePath();
 
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     // Use No-SQL store for preview data
-    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION,
+        Constants.Dataset.DATA_STORAGE_NOSQL);
 
     return previewCConf;
   }

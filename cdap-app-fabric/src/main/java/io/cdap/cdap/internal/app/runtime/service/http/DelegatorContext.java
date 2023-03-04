@@ -26,27 +26,27 @@ import org.apache.twill.common.Cancellable;
 public interface DelegatorContext<T> {
 
   /**
-   * Returns an instance of the user service handler.
-   * Calling this method multiple times from the same thread will return
-   * the same instance until {@link #capture()} is called.
+   * Returns an instance of the user service handler. Calling this method multiple times from the
+   * same thread will return the same instance until {@link #capture()} is called.
    */
   T getHandler();
 
   /**
-   * Returns an instance of {@link ServiceTaskExecutor} for the current thread.
-   * Calling this method multiple times from the same thread will return the same
-   * instance util {@link #capture()} is called.
+   * Returns an instance of {@link ServiceTaskExecutor} for the current thread. Calling this method
+   * multiple times from the same thread will return the same instance util {@link #capture()} is
+   * called.
    */
   ServiceTaskExecutor getServiceTaskExecutor();
 
   /**
-   * Capture the current context. Once this method is called, the current instances of
-   * {@link ServiceTaskExecutor} and {@link ServiceTaskExecutor} associated with the caller thread
-   * will no longer be available through the {@link #getHandler()} or {@link #getServiceTaskExecutor()} methods.
+   * Capture the current context. Once this method is called, the current instances of {@link
+   * ServiceTaskExecutor} and {@link ServiceTaskExecutor} associated with the caller thread will no
+   * longer be available through the {@link #getHandler()} or {@link #getServiceTaskExecutor()}
+   * methods.
    *
-   * @return a {@link Cancellable} to release the captured context so that the {@link ServiceTaskExecutor} and the
-   *         {@link ServiceTaskExecutor} will be available for the caller thread of the {@link Cancellable#cancel()}
-   *         to be reused.
+   * @return a {@link Cancellable} to release the captured context so that the {@link
+   *     ServiceTaskExecutor} and the {@link ServiceTaskExecutor} will be available for the caller
+   *     thread of the {@link Cancellable#cancel()} to be reused.
    */
   Cancellable capture();
 }

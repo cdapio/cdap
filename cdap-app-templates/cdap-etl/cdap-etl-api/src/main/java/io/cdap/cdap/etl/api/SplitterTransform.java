@@ -23,8 +23,9 @@ package io.cdap.cdap.etl.api;
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
 public abstract class SplitterTransform<T, E>
-  implements MultiOutputTransformation<T, E>, MultiOutputPipelineConfigurable, StageLifecycle<TransformContext>,
-  SubmitterLifecycle<StageSubmitterContext> {
+    implements MultiOutputTransformation<T, E>, MultiOutputPipelineConfigurable,
+    StageLifecycle<TransformContext>,
+    SubmitterLifecycle<StageSubmitterContext> {
 
   public static final String PLUGIN_TYPE = "splittertransform";
 

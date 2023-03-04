@@ -41,23 +41,29 @@ import org.apache.commons.cli.Options;
  * Manual tool for testing out dataproc provisioning and deprovisioning.
  */
 public class DataprocTool {
+
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final String PROVISION = "provision";
   private static final String DETAILS = "details";
   private static final String DEPROVISION = "deprovision";
   private static final String STATUS = "status";
-  private static final Set<String> COMMANDS = ImmutableSet.of(PROVISION, DETAILS, DEPROVISION, STATUS);
+  private static final Set<String> COMMANDS = ImmutableSet.of(PROVISION, DETAILS, DEPROVISION,
+      STATUS);
 
   public static void main(String[] args) throws Exception {
 
     Options options = new Options()
-      .addOption(new Option("h", "help", false, "Print this usage message."))
-      .addOption(new Option("k", "serviceAccountKey", true, "Google cloud service account key (json format)."))
-      .addOption(new Option("p", "project", true, "Google cloud project id."))
-      .addOption(new Option("c", "configFile", true, "File all provisioner settings as a json object."))
-      .addOption(new Option("i", "imageVersion", true, "The image version for the cluster. Defaults to 2.0."))
-      .addOption(new Option("l", "lookupNetwork", false, "Whether to lookup network information about the cluster."))
-      .addOption(new Option("n", "name", true, "Name of the cluster."));
+        .addOption(new Option("h", "help", false, "Print this usage message."))
+        .addOption(new Option("k", "serviceAccountKey", true,
+            "Google cloud service account key (json format)."))
+        .addOption(new Option("p", "project", true, "Google cloud project id."))
+        .addOption(
+            new Option("c", "configFile", true, "File all provisioner settings as a json object."))
+        .addOption(new Option("i", "imageVersion", true,
+            "The image version for the cluster. Defaults to 2.0."))
+        .addOption(new Option("l", "lookupNetwork", false,
+            "Whether to lookup network information about the cluster."))
+        .addOption(new Option("n", "name", true, "Name of the cluster."));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -65,7 +71,8 @@ public class DataprocTool {
     String command = commandArgs.length > 0 ? commandArgs[0] : null;
 
     // if help is an option, or if there isn't a single 'upgrade' command, print usage and exit.
-    if (commandLine.hasOption("h") || commandArgs.length != 1 || !COMMANDS.contains(command.toLowerCase())) {
+    if (commandLine.hasOption("h") || commandArgs.length != 1 || !COMMANDS.contains(
+        command.toLowerCase())) {
       printUsage(options);
       System.exit(0);
     }
@@ -85,7 +92,8 @@ public class DataprocTool {
         System.exit(-1);
       }
       try (Reader reader = new FileReader(configFile)) {
-        Map<String, String> map = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+        Map<String, String> map = GSON.fromJson(reader, new TypeToken<Map<String, String>>() {
+        }.getType());
         conf = DataprocConf.create(map);
       }
     } else {
@@ -108,11 +116,13 @@ public class DataprocTool {
     String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "2.0";
 
     String name = commandLine.getOptionValue('n');
-    DataprocClientFactory clientFactory = new DefaultDataprocClientFactory(new GoogleComputeFactory());
+    DataprocClientFactory clientFactory = new DefaultDataprocClientFactory(
+        new GoogleComputeFactory());
     try (DataprocClient client = clientFactory.create(conf, commandLine.hasOption('l'))) {
       if (PROVISION.equalsIgnoreCase(command)) {
-        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap(), false,
-                                                                 null);
+        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion,
+            Collections.emptyMap(), false,
+            null);
         System.out.println(GSON.toJson(createOp));
       } else if (DETAILS.equalsIgnoreCase(command)) {
         Optional<Cluster> cluster = client.getCluster(name);
@@ -133,10 +143,12 @@ public class DataprocTool {
   private static void printUsage(Options options) {
     HelpFormatter helpFormatter = new HelpFormatter();
     helpFormatter.printHelp(
-      DataprocTool.class.getSimpleName() + " provision|details|status|deprovision",
-      "Provisions, deprovisions, or gets the status of a cluster. Basic provisioner settings can be passed in as " +
-        "options. Advanced provisioner settings can be specified in a file, in which case every setting must be " +
-        "given.",
-      options, "");
+        DataprocTool.class.getSimpleName() + " provision|details|status|deprovision",
+        "Provisions, deprovisions, or gets the status of a cluster. Basic provisioner settings can be passed in as "
+
+            + "options. Advanced provisioner settings can be specified in a file, in which case every setting must be "
+
+            + "given.",
+        options, "");
   }
 }

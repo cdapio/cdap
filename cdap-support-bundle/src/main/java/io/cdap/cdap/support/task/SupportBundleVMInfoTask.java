@@ -47,8 +47,9 @@ public class SupportBundleVMInfoTask implements SupportBundleTask {
   private final VMInformationFetcher vmInfoFetcher;
   private final File baseDir;
 
-  public SupportBundleVMInfoTask(RemoteMonitorServicesFetcher servicesFetcher, VMInformationFetcher vmInfoFetcher,
-                                 File baseDir) {
+  public SupportBundleVMInfoTask(RemoteMonitorServicesFetcher servicesFetcher,
+      VMInformationFetcher vmInfoFetcher,
+      File baseDir) {
     this.servicesFetcher = servicesFetcher;
     this.vmInfoFetcher = vmInfoFetcher;
     this.baseDir = baseDir;
@@ -65,7 +66,8 @@ public class SupportBundleVMInfoTask implements SupportBundleTask {
         VMInformation vmInfo = vmInfoFetcher.getVMInformation(service);
 
         File memoryUsageFile = new File(vmInfoDir, "memory.txt");
-        try (Writer writer = Files.newBufferedWriter(memoryUsageFile.toPath(), StandardCharsets.UTF_8)) {
+        try (Writer writer = Files.newBufferedWriter(memoryUsageFile.toPath(),
+            StandardCharsets.UTF_8)) {
           Map<String, MemoryUsage> memoryUsages = new HashMap<>();
           memoryUsages.put("heap", vmInfo.getHeapMemoryUsage());
           memoryUsages.put("nonheap", vmInfo.getNonHeapMemoryUsage());
@@ -73,7 +75,8 @@ public class SupportBundleVMInfoTask implements SupportBundleTask {
         }
 
         File threadDumpFile = new File(vmInfoDir, "threadDump.txt");
-        try (Writer writer = Files.newBufferedWriter(threadDumpFile.toPath(), StandardCharsets.UTF_8)) {
+        try (Writer writer = Files.newBufferedWriter(threadDumpFile.toPath(),
+            StandardCharsets.UTF_8)) {
           writer.write(vmInfo.getThreads());
         }
       } catch (ServiceUnavailableException e) {

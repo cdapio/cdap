@@ -20,6 +20,7 @@ package io.cdap.cdap.master.environment.k8s;
  * Provides the master path for the Kubernetes API client.
  */
 public interface KubeMasterPathProvider {
+
   /**
    * @return Spark master base path
    */

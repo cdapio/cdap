@@ -18,9 +18,11 @@ package io.cdap.cdap.security.auth;
 
 /**
  * Represents a message signed by a secret key.
+ *
  * @param <T> the type of the message object which has been signed.
  */
 public interface Signed<T> {
+
   /**
    * Returns the message object which was signed.
    */

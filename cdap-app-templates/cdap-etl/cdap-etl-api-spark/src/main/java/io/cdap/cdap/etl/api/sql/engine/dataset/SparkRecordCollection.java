@@ -24,5 +24,6 @@ import org.apache.spark.sql.Row;
  * Representation of the record collection for Spark records.
  */
 public interface SparkRecordCollection extends RecordCollection {
+
   Dataset<Row> getDataFrame();
 }

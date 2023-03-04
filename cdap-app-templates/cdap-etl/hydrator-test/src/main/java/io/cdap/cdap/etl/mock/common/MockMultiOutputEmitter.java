@@ -30,6 +30,7 @@ import java.util.Map;
  * @param <E> type of error object
  */
 public class MockMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
+
   private final Map<String, List<Object>> emitted = new HashMap<>();
   private final List<InvalidEntry<E>> errors = new ArrayList<>();
   private final List<Map<String, String>> alerts = new ArrayList<>();

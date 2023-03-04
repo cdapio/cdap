@@ -55,7 +55,6 @@ public class MetricsManager {
   /**
    * query the metric store and return the Collection<MetricTimeSeries>
    *
-   * @param query
    * @return Collection<MetricTimeSeries>
    */
   public Collection<MetricTimeSeries> query(MetricDataQuery query) {
@@ -63,9 +62,9 @@ public class MetricsManager {
   }
 
   /**
-   * Search the metric store and return the collection of metric names available for the tag-values in search query
+   * Search the metric store and return the collection of metric names available for the tag-values
+   * in search query
    *
-   * @param query
    * @return Collection of metric names
    */
   public Collection<String> searchMetricNames(MetricSearchQuery query) {
@@ -75,7 +74,6 @@ public class MetricsManager {
   /**
    * Search the metric store and return the collection of next available tags for the search query
    *
-   * @param query
    * @return Collection of tag values
    */
   public Collection<TagValue> searchTags(MetricSearchQuery query) {
@@ -85,42 +83,36 @@ public class MetricsManager {
   /**
    * returns service related metrics
    *
-   * @param namespace
-   * @param applicationId
-   * @param serviceId
    * @return {@link io.cdap.cdap.api.metrics.RuntimeMetrics}
    */
-  public RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
+  public RuntimeMetrics getServiceMetrics(String namespace, String applicationId,
+      String serviceId) {
     ServiceId service = new ServiceId(namespace, applicationId, serviceId);
     return getMetrics(MetricsTags.service(service),
-                      Constants.Metrics.Name.Service.SERVICE_INPUT,
-                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
-                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+        Constants.Metrics.Name.Service.SERVICE_INPUT,
+        Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+        Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   /**
    * returns service handler related metrics
    *
-   * @param namespace
-   * @param applicationId
-   * @param serviceId
-   * @param handlerId
    * @return {@link io.cdap.cdap.api.metrics.RuntimeMetrics}
    */
-  public RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId, String serviceId,
-                                                 String handlerId) {
+  public RuntimeMetrics getServiceHandlerMetrics(String namespace, String applicationId,
+      String serviceId,
+      String handlerId) {
     ServiceId id = new ServiceId(namespace, applicationId, serviceId);
     return getMetrics(MetricsTags.serviceHandler(id, handlerId),
-                      Constants.Metrics.Name.Service.SERVICE_INPUT,
-                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
-                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+        Constants.Metrics.Name.Service.SERVICE_INPUT,
+        Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+        Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   /**
    * get metrics total count value for a given context and metric.
    *
    * @param tags that identify a context
-   * @param metricName
    * @return the total metric
    */
   public long getTotalMetric(Map<String, String> tags, String metricName) {
@@ -132,19 +124,16 @@ public class MetricsManager {
    * waitFor a metric value count for the metric identified by metricName and context.
    *
    * @param tags - context identified by tags map
-   * @param metricName
    * @param count - expected metric total count value
-   * @param timeout
-   * @param timeoutUnit
-   * @throws TimeoutException
-   * @throws InterruptedException
    */
-  public void waitForTotalMetricCount(Map<String, String> tags, String metricName, long count, long timeout,
-                                      TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+  public void waitForTotalMetricCount(Map<String, String> tags, String metricName, long count,
+      long timeout,
+      TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
     long value = getTotalMetric(tags, metricName);
 
     // Min sleep time is 10ms, max sleep time is 1 seconds
-    long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+    long sleepMillis = Math.max(10,
+        Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
     Stopwatch stopwatch = new Stopwatch().start();
     while (value < count && stopwatch.elapsedTime(timeoutUnit) < timeout) {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);
@@ -152,7 +141,8 @@ public class MetricsManager {
     }
 
     if (value < count) {
-      throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
+      throw new TimeoutException(
+          "Time limit reached: Expected '" + count + "' but got '" + value + "'");
     }
   }
 
@@ -160,16 +150,11 @@ public class MetricsManager {
    * waitFor a metric value count for the metric identified by metricName and context.
    *
    * @param tags - context identified by tags map
-   * @param metricName
    * @param count - expected metric total count value
-   * @param timeout
-   * @param timeoutUnit
-   * @throws TimeoutException
-   * @throws InterruptedException
    */
   public void waitForExactMetricCount(Map<String, String> tags, String metricName, long count,
-                                      long timeout, TimeUnit timeoutUnit)
-    throws TimeoutException, InterruptedException, ExecutionException {
+      long timeout, TimeUnit timeoutUnit)
+      throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(count, () -> getTotalMetric(tags, metricName), timeout, timeoutUnit);
   }
 
@@ -181,9 +166,9 @@ public class MetricsManager {
   }
 
   private RuntimeMetrics getMetrics(final Map<String, String> context,
-                                    final String inputName,
-                                    final String processedName,
-                                    @Nullable final String exceptionName) {
+      final String inputName,
+      final String processedName,
+      @Nullable final String exceptionName) {
     return new RuntimeMetrics() {
       @Override
       public long getInput() {
@@ -203,40 +188,40 @@ public class MetricsManager {
 
       @Override
       public void waitForinput(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         waitForTotalMetricCount(context, inputName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         waitForTotalMetricCount(context, processedName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForException(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         waitForTotalMetricCount(context, exceptionName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitFor(String name, long count,
-                          long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+          long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
         waitForTotalMetricCount(context, name, count, timeout, timeoutUnit);
       }
 
       @Override
       public String toString() {
         return String.format("%s; input=%d, processed=%d, exception=%d",
-                             Joiner.on(",").withKeyValueSeparator(":").join(context),
-                             getInput(), getProcessed(), getException());
+            Joiner.on(",").withKeyValueSeparator(":").join(context),
+            getInput(), getProcessed(), getException());
       }
     };
   }
 
   private MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
     return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                               context, new ArrayList<String>());
+        context, new ArrayList<String>());
   }
 
   private long getSingleValueFromTotals(MetricDataQuery query) {

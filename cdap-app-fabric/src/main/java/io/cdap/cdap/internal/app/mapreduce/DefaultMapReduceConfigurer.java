@@ -38,7 +38,8 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link MapReduceConfigurer}.
  */
-public final class DefaultMapReduceConfigurer extends AbstractConfigurer implements MapReduceConfigurer {
+public final class DefaultMapReduceConfigurer extends AbstractConfigurer implements
+    MapReduceConfigurer {
 
   private final MapReduce mapReduce;
   private String name;
@@ -50,13 +51,15 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
   private Resources mapperResources;
   private Resources reducerResources;
 
-  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                    PluginFinder pluginFinder,
-                                    PluginInstantiator pluginInstantiator,
-                                    @Nullable AppDeploymentRuntimeInfo runtimeInfo,
-                                    FeatureFlagsProvider featureFlagsProvider
-                                    ) {
-    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo, featureFlagsProvider);
+  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace,
+      Id.Artifact artifactId,
+      PluginFinder pluginFinder,
+      PluginInstantiator pluginInstantiator,
+      @Nullable AppDeploymentRuntimeInfo runtimeInfo,
+      FeatureFlagsProvider featureFlagsProvider
+  ) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator, runtimeInfo,
+        featureFlagsProvider);
     this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";
@@ -96,9 +99,9 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
   public MapReduceSpecification createSpecification() {
     Set<String> datasets = new HashSet<>();
     Reflections.visit(mapReduce, mapReduce.getClass(), new PropertyFieldExtractor(properties),
-                      new DataSetFieldExtractor(datasets));
+        new DataSetFieldExtractor(datasets));
     return new MapReduceSpecification(mapReduce.getClass().getName(), name, description,
-                                      inputDataset, outputDataset, datasets,
-                                      properties, driverResources, mapperResources, reducerResources, getPlugins());
+        inputDataset, outputDataset, datasets,
+        properties, driverResources, mapperResources, reducerResources, getPlugins());
   }
 }

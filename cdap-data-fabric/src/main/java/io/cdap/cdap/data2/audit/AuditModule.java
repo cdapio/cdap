@@ -35,6 +35,7 @@ public class AuditModule extends AbstractModule {
   }
 
   private static final class AuditPublisherProvider implements Provider<AuditPublisher> {
+
     private final Injector injector;
     private final CConfiguration cConf;
 

@@ -53,11 +53,13 @@ public class CombinedLogRecordFormatTest {
   @Test
   public void testCLFLog() throws UnsupportedTypeException, UnexpectedFormatException {
     CombinedLogRecordFormat format = new CombinedLogRecordFormat();
-    FormatSpecification spec = new FormatSpecification(CombinedLogRecordFormat.class.getCanonicalName(),
-                                                       null, ImmutableMap.of());
+    FormatSpecification spec = new FormatSpecification(
+        CombinedLogRecordFormat.class.getCanonicalName(),
+        null, ImmutableMap.of());
     format.initialize(spec);
-    String data = "10.10.10.10 - - [01/Feb/2015:06:47:10 +0000] \"GET /browse/COOP-DBT-JOB1-238/artifact HTTP/1.1\"" +
-      " 301 256 \"-\" \"Mozilla/5.0 (compatible; AhrefsBot/5.0; +http://ahrefs.com/robot/)\"";
+    String data =
+        "10.10.10.10 - - [01/Feb/2015:06:47:10 +0000] \"GET /browse/COOP-DBT-JOB1-238/artifact HTTP/1.1\""
+            + " 301 256 \"-\" \"Mozilla/5.0 (compatible; AhrefsBot/5.0; +http://ahrefs.com/robot/)\"";
     StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(data)));
 
     Assert.assertEquals("10.10.10.10", output.get("remote_host"));
@@ -74,24 +76,28 @@ public class CombinedLogRecordFormatTest {
   @Test
   public void testCLFLogWithEscapedDoubleQuotes() throws UnsupportedTypeException, UnexpectedFormatException {
     CombinedLogRecordFormat format = new CombinedLogRecordFormat();
-    FormatSpecification spec = new FormatSpecification(CombinedLogRecordFormat.class.getCanonicalName(),
-                                                       null, ImmutableMap.of());
+    FormatSpecification spec = new FormatSpecification(
+        CombinedLogRecordFormat.class.getCanonicalName(),
+        null, ImmutableMap.of());
     format.initialize(spec);
-    String data = "10.10.10.10 - - [01/Feb/2015:06:38:58 +0000] \"GET /plugins/servlet/buildStatusImage/CDAP-DUT " +
-      "HTTP/1.1\" 301 257 \"http://cdap.io/\" \"\\\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, " +
-      "like Gecko) Chrome/31.0.1650.57 Safari/537.36 OPR/18.0.1284.49\\\"\"";
+    String data =
+        "10.10.10.10 - - [01/Feb/2015:06:38:58 +0000] \"GET /plugins/servlet/buildStatusImage/CDAP-DUT "
+            + "HTTP/1.1\" 301 257 \"http://cdap.io/\" \"\\\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 "
+            + "(KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36 OPR/18.0.1284.49\\\"\"";
     StructuredRecord output = format.read(ByteBuffer.wrap(Bytes.toBytes(data)));
 
     Assert.assertEquals("10.10.10.10", output.get("remote_host"));
     Assert.assertNull(output.get("remote_login"));
     Assert.assertNull(output.get("auth_user"));
     Assert.assertEquals("01/Feb/2015:06:38:58 +0000", output.get("request_time"));
-    Assert.assertEquals("GET /plugins/servlet/buildStatusImage/CDAP-DUT HTTP/1.1", output.get("request"));
+    Assert.assertEquals("GET /plugins/servlet/buildStatusImage/CDAP-DUT HTTP/1.1",
+        output.get("request"));
     Assert.assertEquals(301, (int) output.get("status"));
     Assert.assertEquals(257, (int) output.get("content_length"));
     Assert.assertEquals("http://cdap.io/", output.get("referrer"));
-    Assert.assertEquals("\\\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                          "Chrome/31.0.1650.57 Safari/537.36 OPR/18.0.1284.49\\\"", output.get("user_agent"));
+    Assert.assertEquals(
+        "\\\"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            + "Chrome/31.0.1650.57 Safari/537.36 OPR/18.0.1284.49\\\"", output.get("user_agent"));
   }
 
 

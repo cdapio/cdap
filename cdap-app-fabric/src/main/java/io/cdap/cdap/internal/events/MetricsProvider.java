@@ -21,8 +21,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.events.ExecutionMetrics;
 
 /**
- * Provides metrics for the completed {@link io.cdap.cdap.spi.events.Event}s,
- * such as output and input records and bytes.
+ * Provides metrics for the completed {@link io.cdap.cdap.spi.events.Event}s, such as output and
+ * input records and bytes.
  */
 public interface MetricsProvider {
 

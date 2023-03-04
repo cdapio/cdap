@@ -20,6 +20,7 @@ package io.cdap.cdap.messaging.data;
  * Represents a unique message in the messaging system. It contains the message id and the payload
  */
 public class RawMessage {
+
   private final byte[] id;
   private final byte[] payload;
 

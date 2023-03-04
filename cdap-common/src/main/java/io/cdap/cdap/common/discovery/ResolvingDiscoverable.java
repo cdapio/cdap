@@ -48,7 +48,8 @@ public class ResolvingDiscoverable extends Discoverable {
     try {
       // If domain of bindAddress is not resolvable, address of bindAddress is null.
       if (bindAddress.getAddress() != null && bindAddress.getAddress().isAnyLocalAddress()) {
-        return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
+        return new InetSocketAddress(InetAddress.getLocalHost().getHostName(),
+            bindAddress.getPort());
       }
     } catch (Exception e) {
       LOG.warn("Unable to resolve bindAddress", e);

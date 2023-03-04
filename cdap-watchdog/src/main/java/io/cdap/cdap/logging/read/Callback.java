@@ -20,6 +20,7 @@ package io.cdap.cdap.logging.read;
  * Callback to handle log events.
  */
 public interface Callback {
+
   /**
    * Called once at the beginning before calling @{link handle}.
    */
@@ -27,6 +28,7 @@ public interface Callback {
 
   /**
    * Called for every log event.
+   *
    * @param event log event.
    */
   void handle(LogEvent event);

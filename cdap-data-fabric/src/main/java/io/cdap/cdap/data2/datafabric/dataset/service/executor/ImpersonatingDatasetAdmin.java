@@ -118,7 +118,8 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
 
       // since the callables we execute only throw IOException (besides unchecked exceptions),
       // this should never happen
-      LOG.warn("Unexpected exception while executing dataset admin operation in namespace {}.", datasetId, t);
+      LOG.warn("Unexpected exception while executing dataset admin operation in namespace {}.",
+          datasetId, t);
       // the only checked exception that the Callables in this class is IOException, and we handle that in the previous
       // catch statement. So, no checked exceptions should be wrapped by the following statement. However, we need it
       // because ImpersonationUtils#doAs declares 'throws Exception', because it can throw other checked exceptions

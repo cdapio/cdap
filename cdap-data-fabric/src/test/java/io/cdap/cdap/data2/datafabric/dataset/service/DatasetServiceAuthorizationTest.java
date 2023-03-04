@@ -92,9 +92,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     final DatasetId dsId1 = NamespaceId.DEFAULT.dataset("myds1");
     DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
     SecurityRequestContext.setUserId(ALICE.getName());
-    assertAuthorizationFailure(() -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
-                               "Alice should not be able to add a dataset instance since she does not have ADMIN" +
-                                 " privileges on the dataset");
+    assertAuthorizationFailure(
+        () -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
+        "Alice should not be able to add a dataset instance since she does not have ADMIN"
+            + " privileges on the dataset");
     // grant alice full access to the dsId
     grantAndAssertSuccess(dsId, ALICE, EnumSet.allOf(StandardPermission.class));
     grantAndAssertSuccess(NamespaceId.DEFAULT, EntityType.DATASET, ALICE, EnumSet.of(StandardPermission.LIST));
@@ -150,9 +151,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
     // should get an authorization error if alice tries to delete datasets that she does not have permissions on
     assertAuthorizationFailure(() -> dsFramework.deleteInstance(dsId1),
-                               String.format("Alice should not be able to delete instance %s since she does not " +
-                                               "have privileges", dsId1));
-    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(StandardPermission.DELETE, StandardPermission.CREATE));
+        String.format("Alice should not be able to delete instance %s since she does not "
+            + "have privileges", dsId1));
+    grantAndAssertSuccess(dsId1, ALICE,
+        ImmutableSet.of(StandardPermission.DELETE, StandardPermission.CREATE));
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
     // since Alice now has DELETE for dsId1, she should be able to delete it

@@ -17,9 +17,11 @@
 package io.cdap.cdap.security.impersonation;
 
 /**
- * An implementation of {@link UGIProvider} that is used when Kerberos is never enabled, and so should never be called.
+ * An implementation of {@link UGIProvider} that is used when Kerberos is never enabled, and so
+ * should never be called.
  */
 public class UnsupportedUGIProvider implements UGIProvider {
+
   @Override
   public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) {
     // If this implementation's method is called, then some guice binding is done improperly.

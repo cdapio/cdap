@@ -50,32 +50,37 @@ public class ListArtifactVersionsCommand extends AbstractAuthCommand {
     String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
     List<ArtifactSummary> artifactSummaries;
     if (scopeStr == null) {
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(), artifactName);
+      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(),
+          artifactName);
     } else {
       ArtifactScope scope = ArtifactScope.valueOf(scopeStr.toUpperCase());
-      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(), artifactName, scope);
+      artifactSummaries = artifactClient.listVersions(cliConfig.getCurrentNamespace(), artifactName,
+          scope);
     }
 
     Table table = Table.builder()
-      .setHeader("name", "version", "scope")
-      .setRows(artifactSummaries, new RowMaker<ArtifactSummary>() {
-        @Override
-        public List<?> makeRow(ArtifactSummary object) {
-          return Lists.newArrayList(object.getName(), object.getVersion(), object.getScope().name());
-        }
-      }).build();
+        .setHeader("name", "version", "scope")
+        .setRows(artifactSummaries, new RowMaker<ArtifactSummary>() {
+          @Override
+          public List<?> makeRow(ArtifactSummary object) {
+            return Lists.newArrayList(object.getName(), object.getVersion(),
+                object.getScope().name());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("list artifact versions <%s> [<%s>]", ArgumentName.ARTIFACT_NAME, ArgumentName.SCOPE);
+    return String.format("list artifact versions <%s> [<%s>]", ArgumentName.ARTIFACT_NAME,
+        ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Lists all versions of a specific %s. If no scope is provided, %s are looked " +
-                           "for first in the 'SYSTEM' and then in the 'USER' scope.",
-                         ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
+    return String.format(
+        "Lists all versions of a specific %s. If no scope is provided, %s are looked "
+            + "for first in the 'SYSTEM' and then in the 'USER' scope.",
+        ElementType.ARTIFACT.getName(), ElementType.ARTIFACT.getNamePlural());
   }
 }

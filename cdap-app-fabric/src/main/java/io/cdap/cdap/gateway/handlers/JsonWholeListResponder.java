@@ -31,12 +31,13 @@ public class JsonWholeListResponder extends JsonListResponder {
   }
 
   /**
-   * Allows to write a json array response in a streaming fashion.
-   * Provided generator should call {@link JsonListResponder#send(Object)} to
-   * write Json representation to an output stream.
+   * Allows to write a json array response in a streaming fashion. Provided generator should call
+   * {@link JsonListResponder#send(Object)} to write Json representation to an output stream.
+   *
    * @param gson instance of Gson library to be used for json conversions
    * @param responder {@link HttpResponder} to be used to stream Json objects to
-   * @param generator should call send for every generated object to be written to an output stream.
+   * @param generator should call send for every generated object to be written to an output
+   *     stream.
    */
   public static void respond(Gson gson, HttpResponder responder,
       Consumer<JsonListResponder> generator) throws IOException {

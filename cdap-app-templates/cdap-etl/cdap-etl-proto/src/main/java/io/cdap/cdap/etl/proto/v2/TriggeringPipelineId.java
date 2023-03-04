@@ -20,6 +20,7 @@ package io.cdap.cdap.etl.proto.v2;
  * Class for identifiers of properties from the triggering pipeline.
  */
 public class TriggeringPipelineId {
+
   private final String namespace;
   private final String name;
 
@@ -47,14 +48,14 @@ public class TriggeringPipelineId {
       return false;
     }
     return namespace.equals(otherPipelineId.getNamespace())
-      && name.equals(otherPipelineId.getName());
+        && name.equals(otherPipelineId.getName());
   }
 
   @Override
   public String toString() {
-    return "TriggeringPipelineId{" +
-      "namespace='" + getNamespace() + '\'' +
-      ", pipelineName='" + getName() + '\'' +
-      '}';
+    return "TriggeringPipelineId{"
+        + "namespace='" + getNamespace() + '\''
+        + ", pipelineName='" + getName() + '\''
+        + '}';
   }
 }

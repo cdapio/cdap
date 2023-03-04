@@ -26,6 +26,7 @@ import java.util.List;
  */
 @Beta
 public class ValidationException extends RuntimeException {
+
   private final List<ValidationFailure> failures;
 
   /**
@@ -47,6 +48,6 @@ public class ValidationException extends RuntimeException {
 
   private static String generateMessage(List<ValidationFailure> failures) {
     return String.format("Errors were encountered during validation. %s",
-                         failures.isEmpty() ? "" : failures.iterator().next().getMessage());
+        failures.isEmpty() ? "" : failures.iterator().next().getMessage());
   }
 }

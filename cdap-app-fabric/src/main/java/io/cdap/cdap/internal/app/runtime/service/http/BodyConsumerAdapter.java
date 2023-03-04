@@ -54,21 +54,22 @@ final class BodyConsumerAdapter extends BodyConsumer {
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
    * @param taskExecutor a {@link ServiceTaskExecutor} for executing user code
-   * @param contextReleaser A {@link Cancellable} for returning the context back to the http server
+   * @param contextReleaser A {@link Cancellable} for returning the context back to the http
+   *     server
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      ServiceTaskExecutor taskExecutor, Cancellable contextReleaser,
-                      TransactionControl defaultTxControl) {
+      ServiceTaskExecutor taskExecutor, Cancellable contextReleaser,
+      TransactionControl defaultTxControl) {
     this.responder = responder;
     this.delegate = delegate;
     this.taskExecutor = taskExecutor;
     this.contextReleaser = contextReleaser;
     this.useTxOnFinish = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentConsumer.class, delegate,
-      "onFinish", HttpServiceResponder.class) == TransactionControl.IMPLICIT;
+        defaultTxControl, HttpContentConsumer.class, delegate,
+        "onFinish", HttpServiceResponder.class) == TransactionControl.IMPLICIT;
     this.useTxOnError = Transactions.getTransactionControl(
-      defaultTxControl, HttpContentConsumer.class, delegate,
-      "onError", HttpServiceResponder.class, Throwable.class) == TransactionControl.IMPLICIT;
+        defaultTxControl, HttpContentConsumer.class, delegate,
+        "onError", HttpServiceResponder.class, Throwable.class) == TransactionControl.IMPLICIT;
   }
 
   @Override
@@ -79,7 +80,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
     }
 
     try {
-      taskExecutor.execute(() -> delegate.onReceived(chunk.nioBuffer(), taskExecutor.getTransactional()), false);
+      taskExecutor.execute(
+          () -> delegate.onReceived(chunk.nioBuffer(), taskExecutor.getTransactional()), false);
     } catch (Throwable t) {
       onError(t, this.responder);
     }
@@ -88,7 +90,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
   @Override
   public void finished(HttpResponder responder) {
     try {
-      taskExecutor.execute(() -> delegate.onFinish(BodyConsumerAdapter.this.responder), useTxOnFinish);
+      taskExecutor.execute(() -> delegate.onFinish(BodyConsumerAdapter.this.responder),
+          useTxOnFinish);
     } catch (Throwable t) {
       onError(t, this.responder);
       return;
@@ -113,9 +116,9 @@ final class BodyConsumerAdapter extends BodyConsumer {
     onError(cause, new DelayedHttpServiceResponder(responder, new ErrorBodyProducerFactory()) {
       @Override
       protected void doSend(int status, String contentType,
-                            @Nullable ByteBuf content,
-                            @Nullable HttpContentProducer contentProducer,
-                            @Nullable HttpHeaders headers) {
+          @Nullable ByteBuf content,
+          @Nullable HttpContentProducer contentProducer,
+          @Nullable HttpHeaders headers) {
         // no-op
       }
 
@@ -138,7 +141,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
   }
 
   /**
-   * Calls the {@link HttpContentConsumer#onError(HttpServiceResponder, Throwable)} method from a transaction.
+   * Calls the {@link HttpContentConsumer#onError(HttpServiceResponder, Throwable)} method from a
+   * transaction.
    */
   private void onError(Throwable cause, DelayedHttpServiceResponder responder) {
     if (completed) {
@@ -170,7 +174,8 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private static final class ErrorBodyProducerFactory implements BodyProducerFactory {
 
     @Override
-    public BodyProducer create(HttpContentProducer contentProducer, ServiceTaskExecutor taskExecutor) {
+    public BodyProducer create(HttpContentProducer contentProducer,
+        ServiceTaskExecutor taskExecutor) {
       // It doesn't matter what it returns as it'll never get used
       // Returning a body producer that gives empty content
       return new BodyProducer() {

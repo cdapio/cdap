@@ -26,9 +26,8 @@ import javax.annotation.Nullable;
 public class KeyValue {
 
   /**
-   * Timestamp to use when we want to refer to the latest cell.
-   * This is the timestamp sent by clients when no timestamp is specified on
-   * commit.
+   * Timestamp to use when we want to refer to the latest cell. This is the timestamp sent by
+   * clients when no timestamp is specified on commit.
    */
   public static final long LATEST_TIMESTAMP = Long.MAX_VALUE;
 
@@ -38,21 +37,28 @@ public class KeyValue {
   public static final long OLDEST_TIMESTAMP = Long.MIN_VALUE;
 
   /**
-   * Comparator for plain key; i.e. non-catalog table key.  Works on Key portion
-   * of KeyValue only.
+   * Comparator for plain key; i.e. non-catalog table key.  Works on Key portion of KeyValue only.
    */
   public static final KeyComparator KEY_COMPARATOR = new KeyComparator();
 
-  /** Size of the key type field in bytes. */
+  /**
+   * Size of the key type field in bytes.
+   */
   public static final int TYPE_SIZE = Bytes.SIZEOF_BYTE;
 
-  /** Size of the row length field in bytes. */
+  /**
+   * Size of the row length field in bytes.
+   */
   public static final int ROW_LENGTH_SIZE = Bytes.SIZEOF_SHORT;
 
-  /** Size of the family length field in bytes. */
+  /**
+   * Size of the family length field in bytes.
+   */
   public static final int FAMILY_LENGTH_SIZE = Bytes.SIZEOF_BYTE;
 
-  /** Size of the timestamp field in bytes. */
+  /**
+   * Size of the timestamp field in bytes.
+   */
   public static final int TIMESTAMP_SIZE = Bytes.SIZEOF_LONG;
 
   // Size of the timestamp and type byte on end of a key -- a long + a byte.
@@ -65,16 +71,15 @@ public class KeyValue {
   // How far into the key the row starts at. First thing to read is the short
   // that says how long the row is.
   public static final int ROW_OFFSET =
-    Bytes.SIZEOF_INT /*keylength*/ +
-    Bytes.SIZEOF_INT /*valuelength*/;
+      Bytes.SIZEOF_INT /*keylength*/
+          + Bytes.SIZEOF_INT /*valuelength*/;
 
   // Size of the length ints in a KeyValue datastructure.
   public static final int KEYVALUE_INFRASTRUCTURE_SIZE = ROW_OFFSET;
 
   /**
-   * Key type.
-   * Has space for other key types to be added later.  Cannot rely on
-   * enum ordinals . They change if item is removed or moved.  Do our own codes.
+   * Key type. Has space for other key types to be added later.  Cannot rely on enum ordinals . They
+   * change if item is removed or moved.  Do our own codes.
    */
   public enum Type {
     Minimum((byte) 0),
@@ -99,8 +104,8 @@ public class KeyValue {
     }
 
     /**
-     * Cannot rely on enum ordinals . They change if item is removed or moved.
-     * Do our own codes.
+     * Cannot rely on enum ordinals . They change if item is removed or moved. Do our own codes.
+     *
      * @return Type associated with passed code.
      */
     public static Type codeToType(final byte b) {
@@ -113,41 +118,43 @@ public class KeyValue {
     }
   }
 
-  private byte [] bytes;
+  private byte[] bytes;
   private int offset;
   private int length;
 
   // the row cached
-  private volatile byte [] rowCache;
+  private volatile byte[] rowCache;
 
   /**
-   * Creates a KeyValue from the start of the specified byte array.
-   * Presumes <code>bytes</code> content is formatted as a KeyValue blob.
+   * Creates a KeyValue from the start of the specified byte array. Presumes <code>bytes</code>
+   * content is formatted as a KeyValue blob.
+   *
    * @param bytes byte array
    */
-  public KeyValue(final byte [] bytes) {
+  public KeyValue(final byte[] bytes) {
     this(bytes, 0);
   }
 
   /**
-   * Creates a KeyValue from the specified byte array and offset.
-   * Presumes <code>bytes</code> content starting at <code>offset</code> is
-   * formatted as a KeyValue blob.
+   * Creates a KeyValue from the specified byte array and offset. Presumes <code>bytes</code>
+   * content starting at <code>offset</code> is formatted as a KeyValue blob.
+   *
    * @param bytes byte array
    * @param offset offset to start of KeyValue
    */
-  public KeyValue(final byte [] bytes, final int offset) {
+  public KeyValue(final byte[] bytes, final int offset) {
     this(bytes, offset, getLength(bytes, offset));
   }
 
   /**
-   * Creates a KeyValue from the specified byte array, starting at offset, and
-   * for length <code>length</code>.
+   * Creates a KeyValue from the specified byte array, starting at offset, and for length
+   * <code>length</code>.
+   *
    * @param bytes byte array
    * @param offset offset to start of the KeyValue
    * @param length length of the KeyValue
    */
-  public KeyValue(final byte [] bytes, final int offset, final int length) {
+  public KeyValue(final byte[] bytes, final int offset, final int length) {
     this.bytes = bytes;
     this.offset = offset;
     this.length = length;
@@ -157,12 +164,12 @@ public class KeyValue {
 
   /**
    * Constructs KeyValue structure filled with specified values.
+   *
    * @param row row key
    * @param family family name
    * @param qualifier column qualifier
    * @param timestamp version timestamp
    * @param type key type
-   * @throws IllegalArgumentException
    */
   public KeyValue(final byte[] row, final byte[] family,
       final byte[] qualifier, final long timestamp, Type type) {
@@ -171,12 +178,12 @@ public class KeyValue {
 
   /**
    * Constructs KeyValue structure filled with specified values.
+   *
    * @param row row key
    * @param family family name
    * @param qualifier column qualifier
    * @param timestamp version timestamp
    * @param value column value
-   * @throws IllegalArgumentException
    */
   public KeyValue(final byte[] row, final byte[] family,
       final byte[] qualifier, final long timestamp, final byte[] value) {
@@ -185,13 +192,13 @@ public class KeyValue {
 
   /**
    * Constructs KeyValue structure filled with specified values.
+   *
    * @param row row key
    * @param family family name
    * @param qualifier column qualifier
    * @param timestamp version timestamp
    * @param type key type
    * @param value column value
-   * @throws IllegalArgumentException
    */
   public KeyValue(final byte[] row, final byte[] family,
       final byte[] qualifier, final long timestamp, Type type,
@@ -202,6 +209,7 @@ public class KeyValue {
 
   /**
    * Constructs KeyValue structure filled with specified values.
+   *
    * @param row row key
    * @param family family name
    * @param qualifier column qualifier
@@ -212,11 +220,10 @@ public class KeyValue {
    * @param value column value
    * @param voffset value offset
    * @param vlength value length
-   * @throws IllegalArgumentException
    */
-  public KeyValue(byte [] row, byte [] family,
-      byte [] qualifier, int qoffset, int qlength, long timestamp, Type type,
-      byte [] value, int voffset, int vlength) {
+  public KeyValue(byte[] row, byte[] family,
+      byte[] qualifier, int qoffset, int qlength, long timestamp, Type type,
+      byte[] value, int voffset, int vlength) {
     this(row, 0, row == null ? 0 : row.length,
         family, 0, family == null ? 0 : family.length,
         qualifier, qoffset, qlength, timestamp, type,
@@ -227,6 +234,7 @@ public class KeyValue {
    * Constructs KeyValue structure filled with specified values.
    * <p>
    * Column is split into two fields, family and qualifier.
+   *
    * @param row row key
    * @param roffset row offset
    * @param rlength row length
@@ -241,13 +249,12 @@ public class KeyValue {
    * @param value column value
    * @param voffset value offset
    * @param vlength value length
-   * @throws IllegalArgumentException
    */
-  public KeyValue(final byte [] row, final int roffset, final int rlength,
-      final byte [] family, final int foffset, final int flength,
-      final byte [] qualifier, final int qoffset, final int qlength,
+  public KeyValue(final byte[] row, final int roffset, final int rlength,
+      final byte[] family, final int foffset, final int flength,
+      final byte[] qualifier, final int qoffset, final int qlength,
       final long timestamp, final Type type,
-      final byte [] value, final int voffset, final int vlength) {
+      final byte[] value, final int voffset, final int vlength) {
     this.bytes = createByteArray(row, roffset, rlength,
         family, foffset, flength, qualifier, qoffset, qlength,
         timestamp, type, value, voffset, vlength);
@@ -256,30 +263,32 @@ public class KeyValue {
   }
 
   /**
-   * Returns a new array that represents the key constructed from the given parameters.
-   * It is the same as calling {@link #getKey(byte[], int, int, byte[], int, int, byte[], int, int, long, Type)}
-   * with all offsets equal {@code 0} and length as the array length.
+   * Returns a new array that represents the key constructed from the given parameters. It is the
+   * same as calling {@link #getKey(byte[], int, int, byte[], int, int, byte[], int, int, long,
+   * Type)} with all offsets equal {@code 0} and length as the array length.
    */
   public static byte[] getKey(byte[] row, @Nullable byte[] family, @Nullable byte[] qualifier,
-                              long timestamp, Type type) {
+      long timestamp, Type type) {
     return getKey(row, 0, row.length,
-                  family, 0, family == null ? 0 : family.length,
-                  qualifier, 0, qualifier == null ? 0 : qualifier.length, timestamp, type);
+        family, 0, family == null ? 0 : family.length,
+        qualifier, 0, qualifier == null ? 0 : qualifier.length, timestamp, type);
   }
 
   /**
-   * Returns a new array that represents the key constructed from the given parameters. Effectively it is the same
-   * as calling {@link #KeyValue(byte[], int, int, byte[], int, int, byte[], int, int, long, Type, byte[], int, int)}
-   * with {@code value} as {@code null}, followed by {@link #getKey()}.
-   * If only the key is needed, calling this method will create less intermediate arrays and less array copying.
+   * Returns a new array that represents the key constructed from the given parameters. Effectively
+   * it is the same as calling {@link #KeyValue(byte[], int, int, byte[], int, int, byte[], int,
+   * int, long, Type, byte[], int, int)} with {@code value} as {@code null}, followed by {@link
+   * #getKey()}. If only the key is needed, calling this method will create less intermediate arrays
+   * and less array copying.
    */
   public static byte[] getKey(byte[] row, int rOffset, int rLength,
-                              @Nullable byte[] family, int fOffset, int fLength,
-                              @Nullable byte[] qualifier, int qOffset, int qLength,
-                              long timestamp, Type type) {
+      @Nullable byte[] family, int fOffset, int fLength,
+      @Nullable byte[] qualifier, int qOffset, int qLength,
+      long timestamp, Type type) {
     int keyLength = validateAndGetKeyLength(row, rLength, family, fLength, qualifier, qLength);
     byte[] key = new byte[keyLength];
-    writeKey(row, rOffset, rLength, family, fOffset, fLength, qualifier, qOffset, qLength, timestamp, type, key, 0);
+    writeKey(row, rOffset, rLength, family, fOffset, fLength, qualifier, qOffset, qLength,
+        timestamp, type, key, 0);
     return key;
   }
 
@@ -302,23 +311,23 @@ public class KeyValue {
    * @param vlength value length
    * @return The newly created byte array.
    */
-  private static byte [] createByteArray(byte[] row, int roffset,
-                                         int rlength, byte[] family, int foffset, int flength,
-                                         byte[] qualifier, int qoffset, int qlength,
-                                         long timestamp, Type type,
-                                         byte[] value, int voffset, int vlength) {
+  private static byte[] createByteArray(byte[] row, int roffset,
+      int rlength, byte[] family, int foffset, int flength,
+      byte[] qualifier, int qoffset, int qlength,
+      long timestamp, Type type,
+      byte[] value, int voffset, int vlength) {
     int keyLength = validateAndGetKeyLength(row, rlength, family, flength, qualifier, qlength);
     // Value length
     vlength = value == null ? 0 : vlength;
 
     // Allocate right-sized byte array.
-    byte [] bytes = new byte[KEYVALUE_INFRASTRUCTURE_SIZE + keyLength + vlength];
+    byte[] bytes = new byte[KEYVALUE_INFRASTRUCTURE_SIZE + keyLength + vlength];
     // Write key, value and key row length.
     int pos = 0;
     pos = Bytes.putInt(bytes, pos, keyLength);
     pos = Bytes.putInt(bytes, pos, vlength);
     pos = writeKey(row, roffset, rlength, family, foffset, flength, qualifier,
-                   qoffset, qlength, timestamp, type, bytes, pos);
+        qoffset, qlength, timestamp, type, bytes, pos);
 
     if (value != null && value.length > 0) {
       Bytes.putBytes(bytes, pos, value, voffset, vlength);
@@ -338,8 +347,8 @@ public class KeyValue {
    * @return the key size in bytes
    */
   private static int validateAndGetKeyLength(byte[] row, int rLength,
-                                             @Nullable byte[] family, int fLength,
-                                             @Nullable byte[] qualifier, int qLength) {
+      @Nullable byte[] family, int fLength,
+      @Nullable byte[] qualifier, int qLength) {
     if (rLength > Short.MAX_VALUE) {
       throw new IllegalArgumentException("Row > " + Short.MAX_VALUE);
     }
@@ -383,10 +392,10 @@ public class KeyValue {
    * @return the position in the key byte array right after the key was stored.
    */
   private static int writeKey(byte[] row, int rOffset, int rLength,
-                              @Nullable byte[] family, int fOffset, int fLength,
-                              @Nullable byte[] qualifier, int qOffset, int qLength,
-                              long timestamp, Type type,
-                              byte[] bytes, int offset) {
+      @Nullable byte[] family, int fOffset, int fLength,
+      @Nullable byte[] qualifier, int qOffset, int qLength,
+      long timestamp, Type type,
+      byte[] bytes, int offset) {
     int pos = offset;
     pos = Bytes.putShort(bytes, pos, (short) (rLength & 0x0000ffff));
     pos = Bytes.putBytes(bytes, pos, row, rOffset, rLength);
@@ -412,7 +421,7 @@ public class KeyValue {
     // Comparing bytes should be fine doing equals test.  Shouldn't have to
     // worry about special .META. comparators doing straight equals.
     return Bytes.equals(getBuffer(), getKeyOffset(), getKeyLength(),
-      kv.getBuffer(), kv.getKeyOffset(), kv.getKeyLength());
+        kv.getBuffer(), kv.getKeyOffset(), kv.getKeyLength());
   }
 
   @Override
@@ -438,10 +447,10 @@ public class KeyValue {
       return "empty";
     }
     return keyToString(this.bytes, this.offset + ROW_OFFSET, getKeyLength()) +
-      "/vlen=" + getValueLength();
+        "/vlen=" + getValueLength();
   }
 
-  public static String keyToString(final byte [] b, final int o, final int l) {
+  public static String keyToString(final byte[] b, final int o, final int l) {
     if (b == null) {
       return "";
     }
@@ -451,16 +460,16 @@ public class KeyValue {
     int familylength = b[columnoffset - 1];
     int columnlength = l - ((columnoffset - o) + TIMESTAMP_TYPE_SIZE);
     String family = familylength == 0 ? "" :
-      Bytes.toStringBinary(b, columnoffset, familylength);
+        Bytes.toStringBinary(b, columnoffset, familylength);
     String qualifier = columnlength == 0 ? "" :
-      Bytes.toStringBinary(b, columnoffset + familylength,
-      columnlength - familylength);
+        Bytes.toStringBinary(b, columnoffset + familylength,
+            columnlength - familylength);
     long timestamp = Bytes.toLong(b, o + (l - TIMESTAMP_TYPE_SIZE));
     String timestampStr = humanReadableTimestamp(timestamp);
     byte type = b[o + l - 1];
     return row + "/" + family +
-      (family != null && family.length() > 0 ? ":" : "") +
-      qualifier + "/" + timestampStr + "/" + Type.codeToType(type);
+        (family != null && family.length() > 0 ? ":" : "") +
+        qualifier + "/" + timestampStr + "/" + Type.codeToType(type);
   }
 
   public static String humanReadableTimestamp(final long timestamp) {
@@ -482,7 +491,7 @@ public class KeyValue {
   /**
    * @return The byte array backing this KeyValue.
    */
-  public byte [] getBuffer() {
+  public byte[] getBuffer() {
     return this.bytes;
   }
 
@@ -507,13 +516,14 @@ public class KeyValue {
   //---------------------------------------------------------------------------
 
   /**
-   * Determines the total length of the KeyValue stored in the specified
-   * byte array and offset.  Includes all headers.
+   * Determines the total length of the KeyValue stored in the specified byte array and offset.
+   * Includes all headers.
+   *
    * @param bytes byte array
    * @param offset offset to start of the KeyValue
    * @return length of entire KeyValue, in bytes
    */
-  private static int getLength(byte [] bytes, int offset) {
+  private static int getLength(byte[] bytes, int offset) {
     return ROW_OFFSET +
         Bytes.toInt(bytes, offset) +
         Bytes.toInt(bytes, offset + Bytes.SIZEOF_INT);
@@ -620,7 +630,7 @@ public class KeyValue {
    */
   public int getQualifierLength(int rlength, int flength) {
     return getKeyLength() -
-      (KEY_INFRASTRUCTURE_SIZE + rlength + flength);
+        (KEY_INFRASTRUCTURE_SIZE + rlength + flength);
   }
 
   /**
@@ -640,41 +650,40 @@ public class KeyValue {
   /**
    * Do not use unless you have to.  Used internally for compacting and testing.
    *
-   * Use {@link #getRow()}, {@link #getFamily()}, {@link #getQualifier()}, and
-   * {@link #getValue()} if accessing a KeyValue client-side.
+   * Use {@link #getRow()}, {@link #getFamily()}, {@link #getQualifier()}, and {@link #getValue()}
+   * if accessing a KeyValue client-side.
+   *
    * @return Copy of the key portion only.
    */
-  public byte [] getKey() {
+  public byte[] getKey() {
     int keylength = getKeyLength();
-    byte [] key = new byte[keylength];
+    byte[] key = new byte[keylength];
     System.arraycopy(getBuffer(), getKeyOffset(), key, 0, keylength);
     return key;
   }
 
   /**
-   * Returns value in a new byte array.
-   * Primarily for use client-side. If server-side, use
-   * {@link #getBuffer()} with appropriate offsets and lengths instead to
-   * save on allocations.
+   * Returns value in a new byte array. Primarily for use client-side. If server-side, use {@link
+   * #getBuffer()} with appropriate offsets and lengths instead to save on allocations.
+   *
    * @return Value in a new byte array.
    */
-  public byte [] getValue() {
+  public byte[] getValue() {
     int o = getValueOffset();
     int l = getValueLength();
-    byte [] result = new byte[l];
+    byte[] result = new byte[l];
     System.arraycopy(getBuffer(), o, result, 0, l);
     return result;
   }
 
   /**
-   * Primarily for use client-side.  Returns the row of this KeyValue in a new
-   * byte array.<p>
+   * Primarily for use client-side.  Returns the row of this KeyValue in a new byte array.<p>
    *
-   * If server-side, use {@link #getBuffer()} with appropriate offsets and
-   * lengths instead.
+   * If server-side, use {@link #getBuffer()} with appropriate offsets and lengths instead.
+   *
    * @return Row in a new byte array.
    */
-  public byte [] getRow() {
+  public byte[] getRow() {
     if (rowCache == null) {
       int o = getRowOffset();
       short l = getRowLength();
@@ -688,6 +697,7 @@ public class KeyValue {
   }
 
   private long timestampCache = -1;
+
   /**
    * @return Timestamp
    */
@@ -723,34 +733,33 @@ public class KeyValue {
   }
 
   /**
-   * Primarily for use client-side.  Returns the family of this KeyValue in a
-   * new byte array.<p>
+   * Primarily for use client-side.  Returns the family of this KeyValue in a new byte array.<p>
    *
-   * If server-side, use {@link #getBuffer()} with appropriate offsets and
-   * lengths instead.
+   * If server-side, use {@link #getBuffer()} with appropriate offsets and lengths instead.
+   *
    * @return Returns family. Makes a copy.
    */
-  public byte [] getFamily() {
+  public byte[] getFamily() {
     int o = getFamilyOffset();
     int l = getFamilyLength(o);
-    byte [] result = new byte[l];
+    byte[] result = new byte[l];
     System.arraycopy(this.bytes, o, result, 0, l);
     return result;
   }
 
   /**
-   * Primarily for use client-side.  Returns the column qualifier of this
-   * KeyValue in a new byte array.<p>
+   * Primarily for use client-side.  Returns the column qualifier of this KeyValue in a new byte
+   * array.<p>
    *
-   * If server-side, use {@link #getBuffer()} with appropriate offsets and
-   * lengths instead.
-   * Use {@link #getBuffer()} with appropriate offsets and lengths instead.
+   * If server-side, use {@link #getBuffer()} with appropriate offsets and lengths instead. Use
+   * {@link #getBuffer()} with appropriate offsets and lengths instead.
+   *
    * @return Returns qualifier. Makes a copy.
    */
-  public byte [] getQualifier() {
+  public byte[] getQualifier() {
     int o = getQualifierOffset();
     int l = getQualifierLength();
-    byte [] result = new byte[l];
+    byte[] result = new byte[l];
     System.arraycopy(this.bytes, o, result, 0, l);
     return result;
   }
@@ -767,38 +776,50 @@ public class KeyValue {
    * Should get rid of this if we can, but is very useful for debugging.
    */
   public static class SplitKeyValue {
-    private byte [][] split;
+
+    private byte[][] split;
+
     SplitKeyValue() {
       this.split = new byte[6][];
     }
-    public void setRow(byte [] value) {
+
+    public void setRow(byte[] value) {
       this.split[0] = value;
     }
-    public void setFamily(byte [] value) {
+
+    public void setFamily(byte[] value) {
       this.split[1] = value;
     }
-    public void setQualifier(byte [] value) {
+
+    public void setQualifier(byte[] value) {
       this.split[2] = value;
     }
-    public void setTimestamp(byte [] value) {
+
+    public void setTimestamp(byte[] value) {
       this.split[3] = value;
     }
-    public void setType(byte [] value) {
+
+    public void setType(byte[] value) {
       this.split[4] = value;
     }
-    public void setValue(byte [] value) {
+
+    public void setValue(byte[] value) {
       this.split[5] = value;
     }
-    public byte [] getRow() {
+
+    public byte[] getRow() {
       return this.split[0];
     }
-    public byte [] getTimestamp() {
+
+    public byte[] getTimestamp() {
       return this.split[3];
     }
-    public byte [] getType() {
+
+    public byte[] getType() {
       return this.split[4];
     }
-    public byte [] getValue() {
+
+    public byte[] getValue() {
       return this.split[5];
     }
   }
@@ -812,32 +833,32 @@ public class KeyValue {
     splitOffset += Bytes.SIZEOF_INT;
     short rowLen = Bytes.toShort(bytes, splitOffset);
     splitOffset += Bytes.SIZEOF_SHORT;
-    byte [] row = new byte[rowLen];
+    byte[] row = new byte[rowLen];
     System.arraycopy(bytes, splitOffset, row, 0, rowLen);
     splitOffset += rowLen;
     split.setRow(row);
     byte famLen = bytes[splitOffset];
     splitOffset += Bytes.SIZEOF_BYTE;
-    byte [] family = new byte[famLen];
+    byte[] family = new byte[famLen];
     System.arraycopy(bytes, splitOffset, family, 0, famLen);
     splitOffset += famLen;
     split.setFamily(family);
     int colLen = keyLen -
-      (rowLen + famLen + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_BYTE +
-      Bytes.SIZEOF_LONG + Bytes.SIZEOF_BYTE);
-    byte [] qualifier = new byte[colLen];
+        (rowLen + famLen + Bytes.SIZEOF_SHORT + Bytes.SIZEOF_BYTE +
+            Bytes.SIZEOF_LONG + Bytes.SIZEOF_BYTE);
+    byte[] qualifier = new byte[colLen];
     System.arraycopy(bytes, splitOffset, qualifier, 0, colLen);
     splitOffset += colLen;
     split.setQualifier(qualifier);
-    byte [] timestamp = new byte[Bytes.SIZEOF_LONG];
+    byte[] timestamp = new byte[Bytes.SIZEOF_LONG];
     System.arraycopy(bytes, splitOffset, timestamp, 0, Bytes.SIZEOF_LONG);
     splitOffset += Bytes.SIZEOF_LONG;
     split.setTimestamp(timestamp);
-    byte [] type = new byte[1];
+    byte[] type = new byte[1];
     type[0] = bytes[splitOffset];
     splitOffset += Bytes.SIZEOF_BYTE;
     split.setType(type);
-    byte [] value = new byte[valLen];
+    byte[] value = new byte[valLen];
     System.arraycopy(bytes, splitOffset, value, 0, valLen);
     split.setValue(value);
     return split;
@@ -853,6 +874,7 @@ public class KeyValue {
    * Compare key portion of a {@link KeyValue}.
    */
   public static class KeyComparator {
+
     volatile boolean ignoreTimestamp;
     volatile boolean ignoreType;
 
@@ -875,14 +897,13 @@ public class KeyValue {
     }
 
     /**
-     * Compare columnFamily, qualifier, timestamp, and key type (everything
-     * except the row). This method is used both in the normal comparator and
-     * the "same-prefix" comparator. Note that we are assuming that row portions
-     * of both KVs have already been parsed and found identical, and we don't
-     * validate that assumption here.
-     * @param commonPrefix
-     *          the length of the common prefix of the two key-values being
-     *          compared, including row length and row
+     * Compare columnFamily, qualifier, timestamp, and key type (everything except the row). This
+     * method is used both in the normal comparator and the "same-prefix" comparator. Note that we
+     * are assuming that row portions of both KVs have already been parsed and found identical, and
+     * we don't validate that assumption here.
+     *
+     * @param commonPrefix the length of the common prefix of the two key-values being compared,
+     *     including row length and row
      */
     private int compareWithoutRow(int commonPrefix, byte[] left, int loffset,
         int llength, byte[] right, int roffset, int rlength, short rowlength) {
@@ -980,8 +1001,8 @@ public class KeyValue {
       return compare(left, 0, left.length, right, 0, right.length);
     }
 
-    public int compareRows(byte [] left, int loffset, int llength,
-        byte [] right, int roffset, int rlength) {
+    public int compareRows(byte[] left, int loffset, int llength,
+        byte[] right, int roffset, int rlength) {
       return Bytes.compareTo(left, loffset, llength, right, roffset, rlength);
     }
 

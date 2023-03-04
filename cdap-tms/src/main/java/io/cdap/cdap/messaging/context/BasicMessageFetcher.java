@@ -31,8 +31,9 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 
 /**
- * Implementation of {@link MessageFetcher} that implements {@link TransactionAware}. The active transaction will
- * be used for fetching messages if there is one. Otherwise messages will be fetched without transaction.
+ * Implementation of {@link MessageFetcher} that implements {@link TransactionAware}. The active
+ * transaction will be used for fetching messages if there is one. Otherwise messages will be
+ * fetched without transaction.
  */
 final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
 
@@ -47,11 +48,11 @@ final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
 
   @Override
   public CloseableIterator<Message> fetch(String namespace, String topic,
-                                          int limit, long timestamp) throws IOException, TopicNotFoundException {
+      int limit, long timestamp) throws IOException, TopicNotFoundException {
     io.cdap.cdap.messaging.MessageFetcher fetcher = messagingService
-      .prepareFetch(new NamespaceId(namespace).topic(topic))
-      .setLimit(limit)
-      .setStartTime(timestamp);
+        .prepareFetch(new NamespaceId(namespace).topic(topic))
+        .setLimit(limit)
+        .setStartTime(timestamp);
 
     if (transaction != null) {
       fetcher.setTransaction(transaction);
@@ -62,10 +63,10 @@ final class BasicMessageFetcher implements MessageFetcher, TransactionAware {
 
   @Override
   public CloseableIterator<Message> fetch(String namespace, String topic, int limit,
-                                          @Nullable String afterMessageId) throws IOException, TopicNotFoundException {
+      @Nullable String afterMessageId) throws IOException, TopicNotFoundException {
     io.cdap.cdap.messaging.MessageFetcher fetcher = messagingService
-      .prepareFetch(new NamespaceId(namespace).topic(topic))
-      .setLimit(limit);
+        .prepareFetch(new NamespaceId(namespace).topic(topic))
+        .setLimit(limit);
 
     if (afterMessageId != null) {
       fetcher.setStartMessage(Bytes.fromHexString(afterMessageId), false);

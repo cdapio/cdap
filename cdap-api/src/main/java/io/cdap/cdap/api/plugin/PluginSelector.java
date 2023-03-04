@@ -31,8 +31,8 @@ public class PluginSelector {
   /**
    * Selects a plugin. The default implementation returns the last entry in the given map.
    *
-   * @param plugins the set of available plugins. The {@link ArtifactId} is sorted in ascending order of plugin JAR
-   *        name followed by the plugin version.
+   * @param plugins the set of available plugins. The {@link ArtifactId} is sorted in ascending
+   *     order of plugin JAR name followed by the plugin version.
    * @return a {@link java.util.Map.Entry} for the selected plugin, or null if nothing is selected
    */
   @Nullable

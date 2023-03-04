@@ -23,9 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Information for creating a program schedule.
- * See {@link io.cdap.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
- * for how to build an instance of this object.
+ * Information for creating a program schedule. See {@link io.cdap.cdap.api.app.AbstractApplication#buildSchedule(String,
+ * ProgramType, String)} for how to build an instance of this object.
  */
 public class ScheduleCreationSpec {
 
@@ -37,8 +36,9 @@ public class ScheduleCreationSpec {
   private final List<? extends Constraint> constraints;
   private final long timeoutMillis;
 
-  public ScheduleCreationSpec(String name, String description, String programName, Map<String, String> properties,
-                              Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
+  public ScheduleCreationSpec(String name, String description, String programName,
+      Map<String, String> properties,
+      Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
     this.name = name;
     this.description = description;
     this.programName = programName;

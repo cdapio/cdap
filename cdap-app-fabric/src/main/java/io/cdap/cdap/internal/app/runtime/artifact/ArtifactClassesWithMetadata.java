@@ -26,10 +26,12 @@ import java.util.Objects;
  * Artifact classes along with metadata
  */
 public class ArtifactClassesWithMetadata {
+
   private final ArtifactClasses artifactClasses;
   private final List<MetadataMutation> mutations;
 
-  public ArtifactClassesWithMetadata(ArtifactClasses artifactClasses, List<MetadataMutation> mutations) {
+  public ArtifactClassesWithMetadata(ArtifactClasses artifactClasses,
+      List<MetadataMutation> mutations) {
     this.artifactClasses = artifactClasses;
     this.mutations = mutations;
   }
@@ -53,8 +55,8 @@ public class ArtifactClassesWithMetadata {
     }
 
     ArtifactClassesWithMetadata that = (ArtifactClassesWithMetadata) o;
-    return Objects.equals(artifactClasses, that.artifactClasses) &&
-             Objects.equals(mutations, that.mutations);
+    return Objects.equals(artifactClasses, that.artifactClasses)
+        && Objects.equals(mutations, that.mutations);
   }
 
   @Override

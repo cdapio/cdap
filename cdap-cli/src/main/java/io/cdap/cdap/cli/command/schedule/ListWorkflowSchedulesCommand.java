@@ -50,7 +50,8 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    String[] programIdParts = arguments.get(ElementType.WORKFLOW.getArgumentName().toString()).split("\\.");
+    String[] programIdParts = arguments.get(ElementType.WORKFLOW.getArgumentName().toString())
+        .split("\\.");
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
     }
@@ -61,33 +62,35 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
 
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflowId);
     Table table = Table.builder()
-      .setHeader("application", "program", "program type", "name", "description", "trigger", "timeoutMillis",
-                 "properties")
-      .setRows(list, new RowMaker<ScheduleDetail>() {
-        @Override
-        public List<?> makeRow(ScheduleDetail object) {
-          return Lists.newArrayList(appId,
-                                    object.getProgram().getProgramName(),
-                                    object.getProgram().getProgramType().name(),
-                                    object.getName(),
-                                    object.getDescription(),
-                                    object.getTrigger(),
-                                    object.getTimeoutMillis(),
-                                    GSON.toJson(object.getProperties()));
-        }
-      }).build();
+        .setHeader("application", "program", "program type", "name", "description", "trigger",
+            "timeoutMillis",
+            "properties")
+        .setRows(list, new RowMaker<ScheduleDetail>() {
+          @Override
+          public List<?> makeRow(ScheduleDetail object) {
+            return Lists.newArrayList(appId,
+                object.getProgram().getProgramName(),
+                object.getProgram().getProgramType().name(),
+                object.getName(),
+                object.getDescription(),
+                object.getTrigger(),
+                object.getTimeoutMillis(),
+                GSON.toJson(object.getProperties()));
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
     return String.format("get %s schedules <%s>",
-                         ElementType.WORKFLOW.getName(), ElementType.WORKFLOW.getArgumentName());
+        ElementType.WORKFLOW.getName(), ElementType.WORKFLOW.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return String.format("Gets schedules of %s", Fragment.of(Article.A, ElementType.WORKFLOW.getName()));
+    return String.format("Gets schedules of %s",
+        Fragment.of(Article.A, ElementType.WORKFLOW.getName()));
 
   }
 }

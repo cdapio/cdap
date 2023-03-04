@@ -41,32 +41,33 @@ public class BasicMessagingAdmin implements MessagingAdmin {
   }
 
   @Override
-  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException, UnauthorizedException {
+  public void createTopic(String topic)
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     createTopic(topic, Collections.emptyMap());
   }
 
   @Override
   public void createTopic(String topic,
-                          Map<String, String> properties)
-    throws TopicAlreadyExistsException, IOException, UnauthorizedException {
+      Map<String, String> properties)
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException {
     messagingService.createTopic(new TopicMetadata(namespace.topic(topic), properties));
   }
 
   @Override
   public Map<String, String> getTopicProperties(String topic)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     return messagingService.getTopic(namespace.topic(topic)).getProperties();
   }
 
   @Override
   public void updateTopic(String topic, Map<String, String> properties)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     messagingService.updateTopic(new TopicMetadata(namespace.topic(topic), properties));
   }
 
   @Override
   public void deleteTopic(String topic)
-    throws TopicNotFoundException, IOException, UnauthorizedException {
+      throws TopicNotFoundException, IOException, UnauthorizedException {
     messagingService.deleteTopic(namespace.topic(topic));
   }
 }

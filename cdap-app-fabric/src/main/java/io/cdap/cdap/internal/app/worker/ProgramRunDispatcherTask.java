@@ -46,14 +46,15 @@ import org.apache.twill.api.RunId;
  */
 public class ProgramRunDispatcherTask implements RunnableTask {
 
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
-    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
-    .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
-    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
-    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .create();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
+          new GsonBuilder())
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec())
+      .registerTypeAdapter(RunId.class, new RunIds.RunIdCodec())
+      .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+      .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+      .create();
 
   private final Injector injector;
 
@@ -66,10 +67,10 @@ public class ProgramRunDispatcherTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     // Need to copy the instance to restore transient fields
     ProgramRunDispatcherContext dispatcherContext = new ProgramRunDispatcherContext(
-      GSON.fromJson(context.getParam(), ProgramRunDispatcherContext.class));
+        GSON.fromJson(context.getParam(), ProgramRunDispatcherContext.class));
     context.setCleanupTask(dispatcherContext::executeCleanupTasks);
     ProgramRunId programRunId =
-      dispatcherContext.getProgramDescriptor().getProgramId().run(dispatcherContext.getRunId());
+        dispatcherContext.getProgramDescriptor().getProgramId().run(dispatcherContext.getRunId());
 
     ProgramRunDispatcher dispatcher = injector.getInstance(InMemoryProgramRunDispatcher.class);
     ProgramController programController;

@@ -23,8 +23,9 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 /**
- * A container for messages in the preview topic configured by {@link Constants.Preview#MESSAGING_TOPIC}.
- * It carries the message type and the payload as {@link JsonElement}.
+ * A container for messages in the preview topic configured by {@link
+ * Constants.Preview#MESSAGING_TOPIC}. It carries the message type and the payload as {@link
+ * JsonElement}.
  */
 public final class PreviewMessage {
 
@@ -43,6 +44,7 @@ public final class PreviewMessage {
 
   /**
    * Create an instance of message.
+   *
    * @param type type of the message
    * @param entityId program run id associated with the message
    * @param payload the payload
@@ -81,10 +83,10 @@ public final class PreviewMessage {
 
   @Override
   public String toString() {
-    return "PreviewMessage{" +
-      "type=" + type +
-      ", entityId=" + entityId +
-      ", payload=" + payload +
-      '}';
+    return "PreviewMessage{"
+        + "type=" + type
+        + ", entityId=" + entityId
+        + ", payload=" + payload
+        + '}';
   }
 }

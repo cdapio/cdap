@@ -26,14 +26,14 @@ import java.util.Set;
 public interface PartitionedFileSetInputContext extends InputContext {
 
   /**
-   * Returns the {@link PartitionKey} of the input configured for this task.
-   * In case of CombineFileInputFormat, this will be the PartitionKey currently being processed by the task.
+   * Returns the {@link PartitionKey} of the input configured for this task. In case of
+   * CombineFileInputFormat, this will be the PartitionKey currently being processed by the task.
    */
   PartitionKey getInputPartitionKey();
 
   /**
-   * Returns a Set of {@link PartitionKey}s of the input configured for this task. There can be multiple PartitionKeys
-   * for a single task if using CombineFileInputFormat.
+   * Returns a Set of {@link PartitionKey}s of the input configured for this task. There can be
+   * multiple PartitionKeys for a single task if using CombineFileInputFormat.
    */
   Set<PartitionKey> getInputPartitionKeys();
 }

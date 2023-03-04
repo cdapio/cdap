@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
  * Configuration for EMR.
  */
 public class EMRConf {
+
   private final String accessKey;
   private final String secretKey;
   private final String region;
@@ -46,9 +47,9 @@ public class EMRConf {
   private final SSHPublicKey publicKey;
 
   private EMRConf(String accessKey, String secretKey, String region, String ec2SubnetId,
-                  String additionalMasterSecurityGroup, String serviceRole, String jobFlowRole,
-                  String masterInstanceType, String workerInstanceType, int instanceCount,
-                  @Nullable String logURI, @Nullable SSHPublicKey publicKey) {
+      String additionalMasterSecurityGroup, String serviceRole, String jobFlowRole,
+      String masterInstanceType, String workerInstanceType, int instanceCount,
+      @Nullable String logURI, @Nullable SSHPublicKey publicKey) {
     this.accessKey = accessKey;
     this.secretKey = secretKey;
     this.region = region;
@@ -139,15 +140,16 @@ public class EMRConf {
     int instanceCount = getInt(properties, "instanceCount", 3);
 
     return new EMRConf(accessKey, secretKey, region, ec2SubnetId,
-                       additionalMasterSecurityGroup, serviceRole, jobFlowRole,
-                       masterInstanceType, workerInstanceType, instanceCount,
-                       logURI, publicKey);
+        additionalMasterSecurityGroup, serviceRole, jobFlowRole,
+        masterInstanceType, workerInstanceType, instanceCount,
+        logURI, publicKey);
   }
 
   private static String getString(Map<String, String> properties, String key) {
     String val = properties.get(key);
     if (val == null) {
-      throw new IllegalArgumentException(String.format("Invalid config. '%s' must be specified.", key));
+      throw new IllegalArgumentException(
+          String.format("Invalid config. '%s' must be specified.", key));
     }
     return val;
   }
@@ -166,12 +168,13 @@ public class EMRConf {
       int val = Integer.parseInt(valStr);
       if (val < 0) {
         throw new IllegalArgumentException(
-          String.format("Invalid config '%s' = '%s'. Must be a positive integer.", key, valStr));
+            String.format("Invalid config '%s' = '%s'. Must be a positive integer.", key, valStr));
       }
       return val;
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
-        String.format("Invalid config '%s' = '%s'. Must be a valid, positive integer.", key, valStr));
+          String.format("Invalid config '%s' = '%s'. Must be a valid, positive integer.", key,
+              valStr));
     }
   }
 }

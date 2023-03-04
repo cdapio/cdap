@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  * Interface for client-side scanning the data written with keys distribution
  */
 public class DistributedScanner implements ResultScanner {
+
   private final AbstractRowKeyDistributor keyDistributor;
   private final ResultScanner[] scanners;
   private final List<Result>[] nextOfScanners;
@@ -45,9 +46,9 @@ public class DistributedScanner implements ResultScanner {
 
   @SuppressWarnings("unchecked")
   private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
-                            ResultScanner[] scanners,
-                            int caching,
-                            ExecutorService scansExecutor) {
+      ResultScanner[] scanners,
+      int caching,
+      ExecutorService scansExecutor) {
     this.keyDistributor = keyDistributor;
     this.scanners = scanners;
     this.caching = caching;
@@ -103,9 +104,9 @@ public class DistributedScanner implements ResultScanner {
   }
 
   public static DistributedScanner create(Table table,
-                                          Scan originalScan,
-                                          AbstractRowKeyDistributor keyDistributor,
-                                          ExecutorService scansExecutor) throws IOException {
+      Scan originalScan,
+      AbstractRowKeyDistributor keyDistributor,
+      ExecutorService scansExecutor) throws IOException {
     Scan[] scans = keyDistributor.getDistributedScans(originalScan);
 
     ResultScanner[] rss = new ResultScanner[scans.length];
@@ -167,7 +168,6 @@ public class DistributedScanner implements ResultScanner {
       }
     }
 
-
     for (int i = 0; i < nextOfScanners.length; i++) {
       if (nextOfScanners[i] == null) {
         // result scanner is exhausted, don't advance it any more
@@ -175,8 +175,9 @@ public class DistributedScanner implements ResultScanner {
       }
 
       // if result is null or next record has original key less than the candidate to be returned
-      if (result == null || Bytes.compareTo(keyDistributor.getOriginalKey(nextOfScanners[i].get(0).getRow()),
-                                            keyDistributor.getOriginalKey(result.getRow())) < 0) {
+      if (result == null
+          || Bytes.compareTo(keyDistributor.getOriginalKey(nextOfScanners[i].get(0).getRow()),
+          keyDistributor.getOriginalKey(result.getRow())) < 0) {
         result = nextOfScanners[i].get(0);
         indexOfScannerToUse = i;
       }

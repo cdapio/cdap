@@ -38,6 +38,7 @@ import org.apache.twill.internal.utils.Instances;
  * Default implementation of {@link MasterEnvironmentRunnableContext}.
  */
 public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmentRunnableContext {
+
   private final LocationFactory locationFactory;
   private final RemoteClient remoteClient;
   private final CConfiguration cConf;
@@ -46,12 +47,12 @@ public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmen
   private ClassLoader extensionCombinedClassLoader;
 
   public DefaultMasterEnvironmentRunnableContext(LocationFactory locationFactory,
-                                                 RemoteClientFactory remoteClientFactory,
-                                                 CConfiguration cConf) {
+      RemoteClientFactory remoteClientFactory,
+      CConfiguration cConf) {
     this.locationFactory = locationFactory;
     this.remoteClient = remoteClientFactory.createRemoteClient(
-      Constants.Service.APP_FABRIC_HTTP,
-      new DefaultHttpRequestConfig(false), "");
+        Constants.Service.APP_FABRIC_HTTP,
+        new DefaultHttpRequestConfig(false), "");
     this.cConf = cConf;
     this.programRuntimeProviderLoader = new ProgramRuntimeProviderLoader(cConf);
     this.extensionCombinedClassLoader = null;
@@ -80,21 +81,23 @@ public class DefaultMasterEnvironmentRunnableContext implements MasterEnvironmen
       if (extensionCombinedClassLoader == null) {
         Map<ProgramType, ProgramRuntimeProvider> classLoaderProviderMap = programRuntimeProviderLoader.getAll();
         extensionCombinedClassLoader = new CombineClassLoader(getClass().getClassLoader(),
-                                                              classLoaderProviderMap.entrySet().stream()
-                                                                .map(entry -> entry.getValue()
-                                                                  .createProgramClassLoader(cConf, entry.getKey()))
-                                                                .collect(Collectors.toList())
-                                                                .toArray(new ClassLoader[0]));
+            classLoaderProviderMap.entrySet().stream()
+                .map(entry -> entry.getValue()
+                    .createProgramClassLoader(cConf, entry.getKey()))
+                .collect(Collectors.toList())
+                .toArray(new ClassLoader[0]));
       }
       try {
         runnableClass = extensionCombinedClassLoader.loadClass(className);
       } catch (ClassNotFoundException cnfe) {
-        throw new RuntimeException(String.format("Failed to load twill runnable class from runtime extension '%s'",
-                                                 className), cnfe);
+        throw new RuntimeException(
+            String.format("Failed to load twill runnable class from runtime extension '%s'",
+                className), cnfe);
       }
     }
     if (!TwillRunnable.class.isAssignableFrom(runnableClass)) {
-      throw new IllegalArgumentException("Class " + runnableClass + " is not an instance of " + TwillRunnable.class);
+      throw new IllegalArgumentException(
+          "Class " + runnableClass + " is not an instance of " + TwillRunnable.class);
     }
     return (TwillRunnable) Instances.newInstance(runnableClass);
   }

@@ -37,9 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service to manage metadata in CDAP. This service serves the HTTP endpoints defined in {@link MetadataHttpHandler}.
+ * Service to manage metadata in CDAP. This service serves the HTTP endpoints defined in {@link
+ * MetadataHttpHandler}.
  */
 public class MetadataService extends AbstractIdleService {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetadataService.class);
 
   private final DiscoveryService discoveryService;
@@ -49,18 +51,20 @@ public class MetadataService extends AbstractIdleService {
 
   @Inject
   MetadataService(CConfiguration cConf, SConfiguration sConf,
-                  DiscoveryService discoveryService, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
-                  @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
+      DiscoveryService discoveryService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      @Named(Constants.Metadata.HANDLERS_NAME) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.METADATA_SERVICE)
-      .setHttpHandlers(handlers)
-      .setExceptionHandler(new HttpExceptionHandler())
-      .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
-      .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
-      .setConnectionBacklog(20000);
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.METADATA_SERVICE)
+        .setHttpHandlers(handlers)
+        .setExceptionHandler(new HttpExceptionHandler())
+        .setHost(cConf.get(Constants.Metadata.SERVICE_BIND_ADDRESS))
+        .setPort(cConf.getInt(Constants.Metadata.SERVICE_BIND_PORT))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_WORKER_THREADS))
+        .setExecThreadPoolSize(cConf.getInt(Constants.Metadata.SERVICE_EXEC_THREADS))
+        .setConnectionBacklog(20000);
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -77,7 +81,8 @@ public class MetadataService extends AbstractIdleService {
     InetSocketAddress socketAddress = httpService.getBindAddress();
     LOG.info("Metadata service running at {}", socketAddress);
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.METADATA_SERVICE, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.METADATA_SERVICE, httpService)));
 
   }
 

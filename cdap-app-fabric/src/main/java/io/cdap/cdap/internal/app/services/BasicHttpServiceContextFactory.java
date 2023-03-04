@@ -28,9 +28,10 @@ public interface BasicHttpServiceContextFactory {
   /**
    * Creates a new instance of {@link BasicHttpServiceContext} with the given spec.
    *
-   * @param spec the specification of the http handler, or {@code null} if the context created is not
-   *             associated with any handler.
+   * @param spec the specification of the http handler, or {@code null} if the context created
+   *     is not associated with any handler.
    * @param handlerClass the handler class type, or {@code null} if the spec is {@code null}.
    */
-  BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec, @Nullable Class<?> handlerClass);
+  BasicHttpServiceContext create(@Nullable HttpServiceHandlerSpecification spec,
+      @Nullable Class<?> handlerClass);
 }

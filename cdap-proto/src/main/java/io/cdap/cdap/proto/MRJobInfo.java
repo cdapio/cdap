@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Simplified (filtered) representation of a MapReduce Job.
  */
 public class MRJobInfo {
+
   @Nullable
   private String state;
   private Long startTime;
@@ -39,7 +40,7 @@ public class MRJobInfo {
   private final boolean complete;
 
   public MRJobInfo(Float mapProcess, Float reduceProgress, Map<String, Long> counters,
-                   List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks, boolean complete) {
+      List<MRTaskInfo> mapTasks, List<MRTaskInfo> reduceTasks, boolean complete) {
     this.mapProgress = mapProcess;
     this.reduceProgress = reduceProgress;
     this.counters = counters;

@@ -32,7 +32,7 @@ public class SystemApplication {
   private final JsonObject config;
 
   public SystemApplication(String namespace, String applicationName,
-                           ArtifactSummary artifact, @Nullable JsonObject config) {
+      ArtifactSummary artifact, @Nullable JsonObject config) {
     this.namespace = namespace;
     this.name = applicationName;
     this.artifact = artifact;
@@ -77,10 +77,10 @@ public class SystemApplication {
       return false;
     }
     SystemApplication otherApplication = (SystemApplication) other;
-    return Objects.equals(namespace, otherApplication.namespace) &&
-      Objects.equals(name, otherApplication.name) &&
-      Objects.equals(artifact, otherApplication.artifact) &&
-      Objects.equals(config, otherApplication.config);
+    return Objects.equals(namespace, otherApplication.namespace)
+        && Objects.equals(name, otherApplication.name)
+        && Objects.equals(artifact, otherApplication.artifact)
+        && Objects.equals(config, otherApplication.config);
   }
 
   @Override

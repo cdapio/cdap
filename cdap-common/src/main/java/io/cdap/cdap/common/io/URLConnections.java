@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
  * Utility class for {@link URLConnection}.
  */
 public class URLConnections {
+
   private static final Logger LOG = LoggerFactory.getLogger(URLConnections.class);
 
   /**

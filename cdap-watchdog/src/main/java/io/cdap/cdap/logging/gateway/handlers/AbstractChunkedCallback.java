@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * LogReader Callback class that uses {@link ChunkResponder} to send logs back in chunks.
  */
 public abstract class AbstractChunkedCallback implements Callback {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractChunkedCallback.class);
 
   private final AtomicBoolean initialized = new AtomicBoolean();

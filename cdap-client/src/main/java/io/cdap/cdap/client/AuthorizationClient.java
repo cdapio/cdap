@@ -58,13 +58,15 @@ import javax.inject.Inject;
 public class AuthorizationClient implements AccessController {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapterFactory(new PermissionAdapterFactory())
-    .create();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapterFactory(new PermissionAdapterFactory())
+      .create();
   public static final String AUTHORIZATION_BASE = "security/authorization/";
   private static final TypeToken<Set<GrantedPermission>> TYPE_OF_PRIVILEGE_SET =
-    new TypeToken<Set<GrantedPermission>>() { };
-  private static final TypeToken<Set<Role>> TYPE_OF_ROLE_SET = new TypeToken<Set<Role>>() { };
+      new TypeToken<Set<GrantedPermission>>() {
+      };
+  private static final TypeToken<Set<Role>> TYPE_OF_ROLE_SET = new TypeToken<Set<Role>>() {
+  };
   private final RESTClient restClient;
   private final ClientConfig config;
 
@@ -80,14 +82,17 @@ public class AuthorizationClient implements AccessController {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Set<? extends Permission> permissions) {
-    throw new UnsupportedOperationException("Enforcement is not supported via Java Client. Please instead use the " +
-                                              "listPrivileges method to view the privileges for a principal.");
+    throw new UnsupportedOperationException(
+        "Enforcement is not supported via Java Client. Please instead use the "
+            + "listPrivileges method to view the privileges for a principal.");
   }
 
   @Override
-  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal, Permission permission) {
-    throw new UnsupportedOperationException("Enforcement is not supported via Java Client. Please instead use the " +
-                                              "listPrivileges method to view the privileges for a principal.");
+  public void enforceOnParent(EntityType entityType, EntityId parentId, Principal principal,
+      Permission permission) {
+    throw new UnsupportedOperationException(
+        "Enforcement is not supported via Java Client. Please instead use the "
+            + "listPrivileges method to view the privileges for a principal.");
   }
 
   @Override
@@ -96,8 +101,9 @@ public class AuthorizationClient implements AccessController {
   }
 
   @Override
-  public void grant(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void grant(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     GrantRequest grantRequest = new GrantRequest(authorizable, principal, permissions);
 
     URL url = resolveURL(AUTHORIZATION_BASE + "/privileges/grant");
@@ -111,15 +117,16 @@ public class AuthorizationClient implements AccessController {
   }
 
   @Override
-  public void revoke(Authorizable authorizable, Principal principal, Set<? extends Permission> permissions)
-    throws AccessException {
+  public void revoke(Authorizable authorizable, Principal principal,
+      Set<? extends Permission> permissions)
+      throws AccessException {
     revoke(new RevokeRequest(authorizable, principal, permissions));
   }
 
   @Override
   public Set<GrantedPermission> listGrants(Principal principal) throws AccessException {
     String urlStr = String.format(AUTHORIZATION_BASE + "%s/%s/privileges", principal.getType(),
-                                  principal.getName());
+        principal.getName());
     URL url = resolveURL(urlStr);
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = doExecuteRequest(request);
@@ -127,7 +134,7 @@ public class AuthorizationClient implements AccessController {
       return ObjectResponse.fromJsonBody(response, TYPE_OF_PRIVILEGE_SET, GSON).getResponseObject();
     }
     throw new AccessIOException(String.format("Cannot list privileges. Reason: %s",
-                                              response.getResponseBodyAsString()));
+        response.getResponseBodyAsString()));
   }
 
   @Override
@@ -160,7 +167,7 @@ public class AuthorizationClient implements AccessController {
   @Override
   public void addRoleToPrincipal(Role role, Principal principal) throws AccessException {
     URL url = resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
-                                       principal.getName(), role.getName()));
+        principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.put(url).build();
     executeExistingRolesRequest(role, request);
   }
@@ -168,7 +175,7 @@ public class AuthorizationClient implements AccessController {
   @Override
   public void removeRoleFromPrincipal(Role role, Principal principal) throws AccessException {
     URL url = resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles/%s", principal.getType(),
-                                       principal.getName(), role.getName()));
+        principal.getName(), role.getName()));
     HttpRequest request = HttpRequest.delete(url).build();
     executeExistingRolesRequest(role, request);
   }
@@ -181,14 +188,16 @@ public class AuthorizationClient implements AccessController {
 
   private Set<Role> listRolesHelper(@Nullable Principal principal) throws AccessException {
     URL url = principal == null ? resolveURL(AUTHORIZATION_BASE + "roles") :
-      resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles", principal.getType(), principal.getName()));
+        resolveURL(String.format(AUTHORIZATION_BASE + "%s/%s/roles", principal.getType(),
+            principal.getName()));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = doExecuteRequest(request);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return ObjectResponse.fromJsonBody(response, TYPE_OF_ROLE_SET).getResponseObject();
     }
-    throw new AccessIOException(String.format("Cannot list roles. Reason: %s", response.getResponseBodyAsString()));
+    throw new AccessIOException(
+        String.format("Cannot list roles. Reason: %s", response.getResponseBodyAsString()));
   }
 
   private void executeExistingRolesRequest(Role role, HttpRequest request) throws AccessException {
@@ -207,12 +216,14 @@ public class AuthorizationClient implements AccessController {
   }
 
   private HttpResponse doExecuteRequest(HttpRequest request, int... additionalAllowedErrorCodes)
-    throws AccessException {
+      throws AccessException {
     try {
       int[] allowedErrorCodes = new int[additionalAllowedErrorCodes.length + 2];
-      System.arraycopy(additionalAllowedErrorCodes, 0, allowedErrorCodes, 0, additionalAllowedErrorCodes.length);
+      System.arraycopy(additionalAllowedErrorCodes, 0, allowedErrorCodes, 0,
+          additionalAllowedErrorCodes.length);
       allowedErrorCodes[additionalAllowedErrorCodes.length] = HttpURLConnection.HTTP_NOT_IMPLEMENTED;
-      HttpResponse response = restClient.execute(request, config.getAccessToken(), allowedErrorCodes);
+      HttpResponse response = restClient.execute(request, config.getAccessToken(),
+          allowedErrorCodes);
       if (HttpURLConnection.HTTP_NOT_IMPLEMENTED == response.getResponseCode()) {
         FeatureDisabledException.Feature feature = FeatureDisabledException.Feature.AUTHORIZATION;
         String enableConfig = Constants.Security.Authorization.ENABLED;
@@ -220,7 +231,8 @@ public class AuthorizationClient implements AccessController {
           feature = FeatureDisabledException.Feature.AUTHENTICATION;
           enableConfig = Constants.Security.ENABLED;
         }
-        throw new FeatureDisabledException(feature, FeatureDisabledException.CDAP_SITE, enableConfig, "true");
+        throw new FeatureDisabledException(feature, FeatureDisabledException.CDAP_SITE,
+            enableConfig, "true");
       }
       return response;
     } catch (IOException e) {

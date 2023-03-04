@@ -70,18 +70,18 @@ public class DefaultProgramStatusTriggerInfoTest {
     //                                      runId, ProgramStatus.COMPLETED, null,
     //                                      Collections.emptyMap());
     // String serialized = serializeToStringBase64(triggerInfo);
-    String serialized = "rO0ABXNyAFJpby5jZGFwLmNkYXAuaW50ZXJuYWwuYXBwLnJ1bnRpbW" +
-      "Uuc2NoZWR1bGUudHJpZ2dlci5EZWZhdWx0UHJvZ3JhbVN0YXR1c1RyaWdnZXJJbmZvAAAAA" +
-      "AAAAAEMAAB4cHctACZ0ZXN0RGVzZXJpYWxpemF0aW9uVmVyc2lvbmluZ05hbWVzcGFjZQAD" +
-      "QXBwfnIAIGlvLmNkYXAuY2RhcC5hcGkuYXBwLlByb2dyYW1UeXBlAAAAAAAAAAASAAB4cgA" +
-      "OamF2YS5sYW5nLkVudW0AAAAAAAAAABIAAHhwdAAIV09SS0ZMT1d3NgAOQWxsUHJvZ3JhbX" +
-      "NBcHAAJDc4ZmU1MmMxLTM5MjEtMTFlYy04Y2MxLTAwMDAwMDc3OWM0Mn5yAB5pby5jZGFwL" +
-      "mNkYXAuYXBpLlByb2dyYW1TdGF0dXMAAAAAAAAAABIAAHhxAH4AA3QACUNPTVBMRVRFRHB3" +
-      "BAAAAAB4";
+    String serialized = "rO0ABXNyAFJpby5jZGFwLmNkYXAuaW50ZXJuYWwuYXBwLnJ1bnRpbW"
+        + "Uuc2NoZWR1bGUudHJpZ2dlci5EZWZhdWx0UHJvZ3JhbVN0YXR1c1RyaWdnZXJJbmZvAAAAA"
+        + "AAAAAEMAAB4cHctACZ0ZXN0RGVzZXJpYWxpemF0aW9uVmVyc2lvbmluZ05hbWVzcGFjZQAD"
+        + "QXBwfnIAIGlvLmNkYXAuY2RhcC5hcGkuYXBwLlByb2dyYW1UeXBlAAAAAAAAAAASAAB4cgA"
+        + "OamF2YS5sYW5nLkVudW0AAAAAAAAAABIAAHhwdAAIV09SS0ZMT1d3NgAOQWxsUHJvZ3JhbX"
+        + "NBcHAAJDc4ZmU1MmMxLTM5MjEtMTFlYy04Y2MxLTAwMDAwMDc3OWM0Mn5yAB5pby5jZGFwL"
+        + "mNkYXAuYXBpLlByb2dyYW1TdGF0dXMAAAAAAAAAABIAAHhxAH4AA3QACUNPTVBMRVRFRHB3"
+        + "BAAAAAB4";
 
     // Verify that we can always deserialize.
     DefaultProgramStatusTriggerInfo deserializedTriggerInfo =
-      (DefaultProgramStatusTriggerInfo) deSerializeFromStringBase64(serialized);
+        (DefaultProgramStatusTriggerInfo) deSerializeFromStringBase64(serialized);
     Assert.assertEquals(namespace, deserializedTriggerInfo.getNamespace());
     Assert.assertEquals(AllProgramsApp.NAME, deserializedTriggerInfo.getApplicationName());
     Assert.assertEquals(ProgramType.WORKFLOW, deserializedTriggerInfo.getProgramType());

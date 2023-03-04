@@ -20,10 +20,11 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 
 /**
- * Interface for an entity which allows the transformation between an object of a given Type from a KeyValue pair.
+ * Interface for an entity which allows the transformation between an object of a given Type from a
+ * KeyValue pair.
  *
- * This interface is used when mapping records into and out of storage engines, and allows us to reuse some of the
- * logic present in our existing Batch Sources.
+ * This interface is used when mapping records into and out of storage engines, and allows us to
+ * reuse some of the logic present in our existing Batch Sources.
  *
  * @param <TYPE> The Record Type
  * @param <KEY_IN> Type for input key when building records
@@ -31,5 +32,6 @@ import io.cdap.cdap.api.dataset.lib.KeyValue;
  */
 @Beta
 public interface FromKeyValueTransform<TYPE, KEY_IN, VALUE_IN> {
+
   Transform<KeyValue<KEY_IN, VALUE_IN>, TYPE> fromKeyValue();
 }

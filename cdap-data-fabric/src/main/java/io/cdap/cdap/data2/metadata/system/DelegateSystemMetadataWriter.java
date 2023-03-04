@@ -30,8 +30,8 @@ public class DelegateSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final SystemMetadataProvider metadataProvider;
 
   public DelegateSystemMetadataWriter(MetadataServiceClient metadataServiceClient,
-                                      NamespacedEntityId entity,
-                                      SystemMetadataProvider metadataProvider) {
+      NamespacedEntityId entity,
+      SystemMetadataProvider metadataProvider) {
     super(metadataServiceClient, entity);
     this.metadataProvider = metadataProvider;
   }

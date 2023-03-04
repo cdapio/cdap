@@ -20,15 +20,17 @@ import io.cdap.cdap.api.data.batch.Output;
 import java.util.Map;
 
 /**
- * Sinks that want to employ optimization by an SQL Engine may push SQLEngine-specific outputs in addition
- * to regular ones
+ * Sinks that want to employ optimization by an SQL Engine may push SQLEngine-specific outputs in
+ * addition to regular ones
  */
 public class SQLEngineOutput extends Output {
+
   private final String stageName;
   private final String sqlEngineClassName;
   private final Map<String, String> arguments;
 
-  public SQLEngineOutput(String name, String stageName, String sqlEngineClassName, Map<String, String> arguments) {
+  public SQLEngineOutput(String name, String stageName, String sqlEngineClassName,
+      Map<String, String> arguments) {
     super(name);
     this.stageName = stageName;
     this.sqlEngineClassName = sqlEngineClassName;
@@ -36,8 +38,9 @@ public class SQLEngineOutput extends Output {
   }
 
   /**
-   * Gets the stage name for this output. This name is used to allocate metrics to the appropriate sink after the
-   * output is written into the SQL engine
+   * Gets the stage name for this output. This name is used to allocate metrics to the appropriate
+   * sink after the output is written into the SQL engine
+   *
    * @return the stage name
    */
   public String getStageName() {
@@ -46,6 +49,7 @@ public class SQLEngineOutput extends Output {
 
   /**
    * Gets the class name for the SQL engine implementation
+   *
    * @return class name for the SQL engine implementation
    */
   public String getSqlEngineClassName() {
@@ -54,6 +58,7 @@ public class SQLEngineOutput extends Output {
 
   /**
    * Get arguments used for output configuration
+   *
    * @return arguments used for output configuration
    */
   public Map<String, String> getArguments() {
@@ -62,9 +67,9 @@ public class SQLEngineOutput extends Output {
 
   @Override
   public String toString() {
-    return "SQLEngineOutput{" +
-      "name='" + getName() + '\'' +
-      ", sqlEngineClassName='" + sqlEngineClassName + '\'' +
-      "} ";
+    return "SQLEngineOutput{"
+        + "name='" + getName() + '\''
+        + ", sqlEngineClassName='" + sqlEngineClassName + '\''
+        + "} ";
   }
 }

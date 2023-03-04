@@ -66,7 +66,7 @@ public class TransactionManagerDebuggerMain {
   private static final SimpleDateFormat formatter
       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S z");
   private static final String TOOL_NAME = "tx-debugger";
-        
+
   private static final String HOST_OPTION = "host";
   private static final String PORT_OPTION = "port";
   private static final String FILENAME_OPTION = "filename";
@@ -104,7 +104,7 @@ public class TransactionManagerDebuggerMain {
   private Long txId;                  // transaction ID option
   private Integer portNumber;         // port number of the router to reach
   private String persistingFilename;  // filename where the snapshot - downloaded from a hostname -
-                                      // is to be persisted on the disk
+  // is to be persisted on the disk
   private boolean showTxids;          // show all the transaction IDs present in the snapshot
 
   private Configuration hConf;
@@ -112,7 +112,7 @@ public class TransactionManagerDebuggerMain {
 
   private final SnapshotCodecProvider codecProvider;
 
-  private TransactionManagerDebuggerMain (Configuration configuration) {
+  private TransactionManagerDebuggerMain(Configuration configuration) {
     codecProvider = new SnapshotCodecProvider(configuration);
     buildOptions();
     this.hConf = configuration;
@@ -121,24 +121,31 @@ public class TransactionManagerDebuggerMain {
   private void buildOptions() {
     options = new Options();
     options.addOption(null, HOST_OPTION, true, "To specify the hostname of the router");
-    options.addOption(null, FILENAME_OPTION, true, "To specify a file to load a snapshot from in view mode. " +
-                                                   "If the host option is specified, filename will be ignored");
-    options.addOption(null, SAVE_OPTION, true, "To specify where the snapshot downloaded on hostname --host " +
-                                               "should be persisted on your disk when using the view mode");
-    options.addOption(null, IDS_OPTION, false, "To view all the transaction IDs contained in the " +
-                                               "snapshot when using the view mode");
-    options.addOption(null, TRANSACTION_OPTION, true, "To specify a transaction ID. Mandatory in invalidate mode, " +
-                                                      "optional in view mode");
-    options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port " +
-                                               Constants.Router.DEFAULT_ROUTER_PORT);
+    options.addOption(null, FILENAME_OPTION, true,
+        "To specify a file to load a snapshot from in view mode. "
+            + "If the host option is specified, filename will be ignored");
+    options.addOption(null, SAVE_OPTION, true,
+        "To specify where the snapshot downloaded on hostname --host "
+            + "should be persisted on your disk when using the view mode");
+    options.addOption(null, IDS_OPTION, false, "To view all the transaction IDs contained in the "
+        + "snapshot when using the view mode");
+    options.addOption(null, TRANSACTION_OPTION, true,
+        "To specify a transaction ID. Mandatory in invalidate mode, "
+            + "optional in view mode");
+    options.addOption(null, PORT_OPTION, true,
+        "To specify the port to use. The default value is --port "
+            + Constants.Router.DEFAULT_ROUTER_PORT);
     options.addOption(null, HELP_OPTION, false, "To print this message");
-    options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure connections");
-    options.addOption(null, TOKEN_FILE_OPTION, true, "Alternative to --token, to specify a file that contains " +
-                                                      "the access token for a secure connection");
+    options.addOption(null, TOKEN_OPTION, true,
+        "To specify the access token for secure connections");
+    options.addOption(null, TOKEN_FILE_OPTION, true,
+        "Alternative to --token, to specify a file that contains "
+            + "the access token for a secure connection");
   }
 
   /**
    * Parse the arguments from the command line and execute the different modes.
+   *
    * @param args command line arguments
    * @param conf default configuration
    * @return true if the arguments were parsed successfully and comply with the expected usage
@@ -157,12 +164,18 @@ public class TransactionManagerDebuggerMain {
       existingFilename = line.getOptionValue(FILENAME_OPTION);
       persistingFilename = line.hasOption(SAVE_OPTION) ? line.getOptionValue(SAVE_OPTION) : null;
       showTxids = line.hasOption(IDS_OPTION);
-      txId = line.hasOption(TRANSACTION_OPTION) ? Long.valueOf(line.getOptionValue(TRANSACTION_OPTION)) : null;
-      accessToken = line.hasOption(TOKEN_OPTION) ? line.getOptionValue(TOKEN_OPTION).replaceAll("(\r|\n)", "") : null;
-      tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
-        : null;
+      txId =
+          line.hasOption(TRANSACTION_OPTION) ? Long.valueOf(line.getOptionValue(TRANSACTION_OPTION))
+              : null;
+      accessToken =
+          line.hasOption(TOKEN_OPTION) ? line.getOptionValue(TOKEN_OPTION).replaceAll("(\r|\n)", "")
+              : null;
+      tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION)
+          .replaceAll("(\r|\n)", "")
+          : null;
       portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                   conf.getInt(Constants.Router.ROUTER_PORT, Integer.parseInt(Constants.Router.DEFAULT_ROUTER_PORT));
+          conf.getInt(Constants.Router.ROUTER_PORT,
+              Integer.parseInt(Constants.Router.DEFAULT_ROUTER_PORT));
 
       // if both tokenfile and accessToken are given, just use the access token
       if (tokenFile != null) {
@@ -176,8 +189,8 @@ public class TransactionManagerDebuggerMain {
       switch (this.mode) {
         case VIEW:
           if (!line.hasOption(HOST_OPTION) && !line.hasOption(FILENAME_OPTION)) {
-            usage("Either specify a hostname to download a new snapshot, " +
-                  "or a filename of an existing snapshot.");
+            usage("Either specify a hostname to download a new snapshot, "
+                + "or a filename of an existing snapshot.");
             return false;
           }
           // Execute mode
@@ -229,11 +242,11 @@ public class TransactionManagerDebuggerMain {
     } else {
       pw = new PrintWriter(System.out);
     }
-    
+
     String toolName = "cdap" + (OSDetector.isWindows() ? ".bat " : " ") + TOOL_NAME;
-    pw.println("Usage:" +
-        "\n\t " + toolName + " view [ <option> ... ]" +
-        "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
+    pw.println("Usage:"
+        + "\n\t " + toolName + " view [ <option> ... ]"
+        + "\n\t " + toolName + " invalidate --host <name> --transaction <id>");
     pw.println("\nOptions:\n");
     HelpFormatter formatter = new HelpFormatter();
     formatter.printOptions(pw, 100, options, 0, 10);
@@ -250,9 +263,11 @@ public class TransactionManagerDebuggerMain {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
         accessToken = bufferedReader.readLine();
       } catch (FileNotFoundException e) {
-        System.out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
+        System.out.println(
+            "Could not find access token file: " + tokenFile + "\nNo access token will be used");
       } catch (IOException e) {
-        System.out.println("Could not read access token file: " + tokenFile + "\nNo access token will be used");
+        System.out.println(
+            "Could not read access token file: " + tokenFile + "\nNo access token will be used");
       }
     }
   }
@@ -283,22 +298,24 @@ public class TransactionManagerDebuggerMain {
     URL url;
     HttpURLConnection connection = null;
     try {
-      url = new URL("http://" + hostname + ":" + portNumber + "/v3/transactions/" + txId + "/invalidate");
+      url = new URL(
+          "http://" + hostname + ":" + portNumber + "/v3/transactions/" + txId + "/invalidate");
       connection = (HttpURLConnection) url.openConnection();
       connection.setRequestMethod("POST");
       if (accessToken != null) {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
       }
 
-      System.out.println("About to invalidate transaction " +
-                          txId + " on CDAP running at " + hostname);
+      System.out.println("About to invalidate transaction "
+          + txId + " on CDAP running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction successfully invalidated.");
       } else if (responseCode == 400) {
         System.out.println("Could not invalidate transaction: " + txId + " is not a valid tx id");
       } else if (responseCode == 409) {
-        System.out.println("Could not invalidate transaction " + txId + ": transaction is not in progress.");
+        System.out.println(
+            "Could not invalidate transaction " + txId + ": transaction is not in progress.");
       } else if (responseCode == 401) {
         readUnauthorizedError(connection);
       } else {
@@ -324,7 +341,8 @@ public class TransactionManagerDebuggerMain {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
       }
 
-      System.out.println("About to reset the CDAP transaction manager state running at " + hostname);
+      System.out.println(
+          "About to reset the CDAP transaction manager state running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction manager state reset successfully.");
@@ -341,8 +359,11 @@ public class TransactionManagerDebuggerMain {
       }
     }
   }
+
   /**
-   * Look for a transaction ID in a snapshot of the transaction manager, and give all the information possible.
+   * Look for a transaction ID in a snapshot of the transaction manager, and give all the
+   * information possible.
+   *
    * @param snapshot snapshot of the transaction manager
    */
   private void searchTransactionID(TransactionSnapshot snapshot) {
@@ -351,12 +372,13 @@ public class TransactionManagerDebuggerMain {
     TransactionManager.InProgressTx txInfo = snapshot.getInProgress().get(txId);
     if (txInfo != null) {
       System.out.println("Transaction found in In-progress transactions:");
-      System.out.println("\t" + txIdToString(txId) + " - " +
-          (txInfo.isLongRunning() ? "Long" : "Short"));
+      System.out.println("\t" + txIdToString(txId) + " - "
+          + (txInfo.isLongRunning() ? "Long" : "Short"));
       if (!txInfo.isLongRunning()) {
         System.out.println("\tExpiring at: " + formatter.format(new Date(txInfo.getExpiration())));
       }
-      System.out.println("\tVisibility upper bound: " + txIdToString(txInfo.getVisibilityUpperBound()));
+      System.out.println(
+          "\tVisibility upper bound: " + txIdToString(txInfo.getVisibilityUpperBound()));
       System.out.println("\tCheckpoints: " + txInfo.getCheckpointWritePointers());
     }
 
@@ -384,6 +406,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Retrieve a persisted snapshot taken in the past.
+   *
    * @return the decoded transaction manager snapshot
    */
   private TransactionSnapshot retrieveSnapshot() {
@@ -404,6 +427,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Take a snapshot from the CDAP transaction manager and retrieve it.
+   *
    * @return the transaction manager snapshot just taken
    */
   private TransactionSnapshot takeSnapshot() {
@@ -416,8 +440,8 @@ public class TransactionManagerDebuggerMain {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
       }
 
-      System.out.println("About to take a snapshot of the transaction manager at " +
-                         url.toURI() + ", timestamp is " + System.currentTimeMillis() + " ms");
+      System.out.println("About to take a snapshot of the transaction manager at "
+          + url.toURI() + ", timestamp is " + System.currentTimeMillis() + " ms");
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         // Retrieve and deserialize the snapshot
@@ -425,8 +449,8 @@ public class TransactionManagerDebuggerMain {
         try (InputStream input = connection.getInputStream()) {
           snapshot = codecProvider.decode(input);
         }
-        System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is " +
-                           snapshot.getTimestamp() + " ms");
+        System.out.println("Snapshot taken and retrieved properly, snapshot timestamp is "
+            + snapshot.getTimestamp() + " ms");
 
         if (persistingFilename != null) {
           // Persist the snapshot on disk for future queries and debugging
@@ -435,10 +459,11 @@ public class TransactionManagerDebuggerMain {
             // todo use pipes here to avoid having everyhting in memory twice
             codecProvider.encode(out, snapshot);
           }
-          System.out.println("Snapshot persisted on your disk as " + outputFile.getAbsolutePath() +
-                             " for future queries.");
+          System.out.println("Snapshot persisted on your disk as " + outputFile.getAbsolutePath()
+              + " for future queries.");
         } else {
-          System.out.println("Persist option not activated - Snapshot won't be persisted on your disk.");
+          System.out.println(
+              "Persist option not activated - Snapshot won't be persisted on your disk.");
         }
         return snapshot;
       } else if (responseCode == 401) {
@@ -459,12 +484,14 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Print basic information and statistics about a transaction manager snapshot.
+   *
    * @param snapshot transaction manager snapshot
    */
   private void printSnapshotInfo(TransactionSnapshot snapshot) {
     System.out.println("==============================");
     System.out.println("= Snapshot basic information =");
-    System.out.println("Snapshot timestamp is " + formatter.format(new Date(snapshot.getTimestamp())));
+    System.out.println(
+        "Snapshot timestamp is " + formatter.format(new Date(snapshot.getTimestamp())));
     System.out.println("Current WritePtr " + txIdToString(snapshot.getWritePointer()));
     System.out.println("Current ReadPtr " + txIdToString(snapshot.getReadPointer()));
 
@@ -476,6 +503,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Print basic information and statistics about invalid transactions.
+   *
    * @param invalids collection of invalid transaction IDs
    */
   private void printInvalidInfo(Collection<Long> invalids) {
@@ -485,7 +513,7 @@ public class TransactionManagerDebuggerMain {
 
     long oldest = 0;
     long avgAge = 0;
-    for (long tx: invalids) {
+    for (long tx : invalids) {
       // Gather some statistics about invalid transactions
       avgAge += tx / TxConstants.MAX_TX_PER_MS;
       if (oldest == 0) {
@@ -503,6 +531,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Print basic information and statistics about committed/committing transactions.
+   *
    * @param changeSets transaction IDs associated to their changes
    * @param committed true if committed change sets, false if committing change sets
    */
@@ -520,7 +549,7 @@ public class TransactionManagerDebuggerMain {
     // map of sizes with Size -> number of changesets with that size
     Map<Integer, Integer> sizes = new HashMap<>();
     Map.Entry<Long, Set<ChangeId>> oldest = null,
-                                   biggest = null;
+        biggest = null;
     for (Map.Entry<Long, Set<ChangeId>> tx : changeSets.entrySet()) {
       if (oldest == null || tx.getKey() < oldest.getKey()) {
         oldest = tx;
@@ -554,6 +583,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Print basic information and statistics about in-progress transactions.
+   *
    * @param inProgress in progress transaction IDs mapped to information about those
    */
   private void printInProgressInfo(Map<Long, TransactionManager.InProgressTx> inProgress) {
@@ -585,33 +615,37 @@ public class TransactionManagerDebuggerMain {
         // Print some information about long transactions
         System.out.println("=====");
         System.out.println("Number of long transactions: " + longTxCount);
-        System.out.println("Average age of long transactions: " + formatter.format(new Date(avgLongAge / longTxCount)));
-        System.out.println("Oldest long transaction:" +
-                           "\n\tWritePtr " + txIdToString(oldestLong.getKey()) +
-                           "\n\tVisibility upper bound: " +
-                           txIdToString(oldestLong.getValue().getVisibilityUpperBound()) +
-                           "\n\tCheckpoints: " +
-                           oldestLong.getValue().getCheckpointWritePointers());
+        System.out.println("Average age of long transactions: " + formatter.format(
+            new Date(avgLongAge / longTxCount)));
+        System.out.println("Oldest long transaction:"
+            + "\n\tWritePtr " + txIdToString(oldestLong.getKey())
+            + "\n\tVisibility upper bound: "
+            + txIdToString(oldestLong.getValue().getVisibilityUpperBound())
+            + "\n\tCheckpoints: "
+            + oldestLong.getValue().getCheckpointWritePointers());
       }
       if (inProgress.size() - longTxCount > 0) {
         // Print some information about short transactions
         System.out.println("=====");
         System.out.println("Number of short transactions: " + (inProgress.size() - longTxCount));
-        System.out.println("Average age of short transactions: " +
-            formatter.format(new Date(avgShortAge / (inProgress.size() - longTxCount))));
-        System.out.println("Oldest short transaction:" +
-                           "\n\tWritePtr " + txIdToString(oldestShort.getKey()) +
-                           "\n\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())) +
-                           "\n\tVisibility upper bound: " +
-                           txIdToString(oldestShort.getValue().getVisibilityUpperBound()) +
-                           "\n\tCheckpoints: " +
-                           oldestShort.getValue().getCheckpointWritePointers());
+        System.out.println("Average age of short transactions: "
+            + formatter.format(new Date(avgShortAge / (inProgress.size() - longTxCount))));
+        System.out.println("Oldest short transaction:"
+            + "\n\tWritePtr " + txIdToString(oldestShort.getKey())
+            + "\n\tExpiring at: " + formatter.format(
+            new Date(oldestShort.getValue().getExpiration()))
+
+            + "\n\tVisibility upper bound: "
+            + txIdToString(oldestShort.getValue().getVisibilityUpperBound())
+            + "\n\tCheckpoints: "
+            + oldestShort.getValue().getCheckpointWritePointers());
       }
     }
   }
 
   /**
    * Print all the transaction IDs found in the transaction manager snapshot.
+   *
    * @param snapshot transaction manager snapshot
    */
   private void printTxIds(TransactionSnapshot snapshot) {
@@ -619,9 +653,10 @@ public class TransactionManagerDebuggerMain {
     System.out.println("======== All transaction Ids =========");
 
     System.out.println("=== In progress transactions ===");
-    for (Map.Entry<Long, TransactionManager.InProgressTx> tx : snapshot.getInProgress().entrySet()) {
-      System.out.println(txIdToString(tx.getKey()) + " - " +
-          (tx.getValue().isLongRunning() ? "Long" : "Short"));
+    for (Map.Entry<Long, TransactionManager.InProgressTx> tx : snapshot.getInProgress()
+        .entrySet()) {
+      System.out.println(txIdToString(tx.getKey()) + " - "
+          + (tx.getValue().isLongRunning() ? "Long" : "Short"));
     }
 
     System.out.println("=== Invalid transactions ===");
@@ -642,12 +677,14 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Utility method to convert a transaction ID to its string representation.
+   *
    * @param id transaction ID to convert.
    * @return string representation of a transaction ID.
    */
   private String txIdToString(long id) {
     Date date = new Date(id / TxConstants.MAX_TX_PER_MS);
-    return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
+    return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id
+        % TxConstants.MAX_TX_PER_MS) + "]";
   }
 
   private boolean execute(String[] args) {
@@ -666,6 +703,7 @@ public class TransactionManagerDebuggerMain {
 
   /**
    * Prints the error response from the connection
+   *
    * @param connection the connection to read the response from
    */
   private void readUnauthorizedError(HttpURLConnection connection) {
@@ -690,6 +728,7 @@ public class TransactionManagerDebuggerMain {
    * Error Description from HTTPResponse
    */
   private class ErrorMessage {
+
     @SerializedName("error_description")
     private String errorDescription;
 

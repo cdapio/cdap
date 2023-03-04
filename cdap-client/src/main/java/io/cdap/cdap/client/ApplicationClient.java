@@ -96,30 +96,36 @@ public class ApplicationClient {
    * @param namespace the namespace to list applications from
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ApplicationRecord> list(NamespaceId namespace)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(namespace, "apps?latestOnly=false"),
-                                               config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+        config.resolveNamespacedURLV3(namespace, "apps?latestOnly=false"),
+        config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
   }
 
   /**
-   * Lists all applications currently deployed, optionally filtering to only include applications that use the
-   * specified artifact name and version.
+   * Lists all applications currently deployed, optionally filtering to only include applications
+   * that use the specified artifact name and version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done.
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be
+   *     done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will
+   *     be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ApplicationRecord> list(
-    NamespaceId namespace, @Nullable String artifactName,
-    @Nullable String artifactVersion) throws IOException, UnauthenticatedException, UnauthorizedException {
+      NamespaceId namespace, @Nullable String artifactName,
+      @Nullable String artifactVersion)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     Set<String> names = new HashSet<>();
     if (artifactName != null) {
       names.add(artifactName);
@@ -128,19 +134,22 @@ public class ApplicationClient {
   }
 
   /**
-   * Lists all applications currently deployed, optionally filtering to only include applications that use one of
-   * the specified artifact names and the specified artifact version.
+   * Lists all applications currently deployed, optionally filtering to only include applications
+   * that use one of the specified artifact names and the specified artifact version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done.
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be
+   *     done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will
+   *     be done.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ApplicationRecord> list(
-    NamespaceId namespace, Set<String> artifactNames, @Nullable String artifactVersion)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      NamespaceId namespace, Set<String> artifactNames, @Nullable String artifactVersion)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
     if (artifactNames.isEmpty() && artifactVersion == null) {
       return list(namespace);
     }
@@ -153,37 +162,41 @@ public class ApplicationClient {
     if (artifactVersion != null) {
       params.add("artifactVersion=" + artifactVersion);
     }
-    
+
     String path = String.format("apps?%s", String.join("&", params));
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(namespace, path),
-                                               config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+        config.resolveNamespacedURLV3(namespace, path),
+        config.getAccessToken());
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
   }
 
   /**
-   * Lists all applications currently deployed, optionally filtering to only include applications that use one of
-   * the specified artifact names and the specified artifact version.
+   * Lists all applications currently deployed, optionally filtering to only include applications
+   * that use one of the specified artifact names and the specified artifact version.
    *
    * @param namespace the namespace to list application versions from
    * @param appName the application name to list versions for
    * @return list of {@link String} application versions.
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<String> listAppVersions(NamespaceId namespace, String appName)
-    throws IOException, UnauthenticatedException, UnauthorizedException, ApplicationNotFoundException {
+      throws IOException, UnauthenticatedException, UnauthorizedException, ApplicationNotFoundException {
     String path = String.format("apps/%s/versions", appName);
     URL url = config.resolveNamespacedURLV3(namespace, path);
     HttpRequest request = HttpRequest.get(url).build();
 
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(namespace.app(appName));
     }
 
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<String>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<String>>() {
+    }).getResponseObject();
   }
 
   /**
@@ -193,10 +206,11 @@ public class ApplicationClient {
    * @return details about the specified application
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public ApplicationDetail get(ApplicationId appId)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     return get(appId, false);
   }
@@ -209,16 +223,17 @@ public class ApplicationClient {
    * @return details about the specified application
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public ApplicationDetail get(ApplicationId appId, boolean latestOnly)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s?latestOnly=%s", appId.getApplication(), latestOnly);
     HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(appId.getParent(), path),
-                                               config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        config.resolveNamespacedURLV3(appId.getParent(), path),
+        config.getAccessToken(),
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -232,21 +247,23 @@ public class ApplicationClient {
    * @return list of plugins in the application
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<PluginInstanceDetail> getPlugins(ApplicationId appId)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     HttpResponse response = restClient.execute(HttpMethod.GET,
-                                               config.resolveNamespacedURLV3(
-                                                 appId.getParent(),
-                                                 "apps/" + appId.getApplication() + "/plugins"),
-                                               config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        config.resolveNamespacedURLV3(
+            appId.getParent(),
+            "apps/" + appId.getApplication() + "/plugins"),
+        config.getAccessToken(),
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<PluginInstanceDetail>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<PluginInstanceDetail>>() {
+    }).getResponseObject();
   }
 
   /**
@@ -255,10 +272,11 @@ public class ApplicationClient {
    * @param app the application to delete
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void upgradeApplication(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     upgradeApplication(app, Collections.emptySet(), false);
   }
 
@@ -270,23 +288,26 @@ public class ApplicationClient {
    * @param allowSnapshot should consider snapshot artifacts or not.
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
-  public void upgradeApplication(ApplicationId app, Set<String> artifactScopes, boolean allowSnapshot)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+  public void upgradeApplication(ApplicationId app, Set<String> artifactScopes,
+      boolean allowSnapshot)
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("apps/%s/upgrade?allowSnapshot=%s", app.getApplication(),
-                                Boolean.toString(allowSnapshot));
+        Boolean.toString(allowSnapshot));
 
     if (!artifactScopes.isEmpty()) {
-      for (String scope: artifactScopes) {
+      for (String scope : artifactScopes) {
         path = path + String.format("&artifactScope=%s", scope);
       }
     }
 
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
-    HttpRequest.Builder request  = HttpRequest.post(config.resolveNamespacedURLV3(app.getParent(), path)).withBody("");
+    HttpRequest.Builder request = HttpRequest.post(
+        config.resolveNamespacedURLV3(app.getParent(), path)).withBody("");
     HttpResponse response = restClient.execute(request.build(),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
@@ -299,14 +320,15 @@ public class ApplicationClient {
    * @param app the application version to delete
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void delete(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, AccessException {
+      throws ApplicationNotFoundException, IOException, AccessException {
     String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                               config.resolveNamespacedURLV3(app.getParent(), path),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+        config.resolveNamespacedURLV3(app.getParent(), path),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
@@ -318,14 +340,15 @@ public class ApplicationClient {
    * @param app the application to delete
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deleteApp(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, AccessException {
+      throws ApplicationNotFoundException, IOException, AccessException {
     String path = String.format("apps/%s", app.getApplication());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
-                                               config.resolveNamespacedURLV3(app.getParent(), path),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+        config.resolveNamespacedURLV3(app.getParent(), path),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
@@ -335,10 +358,12 @@ public class ApplicationClient {
    * Deletes all applications in a namespace.
    *
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deleteAll(NamespaceId namespace) throws IOException, AccessException {
-    restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3(namespace, "apps"), config.getAccessToken());
+    restClient.execute(HttpMethod.DELETE, config.resolveNamespacedURLV3(namespace, "apps"),
+        config.getAccessToken());
   }
 
   /**
@@ -347,13 +372,14 @@ public class ApplicationClient {
    * @param app the application to check
    * @return true if the application exists
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public boolean exists(ApplicationId app) throws IOException, AccessException {
     HttpResponse response = restClient.execute(
-      HttpMethod.GET,
-      config.resolveNamespacedURLV3(app.getParent(), "apps/" + app.getApplication()),
-      config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+        HttpMethod.GET,
+        config.resolveNamespacedURLV3(app.getParent(), "apps/" + app.getApplication()),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
 
@@ -364,12 +390,14 @@ public class ApplicationClient {
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the application was not yet deployed before {@code timeout} milliseconds
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
+   * @throws TimeoutException if the application was not yet deployed before {@code timeout}
+   *     milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForDeployed(final ApplicationId app, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+      throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
@@ -379,7 +407,8 @@ public class ApplicationClient {
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthenticatedException.class);
+      Throwables.propagateIfPossible(e.getCause(), IOException.class,
+          UnauthenticatedException.class);
     }
   }
 
@@ -391,12 +420,14 @@ public class ApplicationClient {
    * @param timeout time to wait before timing out
    * @param timeoutUnit time unit of timeout
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   * @throws TimeoutException if the application was not yet deleted before {@code timeout} milliseconds
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
+   * @throws TimeoutException if the application was not yet deleted before {@code timeout}
+   *     milliseconds
    * @throws InterruptedException if interrupted while waiting
    */
   public void waitForDeleted(final ApplicationId app, long timeout, TimeUnit timeoutUnit)
-    throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
+      throws IOException, UnauthenticatedException, TimeoutException, InterruptedException {
 
     try {
       Tasks.waitFor(false, new Callable<Boolean>() {
@@ -406,7 +437,8 @@ public class ApplicationClient {
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnauthenticatedException.class);
+      Throwables.propagateIfPossible(e.getCause(), IOException.class,
+          UnauthenticatedException.class);
     }
   }
 
@@ -416,7 +448,8 @@ public class ApplicationClient {
    * @param jarFile JAR file of the application to deploy
    * @throws IOException if a network error occurred
    */
-  public void deploy(NamespaceId namespace, File jarFile) throws IOException, UnauthenticatedException {
+  public void deploy(NamespaceId namespace, File jarFile)
+      throws IOException, UnauthenticatedException {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
     deployApp(namespace, jarFile, headers);
   }
@@ -428,10 +461,11 @@ public class ApplicationClient {
    * @param jarFile JAR file of the application to deploy
    * @param appConfig serialized application configuration
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deploy(NamespaceId namespace, File jarFile,
-                     @Nullable String appConfig) throws IOException, UnauthenticatedException {
+      @Nullable String appConfig) throws IOException, UnauthenticatedException {
     deploy(namespace, jarFile, appConfig, null);
   }
 
@@ -443,11 +477,12 @@ public class ApplicationClient {
    * @param appConfig serialized application configuration
    * @param ownerPrincipal the principal of application owner
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deploy(NamespaceId namespace, File jarFile,
-                     @Nullable String appConfig,
-                     @Nullable String ownerPrincipal) throws IOException, UnauthenticatedException {
+      @Nullable String appConfig,
+      @Nullable String ownerPrincipal) throws IOException, UnauthenticatedException {
     Map<String, String> headers = new HashMap<>();
     headers.put("X-Archive-Name", jarFile.getName());
     if (appConfig != null) {
@@ -466,10 +501,11 @@ public class ApplicationClient {
    * @param jarFile JAR file of the application to deploy
    * @param appConfig application configuration object
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public void deploy(NamespaceId namespace, File jarFile,
-                     Config appConfig) throws IOException, UnauthenticatedException {
+      Config appConfig) throws IOException, UnauthenticatedException {
     deploy(namespace, jarFile, GSON.toJson(appConfig));
   }
 
@@ -477,18 +513,21 @@ public class ApplicationClient {
    * Creates an application with a version using an existing artifact.
    *
    * @param appId the id of the application to add
-   * @param createRequest the request body, which contains the artifact to use and any application config
+   * @param createRequest the request body, which contains the artifact to use and any
+   *     application config
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
-  public void deploy(ApplicationId appId, AppRequest<?> createRequest) throws IOException, UnauthenticatedException {
+  public void deploy(ApplicationId appId, AppRequest<?> createRequest)
+      throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(new NamespaceId(appId.getNamespace()),
-                                            String.format("apps/%s/versions/%s/create",
-                                                          appId.getApplication(), appId.getVersion()));
+        String.format("apps/%s/versions/%s/create",
+            appId.getApplication(), appId.getVersion()));
     HttpRequest request = HttpRequest.post(url)
-      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-      .withBody(GSON.toJson(createRequest))
-      .build();
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+        .withBody(GSON.toJson(createRequest))
+        .build();
     restClient.upload(request, config.getAccessToken());
   }
 
@@ -498,36 +537,38 @@ public class ApplicationClient {
    * @param appId the id of the application to update
    * @param updateRequest the request to update the application with
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    * @throws NotFoundException if the app or requested artifact could not be found
    * @throws BadRequestException if the request is invalid
    */
   public void update(ApplicationId appId, AppRequest<?> updateRequest)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
 
-    URL url = config.resolveNamespacedURLV3(appId.getParent(), String.format("apps/%s/update", appId.getApplication()));
+    URL url = config.resolveNamespacedURLV3(appId.getParent(),
+        String.format("apps/%s/update", appId.getApplication()));
     HttpRequest request = HttpRequest.post(url)
-      .withBody(GSON.toJson(updateRequest))
-      .build();
+        .withBody(GSON.toJson(updateRequest))
+        .build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
+        HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("app or app artifact");
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Bad Request. Reason: %s",
-                                                  response.getResponseBodyAsString()));
+          response.getResponseBodyAsString()));
     }
   }
 
   private void deployApp(NamespaceId namespace, File jarFile, Map<String, String> headers)
-    throws IOException, UnauthenticatedException {
+      throws IOException, UnauthenticatedException {
     URL url = config.resolveNamespacedURLV3(namespace, "apps");
     HttpRequest request = HttpRequest.post(url)
-      .addHeaders(headers)
-      .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
-      .withBody(jarFile).build();
+        .addHeaders(headers)
+        .addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM)
+        .withBody(jarFile).build();
     restClient.upload(request, config.getAccessToken());
   }
 
@@ -537,10 +578,11 @@ public class ApplicationClient {
    * @param programType type of the programs to list
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ProgramRecord> listAllPrograms(NamespaceId namespace, ProgramType programType)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
 
@@ -549,7 +591,8 @@ public class ApplicationClient {
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, config.getAccessToken()), new TypeToken<List<ProgramRecord>>() { });
+        restClient.execute(request, config.getAccessToken()), new TypeToken<List<ProgramRecord>>() {
+        });
 
     return response.getResponseObject();
   }
@@ -559,10 +602,11 @@ public class ApplicationClient {
    *
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public Map<ProgramType, List<ProgramRecord>> listAllPrograms(NamespaceId namespace)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
@@ -583,10 +627,11 @@ public class ApplicationClient {
    * @return list of {@link ProgramRecord}s
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ProgramRecord> listPrograms(ApplicationId app, ProgramType programType)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Preconditions.checkArgument(programType.isListable());
 
@@ -606,10 +651,11 @@ public class ApplicationClient {
    * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public Map<ProgramType, List<ProgramRecord>> listProgramsByType(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     Map<ProgramType, List<ProgramRecord>> result = Maps.newHashMap();
     for (ProgramType type : ProgramType.values()) {
@@ -628,21 +674,24 @@ public class ApplicationClient {
    * @return List of all {@link ProgramRecord}s
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<ProgramRecord> listPrograms(ApplicationId app)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
 
     String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
     URL url = config.resolveNamespacedURLV3(app.getParent(), path);
     HttpRequest request = HttpRequest.get(url).build();
 
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
 
-    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();
+    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject()
+        .getPrograms();
   }
 
   /**
@@ -652,21 +701,23 @@ public class ApplicationClient {
    * @param scheduleDetail the schedule to be added
    */
   public void addSchedule(ApplicationId app, ScheduleDetail scheduleDetail)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException,
-    UnauthorizedException, BadRequestException {
-    String path = String.format("apps/%s/versions/%s/schedules/%s", app.getApplication(), app.getVersion(),
-                                scheduleDetail.getName());
-    HttpResponse response = restClient.execute(HttpMethod.PUT, config.resolveNamespacedURLV3(app.getParent(), path),
-                                               GSON.toJson(scheduleDetail), ImmutableMap.<String, String>of(),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_BAD_REQUEST);
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException,
+      UnauthorizedException, BadRequestException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s", app.getApplication(),
+        app.getVersion(),
+        scheduleDetail.getName());
+    HttpResponse response = restClient.execute(HttpMethod.PUT,
+        config.resolveNamespacedURLV3(app.getParent(), path),
+        GSON.toJson(scheduleDetail), ImmutableMap.<String, String>of(),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+        HttpURLConnection.HTTP_BAD_REQUEST);
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Bad Request. Reason: %s",
-                                                  response.getResponseBodyAsString()));
+          response.getResponseBodyAsString()));
     }
   }
 
@@ -676,21 +727,21 @@ public class ApplicationClient {
    * @param scheduleId the id of the schedule to be enabled
    */
   public void enableSchedule(ScheduleId scheduleId)
-    throws ApplicationNotFoundException, IOException, UnauthenticatedException,
-    UnauthorizedException, BadRequestException {
+      throws ApplicationNotFoundException, IOException, UnauthenticatedException,
+      UnauthorizedException, BadRequestException {
     String path = String.format("apps/%s/program-type/schedules/program-id/%s/action/enable",
-                                scheduleId.getApplication(), scheduleId.getSchedule());
+        scheduleId.getApplication(), scheduleId.getSchedule());
     HttpResponse response = restClient.execute(HttpMethod.PUT,
-                                               config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path),
-                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_BAD_REQUEST);
+        config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path),
+        config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+        HttpURLConnection.HTTP_BAD_REQUEST);
 
     int responseCode = response.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(scheduleId.getParent());
     } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Bad Request. Reason: %s",
-                                                  response.getResponseBodyAsString()));
+          response.getResponseBodyAsString()));
     }
   }
 }

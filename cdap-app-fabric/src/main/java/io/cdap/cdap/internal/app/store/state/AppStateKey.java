@@ -22,13 +22,14 @@ import io.cdap.cdap.proto.id.NamespaceId;
  * Represents application state keys.
  */
 public class AppStateKey {
+
   protected final NamespaceId namespaceId;
   protected final String appName;
   protected final String stateKey;
 
   public AppStateKey(NamespaceId namespaceId,
-                     String appName,
-                     String stateKey) {
+      String appName,
+      String stateKey) {
     this.namespaceId = namespaceId;
     this.appName = appName;
     this.stateKey = stateKey;

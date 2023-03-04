@@ -32,19 +32,23 @@ import io.cdap.cdap.security.auth.UserIdentity;
 import io.cdap.cdap.security.auth.UserIdentityCodec;
 
 /**
- * Guice bindings for core security related functionality including token and key management.
- * This extends {@code PrivateModule} in order to limit which classes are exposed.
+ * Guice bindings for core security related functionality including token and key management. This
+ * extends {@code PrivateModule} in order to limit which classes are exposed.
  */
 public abstract class CoreSecurityModule extends PrivateModule {
+
   public boolean requiresZKClient() {
     return false;
   }
 
   @Override
   protected final void configure() {
-    bind(new TypeLiteral<Codec<AccessToken>>() { }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
-    bind(new TypeLiteral<Codec<UserIdentity>>() { }).to(UserIdentityCodec.class).in(Scopes.SINGLETON);
-    bind(new TypeLiteral<Codec<KeyIdentifier>>() { }).to(KeyIdentifierCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<AccessToken>>() {
+    }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<UserIdentity>>() {
+    }).to(UserIdentityCodec.class).in(Scopes.SINGLETON);
+    bind(new TypeLiteral<Codec<KeyIdentifier>>() {
+    }).to(KeyIdentifierCodec.class).in(Scopes.SINGLETON);
 
     bindKeyManager(binder());
     bind(TokenManager.class).in(Scopes.SINGLETON);
@@ -52,8 +56,10 @@ public abstract class CoreSecurityModule extends PrivateModule {
 
     expose(TokenValidator.class);
     expose(TokenManager.class);
-    expose(new TypeLiteral<Codec<AccessToken>>() { });
-    expose(new TypeLiteral<Codec<KeyIdentifier>>() { });
+    expose(new TypeLiteral<Codec<AccessToken>>() {
+    });
+    expose(new TypeLiteral<Codec<KeyIdentifier>>() {
+    });
   }
 
   protected abstract void bindKeyManager(Binder binder);

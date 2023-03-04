@@ -19,10 +19,13 @@ package io.cdap.cdap.common.io;
 import java.io.IOException;
 
 /**
- * Common interface representing a utility which knows how to serialize and deserialize a given type of object.
+ * Common interface representing a utility which knows how to serialize and deserialize a given type
+ * of object.
+ *
  * @param <T> the class type which can be serialized / deserialized.
  */
 public interface Codec<T> {
+
   /**
    * Returns the serialized form of the given object as a {@code byte[]}.
    */

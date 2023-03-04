@@ -25,13 +25,15 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Metadata about an artifact, such as what plugins are contained in the artifact, and what other artifacts can use
- * the plugins in this artifact. For example, we could have an etl-batch-lib artifact that contains
- * 20 different plugins that are meant to be used by the application contained in the etl-batch artifact.
- * In this case, the artifact meta for etl-batch-lib would contain details about each of those 20 plugins, as well
- * as information about which versions of the etl-batch artifact can use the plugins it contains.
+ * Metadata about an artifact, such as what plugins are contained in the artifact, and what other
+ * artifacts can use the plugins in this artifact. For example, we could have an etl-batch-lib
+ * artifact that contains 20 different plugins that are meant to be used by the application
+ * contained in the etl-batch artifact. In this case, the artifact meta for etl-batch-lib would
+ * contain details about each of those 20 plugins, as well as information about which versions of
+ * the etl-batch artifact can use the plugins it contains.
  */
 public class ArtifactMeta {
+
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
   private final ArtifactClasses classes;
   // can't call this 'extends' since that's a reserved keyword
@@ -46,7 +48,8 @@ public class ArtifactMeta {
     this(classes, usableBy, EMPTY_MAP);
   }
 
-  public ArtifactMeta(ArtifactClasses classes, Set<ArtifactRange> usableBy, Map<String, String> properties) {
+  public ArtifactMeta(ArtifactClasses classes, Set<ArtifactRange> usableBy,
+      Map<String, String> properties) {
     this.classes = classes;
     this.usableBy = usableBy;
     this.properties = ImmutableMap.copyOf(properties);
@@ -76,9 +79,9 @@ public class ArtifactMeta {
 
     ArtifactMeta that = (ArtifactMeta) o;
 
-    return Objects.equals(classes, that.classes) &&
-      Objects.equals(usableBy, that.usableBy) &&
-      Objects.equals(getProperties(), that.getProperties());
+    return Objects.equals(classes, that.classes)
+        && Objects.equals(usableBy, that.usableBy)
+        && Objects.equals(getProperties(), that.getProperties());
   }
 
   @Override
@@ -88,10 +91,10 @@ public class ArtifactMeta {
 
   @Override
   public String toString() {
-    return "ArtifactMeta{" +
-      "classes=" + classes +
-      ", usableBy=" + usableBy +
-      ", properties=" + getProperties() +
-      '}';
+    return "ArtifactMeta{"
+        + "classes=" + classes
+        + ", usableBy=" + usableBy
+        + ", properties=" + getProperties()
+        + '}';
   }
 }

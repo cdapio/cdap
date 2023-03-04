@@ -55,8 +55,8 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
 
   @Inject
   DefaultMetadataAdmin(MetadataStorage storage, CConfiguration cConf,
-                       AccessEnforcer accessEnforcer,
-                       AuthenticationContext authenticationContext) {
+      AccessEnforcer accessEnforcer,
+      AuthenticationContext authenticationContext) {
     super(cConf);
     this.storage = storage;
     this.accessEnforcer = accessEnforcer;
@@ -64,17 +64,22 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
-    throws InvalidMetadataException, IOException {
+  public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties,
+      MutationOptions options)
+      throws InvalidMetadataException, IOException {
     validateProperties(metadataEntity, properties);
-    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, properties)), options);
+    storage.apply(
+        new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, properties)),
+        options);
   }
 
   @Override
   public void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
-    throws InvalidMetadataException, IOException {
+      throws InvalidMetadataException, IOException {
     validateTags(metadataEntity, tags);
-    storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, tags)), options);
+    storage.apply(
+        new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, tags)),
+        options);
   }
 
   @Override
@@ -83,15 +88,18 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException {
+  public Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope)
+      throws IOException {
     return storage.read(new Read(metadataEntity, scope));
   }
 
   @Override
-  public Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
-    throws IOException {
-    Read read = kind != null ? (scope != null ? new Read(entity, scope, kind) : new Read(entity, kind))
-      : scope != null ? new Read(entity, scope) : new Read(entity);
+  public Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope,
+      @Nullable MetadataKind kind)
+      throws IOException {
+    Read read =
+        kind != null ? (scope != null ? new Read(entity, scope, kind) : new Read(entity, kind))
+            : scope != null ? new Read(entity, scope) : new Read(entity);
     return storage.read(read);
   }
 
@@ -101,15 +109,17 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity)
+      throws IOException {
     return doGetProperties(scope, metadataEntity);
   }
 
-  private Map<String, String> doGetProperties(@Nullable MetadataScope scope, MetadataEntity metadataEntity)
-    throws IOException {
+  private Map<String, String> doGetProperties(@Nullable MetadataScope scope,
+      MetadataEntity metadataEntity)
+      throws IOException {
     Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.PROPERTY);
     return metadata.getProperties().entrySet().stream().collect(Collectors.toMap(
-      entry -> entry.getKey().getName(), Map.Entry::getValue));
+        entry -> entry.getKey().getName(), Map.Entry::getValue));
   }
 
   @Override
@@ -118,43 +128,53 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity)
+      throws IOException {
     return doGetTags(scope, metadataEntity);
   }
 
-  private Set<String> doGetTags(@Nullable MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  private Set<String> doGetTags(@Nullable MetadataScope scope, MetadataEntity metadataEntity)
+      throws IOException {
     Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.TAG);
     return metadata.getTags().stream().map(ScopedName::getName).collect(Collectors.toSet());
   }
 
   @Override
-  public void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+  public void removeMetadata(MetadataEntity metadataEntity, MutationOptions options)
+      throws IOException {
     storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER), options);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
-    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.PROPERTY), options);
+  public void removeProperties(MetadataEntity metadataEntity, MutationOptions options)
+      throws IOException {
+    storage.apply(
+        new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.PROPERTY),
+        options);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options)
-    throws IOException {
+  public void removeProperties(MetadataEntity metadataEntity, Set<String> keys,
+      MutationOptions options)
+      throws IOException {
     storage.apply(new MetadataMutation.Remove(metadataEntity, keys.stream()
-      .map(key -> new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, key))
-      .collect(Collectors.toSet())), options);
+        .map(key -> new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, key))
+        .collect(Collectors.toSet())), options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
-    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.TAG), options);
+  public void removeTags(MetadataEntity metadataEntity, MutationOptions options)
+      throws IOException {
+    storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.TAG),
+        options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException {
+  public void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
+      throws IOException {
     storage.apply(new MetadataMutation.Remove(metadataEntity, tags.stream()
-      .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag))
-      .collect(Collectors.toSet())), options);
+        .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag))
+        .collect(Collectors.toSet())), options);
   }
 
 
@@ -164,7 +184,8 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException {
+  public void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options)
+      throws IOException {
     storage.batch(mutations, options);
   }
 
@@ -180,16 +201,17 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
    * @return filtered {@link SearchResponse}
    */
   private SearchResponse filterAuthorizedSearchResult(final SearchResponse response)
-    throws Exception {
+      throws Exception {
     //noinspection ConstantConditions
     return new SearchResponse(
-      response.getRequest(),
-      response.getCursor(),
-      response.getOffset(),
-      response.getLimit(),
-      response.getTotalResults(),
-      ImmutableList.copyOf(
-        AuthorizationUtil.isVisible(response.getResults(), accessEnforcer, authenticationContext.getPrincipal(),
-                                    input -> EntityId.getSelfOrParentEntityId(input.getEntity()), null)));
+        response.getRequest(),
+        response.getCursor(),
+        response.getOffset(),
+        response.getLimit(),
+        response.getTotalResults(),
+        ImmutableList.copyOf(
+            AuthorizationUtil.isVisible(response.getResults(), accessEnforcer,
+                authenticationContext.getPrincipal(),
+                input -> EntityId.getSelfOrParentEntityId(input.getEntity()), null)));
   }
 }

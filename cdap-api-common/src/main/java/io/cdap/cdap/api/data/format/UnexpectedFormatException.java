@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public class UnexpectedFormatException extends RuntimeException {
+
   public UnexpectedFormatException(String message) {
     super(message);
   }

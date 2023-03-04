@@ -97,12 +97,12 @@ public class DraftStoreRequest<T> {
       return false;
     }
     DraftStoreRequest<T> that = (DraftStoreRequest<T>) o;
-    return Objects.equals(config, that.config) &&
-      Objects.equals(previousHash, that.previousHash) &&
-      Objects.equals(name, that.name) &&
-      Objects.equals(artifact, that.artifact) &&
-      revision == that.revision &&
-      Objects.equals(parentVersion, that.parentVersion);
+    return Objects.equals(config, that.config)
+      && Objects.equals(previousHash, that.previousHash)
+      && Objects.equals(name, that.name)
+      && Objects.equals(artifact, that.artifact)
+      && revision == that.revision
+      && Objects.equals(parentVersion, that.parentVersion);
   }
 
   @Override

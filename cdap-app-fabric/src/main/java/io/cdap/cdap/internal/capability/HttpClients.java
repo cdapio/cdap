@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * Makes {@link io.cdap.common.http.HttpRequest}s, retrying on failure.
  */
 public final class HttpClients {
+
   private static final int RETRY_LIMIT = 5;
   private static final int RETRY_DELAY = 5;
 
@@ -40,11 +41,13 @@ public final class HttpClients {
 
   /**
    * Makes an {@link HttpRequest}, retries on failure.
+   *
    * @return {@link HttpResponse}
    */
   public static HttpResponse execute(HttpRequest request) throws IOException {
     return Retries.callWithRetries(() -> {
-      HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+      HttpResponse httpResponse = HttpRequests.execute(request,
+          new DefaultHttpRequestConfig(false));
 
       if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
         throw new IOException(httpResponse.getResponseBodyAsString());
@@ -54,8 +57,8 @@ public final class HttpClients {
   }
 
   /**
-   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link HttpContentConsumer} provided
-   * in the request. It retries on failure.
+   * Makes a streaming {@link HttpRequest} and consumes the response using the {@link
+   * HttpContentConsumer} provided in the request. It retries on failure.
    */
   public static void executeStreamingRequest(HttpRequest request) throws IOException {
     if (!request.hasContentConsumer()) {
@@ -63,7 +66,8 @@ public final class HttpClients {
     }
 
     Retries.callWithRetries(() -> {
-      HttpResponse httpResponse = HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+      HttpResponse httpResponse = HttpRequests.execute(request,
+          new DefaultHttpRequestConfig(false));
 
       if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
         throw new IOException(httpResponse.getResponseBodyAsString());
@@ -75,6 +79,7 @@ public final class HttpClients {
 
   /**
    * Does an HTTP GET on the given {@link URL}, retries on failure.
+   *
    * @return {@link String} response body
    */
   public static String doGetAsString(URL url) throws IOException {
@@ -84,6 +89,7 @@ public final class HttpClients {
 
   /**
    * Does an HTTP GET on the given {@link URL}, retries on failure.
+   *
    * @return {@link byte[]} response body
    */
   public static byte[] doGetAsBytes(URL url) throws IOException {

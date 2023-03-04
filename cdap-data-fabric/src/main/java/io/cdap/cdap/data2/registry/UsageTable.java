@@ -54,6 +54,7 @@ public class UsageTable {
 
   /**
    * Registers usage of a dataset by a program.
+   *
    * @param programId program
    * @param datasetInstanceId dataset
    */
@@ -68,6 +69,7 @@ public class UsageTable {
 
   /**
    * Unregisters all usage information of an application.
+   *
    * @param applicationId application
    */
   public void unregister(ApplicationId applicationId) throws IOException {
@@ -77,6 +79,7 @@ public class UsageTable {
 
   /**
    * Returns datasets used by a program.
+   *
    * @param programId program
    * @return datasets used by programId
    */
@@ -86,6 +89,7 @@ public class UsageTable {
 
   /**
    * Returns datasets used by an application.
+   *
    * @param applicationId application
    * @return datasets used by applicaionId
    */
@@ -95,20 +99,21 @@ public class UsageTable {
 
   /**
    * Returns programs using dataset.
+   *
    * @param datasetInstanceId dataset
    * @return programs using datasetInstanceId
    */
   public Set<ProgramId> getPrograms(DatasetId datasetInstanceId) throws IOException {
     Set<ProgramId> programs = new HashSet<>();
     Field<?> index = Fields.stringField(StoreDefinition.UsageStore.INDEX_FIELD,
-                                        GSON.toJson(new DatasetKey(datasetInstanceId)));
+        GSON.toJson(new DatasetKey(datasetInstanceId)));
     try (CloseableIterator<StructuredRow> iterator = table.scan(index)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         programs.add(new ProgramId(row.getString(StoreDefinition.UsageStore.NAMESPACE_FIELD),
-                                   row.getString(StoreDefinition.UsageStore.APPLICATION_FIELD),
-                                   row.getString(StoreDefinition.UsageStore.PROGRAM_TYPE_FIELD),
-                                   row.getString(StoreDefinition.UsageStore.PROGRAM_FIELD)));
+            row.getString(StoreDefinition.UsageStore.APPLICATION_FIELD),
+            row.getString(StoreDefinition.UsageStore.PROGRAM_TYPE_FIELD),
+            row.getString(StoreDefinition.UsageStore.PROGRAM_FIELD)));
       }
     }
     return programs;
@@ -116,11 +121,13 @@ public class UsageTable {
 
   private Set<DatasetId> getDatasetsFromPrefix(List<Field<?>> prefix) throws IOException {
     Set<DatasetId> datasets = new HashSet<>();
-    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(prefix), Integer.MAX_VALUE)) {
+    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(prefix),
+        Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         datasets.add(
-          GSON.fromJson(row.getString(StoreDefinition.UsageStore.DATASET_FIELD), DatasetKey.class).getDataset());
+            GSON.fromJson(row.getString(StoreDefinition.UsageStore.DATASET_FIELD), DatasetKey.class)
+                .getDataset());
       }
     }
     return datasets;
@@ -128,17 +135,23 @@ public class UsageTable {
 
   private static List<Field<?>> getApplicationPrefix(ApplicationId applicationId) {
     List<Field<?>> fields = new ArrayList();
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.NAMESPACE_FIELD, applicationId.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.APPLICATION_FIELD, applicationId.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.UsageStore.NAMESPACE_FIELD,
+        applicationId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.UsageStore.APPLICATION_FIELD,
+        applicationId.getApplication()));
     return fields;
   }
 
   private static List<Field<?>> getProgramPrefix(ProgramId programId) {
     List<Field<?>> fields = new ArrayList();
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.NAMESPACE_FIELD, programId.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.APPLICATION_FIELD, programId.getApplication()));
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.PROGRAM_TYPE_FIELD, programId.getType().name()));
-    fields.add(Fields.stringField(StoreDefinition.UsageStore.PROGRAM_FIELD, programId.getProgram()));
+    fields.add(
+        Fields.stringField(StoreDefinition.UsageStore.NAMESPACE_FIELD, programId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.UsageStore.APPLICATION_FIELD,
+        programId.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.UsageStore.PROGRAM_TYPE_FIELD,
+        programId.getType().name()));
+    fields.add(
+        Fields.stringField(StoreDefinition.UsageStore.PROGRAM_FIELD, programId.getProgram()));
     return fields;
   }
 
@@ -146,6 +159,7 @@ public class UsageTable {
    * Key class for datasetId since we can only have one index field.
    */
   private class DatasetKey {
+
     private final String namespace;
     private final String datasetName;
 

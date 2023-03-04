@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.ProgramType;
  * Helper class for getting the program type id to use when emitting metrics.
  */
 public final class ProgramTypeMetricTag {
+
   /**
    * Metric contexts are of the form {applicationId}.{programType}.{programId}.{optionalComponentId},
    * where programType is some string.

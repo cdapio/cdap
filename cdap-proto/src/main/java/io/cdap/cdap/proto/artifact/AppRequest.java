@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * @param <T> the type of application config
  */
 public class AppRequest<T> {
+
   private final ArtifactSummary artifact;
   private final T config;
   private final T configuration;
@@ -55,18 +56,19 @@ public class AppRequest<T> {
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
-                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
+      @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
     this(artifact, config, preview, ownerPrincipal, updateSchedules, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
-                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
+      @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules,
+      @Nullable T configuration) {
     this(artifact, config, preview, ownerPrincipal, updateSchedules, configuration, null);
   }
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
-                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration,
-                    @Nullable ChangeSummary change) {
+      @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration,
+      @Nullable ChangeSummary change) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
@@ -106,8 +108,8 @@ public class AppRequest<T> {
   }
 
   /**
-   * Validate the app request contains all required information. Should be called when this object is created through
-   * deserializing user input.
+   * Validate the app request contains all required information. Should be called when this object
+   * is created through deserializing user input.
    *
    * @throws IllegalArgumentException if the request is invalid
    */

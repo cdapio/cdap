@@ -32,26 +32,31 @@ import javax.annotation.Nullable;
  * JSON codec for {@link Filter}
  */
 public class FilterCodec implements JsonSerializer<Filter>, JsonDeserializer<Filter> {
+
   private static final Type INT_RANGE_FILTER_TYPE =
-    new TypeToken<RangeFilter<Integer>>() { }.getType();
+      new TypeToken<RangeFilter<Integer>>() {
+      }.getType();
   private static final Type LONG_RANGE_FILTER_TYPE =
-    new TypeToken<RangeFilter<Long>>() { }.getType();
+      new TypeToken<RangeFilter<Long>>() {
+      }.getType();
   private static final Type STRING_VALUE_FILTER_TYPE =
-    new TypeToken<ValueFilter<String>>() { }.getType();
+      new TypeToken<ValueFilter<String>>() {
+      }.getType();
 
   /**
-   * Deserializes a JSON String as {@link Filter}. Determines the class and data type of
-   * the filter according to the field name that the filter contains.
+   * Deserializes a JSON String as {@link Filter}. Determines the class and data type of the filter
+   * according to the field name that the filter contains.
    */
   @Nullable
   @Override
   public Filter deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
+      throws JsonParseException {
     if (json == null) {
       return null;
     }
     if (!(json instanceof JsonObject)) {
-      throw new JsonParseException("Expected a JsonObject but found a " + json.getClass().getName());
+      throw new JsonParseException(
+          "Expected a JsonObject but found a " + json.getClass().getName());
     }
 
     JsonObject object = (JsonObject) json;
@@ -61,8 +66,9 @@ public class FilterCodec implements JsonSerializer<Filter>, JsonDeserializer<Fil
     }
     ReportField field = ReportField.valueOfFieldName(fieldName.getAsString());
     if (field == null) {
-      throw new JsonParseException(String.format("Invalid field name '%s'. Field name must be one of: [%s]", fieldName,
-                                                 String.join(", ", ReportField.FIELD_NAME_MAP.keySet())));
+      throw new JsonParseException(
+          String.format("Invalid field name '%s'. Field name must be one of: [%s]", fieldName,
+              String.join(", ", ReportField.FIELD_NAME_MAP.keySet())));
     }
     Filter filter = null;
     // if the object contains "range" field, try to deserialize it as a range filter
@@ -81,8 +87,9 @@ public class FilterCodec implements JsonSerializer<Filter>, JsonDeserializer<Fil
     if (filter == null) {
       // this should never happen. If the field's applicable filters contains value filter,
       // there must be a know class matches the class of its value
-      throw new JsonParseException(String.format("No applicable filter found for field %s with value type %s.",
-                                                 fieldName, field.getValueClass().getName()));
+      throw new JsonParseException(
+          String.format("No applicable filter found for field %s with value type %s.",
+              fieldName, field.getValueClass().getName()));
     }
     return filter;
   }

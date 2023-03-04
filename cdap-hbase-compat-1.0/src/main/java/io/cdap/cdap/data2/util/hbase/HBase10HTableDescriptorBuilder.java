@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.TableName;
  * HBase 1.0 specific implementation for {@link HTableDescriptorBuilder}.
  */
 public class HBase10HTableDescriptorBuilder extends HTableDescriptorBuilder {
+
   HBase10HTableDescriptorBuilder(TableName tableName) {
     super(tableName);
   }
@@ -62,7 +63,7 @@ public class HBase10HTableDescriptorBuilder extends HTableDescriptorBuilder {
 
   @Override
   public HTableDescriptorBuilder addCoprocessor(String className, Path jarFilePath, int priority,
-                                                Map<String, String> keyValues) throws IOException {
+      Map<String, String> keyValues) throws IOException {
     instance.addCoprocessor(className, jarFilePath, priority, keyValues);
     return this;
   }

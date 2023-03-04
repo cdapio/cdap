@@ -60,8 +60,10 @@ public final class AddTimeScheduleCommand extends AbstractCommand {
     String version = arguments.getOptional(ArgumentName.APP_VERSION.toString());
     String scheduleDescription = arguments.getOptional(ArgumentName.DESCRIPTION.toString(), "");
     String cronExpression = arguments.get(ArgumentName.CRON_EXPRESSION.toString());
-    String schedulePropertiesString = arguments.getOptional(ArgumentName.SCHEDULE_PROPERTIES.toString(), "");
-    String scheduleRunConcurrencyString = arguments.getOptional(ArgumentName.CONCURRENCY.toString(), null);
+    String schedulePropertiesString = arguments.getOptional(
+        ArgumentName.SCHEDULE_PROPERTIES.toString(), "");
+    String scheduleRunConcurrencyString = arguments.getOptional(ArgumentName.CONCURRENCY.toString(),
+        null);
 
     if (programIdParts.length < 2) {
       throw new CommandInputError(this);
@@ -69,16 +71,20 @@ public final class AddTimeScheduleCommand extends AbstractCommand {
 
     String appId = programIdParts[0];
     NamespaceId namespaceId = cliConfig.getCurrentNamespace();
-    ApplicationId applicationId = (version == null) ? namespaceId.app(appId) : namespaceId.app(appId, version);
+    ApplicationId applicationId =
+        (version == null) ? namespaceId.app(appId) : namespaceId.app(appId, version);
     ScheduleId scheduleId = applicationId.schedule(scheduleName);
     String description = scheduleDescription == null ? null : scheduleDescription;
-    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, programIdParts[1]);
+    ScheduleProgramInfo programInfo = new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW,
+        programIdParts[1]);
     List<Constraint> constraints = scheduleRunConcurrencyString == null ? ImmutableList.of() :
-      ImmutableList.of(new ProtoConstraint.ConcurrencyConstraint(Integer.valueOf(scheduleRunConcurrencyString)));
+        ImmutableList.of(new ProtoConstraint.ConcurrencyConstraint(
+            Integer.valueOf(scheduleRunConcurrencyString)));
     Map<String, String> propertiesMap = ArgumentParser.parseMap(schedulePropertiesString,
-                                                                ArgumentName.SCHEDULE_PROPERTIES.toString());
-    ScheduleDetail scheduleDetail = new ScheduleDetail(scheduleName, description, programInfo, propertiesMap,
-                                                       new ProtoTrigger.TimeTrigger(cronExpression), constraints, null);
+        ArgumentName.SCHEDULE_PROPERTIES.toString());
+    ScheduleDetail scheduleDetail = new ScheduleDetail(scheduleName, description, programInfo,
+        propertiesMap,
+        new ProtoTrigger.TimeTrigger(cronExpression), constraints, null);
 
     scheduleClient.add(scheduleId, scheduleDetail);
     printStream.printf("Successfully added schedule '%s' in app '%s'\n", scheduleName, appId);
@@ -86,17 +92,17 @@ public final class AddTimeScheduleCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("add time schedule <%s> for workflow <%s> [version <%s>] " +
-                           "[description <%s>] at <%s> [concurrency <%s>] [properties <%s>]",
-                         ArgumentName.SCHEDULE_NAME, ArgumentName.PROGRAM, ArgumentName.APP_VERSION,
-                         ArgumentName.DESCRIPTION, ArgumentName.CRON_EXPRESSION, ArgumentName.CONCURRENCY,
-                         ArgumentName.SCHEDULE_PROPERTIES);
+    return String.format("add time schedule <%s> for workflow <%s> [version <%s>] "
+            + "[description <%s>] at <%s> [concurrency <%s>] [properties <%s>]",
+        ArgumentName.SCHEDULE_NAME, ArgumentName.PROGRAM, ArgumentName.APP_VERSION,
+        ArgumentName.DESCRIPTION, ArgumentName.CRON_EXPRESSION, ArgumentName.CONCURRENCY,
+        ArgumentName.SCHEDULE_PROPERTIES);
   }
 
   @Override
   public String getDescription() {
     return String.format("Adds %s which is associated with %s given",
-                         Fragment.of(Article.A, ElementType.SCHEDULE.getName()),
-                         Fragment.of(Article.THE, ElementType.PROGRAM.getName()));
+        Fragment.of(Article.A, ElementType.SCHEDULE.getName()),
+        Fragment.of(Article.THE, ElementType.PROGRAM.getName()));
   }
 }

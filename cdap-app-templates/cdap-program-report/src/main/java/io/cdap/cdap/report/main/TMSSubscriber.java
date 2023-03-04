@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
  * Transfer records from programstatusrecordevent topic to files
  */
 public class TMSSubscriber extends Thread {
+
   private static final Logger LOG = LoggerFactory.getLogger(TMSSubscriber.class);
   private static final String TOPIC = "programstatusrecordevent";
   private static final String NAMESPACE_SYSTEM = "system";
@@ -47,15 +48,16 @@ public class TMSSubscriber extends Thread {
 
   private volatile boolean isStopped;
 
-  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation, Map<String, String> runtimeArguments,
-                Metrics metrics) {
+  TMSSubscriber(MessageFetcher messageFetcher, Location baseLocation,
+      Map<String, String> runtimeArguments,
+      Metrics metrics) {
     super("TMS-RunrecordEvent-Subscriber-thread");
     this.messageFetcher = messageFetcher;
     isStopped = false;
     this.baseLocation = baseLocation;
     this.runMetaFileManager = new RunMetaFileManager(baseLocation, runtimeArguments, metrics);
-    this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE) ?
-      Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
+    this.fetchSize = runtimeArguments.containsKey(FETCH_SIZE)
+        ? Integer.parseInt(runtimeArguments.get(FETCH_SIZE)) : DEFAULT_FETCH_SIZE;
     this.metrics = metrics;
   }
 
@@ -68,7 +70,7 @@ public class TMSSubscriber extends Thread {
   @Override
   public void run() {
     String afterMessageId = null;
-    SampledLogging sampledLogging  = new SampledLogging(LOG, 100);
+    SampledLogging sampledLogging = new SampledLogging(LOG, 100);
     try {
       afterMessageId = MessageUtil.findMessageId(baseLocation);
     } catch (InterruptedException e) {
@@ -85,20 +87,23 @@ public class TMSSubscriber extends Thread {
         break;
       }
       try (CloseableIterator<Message> messageCloseableIterator =
-             messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, fetchSize, afterMessageId)) {
+          messageFetcher.fetch(NAMESPACE_SYSTEM, TOPIC, fetchSize, afterMessageId)) {
         while (!isStopped && messageCloseableIterator.hasNext()) {
-          Message message  = messageCloseableIterator.next();
+          Message message = messageCloseableIterator.next();
           Notification notification = MessageUtil.messageToNotification(message);
           // we want to skip appending pre 5.0 run records
           if (MessageUtil.isCDAPVersionCompatible(notification)) {
-            ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunInfo(message, notification);
+            ProgramRunInfo programRunInfo = MessageUtil.constructAndGetProgramRunInfo(message,
+                notification);
             runMetaFileManager.append(programRunInfo);
             emitUserProgramMetrics(programRunInfo);
           }
           afterMessageId = message.getId();
         }
       } catch (TopicNotFoundException tpe) {
-        LOG.error("Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix", TOPIC, tpe);
+        LOG.error(
+            "Unable to find topic {} in tms, returning, cant write to the Fileset, Please fix",
+            TOPIC, tpe);
         break;
       } catch (InterruptedException ie) {
         break;

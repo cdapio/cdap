@@ -32,9 +32,9 @@ public interface Job {
   /**
    * State of the job. The lifecycle of State is as follows:
    *
-   *   *-----------------*       *--------------------*         *----------------*
-   *   | PENDING_TRIGGER |  ---> | PENDING_CONSTRAINT |  --->   | PENDING_LAUNCH |
-   *   *-----------------*       *--------------------*         *----------------*
+   * *-----------------*       *--------------------*         *----------------* | PENDING_TRIGGER |
+   * ---> | PENDING_CONSTRAINT |  --->   | PENDING_LAUNCH | *-----------------*
+   * *--------------------*         *----------------*
    */
   enum State {
     /**
@@ -61,7 +61,7 @@ public interface Job {
      */
     void checkTransition(State nextState) {
       Preconditions.checkArgument(allowedNextStates.contains(nextState),
-                                  "Invalid Job State transition from '%s' to '%s'.", this, nextState);
+          "Invalid Job State transition from '%s' to '%s'.", this, nextState);
     }
   }
 
@@ -71,14 +71,14 @@ public interface Job {
   ProgramSchedule getSchedule();
 
   /**
-   * @return the generation id of the job in the job queue.
-   * The generation id is used to distinguish multiple jobs (with different states)
-   * for the same schedule present in the job queue.
+   * @return the generation id of the job in the job queue. The generation id is used to distinguish
+   *     multiple jobs (with different states) for the same schedule present in the job queue.
    */
   int getGenerationId();
 
   /**
-   * Returns the last modification time of the schedule. It represents the schedule at the time this job was created.
+   * Returns the last modification time of the schedule. It represents the schedule at the time this
+   * job was created.
    */
   long getScheduleLastUpdatedTime();
 
@@ -108,7 +108,8 @@ public interface Job {
   boolean isToBeDeleted();
 
   /**
-   * @return the time at which this job was marked for deletion, null only if {@link #isToBeDeleted} returns false
+   * @return the time at which this job was marked for deletion, null only if {@link #isToBeDeleted}
+   *     returns false
    */
   @Nullable
   Long getDeleteTimeMillis();

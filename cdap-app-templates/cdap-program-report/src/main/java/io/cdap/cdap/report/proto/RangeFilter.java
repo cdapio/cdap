@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * @param <T> type of the values
  */
 public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
+
   private final Range<T> range;
 
   public RangeFilter(String fieldName, Range<T> range) {
@@ -43,12 +44,12 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
 
   /**
    * @return {@code true} if the given value is larger or equal to min if min is not {@code null}
-   *         and smaller than max if max is not {@code null}, {@code false} otherwise
+   *     and smaller than max if max is not {@code null}, {@code false} otherwise
    */
   @Override
   public boolean apply(T value) {
     return (range.getMin() == null || range.getMin().compareTo(value) <= 0)
-      && (range.getMax() == null || range.getMax().compareTo(value) > 0);
+        && (range.getMax() == null || range.getMax().compareTo(value) > 0);
   }
 
   @Override
@@ -65,29 +66,32 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
     } else {
       if (range.getMin() == null && range.getMax() == null) {
         errors.add("'min' and 'max' cannot both be null'");
-      } else if (range.getMin() != null && range.getMax() != null && range.getMin().compareTo(range.getMax()) >= 0) {
+      } else if (range.getMin() != null && range.getMax() != null
+          && range.getMin().compareTo(range.getMax()) >= 0) {
         errors.add("'min' must be smaller than 'max'");
       }
     }
     return errors.isEmpty() ? null :
-      String.format("Filter %s contains these errors: %s", getFieldName(), String.join("; ", errors));
+        String.format("Filter %s contains these errors: %s", getFieldName(),
+            String.join("; ", errors));
   }
 
   @Override
   public String toString() {
-    return "RangeFilter{" +
-      "fieldName=" + getFieldName() +
-      ", range=" + range +
-      '}';
+    return "RangeFilter{"
+        + "fieldName=" + getFieldName()
+        + ", range=" + range
+        + '}';
   }
 
   /**
-   * Range of allowed values of a field represented as [min, max) where min is the inclusive minimum value
-   * and max is the exclusive maximum value.
+   * Range of allowed values of a field represented as [min, max) where min is the inclusive minimum
+   * value and max is the exclusive maximum value.
    *
    * @param <T> the value type of the field
    */
   public static class Range<T> {
+
     @Nullable
     private final T min;
     @Nullable
@@ -116,10 +120,10 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
 
     @Override
     public String toString() {
-      return "Range{" +
-        "min=" + min +
-        ", max=" + max +
-        '}';
+      return "Range{"
+          + "min=" + min
+          + ", max=" + max
+          + '}';
     }
 
     @Override
@@ -136,8 +140,8 @@ public class RangeFilter<T extends Comparable<T>> extends Filter<T> {
         return false;
       }
       Range that = (Range) o;
-      return Objects.equals(this.min, that.min) &&
-        Objects.equals(this.max, that.max);
+      return Objects.equals(this.min, that.min)
+          && Objects.equals(this.max, that.max);
     }
   }
 

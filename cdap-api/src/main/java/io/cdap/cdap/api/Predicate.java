@@ -24,8 +24,10 @@ import javax.annotation.Nullable;
  * @param <T> the type of the input based on which the predicate is to be evaluated
  */
 public interface Predicate<T> {
+
   /**
    * Returns the result of applying this predicate to {@code input}.
+   *
    * @param input the input based on which the predicate to be evaluated
    * @return the result of the evaluation of the predicate
    */

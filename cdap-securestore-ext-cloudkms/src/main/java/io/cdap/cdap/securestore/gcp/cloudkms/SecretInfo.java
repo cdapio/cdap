@@ -22,9 +22,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Class used to serialize and deserialize the secret and associated metadata. Used by {@link SecretInfoCodec}.
+ * Class used to serialize and deserialize the secret and associated metadata. Used by {@link
+ * SecretInfoCodec}.
  */
 public final class SecretInfo {
+
   private final String name;
   private final String description;
   private final byte[] secretData;
@@ -32,10 +34,12 @@ public final class SecretInfo {
   private final Map<String, String> properties;
 
   /**
-   * Creates SecretInfo instance with provided name, description, secretData, creationTimeMs and properties.
+   * Creates SecretInfo instance with provided name, description, secretData, creationTimeMs and
+   * properties.
    */
-  public SecretInfo(String name, @Nullable String description, byte[] secretData, long creationTimeMs,
-                    Map<String, String> properties) {
+  public SecretInfo(String name, @Nullable String description, byte[] secretData,
+      long creationTimeMs,
+      Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.secretData = secretData;

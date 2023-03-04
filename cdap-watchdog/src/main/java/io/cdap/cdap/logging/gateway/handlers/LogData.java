@@ -46,9 +46,11 @@ public final class LogData {
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final boolean isNativeMethod;
 
-  LogData(Long timestamp, String logLevel, String threadName, String className, String simpleClassName,
-          Integer lineNumber, String message, String stackTrace, String loggerName, Map<String, String> mdc,
-          boolean isNativeMethod) {
+  LogData(Long timestamp, String logLevel, String threadName, String className,
+      String simpleClassName,
+      Integer lineNumber, String message, String stackTrace, String loggerName,
+      Map<String, String> mdc,
+      boolean isNativeMethod) {
     this.timestamp = timestamp;
     this.logLevel = logLevel;
     this.threadName = threadName;

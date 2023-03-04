@@ -28,6 +28,7 @@ import java.util.Objects;
  * Uniquely identifies an artifact.
  */
 public class ProfileId extends NamespacedEntityId implements ParentedId<NamespaceId> {
+
   public static final ProfileId NATIVE = NamespaceId.SYSTEM.profile(Profile.NATIVE_NAME);
   private final String profileName;
   private transient Integer hashCode;
@@ -61,13 +62,14 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   }
 
   /**
-   * Return the scoped name. If it is a system profile, the profile name will be prefixed by 'SYSTEM:'. Otherwise,
-   * the profile name will be prefixed by 'USER:'.
+   * Return the scoped name. If it is a system profile, the profile name will be prefixed by
+   * 'SYSTEM:'. Otherwise, the profile name will be prefixed by 'USER:'.
    *
    * @return the scoped profile name
    */
   public String getScopedName() {
-    EntityScope scope = NamespaceId.SYSTEM.equals(getNamespaceId()) ? EntityScope.SYSTEM : EntityScope.USER;
+    EntityScope scope =
+        NamespaceId.SYSTEM.equals(getNamespaceId()) ? EntityScope.SYSTEM : EntityScope.USER;
     return String.format("%s:%s", scope.name(), profileName);
   }
 
@@ -78,8 +80,8 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
   }
 
   /**
-   * Get the profile id for the given scoped profile name. A scoped name starts with an entity scope, a ':',
-   * then the profile name. If there is no ':', it is assumed that it is user scope.
+   * Get the profile id for the given scoped profile name. A scoped name starts with an entity
+   * scope, a ':', then the profile name. If there is no ':', it is assumed that it is user scope.
    *
    * @param namespaceId the namespace to use if user scoped
    * @param scopedName the scoped name
@@ -92,11 +94,13 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
       return namespaceId.profile(scopedName);
     }
     if (idx == scopedName.length()) {
-      throw new IllegalArgumentException("Invalid scoped profile " + scopedName + ". Cannot end with a ':'.");
+      throw new IllegalArgumentException(
+          "Invalid scoped profile " + scopedName + ". Cannot end with a ':'.");
     }
     EntityScope scope = EntityScope.valueOf(scopedName.substring(0, idx).toUpperCase());
     String profileName = scopedName.substring(idx + 1);
-    return scope == EntityScope.SYSTEM ? NamespaceId.SYSTEM.profile(profileName) : namespaceId.profile(profileName);
+    return scope == EntityScope.SYSTEM ? NamespaceId.SYSTEM.profile(profileName)
+        : namespaceId.profile(profileName);
   }
 
   /**
@@ -114,8 +118,8 @@ public class ProfileId extends NamespacedEntityId implements ParentedId<Namespac
       return false;
     }
     ProfileId profileId = (ProfileId) o;
-    return Objects.equals(namespace, profileId.namespace) &&
-      Objects.equals(profileName, profileId.profileName);
+    return Objects.equals(namespace, profileId.namespace)
+        && Objects.equals(profileName, profileId.profileName);
   }
 
   @Override

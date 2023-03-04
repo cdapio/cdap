@@ -15,8 +15,8 @@
  */
 
 /**
- * Classes related to artifacts. An artifact is a jar file that contains classes that can be used by CDAP. For
- * example, an artifact can contain an Application class to create applications from, or it can contain plugins that
- * can be used by programs.
+ * Classes related to artifacts. An artifact is a jar file that contains classes that can be used by
+ * CDAP. For example, an artifact can contain an Application class to create applications from, or
+ * it can contain plugins that can be used by programs.
  */
 package io.cdap.cdap.api.artifact;

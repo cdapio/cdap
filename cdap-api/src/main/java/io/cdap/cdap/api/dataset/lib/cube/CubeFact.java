@@ -24,12 +24,14 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Time-based measurement with associated dimensionValues (dimensions) to be stored in {@link Cube}.
+ * Time-based measurement with associated dimensionValues (dimensions) to be stored in {@link
+ * Cube}.
  * <p/>
  * See also {@link Cube#add(CubeFact)}.
  */
 @Beta
 public class CubeFact {
+
   private final long timestamp;
   private final Map<String, String> dimensionValues;
   private final Collection<Measurement> measurements;
@@ -50,6 +52,7 @@ public class CubeFact {
 
   /**
    * Adds dimension value to this {@link CubeFact}.
+   *
    * @param name name of the dimension
    * @param value value of the dimension
    * @return this {@link CubeFact}
@@ -61,6 +64,7 @@ public class CubeFact {
 
   /**
    * Adds multiple dimensionValues to this {@link CubeFact}.
+   *
    * @param dimensionValues dimensionValues to add
    * @return this {@link CubeFact}
    */
@@ -71,6 +75,7 @@ public class CubeFact {
 
   /**
    * Adds a {@link Measurement} to this {@link CubeFact}.
+   *
    * @param name name of the measurement to add
    * @param type type of the measurement to add
    * @param value value of the measurement to add
@@ -83,6 +88,7 @@ public class CubeFact {
 
   /**
    * Adds a {@link Measurement} to this {@link CubeFact}.
+   *
    * @param measurement a {@link Measurement} to add
    * @return this {@link CubeFact}
    */
@@ -93,6 +99,7 @@ public class CubeFact {
 
   /**
    * Adds multiple {@link Measurement}s to this {@link CubeFact}
+   *
    * @param measurements {@link Measurement}s to add
    * @return this {@link CubeFact}
    */

@@ -20,6 +20,7 @@ package io.cdap.cdap.proto;
  * Represents a program in an HTTP response.
  */
 public class ProgramRecord {
+
   private final ProgramType type;
   private final String app;
   private final String name;

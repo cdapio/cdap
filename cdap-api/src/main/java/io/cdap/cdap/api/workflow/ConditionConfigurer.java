@@ -22,5 +22,7 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 /**
  * Configurer for configuring the {@link Condition} in the {@link Workflow}.
  */
-public interface ConditionConfigurer extends ProgramConfigurer, PluginConfigurer, DatasetConfigurer {
+public interface ConditionConfigurer extends ProgramConfigurer, PluginConfigurer,
+    DatasetConfigurer {
+
 }

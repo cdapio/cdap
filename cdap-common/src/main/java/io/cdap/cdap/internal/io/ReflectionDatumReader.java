@@ -34,7 +34,8 @@ import java.util.Map;
  *
  * @param <T> type T reader
  */
-public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T> implements DatumReader<T> {
+public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T> implements
+    DatumReader<T> {
 
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     super(schema, type);
@@ -82,9 +83,10 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
 
   @Override
   protected Object readEnum(Decoder decoder, Schema sourceSchema, Schema targetSchema,
-                            TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     String enumValue = sourceSchema.getEnumValue(decoder.readInt());
-    check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.", enumValue);
+    check(targetSchema.getEnumValues().contains(enumValue), "Enum value '%s' missing in target.",
+        enumValue);
     try {
       return Enum.valueOf((Class) targetTypeToken.getRawType(), enumValue);
     } catch (Exception e) {
@@ -95,13 +97,14 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
   @SuppressWarnings({"unchecked", "ConstantConditions"})
   @Override
   protected Object readArray(Decoder decoder, Schema sourceSchema, Schema targetSchema,
-                             TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     TypeToken<?> componentType = null;
     if (targetTypeToken.isArray()) {
       componentType = targetTypeToken.getComponentType();
     } else if (Collection.class.isAssignableFrom(targetTypeToken.getRawType())) {
       Type type = targetTypeToken.getType();
-      check(type instanceof ParameterizedType, "Only parameterized type is supported for collection.");
+      check(type instanceof ParameterizedType,
+          "Only parameterized type is supported for collection.");
       componentType = TypeToken.of(((ParameterizedType) type).getActualTypeArguments()[0]);
     }
     check(componentType != null, "Only array or collection type is support for array value.");
@@ -111,14 +114,15 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
     while (len != 0) {
       for (int i = 0; i < len; i++) {
         collection.add(read(decoder, sourceSchema.getComponentSchema(),
-                            targetSchema.getComponentSchema(), componentType)
+            targetSchema.getComponentSchema(), componentType)
         );
       }
       len = decoder.readInt();
     }
 
     if (targetTypeToken.isArray()) {
-      Object array = Array.newInstance(targetTypeToken.getComponentType().getRawType(), collection.size());
+      Object array = Array.newInstance(targetTypeToken.getComponentType().getRawType(),
+          collection.size());
       int idx = 0;
       for (Object obj : collection) {
         Array.set(array, idx++, obj);
@@ -130,10 +134,12 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
 
   @Override
   protected Object readMap(Decoder decoder, Schema sourceSchema, Schema targetSchema,
-                           TypeToken<?> targetTypeToken) throws IOException {
-    check(Map.class.isAssignableFrom(targetTypeToken.getRawType()), "Only map type is supported for map data.");
+      TypeToken<?> targetTypeToken) throws IOException {
+    check(Map.class.isAssignableFrom(targetTypeToken.getRawType()),
+        "Only map type is supported for map data.");
     Type type = targetTypeToken.getType();
-    Preconditions.checkArgument(type instanceof ParameterizedType, "Only parameterized map is supported.");
+    Preconditions.checkArgument(type instanceof ParameterizedType,
+        "Only parameterized map is supported.");
     // suppressing warning because we know type is not null
     @SuppressWarnings("ConstantConditions")
     Type[] typeArgs = ((ParameterizedType) type).getActualTypeArguments();
@@ -147,8 +153,10 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
         Map.Entry<Schema, Schema> sourceEntry = sourceSchema.getMapSchema();
         Map.Entry<Schema, Schema> targetEntry = targetSchema.getMapSchema();
 
-        map.put(read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
-                read(decoder, sourceEntry.getValue(), targetEntry.getValue(), TypeToken.of(typeArgs[1])));
+        map.put(
+            read(decoder, sourceEntry.getKey(), targetEntry.getKey(), TypeToken.of(typeArgs[0])),
+            read(decoder, sourceEntry.getValue(), targetEntry.getValue(),
+                TypeToken.of(typeArgs[1])));
       }
       len = decoder.readInt();
     }
@@ -158,16 +166,16 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
 
   @Override
   protected Object readUnion(Decoder decoder, Schema sourceSchema, Schema targetSchema,
-                             TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     int idx = decoder.readInt();
     Schema sourceValueSchema = sourceSchema.getUnionSchemas().get(idx);
-
 
     if (targetSchema.getType() == Schema.Type.UNION) {
       try {
         // A simple optimization to try resolve before resorting to linearly try the union schema.
         Schema targetValueSchema = targetSchema.getUnionSchema(idx);
-        if (targetValueSchema != null && targetValueSchema.getType() == sourceValueSchema.getType()) {
+        if (targetValueSchema != null
+            && targetValueSchema.getType() == sourceValueSchema.getType()) {
           return read(decoder, sourceValueSchema, targetValueSchema, targetTypeToken);
         }
       } catch (IOException e) {
@@ -188,7 +196,7 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
 
   @Override
   protected Object readRecord(Decoder decoder, Schema sourceSchema, Schema targetSchema,
-                              TypeToken<?> targetTypeToken) throws IOException {
+      TypeToken<?> targetTypeToken) throws IOException {
     try {
       Object record = create(targetTypeToken);
       for (Schema.Field sourceField : sourceSchema.getFields()) {
@@ -199,8 +207,8 @@ public final class ReflectionDatumReader<T> extends ReflectionReader<Decoder, T>
         }
         FieldAccessor fieldAccessor = getFieldAccessor(targetTypeToken, sourceField.getName());
         fieldAccessor.set(record,
-                          read(decoder, sourceField.getSchema(), targetField.getSchema(),
-                               TypeToken.of(fieldAccessor.getType())));
+            read(decoder, sourceField.getSchema(), targetField.getSchema(),
+                TypeToken.of(fieldAccessor.getType())));
       }
       return record;
     } catch (Exception e) {

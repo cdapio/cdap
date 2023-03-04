@@ -36,9 +36,8 @@ import java.io.PrintStream;
 import java.util.List;
 
 /**
- * {@link Command} to describe a namespace.
- * Uses {@link NamespaceCommandUtils#prettyPrintNamespaceConfigCLI(NamespaceConfig)} to display the
- * {@link NamespaceConfig}.
+ * {@link Command} to describe a namespace. Uses {@link NamespaceCommandUtils#prettyPrintNamespaceConfigCLI(NamespaceConfig)}
+ * to display the {@link NamespaceConfig}.
  */
 public class DescribeNamespaceCommand extends AbstractCommand {
 
@@ -55,14 +54,14 @@ public class DescribeNamespaceCommand extends AbstractCommand {
     NamespaceId namespace = new NamespaceId(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
     NamespaceMeta namespaceMeta = namespaceClient.get(namespace);
     Table table = Table.builder()
-      .setHeader("name", "description", "config")
-      .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {
-        @Override
-        public List<?> makeRow(NamespaceMeta object) {
-          return Lists.newArrayList(object.getName(), object.getDescription(),
-                                    NamespaceCommandUtils.prettyPrintNamespaceConfigCLI(object.getConfig()));
-        }
-      }).build();
+        .setHeader("name", "description", "config")
+        .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {
+          @Override
+          public List<?> makeRow(NamespaceMeta object) {
+            return Lists.newArrayList(object.getName(), object.getDescription(),
+                NamespaceCommandUtils.prettyPrintNamespaceConfigCLI(object.getConfig()));
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

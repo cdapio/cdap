@@ -70,18 +70,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service responsible for consuming metadata messages from TMS and consume it in ext modules if configured.
- * This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s for lineage subscriptions.
- * No transactions should be started in any of the overridden methods since they are already wrapped in a transaction.
+ * Service responsible for consuming metadata messages from TMS and consume it in ext modules if
+ * configured. This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s
+ * for lineage subscriptions. No transactions should be started in any of the overridden methods
+ * since they are already wrapped in a transaction.
  */
-public class MetadataConsumerSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
+public class MetadataConsumerSubscriberService extends
+    AbstractMessagingSubscriberService<MetadataMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetadataConsumerSubscriberService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      MetadataConsumerSubscriberService.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-    .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
-    .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-    .create();
+      .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+      .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+      .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+      .create();
   private static final String FQN = "fqn";
 
   private final MultiThreadMessagingContext messagingContext;
@@ -95,22 +98,22 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
   @Inject
   MetadataConsumerSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                                    MetricsCollectionService metricsCollectionService,
-                                    TransactionRunner transactionRunner,
-                                    MetadataConsumerExtensionLoader provider) {
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner,
+      MetadataConsumerExtensionLoader provider) {
     super(
-      NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
-      cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
-      cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
-      cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
-      RetryStrategies.fromConfiguration(cConf, "system.metadata."),
-      metricsCollectionService.getContext(ImmutableMap.of(
-        Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
-        Constants.Metrics.Tag.INSTANCE_ID, "0",
-        Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
-        Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
-        Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_WRITER_SUBSCRIBER
-      )));
+        NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
+        cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+        cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+        cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
+        RetryStrategies.fromConfiguration(cConf, "system.metadata."),
+        metricsCollectionService.getContext(ImmutableMap.of(
+            Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
+            Constants.Metrics.Tag.INSTANCE_ID, "0",
+            Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+            Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
+            Constants.Metrics.Tag.CONSUMER, Constants.Metadata.METADATA_WRITER_SUBSCRIBER
+        )));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
@@ -135,18 +138,19 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
   @Nullable
   @Override
-  protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
+  protected String loadMessageId(StructuredTableContext context)
+      throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(),
-                                                    Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER);
   }
 
   @Override
   protected void storeMessageId(StructuredTableContext context, String messageId)
-    throws IOException, TableNotFoundException {
+      throws IOException, TableNotFoundException {
     AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(),
-                                            Constants.Metadata.METADATA_WRITER_SUBSCRIBER, messageId);
+        Constants.Metadata.METADATA_WRITER_SUBSCRIBER, messageId);
   }
 
   @Override
@@ -172,8 +176,8 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages)
-    throws IOException, ConflictException {
+      Iterator<ImmutablePair<String, MetadataMessage>> messages)
+      throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
     while (messages.hasNext()) {
@@ -199,8 +203,9 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
         if (messageId.equals(conflictMessageId)) {
           conflictCount++;
           if (conflictCount >= maxRetriesOnConflict) {
-            LOG.warn("Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
-                     message, conflictCount, e.getMessage());
+            LOG.warn(
+                "Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
+                message, conflictCount, e.getMessage());
             continue;
           }
         } else {
@@ -228,7 +233,9 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
     @Override
     public void processMessage(MetadataMessage message, StructuredTableContext context) {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
-        LOG.warn("Missing program run id from the field lineage information. Ignoring the message {}", message);
+        LOG.warn(
+            "Missing program run id from the field lineage information. Ignoring the message {}",
+            message);
         return;
       }
 
@@ -236,16 +243,17 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
       FieldLineageInfo fieldLineageInfo;
       try {
         Gson gson = new GsonBuilder()
-          .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
-          .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
-          .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
-          .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
-          .create();
+            .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+            .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
+            .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
+            .registerTypeAdapter(EndPointField.class, new EndpointFieldDeserializer())
+            .create();
 
         fieldLineageInfo = message.getPayload(gson, FieldLineageInfo.class);
       } catch (Throwable t) {
-        LOG.warn("Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
-                 message, t);
+        LOG.warn(
+            "Error while deserializing the field lineage information message received from TMS. Ignoring : {}",
+            message, t);
         return;
       }
       ProgramRun run;
@@ -257,65 +265,74 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
         run = getProgramRunForConsumer(programRunId, startTimeMs, endTimeMs);
         info = getLineageInfoForConsumer(fieldLineageInfo, startTimeMs, endTimeMs);
       } catch (IllegalArgumentException e) {
-        LOG.warn("Error while processing field-lineage information received from TMS. Ignoring : {}", message, e);
+        LOG.warn(
+            "Error while processing field-lineage information received from TMS. Ignoring : {}",
+            message, e);
         return;
       }
       this.consumers.forEach((key, consumer) -> {
         try {
           DefaultMetadataConsumerContext metadataConsumerContext =
-            new DefaultMetadataConsumerContext(cConf, consumer.getName());
+              new DefaultMetadataConsumerContext(cConf, consumer.getName());
           // if there is any error from the implementation, log and continue here
           // as we are already retrying at the service level
           consumer.consumeLineage(metadataConsumerContext, run, info);
         } catch (Throwable e) {
-          LOG.error("Error calling the metadata consumer {}: {}", consumer.getName(), e.getMessage());
+          LOG.error("Error calling the metadata consumer {}: {}", consumer.getName(),
+              e.getMessage());
         }
       });
     }
 
-    private ProgramRun getProgramRunForConsumer(ProgramRunId programRunId, long startTimeMs, long endTimeMs) {
+    private ProgramRun getProgramRunForConsumer(ProgramRunId programRunId, long startTimeMs,
+        long endTimeMs) {
       return ProgramRun.builder(programRunId.getRun())
-        .setProgramId(programRunId.getParent().toString())
-        .setApplication(programRunId.getApplication())
-        .setNamespace(programRunId.getNamespace())
-        .setStatus(ProgramRunStatus.COMPLETED.name())
-        .setStartTimeMs(startTimeMs)
-        .setEndTimeMs(endTimeMs)
-        .build();
+          .setProgramId(programRunId.getParent().toString())
+          .setApplication(programRunId.getApplication())
+          .setNamespace(programRunId.getNamespace())
+          .setStatus(ProgramRunStatus.COMPLETED.name())
+          .setStartTimeMs(startTimeMs)
+          .setEndTimeMs(endTimeMs)
+          .build();
     }
 
-    private LineageInfo getLineageInfoForConsumer(FieldLineageInfo lineage, long startTimeMs, long endTimeMs) {
+    private LineageInfo getLineageInfoForConsumer(FieldLineageInfo lineage, long startTimeMs,
+        long endTimeMs) {
       return LineageInfo.builder()
-        .setStartTimeMs(startTimeMs)
-        .setEndTimeMs(endTimeMs)
-        .setSources(lineage.getSources().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
-        .setTargets(lineage.getDestinations().stream().map(this::getAssetForEndpoint).collect(Collectors.toSet()))
-        .setTargetToSources(getAssetsMapFromEndpointFieldsMap(lineage.getIncomingSummary()))
-        .setSourceToTargets(getAssetsMapFromEndpointFieldsMap(lineage.getOutgoingSummary()))
-        .build();
+          .setStartTimeMs(startTimeMs)
+          .setEndTimeMs(endTimeMs)
+          .setSources(lineage.getSources().stream().map(this::getAssetForEndpoint)
+              .collect(Collectors.toSet()))
+          .setTargets(lineage.getDestinations().stream().map(this::getAssetForEndpoint)
+              .collect(Collectors.toSet()))
+          .setTargetToSources(getAssetsMapFromEndpointFieldsMap(lineage.getIncomingSummary()))
+          .setSourceToTargets(getAssetsMapFromEndpointFieldsMap(lineage.getOutgoingSummary()))
+          .build();
     }
 
     private Asset getAssetForEndpoint(EndPoint endPoint) {
       // if the instance is upgraded and the pipeline is not, then there is a chance that fqn is null
       // throw illegal argument exception so that such messages can be ignored as it does not make sense to retry
       Map<String, String> properties = endPoint.getProperties();
-      if (!properties.containsKey(FQN) || (properties.containsKey(FQN) && properties.get(FQN) == null)) {
+      if (!properties.containsKey(FQN) || (properties.containsKey(FQN)
+          && properties.get(FQN) == null)) {
         throw new IllegalArgumentException("FQN for the asset is null");
       }
       return new Asset(properties.get(FQN));
     }
 
-    private Map<Asset, Set<Asset>> getAssetsMapFromEndpointFieldsMap(Map<EndPointField, Set<EndPointField>>
-                                                                       endPointFieldSetMap) {
+    private Map<Asset, Set<Asset>> getAssetsMapFromEndpointFieldsMap(
+        Map<EndPointField, Set<EndPointField>>
+            endPointFieldSetMap) {
       return endPointFieldSetMap.entrySet().stream()
-        .collect(Collectors.toMap(entry -> getAssetForEndpoint(entry.getKey().getEndPoint()),
-                                  entry -> entry.getValue().stream()
-                                    .filter(EndPointField::isValid)
-                                    .map(endPointField ->
-                                           getAssetForEndpoint(endPointField.getEndPoint()))
-                                    .collect(Collectors.toSet()),
-                                  (first, second) -> Stream.of(first, second).flatMap(Set::stream)
-                                    .collect(Collectors.toSet())));
+          .collect(Collectors.toMap(entry -> getAssetForEndpoint(entry.getKey().getEndPoint()),
+              entry -> entry.getValue().stream()
+                  .filter(EndPointField::isValid)
+                  .map(endPointField ->
+                      getAssetForEndpoint(endPointField.getEndPoint()))
+                  .collect(Collectors.toSet()),
+              (first, second) -> Stream.of(first, second).flatMap(Set::stream)
+                  .collect(Collectors.toSet())));
     }
   }
 }

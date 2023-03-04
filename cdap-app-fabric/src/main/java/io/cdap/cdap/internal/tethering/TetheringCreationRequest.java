@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Tethering request that's sent to the client.
  */
 public class TetheringCreationRequest {
+
   // Name of the peer
   private final String peer;
   // Server endpoint
@@ -35,8 +36,9 @@ public class TetheringCreationRequest {
   // Text that describes this tethering
   private final String description;
 
-  public TetheringCreationRequest(String peer, String endpoint, List<NamespaceAllocation> namespaceAllocations,
-                                  Map<String, String> metadata, @Nullable String description) {
+  public TetheringCreationRequest(String peer, String endpoint,
+      List<NamespaceAllocation> namespaceAllocations,
+      Map<String, String> metadata, @Nullable String description) {
     this.peer = peer;
     this.endpoint = endpoint;
     this.namespaceAllocations = namespaceAllocations;

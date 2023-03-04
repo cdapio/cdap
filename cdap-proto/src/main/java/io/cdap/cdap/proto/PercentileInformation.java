@@ -21,11 +21,13 @@ import java.util.List;
  * This class keeps track of the percentiles, and run ids for a particular percentile.
  */
 public class PercentileInformation {
+
   private final double percentile;
   private final long percentileTimeInSeconds;
   private final List<String> runIdsOverPercentile;
 
-  public PercentileInformation(double percentile, long percentileTimeInSeconds, List<String> runIdsOverPercentile) {
+  public PercentileInformation(double percentile, long percentileTimeInSeconds,
+      List<String> runIdsOverPercentile) {
     this.percentile = percentile;
     this.percentileTimeInSeconds = percentileTimeInSeconds;
     this.runIdsOverPercentile = runIdsOverPercentile;

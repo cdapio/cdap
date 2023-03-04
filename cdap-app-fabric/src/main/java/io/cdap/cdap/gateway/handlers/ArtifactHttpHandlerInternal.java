@@ -77,19 +77,23 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3)
 public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
-  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
-  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+  private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() {
+  }.getType();
+  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() {
+  }.getType();
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   @VisibleForTesting
-  public ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository, NamespaceQueryAdmin namespaceQueryAdmin) {
+  public ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository,
+      NamespaceQueryAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -97,7 +101,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   @GET
   @Path("/namespaces/{namespace-id}/artifacts")
   public void listArtifacts(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespace) {
+      @PathParam("namespace-id") String namespace) {
     try {
       NamespaceId namespaceId = new NamespaceId(namespace);
       List<ArtifactInfo> result = new ArrayList<>(artifactRepository.getArtifactsInfo(namespaceId));
@@ -106,30 +110,34 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result, ARTIFACT_INFO_LIST_TYPE));
     } catch (Exception e) {
-      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespace, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
+      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespace,
+          e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+          "Error reading artifact metadata from the store.");
     }
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/download")
   public void getArtifactBytes(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("artifact-name") String artifactName,
-                               @PathParam("artifact-version") String artifactVersion,
-                               @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion,
+      @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
     ArtifactId artifactId = new ArtifactId(namespace.getNamespace(), artifactName, artifactVersion);
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(
+        Id.Artifact.fromEntityId(artifactId));
     Location location = artifactDetail.getDescriptor().getLocation();
 
     ZonedDateTime newModifiedDate =
-      ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.of("GMT"));
+        ZonedDateTime.ofInstant(Instant.ofEpochMilli(location.lastModified()), ZoneId.of("GMT"));
 
     HttpHeaders headers = new DefaultHttpHeaders()
-      .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
-      .add(HttpHeaderNames.LAST_MODIFIED, newModifiedDate.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+        .add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_OCTET_STREAM)
+        .add(HttpHeaderNames.LAST_MODIFIED,
+            newModifiedDate.format(DateTimeFormatter.RFC_1123_DATE_TIME));
 
     String lastModified = request.headers().get(HttpHeaderNames.IF_MODIFIED_SINCE);
     if (areDatesEqual(lastModified, newModifiedDate)) {
@@ -145,21 +153,23 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     }
     //We truncate milliseconds from timestamps when comparing them.
     //Reason: newModifiedDate may contain millisecond while lastModifiedDate may not.
-    Comparator<ZonedDateTime> comparator = Comparator.comparing(zdt -> zdt.truncatedTo(ChronoUnit.SECONDS));
+    Comparator<ZonedDateTime> comparator = Comparator.comparing(
+        zdt -> zdt.truncatedTo(ChronoUnit.SECONDS));
     return comparator.compare(newModifiedDate, ZonedDateTime
-      .of(LocalDateTime.parse(lastModifiedDate, DateTimeFormatter.RFC_1123_DATE_TIME), ZoneId.of("GMT"))) == 0;
+        .of(LocalDateTime.parse(lastModifiedDate, DateTimeFormatter.RFC_1123_DATE_TIME),
+            ZoneId.of("GMT"))) == 0;
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions")
   public void getArtifactDetailForVersions(HttpRequest request, HttpResponder responder,
-                                           @PathParam("namespace-id") String namespace,
-                                           @PathParam("artifact-name") String artifactName,
-                                           @QueryParam("lower") String lower,
-                                           @QueryParam("upper") String upper,
-                                           @QueryParam("limit") @DefaultValue("1") int limit,
-                                           @QueryParam("order") String order,
-                                           @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("artifact-name") String artifactName,
+      @QueryParam("lower") String lower,
+      @QueryParam("upper") String upper,
+      @QueryParam("limit") @DefaultValue("1") int limit,
+      @QueryParam("order") String order,
+      @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceId.equals(NamespaceId.SYSTEM)) {
       if (!namespaceQueryAdmin.exists(namespaceId)) {
@@ -167,21 +177,23 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       }
     }
     ArtifactRange range =
-      new ArtifactRange(namespaceId.getNamespace(), artifactName,
-                        new ArtifactVersionRange(new ArtifactVersion(lower), true,
-                                                 new ArtifactVersion(upper), true));
+        new ArtifactRange(namespaceId.getNamespace(), artifactName,
+            new ArtifactVersionRange(new ArtifactVersion(lower), true,
+                new ArtifactVersion(upper), true));
     ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
-    List<ArtifactDetail> artifactDetailList = artifactRepository.getArtifactDetails(range, limit, sortOrder);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetailList, ARTIFACT_DETAIL_LIST_TYPE));
+    List<ArtifactDetail> artifactDetailList = artifactRepository.getArtifactDetails(range, limit,
+        sortOrder);
+    responder.sendJson(HttpResponseStatus.OK,
+        GSON.toJson(artifactDetailList, ARTIFACT_DETAIL_LIST_TYPE));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
   public void getArtifactDetail(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespace,
-                                @PathParam("artifact-name") String artifactName,
-                                @PathParam("artifact-version") String artifactVersion,
-                                @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+      @PathParam("namespace-id") String namespace,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion,
+      @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceId.equals(NamespaceId.SYSTEM)) {
       if (!namespaceQueryAdmin.exists(namespaceId)) {
@@ -189,24 +201,27 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       }
     }
     ArtifactId artifactId = new ArtifactId(namespace, artifactName, artifactVersion);
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(
+        Id.Artifact.fromEntityId(artifactId));
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetail));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/location")
   public void getArtifactLocationPath(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") String namespaceId,
-                                      @PathParam("artifact-name") String artifactName,
-                                      @PathParam("artifact-version") String artifactVersion) {
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("artifact-name") String artifactName,
+      @PathParam("artifact-version") String artifactVersion) {
     try {
       ArtifactDetail artifactDetail = artifactRepository.getArtifact(
-        Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
-      responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
+          Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
+      responder.sendString(HttpResponseStatus.OK,
+          artifactDetail.getDescriptor().getLocation().toURI().getPath());
     } catch (Exception e) {
-      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId,
+          e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Error reading artifact metadata from the store.");
+          "Error reading artifact metadata from the store.");
     }
   }
 
@@ -219,7 +234,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, @Nullable String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+      throws NamespaceNotFoundException, BadRequestException {
     if (scope != null) {
       return validateAndGetScopedNamespace(namespace, validateScope(scope));
     }
@@ -227,16 +242,17 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   /**
-   * Check that the namespace exists, and check if the request is only supposed to include system artifacts, and
-   * returning the system namespace if so.
+   * Check that the namespace exists, and check if the request is only supposed to include system
+   * artifacts, and returning the system namespace if so.
    *
    * @param namespace NamespaceId to validate
    * @param scope ArtifactScope for the given artifact
-   * @return The scoped NamespaceId (SYSTEM if the artifact scope is SYSTEM otherwise the given namespace)
+   * @return The scoped NamespaceId (SYSTEM if the artifact scope is SYSTEM otherwise the given
+   *     namespace)
    * @throws NamespaceNotFoundException If the given namespace does not exist
    */
   private NamespaceId validateAndGetScopedNamespace(NamespaceId namespace, ArtifactScope scope)
-    throws NamespaceNotFoundException {
+      throws NamespaceNotFoundException {
     if (ArtifactScope.SYSTEM.equals(scope)) {
       return NamespaceId.SYSTEM;
     }
@@ -244,7 +260,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     try {
       namespaceQueryAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {
-        throw e;
+      throw e;
     } catch (Exception e) {
       // This can only happen when NamespaceAdmin uses HTTP to interact with namespaces.
       // Within AppFabric, NamespaceAdmin is bound to DefaultNamespaceAdmin which directly interacts with MDS.

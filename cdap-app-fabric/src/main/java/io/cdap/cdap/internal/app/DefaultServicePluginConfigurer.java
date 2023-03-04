@@ -37,14 +37,17 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Default service plugin configurer which supports creating a combined class loader for all the plugins used.
+ * Default service plugin configurer which supports creating a combined class loader for all the
+ * plugins used.
  */
-public class DefaultServicePluginConfigurer extends DefaultPluginConfigurer implements ServicePluginConfigurer {
+public class DefaultServicePluginConfigurer extends DefaultPluginConfigurer implements
+    ServicePluginConfigurer {
+
   private final ClassLoader programClassLoader;
 
   public DefaultServicePluginConfigurer(ArtifactId artifactId, NamespaceId pluginNamespaceId,
-                                        PluginInstantiator pluginInstantiator, PluginFinder pluginFinder,
-                                        ClassLoader programClassLoader) {
+      PluginInstantiator pluginInstantiator, PluginFinder pluginFinder,
+      ClassLoader programClassLoader) {
     super(artifactId, pluginNamespaceId, pluginInstantiator, pluginFinder);
     this.programClassLoader = programClassLoader;
   }
@@ -52,17 +55,19 @@ public class DefaultServicePluginConfigurer extends DefaultPluginConfigurer impl
   @Override
   public ClassLoader createClassLoader() {
     Map<String, Plugin> plugins = getPlugins().entrySet().stream()
-                                    .collect(Collectors.toMap(Map.Entry::getKey, v -> v.getValue().getPlugin()));
+        .collect(Collectors.toMap(Map.Entry::getKey, v -> v.getValue().getPlugin()));
 
     ClassLoader pluginsClassLoader =
-      PluginClassLoaders.createFilteredPluginsClassLoader(plugins, getPluginInstantiator());
-    return new CombineClassLoader(null, programClassLoader, pluginsClassLoader, getClass().getClassLoader());
+        PluginClassLoaders.createFilteredPluginsClassLoader(plugins, getPluginInstantiator());
+    return new CombineClassLoader(null, programClassLoader, pluginsClassLoader,
+        getClass().getClassLoader());
   }
 
   @Nullable
   @Override
-  public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                         PluginSelector selector, MacroEvaluator macroEvaluator, MacroParserOptions options) {
+  public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+      PluginProperties properties,
+      PluginSelector selector, MacroEvaluator macroEvaluator, MacroParserOptions options) {
     try {
       Plugin plugin = addPlugin(pluginType, pluginName, pluginId, properties, selector);
       return pluginInstantiator.newInstance(plugin, macroEvaluator, options);

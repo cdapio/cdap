@@ -1170,19 +1170,20 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program, "RUNNING");
     // Try to delete all Apps while service is running
     response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE1));
+        TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + program.getNamespace() +
-                          "' could not be deleted. Reason: The following programs are still running: "
-                          + program.getApplicationId() + ": " + program.getId(),
-                        response.getResponseBodyAsString());
+    Assert.assertEquals("'" + program.getNamespace()
+            + "' could not be deleted. Reason: The following programs are still running: "
+            + program.getApplicationId() + ": " + program.getId(),
+        response.getResponseBodyAsString());
 
     stopProgram(program);
     waitState(program, "STOPPED");
 
     // Delete the app in the wrong namespace
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE2));
+    response = doDelete(
+        getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+            TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Delete an non-existing app with version
@@ -1206,19 +1207,20 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program1, "RUNNING");
     // Try to delete an App while its service is running
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
-      Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
+        String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+        Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
-                          " are still running: " + program1.getProgram(), response.getResponseBodyAsString());
+    Assert.assertEquals(
+        "'" + program1.getParent() + "' could not be deleted. Reason: The following programs"
+            + " are still running: " + program1.getProgram(), response.getResponseBodyAsString());
 
     stopProgram(program1, null, 200, null);
     waitState(program1, "STOPPED");
 
     // Delete the app with version in the wrong namespace
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
-      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+        String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service
@@ -1292,19 +1294,20 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program, "RUNNING");
     // Try to delete all Apps while service is running
     response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE1));
+        TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
-    Assert.assertEquals("'" + program.getNamespace() +
-                          "' could not be deleted. Reason: The following programs are still running: "
-                          + program.getApplicationId() + ": " + program.getId(),
-                        response.getResponseBodyAsString());
+    Assert.assertEquals("'" + program.getNamespace()
+            + "' could not be deleted. Reason: The following programs are still running: "
+            + program.getApplicationId() + ": " + program.getId(),
+        response.getResponseBodyAsString());
 
     stopProgram(program);
     waitState(program, "STOPPED");
 
     // Delete the app in the wrong namespace
-    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE2));
+    response = doDelete(
+        getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
+            TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     // Delete an non-existing app with version
@@ -1327,22 +1330,23 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program1, "RUNNING");
     // Try to delete an App while its service is running
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s", appId.getApplication()),
-      Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
+        String.format("apps/%s", appId.getApplication()),
+        Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
-    ProgramReference programIdDefault = new ApplicationReference(appId.getNamespace(), appId.getApplication())
-      .program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    Assert.assertEquals("'" + programIdDefault.getParent() + "' could not be deleted. Reason: " +
-                          "The following programs are still running: " + AllProgramsApp.NoOpService.NAME,
-                        response.getResponseBodyAsString());
+    ProgramReference programIdDefault = new ApplicationReference(appId.getNamespace(),
+        appId.getApplication())
+        .program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    Assert.assertEquals("'" + programIdDefault.getParent() + "' could not be deleted. Reason: "
+            + "The following programs are still running: " + AllProgramsApp.NoOpService.NAME,
+        response.getResponseBodyAsString());
 
     stopProgram(program1, null, 200, null);
     waitState(program1, "STOPPED");
 
     // Delete the app with version in the wrong namespace
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s", appId.getApplication()),
-      Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+        String.format("apps/%s", appId.getApplication()),
+        Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
     //Delete the app with version after stopping the service

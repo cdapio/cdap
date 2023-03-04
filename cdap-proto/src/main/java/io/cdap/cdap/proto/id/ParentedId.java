@@ -22,6 +22,7 @@ package io.cdap.cdap.proto.id;
  * @param <T> the type of parent
  */
 public interface ParentedId<T extends EntityId> {
+
   /**
    * @return the parent {@link EntityId} of {@code this}
    */

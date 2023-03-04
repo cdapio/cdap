@@ -26,6 +26,7 @@ import org.apache.twill.api.TwillRunnable;
  * Container class for holding {@link TwillRunnable} and extra configurations associated with it.
  */
 public final class RunnableDefinition {
+
   private final TwillRunnable runnable;
   private final ResourceSpecification resources;
   private final Map<String, String> twillRunnableConfigs;
@@ -33,8 +34,8 @@ public final class RunnableDefinition {
   private final Integer maxRetries;
 
   public RunnableDefinition(TwillRunnable runnable, ResourceSpecification resources,
-                            Map<String, String> twillRunnableConfigs, Map<String, Level> logLevels,
-                            @Nullable Integer maxRetries) {
+      Map<String, String> twillRunnableConfigs, Map<String, Level> logLevels,
+      @Nullable Integer maxRetries) {
     this.runnable = runnable;
     this.resources = resources;
     this.twillRunnableConfigs = twillRunnableConfigs;

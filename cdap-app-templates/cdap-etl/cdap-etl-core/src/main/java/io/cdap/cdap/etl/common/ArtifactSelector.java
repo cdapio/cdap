@@ -28,17 +28,18 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
- * Selects which plugin to use based on optional artifact scope, name, and version fields.
- * Will select the greatest artifact that matches all non-null fields.
+ * Selects which plugin to use based on optional artifact scope, name, and version fields. Will
+ * select the greatest artifact that matches all non-null fields.
  */
 public class ArtifactSelector extends PluginSelector {
+
   private final ArtifactScope scope;
   private final String name;
   private final ArtifactVersionRange range;
 
   public ArtifactSelector(@Nullable ArtifactScope scope,
-                          @Nullable String name,
-                          @Nullable ArtifactVersionRange range) {
+      @Nullable String name,
+      @Nullable ArtifactVersionRange range) {
     this.scope = scope;
     this.name = name;
     this.range = range;
@@ -57,9 +58,9 @@ public class ArtifactSelector extends PluginSelector {
 
     for (Map.Entry<ArtifactId, PluginClass> entry : pluginMap.descendingMap().entrySet()) {
       ArtifactId artifactId = entry.getKey();
-      if ((scope == null || artifactId.getScope().equals(scope)) &&
-        (name == null || artifactId.getName().equals(name)) &&
-        (range == null || range.versionIsInRange(artifactId.getVersion()))) {
+      if ((scope == null || artifactId.getScope().equals(scope))
+          && (name == null || artifactId.getName().equals(name))
+          && (range == null || range.versionIsInRange(artifactId.getVersion()))) {
         return entry;
       }
     }

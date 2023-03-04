@@ -32,10 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HBase coprocessor that tracks WAL writes for all tables to track replication status.
- * For each region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
+ * HBase coprocessor that tracks WAL writes for all tables to track replication status. For each
+ * region the writeTime of the last WAL entry is written to the REPLICATION_STATE table.
  */
 public class LastWriteTimeObserver extends BaseWALObserver {
+
   private HBase10TableUpdater hBase10TableUpdater;
   private static final Logger LOG = LoggerFactory.getLogger(LastWriteTimeObserver.class);
 
@@ -44,8 +45,9 @@ public class LastWriteTimeObserver extends BaseWALObserver {
     LOG.info("LastWriteTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase10TableUpdater = new HBase10TableUpdater(ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
-                                                  env.getConfiguration(), htableInterface);
+    hBase10TableUpdater = new HBase10TableUpdater(
+        ReplicationConstants.ReplicationStatusTool.WRITE_TIME_ROW_TYPE,
+        env.getConfiguration(), htableInterface);
   }
 
   @Override
@@ -55,9 +57,11 @@ public class LastWriteTimeObserver extends BaseWALObserver {
   }
 
   @Override
-  public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx, HRegionInfo info,
-                           WALKey logKey, WALEdit logEdit) throws IOException {
-    if (logKey.getScopes() == null || logKey.getScopes().size() == 0 || !logKey.getClusterIds().isEmpty()) {
+  public void postWALWrite(ObserverContext<? extends WALCoprocessorEnvironment> ctx,
+      HRegionInfo info,
+      WALKey logKey, WALEdit logEdit) throws IOException {
+    if (logKey.getScopes() == null || logKey.getScopes().size() == 0 || !logKey.getClusterIds()
+        .isEmpty()) {
       //if replication scope is not set for this entry, do not update write time.
       // This is to save us from cases where some HBase tables do not have replication enabled.
       // Ideally, you would check scopes against REPLICATION_SCOPE_LOCAL, but cell.getFamily() is expensive.
@@ -66,9 +70,10 @@ public class LastWriteTimeObserver extends BaseWALObserver {
       return;
     }
     LOG.debug("Update LastWriteTimeObserver for Table {}:{} for region={}",
-              logKey.getTablename().toString(),
-              logKey.getWriteTime(),
-              logKey.getEncodedRegionName().toString());
-    hBase10TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"), logKey.getWriteTime());
+        logKey.getTablename().toString(),
+        logKey.getWriteTime(),
+        logKey.getEncodedRegionName().toString());
+    hBase10TableUpdater.updateTime(new String(logKey.getEncodedRegionName(), "UTF-8"),
+        logKey.getWriteTime());
   }
 }

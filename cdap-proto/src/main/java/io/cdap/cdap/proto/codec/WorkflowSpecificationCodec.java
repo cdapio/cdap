@@ -32,10 +32,12 @@ import java.util.Map;
 /**
  *
  */
-public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec<WorkflowSpecification> {
+public final class WorkflowSpecificationCodec extends
+    AbstractSpecificationCodec<WorkflowSpecification> {
 
   @Override
-  public JsonElement serialize(WorkflowSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(WorkflowSpecification src, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
@@ -43,24 +45,28 @@ public final class WorkflowSpecificationCodec extends AbstractSpecificationCodec
     jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
     jsonObj.add("nodes", serializeList(src.getNodes(), context, WorkflowNode.class));
-    jsonObj.add("localDatasetSpecs", serializeMap(src.getLocalDatasetSpecs(), context, DatasetCreationSpec.class));
+    jsonObj.add("localDatasetSpecs",
+        serializeMap(src.getLocalDatasetSpecs(), context, DatasetCreationSpec.class));
     return jsonObj;
   }
 
   @Override
   public WorkflowSpecification deserialize(JsonElement json, Type typeOfT,
-                                           JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
     List<WorkflowNode> nodes = deserializeList(jsonObj.get("nodes"), context, WorkflowNode.class);
-    Map<String, DatasetCreationSpec> localDatasetSpec = deserializeMap(jsonObj.get("localDatasetSpecs"), context,
-                                                                       DatasetCreationSpec.class);
+    Map<String, DatasetCreationSpec> localDatasetSpec = deserializeMap(
+        jsonObj.get("localDatasetSpecs"), context,
+        DatasetCreationSpec.class);
 
-    return new WorkflowSpecification(className, name, description, properties, nodes, localDatasetSpec, plugins);
+    return new WorkflowSpecification(className, name, description, properties, nodes,
+        localDatasetSpec, plugins);
   }
 }

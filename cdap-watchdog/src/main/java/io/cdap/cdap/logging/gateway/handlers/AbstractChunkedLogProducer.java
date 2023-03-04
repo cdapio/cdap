@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
  * LogReader BodyProducer class that delegates to subclasses for how to encode log events.
  */
 public abstract class AbstractChunkedLogProducer extends BodyProducer {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractChunkedLogProducer.class);
 
   protected static final int BUFFER_BYTES = 8192;
@@ -51,7 +52,10 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
   protected abstract HttpHeaders getResponseHeaders();
 
   protected abstract ByteBuf onWriteStart() throws IOException;
-  protected abstract ByteBuf writeLogEvents(CloseableIterator<LogEvent> logEvent) throws IOException;
+
+  protected abstract ByteBuf writeLogEvents(CloseableIterator<LogEvent> logEvent)
+      throws IOException;
+
   protected abstract ByteBuf onWriteFinish() throws IOException;
 
   public void close() {
@@ -68,7 +72,8 @@ public abstract class AbstractChunkedLogProducer extends BodyProducer {
 
     if (logEventIter.hasNext()) {
       ByteBuf eventsBuffer = writeLogEvents(logEventIter);
-      return startBuffer.isReadable() ? Unpooled.wrappedBuffer(startBuffer, eventsBuffer) : eventsBuffer;
+      return startBuffer.isReadable() ? Unpooled.wrappedBuffer(startBuffer, eventsBuffer)
+          : eventsBuffer;
     }
 
     if (!hasFinished) {

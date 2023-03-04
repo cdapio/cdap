@@ -33,6 +33,7 @@ public class QueryStatus {
 
   /**
    * A query status for an operation that is not in error.
+   *
    * @param status the status
    * @param hasResults whether the query has produced results
    */
@@ -42,13 +43,15 @@ public class QueryStatus {
 
   /**
    * A query status that represents failure with an error message.
+   *
    * @param errorMessage the error message
    */
   public QueryStatus(String errorMessage, @Nullable String sqlState) {
     this(OpStatus.ERROR, false, errorMessage, sqlState);
   }
 
-  private QueryStatus(OpStatus status, boolean hasResults, @Nullable String errorMessage, @Nullable String sqlState) {
+  private QueryStatus(OpStatus status, boolean hasResults, @Nullable String errorMessage,
+      @Nullable String sqlState) {
     this.status = status;
     this.hasResults = hasResults;
     this.errorMessage = errorMessage;
@@ -74,12 +77,12 @@ public class QueryStatus {
 
   @Override
   public String toString() {
-    return "QueryStatus{" +
-      "status=" + status +
-      ", hasResults=" + hasResults +
-      ", errorMessage='" + errorMessage + '\'' +
-      ", sqlState='" + sqlState + '\'' +
-      '}';
+    return "QueryStatus{"
+        + "status=" + status
+        + ", hasResults=" + hasResults
+        + ", errorMessage='" + errorMessage + '\''
+        + ", sqlState='" + sqlState + '\''
+        + '}';
   }
 
   @Override
@@ -93,10 +96,10 @@ public class QueryStatus {
 
     QueryStatus that = (QueryStatus) o;
 
-    return Objects.equals(this.status, that.status) &&
-      Objects.equals(this.hasResults, that.hasResults) &&
-      Objects.equals(this.errorMessage, that.errorMessage) &&
-      Objects.equals(this.sqlState, that.sqlState);
+    return Objects.equals(this.status, that.status)
+        && Objects.equals(this.hasResults, that.hasResults)
+        && Objects.equals(this.errorMessage, that.errorMessage)
+        && Objects.equals(this.sqlState, that.sqlState);
   }
 
   @Override
@@ -119,7 +122,8 @@ public class QueryStatus {
     PENDING;
 
     public boolean isDone() {
-      return this.equals(FINISHED) || this.equals(CANCELED) || this.equals(CLOSED) || this.equals(ERROR);
+      return this.equals(FINISHED) || this.equals(CANCELED) || this.equals(CLOSED) || this.equals(
+          ERROR);
     }
   }
 }

@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Class to carry information about dataproc cluster. Instance of this class will be created by provisioner.
+ * Class to carry information about dataproc cluster. Instance of this class will be created by
+ * provisioner.
  */
 public class DataprocClusterInfo {
 
@@ -37,8 +38,8 @@ public class DataprocClusterInfo {
   private final Map<String, String> labels;
 
   public DataprocClusterInfo(ProvisionerContext provisionerContext,
-                             String clusterName, GoogleCredentials credentials, String endpoint, String projectId,
-                             String region, String bucket, Map<String, String> labels) {
+      String clusterName, GoogleCredentials credentials, String endpoint, String projectId,
+      String region, String bucket, Map<String, String> labels) {
     this.provisionerContext = provisionerContext;
     this.clusterName = clusterName;
     this.endpoint = endpoint;

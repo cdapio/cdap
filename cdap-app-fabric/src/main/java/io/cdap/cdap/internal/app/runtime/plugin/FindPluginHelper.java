@@ -39,23 +39,24 @@ public final class FindPluginHelper {
   /**
    * Get the Plugin information from the specified information.
    *
-   * @param parents plugin parents of the plugin. Each item in the iterable must be the parent of the item before it,
-   *                with the first item as the direct parent of the plugin
+   * @param parents plugin parents of the plugin. Each item in the iterable must be the parent
+   *     of the item before it, with the first item as the direct parent of the plugin
    * @param pluginEntry artifact and class information for the plugin
    * @param properties plugin properties
    * @param pluginInstantiator instantiator to add the plugin artifact to
    * @return plugin information
    */
-  public static Plugin getPlugin(Iterable<ArtifactId> parents, Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry,
-                                 PluginProperties properties, PluginInstantiator pluginInstantiator) {
+  public static Plugin getPlugin(Iterable<ArtifactId> parents,
+      Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry,
+      PluginProperties properties, PluginInstantiator pluginInstantiator) {
     CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
 
     for (PluginPropertyField field : pluginEntry.getValue().getProperties().values()) {
       if (field.isMacroSupported() && properties.getProperties().containsKey(field.getName())) {
         MacroParser parser = new MacroParser(collectMacroEvaluator,
-                                             MacroParserOptions.builder()
-                                               .setEscaping(field.isMacroEscapingEnabled())
-                                               .build());
+            MacroParserOptions.builder()
+                .setEscaping(field.isMacroEscapingEnabled())
+                .build());
         parser.parse(properties.getProperties().get(field.getName()));
       }
     }
@@ -67,7 +68,7 @@ public final class FindPluginHelper {
       throw Throwables.propagate(e);
     }
     return new Plugin(parents, artifact, pluginEntry.getValue(),
-                      properties.setMacros(collectMacroEvaluator.getMacros()));
+        properties.setMacros(collectMacroEvaluator.getMacros()));
   }
 
 }

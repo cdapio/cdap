@@ -37,6 +37,7 @@ import java.util.Map;
 @Plugin(type = ErrorTransform.PLUGIN_TYPE)
 @Name("Filter")
 public class FilterErrorTransform extends ErrorTransform<StructuredRecord, StructuredRecord> {
+
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private Config config;
 
@@ -47,7 +48,8 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
   }
 
   @Override
-  public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void transform(ErrorRecord<StructuredRecord> input, Emitter<StructuredRecord> emitter)
+      throws Exception {
     if (input.getErrorCode() != config.code) {
       emitter.emit(input.getRecord());
     }
@@ -57,6 +59,7 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
    * Config for the error transform.
    */
   public static class Config extends PluginConfig {
+
     private int code;
   }
 
@@ -70,7 +73,8 @@ public class FilterErrorTransform extends ErrorTransform<StructuredRecord, Struc
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("code", new PluginPropertyField("code", "", "int", true, false));
     return PluginClass.builder().setName("Filter").setType(ErrorTransform.PLUGIN_TYPE)
-             .setDescription("").setClassName(FilterErrorTransform.class.getName()).setProperties(properties)
-             .setConfigFieldName("config").build();
+        .setDescription("").setClassName(FilterErrorTransform.class.getName())
+        .setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

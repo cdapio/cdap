@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public class UnsupportedTypeException extends Exception {
+
   public UnsupportedTypeException(String message) {
     super(message);
   }

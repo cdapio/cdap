@@ -31,14 +31,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link TimeEventQueue} processor to enqueue the log events to {@link TimeEventQueue}, and process them.
+ * The {@link TimeEventQueue} processor to enqueue the log events to {@link TimeEventQueue}, and
+ * process them.
+ *
  * @param <OFFSET> type of the offset
  */
 public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
+
   private static final Logger LOG = LoggerFactory.getLogger(TimeEventQueueProcessor.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
-    Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
+      Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
   private static final double MIN_FREE_FACTOR = 0.5d;
   private final TimeEventQueue<ILoggingEvent, OFFSET> eventQueue;
   private final LogProcessorPipelineContext context;
@@ -49,8 +52,9 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
   /**
    * Time event queue processor.
    */
-  public TimeEventQueueProcessor(LogProcessorPipelineContext context, long maxBufferSize, long eventDelayMillis,
-                                 Iterable<Integer> partitions) {
+  public TimeEventQueueProcessor(LogProcessorPipelineContext context, long maxBufferSize,
+      long eventDelayMillis,
+      Iterable<Integer> partitions) {
     this.context = context;
     this.maxBufferSize = maxBufferSize;
     this.eventDelayMillis = eventDelayMillis;
@@ -63,17 +67,18 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
    *
    * @param partition log event partition
    * @param eventIterator processor events iterator
-   *
    * @return processed event metadata
    */
-  public ProcessedEventMetadata<OFFSET> process(int partition, Iterator<ProcessorEvent<OFFSET>> eventIterator) {
+  public ProcessedEventMetadata<OFFSET> process(int partition,
+      Iterator<ProcessorEvent<OFFSET>> eventIterator) {
     int totalEvents = 0;
     Map<Integer, Checkpoint<OFFSET>> checkpoints = new HashMap<>();
 
     // iterate through all the events if buffer size has not reached max
     while (eventIterator.hasNext()) {
       if (eventQueue.getEventSize() >= maxBufferSize) {
-        OUTAGE_LOG.info("Maximum queue size {} reached for log pipeline {}.", maxBufferSize, context.getName());
+        OUTAGE_LOG.info("Maximum queue size {} reached for log pipeline {}.", maxBufferSize,
+            context.getName());
 
         // Event queue is full. So try to append events to log appenders. If none of the events are appended to log
         // appenders, then do not enqueue any more events.
@@ -86,8 +91,9 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
       }
 
       ProcessorEvent<OFFSET> processorEvent = eventIterator.next();
-      eventQueue.add(processorEvent.getEvent(), processorEvent.getEvent().getTimeStamp(), processorEvent.getEventSize(),
-                     partition, processorEvent.getOffset());
+      eventQueue.add(processorEvent.getEvent(), processorEvent.getEvent().getTimeStamp(),
+          processorEvent.getEventSize(),
+          partition, processorEvent.getOffset());
     }
 
     // if event queue is full or all the events have been added to the queue, append all the enqueued events to log
@@ -103,8 +109,8 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
 
   private ProcessedEventMetadata<OFFSET> append() {
     long minEventTime = System.currentTimeMillis() - eventDelayMillis;
-    long maxRetainSize = eventQueue.getEventSize() >= maxBufferSize ?
-      (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
+    long maxRetainSize = eventQueue.getEventSize() >= maxBufferSize
+        ? (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
 
     int eventsAppended = 0;
     long minDelay = Long.MAX_VALUE;
@@ -128,17 +134,20 @@ public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
 
       try {
         // Otherwise, append the event
-        ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(event.getLoggerName());
+        ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(
+            event.getLoggerName());
         if (event.getLevel().isGreaterOrEqual(effectiveLogger.getEffectiveLevel())) {
           effectiveLogger.callAppenders(event);
         }
       } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to append log event in log pipeline {}. Will be retried.", context.getName(), e);
+        OUTAGE_LOG.warn("Failed to append log event in log pipeline {}. Will be retried.",
+            context.getName(), e);
         break;
       }
 
-      metadata.put(iterator.getPartition(), new Checkpoint<>(eventQueue.getSmallestOffset(iterator.getPartition()),
-                                                             event.getTimeStamp()));
+      metadata.put(iterator.getPartition(),
+          new Checkpoint<>(eventQueue.getSmallestOffset(iterator.getPartition()),
+              event.getTimeStamp()));
       iterator.remove();
       eventsAppended++;
     }

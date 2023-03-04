@@ -30,8 +30,8 @@ public interface AssignmentChangeListener {
   /**
    * Invoked when no more changes will be notified to this listener.
    *
-   * @param failureCause Failure that causes notification stopped or {@code null} if the completion is not caused by
-   *                     failure (e.g. upon request).
+   * @param failureCause Failure that causes notification stopped or {@code null} if the
+   *     completion is not caused by failure (e.g. upon request).
    */
   void finished(Throwable failureCause);
 }

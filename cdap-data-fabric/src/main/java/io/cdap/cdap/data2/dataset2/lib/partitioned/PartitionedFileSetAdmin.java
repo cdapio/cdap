@@ -23,15 +23,16 @@ import io.cdap.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import java.util.Map;
 
 /**
- * Implementation of {@link io.cdap.cdap.api.dataset.DatasetAdmin} for
- * {@link io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset} instances.
+ * Implementation of {@link io.cdap.cdap.api.dataset.DatasetAdmin} for {@link
+ * io.cdap.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset} instances.
  */
 public class PartitionedFileSetAdmin extends CompositeDatasetAdmin {
+
   private final DatasetContext context;
   private final DatasetSpecification spec;
 
   public PartitionedFileSetAdmin(DatasetContext context, DatasetSpecification spec,
-                                 Map<String, DatasetAdmin> embeddedAdmins) {
+      Map<String, DatasetAdmin> embeddedAdmins) {
     super(embeddedAdmins);
     this.context = context;
     this.spec = spec;

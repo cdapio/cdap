@@ -20,12 +20,13 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.util.Objects;
 
 /**
- * Abstract base class to represent a field lineage operation. Each operation has a
- * name and description. The name of operation must be unique within all operations
- * recorded by the same pipeline stage. Operation typically has input and output fields.
+ * Abstract base class to represent a field lineage operation. Each operation has a name and
+ * description. The name of operation must be unique within all operations recorded by the same
+ * pipeline stage. Operation typically has input and output fields.
  */
 @Beta
 public abstract class FieldOperation {
+
   private final String name;
   private final OperationType type;
   private final String description;
@@ -66,9 +67,9 @@ public abstract class FieldOperation {
       return false;
     }
     FieldOperation operation = (FieldOperation) o;
-    return Objects.equals(name, operation.name) &&
-      type == operation.type &&
-      Objects.equals(description, operation.description);
+    return Objects.equals(name, operation.name)
+        && type == operation.type
+        && Objects.equals(description, operation.description);
   }
 
   @Override

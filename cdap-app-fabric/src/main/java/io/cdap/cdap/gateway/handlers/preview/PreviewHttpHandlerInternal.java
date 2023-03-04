@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/previews")
 public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandlerInternal.class);
   private static final Gson GSON = new Gson();
   private final PreviewManager previewManager;
@@ -55,7 +56,8 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
     PreviewRequest previewRequest = previewManager.poll(pollerInfo).orElse(null);
 
     if (previewRequest != null) {
-      LOG.debug("Send preview request {} to poller {}", previewRequest.getProgram(), Bytes.toString(pollerInfo));
+      LOG.debug("Send preview request {} to poller {}", previewRequest.getProgram(),
+          Bytes.toString(pollerInfo));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequest));
     } else {
       responder.sendStatus(HttpResponseStatus.OK);

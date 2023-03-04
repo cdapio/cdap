@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  * Format context.
  */
 public class FormatContext {
+
   private final FailureCollector collector;
   private final Schema inputSchema;
 

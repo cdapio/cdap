@@ -24,6 +24,7 @@ import org.slf4j.MDC;
  * Sets the stage name in logging MDC before calling the callable, and resets it when finished.
  */
 public class StageLoggingCaller extends Caller {
+
   private final Caller delegate;
   private final String stageName;
 

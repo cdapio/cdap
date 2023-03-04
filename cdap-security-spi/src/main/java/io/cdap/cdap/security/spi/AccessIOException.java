@@ -22,6 +22,7 @@ import io.cdap.cdap.api.security.AccessException;
  * Security exception related to networking IO problems. Often wraps {@link java.io.IOException}
  */
 public class AccessIOException extends AccessException {
+
   public AccessIOException() {
   }
 
@@ -37,7 +38,8 @@ public class AccessIOException extends AccessException {
     super(cause);
   }
 
-  public AccessIOException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+  public AccessIOException(String message, Throwable cause, boolean enableSuppression,
+      boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 }

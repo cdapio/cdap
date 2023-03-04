@@ -46,18 +46,22 @@ public class CoreDatasetsModule implements DatasetModule {
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<Table, DatasetAdmin> tableDef = registry.get("table");
 
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition(KeyValueTable.TYPE,
-                                                                                            tableDef);
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition(
+        KeyValueTable.TYPE,
+        tableDef);
     registry.add(kvTableDef);
     registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
 
-    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition(ObjectStore.TYPE,
-                                                                                            kvTableDef);
+    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition(
+        ObjectStore.TYPE,
+        kvTableDef);
     registry.add(new ObjectStoreDefinition(ObjectStore.TYPE, kvTableDef));
     registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), kvTableDef));
 
-    registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.TYPE, tableDef, objectStoreDef));
-    registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.class.getName(), tableDef, objectStoreDef));
+    registry.add(
+        new IndexedObjectStoreDefinition(IndexedObjectStore.TYPE, tableDef, objectStoreDef));
+    registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.class.getName(), tableDef,
+        objectStoreDef));
 
     registry.add(new IndexedTableDefinition(IndexedTable.TYPE, tableDef));
     registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), tableDef));
@@ -66,7 +70,8 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
 
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.TYPE, tableDef));
-    registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
+    registry.add(
+        new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
     registry.add(new InMemoryTableDefinition(InMemoryTable.TYPE));

@@ -26,6 +26,7 @@ import java.io.Serializable;
  */
 @Beta
 public class SQLPullRequest implements Serializable {
+
   private static final long serialVersionUID = 2740000608695387711L;
   private final String datasetName;
   private final Schema datasetSchema;

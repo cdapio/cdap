@@ -27,7 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Mock sink that writes records to a Table and has a utility method for getting all records written.
+ * Mock sink that writes records to a Table and has a utility method for getting all records
+ * written.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name(MockSink.NAME)
@@ -67,10 +68,11 @@ public class MockSink extends AbstractMockSink {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
-    properties.put("connectionConfig", new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
-                                                               false, Collections.singleton("tableName")));
+    properties.put("connectionConfig",
+        new PluginPropertyField("connectionConfig", "", "connectionconfig", true, true,
+            false, Collections.singleton("tableName")));
     return PluginClass.builder().setName(NAME).setType(BatchSink.PLUGIN_TYPE)
-      .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
-      .setConfigFieldName("config").build();
+        .setDescription("").setClassName(MockSink.class.getName()).setProperties(properties)
+        .setConfigFieldName("config").build();
   }
 }

@@ -31,7 +31,8 @@ import java.util.Map;
 /**
  * System App context for a remote task
  */
-public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, AutoCloseable, FeatureFlagsProvider {
+public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, AutoCloseable,
+    FeatureFlagsProvider {
 
   /**
    * Fetch preferences for the given namespace.
@@ -42,7 +43,8 @@ public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, Au
    * @throws IOException if the preferences for the supplied namespace could not be fetched.
    * @throws IllegalArgumentException if the namespace doesn't exist.
    */
-  Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved) throws Exception;
+  Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
+      throws Exception;
 
   /**
    * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime.
@@ -53,7 +55,9 @@ public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, Au
   PluginConfigurer createPluginConfigurer(String namespace) throws IOException;
 
   /**
-   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins with macro evaluation
+   * Create a {@link ServicePluginConfigurer} that can be used to instantiate plugins with macro
+   * evaluation
+   *
    * @param namespace the namespace for user scoped plugins.
    * @return a plugin configurer specifically for service.
    */
@@ -63,15 +67,15 @@ public interface SystemAppTaskContext extends ServiceDiscoverer, SecureStore, Au
    * Evaluates macros using provided macro evaluator with the provided parsing options.
    *
    * @param namespace namespace in which macros needs to be evaluated
-   * @param macros    key-value map of properties to evaluate
+   * @param macros key-value map of properties to evaluate
    * @param evaluator macro evaluator to be used to evaluate macros
-   * @param options   macro parsing options
+   * @param options macro parsing options
    * @return map of evaluated macros
    * @throws InvalidMacroException indicates that there is an invalid macro
    */
   Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
-                                     MacroEvaluator evaluator,
-                                     MacroParserOptions options) throws InvalidMacroException;
+      MacroEvaluator evaluator,
+      MacroParserOptions options) throws InvalidMacroException;
 
   /**
    * @return {@link ArtifactManager} for artifact listing and class loading

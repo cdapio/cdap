@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * Metadata about a tethered peer.
  */
 public class PeerMetadata {
+
   private final List<NamespaceAllocation> namespaceAllocations;
   // metadata associated with the peer. ex: project, region when peer is located
   private final Map<String, String> metadata;
@@ -32,7 +33,7 @@ public class PeerMetadata {
   private final String description;
 
   public PeerMetadata(List<NamespaceAllocation> namespaceAllocations, Map<String, String> metadata,
-                      @Nullable String description) {
+      @Nullable String description) {
     this.namespaceAllocations = namespaceAllocations;
     this.metadata = metadata;
     this.description = description;
@@ -60,9 +61,9 @@ public class PeerMetadata {
       return false;
     }
     PeerMetadata that = (PeerMetadata) other;
-    return Objects.equals(this.namespaceAllocations, that.namespaceAllocations) &&
-      Objects.equals(this.metadata, that.metadata) &&
-      Objects.equals(this.description, that.description);
+    return Objects.equals(this.namespaceAllocations, that.namespaceAllocations)
+        && Objects.equals(this.metadata, that.metadata)
+        && Objects.equals(this.description, that.description);
   }
 
   @Override

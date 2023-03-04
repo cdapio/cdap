@@ -55,13 +55,15 @@ import javax.inject.Inject;
 public class ScheduleClient {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
-    .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
-    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
-    .create();
+      .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+      .registerTypeAdapter(ProtoTrigger.class, new ProtoTriggerCodec())
+      .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
+      .create();
 
-  private static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() {
+  }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -83,12 +85,12 @@ public class ScheduleClient {
    * @param detail the {@link ScheduleDetail} describing the new schedule.
    */
   public void add(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+      UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doAdd(scheduleId, GSON.toJson(detail));
   }
 
   public void update(ScheduleId scheduleId, ScheduleDetail detail) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+      UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
     doUpdate(scheduleId, GSON.toJson(detail));
   }
 
@@ -98,53 +100,57 @@ public class ScheduleClient {
    * @param workflow the ID of the workflow
    */
   public List<ScheduleDetail> listSchedules(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
     return doList(workflow);
   }
 
   /**
-   * Get the next scheduled run time of the program. A program may contain multiple schedules.
-   * This method returns the next scheduled runtimes for all the schedules. This method only takes
-   + into account schedules based on time. Schedules based on data are ignored.
+   * Get the next scheduled run time of the program. A program may contain multiple schedules. This
+   * method returns the next scheduled runtimes for all the schedules. This method only takes + into
+   * account schedules based on time. Schedules based on data are ignored.
    *
    * @param workflow Id of the Workflow for which to fetch next run times.
    * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.
    */
   public List<ScheduledRuntime> nextRuntimes(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/workflows/%s/nextruntime", workflow.getApplication(), workflow.getProgram());
+    String path = String.format("apps/%s/workflows/%s/nextruntime", workflow.getApplication(),
+        workflow.getProgram());
     URL url = config.resolveNamespacedURLV3(workflow.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(workflow);
     }
 
     ObjectResponse<List<ScheduledRuntime>> objectResponse = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<ScheduledRuntime>>() { }.getType(), GSON);
+        response, new TypeToken<List<ScheduledRuntime>>() {
+        }.getType(), GSON);
     return objectResponse.getResponseObject();
   }
 
-  public void suspend(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
+  public void suspend(ScheduleId scheduleId)
+      throws IOException, UnauthenticatedException, NotFoundException,
+      UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s/suspend", scheduleId.getApplication(),
-                                scheduleId.getSchedule());
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     }
   }
 
-  public void resume(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
+  public void resume(ScheduleId scheduleId)
+      throws IOException, UnauthenticatedException, NotFoundException,
+      UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s/resume", scheduleId.getApplication(),
-                                scheduleId.getSchedule());
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     }
@@ -155,31 +161,34 @@ public class ScheduleClient {
    *
    * @param scheduleId the ID of the schedule to be deleted
    */
-  public void delete(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
+  public void delete(ScheduleId scheduleId)
+      throws IOException, UnauthenticatedException, NotFoundException,
+      UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s", scheduleId.getApplication(),
-                                scheduleId.getSchedule());
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     }
   }
 
-  public String getStatus(ScheduleId scheduleId) throws IOException, UnauthenticatedException, NotFoundException,
-    UnauthorizedException {
+  public String getStatus(ScheduleId scheduleId)
+      throws IOException, UnauthenticatedException, NotFoundException,
+      UnauthorizedException {
     String path = String.format("apps/%s/schedules/%s/status", scheduleId.getApplication(),
-                                scheduleId.getSchedule());
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     }
 
     Map<String, String> responseObject
-      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+        = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON)
+        .getResponseObject();
     return responseObject.get("status");
   }
 
@@ -190,13 +199,15 @@ public class ScheduleClient {
    * @param startTimeMillis lower bound in millis of the update time for schedules (inclusive)
    * @param endTimeMillis upper bound in millis of the update time for schedules (exclusive)
    */
-  public void reEnableSuspendedSchedules(NamespaceId namespaceId, long startTimeMillis, long endTimeMillis)
-    throws IOException, UnauthorizedException, UnauthenticatedException, NotFoundException {
+  public void reEnableSuspendedSchedules(NamespaceId namespaceId, long startTimeMillis,
+      long endTimeMillis)
+      throws IOException, UnauthorizedException, UnauthenticatedException, NotFoundException {
     String path =
-      String.format("schedules/re-enable?start-time-millis=%d&end-time-millis=%d", startTimeMillis, endTimeMillis);
+        String.format("schedules/re-enable?start-time-millis=%d&end-time-millis=%d",
+            startTimeMillis, endTimeMillis);
     URL url = config.resolveNamespacedURLV3(namespaceId.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(namespaceId);
     }
@@ -204,15 +215,16 @@ public class ScheduleClient {
 
   /*------------ private helpers ---------------------*/
 
-  private void doAdd(ScheduleId scheduleId, String json)  throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+  private void doAdd(ScheduleId scheduleId, String json) throws IOException,
+      UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
 
-    String path = String.format("apps/%s/schedules/%s", scheduleId.getApplication(), scheduleId.getSchedule());
+    String path = String.format("apps/%s/schedules/%s", scheduleId.getApplication(),
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpRequest request = HttpRequest.put(url).withBody(json).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_CONFLICT);
+        HttpURLConnection.HTTP_NOT_FOUND,
+        HttpURLConnection.HTTP_CONFLICT);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     } else if (HttpURLConnection.HTTP_CONFLICT == response.getResponseCode()) {
@@ -221,32 +233,33 @@ public class ScheduleClient {
   }
 
   private void doUpdate(ScheduleId scheduleId, String json) throws IOException,
-    UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
+      UnauthenticatedException, NotFoundException, UnauthorizedException, AlreadyExistsException {
 
     String path = String.format("apps/%s/schedules/%s/update", scheduleId.getApplication(),
-                                scheduleId.getSchedule());
+        scheduleId.getSchedule());
     URL url = config.resolveNamespacedURLV3(scheduleId.getNamespaceId(), path);
     HttpRequest request = HttpRequest.post(url).withBody(json).build();
     HttpResponse response = restClient.execute(request, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(scheduleId);
     }
   }
 
   private List<ScheduleDetail> doList(WorkflowId workflow)
-    throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, NotFoundException, UnauthorizedException {
 
-    String path = String.format("apps/%s/workflows/%s/schedules", workflow.getApplication(), workflow.getProgram());
+    String path = String.format("apps/%s/workflows/%s/schedules", workflow.getApplication(),
+        workflow.getProgram());
     URL url = config.resolveNamespacedURLV3(workflow.getNamespaceId(), path);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+        HttpURLConnection.HTTP_NOT_FOUND);
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(workflow);
     }
 
     ObjectResponse<List<ScheduleDetail>> objectResponse =
-      ObjectResponse.fromJsonBody(response, LIST_SCHEDULE_DETAIL_TYPE, GSON);
+        ObjectResponse.fromJsonBody(response, LIST_SCHEDULE_DETAIL_TYPE, GSON);
     return objectResponse.getResponseObject();
   }
 

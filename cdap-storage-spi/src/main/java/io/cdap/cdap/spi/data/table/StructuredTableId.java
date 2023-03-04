@@ -25,11 +25,12 @@ import java.util.Objects;
  */
 @Beta
 public class StructuredTableId {
+
   private final String name;
 
   /**
-   * @param name table name, the name can only contain alpha-numeric characters and underscore. The name will always be
-   *             lower case. The name has to start with an alphabet.
+   * @param name table name, the name can only contain alpha-numeric characters and underscore.
+   *     The name will always be lower case. The name has to start with an alphabet.
    */
   public StructuredTableId(String name) {
     this.name = name.toLowerCase();
@@ -61,8 +62,8 @@ public class StructuredTableId {
 
   @Override
   public String toString() {
-    return "StructuredTableId{" +
-      "name='" + name + '\'' +
-      '}';
+    return "StructuredTableId{"
+        + "name='" + name + '\''
+        + '}';
   }
 }

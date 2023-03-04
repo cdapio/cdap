@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
-* Live info for distributed mode, adds yarn app id and container information.
-*/
+ * Live info for distributed mode, adds yarn app id and container information.
+ */
 public class DistributedProgramLiveInfo extends ProgramLiveInfo implements Containers {
 
   private final String yarnAppId;

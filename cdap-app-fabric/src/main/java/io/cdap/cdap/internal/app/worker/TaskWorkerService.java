@@ -55,28 +55,29 @@ public class TaskWorkerService extends AbstractIdleService {
 
   @Inject
   TaskWorkerService(CConfiguration cConf,
-                    SConfiguration sConf,
-                    DiscoveryService discoveryService,
-                    DiscoveryServiceClient discoveryServiceClient,
-                    MetricsCollectionService metricsCollectionService,
-                    CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      SConfiguration sConf,
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService,
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
 
-    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(Constants.Service.TASK_WORKER)
-      .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
-      .setPort(cConf.getInt(Constants.TaskWorker.PORT))
-      .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
-      .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
-      .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
-      .setChannelPipelineModifier(new ChannelPipelineModifier() {
-        @Override
-        public void modify(ChannelPipeline pipeline) {
-          pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
-        }
-      })
-      .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
-                                                         discoveryServiceClient, this::stopService,
-                                                         metricsCollectionService));
+    NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
+            Constants.Service.TASK_WORKER)
+        .setHost(cConf.get(Constants.TaskWorker.ADDRESS))
+        .setPort(cConf.getInt(Constants.TaskWorker.PORT))
+        .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
+        .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
+        .setChannelPipelineModifier(new ChannelPipelineModifier() {
+          @Override
+          public void modify(ChannelPipeline pipeline) {
+            pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+          }
+        })
+        .setHttpHandlers(new TaskWorkerHttpHandlerInternal(cConf, discoveryService,
+            discoveryServiceClient, this::stopService,
+            metricsCollectionService));
 
     if (cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED)) {
       new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
@@ -90,7 +91,8 @@ public class TaskWorkerService extends AbstractIdleService {
     httpService.start();
     bindAddress = httpService.getBindAddress();
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
+        ResolvingDiscoverable.of(
+            URIScheme.createDiscoverable(Constants.Service.TASK_WORKER, httpService)));
     LOG.debug("Starting TaskWorkerService has completed");
   }
 

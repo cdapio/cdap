@@ -298,8 +298,8 @@ public class SparkContainerDriverLauncher {
     }
 
     File localizeArtifact(ArtifactId artifactId, String programNamespace) throws Exception {
-      String namespace = artifactId.getScope().name().equalsIgnoreCase(ArtifactScope.USER.toString()) ?
-        programNamespace : artifactId.getScope().name();
+      String namespace = artifactId.getScope().name().equalsIgnoreCase(ArtifactScope.USER.toString())
+        ? programNamespace : artifactId.getScope().name();
       io.cdap.cdap.proto.id.ArtifactId aId =
         new io.cdap.cdap.proto.id.ArtifactId(namespace,
                                              artifactId.getName(),

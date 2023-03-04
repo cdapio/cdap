@@ -32,8 +32,9 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Base class for writing an object with a {@link Schema}. Examines the schema to cast the object accordingly,
- * and uses reflection to determine field values if the object is a record. Recursive types are not allowed.
+ * Base class for writing an object with a {@link Schema}. Examines the schema to cast the object
+ * accordingly, and uses reflection to determine field values if the object is a record. Recursive
+ * types are not allowed.
  *
  * @param <WRITER> the type of writer used to encode objects
  * @param <TYPE> the type of object to write
@@ -72,14 +73,17 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
 
   protected abstract void writeEnum(WRITER writer, String val, Schema schema) throws IOException;
 
-  protected abstract void writeArray(WRITER writer, Collection<?> val, Schema componentSchema) throws IOException;
+  protected abstract void writeArray(WRITER writer, Collection<?> val, Schema componentSchema)
+      throws IOException;
 
-  protected abstract void writeArray(WRITER writer, Object val, Schema componentSchema) throws IOException;
+  protected abstract void writeArray(WRITER writer, Object val, Schema componentSchema)
+      throws IOException;
 
   protected abstract void writeMap(WRITER writer, Map<?, ?> val,
-                                   Map.Entry<Schema, Schema> mapSchema) throws IOException;
+      Map.Entry<Schema, Schema> mapSchema) throws IOException;
 
-  protected abstract void writeUnion(WRITER writer, Object val, Schema unionSchema) throws IOException;
+  protected abstract void writeUnion(WRITER writer, Object val, Schema unionSchema)
+      throws IOException;
 
   /**
    * Write the given object that has the given schema.
@@ -99,7 +103,7 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
       }
     }
 
-    switch(objSchema.getType()) {
+    switch (objSchema.getType()) {
       case NULL:
         writeNull(writer);
         break;
@@ -125,7 +129,7 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
         if (object instanceof ByteBuffer) {
           writeBytes(writer, (ByteBuffer) object);
         } else if (object instanceof UUID) {
-          UUID uuid = (UUID)  object;
+          UUID uuid = (UUID) object;
           ByteBuffer buf = ByteBuffer.allocate(Longs.BYTES * 2);
           buf.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
           writeBytes(writer, (ByteBuffer) buf.flip());
@@ -172,7 +176,9 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
         } else {
           Method method = methods.get(fieldName);
           if (method == null) {
-            throw new IOException("Unable to read field value through getter. Class=" + type + ", field=" + fieldName);
+            throw new IOException(
+                "Unable to read field value through getter. Class=" + type + ", field="
+                    + fieldName);
           }
           value = method.invoke(record);
         }
@@ -215,16 +221,17 @@ public abstract class ReflectionWriter<WRITER, TYPE> {
       }
       String methodName = method.getName();
       if (!(methodName.startsWith("get") || methodName.startsWith("is"))
-           || method.isSynthetic() || method.getParameterTypes().length != 0) {
+          || method.isSynthetic() || method.getParameterTypes().length != 0) {
         // Ignore not getter methods
         continue;
       }
-      String fieldName = methodName.startsWith("get") ?
-                           methodName.substring("get".length()) : methodName.substring("is".length());
+      String fieldName = methodName.startsWith("get")
+          ? methodName.substring("get".length()) : methodName.substring("is".length());
       if (fieldName.isEmpty()) {
         continue;
       }
-      fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)), fieldName.substring(1));
+      fieldName = String.format("%c%s", Character.toLowerCase(fieldName.charAt(0)),
+          fieldName.substring(1));
       if (methods.containsKey(fieldName)) {
         continue;
       }

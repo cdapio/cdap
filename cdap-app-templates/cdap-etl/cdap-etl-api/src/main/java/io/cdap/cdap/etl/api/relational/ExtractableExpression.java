@@ -19,17 +19,20 @@ package io.cdap.cdap.etl.api.relational;
 import javax.annotation.Nullable;
 
 /**
- * Expression that can be used to derive a scalar value. This value can then be used to build a new valid expression
- * using {@link ExpressionFactory#compile}
- * Note that relations, engine and expression factories must come from the same {@link RelationalTranformContext}
- * and are valid only for the time of the {@link RelationalTransform#transform} call.
+ * Expression that can be used to derive a scalar value. This value can then be used to build a new
+ * valid expression using {@link ExpressionFactory#compile} Note that relations, engine and
+ * expression factories must come from the same {@link RelationalTranformContext} and are valid only
+ * for the time of the {@link RelationalTransform#transform} call.
+ *
  * @param <T> type of the scalar value contained in this expression
  */
 public interface ExtractableExpression<T> extends Expression {
+
   /**
-   * Get the value contained in this expression. This value is safe to use when building expressions using
-   * {@link ExpressionFactory#compile}
-   * The return value for this method will be null if the expression is invalid.
+   * Get the value contained in this expression. This value is safe to use when building expressions
+   * using {@link ExpressionFactory#compile} The return value for this method will be null if the
+   * expression is invalid.
+   *
    * @return scalar value contained in this expression, or null if the expression is invalid.
    * @throws UnsupportedOperationException if the expression is invalid.
    */

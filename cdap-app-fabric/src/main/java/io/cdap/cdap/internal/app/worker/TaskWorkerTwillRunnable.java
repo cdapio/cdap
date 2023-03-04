@@ -111,9 +111,10 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
         @Override
         protected void configure() {
           bind(DiscoveryService.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+              .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
           bind(DiscoveryServiceClient.class)
-            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+              .toProvider(
+                  new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
         }
       });
       modules.add(new RemoteLogAppenderModule());
@@ -201,8 +202,8 @@ public class TaskWorkerTwillRunnable extends AbstractTwillRunnable {
     metricsCollectionService.startAndWait();
 
     LoggingContext loggingContext = new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                              Constants.Logging.COMPONENT_NAME,
-                                                              TaskWorkerTwillApplication.NAME);
+        Constants.Logging.COMPONENT_NAME,
+        TaskWorkerTwillApplication.NAME);
     LoggingContextAccessor.setLoggingContext(loggingContext);
     taskWorker = injector.getInstance(TaskWorkerService.class);
   }

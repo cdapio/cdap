@@ -52,8 +52,8 @@ public final class FilterClassLoader extends ClassLoader {
   }
 
   /**
-   * Returns the default filter that should applies to all program type. By default
-   * all hadoop classes and cdap-api classes (and dependencies) are allowed.
+   * Returns the default filter that should applies to all program type. By default all hadoop
+   * classes and cdap-api classes (and dependencies) are allowed.
    */
   public static Filter defaultFilter() {
     final Set<String> visibleResources = ProgramResources.getVisibleResources();
@@ -81,8 +81,8 @@ public final class FilterClassLoader extends ClassLoader {
   }
 
   /**
-   * Creates a new {@link FilterClassLoader} that filter classes based on the {@link #defaultFilter()} on the
-   * given parent ClassLoader
+   * Creates a new {@link FilterClassLoader} that filter classes based on the {@link
+   * #defaultFilter()} on the given parent ClassLoader
    *
    * @param parentClassLoader the ClassLoader to filter from.
    * @return a new intance of {@link FilterClassLoader}.
@@ -92,20 +92,22 @@ public final class FilterClassLoader extends ClassLoader {
   }
 
   /**
-   * Create a {@link FilterClassLoader} that filter classes based on the given {@link Filter} on the given
-   * parent ClassLoader.
+   * Create a {@link FilterClassLoader} that filter classes based on the given {@link Filter} on the
+   * given parent ClassLoader.
    *
    * @param parentClassLoader Parent ClassLoader
    * @param filter Filter to apply for the ClassLoader
    */
   public FilterClassLoader(ClassLoader parentClassLoader, Filter filter) {
     super(parentClassLoader);
-    this.extensionClassLoader = new URLClassLoader(new URL[0], ClassLoader.getSystemClassLoader().getParent());
+    this.extensionClassLoader = new URLClassLoader(new URL[0],
+        ClassLoader.getSystemClassLoader().getParent());
     this.filter = filter;
   }
 
   @Override
-  protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+  protected synchronized Class<?> loadClass(String name, boolean resolve)
+      throws ClassNotFoundException {
     // Try to load it from bootstrap class loader first
     try {
       return extensionClassLoader.loadClass(name);
@@ -149,7 +151,8 @@ public final class FilterClassLoader extends ClassLoader {
     if (resources.hasMoreElements()) {
       return resources;
     }
-    return filter.acceptResource(name) ? super.getResources(name) : Collections.<URL>emptyEnumeration();
+    return filter.acceptResource(name) ? super.getResources(name)
+        : Collections.<URL>emptyEnumeration();
   }
 
   @Override

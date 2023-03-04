@@ -50,12 +50,14 @@ import java.util.Set;
  * {@link AbstractApplicationManager} for use in integration tests.
  */
 public class RemoteApplicationManager extends AbstractApplicationManager {
+
   private final ClientConfig clientConfig;
   private final ProgramClient programClient;
   private final ApplicationClient applicationClient;
   private final RESTClient restClient;
 
-  public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig, RESTClient restClient) {
+  public RemoteApplicationManager(ApplicationId application, ClientConfig clientConfig,
+      RESTClient restClient) {
     super(application);
     this.clientConfig = clientConfig;
     this.programClient = new ProgramClient(clientConfig, restClient);
@@ -157,7 +159,8 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) {
     try {
-      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+      return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE,
+          Integer.MAX_VALUE);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

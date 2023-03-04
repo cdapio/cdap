@@ -31,7 +31,8 @@ import java.util.Map;
 public class ProgramTypes {
 
   private static final Map<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
-    new IdentityHashMap<>();
+      new IdentityHashMap<>();
+
   static {
     specClassToProgramType.put(MapReduceSpecification.class, ProgramType.MAPREDUCE);
     specClassToProgramType.put(SparkSpecification.class, ProgramType.SPARK);

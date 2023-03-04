@@ -19,13 +19,14 @@ import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.Workflow;
 
 /**
- * An interface for Programs which can run in a {@link Workflow}. Please see {@link SchedulableProgramType}.
+ * An interface for Programs which can run in a {@link Workflow}. Please see {@link
+ * SchedulableProgramType}.
  */
 interface ProgramWorkflowRunner {
 
   /**
-   * Programs which want to support running in Workflow should give the implementation to get a {@link Runnable} of
-   * for the program name in the workflow.
+   * Programs which want to support running in Workflow should give the implementation to get a
+   * {@link Runnable} of for the program name in the workflow.
    *
    * @param name name of program in workflow
    * @return {@link Runnable} which will be called to execute the program

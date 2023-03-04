@@ -53,14 +53,15 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 public class AppStateHandlerTest extends AppFabricTestBase {
+
   public static final String NAMESPACE_1 = "ns1";
   public static final String NAMESPACE_2 = "ns2";
   public static final String APP_NAME = "testapp";
   public static final String APP_NAME_2 = "testapp2";
   public static final String STATE_KEY = "kafka";
-  public static final String STATE_VALUE = "{\n" +
-                                           "\"offset\" : 12345\n" +
-                                           "}";
+  public static final String STATE_VALUE = "{\n"
+      + "\"offset\" : 12345\n"
+      + "}";
 
   private static String endpoint;
   private static ApplicationLifecycleService applicationLifecycleService;

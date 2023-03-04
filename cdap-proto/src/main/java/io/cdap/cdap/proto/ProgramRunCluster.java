@@ -24,11 +24,13 @@ import javax.annotation.Nullable;
  * Information about the cluster used for a program run.
  */
 public class ProgramRunCluster {
+
   private final ProgramRunClusterStatus status;
   private final Long end;
   private final Integer numNodes;
 
-  public ProgramRunCluster(ProgramRunClusterStatus status, @Nullable Long endTs, @Nullable Integer numNodes) {
+  public ProgramRunCluster(ProgramRunClusterStatus status, @Nullable Long endTs,
+      @Nullable Integer numNodes) {
     this.status = status;
     this.end = endTs;
     this.numNodes = numNodes;
@@ -39,7 +41,8 @@ public class ProgramRunCluster {
   }
 
   /**
-   * @return timestamp in seconds when the cluster was deprovisioned or orphaned, or null if it is not in an end state
+   * @return timestamp in seconds when the cluster was deprovisioned or orphaned, or null if it is
+   *     not in an end state
    */
   @Nullable
   public Long getEnd() {
@@ -47,8 +50,8 @@ public class ProgramRunCluster {
   }
 
   /**
-   * @return number of nodes in the cluster. Can be null if the cluster has not been provisioned yet, or if it is on
-   *         the local cluster.
+   * @return number of nodes in the cluster. Can be null if the cluster has not been provisioned
+   *     yet, or if it is on the local cluster.
    */
   @Nullable
   public Integer getNumNodes() {
@@ -66,9 +69,9 @@ public class ProgramRunCluster {
 
     ProgramRunCluster that = (ProgramRunCluster) o;
 
-    return Objects.equals(status, that.status) &&
-      Objects.equals(end, that.end) &&
-      Objects.equals(numNodes, that.numNodes);
+    return Objects.equals(status, that.status)
+        && Objects.equals(end, that.end)
+        && Objects.equals(numNodes, that.numNodes);
   }
 
   @Override
@@ -78,10 +81,10 @@ public class ProgramRunCluster {
 
   @Override
   public String toString() {
-    return "ProgramRunCluster{" +
-      "status=" + status +
-      ", end=" + end +
-      ", numNodes=" + numNodes +
-      '}';
+    return "ProgramRunCluster{"
+        + "status=" + status
+        + ", end=" + end
+        + ", numNodes=" + numNodes
+        + '}';
   }
 }

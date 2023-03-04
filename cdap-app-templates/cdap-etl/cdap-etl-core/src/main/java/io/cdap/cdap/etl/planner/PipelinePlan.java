@@ -30,6 +30,7 @@ import java.util.Set;
  * Plan for a logical pipeline.
  */
 public class PipelinePlan {
+
   private final Map<String, PipelinePhase> phases;
   private final Set<Connection> phaseConnections;
 
@@ -74,7 +75,8 @@ public class PipelinePlan {
         trueOutput = branches.getTrueOutput();
         falseOutput = connection.getTo();
       }
-      conditionPhaseConnections.put(connection.getFrom(), new ConditionBranches(trueOutput, falseOutput));
+      conditionPhaseConnections.put(connection.getFrom(),
+          new ConditionBranches(trueOutput, falseOutput));
     }
     return conditionPhaseConnections;
   }
@@ -90,8 +92,8 @@ public class PipelinePlan {
 
     PipelinePlan that = (PipelinePlan) o;
 
-    return Objects.equals(phases, that.phases) &&
-      Objects.equals(phaseConnections, that.phaseConnections);
+    return Objects.equals(phases, that.phases)
+        && Objects.equals(phaseConnections, that.phaseConnections);
   }
 
   @Override
@@ -101,9 +103,9 @@ public class PipelinePlan {
 
   @Override
   public String toString() {
-    return "PipelinePlan{" +
-      "phases=" + phases +
-      ", phaseConnections=" + phaseConnections +
-      '}';
+    return "PipelinePlan{"
+        + "phases=" + phases
+        + ", phaseConnections=" + phaseConnections
+        + '}';
   }
 }

@@ -44,16 +44,17 @@ public class ListDatasetInstancesCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list(cliConfig.getCurrentNamespace());
+    List<DatasetSpecificationSummary> datasetMetas = datasetClient.list(
+        cliConfig.getCurrentNamespace());
 
     Table table = Table.builder()
-      .setHeader("name", "type", "description")
-      .setRows(datasetMetas, new RowMaker<DatasetSpecificationSummary>() {
-        @Override
-        public List<?> makeRow(DatasetSpecificationSummary object) {
-          return Lists.newArrayList(object.getName(), object.getType(), object.getDescription());
-        }
-      }).build();
+        .setHeader("name", "type", "description")
+        .setRows(datasetMetas, new RowMaker<DatasetSpecificationSummary>() {
+          @Override
+          public List<?> makeRow(DatasetSpecificationSummary object) {
+            return Lists.newArrayList(object.getName(), object.getType(), object.getDescription());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

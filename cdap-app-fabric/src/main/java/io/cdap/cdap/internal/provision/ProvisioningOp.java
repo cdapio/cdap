@@ -20,6 +20,7 @@ package io.cdap.cdap.internal.provision;
  * Provisioning operations.
  */
 public class ProvisioningOp {
+
   private final Type type;
   private final Status status;
 

@@ -54,8 +54,8 @@ import org.apache.hadoop.hbase.util.Bytes;
  * This region observer does row eviction during flush time and compact time by using
  *
  * i) Time-To-Live (TTL) information in MetadataTable to determine if a message has expired its TTL.
- * ii) Generation information in MetadataTable to determine if the message belongs to older generation.
- *
+ * ii) Generation information in MetadataTable to determine if the message belongs to older
+ * generation.
  */
 public class PayloadTableRegionObserver extends BaseRegionObserver {
 
@@ -71,14 +71,15 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       HTableDescriptor tableDesc = env.getRegion().getTableDesc();
-      String metadataTableNamespace = tableDesc.getValue(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
+      String metadataTableNamespace = tableDesc.getValue(
+          Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE);
       String tablePrefix = tableDesc.getValue(Constants.Dataset.TABLE_PREFIX);
       prefixLength = Integer.valueOf(tableDesc.getValue(
-        Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
+          Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES));
 
       CConfigurationReader cConfReader = new CoprocessorCConfigurationReader(env, tablePrefix);
       topicMetadataCacheSupplier = new TopicMetadataCacheSupplier(
-        env, cConfReader, tablePrefix, metadataTableNamespace, new HBase10ScanBuilder());
+          env, cConfReader, tablePrefix, metadataTableNamespace, new HBase10ScanBuilder());
       topicMetadataCache = topicMetadataCacheSupplier.get();
     }
   }
@@ -89,30 +90,37 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
   }
 
   @Override
-  public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                             KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
+  public InternalScanner preFlushScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
+      Store store,
+      KeyValueScanner memstoreScanner, InternalScanner s) throws IOException {
     LOG.info("preFlush, filter using PayloadDataFilter");
     Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
-                                         topicMetadataCache));
-    return new StoreScanner(store, store.getScanInfo(), scan, Collections.singletonList(memstoreScanner),
-                            ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
+    scan.setFilter(
+        new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+            topicMetadataCache));
+    return new StoreScanner(store, store.getScanInfo(), scan,
+        Collections.singletonList(memstoreScanner),
+        ScanType.COMPACT_DROP_DELETES, store.getSmallestReadPoint(), HConstants.OLDEST_TIMESTAMP);
   }
 
   @Override
-  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c, Store store,
-                                               List<? extends KeyValueScanner> scanners, ScanType scanType,
-                                               long earliestPutTs, InternalScanner s,
-                                               CompactionRequest request) throws IOException {
+  public InternalScanner preCompactScannerOpen(ObserverContext<RegionCoprocessorEnvironment> c,
+      Store store,
+      List<? extends KeyValueScanner> scanners, ScanType scanType,
+      long earliestPutTs, InternalScanner s,
+      CompactionRequest request) throws IOException {
     LOG.info("preCompact, filter using PayloadDataFilter");
     Scan scan = new Scan();
-    scan.setFilter(new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
-                                         topicMetadataCache));
-    return new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType, store.getSmallestReadPoint(),
-                            earliestPutTs);
+    scan.setFilter(
+        new PayloadDataFilter(c.getEnvironment(), System.currentTimeMillis(), prefixLength,
+            topicMetadataCache));
+    return new StoreScanner(store, store.getScanInfo(), scan, scanners, scanType,
+        store.getSmallestReadPoint(),
+        earliestPutTs);
   }
 
   private static final class PayloadDataFilter extends FilterBase {
+
     private final RegionCoprocessorEnvironment env;
     private final long timestamp;
     private final int prefixLength;
@@ -123,7 +131,7 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
     private Integer currentGen;
 
     PayloadDataFilter(RegionCoprocessorEnvironment env, long timestamp, int prefixLength,
-                      TopicMetadataCache metadataCache) {
+        TopicMetadataCache metadataCache) {
       this.env = env;
       this.timestamp = timestamp;
       this.prefixLength = prefixLength;
@@ -134,18 +142,23 @@ public class PayloadTableRegionObserver extends BaseRegionObserver {
     public ReturnCode filterKeyValue(Cell cell) throws IOException {
       int rowKeyOffset = cell.getRowOffset() + prefixLength;
       int sizeOfRowKey = cell.getRowLength() - prefixLength;
-      long writeTimestamp = MessagingUtils.getWriteTimestamp(cell.getRowArray(), rowKeyOffset, sizeOfRowKey);
-      int topicIdLength = MessagingUtils.getTopicLengthPayloadEntry(sizeOfRowKey) - Bytes.SIZEOF_INT;
+      long writeTimestamp = MessagingUtils.getWriteTimestamp(cell.getRowArray(), rowKeyOffset,
+          sizeOfRowKey);
+      int topicIdLength =
+          MessagingUtils.getTopicLengthPayloadEntry(sizeOfRowKey) - Bytes.SIZEOF_INT;
       int generationId = Bytes.toInt(cell.getRowArray(), rowKeyOffset + topicIdLength);
 
-      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null ||
-        (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
-                       cell.getRowArray(), rowKeyOffset, topicIdLength))) {
-        prevTopicIdBytes = Arrays.copyOfRange(cell.getRowArray(), rowKeyOffset, rowKeyOffset + topicIdLength);
-        Map<String, String> properties = metadataCache.getTopicMetadata(ByteBuffer.wrap(prevTopicIdBytes));
+      if (prevTopicIdBytes == null || currentTTL == null || currentGen == null
+          || (!Bytes.equals(prevTopicIdBytes, 0, prevTopicIdBytes.length,
+          cell.getRowArray(), rowKeyOffset, topicIdLength))) {
+        prevTopicIdBytes = Arrays.copyOfRange(cell.getRowArray(), rowKeyOffset,
+            rowKeyOffset + topicIdLength);
+        Map<String, String> properties = metadataCache.getTopicMetadata(
+            ByteBuffer.wrap(prevTopicIdBytes));
         if (properties == null) {
-          LOG.debug("Region " + env.getRegionInfo().getRegionNameAsString() + ", could not get properties of topicId "
-                      + MessagingUtils.toTopicId(prevTopicIdBytes));
+          LOG.debug("Region " + env.getRegionInfo().getRegionNameAsString()
+              + ", could not get properties of topicId "
+              + MessagingUtils.toTopicId(prevTopicIdBytes));
           return ReturnCode.INCLUDE;
         }
         currentTTL = Long.parseLong(properties.get(MessagingUtils.Constants.TTL_KEY));

@@ -20,6 +20,7 @@ package io.cdap.cdap.api.dataset;
  * Thrown for an operation on a non-existing dataset instance.
  */
 public class InstanceNotFoundException extends DatasetManagementException {
+
   public InstanceNotFoundException(String instanceName) {
     super(generateMessage(instanceName));
   }

@@ -63,7 +63,7 @@ public class MetricsClient {
     this.config = config;
     this.restClient = restClient;
     this.validTimeRangeParams = ImmutableSet.of("start", "end", "aggregate", "resolution",
-                                                "interpolate", "maxInterpolateGap", "count");
+        "interpolate", "maxInterpolateGap", "count");
   }
 
   public MetricsClient(ClientConfig config) {
@@ -76,21 +76,24 @@ public class MetricsClient {
    * @param tags the tags to match
    * @return the metrics matching the given tags
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<MetricTagValue> searchTags(Map<String, String> tags)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=tag");
     addTags(tags, queryParts);
 
-    URL url = config.resolveURLV3(String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
+    URL url = config.resolveURLV3(
+        String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
     HttpRequest.Builder request = HttpRequest.post(url).withBody("");
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     ObjectResponse<List<MetricTagValue>> result = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<MetricTagValue>>() { }.getType());
+        response, new TypeToken<List<MetricTagValue>>() {
+        }.getType());
     return result.getResponseObject();
   }
 
@@ -100,21 +103,24 @@ public class MetricsClient {
    * @param tags the tags to match
    * @return the metrics matching the given tags
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public List<String> searchMetrics(Map<String, String> tags)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=metric");
     addTags(tags, queryParts);
 
-    URL url = config.resolveURLV3(String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
+    URL url = config.resolveURLV3(
+        String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
     HttpRequest.Builder request = HttpRequest.post(url).withBody("");
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     ObjectResponse<List<String>> result = ObjectResponse.fromJsonBody(
-      response, new TypeToken<List<String>>() { }.getType());
+        response, new TypeToken<List<String>>() {
+        }.getType());
     return result.getResponseObject();
   }
 
@@ -125,11 +131,13 @@ public class MetricsClient {
    * @param metric names of the metric
    * @return values of the metrics
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   public MetricQueryResult query(Map<String, String> tags, String metric)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
-    return query(tags, ImmutableList.of(metric), ImmutableList.<String>of(), ImmutableMap.<String, String>of());
+      throws IOException, UnauthenticatedException, UnauthorizedException {
+    return query(tags, ImmutableList.of(metric), ImmutableList.<String>of(),
+        ImmutableMap.<String, String>of());
   }
 
   /**
@@ -140,11 +148,13 @@ public class MetricsClient {
    * @param groupBys groupBys for the request
    * @return values of the metrics
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
-  public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
-                                 @Nullable String start, @Nullable String end)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  public MetricQueryResult query(Map<String, String> tags, List<String> metrics,
+      List<String> groupBys,
+      @Nullable String start, @Nullable String end)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     Map<String, String> timeRangeParams = Maps.newHashMap();
     if (start != null) {
@@ -165,12 +175,14 @@ public class MetricsClient {
    * @param timeRangeParams parameters specifying the time range
    * @return values of the metrics
    * @throws IOException if a network error occurred
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws UnauthenticatedException if the request is not authorized successfully in the
+   *     gateway server
    */
   // TODO: take in query object shared by MetricsHandler
-  public MetricQueryResult query(Map<String, String> tags, List<String> metrics, List<String> groupBys,
-                                 Map<String, String> timeRangeParams)
-    throws IOException, UnauthenticatedException, UnauthorizedException {
+  public MetricQueryResult query(Map<String, String> tags, List<String> metrics,
+      List<String> groupBys,
+      Map<String, String> timeRangeParams)
+      throws IOException, UnauthenticatedException, UnauthorizedException {
 
     List<String> queryParts = Lists.newArrayList();
     queryParts.add("target=tag");
@@ -179,14 +191,16 @@ public class MetricsClient {
     addTags(tags, queryParts);
     addTimeRangeParametersToQuery(timeRangeParams, queryParts);
 
-    URL url = config.resolveURLV3(String.format("metrics/query?%s", Joiner.on("&").join(queryParts)));
+    URL url = config.resolveURLV3(
+        String.format("metrics/query?%s", Joiner.on("&").join(queryParts)));
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
     HttpRequest.Builder request = HttpRequest.post(url).withBody("");
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
   }
 
-  private void addTimeRangeParametersToQuery(Map<String, String> timeRangeParams, List<String> queryParts) {
+  private void addTimeRangeParametersToQuery(Map<String, String> timeRangeParams,
+      List<String> queryParts) {
     for (Map.Entry<String, String> entry : timeRangeParams.entrySet()) {
       if (validTimeRangeParams.contains(entry.getKey())) {
         queryParts.add(entry.getKey() + "=" + entry.getValue());
@@ -196,9 +210,9 @@ public class MetricsClient {
 
   public RuntimeMetrics getServiceMetrics(ServiceId serviceId) {
     return getMetrics(MetricsTags.service(serviceId),
-                      Constants.Metrics.Name.Service.SERVICE_INPUT,
-                      Constants.Metrics.Name.Service.SERVICE_PROCESSED,
-                      Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
+        Constants.Metrics.Name.Service.SERVICE_INPUT,
+        Constants.Metrics.Name.Service.SERVICE_PROCESSED,
+        Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
   private void add(String key, List<String> values, List<String> outQueryParts) {
@@ -223,7 +237,7 @@ public class MetricsClient {
    * @return the {@link RuntimeMetrics}
    */
   private RuntimeMetrics getMetrics(final Map<String, String> tags, final String inputName,
-                                    final String processedName, final String exceptionName) {
+      final String processedName, final String exceptionName) {
 
     return new RuntimeMetrics() {
       @Override
@@ -243,34 +257,35 @@ public class MetricsClient {
 
       @Override
       public void waitForinput(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         doWaitFor(inputName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForProcessed(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         doWaitFor(processedName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitForException(long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         doWaitFor(exceptionName, count, timeout, timeoutUnit);
       }
 
       @Override
       public void waitFor(String name, long count,
-                          long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+          long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
         doWaitFor(name, count, timeout, timeoutUnit);
       }
 
       private void doWaitFor(String name, long count, long timeout, TimeUnit timeoutUnit)
-        throws TimeoutException, InterruptedException {
+          throws TimeoutException, InterruptedException {
         long value = getTotalCounter(tags, name);
 
         // Min sleep time is 10ms, max sleep time is 1 seconds
-        long sleepMillis = Math.max(10, Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
+        long sleepMillis = Math.max(10,
+            Math.min(timeoutUnit.toMillis(timeout) / 10, TimeUnit.SECONDS.toMillis(1)));
         long startTime = System.currentTimeMillis();
         long timeoutMillis = timeoutUnit.toMillis(timeout);
 
@@ -280,15 +295,16 @@ public class MetricsClient {
         }
 
         if (value < count) {
-          throw new TimeoutException("Time limit reached. Got '" + value + "' instead of '" + count + "'");
+          throw new TimeoutException(
+              "Time limit reached. Got '" + value + "' instead of '" + count + "'");
         }
       }
 
       @Override
       public String toString() {
         return String.format("%s; tags=%d, processed=%d, exception=%d",
-                             Joiner.on(",").withKeyValueSeparator(":").join(tags),
-                             getInput(), getProcessed(), getException());
+            Joiner.on(",").withKeyValueSeparator(":").join(tags),
+            getInput(), getProcessed(), getException());
       }
     };
   }

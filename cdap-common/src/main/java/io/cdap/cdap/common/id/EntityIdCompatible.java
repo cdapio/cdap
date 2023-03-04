@@ -22,6 +22,7 @@ import io.cdap.cdap.proto.id.EntityId;
  * Compatibility from {@link Id} to {@link EntityId}.
  */
 public interface EntityIdCompatible {
+
   /**
    * @return the {@link EntityId} corresponding to {@code this}
    */

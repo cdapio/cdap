@@ -91,28 +91,34 @@ import org.slf4j.LoggerFactory;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class MetadataHttpHandler extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(MetadataHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .registerTypeAdapter(Metadata.class, new MetadataCodec())
-    .registerTypeAdapter(MetadataEntity.class, new MetadataEntityCodec())
-    .create();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .registerTypeAdapter(Metadata.class, new MetadataCodec())
+      .registerTypeAdapter(MetadataEntity.class, new MetadataEntityCodec())
+      .create();
   // for internal calls (create/update/drop/delete) we need to use a different codec for ScopedName and
   // ScopedNameOfKind: they are used as map keys, where JSON only allows plain strings, so we serialize
   // as [kind:]scope:name instead of a record. In other methods (the external metadata endpoint), however,
   // we need to keep the serialization as a json record.
   private static final Gson GSON_INTERNAL = new GsonBuilder()
-    .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
-    .registerTypeAdapter(Metadata.class, new MetadataCodec())
-    .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
-    .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
-    .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
-    .create();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Type LIST_MUTATION_TYPE = new TypeToken<List<MetadataMutation>>() { }.getType();
-  private static final MutationOptions SYNC = MutationOptions.builder().setAsynchronous(false).build();
-  private static final MutationOptions ASYNC = MutationOptions.builder().setAsynchronous(true).build();
+      .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+      .registerTypeAdapter(Metadata.class, new MetadataCodec())
+      .registerTypeAdapter(ScopedName.class, new ScopedNameTypeAdapter())
+      .registerTypeAdapter(ScopedNameOfKind.class, new ScopedNameOfKindTypeAdapter())
+      .registerTypeAdapter(MetadataMutation.class, new MetadataMutationCodec())
+      .create();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
+  }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() {
+  }.getType();
+  private static final Type LIST_MUTATION_TYPE = new TypeToken<List<MetadataMutation>>() {
+  }.getType();
+  private static final MutationOptions SYNC = MutationOptions.builder().setAsynchronous(false)
+      .build();
+  private static final MutationOptions ASYNC = MutationOptions.builder().setAsynchronous(true)
+      .build();
 
   private final MetadataAdmin metadataAdmin;
   private final AccessEnforcer accessEnforcer;
@@ -120,7 +126,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
 
   @Inject
   MetadataHttpHandler(MetadataAdmin metadataAdmin,
-                      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
+      AccessEnforcer accessEnforcer, AuthenticationContext authenticationContext) {
     this.metadataAdmin = metadataAdmin;
     this.accessEnforcer = accessEnforcer;
     this.authenticationContext = authenticationContext;
@@ -129,154 +135,170 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
-                          @Nullable @QueryParam("scope") String scope,
-                          @Nullable @QueryParam("type") String type,
-                          @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws Exception {
+      @Nullable @QueryParam("scope") String scope,
+      @Nullable @QueryParam("type") String type,
+      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
+      throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     if (isEntityType(entity)) {
-      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity), authenticationContext.getPrincipal(),
-                             StandardPermission.GET);
+      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity),
+          authenticationContext.getPrincipal(),
+          StandardPermission.GET);
     }
     MetadataScope theScope = validateScope(scope);
-    Metadata metadata = scope == null ? metadataAdmin.getMetadata(entity) : metadataAdmin.getMetadata(entity, theScope);
+    Metadata metadata = scope == null ? metadataAdmin.getMetadata(entity)
+        : metadataAdmin.getMetadata(entity, theScope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(entity, metadata, scope) : metadata));
+        "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(entity, metadata,
+            scope) : metadata));
   }
 
   @GET
   @Path("/**/metadata/properties")
   public void getProperties(HttpRequest request, HttpResponder responder,
-                            @QueryParam("scope") String scope,
-                            @QueryParam("type") String type,
-                            @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws Exception {
+      @QueryParam("scope") String scope,
+      @QueryParam("type") String type,
+      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
+      throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     if (isEntityType(entity)) {
-      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity), authenticationContext.getPrincipal(),
-                             StandardPermission.GET);
+      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity),
+          authenticationContext.getPrincipal(),
+          StandardPermission.GET);
     }
     MetadataScope theScope = validateScope(scope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-      "v5".equals(responseFormat)
-        ? (scope == null ? metadataAdmin.getProperties(entity) : metadataAdmin.getProperties(theScope, entity))
-        : metadataAdmin.getMetadata(entity, theScope, MetadataKind.PROPERTY)));
+        "v5".equals(responseFormat)
+            ? (scope == null ? metadataAdmin.getProperties(entity)
+            : metadataAdmin.getProperties(theScope, entity))
+            : metadataAdmin.getMetadata(entity, theScope, MetadataKind.PROPERTY)));
   }
 
   @GET
   @Path("/**/metadata/tags")
   public void getTags(HttpRequest request, HttpResponder responder,
-                      @QueryParam("scope") String scope,
-                      @QueryParam("type") String type,
-                      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws Exception {
+      @QueryParam("scope") String scope,
+      @QueryParam("type") String type,
+      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
+      throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     if (isEntityType(entity)) {
-      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity), authenticationContext.getPrincipal(),
-                             StandardPermission.GET);
+      accessEnforcer.enforce(EntityId.<EntityId>fromMetadataEntity(entity),
+          authenticationContext.getPrincipal(),
+          StandardPermission.GET);
     }
     MetadataScope theScope = validateScope(scope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-      "v5".equals(responseFormat)
-        ? (scope == null ? metadataAdmin.getTags(entity) : metadataAdmin.getTags(theScope, entity))
-        : metadataAdmin.getMetadata(entity, theScope, MetadataKind.TAG)));
+        "v5".equals(responseFormat)
+            ? (scope == null ? metadataAdmin.getTags(entity)
+            : metadataAdmin.getTags(theScope, entity))
+            : metadataAdmin.getMetadata(entity, theScope, MetadataKind.TAG)));
   }
 
   @POST
   @Path("/**/metadata/properties")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void addProperties(FullHttpRequest request, HttpResponder responder,
-                            @QueryParam("type") String type,
-                            @QueryParam("async") @DefaultValue("false") Boolean async)
-    throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async)
+      throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/properties");
     enforce(metadataEntity, StandardPermission.UPDATE);
     metadataAdmin.addProperties(metadataEntity, readProperties(request), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata properties for %s added successfully.", metadataEntity));
+        String.format("Metadata properties for %s added successfully.", metadataEntity));
   }
 
   @POST
   @Path("/**/metadata/tags")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void addTags(FullHttpRequest request, HttpResponder responder,
-                      @QueryParam("type") String type,
-                      @QueryParam("async") @DefaultValue("false") Boolean async)
-    throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async)
+      throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/tags");
     enforce(metadataEntity, StandardPermission.UPDATE);
     metadataAdmin.addTags(metadataEntity, readTags(request), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata tags for %s added successfully.", metadataEntity));
+        String.format("Metadata tags for %s added successfully.", metadataEntity));
   }
 
   @DELETE
   @Path("/**/metadata")
   public void removeMetadata(HttpRequest request, HttpResponder responder,
-                             @QueryParam("type") String type,
-                             @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     enforce(metadataEntity, StandardPermission.DELETE);
     metadataAdmin.removeMetadata(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata for %s deleted successfully.", metadataEntity));
+        String.format("Metadata for %s deleted successfully.", metadataEntity));
   }
 
   @DELETE
   @Path("/**/metadata/properties")
   public void removeProperties(HttpRequest request, HttpResponder responder,
-                               @QueryParam("type") String type,
-                               @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/properties");
     enforce(metadataEntity, StandardPermission.UPDATE);
     metadataAdmin.removeProperties(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata properties for %s deleted successfully.", metadataEntity));
+        String.format("Metadata properties for %s deleted successfully.", metadataEntity));
   }
 
   @DELETE
   @Path("/**/metadata/properties/{property}")
   public void removeProperty(HttpRequest request, HttpResponder responder,
-                             @PathParam("property") String property,
-                             @QueryParam("type") String type,
-                             @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
+      @PathParam("property") String property,
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/properties");
     enforce(metadataEntity, StandardPermission.UPDATE);
-    metadataAdmin.removeProperties(metadataEntity, Collections.singleton(property), async ? ASYNC : SYNC);
+    metadataAdmin.removeProperties(metadataEntity, Collections.singleton(property),
+        async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata property %s for %s deleted successfully.", property, metadataEntity));
+        String.format("Metadata property %s for %s deleted successfully.", property,
+            metadataEntity));
   }
 
   @DELETE
   @Path("/**/metadata/tags")
   public void removeTags(HttpRequest request, HttpResponder responder,
-                         @QueryParam("type") String type,
-                         @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/tags");
     enforce(metadataEntity, StandardPermission.UPDATE);
     metadataAdmin.removeTags(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata tags for %s deleted successfully.", metadataEntity));
+        String.format("Metadata tags for %s deleted successfully.", metadataEntity));
   }
 
   @DELETE
   @Path("/**/metadata/tags/{tag}")
   public void removeTag(HttpRequest request, HttpResponder responder,
-                        @PathParam("tag") String tag,
-                        @QueryParam("type") String type,
-                        @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
+      @PathParam("tag") String tag,
+      @QueryParam("type") String type,
+      @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
+    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type,
+        "/metadata/tags");
     enforce(metadataEntity, StandardPermission.UPDATE);
     metadataAdmin.removeTags(metadataEntity, Collections.singleton(tag), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
-                         String.format("Metadata tag %s for %s deleted successfully.", tag, metadataEntity));
+        String.format("Metadata tag %s for %s deleted successfully.", tag, metadataEntity));
   }
 
   @POST
   @Path("/metadata-internals/create")
   public void create(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Create createMutation =
-      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Create.class);
+        GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            MetadataMutation.Create.class);
     metadataAdmin.applyMutation(createMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, "Create Metadata mutation applied successfully.");
   }
@@ -285,7 +307,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata-internals/update")
   public void update(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Update updateMutation =
-      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Update.class);
+        GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            MetadataMutation.Update.class);
     metadataAdmin.applyMutation(updateMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, "Update Metadata mutation applied successfully.");
   }
@@ -294,7 +317,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata-internals/drop")
   public void drop(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Drop dropMutation =
-      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Drop.class);
+        GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            MetadataMutation.Drop.class);
     metadataAdmin.applyMutation(dropMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, "Drop Metadata mutation applied successfully.");
   }
@@ -303,7 +327,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata-internals/remove")
   public void remove(FullHttpRequest request, HttpResponder responder) throws IOException {
     MetadataMutation.Remove removeMutation =
-      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), MetadataMutation.Remove.class);
+        GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            MetadataMutation.Remove.class);
     metadataAdmin.applyMutation(removeMutation, SYNC);
     responder.sendString(HttpResponseStatus.OK, "Remove Metadata mutation applied successfully.");
   }
@@ -312,7 +337,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/metadata-internals/batch")
   public void batch(FullHttpRequest request, HttpResponder responder) throws IOException {
     List<MetadataMutation> mutations =
-      GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8), LIST_MUTATION_TYPE);
+        GSON_INTERNAL.fromJson(request.content().toString(StandardCharsets.UTF_8),
+            LIST_MUTATION_TYPE);
     metadataAdmin.applyMutations(mutations, SYNC);
     responder.sendString(HttpResponseStatus.OK, "List of Metadata mutations applied successfully.");
   }
@@ -320,69 +346,71 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
-                             @Nullable @QueryParam("namespaces") List<String> namespaces,
-                             @Nullable @QueryParam("scope") String scope,
-                             @Nullable @QueryParam("query") String searchQuery,
-                             @Nullable @QueryParam("target") List<String> targets,
-                             @Nullable @QueryParam("sort") String sort,
-                             @QueryParam("offset") @DefaultValue("0") int offset,
-                             // 2147483647 is Integer.MAX_VALUE
-                             @QueryParam("limit") @DefaultValue("2147483647") int limit,
-                             @Nullable @QueryParam("numCursors") Integer numCursors,
-                             @QueryParam("cursorRequested") @DefaultValue("false") boolean cursorRequested,
-                             @Nullable @QueryParam("cursor") String cursor,
-                             @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
-                             @Nullable @QueryParam("entityScope") String entityScope,
-                             @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws Exception {
-    SearchRequest searchRequest = getValidatedSearchRequest(scope, namespaces, searchQuery, targets, sort,
-                                                            offset, limit, numCursors, cursorRequested, cursor,
-                                                            showHidden, entityScope);
+      @Nullable @QueryParam("namespaces") List<String> namespaces,
+      @Nullable @QueryParam("scope") String scope,
+      @Nullable @QueryParam("query") String searchQuery,
+      @Nullable @QueryParam("target") List<String> targets,
+      @Nullable @QueryParam("sort") String sort,
+      @QueryParam("offset") @DefaultValue("0") int offset,
+      // 2147483647 is Integer.MAX_VALUE
+      @QueryParam("limit") @DefaultValue("2147483647") int limit,
+      @Nullable @QueryParam("numCursors") Integer numCursors,
+      @QueryParam("cursorRequested") @DefaultValue("false") boolean cursorRequested,
+      @Nullable @QueryParam("cursor") String cursor,
+      @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+      @Nullable @QueryParam("entityScope") String entityScope,
+      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
+      throws Exception {
+    SearchRequest searchRequest = getValidatedSearchRequest(scope, namespaces, searchQuery, targets,
+        sort,
+        offset, limit, numCursors, cursorRequested, cursor,
+        showHidden, entityScope);
     SearchResponse response = metadataAdmin.search(searchRequest);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson("v5".equals(responseFormat)
-                                     ? MetadataCompatibility.toV5Response(response, entityScope) : response));
+        GSON.toJson("v5".equals(responseFormat)
+            ? MetadataCompatibility.toV5Response(response, entityScope) : response));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/metadata/search")
   public void searchNamespace(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId,
-                              @Nullable @QueryParam("scope") String scope,
-                              @Nullable @QueryParam("query") String searchQuery,
-                              @Nullable @QueryParam("target") List<String> targets,
-                              @Nullable @QueryParam("sort") String sort,
-                              @QueryParam("offset") @DefaultValue("0") int offset,
-                              // 2147483647 is Integer.MAX_VALUE
-                              @QueryParam("limit") @DefaultValue("2147483647") int limit,
-                              @Nullable @QueryParam("numCursors") Integer numCursors,
-                              @QueryParam("cursorRequested") @DefaultValue("false") boolean cursorRequested,
-                              @Nullable @QueryParam("cursor") String cursor,
-                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
-                              @Nullable @QueryParam("entityScope") String entityScope,
-                              @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws Exception {
-    SearchRequest searchRequest = getValidatedSearchRequest(scope, ImmutableList.of(namespaceId), searchQuery, targets,
-                                                            sort, offset, limit, numCursors, cursorRequested, cursor,
-                                                            showHidden, entityScope);
+      @PathParam("namespace-id") String namespaceId,
+      @Nullable @QueryParam("scope") String scope,
+      @Nullable @QueryParam("query") String searchQuery,
+      @Nullable @QueryParam("target") List<String> targets,
+      @Nullable @QueryParam("sort") String sort,
+      @QueryParam("offset") @DefaultValue("0") int offset,
+      // 2147483647 is Integer.MAX_VALUE
+      @QueryParam("limit") @DefaultValue("2147483647") int limit,
+      @Nullable @QueryParam("numCursors") Integer numCursors,
+      @QueryParam("cursorRequested") @DefaultValue("false") boolean cursorRequested,
+      @Nullable @QueryParam("cursor") String cursor,
+      @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
+      @Nullable @QueryParam("entityScope") String entityScope,
+      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
+      throws Exception {
+    SearchRequest searchRequest = getValidatedSearchRequest(scope, ImmutableList.of(namespaceId),
+        searchQuery, targets,
+        sort, offset, limit, numCursors, cursorRequested, cursor,
+        showHidden, entityScope);
     SearchResponse response = metadataAdmin.search(searchRequest);
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson("v5".equals(responseFormat)
-                                     ? MetadataCompatibility.toV5Response(response, entityScope) : response));
+        GSON.toJson("v5".equals(responseFormat)
+            ? MetadataCompatibility.toV5Response(response, entityScope) : response));
   }
 
   // TODO (CDAP-14946): Find a better way to determine allowed combinations of search parameters
   private SearchRequest getValidatedSearchRequest(@Nullable String scope,
-                                                  @Nullable List<String> namespaces,
-                                                  @Nullable String searchQuery,
-                                                  @Nullable List<String> targets,
-                                                  @Nullable String sort,
-                                                  int offset, int limit,
-                                                  @Nullable Integer numCursors,
-                                                  boolean cursorRequested,
-                                                  @Nullable String cursor,
-                                                  boolean showHidden,
-                                                  @Nullable String entityScope) throws BadRequestException {
+      @Nullable List<String> namespaces,
+      @Nullable String searchQuery,
+      @Nullable List<String> targets,
+      @Nullable String sort,
+      int offset, int limit,
+      @Nullable Integer numCursors,
+      boolean cursorRequested,
+      @Nullable String cursor,
+      boolean showHidden,
+      @Nullable String entityScope) throws BadRequestException {
     try {
       SearchRequest.Builder builder = SearchRequest.of(searchQuery == null ? "*" : searchQuery);
       if (scope != null) {
@@ -406,11 +434,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
           // this cannot happen because UTF_8 is always supported
           throw new IllegalStateException(e);
         }
-        if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sorting.getKey()) &&
-          !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sorting.getKey())) {
-          throw new IllegalArgumentException("Sorting is only supported on fields: " +
-                                               MetadataConstants.ENTITY_NAME_KEY + ", " +
-                                               MetadataConstants.CREATION_TIME_KEY);
+        if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sorting.getKey())
+            && !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sorting.getKey())) {
+          throw new IllegalArgumentException("Sorting is only supported on fields: "
+              + MetadataConstants.ENTITY_NAME_KEY + ", "
+              + MetadataConstants.CREATION_TIME_KEY);
         }
         builder.setSorting(sorting);
       }
@@ -437,25 +465,27 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String entityType, String suffix) {
-    String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
-      Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
+  private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String entityType,
+      String suffix) {
+    String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3)
+        + Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
     MetadataEntity.Builder builder = MetadataEntity.builder();
 
     int curIndex = 0;
     while (curIndex < parts.length - 1) {
       // the api part which we get for program does not have 'type' keyword as part of the uri. It goes like
       // ../apps/appName/programType/ProgramName so handle that correctly
-      if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps") && !parts[curIndex].equalsIgnoreCase
-        ("versions")) {
+      if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps")
+          && !parts[curIndex].equalsIgnoreCase
+          ("versions")) {
         builder = appendHelper(builder, entityType, MetadataEntity.TYPE,
-                                      ProgramType.valueOfCategoryName(parts[curIndex]).name());
+            ProgramType.valueOfCategoryName(parts[curIndex]).name());
         builder = appendHelper(builder, entityType, MetadataEntity.PROGRAM, parts[curIndex + 1]);
       } else {
         if (MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().containsKey(parts[curIndex])) {
           builder = appendHelper(builder, entityType,
-                                        MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().get(parts[curIndex]),
-                                        parts[curIndex + 1]);
+              MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().get(parts[curIndex]),
+              parts[curIndex + 1]);
         } else {
           builder = appendHelper(builder, entityType, parts[curIndex], parts[curIndex + 1]);
         }
@@ -467,36 +497,42 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   /**
-   * If the MetadataEntity Builder key-value represent an application or artifact which is versioned in CDAP i.e. their
-   * metadata entity representation ends with 'version' rather than 'application' or 'artifact' and the type is also
-   * set to 'version' then for backward compatibility of rest end points return an updated builder which has the
-   * correct type. This is only needed in 5.0 for backward compatibility of the rest endpoint.
-   * From 5.0 and later the rest end point must be called with a query parameter which specify the type of the
-   * metadata entity if the type is not the last key. (CDAP-13678)
+   * If the MetadataEntity Builder key-value represent an application or artifact which is versioned
+   * in CDAP i.e. their metadata entity representation ends with 'version' rather than 'application'
+   * or 'artifact' and the type is also set to 'version' then for backward compatibility of rest end
+   * points return an updated builder which has the correct type. This is only needed in 5.0 for
+   * backward compatibility of the rest endpoint. From 5.0 and later the rest end point must be
+   * called with a query parameter which specify the type of the metadata entity if the type is not
+   * the last key. (CDAP-13678)
    */
   @VisibleForTesting
   static MetadataEntity.Builder makeBackwardCompatible(MetadataEntity.Builder builder) {
     MetadataEntity entity = builder.build();
-    List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(), false)
-      .collect(Collectors.toList());
-    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION) &&
-      (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT) ||
-        entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
+    List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(),
+            false)
+        .collect(Collectors.toList());
+    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION)
+        && (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT)
+        || entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
       // this is artifact or application so update the builder
       MetadataEntity.Builder actualEntityBuilder = MetadataEntity.builder();
       // namespace
-      actualEntityBuilder.append(entityKeyValues.get(0).getKey(), entityKeyValues.get(0).getValue());
+      actualEntityBuilder.append(entityKeyValues.get(0).getKey(),
+          entityKeyValues.get(0).getValue());
       // application or artifact (so append as type)
-      actualEntityBuilder.appendAsType(entityKeyValues.get(1).getKey(), entityKeyValues.get(1).getValue());
+      actualEntityBuilder.appendAsType(entityKeyValues.get(1).getKey(),
+          entityKeyValues.get(1).getValue());
       // version detail
-      actualEntityBuilder.append(entityKeyValues.get(2).getKey(), entityKeyValues.get(2).getValue());
+      actualEntityBuilder.append(entityKeyValues.get(2).getKey(),
+          entityKeyValues.get(2).getValue());
       return actualEntityBuilder;
     }
     return builder;
   }
 
-  private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder, @Nullable String entityType,
-                                      String key, String value) {
+  private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder,
+      @Nullable String entityType,
+      String key, String value) {
 
     if (entityType == null || entityType.isEmpty()) {
       // if a type is not provided then keep appending as type to update the type on every append
@@ -518,7 +554,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
 
     Map<String, String> metadata;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content),
+        StandardCharsets.UTF_8)) {
       metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read metadata properties from the request.", e);
@@ -536,7 +573,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to read a list of tags from the request.");
     }
     Set<String> toReturn;
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content),
+        StandardCharsets.UTF_8)) {
       toReturn = GSON.fromJson(reader, SET_STRING_TYPE);
     } catch (IOException e) {
       throw new BadRequestException("Unable to read a list of tags from the request.", e);
@@ -552,8 +590,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     try {
       return scope == null ? null : MetadataScope.valueOf(scope.toUpperCase());
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Invalid metadata scope '%s'. Expected '%s' or '%s'",
-                                                  scope, MetadataScope.USER, MetadataScope.SYSTEM));
+      throw new BadRequestException(
+          String.format("Invalid metadata scope '%s'. Expected '%s' or '%s'",
+              scope, MetadataScope.USER, MetadataScope.SYSTEM));
     }
   }
 
@@ -565,23 +604,25 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     try {
       return EntityScope.valueOf(entityScope.toUpperCase());
     } catch (IllegalArgumentException e) {
-      throw new BadRequestException(String.format("Invalid entity scope '%s'. Expected '%s' or '%s' for entities " +
-                                                    "from specified scope, or just omit the parameter to get " +
-                                                    "entities from both scopes",
-                                                  entityScope, EntityScope.USER, EntityScope.SYSTEM));
+      throw new BadRequestException(
+          String.format("Invalid entity scope '%s'. Expected '%s' or '%s' for entities "
+                  + "from specified scope, or just omit the parameter to get "
+                  + "entities from both scopes",
+              entityScope, EntityScope.USER, EntityScope.SYSTEM));
     }
   }
 
   private void enforce(MetadataEntity metadataEntity, Permission permission) throws Exception {
     if (isEntityType(metadataEntity)) {
-      accessEnforcer.enforce(EntityId.fromMetadataEntity(metadataEntity), authenticationContext.getPrincipal(),
-                                    permission);
+      accessEnforcer.enforce(EntityId.fromMetadataEntity(metadataEntity),
+          authenticationContext.getPrincipal(),
+          permission);
     }
   }
 
   /**
-   * Check if the metadata entity is an entity type. It is possible that metadata entity has a type which is not among
-   * the entity ids. In those cases, do not enforce.
+   * Check if the metadata entity is an entity type. It is possible that metadata entity has a type
+   * which is not among the entity ids. In those cases, do not enforce.
    */
   private boolean isEntityType(MetadataEntity metadataEntity) {
     try {

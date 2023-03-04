@@ -69,8 +69,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Tool to export the HBase table to HFiles. Tool accepts the HBase table name as input parameter and outputs
- * the HDFS path where the corresponding HFiles are exported.
+ * Tool to export the HBase table to HFiles. Tool accepts the HBase table name as input parameter
+ * and outputs the HDFS path where the corresponding HFiles are exported.
  */
 public class HBaseTableExporter {
 
@@ -105,41 +105,42 @@ public class HBaseTableExporter {
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf, Configuration hConf) {
     return Guice.createInjector(
-      new ConfigModule(cConf, hConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new IOModule(),
-      new ZKClientModule(),
-      new ZKDiscoveryModule(),
-      new KafkaClientModule(),
-      new DFSLocationModule(),
-      new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
-      new MessagingClientModule(),
-      new MetricsClientRuntimeModule().getDistributedModules(),
-      new KafkaLogAppenderModule(),
-      new AuthorizationModule(),
-      new AuthorizationEnforcementModule().getStandaloneModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new NamespaceQueryAdminModule(),
-      new SecureStoreServerModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(UGIProvider.class).to(RemoteUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+        new ConfigModule(cConf, hConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new IOModule(),
+        new ZKClientModule(),
+        new ZKDiscoveryModule(),
+        new KafkaClientModule(),
+        new DFSLocationModule(),
+        new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
+        new DataSetsModules().getDistributedModules(),
+        new SystemDatasetRuntimeModule().getDistributedModules(),
+        new MessagingClientModule(),
+        new MetricsClientRuntimeModule().getDistributedModules(),
+        new KafkaLogAppenderModule(),
+        new AuthorizationModule(),
+        new AuthorizationEnforcementModule().getStandaloneModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new NamespaceQueryAdminModule(),
+        new SecureStoreServerModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(UGIProvider.class).to(RemoteUGIProvider.class);
+            bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          }
         }
-      }
     );
   }
 
   /**
    * Sets up the actual MapReduce job.
-   * @param tx The transaction which needs to be passed to the Scan instance. This transaction is be used by
-   *           coprocessors to filter out the data corresonding to the invalid transactions .
+   *
+   * @param tx The transaction which needs to be passed to the Scan instance. This transaction
+   *     is be used by coprocessors to filter out the data corresonding to the invalid transactions
+   *     .
    * @param tableName Name of the table which need to be exported as HFiles.
    * @return the configured job
-   * @throws IOException
    */
   public Job createSubmittableJob(Transaction tx, String tableName) throws IOException {
 
@@ -152,7 +153,8 @@ public class HBaseTableExporter {
     scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, new TransactionCodec().encode(tx));
     job.setNumReduceTasks(0);
 
-    TableMapReduceUtil.initTableMapperJob(tableName, scan, Import.KeyValueImporter.class, null, null, job);
+    TableMapReduceUtil.initTableMapperJob(tableName, scan, Import.KeyValueImporter.class, null,
+        null, job);
 
     FileSystem fs = FileSystem.get(hConf);
     Random rand = new Random();
@@ -168,8 +170,8 @@ public class HBaseTableExporter {
     TableName hbaseTableName = TableName.valueOf(tableName);
     HFileOutputFormat2.setOutputPath(job, bulkloadDir);
     try (Connection connection = ConnectionFactory.createConnection(hConf);
-         Table table = connection.getTable(hbaseTableName);
-         RegionLocator locator = connection.getRegionLocator(hbaseTableName)) {
+        Table table = connection.getTable(hbaseTableName);
+        RegionLocator locator = connection.getRegionLocator(hbaseTableName)) {
       HFileOutputFormat2.configureIncrementalLoad(job, table, locator);
       return job;
     }
@@ -199,8 +201,8 @@ public class HBaseTableExporter {
 
   private void printHelp() {
     System.out.println();
-    System.out.println("Usage: /opt/cdap/master/bin/svc-master " +
-                         "run io.cdap.cdap.data.tools.HBaseTableExporter <tablename>");
+    System.out.println("Usage: /opt/cdap/master/bin/svc-master "
+        + "run io.cdap.cdap.data.tools.HBaseTableExporter <tablename>");
     System.out.println("Args:");
     System.out.println(" tablename    Name of the table to copy");
   }
@@ -225,7 +227,8 @@ public class HBaseTableExporter {
       // Always commit the transaction, since we are not doing any data update
       // operation in this tool.
       txClient.commitOrThrow(tx);
-      System.out.println("Export operation complete. HFiles are stored at location " + bulkloadDir.toString());
+      System.out.println(
+          "Export operation complete. HFiles are stored at location " + bulkloadDir.toString());
     } finally {
       stop();
     }

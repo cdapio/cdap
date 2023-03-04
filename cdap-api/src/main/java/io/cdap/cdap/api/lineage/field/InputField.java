@@ -19,11 +19,11 @@ package io.cdap.cdap.api.lineage.field;
 import java.util.Objects;
 
 /**
- * Represents an input field of an operation. The field is uniquely
- * identified by its name and the name of the operation(origin) that
- * emits it as an output field.
+ * Represents an input field of an operation. The field is uniquely identified by its name and the
+ * name of the operation(origin) that emits it as an output field.
  */
 public class InputField {
+
   private final String origin;
   private final String name;
 
@@ -66,8 +66,8 @@ public class InputField {
       return false;
     }
     InputField that = (InputField) o;
-    return Objects.equals(origin, that.origin) &&
-            Objects.equals(name, that.name);
+    return Objects.equals(origin, that.origin)
+        && Objects.equals(name, that.name);
   }
 
   @Override

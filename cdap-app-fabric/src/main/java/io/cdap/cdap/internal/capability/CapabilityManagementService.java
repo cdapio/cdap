@@ -47,13 +47,13 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
 
   @Inject
   CapabilityManagementService(CConfiguration cConf, CapabilityApplier capabilityApplier,
-                              SystemProgramManagementService systemProgramManagementService) {
+      SystemProgramManagementService systemProgramManagementService) {
     super(RetryStrategies
-            .fixDelay(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES), TimeUnit.MINUTES));
+        .fixDelay(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES), TimeUnit.MINUTES));
     this.cConf = cConf;
     this.capabilityApplier = capabilityApplier;
     this.scheduleIntervalInMillis = TimeUnit.MINUTES
-      .toMillis(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES));
+        .toMillis(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES));
   }
 
   @Override

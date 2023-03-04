@@ -33,20 +33,19 @@ import java.nio.file.Paths;
  * endpoints are defined in {@link ArtifactCacheHttpHandlerInternal}.
  *
  * Artifacts will be cached using the following file structure:
- * /DATA_DIRECTORY/peers/<peer-name>/artifacts/<namespace>/<artifact-name>/<artifact-version>/
- * <last-modified-timestamp>.jar
- *
+ * {@code /DATA_DIRECTORY/peers/{peer-name}/artifacts/{namespace}/{artifact-name}/{artifact-version}/{last-modified-timestamp}.jar}
  */
 public class ArtifactCache extends AbstractArtifactLocalizer {
+
   @Inject
   ArtifactCache(CConfiguration cConf) {
     super(cConf.get(Constants.ArtifactCache.LOCAL_DATA_DIR),
-          RetryStrategies.fromConfiguration(cConf, Constants.Service.ARTIFACT_CACHE + "."));
+        RetryStrategies.fromConfiguration(cConf, Constants.Service.ARTIFACT_CACHE + "."));
   }
 
   /**
-   * Gets the location on the local filesystem for the given artifact. This method handles fetching the artifact as
-   * well as caching it.
+   * Gets the location on the local filesystem for the given artifact. This method handles fetching
+   * the artifact as well as caching it.
    *
    * @param artifactId The ArtifactId of the artifact to fetch
    * @param peer The name of the tethered peer
@@ -55,19 +54,21 @@ public class ArtifactCache extends AbstractArtifactLocalizer {
    * @throws IOException if there was an exception while fetching or caching the artifact
    * @throws Exception if there was an unexpected error
    */
-  public File getArtifact(ArtifactId artifactId, String peer, RemoteClient remoteClient) throws Exception {
+  public File getArtifact(ArtifactId artifactId, String peer, RemoteClient remoteClient)
+      throws Exception {
     File artifactDir = getArtifactDirLocation(artifactId, peer);
-    return Retries.callWithRetries(() -> fetchArtifact(artifactId, remoteClient, artifactDir), retryStrategy);
+    return Retries.callWithRetries(() -> fetchArtifact(artifactId, remoteClient, artifactDir),
+        retryStrategy);
   }
 
   /**
-   * Returns a {@link File} representing the cache directory jars for the given artifact belonging to a tethered peer.
-   * The file path is:
-   * /DATA_DIRECTORY/peers/<peer-name>/</peer-name>artifacts/<namespace>/<artifact-name>/<artifact-version>/
+   * Returns a {@link File} representing the cache directory jars for the given artifact belonging
+   * to a tethered peer. The file path is:
+   * {@code /DATA_DIRECTORY/peers/<peer-name>/</peer-name>artifacts/<namespace>/<artifact-name>/<artifact-version>/}
    */
   private File getArtifactDirLocation(ArtifactId artifactId, String peerName) {
     return Paths.get(dataDir, "peers", peerName, "artifacts", artifactId.getNamespace(),
-                     artifactId.getArtifact(), artifactId.getVersion()).toFile();
+        artifactId.getArtifact(), artifactId.getVersion()).toFile();
 
   }
 }

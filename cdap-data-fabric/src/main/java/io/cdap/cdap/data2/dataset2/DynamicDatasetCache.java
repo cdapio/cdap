@@ -39,25 +39,25 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
- * Implementation of {@link DatasetContext} that allows to dynamically load datasets
- * into a started {@link TransactionContext}. Datasets acquired from this context are
- * distinct from any Datasets instantiated outside this class. Datasets are cached,
- * such that repeated calls to (@link #getDataset()} for the same dataset and arguments
- * return the same instance.
+ * Implementation of {@link DatasetContext} that allows to dynamically load datasets into a started
+ * {@link TransactionContext}. Datasets acquired from this context are distinct from any Datasets
+ * instantiated outside this class. Datasets are cached, such that repeated calls to (@link
+ * #getDataset()} for the same dataset and arguments return the same instance.
  *
- * The cache also maintains a transaction context and adds all acquired datasets to that
- * context, so that they participate in the transactions executed with that context. If a
- * dataset is dismissed during the course of a transaction, then this context delays the
- * dismissal until the transaction is complete.
+ * The cache also maintains a transaction context and adds all acquired datasets to that context, so
+ * that they participate in the transactions executed with that context. If a dataset is dismissed
+ * during the course of a transaction, then this context delays the dismissal until the transaction
+ * is complete.
  *
- * Optionally, this cache can have a set of static datasets that are added to every
- * transaction context created by the cache. Static datasets cannot be dismissed.
+ * Optionally, this cache can have a set of static datasets that are added to every transaction
+ * context created by the cache. Static datasets cannot be dismissed.
  *
- * Also, transaction-aware "datasets" that were not created by this DynamicDatasetCache,
- * can be added to the transaction context. This is useful for transaction-aware's that
- * do not implement a Dataset (such as queue consumers etc.).
+ * Also, transaction-aware "datasets" that were not created by this DynamicDatasetCache, can be
+ * added to the transaction context. This is useful for transaction-aware's that do not implement a
+ * Dataset (such as queue consumers etc.).
  */
-public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseable, TransactionContextFactory {
+public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseable,
+    TransactionContextFactory {
 
   protected final SystemDatasetInstantiator instantiator;
   protected final TransactionSystemClient txClient;
@@ -69,14 +69,14 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    *
    * @param txClient the transaction system client to use for new transaction contexts
    * @param namespace the {@link NamespaceId} in which all datasets are instantiated
-   * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
-   *                         are expected to be scoped so that arguments for one dataset do not override arguments
-   *                         of other datasets.
+   * @param runtimeArguments all runtime arguments that are available to datasets in the
+   *     context. Runtime arguments are expected to be scoped so that arguments for one dataset do
+   *     not override arguments of other datasets.
    */
   public DynamicDatasetCache(SystemDatasetInstantiator instantiator,
-                             TransactionSystemClient txClient,
-                             NamespaceId namespace,
-                             Map<String, String> runtimeArguments) {
+      TransactionSystemClient txClient,
+      NamespaceId namespace,
+      Map<String, String> runtimeArguments) {
     this.instantiator = instantiator;
     this.txClient = txClient;
     this.namespace = namespace;
@@ -85,45 +85,49 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
 
   @Override
   public final <T extends Dataset> T getDataset(String name)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
   public <T extends Dataset> T getDataset(String namespace, String name)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return getDataset(namespace, name, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
   public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
+      throws DatasetInstantiationException {
     return getDataset(name, arguments, false);
   }
 
   @Override
-  public final <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)
-    throws DatasetInstantiationException {
+  public final <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments)
+      throws DatasetInstantiationException {
     return getDataset(namespace, name, arguments, false);
   }
 
   /**
-   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
-   * the in-progress transactions, and it will also not be closed when the cache is closed.
+   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be
+   * added to the in-progress transactions, and it will also not be closed when the cache is
+   * closed.
    *
    * @param name the name of the dataset
    * @param arguments arguments for the dataset
    * @param bypass whether to bypass the cache
    * @param <T> the type of the dataset
    */
-  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments, boolean bypass)
-    throws DatasetInstantiationException {
+  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
+      boolean bypass)
+      throws DatasetInstantiationException {
     return getDataset(name, arguments, bypass, AccessType.UNKNOWN);
   }
 
   /**
-   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
-   * the in-progress transactions, and it will also not be closed when the cache is closed.
+   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be
+   * added to the in-progress transactions, and it will also not be closed when the cache is
+   * closed.
    *
    * @param namespace the namespace name of dataset
    * @param name the name of the dataset
@@ -131,8 +135,9 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param bypass whether to bypass the cache
    * @param <T> the type of the dataset
    */
-  public final <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
-                                                boolean bypass) throws DatasetInstantiationException {
+  public final <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments,
+      boolean bypass) throws DatasetInstantiationException {
     return getDataset(namespace, name, arguments, bypass, AccessType.UNKNOWN);
   }
 
@@ -145,7 +150,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param accessType the accessType
    */
   public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
-                                                AccessType accessType) throws DatasetInstantiationException {
+      AccessType accessType) throws DatasetInstantiationException {
     return getDataset(name, arguments, false, accessType);
   }
 
@@ -158,14 +163,16 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param <T> the type of the dataset
    * @param accessType the accessType
    */
-  public final <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
-                                                AccessType accessType) throws DatasetInstantiationException {
+  public final <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments,
+      AccessType accessType) throws DatasetInstantiationException {
     return getDataset(namespace, name, arguments, false, accessType);
   }
 
   /**
-   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
-   * the in-progress transactions, and it will also not be closed when the cache is closed.
+   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be
+   * added to the in-progress transactions, and it will also not be closed when the cache is
+   * closed.
    *
    * @param name the name of the dataset
    * @param arguments arguments for the dataset
@@ -173,14 +180,16 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param <T> the type of the dataset
    * @param accessType the accessType
    */
-  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments, boolean bypass,
-                                                AccessType accessType) throws DatasetInstantiationException {
+  public final <T extends Dataset> T getDataset(String name, Map<String, String> arguments,
+      boolean bypass,
+      AccessType accessType) throws DatasetInstantiationException {
     return getDataset(namespace.getNamespace(), name, arguments, bypass, accessType);
   }
 
   /**
-   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be added to
-   * the in-progress transactions, and it will also not be closed when the cache is closed.
+   * Instantiate a dataset, allowing to bypass the cache. This means that the dataset will not be
+   * added to the in-progress transactions, and it will also not be closed when the cache is
+   * closed.
    *
    * @param namespace the namespace instance
    * @param name the name of the dataset
@@ -189,21 +198,25 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param <T> the type of the dataset
    * @param accessType the accessType
    */
-  public final <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments,
-                                                boolean bypass, AccessType accessType)
-    throws DatasetInstantiationException {
-    if (namespace.equals(NamespaceId.SYSTEM.getNamespace()) && !this.namespace.equals(NamespaceId.SYSTEM)) {
+  public final <T extends Dataset> T getDataset(String namespace, String name,
+      Map<String, String> arguments,
+      boolean bypass, AccessType accessType)
+      throws DatasetInstantiationException {
+    if (namespace.equals(NamespaceId.SYSTEM.getNamespace()) && !this.namespace.equals(
+        NamespaceId.SYSTEM)) {
       throw new DatasetInstantiationException(
-        String.format("Cannot access dataset %s in system namespace, from %s namespace",
-                      name, this.namespace.getNamespace()));
+          String.format("Cannot access dataset %s in system namespace, from %s namespace",
+              name, this.namespace.getNamespace()));
     }
     // apply actual runtime arguments on top of the context's runtime arguments for this dataset
-    Map<String, String> dsArguments = RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
+    Map<String, String> dsArguments = RuntimeArguments.extractScope(Scope.DATASET, name,
+        runtimeArguments);
     dsArguments.putAll(arguments);
 
     // Need to switch the context classloader to the CDAP system since getting dataset instance is in CDAP context
     // The internal of the dataset instantiate may switch the context class loader to a different one when necessary
-    ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(
+        getClass().getClassLoader());
     try {
       return getDataset(new DatasetCacheKey(namespace, name, dsArguments, accessType), bypass);
     } finally {
@@ -222,15 +235,16 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * @param bypass if true, bypass the dataset cache, and do not add this to the transaction.
    */
   protected abstract <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
-    throws DatasetInstantiationException;
+      throws DatasetInstantiationException;
 
   /**
-   * Return a new transaction context for the current thread. All transaction-aware static datasets and all
-   * extra transaction-awares are added to this transaction initially. Also, any transaction-aware that was
-   * previously dynamically acquired, and that has not been garbage-collected, is added to the transaction.
-   * Any transaction-aware datasets that will subsequently be obtained via (@link #getDataset()) will then
-   * also be added to this transaction context and thus participate in its transaction. These datasets can
-   * also be retrieved using {@link #getTransactionAwares()}.
+   * Return a new transaction context for the current thread. All transaction-aware static datasets
+   * and all extra transaction-awares are added to this transaction initially. Also, any
+   * transaction-aware that was previously dynamically acquired, and that has not been
+   * garbage-collected, is added to the transaction. Any transaction-aware datasets that will
+   * subsequently be obtained via (@link #getDataset()) will then also be added to this transaction
+   * context and thus participate in its transaction. These datasets can also be retrieved using
+   * {@link #getTransactionAwares()}.
    *
    * @return a new transaction context
    */
@@ -241,47 +255,48 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
    * Dismiss the current transaction context. This releases the references to the context's
    * transaction-aware datasets so that they can be collected by the garbage collector (if no one
    * else is holding a reference to them). The static datasets and the extra transaction-awares,
-   * however, will not be made available to garbage collection, and will participate in the
-   * next transaction (created by {@link #newTransactionContext()}).
+   * however, will not be made available to garbage collection, and will participate in the next
+   * transaction (created by {@link #newTransactionContext()}).
    */
   public abstract void dismissTransactionContext();
 
   /**
-   * @return the static datasets that are transaction-aware. This is the same independent of whether a
-   * transaction context was started using {@link #newTransactionContext()}.
+   * @return the static datasets that are transaction-aware. This is the same independent of whether
+   *     a transaction context was started using {@link #newTransactionContext()}.
    */
   public abstract Iterable<TransactionAware> getStaticTransactionAwares();
 
   /**
-   * @return the transaction-aware datasets that participate in the current transaction. If
-   * {@link #newTransactionContext()} has not been called (or {@link #dismissTransactionContext()} has been
-   * called), then there is no transaction and this will return an empty iterable.
+   * @return the transaction-aware datasets that participate in the current transaction. If {@link
+   *     #newTransactionContext()} has not been called (or {@link #dismissTransactionContext()} has
+   *     been called), then there is no transaction and this will return an empty iterable.
    */
   public abstract Iterable<TransactionAware> getTransactionAwares();
 
   /**
-   * @return the current list of extra {@link TransactionAware}s that were added through the
-   * {@link #addExtraTransactionAware(TransactionAware)} method.
+   * @return the current list of extra {@link TransactionAware}s that were added through the {@link
+   *     #addExtraTransactionAware(TransactionAware)} method.
    */
   public abstract Iterable<TransactionAware> getExtraTransactionAwares();
 
   /**
-   * Add an extra transaction aware to the static datasets. This is a transaction aware that
-   * is not instantiated through this factory, but needs to participate in every transaction.
-   * Note that if a transaction is in progress, then this transaction aware will join that transaction.
+   * Add an extra transaction aware to the static datasets. This is a transaction aware that is not
+   * instantiated through this factory, but needs to participate in every transaction. Note that if
+   * a transaction is in progress, then this transaction aware will join that transaction.
    */
   public abstract void addExtraTransactionAware(TransactionAware txAware);
 
   /**
    * Remove a transaction-aware that was added via {@link #addExtraTransactionAware(TransactionAware)}.
-   * Note that if a transaction is in progress, then this transaction aware will leave that transaction.
+   * Note that if a transaction is in progress, then this transaction aware will leave that
+   * transaction.
    */
   public abstract void removeExtraTransactionAware(TransactionAware txAware);
 
   /**
-   * Close and dismiss all datasets that were obtained through this factory, and destroy the factory.
-   * If an extra transaction-awares were added to this cache (and not removed), then they will also
-   * be closed.
+   * Close and dismiss all datasets that were obtained through this factory, and destroy the
+   * factory. If an extra transaction-awares were added to this cache (and not removed), then they
+   * will also be closed.
    */
   @Override
   public void close() {
@@ -289,33 +304,36 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
   }
 
   /**
-   * Close and dismiss all datasets that were obtained through this factory. This can be used to ensure
-   * that all resources held by datasets are released, even though the factory may be still be used for
-   * subsequent execution.
+   * Close and dismiss all datasets that were obtained through this factory. This can be used to
+   * ensure that all resources held by datasets are released, even though the factory may be still
+   * be used for subsequent execution.
    */
   public abstract void invalidate();
 
   /**
-   * A key used by implementations of {@link DynamicDatasetCache} to cache Datasets. Includes the namespace of the
-   * dataset, dataset name, its arguments, and its {@link AccessType}.
+   * A key used by implementations of {@link DynamicDatasetCache} to cache Datasets. Includes the
+   * namespace of the dataset, dataset name, its arguments, and its {@link AccessType}.
    */
   protected static final class DatasetCacheKey {
+
     private final String namespace;
     private final String name;
     private final Map<String, String> arguments;
     private final AccessType accessType;
 
-    protected DatasetCacheKey(String namespace, String name, @Nullable Map<String, String> arguments) {
+    protected DatasetCacheKey(String namespace, String name,
+        @Nullable Map<String, String> arguments) {
       this(namespace, name, arguments, AccessType.UNKNOWN);
     }
 
-    protected DatasetCacheKey(String namespace, String name, @Nullable Map<String, String> arguments,
-                              AccessType accessType) {
+    protected DatasetCacheKey(String namespace, String name,
+        @Nullable Map<String, String> arguments,
+        AccessType accessType) {
       this.namespace = namespace;
       this.name = name;
       this.arguments = arguments == null
-        ? DatasetDefinition.NO_ARGUMENTS
-        : Collections.unmodifiableMap(new HashMap<>(arguments));
+          ? DatasetDefinition.NO_ARGUMENTS
+          : Collections.unmodifiableMap(new HashMap<>(arguments));
       this.accessType = accessType;
     }
 
@@ -348,9 +366,9 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
 
       // Omit accessType here since we don't have to request a another dataset instance just because
       // of the different accessType. Same for the hashCode() method
-      return Objects.equal(this.namespace, that.namespace) &&
-        Objects.equal(this.name, that.name) &&
-        Objects.equal(this.arguments, that.arguments);
+      return Objects.equal(this.namespace, that.namespace)
+          && Objects.equal(this.name, that.name)
+          && Objects.equal(this.arguments, that.arguments);
     }
 
     @Override
@@ -361,11 +379,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, AutoCloseab
     @Override
     public String toString() {
       return Objects.toStringHelper(this)
-        .add("namespace", namespace)
-        .add("name", name)
-        .add("arguments", arguments)
-        .add("accessType", accessType)
-        .toString();
+          .add("namespace", namespace)
+          .add("name", name)
+          .add("arguments", arguments)
+          .add("accessType", accessType)
+          .toString();
     }
   }
 }

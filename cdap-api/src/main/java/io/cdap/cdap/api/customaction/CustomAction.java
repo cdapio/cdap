@@ -24,12 +24,14 @@ public interface CustomAction extends ProgramLifecycle<CustomActionContext> {
 
   /**
    * Configure the custom action.
+   *
    * @param configurer the {@link CustomActionConfigurer} used to configure the action.
    */
   void configure(CustomActionConfigurer configurer);
 
   /**
    * Implementation should contain the code that will be executed by Workflow at runtime.
+   *
    * @throws Exception if there is any error executing the code
    */
   void run() throws Exception;

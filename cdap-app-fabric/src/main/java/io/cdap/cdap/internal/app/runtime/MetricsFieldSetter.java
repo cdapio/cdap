@@ -32,7 +32,8 @@ public final class MetricsFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field)
+      throws Exception {
     if (Metrics.class.equals(field.getType())) {
       field.set(instance, metrics);
     }

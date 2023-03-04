@@ -17,9 +17,9 @@
 package io.cdap.cdap.etl.api;
 
 /**
- * Utility for obtaining an object which implements a set of validator functions; this object
- * is usually assigned to a variable specified by the
- * {@link io.cdap.cdap.etl.api.Validator#getValidatorName} value.
+ * Utility for obtaining an object which implements a set of validator functions; this object is
+ * usually assigned to a variable specified by the {@link io.cdap.cdap.etl.api.Validator#getValidatorName}
+ * value.
  */
 public interface Validator {
 

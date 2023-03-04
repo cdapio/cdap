@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
  * cleanup expired log files
  */
 public class LogCleaner {
+
   public static final int FOLDER_CLEANUP_BATCH_SIZE = 100000;
 
   private static final Logger LOG = LoggerFactory.getLogger(LogCleaner.class);
@@ -68,7 +69,8 @@ public class LogCleaner {
     int failureCount = 0;
     for (FileMetadataCleaner.DeletedEntry deletedEntry : deleteEntries) {
       try {
-        boolean status = Locations.getLocationFromAbsolutePath(locationFactory, deletedEntry.getPath()).delete();
+        boolean status = Locations.getLocationFromAbsolutePath(locationFactory,
+            deletedEntry.getPath()).delete();
         if (!status) {
           failureCount++;
           LOG.warn("File {} delete failed", deletedEntry.getPath());
@@ -82,10 +84,12 @@ public class LogCleaner {
       }
     }
     long completionTime = System.currentTimeMillis();
-    LOG.info("File cleanup completed, Successful file deletes - {}. Failed file deletes - {}. Log Cleanup took {} ms",
+    LOG.info(
+        "File cleanup completed, Successful file deletes - {}. Failed file deletes - {}. Log Cleanup took {} ms",
         deleteCount, failureCount, (completionTime - startTime));
 
-    return folderCleanupCount < folderCleanupBatchSize ? DEFAULT_DELAY_IN_MILLIS : FOLDER_CLEANUP_DELAY_IN_MILLIS;
+    return folderCleanupCount < folderCleanupBatchSize ? DEFAULT_DELAY_IN_MILLIS
+        : FOLDER_CLEANUP_DELAY_IN_MILLIS;
   }
 
   private void cleanupLogFolders() {
@@ -115,10 +119,10 @@ public class LogCleaner {
    *
    * @param location Root folder to start the traversal.
    * @return Returns false if the folder cannot be cleaned up if it has files or maximum number of
-   *         folders are cleaned up, true otherwise.
-   * @throws IOException
+   *     folders are cleaned up, true otherwise.
    */
-  private boolean cleanupFoldersIfEmpty(Location location, long checkpointTimestamp) throws IOException {
+  private boolean cleanupFoldersIfEmpty(Location location, long checkpointTimestamp)
+      throws IOException {
     // Cleanup in not required in cases where:
     // 1. Parent directory has files.
     // 2. Folder is within retention period.

@@ -25,6 +25,7 @@ import io.cdap.cdap.test.ArtifactManager;
  * A {@link Guice} factory to create {@link ArtifactManager}.
  */
 public interface ArtifactManagerFactory {
+
   /**
    * Creates a {@link ArtifactManager} for the specified {@link ArtifactId artifact}.
    */

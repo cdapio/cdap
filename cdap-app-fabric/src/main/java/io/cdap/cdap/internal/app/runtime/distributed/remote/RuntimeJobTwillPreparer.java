@@ -52,7 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  A {@link TwillPreparer} implementation that uses runtime job manager to launch a single {@link TwillRunnable}.
+ * A {@link TwillPreparer} implementation that uses runtime job manager to launch a single {@link
+ * TwillRunnable}.
  */
 class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
 
@@ -64,56 +65,62 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
   private final ProgramOptions programOptions;
 
   RuntimeJobTwillPreparer(CConfiguration cConf, Configuration hConf,
-                          TwillSpecification twillSpec, ProgramRunId programRunId,
-                          ProgramOptions programOptions, Map<String, Location> secretFiles,
-                          LocationCache locationCache, LocationFactory locationFactory,
-                          TwillControllerFactory controllerFactory, Supplier<RuntimeJobManager> jobManagerSupplier) {
-    super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
+      TwillSpecification twillSpec, ProgramRunId programRunId,
+      ProgramOptions programOptions, Map<String, Location> secretFiles,
+      LocationCache locationCache, LocationFactory locationFactory,
+      TwillControllerFactory controllerFactory, Supplier<RuntimeJobManager> jobManagerSupplier) {
+    super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory,
+        controllerFactory);
     this.secretFiles = secretFiles;
     this.jobManagerSupplier = jobManagerSupplier;
     this.programOptions = programOptions;
   }
 
   @Override
-  protected void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
-                        JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
-                        TimeoutChecker timeoutChecker) throws Exception {
+  protected void launch(TwillRuntimeSpecification twillRuntimeSpec,
+      RuntimeSpecification runtimeSpec,
+      JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
+      TimeoutChecker timeoutChecker) throws Exception {
     try (RuntimeJobManager jobManager = jobManagerSupplier.get()) {
       timeoutChecker.throwIfTimeout();
       Map<String, LocalFile> localizeFiles = new HashMap<>(localFiles);
-      for (Map.Entry<String, Location> secretFile: secretFiles.entrySet()) {
+      for (Map.Entry<String, Location> secretFile : secretFiles.entrySet()) {
         Location secretFileLocation = secretFile.getValue();
         localizeFiles.put(secretFile.getKey(),
-                          new DefaultLocalFile(secretFile.getKey(),
-                                               secretFileLocation.toURI(),
-                                               secretFileLocation.lastModified(),
-                                               secretFileLocation.length(),
-                                               false, null));
+            new DefaultLocalFile(secretFile.getKey(),
+                secretFileLocation.toURI(),
+                secretFileLocation.lastModified(),
+                secretFileLocation.length(),
+                false, null));
       }
 
       RuntimeJobInfo runtimeJobInfo = createRuntimeJobInfo(runtimeSpec, localizeFiles,
-                                                           jvmOptions.getRunnableExtraOptions(runtimeSpec.getName()));
-      LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(), getProgramRunId());
+          jvmOptions.getRunnableExtraOptions(runtimeSpec.getName()));
+      LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(),
+          getProgramRunId());
       // launch job using job manager
       jobManager.launch(runtimeJobInfo);
     }
   }
 
   private RuntimeJobInfo createRuntimeJobInfo(RuntimeSpecification runtimeSpec,
-                                              Map<String, LocalFile> localFiles, String jvmOpts) {
+      Map<String, LocalFile> localFiles, String jvmOpts) {
 
     Map<String, String> jvmProperties = parseJvmProperties(jvmOpts);
     LOG.info("JVM properties {}", jvmProperties);
 
     Collection<? extends LocalFile> files =
-      Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream()).collect(Collectors.toList());
+        Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream())
+            .collect(Collectors.toList());
 
     Collection<LocalFile> resultingFiles = new ArrayList<>();
 
     Set<String> cacheableFiles;
     if (programOptions.getArguments().hasOption(ProgramOptionConstants.CACHEABLE_FILES)) {
       cacheableFiles =
-        GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES), Set.class);
+          GSON.fromJson(
+              programOptions.getArguments().getOption(ProgramOptionConstants.CACHEABLE_FILES),
+              Set.class);
     } else {
       cacheableFiles = new HashSet<>();
     }
@@ -130,8 +137,8 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   /**
-   * Parses a jvm options string (e.g. {@code -XYZ -Dkey=value}) and extracts key/value properties provided by the
-   * {@code -D} options.
+   * Parses a jvm options string (e.g. {@code -XYZ -Dkey=value}) and extracts key/value properties
+   * provided by the {@code -D} options.
    */
   @VisibleForTesting
   static Map<String, String> parseJvmProperties(String jvmOpts) {
@@ -140,7 +147,8 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
     while (idx >= 0) {
       int equalIdx = jvmOpts.indexOf('=', idx);
       if (equalIdx < 0) {
-        throw new IllegalArgumentException("Java properties must be in -Dkey=value format: " + jvmOpts);
+        throw new IllegalArgumentException(
+            "Java properties must be in -Dkey=value format: " + jvmOpts);
       }
       String key = jvmOpts.substring(idx + 2, equalIdx);
 
@@ -156,7 +164,8 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
         startIdx++;
         endIdx = jvmOpts.indexOf('"', startIdx);
         if (endIdx < 0) {
-          throw new IllegalArgumentException("Missing end quote in Java property " + key + ": " + jvmOpts);
+          throw new IllegalArgumentException(
+              "Missing end quote in Java property " + key + ": " + jvmOpts);
         }
       } else {
         endIdx = jvmOpts.indexOf(' ', equalIdx);

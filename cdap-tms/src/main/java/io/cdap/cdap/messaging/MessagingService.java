@@ -41,7 +41,8 @@ public interface MessagingService {
    * @throws IOException if failed to create the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void createTopic(TopicMetadata topicMetadata) throws TopicAlreadyExistsException, IOException, UnauthorizedException;
+  void createTopic(TopicMetadata topicMetadata)
+      throws TopicAlreadyExistsException, IOException, UnauthorizedException;
 
   /**
    * Updates the metadata of a topic.
@@ -51,7 +52,8 @@ public interface MessagingService {
    * @throws IOException if failed to update the topic metadata
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void updateTopic(TopicMetadata topicMetadata) throws TopicNotFoundException, IOException, UnauthorizedException;
+  void updateTopic(TopicMetadata topicMetadata)
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Deletes a topic
@@ -61,7 +63,8 @@ public interface MessagingService {
    * @throws IOException if failed to delete the topic
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void deleteTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException;
+  void deleteTopic(TopicId topicId)
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Returns the metadata of the given topic.
@@ -72,7 +75,8 @@ public interface MessagingService {
    * @throws IOException if failed to retrieve topic metadata.
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  TopicMetadata getTopic(TopicId topicId) throws TopicNotFoundException, IOException, UnauthorizedException;
+  TopicMetadata getTopic(TopicId topicId)
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Returns the list of topics available under the given namespace.
@@ -88,7 +92,8 @@ public interface MessagingService {
    * Prepares to fetch messages from the given topic.
    *
    * @param topicId the topic to fetch message from
-   * @return a {@link MessageFetcher} for setting up parameters for fetching messages from the messaging system
+   * @return a {@link MessageFetcher} for setting up parameters for fetching messages from the
+   *     messaging system
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to fetch messages
    * @throws ServiceUnavailableException if the messaging service is not available
@@ -100,35 +105,37 @@ public interface MessagingService {
    *
    * @param request the {@link StoreRequest} containing messages to be published
    * @return if the store request is transactional, then returns a {@link RollbackDetail} containing
-   *         information for rollback; otherwise {@code null} will be returned.
+   *     information for rollback; otherwise {@code null} will be returned.
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to publish messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   @Nullable
-  RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException;
+  RollbackDetail publish(StoreRequest request)
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
-   * Stores a list of messages to the messaging system. It is for long / distributed transactional publishing use case.
+   * Stores a list of messages to the messaging system. It is for long / distributed transactional
+   * publishing use case.
    *
    * @param request the {@link StoreRequest} containing messages to be stored
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to store messages
    * @throws ServiceUnavailableException if the messaging service is not available
    */
-  void storePayload(StoreRequest request) throws TopicNotFoundException, IOException, UnauthorizedException;
+  void storePayload(StoreRequest request)
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 
   /**
    * Rollbacks messages published to the given topic with the given transaction.
    *
    * @param topicId the topic where the messages were published under
-   * @param rollbackDetail the {@link RollbackDetail} as returned by the
-   *                     {@link #publish(StoreRequest)} call,
-   *                     which contains information needed for the rollback
+   * @param rollbackDetail the {@link RollbackDetail} as returned by the {@link
+   *     #publish(StoreRequest)} call, which contains information needed for the rollback
    * @throws TopicNotFoundException if the topic doesn't exist
    * @throws IOException if failed to rollback changes
    * @throws ServiceUnavailableException if the messaging service is not available
    */
   void rollback(TopicId topicId, RollbackDetail rollbackDetail)
-    throws TopicNotFoundException, IOException, UnauthorizedException;
+      throws TopicNotFoundException, IOException, UnauthorizedException;
 }

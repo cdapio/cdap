@@ -60,15 +60,17 @@ import org.slf4j.LoggerFactory;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/system")
 public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
+
   private static final Logger LOG = LoggerFactory.getLogger(SystemWorkerHttpHandlerInternal.class);
   private static final Gson GSON = new GsonBuilder().registerTypeAdapter(BasicThrowable.class,
-                                                                         new BasicThrowableCodec()).create();
+      new BasicThrowableCodec()).create();
   private final int requestLimit;
 
   private final RunnableTaskLauncher runnableTaskLauncher;
 
   /**
-   * Holds the total number of requests that have been executed by this handler that should count toward max allowed.
+   * Holds the total number of requests that have been executed by this handler that should count
+   * toward max allowed.
    */
   private final AtomicInteger requestProcessedCount = new AtomicInteger(0);
 
@@ -76,9 +78,10 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   private final AuthenticationContext authenticationContext;
   private final AccessEnforcer internalAccessEnforcer;
 
-  public SystemWorkerHttpHandlerInternal(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
-                                         Injector injector, AuthenticationContext authenticationContext,
-                                         AccessEnforcer internalAccessEnforcer) {
+  public SystemWorkerHttpHandlerInternal(CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService,
+      Injector injector, AuthenticationContext authenticationContext,
+      AccessEnforcer internalAccessEnforcer) {
     this.runnableTaskLauncher = new RunnableTaskLauncher(injector);
     this.metricsCollectionService = metricsCollectionService;
     this.requestLimit = cConf.getInt(Constants.SystemWorker.REQUEST_LIMIT);
@@ -92,7 +95,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     // Perform a permission check to ensure the caller is part of the system, then unset the SecurityRequestContext to
     // force the system worker to use its system context.
     internalAccessEnforcer.enforce(InstanceId.SELF, authenticationContext.getPrincipal(),
-                                   ApplicationPermission.EXECUTE);
+        ApplicationPermission.EXECUTE);
     SecurityRequestContext.reset();
 
     if (requestProcessedCount.incrementAndGet() > requestLimit) {
@@ -101,8 +104,9 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
 
     long startTime = System.currentTimeMillis();
-    RunnableTaskRequest runnableTaskRequest = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
-                                                            RunnableTaskRequest.class);
+    RunnableTaskRequest runnableTaskRequest = GSON.fromJson(
+        request.content().toString(StandardCharsets.UTF_8),
+        RunnableTaskRequest.class);
     RunnableTaskContext runnableTaskContext = new RunnableTaskContext(runnableTaskRequest);
     try {
       runnableTaskLauncher.launchRunnableTask(runnableTaskContext);
@@ -110,10 +114,12 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
       new TaskDetails(metricsCollectionService, startTime, false, null).emitMetrics(false);
 
       if (e instanceof ClassNotFoundException || e instanceof ClassCastException) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, exceptionToJson(e),
+            EmptyHttpHeaders.INSTANCE);
       } else {
         LOG.error("Failed to run task", e);
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e), EmptyHttpHeaders.INSTANCE);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, exceptionToJson(e),
+            EmptyHttpHeaders.INSTANCE);
       }
 
       runnableTaskContext.executeCleanupTask();
@@ -122,16 +128,16 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
     }
 
     TaskDetails taskDetails = new TaskDetails(metricsCollectionService, startTime,
-                                              runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
+        runnableTaskContext.isTerminateOnComplete(), runnableTaskRequest);
     responder.sendContent(HttpResponseStatus.OK,
-                          new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
-                          new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
-                                                       MediaType.APPLICATION_OCTET_STREAM));
+        new RunnableTaskBodyProducer(runnableTaskContext, taskDetails),
+        new DefaultHttpHeaders().add(HttpHeaders.CONTENT_TYPE,
+            MediaType.APPLICATION_OCTET_STREAM));
   }
 
   /**
-   * Return json representation of an exception.
-   * Used to propagate exception across network for better surfacing errors and debuggability.
+   * Return json representation of an exception. Used to propagate exception across network for
+   * better surfacing errors and debuggability.
    */
   private String exceptionToJson(Exception ex) {
     BasicThrowable basicThrowable = new BasicThrowable(ex);
@@ -139,6 +145,7 @@ public class SystemWorkerHttpHandlerInternal extends AbstractHttpHandler {
   }
 
   private class RunnableTaskBodyProducer extends BodyProducer {
+
     private final RunnableTaskContext context;
     private final TaskDetails taskDetails;
     private boolean done;

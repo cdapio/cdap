@@ -60,7 +60,7 @@ public class MessagingUsageWriter implements UsageWriter {
       doRegisterAll(users, datasetId);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish usage for " + datasetId
-                                   + " with owners " + Iterables.toString(users), e);
+          + " with owners " + Iterables.toString(users), e);
     }
   }
 
@@ -75,27 +75,32 @@ public class MessagingUsageWriter implements UsageWriter {
   @Override
   public void register(ProgramId programId, DatasetId datasetId) {
     MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
-                                                  GSON.toJsonTree(new DatasetUsage(datasetId)));
+        GSON.toJsonTree(new DatasetUsage(datasetId)));
     StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
 
     try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+          Retries.ALWAYS_TRUE);
     } catch (Exception e) {
-      throw new RuntimeException("Failed to publish usage for " + datasetId + " for program " + programId, e);
+      throw new RuntimeException(
+          "Failed to publish usage for " + datasetId + " for program " + programId, e);
     }
   }
 
-  private void doRegisterAll(Iterable<? extends EntityId> users, EntityId entityId) throws Exception {
+  private void doRegisterAll(Iterable<? extends EntityId> users, EntityId entityId)
+      throws Exception {
     // Only record usage from program
     StoreRequest request = StoreRequestBuilder.of(topic).addPayloads(
-      StreamSupport.stream(users.spliterator(), false)
-        .filter(ProgramId.class::isInstance)
-        .map(ProgramId.class::cast)
-        .map(id -> new MetadataMessage(MetadataMessage.Type.USAGE, id, GSON.toJsonTree(new DatasetUsage(entityId))))
-        .map(GSON::toJson)
-        .map(s -> s.getBytes(StandardCharsets.UTF_8))
-        .iterator()
+        StreamSupport.stream(users.spliterator(), false)
+            .filter(ProgramId.class::isInstance)
+            .map(ProgramId.class::cast)
+            .map(id -> new MetadataMessage(MetadataMessage.Type.USAGE, id,
+                GSON.toJsonTree(new DatasetUsage(entityId))))
+            .map(GSON::toJson)
+            .map(s -> s.getBytes(StandardCharsets.UTF_8))
+            .iterator()
     ).build();
-    Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
+    Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy,
+        Retries.ALWAYS_TRUE);
   }
 }

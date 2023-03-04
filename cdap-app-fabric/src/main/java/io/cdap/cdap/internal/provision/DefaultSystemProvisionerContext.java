@@ -42,7 +42,8 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
   private long lastConfReloadTime = System.currentTimeMillis();
 
   DefaultSystemProvisionerContext(CConfiguration cConf, String provisionerName) {
-    this.prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX, provisionerName);
+    this.prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX,
+        provisionerName);
     this.cConf = CConfiguration.copy(cConf);
     this.properties = new AtomicReference<>(Collections.emptyMap());
     this.cdapVersion = ProjectInfo.getVersion().toString();
@@ -59,7 +60,8 @@ public class DefaultSystemProvisionerContext implements ProvisionerSystemContext
 
   @Override
   public synchronized void reloadProperties() {
-    if (confReloadInterval <= 0 || System.currentTimeMillis() - confReloadInterval > lastConfReloadTime) {
+    if (confReloadInterval <= 0
+        || System.currentTimeMillis() - confReloadInterval > lastConfReloadTime) {
       cConf.reloadConfiguration();
       properties.set(Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix)));
       lastConfReloadTime = System.currentTimeMillis();

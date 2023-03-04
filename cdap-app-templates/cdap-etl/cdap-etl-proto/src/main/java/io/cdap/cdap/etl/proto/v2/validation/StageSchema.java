@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
  * The schema for a pipeline stage.
  */
 public class StageSchema {
+
   private final String stage;
   private final Schema schema;
 
@@ -43,8 +44,8 @@ public class StageSchema {
   }
 
   /**
-   * Validate that the stage schema is valid. This should be called whenever the instance was created by deserializing
-   * user input.
+   * Validate that the stage schema is valid. This should be called whenever the instance was
+   * created by deserializing user input.
    *
    * @throws IllegalArgumentException if the stage schema is invalid
    */
@@ -63,8 +64,8 @@ public class StageSchema {
       return false;
     }
     StageSchema that = (StageSchema) o;
-    return Objects.equals(stage, that.stage) &&
-      Objects.equals(schema, that.schema);
+    return Objects.equals(stage, that.stage)
+        && Objects.equals(schema, that.schema);
   }
 
   @Override

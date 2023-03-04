@@ -24,22 +24,22 @@ import io.cdap.cdap.etl.api.TransformContext;
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around a {@link SplitterTransform} that makes sure logging, classloading, and other pipeline capabilities are
- * setup correctly.
+ * Wrapper around a {@link SplitterTransform} that makes sure logging, classloading, and other
+ * pipeline capabilities are setup correctly.
  *
  * @param <T> type of input record
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
 public class WrappedSplitterTransform<T, E>
-  extends SplitterTransform<T, E>
-  implements PluginWrapper<SplitterTransform<T, E>> {
+    extends SplitterTransform<T, E>
+    implements PluginWrapper<SplitterTransform<T, E>> {
 
   private final SplitterTransform<T, E> transform;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
   public WrappedSplitterTransform(SplitterTransform<T, E> transform, Caller caller,
-                                  OperationTimer operationTimer) {
+      OperationTimer operationTimer) {
     this.transform = transform;
     this.caller = caller;
     this.operationTimer = operationTimer;

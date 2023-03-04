@@ -52,6 +52,7 @@ import org.apache.twill.filesystem.LocationFactory;
  *
  */
 public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updatable {
+
   public static final String PROPERTY_SPLITS = "hbase.splits";
   public static final String SPLIT_POLICY = "hbase.split.policy";
 
@@ -62,21 +63,24 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   private final CConfiguration conf;
 
   public HBaseTableAdmin(DatasetContext datasetContext,
-                         DatasetSpecification spec,
-                         Configuration hConf,
-                         HBaseTableUtil tableUtil,
-                         CConfiguration conf,
-                         LocationFactory locationFactory) throws IOException {
-    super(tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
-          hConf, conf, tableUtil, locationFactory);
+      DatasetSpecification spec,
+      Configuration hConf,
+      HBaseTableUtil tableUtil,
+      CConfiguration conf,
+      LocationFactory locationFactory) throws IOException {
+    super(
+        tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName()),
+        hConf, conf, tableUtil, locationFactory);
     this.spec = spec;
     this.conf = conf;
   }
 
   @Override
   public void create() throws IOException {
-    String columnFamily = Bytes.toString(TableProperties.getColumnFamilyBytes(spec.getProperties()));
-    ColumnFamilyDescriptorBuilder cfdBuilder = HBaseTableUtil.getColumnFamilyDescriptorBuilder(columnFamily, hConf);
+    String columnFamily = Bytes.toString(
+        TableProperties.getColumnFamilyBytes(spec.getProperties()));
+    ColumnFamilyDescriptorBuilder cfdBuilder = HBaseTableUtil.getColumnFamilyDescriptorBuilder(
+        columnFamily, hConf);
 
     if (TableProperties.getReadlessIncrementSupport(spec.getProperties())) {
       cfdBuilder.setMaxVersions(Integer.MAX_VALUE);
@@ -96,10 +100,12 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       cfdBuilder.addProperty(TxConstants.PROPERTY_TTL, String.valueOf(ttl));
     }
 
-    final TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf);
+    final TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId,
+        cConf);
 
     // if the dataset is configured for read-less increments, then set the table property to support upgrades
-    boolean supportsReadlessIncrements = TableProperties.getReadlessIncrementSupport(spec.getProperties());
+    boolean supportsReadlessIncrements = TableProperties.getReadlessIncrementSupport(
+        spec.getProperties());
     if (supportsReadlessIncrements) {
       tdBuilder.addProperty(Table.PROPERTY_READLESS_INCREMENT, "true");
     }
@@ -118,7 +124,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     CoprocessorJar coprocessorJar = createCoprocessorJar();
     for (Class<? extends Coprocessor> coprocessor : coprocessorJar.getCoprocessors()) {
       tdBuilder.addCoprocessor(
-        coprocessorManager.getCoprocessorDescriptor(coprocessor, coprocessorJar.getPriority(coprocessor)));
+          coprocessorManager.getCoprocessorDescriptor(coprocessor,
+              coprocessorJar.getPriority(coprocessor)));
     }
 
     byte[][] splits = null;
@@ -157,9 +164,10 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   }
 
   @Override
-  protected boolean needsUpdate(HTableDescriptor tableDescriptor, HTableDescriptorBuilder descriptorBuilder) {
+  protected boolean needsUpdate(HTableDescriptor tableDescriptor,
+      HTableDescriptorBuilder descriptorBuilder) {
     HColumnDescriptor columnDescriptor =
-      tableDescriptor.getFamily(TableProperties.getColumnFamilyBytes(spec.getProperties()));
+        tableDescriptor.getFamily(TableProperties.getColumnFamilyBytes(spec.getProperties()));
 
     boolean needUpgrade = false;
     if (tableUtil.getBloomFilter(columnDescriptor) != HBaseTableUtil.BloomType.ROW) {
@@ -172,7 +180,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     if (ttl == null && columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (ttl != null && !ttlInMillis.equals(columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
+    } else if (ttl != null && !ttlInMillis.equals(
+        columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, ttlInMillis);
       needUpgrade = true;
     }
@@ -181,7 +190,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
 
     // check if the read-less increment setting has changed
     boolean supportsReadlessIncrements = supportsReadlessIncrements(tableDescriptor);
-    boolean specifiedReadlessIncrements = TableProperties.getReadlessIncrementSupport(spec.getProperties());
+    boolean specifiedReadlessIncrements = TableProperties.getReadlessIncrementSupport(
+        spec.getProperties());
     if (!specifiedReadlessIncrements && supportsReadlessIncrements) {
       tableDescriptor.remove(Table.PROPERTY_READLESS_INCREMENT);
       supportsReadlessIncrements = false;
@@ -192,15 +202,16 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       needUpgrade = true;
     }
 
-
     String splitsPolicy = spec.getProperty(SPLIT_POLICY);
     // override using provided split policy
-    if (!Strings.isNullOrEmpty(splitsPolicy) && !splitsPolicy.equals(tableDescriptor.getRegionSplitPolicyClassName())) {
+    if (!Strings.isNullOrEmpty(splitsPolicy) && !splitsPolicy.equals(
+        tableDescriptor.getRegionSplitPolicyClassName())) {
       descriptorBuilder.setValue(HTableDescriptor.SPLIT_POLICY, splitsPolicy);
       needUpgrade = true;
     }
 
-    boolean setMaxVersions = supportsReadlessIncrements || HBaseTableAdmin.isTransactional(tableDescriptor);
+    boolean setMaxVersions =
+        supportsReadlessIncrements || HBaseTableAdmin.isTransactional(tableDescriptor);
     if (setMaxVersions && columnDescriptor.getMaxVersions() < Integer.MAX_VALUE) {
       columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
       needUpgrade = true;
@@ -213,14 +224,15 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   protected CoprocessorJar createCoprocessorJar() throws IOException {
     boolean supportsIncrement = TableProperties.getReadlessIncrementSupport(spec.getProperties());
     boolean transactional = DatasetsUtil.isTransactional(spec.getProperties());
-    return createCoprocessorJarInternal(conf, coprocessorManager, tableUtil, transactional, supportsIncrement);
+    return createCoprocessorJarInternal(conf, coprocessorManager, tableUtil, transactional,
+        supportsIncrement);
   }
 
   public static CoprocessorJar createCoprocessorJarInternal(CConfiguration conf,
-                                                            CoprocessorManager coprocessorManager,
-                                                            HBaseTableUtil tableUtil,
-                                                            boolean transactional,
-                                                            boolean supportsReadlessIncrement) throws IOException {
+      CoprocessorManager coprocessorManager,
+      HBaseTableUtil tableUtil,
+      boolean transactional,
+      boolean supportsReadlessIncrement) throws IOException {
     Class<? extends Coprocessor> dataJanitorClass = tableUtil.getTransactionDataJanitorClassForVersion();
     Class<? extends Coprocessor> incrementClass = tableUtil.getIncrementHandlerClassForVersion();
 
@@ -231,7 +243,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     if (transactional) {
       // tx janitor
       if (conf.getBoolean(Constants.Transaction.DataJanitor.CFG_TX_JANITOR_ENABLE,
-                          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
+          Constants.Transaction.DataJanitor.DEFAULT_TX_JANITOR_ENABLE)) {
         coprocessors.add(dataJanitorClass);
       }
     }
@@ -249,8 +261,8 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   }
 
   /**
-   * Returns whether or not the table defined by the given descriptor has read-less increments enabled.
-   * Defaults to false.
+   * Returns whether or not the table defined by the given descriptor has read-less increments
+   * enabled. Defaults to false.
    */
   public static boolean supportsReadlessIncrements(HTableDescriptor desc) {
     return "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));

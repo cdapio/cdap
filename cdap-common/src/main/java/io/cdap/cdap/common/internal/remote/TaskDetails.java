@@ -39,8 +39,8 @@ public class TaskDetails {
   private final boolean terminateOnComplete;
 
   public TaskDetails(MetricsCollectionService metricsCollectionService, long startTime,
-                     boolean terminateOnComplete,
-                     @Nullable RunnableTaskRequest request) {
+      boolean terminateOnComplete,
+      @Nullable RunnableTaskRequest request) {
     this.metricsCollectionService = metricsCollectionService;
     this.startTime = startTime;
     this.terminateOnComplete = terminateOnComplete;
@@ -52,8 +52,10 @@ public class TaskDetails {
     Map<String, String> metricTags = new HashMap<>();
     metricTags.put(Constants.Metrics.Tag.CLASS, Optional.ofNullable(getClassName()).orElse(""));
     metricTags.put(Constants.Metrics.Tag.STATUS, succeeded ? SUCCESS : FAILURE);
-    metricsCollectionService.getContext(metricTags).increment(Constants.Metrics.TaskWorker.REQUEST_COUNT, 1L);
-    metricsCollectionService.getContext(metricTags).gauge(Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS, time);
+    metricsCollectionService.getContext(metricTags)
+        .increment(Constants.Metrics.TaskWorker.REQUEST_COUNT, 1L);
+    metricsCollectionService.getContext(metricTags)
+        .gauge(Constants.Metrics.TaskWorker.REQUEST_LATENCY_MS, time);
   }
 
   public boolean isTerminateOnComplete() {
@@ -66,8 +68,8 @@ public class TaskDetails {
       return null;
     }
     return Optional.ofNullable(request.getParam())
-      .map(RunnableTaskParam::getEmbeddedTaskRequest)
-      .map(RunnableTaskRequest::getClassName)
-      .orElse(request.getClassName());
+        .map(RunnableTaskParam::getEmbeddedTaskRequest)
+        .map(RunnableTaskRequest::getClassName)
+        .orElse(request.getClassName());
   }
 }

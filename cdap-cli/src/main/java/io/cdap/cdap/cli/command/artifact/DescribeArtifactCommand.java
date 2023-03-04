@@ -66,31 +66,35 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties", "parents")
-      .setRows(ImmutableList.of((List<String>) ImmutableList.of(
-        info.getName(),
-        info.getVersion(),
-        info.getScope().name(),
-        GSON.toJson(info.getClasses().getApps()),
-        GSON.toJson(info.getClasses().getPlugins()),
-        GSON.toJson(info.getProperties()),
-        Joiner.on('/').join(info.getParents())))
-      )
-      .build();
+        .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties",
+            "parents")
+        .setRows(ImmutableList.of((List<String>) ImmutableList.of(
+            info.getName(),
+            info.getVersion(),
+            info.getScope().name(),
+            GSON.toJson(info.getClasses().getApps()),
+            GSON.toJson(info.getClasses().getPlugins()),
+            GSON.toJson(info.getProperties()),
+            Joiner.on('/').join(info.getParents())))
+        )
+        .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
     return String.format("describe artifact <%s> <%s> [<%s>]",
-                         ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
+        ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Describes %s, including information about the application and plugin classes contained in " +
-                         "the artifact. If no scope is provided, the artifact is looked for first in the 'SYSTEM' " +
-                         "and then in the 'USER' scope.",
-                         Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+    return String.format(
+        "Describes %s, including information about the application and plugin classes contained in "
+
+            + "the artifact. If no scope is provided, the artifact is looked for first in the 'SYSTEM' "
+
+            + "and then in the 'USER' scope.",
+        Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }

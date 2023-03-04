@@ -44,9 +44,10 @@ import org.slf4j.LoggerFactory;
  * {@link AggregatedMetricsEmitter}.
  */
 public abstract class AggregatedMetricsCollectionService extends AbstractExecutionThreadService
-                                                         implements MetricsCollectionService {
+    implements MetricsCollectionService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsCollectionService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      AggregatedMetricsCollectionService.class);
   private static final long CACHE_EXPIRE_MINUTES = 1;
 
   private final LoadingCache<Map<String, String>, MetricsContext> collectors;
@@ -57,37 +58,41 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
   public AggregatedMetricsCollectionService(long publishIntervalInMillis) {
     // the longest sleep time will be 1 min
-    this.publishIntervalInMillis = Math.min(publishIntervalInMillis, Constants.Metrics.PROCESS_INTERVAL_MILLIS);
+    this.publishIntervalInMillis = Math.min(publishIntervalInMillis,
+        Constants.Metrics.PROCESS_INTERVAL_MILLIS);
     this.shutdownLatch = new CountDownLatch(1);
     this.collectors = CacheBuilder.newBuilder()
-      .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-      .build(createCollectorLoader());
+        .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
+        .build(createCollectorLoader());
 
     this.emitters = CacheBuilder.newBuilder()
-      // NOTE : we don't need to have removalListener to  emit metrics, as we have expireAfterAccess set for a minute,
-      // emitters.get() is used to increment/gauge and that would reset the access time,
-      // and since runOneIteration() emits all the metrics for the scheduled duration (every 1 second)
-      // there wont be any loss of emitter entries.
-      .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-      .build(new CacheLoader<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>() {
-        @Override
-        public LoadingCache<String, AggregatedMetricsEmitter> load(Map<String, String> tags) throws Exception {
-          return CacheBuilder.newBuilder().expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).
-            build(new CacheLoader<String, AggregatedMetricsEmitter>() {
+        // NOTE : we don't need to have removalListener to  emit metrics, as we have expireAfterAccess set for a minute,
+        // emitters.get() is used to increment/gauge and that would reset the access time,
+        // and since runOneIteration() emits all the metrics for the scheduled duration (every 1 second)
+        // there wont be any loss of emitter entries.
+        .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
+        .build(
+            new CacheLoader<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>() {
               @Override
-              public AggregatedMetricsEmitter load(String metricName) throws Exception {
-                return new AggregatedMetricsEmitter(metricName);
+              public LoadingCache<String, AggregatedMetricsEmitter> load(Map<String, String> tags)
+                  throws Exception {
+                return CacheBuilder.newBuilder()
+                    .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES).
+                    build(new CacheLoader<String, AggregatedMetricsEmitter>() {
+                      @Override
+                      public AggregatedMetricsEmitter load(String metricName) throws Exception {
+                        return new AggregatedMetricsEmitter(metricName);
+                      }
+                    });
               }
             });
-        }
-      });
   }
 
   /**
-   * Publishes the given collection of {@link io.cdap.cdap.api.metrics.MetricValues}. When this method returns, the
-   * given {@link Iterator} will no longer be valid. This method should process the input
-   * iterator and returns quickly. Any long operations should be run in a separated thread.
-   * This method is guaranteed not to get concurrent calls.
+   * Publishes the given collection of {@link io.cdap.cdap.api.metrics.MetricValues}. When this
+   * method returns, the given {@link Iterator} will no longer be valid. This method should process
+   * the input iterator and returns quickly. Any long operations should be run in a separated
+   * thread. This method is guaranteed not to get concurrent calls.
    *
    * @param metrics collection of {@link io.cdap.cdap.api.metrics.MetricValues} to publish.
    * @throws Exception if there is error raised during publish.
@@ -95,8 +100,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
 
   /**
-   * Returns the initial delay in milliseconds for the first metrics to be published. By default this will be the
-   * publish intervals
+   * Returns the initial delay in milliseconds for the first metrics to be published. By default
+   * this will be the publish intervals
    */
   protected long getInitialDelayMillis() {
     return publishIntervalInMillis;
@@ -111,7 +116,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   protected final void run() {
     long sleepMillis = getInitialDelayMillis();
     while (isRunning()) {
-      if (Uninterruptibles.awaitUninterruptibly(shutdownLatch, sleepMillis, TimeUnit.MILLISECONDS)) {
+      if (Uninterruptibles.awaitUninterruptibly(shutdownLatch, sleepMillis,
+          TimeUnit.MILLISECONDS)) {
         // If the shutdown latch is triggered, it means triggerShutdown has been called, hence break the loop
         break;
       }
@@ -174,7 +180,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     // NOTE : emitters.asMap does not reset the access time in cache,
     // so it's the preferred way to access the cache entries. as we access and emit metrics every second.
     final Iterator<Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>>> iterator =
-      emitters.asMap().entrySet().iterator();
+        emitters.asMap().entrySet().iterator();
     return new AbstractIterator<MetricValues>() {
       @Override
       protected MetricValues computeNext() {
@@ -182,14 +188,16 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
           Map.Entry<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> entry = iterator.next();
           Map<String, AggregatedMetricsEmitter> metricEmitters = entry.getValue().asMap();
           // +1 because we add extra metric about how many metric values did we emit in this context (see below)
-          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(metricEmitters.size() + 1);
+          List<MetricValue> metricValues = Lists.newArrayListWithCapacity(
+              metricEmitters.size() + 1);
           for (Map.Entry<String, AggregatedMetricsEmitter> emitterEntry : metricEmitters.entrySet()) {
             MetricValue metricValue = emitterEntry.getValue().emit();
             // skip increment by 0
             if (metricValue.getType() == MetricType.COUNTER && metricValue.getValue() == 0) {
               continue;
             }
-            if (metricValue.getType() == MetricType.DISTRIBUTION && metricValue.getBucketCounts().length == 0) {
+            if (metricValue.getType() == MetricType.DISTRIBUTION
+                && metricValue.getBucketCounts().length == 0) {
               continue;
             }
 
@@ -202,7 +210,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
           }
 
           // number of emitted metrics
-          metricValues.add(new MetricValue("metrics.emitted.count", MetricType.COUNTER, metricValues.size() + 1));
+          metricValues.add(new MetricValue("metrics.emitted.count", MetricType.COUNTER,
+              metricValues.size() + 1));
 
           LOG.trace("Emit metric {}", metricValues);
           return new MetricValues(entry.getKey(), timestamp, metricValues);
@@ -242,7 +251,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     @Override
     public MetricsContext childContext(String tagName, String tagValue) {
       ImmutableMap<String, String> allTags = ImmutableMap.<String, String>builder()
-        .putAll(tags).put(tagName, tagValue).build();
+          .putAll(tags).put(tagName, tagValue).build();
       return collectors.getUnchecked(allTags);
     }
 

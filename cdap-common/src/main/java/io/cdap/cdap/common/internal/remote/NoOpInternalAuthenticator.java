@@ -22,6 +22,7 @@ import java.util.function.BiConsumer;
  * A class which does not set internal authentication headers.
  */
 public class NoOpInternalAuthenticator implements InternalAuthenticator {
+
   @Override
   public void applyInternalAuthenticationHeaders(BiConsumer<String, String> headerSetter) {
     return;

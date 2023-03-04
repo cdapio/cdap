@@ -37,7 +37,6 @@ public final class UserMessages {
   }
 
   /**
-   *
    * @return Resource bundle.
    */
   public static ResourceBundle getBundle() {

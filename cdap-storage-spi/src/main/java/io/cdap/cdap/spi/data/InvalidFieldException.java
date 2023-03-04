@@ -25,24 +25,27 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 
 /**
- * Exception thrown when a field is invalid. The field is invalid on the following conditions: 1. it is not part of
- * the table schema, 2. the field is not a primary key or an index, but it is used as one, 3. the field is part of
- * schema but its value is incompatible with what is in the schema.
+ * Exception thrown when a field is invalid. The field is invalid on the following conditions: 1. it
+ * is not part of the table schema, 2. the field is not a primary key or an index, but it is used as
+ * one, 3. the field is part of schema but its value is incompatible with what is in the schema.
  */
 @Beta
 public class InvalidFieldException extends RuntimeException {
+
   private final Collection<String> fieldNames;
   private final StructuredTableId tableId;
 
   /**
-   * Create an exception when a collection of fields do not satisfy the table schema. They can be in wrong order of
-   * primary keys, missing several fields, or contain extra fields that are not in the schema.
+   * Create an exception when a collection of fields do not satisfy the table schema. They can be in
+   * wrong order of primary keys, missing several fields, or contain extra fields that are not in
+   * the schema.
    *
    * @param tableId the table where exception happens
    * @param fields the fields which do not satisfy the schema
    * @param message the error message
    */
-  public InvalidFieldException(StructuredTableId tableId, Collection<Field<?>> fields, String message) {
+  public InvalidFieldException(StructuredTableId tableId, Collection<Field<?>> fields,
+      String message) {
     super(message);
     this.tableId = tableId;
     this.fieldNames = fields.stream().map(Field::getName).collect(Collectors.toList());
@@ -56,14 +59,14 @@ public class InvalidFieldException extends RuntimeException {
    */
   public InvalidFieldException(StructuredTableId tableId, String fieldName) {
     super(String.format("Field %s is not part of the schema of table %s",
-                        fieldName, tableId.getName()));
+        fieldName, tableId.getName()));
     this.tableId = tableId;
     this.fieldNames = Collections.singleton(fieldName);
   }
 
   /**
-   * Create an exception when a field is not defined as a primary key or an index, but is used as one, or
-   * the field is a key but the value of it is null.
+   * Create an exception when a field is not defined as a primary key or an index, but is used as
+   * one, or the field is a key but the value of it is null.
    *
    * @param tableId table
    * @param fieldName wrongly used field name
@@ -76,7 +79,8 @@ public class InvalidFieldException extends RuntimeException {
   }
 
   /**
-   * Create an exception when a field needs conversion to an incompatible type than what is defined.
+   * Create an exception when a field needs conversion to an incompatible type than what is
+   * defined.
    *
    * @param tableId table
    * @param fieldName field name
@@ -84,9 +88,9 @@ public class InvalidFieldException extends RuntimeException {
    * @param actual actual type of the field
    */
   public InvalidFieldException(StructuredTableId tableId, String fieldName, FieldType.Type expected,
-                               FieldType.Type actual) {
+      FieldType.Type actual) {
     super(String.format("Wrong type for field %s in table %s. Expected %s, actual %s",
-                        fieldName, tableId.getName(), expected, actual));
+        fieldName, tableId.getName(), expected, actual));
     this.tableId = tableId;
     this.fieldNames = Collections.singleton(fieldName);
   }

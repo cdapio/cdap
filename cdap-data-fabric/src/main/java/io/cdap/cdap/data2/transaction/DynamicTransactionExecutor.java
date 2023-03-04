@@ -27,24 +27,27 @@ import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 
 /**
- * Utility class that encapsulates the transaction life cycle over a given set of
- * transaction-aware datasets. The executor can be reused across multiple invocations
- * of the execute() method. However, it is not thread-safe for concurrent execution.
+ * Utility class that encapsulates the transaction life cycle over a given set of transaction-aware
+ * datasets. The executor can be reused across multiple invocations of the execute() method.
+ * However, it is not thread-safe for concurrent execution.
  * <p>
- *   Transaction execution will be retries according to specified in constructor {@link RetryStrategy}.
- *   By default {@link RetryOnConflictStrategy} is used with max 20 retries and 100 ms between retries.
+ * Transaction execution will be retries according to specified in constructor {@link
+ * RetryStrategy}. By default {@link RetryOnConflictStrategy} is used with max 20 retries and 100 ms
+ * between retries.
  * </p>
  * This is a copy of Tephra's transaction executor, with the difference that it creates transaction
- * contexts using a supplier, instead of creating it directly from a list of transaction-aware's. This
- * allow using it with a DynamicDatasetCache, where the set of datasets participating in transactions
- * can change while the transaction is executed. TODO: (CDAP-3988) remove this once TEPHRA-137 is done.
+ * contexts using a supplier, instead of creating it directly from a list of transaction-aware's.
+ * This allow using it with a DynamicDatasetCache, where the set of datasets participating in
+ * transactions can change while the transaction is executed. TODO: (CDAP-3988) remove this once
+ * TEPHRA-137 is done.
  */
 public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
 
   private final TransactionContextFactory txContextFactory;
   private final RetryStrategy retryStrategy;
 
-  public DynamicTransactionExecutor(TransactionContextFactory txContextFactory, RetryStrategy retryStrategy) {
+  public DynamicTransactionExecutor(TransactionContextFactory txContextFactory,
+      RetryStrategy retryStrategy) {
     super(MoreExecutors.sameThreadExecutor());
     this.txContextFactory = txContextFactory;
     this.retryStrategy = retryStrategy;
@@ -55,12 +58,14 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
   }
 
   @Override
-  public <I, O> O execute(Function<I, O> function, I input) throws TransactionFailureException, InterruptedException {
+  public <I, O> O execute(Function<I, O> function, I input)
+      throws TransactionFailureException, InterruptedException {
     return executeWithRetry(function, input);
   }
 
   @Override
-  public <I> void execute(Procedure<I> procedure, I input) throws TransactionFailureException, InterruptedException {
+  public <I> void execute(Procedure<I> procedure, I input)
+      throws TransactionFailureException, InterruptedException {
     execute(input1 -> {
       procedure.apply(input1);
       return null;
@@ -68,14 +73,16 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
   }
 
   @Override
-  public <O> O execute(Callable<O> callable) throws TransactionFailureException, InterruptedException {
+  public <O> O execute(Callable<O> callable)
+      throws TransactionFailureException, InterruptedException {
     return execute(input -> {
       return callable.call();
     }, null);
   }
 
   @Override
-  public void execute(Subroutine subroutine) throws TransactionFailureException, InterruptedException {
+  public void execute(Subroutine subroutine)
+      throws TransactionFailureException, InterruptedException {
     execute(input -> {
       subroutine.apply();
       return null;
@@ -83,7 +90,7 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
   }
 
   private <I, O> O executeWithRetry(Function<I, O> function, I input)
-    throws TransactionFailureException, InterruptedException {
+      throws TransactionFailureException, InterruptedException {
 
     int retries = 0;
     while (true) {
@@ -104,14 +111,16 @@ public class DynamicTransactionExecutor extends AbstractTransactionExecutor {
 
   }
 
-  private <I, O> O executeOnce(Function<I, O> function, I input) throws TransactionFailureException {
+  private <I, O> O executeOnce(Function<I, O> function, I input)
+      throws TransactionFailureException {
     TransactionContext txContext = txContextFactory.newTransactionContext();
     txContext.start();
     O o = null;
     try {
       o = function.apply(input);
     } catch (Throwable e) {
-      txContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
+      txContext.abort(
+          new TransactionFailureException("Transaction function failure for transaction. ", e));
       // abort will throw
     }
     // will throw if something goes wrong

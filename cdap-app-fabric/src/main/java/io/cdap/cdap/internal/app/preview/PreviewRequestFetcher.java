@@ -29,8 +29,8 @@ public interface PreviewRequestFetcher {
   /**
    * Fetches a {@link PreviewRequest} for preview execution
    *
-   * @return an {@link Optional} of {@link PreviewRequest} or an empty {@link Optional} if there is no preview request
-   *         available
+   * @return an {@link Optional} of {@link PreviewRequest} or an empty {@link Optional} if there is
+   *     no preview request available
    * @throws IOException if failed to fetch preview request
    */
   Optional<PreviewRequest> fetch() throws IOException, UnauthorizedException;

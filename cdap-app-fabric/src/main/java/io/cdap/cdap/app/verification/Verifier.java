@@ -21,14 +21,13 @@ import io.cdap.cdap.proto.id.ApplicationId;
 /**
  * A verifier for verifying the specifications provided.
  * <p>
- * Implementors of this interface will take Specification as input
- * and verify the information within the specification meets satisfies
- * all the checkpoints.
+ * Implementors of this interface will take Specification as input and verify the information within
+ * the specification meets satisfies all the checkpoints.
  * </p>
  * <p/>
  * <p>
- * Implementation of this interface are expected to be thread-safe,
- * an can be safely accessed by multiple concurrent threads.
+ * Implementation of this interface are expected to be thread-safe, an can be safely accessed by
+ * multiple concurrent threads.
  * </p>
  *
  * @param <T> Type of object to be verified.
@@ -36,8 +35,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 public interface Verifier<T> {
 
   /**
-   * Verifies <code>input</code> and returns {@link VerifyResult}
-   * containing the status of verification.
+   * Verifies <code>input</code> and returns {@link VerifyResult} containing the status of
+   * verification.
    *
    * @param appId the application where this is verified
    * @param input to be verified

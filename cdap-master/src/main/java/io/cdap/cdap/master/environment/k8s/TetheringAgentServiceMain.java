@@ -51,6 +51,7 @@ import org.apache.twill.zookeeper.ZKClientService;
  * Main class for running remote agent service in Kubernetes.
  */
 public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOptions> {
+
   /**
    * Main entry point
    */
@@ -60,40 +61,43 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
-                                           EnvironmentOptions options, CConfiguration cConf) {
+      EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
-      RemoteAuthenticatorModules.getDefaultModule(TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
-                                                  Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
-      new MessagingClientModule(),
-      new NamespaceQueryAdminModule(),
-      getDataFabricModule(),
-      // Always use local table implementations, which use LevelDB.
-      // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // The Dataset set modules are only needed to satisfy dependency injection
-      new DataSetsModules().getStandaloneModules(),
-      new AuthorizationEnforcementModule().getDistributedModules(),
-      new ProgramRunnerRuntimeModule.ProgramStateWriterModule(),
-      new DFSLocationModule(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(TetheringAgentService.class).in(Scopes.SINGLETON);
-          expose(TetheringAgentService.class);
-          bind(TetheringProgramEventPublisher.class).in(Scopes.SINGLETON);
-          expose(TetheringProgramEventPublisher.class);
-          bind(ProgramRunRecordFetcher.class).to(StoreProgramRunRecordFetcher.class).in(Scopes.SINGLETON);
-          expose(ProgramRunRecordFetcher.class);
-        }
-      });
+        RemoteAuthenticatorModules.getDefaultModule(
+            TetheringAgentService.REMOTE_TETHERING_AUTHENTICATOR,
+            Constants.Tethering.CLIENT_AUTHENTICATOR_NAME),
+        new MessagingClientModule(),
+        new NamespaceQueryAdminModule(),
+        getDataFabricModule(),
+        // Always use local table implementations, which use LevelDB.
+        // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
+        new SystemDatasetRuntimeModule().getStandaloneModules(),
+        // The Dataset set modules are only needed to satisfy dependency injection
+        new DataSetsModules().getStandaloneModules(),
+        new AuthorizationEnforcementModule().getDistributedModules(),
+        new ProgramRunnerRuntimeModule.ProgramStateWriterModule(),
+        new DFSLocationModule(),
+        new PrivateModule() {
+          @Override
+          protected void configure() {
+            bind(TetheringAgentService.class).in(Scopes.SINGLETON);
+            expose(TetheringAgentService.class);
+            bind(TetheringProgramEventPublisher.class).in(Scopes.SINGLETON);
+            expose(TetheringProgramEventPublisher.class);
+            bind(ProgramRunRecordFetcher.class).to(StoreProgramRunRecordFetcher.class)
+                .in(Scopes.SINGLETON);
+            expose(ProgramRunRecordFetcher.class);
+          }
+        });
   }
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
-    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(
+        Key.get(ZKClientService.class));
     if (zkBinding != null) {
       services.add(zkBinding.getProvider().get());
     }
@@ -105,7 +109,7 @@ public class TetheringAgentServiceMain extends AbstractServiceMain<EnvironmentOp
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                     Constants.Logging.COMPONENT_NAME,
-                                     Constants.Service.REMOTE_AGENT_SERVICE);
+        Constants.Logging.COMPONENT_NAME,
+        Constants.Service.REMOTE_AGENT_SERVICE);
   }
 }

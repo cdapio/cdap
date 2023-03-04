@@ -58,14 +58,15 @@ public enum URIScheme {
       if (scheme.scheme.equalsIgnoreCase(protocol)) {
         int port = url.getPort();
         return scheme.createDiscoverable(serviceName,
-                                         new InetSocketAddress(url.getHost(), port == -1 ? scheme.defaultPort : port));
+            new InetSocketAddress(url.getHost(), port == -1 ? scheme.defaultPort : port));
       }
     }
     throw new IllegalArgumentException("Unsupported protocol from URL " + url);
   }
 
   /**
-   * Creates a {@link Discoverable} for the given service name that represents the given {@link NettyHttpService}.
+   * Creates a {@link Discoverable} for the given service name that represents the given {@link
+   * NettyHttpService}.
    */
   public static Discoverable createDiscoverable(String serviceName, NettyHttpService httpService) {
     URIScheme scheme = httpService.isSSLEnabled() ? HTTPS : HTTP;
@@ -75,14 +76,15 @@ public enum URIScheme {
   /**
    * Creates a {@link URI} based on the scheme from the given {@link Discoverable}.
    */
-  public static URI createURI(Discoverable discoverable, String pathFmt, Object...objs) {
+  public static URI createURI(Discoverable discoverable, String pathFmt, Object... objs) {
     String scheme = getScheme(discoverable).scheme;
     InetSocketAddress address = discoverable.getSocketAddress();
     String path = String.format(pathFmt, objs);
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
-    return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
+    return URI.create(
+        String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
   }
 
 
@@ -93,7 +95,8 @@ public enum URIScheme {
   }
 
   /**
-   * Returns {@code true} if the given {@link Discoverable} has payload that matches with this scheme.
+   * Returns {@code true} if the given {@link Discoverable} has payload that matches with this
+   * scheme.
    */
   public boolean isMatch(Discoverable discoverable) {
     return Arrays.equals(discoverablePayload, discoverable.getPayload());

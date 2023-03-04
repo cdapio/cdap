@@ -32,10 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * HBase Coprocessor that tracks write time of the WAL entries successfully replicated to a Slave Cluster.
- * For each region the writeTime from the last WAL Entry replicated is updated to the REPLICATION_STATE table.
+ * HBase Coprocessor that tracks write time of the WAL entries successfully replicated to a Slave
+ * Cluster. For each region the writeTime from the last WAL Entry replicated is updated to the
+ * REPLICATION_STATE table.
  */
 public class LastReplicateTimeObserver extends BaseRegionServerObserver {
+
   private HBase11TableUpdater hBase11TableUpdater;
   private static final Logger LOG = LoggerFactory.getLogger(LastReplicateTimeObserver.class);
 
@@ -44,8 +46,9 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
     LOG.info("LastReplicateTimeObserver Start received.");
     String tableName = StatusUtils.getReplicationStateTableName(env.getConfiguration());
     HTableInterface htableInterface = env.getTable(TableName.valueOf(tableName));
-    hBase11TableUpdater = new HBase11TableUpdater(ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
-                                                  env.getConfiguration(), htableInterface);
+    hBase11TableUpdater = new HBase11TableUpdater(
+        ReplicationConstants.ReplicationStatusTool.REPLICATE_TIME_ROW_TYPE,
+        env.getConfiguration(), htableInterface);
   }
 
   @Override
@@ -56,14 +59,14 @@ public class LastReplicateTimeObserver extends BaseRegionServerObserver {
 
   @Override
   public void postReplicateLogEntries(ObserverContext<RegionServerCoprocessorEnvironment> ctx,
-                                      List<AdminProtos.WALEntry> entries, CellScanner cells) throws IOException {
+      List<AdminProtos.WALEntry> entries, CellScanner cells) throws IOException {
     for (AdminProtos.WALEntry entry : entries) {
       LOG.debug("Update LastReplicateTimeObserver for Table {}:{} for region {}",
-                entry.getKey().getTableName().toStringUtf8(),
-                entry.getKey().getWriteTime(),
-                entry.getKey().getEncodedRegionName().toStringUtf8());
+          entry.getKey().getTableName().toStringUtf8(),
+          entry.getKey().getWriteTime(),
+          entry.getKey().getEncodedRegionName().toStringUtf8());
       hBase11TableUpdater.updateTime(entry.getKey().getEncodedRegionName().toStringUtf8(),
-                                     entry.getKey().getWriteTime());
+          entry.getKey().getWriteTime());
     }
   }
 }

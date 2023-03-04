@@ -57,7 +57,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 /**
- * A main class that initiate a {@link MasterEnvironment} and run a main class from the environment.
+ * A main class that initiate a {@link MasterEnvironment} and run a main class from the
+ * environment.
  */
 public class MasterEnvironmentMain {
 
@@ -67,7 +68,8 @@ public class MasterEnvironmentMain {
   public static void main(String[] args) throws Exception {
     MainClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
-      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
+      LOG.warn(
+          "Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
       doMain(args);
     } else {
       LOG.debug("Using {} as the system ClassLoader", classLoader);
@@ -78,7 +80,8 @@ public class MasterEnvironmentMain {
   }
 
   /**
-   * The actual main method that get invoke through reflection from the {@link #main(String[])} method.
+   * The actual main method that get invoke through reflection from the {@link #main(String[])}
+   * method.
    */
   @SuppressWarnings("unused")
   public static void doMain(String[] args) throws Exception {
@@ -92,9 +95,10 @@ public class MasterEnvironmentMain {
       SLF4JBridgeHandler.install();
 
       EnvironmentOptions options = new EnvironmentOptions();
-      String[] runnableArgs = OptionsParser.init(options, args, MasterEnvironmentMain.class.getSimpleName(),
-                                                 ProjectInfo.getVersion().toString(), System.out)
-        .toArray(new String[0]);
+      String[] runnableArgs = OptionsParser.init(options, args,
+              MasterEnvironmentMain.class.getSimpleName(),
+              ProjectInfo.getVersion().toString(), System.out)
+          .toArray(new String[0]);
 
       String runnableClass = options.getRunnableClass();
       if (runnableClass == null) {
@@ -126,25 +130,28 @@ public class MasterEnvironmentMain {
 
       // Creates the master environment and load the MasterEnvironmentRunnable class from it.
       MasterEnvironment masterEnv = MasterEnvironments.setMasterEnvironment(
-        MasterEnvironments.create(cConf, options.getEnvProvider()));
-      MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+          MasterEnvironments.create(cConf, options.getEnvProvider()));
+      MasterEnvironmentContext context = MasterEnvironments.createContext(cConf, hConf,
+          masterEnv.getName());
       masterEnv.initialize(context);
       try {
         Class<?> cls = masterEnv.getClass().getClassLoader().loadClass(runnableClass);
         if (!MasterEnvironmentRunnable.class.isAssignableFrom(cls)) {
-          throw new IllegalArgumentException("Runnable class " + runnableClass + " is not an instance of "
-                                               + MasterEnvironmentRunnable.class);
+          throw new IllegalArgumentException(
+              "Runnable class " + runnableClass + " is not an instance of "
+                  + MasterEnvironmentRunnable.class);
         }
 
         RemoteClientFactory remoteClientFactory = new RemoteClientFactory(
-          masterEnv.getDiscoveryServiceClientSupplier().get(),
-          getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
+            masterEnv.getDiscoveryServiceClientSupplier().get(),
+            getInternalAuthenticator(cConf), getRemoteAuthenticator(cConf));
 
         MasterEnvironmentRunnableContext runnableContext =
-          new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(), remoteClientFactory, cConf);
+            new DefaultMasterEnvironmentRunnableContext(context.getLocationFactory(),
+                remoteClientFactory, cConf);
         @SuppressWarnings("unchecked")
         MasterEnvironmentRunnable runnable = masterEnv.createRunnable(runnableContext,
-                                                                      (Class<? extends MasterEnvironmentRunnable>) cls);
+            (Class<? extends MasterEnvironmentRunnable>) cls);
         AtomicBoolean completed = new AtomicBoolean();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
           if (!completed.get()) {
@@ -167,9 +174,10 @@ public class MasterEnvironmentMain {
   }
 
   /**
-   * Return {@link InternalAuthenticator} with
-   *   {@link SystemAuthenticationContext} if cdap-secret is mounted (e.g. when only running system code / trusted code)
-   *   or {@link WorkerAuthenticationContext} if cdap-secret is not mounted (e.g. running untrusted user provided code)
+   * Return {@link InternalAuthenticator} with {@link SystemAuthenticationContext} if cdap-secret is
+   * mounted (e.g. when only running system code / trusted code) or {@link
+   * WorkerAuthenticationContext} if cdap-secret is not mounted (e.g. running untrusted user
+   * provided code)
    */
   private static InternalAuthenticator getInternalAuthenticator(CConfiguration cConf) {
     File sConfFile = new File(cConf.get(Constants.Twill.Security.MASTER_SECRET_DISK_PATH));
@@ -177,10 +185,10 @@ public class MasterEnvironmentMain {
     if (sConfFile.exists()) {
       // cdap-secret is mounted and available, use system authentication context
       injector = Guice.createInjector(
-        new IOModule(),
-        new ConfigModule(cConf),
-        CoreSecurityRuntimeModule.getDistributedModule(cConf),
-        new AuthenticationContextModules().getMasterModule());
+          new IOModule(),
+          new ConfigModule(cConf),
+          CoreSecurityRuntimeModule.getDistributedModule(cConf),
+          new AuthenticationContextModules().getMasterModule());
       if (cConf.getBoolean(Constants.Security.INTERNAL_AUTH_ENABLED)) {
         tokenManager = injector.getInstance(TokenManager.class);
         tokenManager.startAndWait();
@@ -188,22 +196,23 @@ public class MasterEnvironmentMain {
     } else {
       // cdap-secret is NOT mounted, use worker authentication context
       injector = Guice.createInjector(
-        new IOModule(),
-        new ConfigModule(cConf),
-        CoreSecurityRuntimeModule.getDistributedModule(cConf),
-        new AuthenticationContextModules().getMasterWorkerModule());
+          new IOModule(),
+          new ConfigModule(cConf),
+          CoreSecurityRuntimeModule.getDistributedModule(cConf),
+          new AuthenticationContextModules().getMasterWorkerModule());
     }
     return injector.getInstance(InternalAuthenticator.class);
   }
 
   /**
    * Returns a new {@link RemoteAuthenticator} via injection.
+   *
    * @return A new {@link RemoteAuthenticator} instance.
    */
   private static RemoteAuthenticator getRemoteAuthenticator(CConfiguration cConf) {
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getDefaultModule()
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule()
     );
     return injector.getInstance(RemoteAuthenticator.class);
   }

@@ -29,12 +29,14 @@ import java.util.List;
  * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig
-  implements UpgradeableConfig<io.cdap.cdap.etl.proto.v1.ETLBatchConfig> {
+    implements UpgradeableConfig<io.cdap.cdap.etl.proto.v1.ETLBatchConfig> {
+
   private final String schedule;
   private final List<ETLStage> actions;
 
-  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                        Resources resources, List<ETLStage> actions) {
+  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks,
+      List<ETLStage> transforms,
+      Resources resources, List<ETLStage> actions) {
     super(source, sinks, transforms, resources);
     this.schedule = schedule;
     this.actions = actions;
@@ -52,15 +54,16 @@ public final class ETLBatchConfig extends ETLConfig
   @Override
   public io.cdap.cdap.etl.proto.v1.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
     io.cdap.cdap.etl.proto.v1.ETLBatchConfig.Builder builder =
-      io.cdap.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
-        .setEngine(io.cdap.cdap.etl.proto.v1.ETLBatchConfig.Engine.MAPREDUCE)
-        .setDriverResources(getResources());
+        io.cdap.cdap.etl.proto.v1.ETLBatchConfig.builder(schedule)
+            .setEngine(io.cdap.cdap.etl.proto.v1.ETLBatchConfig.Engine.MAPREDUCE)
+            .setDriverResources(getResources());
 
     upgradeBase(builder, upgradeContext, BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE);
 
     int actionNum = 1;
     for (ETLStage v0Action : getActions()) {
-      builder.addAction(v0Action.upgradeStage(v0Action.getName() + "." + actionNum, "action", upgradeContext));
+      builder.addAction(
+          v0Action.upgradeStage(v0Action.getName() + "." + actionNum, "action", upgradeContext));
       actionNum++;
     }
 

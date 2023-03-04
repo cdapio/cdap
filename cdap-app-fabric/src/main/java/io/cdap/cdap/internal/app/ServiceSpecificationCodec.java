@@ -56,7 +56,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
 
   @Override
   public ServiceSpecification deserialize(JsonElement json, Type typeOfT,
-                                          JsonDeserializationContext context) throws JsonParseException {
+      JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = (JsonObject) json;
 
     if (isOldSpec(jsonObj)) {
@@ -67,23 +67,28 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
-    Map<String, HttpServiceHandlerSpecification> handlers = deserializeMap(jsonObj.get("handlers"), context,
-                                                                    HttpServiceHandlerSpecification.class);
+    Map<String, HttpServiceHandlerSpecification> handlers = deserializeMap(jsonObj.get("handlers"),
+        context,
+        HttpServiceHandlerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
-    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
+    Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context,
+        String.class);
 
-    return new ServiceSpecification(className, name, description, handlers, resources, instances, plugins, properties);
+    return new ServiceSpecification(className, name, description, handlers, resources, instances,
+        plugins, properties);
   }
 
   @Override
-  public JsonElement serialize(ServiceSpecification spec, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(ServiceSpecification spec, Type typeOfSrc,
+      JsonSerializationContext context) {
     JsonObject object = new JsonObject();
     object.addProperty("className", spec.getClassName());
     object.addProperty("name", spec.getName());
     object.addProperty("description", spec.getDescription());
     object.add("plugins", serializeMap(spec.getPlugins(), context, Plugin.class));
-    object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
+    object.add("handlers",
+        serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
     object.add("properties", serializeMap(spec.getProperties(), context, String.class));
@@ -97,7 +102,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
   private ServiceSpecification decodeOldSpec(JsonObject json) {
     String className = json.get("classname").getAsString();
     TwillSpecification twillSpec =
-      twillSpecificationAdapter.fromJson(json.get("spec").getAsString()).getTwillSpecification();
+        twillSpecificationAdapter.fromJson(json.get("spec").getAsString()).getTwillSpecification();
     Map<String, HttpServiceHandlerSpecification> handlers = Maps.newHashMap();
 
     RuntimeSpecification handlerSpec = twillSpec.getRunnables().get(twillSpec.getName());
@@ -105,29 +110,32 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
 
     // Get the class names of all handlers. It is stored in the handler runnable spec configs
     List<String> handlerClasses = GSON.fromJson(configs.get("service.runnable.handlers"),
-                                                new TypeToken<List<String>>() { }.getType());
+        new TypeToken<List<String>>() {
+        }.getType());
     List<JsonObject> handlerSpecs = GSON.fromJson(configs.get("service.runnable.handler.spec"),
-                                                  new TypeToken<List<JsonObject>>() { }.getType());
+        new TypeToken<List<JsonObject>>() {
+        }.getType());
 
     for (int i = 0; i < handlerClasses.size(); i++) {
       String handlerClass = handlerClasses.get(i);
       JsonObject spec = handlerSpecs.get(i);
       Map<String, String> properties = GSON.fromJson(spec.get("properties"),
-                                                     new TypeToken<Map<String, String>>() { }.getType());
+          new TypeToken<Map<String, String>>() {
+          }.getType());
 
       // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets or endpoints
       // as it is not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
       handlers.put(spec.get("name").getAsString(),
-                   new HttpServiceHandlerSpecification(handlerClass,
-                                                       spec.get("name").getAsString(),
-                                                       spec.get("description").getAsString(),
-                                                       properties, Collections.emptySet(),
-                                                       Collections.emptyList()));
+          new HttpServiceHandlerSpecification(handlerClass,
+              spec.get("name").getAsString(),
+              spec.get("description").getAsString(),
+              properties, Collections.emptySet(),
+              Collections.emptyList()));
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
     return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers,
-                                    new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                    resourceSpec.getInstances(), Collections.emptyMap());
+        new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
+        resourceSpec.getInstances(), Collections.emptyMap());
   }
 }

@@ -38,13 +38,13 @@ public class InMemoryTableDefinition extends AbstractTableDefinition<Table, InMe
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                          Map<String, String> arguments, ClassLoader classLoader) {
+      Map<String, String> arguments, ClassLoader classLoader) {
     return new InMemoryTable(datasetContext, spec, cConf);
   }
 
   @Override
   public InMemoryTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
-                                     ClassLoader classLoader) throws IOException {
+      ClassLoader classLoader) throws IOException {
     return new InMemoryTableAdmin(datasetContext, spec.getName(), cConf);
   }
 }

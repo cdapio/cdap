@@ -22,8 +22,8 @@ import java.util.Set;
 import org.apache.twill.api.logging.LogEntry;
 
 /**
- * Interface that defines a set of methods that will be used for management of CDAP Services.
- * Each individual service must provide an implementation.
+ * Interface that defines a set of methods that will be used for management of CDAP Services. Each
+ * individual service must provide an implementation.
  */
 public interface MasterServiceManager {
 
@@ -94,8 +94,8 @@ public interface MasterServiceManager {
   boolean isServiceAvailable();
 
   /**
-   * Returns information about this system service runtime information. The information may not be available in
-   * all runtime environment.
+   * Returns information about this system service runtime information. The information may not be
+   * available in all runtime environment.
    */
   SystemServiceLiveInfo getLiveInfo();
 
@@ -126,10 +126,11 @@ public interface MasterServiceManager {
   }
 
   /**
-   * Reset the log levels of the service.
-   * All loggers will be reset to the level when the service started.
+   * Reset the log levels of the service. All loggers will be reset to the level when the service
+   * started.
    *
-   * @param loggerNames The set of logger names to be reset, if empty, all loggers will be reset.
+   * @param loggerNames The set of logger names to be reset, if empty, all loggers will be
+   *     reset.
    */
   default void resetServiceLogLevels(Set<String> loggerNames) {
     throw new UnsupportedOperationException("Reset service log levels is not supported.");

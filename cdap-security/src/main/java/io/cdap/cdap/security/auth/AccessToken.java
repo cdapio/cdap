@@ -38,20 +38,23 @@ import java.util.Map;
  * secret keys or exposure of the token itself, the token was issued by CDAP for this client.
  */
 public class AccessToken implements Signed<UserIdentity> {
+
   static final class Schemas {
+
     private static final int VERSION = 2;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
+
     static {
       schemas.put(1,
-                  Schema.recordOf("AccessToken",
-                                  Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(1)),
-                                  Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
-                                  Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
+          Schema.recordOf("AccessToken",
+              Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(1)),
+              Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+              Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
       schemas.put(2,
-                  Schema.recordOf("AccessToken",
-                                  Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(2)),
-                                  Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
-                                  Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
+          Schema.recordOf("AccessToken",
+              Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(2)),
+              Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
+              Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
     }
 
 
@@ -107,9 +110,9 @@ public class AccessToken implements Signed<UserIdentity> {
   public boolean equals(Object object) {
     if (object instanceof AccessToken) {
       AccessToken other = (AccessToken) object;
-      return Objects.equal(identifier, other.identifier) &&
-        keyId == other.keyId &&
-        Bytes.equals(digest, other.digest);
+      return Objects.equal(identifier, other.identifier)
+          && keyId == other.keyId
+          && Bytes.equals(digest, other.digest);
     }
     return false;
   }
@@ -122,9 +125,9 @@ public class AccessToken implements Signed<UserIdentity> {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("identifier", identifier)
-      .add("keyId", keyId)
-      .add("digest", Bytes.toStringBinary(digest))
-      .toString();
+        .add("identifier", identifier)
+        .add("keyId", keyId)
+        .add("digest", Bytes.toStringBinary(digest))
+        .toString();
   }
 }

@@ -19,12 +19,10 @@ package io.cdap.cdap.api.data.batch;
 
 /**
  * Handy adaptor for {@link SplitReader} to convert types.
- * @param <FROM_KEY>
- * @param <TO_KEY>
- * @param <FROM_VALUE>
- * @param <TO_VALUE>
  */
-public abstract class SplitReaderAdapter<FROM_KEY, TO_KEY, FROM_VALUE, TO_VALUE> extends SplitReader<TO_KEY, TO_VALUE> {
+public abstract class SplitReaderAdapter<FROM_KEY, TO_KEY, FROM_VALUE, TO_VALUE> extends
+    SplitReader<TO_KEY, TO_VALUE> {
+
   private final SplitReader<FROM_KEY, FROM_VALUE> delegate;
 
   public SplitReaderAdapter(SplitReader<FROM_KEY, FROM_VALUE> delegate) {
@@ -32,6 +30,7 @@ public abstract class SplitReaderAdapter<FROM_KEY, TO_KEY, FROM_VALUE, TO_VALUE>
   }
 
   protected abstract TO_KEY convertKey(FROM_KEY key);
+
   protected abstract TO_VALUE convertValue(FROM_VALUE value);
 
   private TO_KEY nextKey;

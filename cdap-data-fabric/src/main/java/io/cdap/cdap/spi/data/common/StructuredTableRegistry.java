@@ -35,7 +35,7 @@ public interface StructuredTableRegistry {
    * @throws IOException if not able to write to the underlying storage
    */
   void registerSpecification(StructuredTableSpecification specification)
-    throws IOException;
+      throws IOException;
 
   /**
    * Get the specification of a table if it exists in the registry.
@@ -54,7 +54,6 @@ public interface StructuredTableRegistry {
   void removeSpecification(StructuredTableId tableId);
 
   /**
-   *
    * @return true if registry does not have any tables registered, false otherwise
    */
   boolean isEmpty();

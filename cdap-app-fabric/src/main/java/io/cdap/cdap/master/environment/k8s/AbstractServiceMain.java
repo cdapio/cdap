@@ -100,7 +100,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   void main(Class<T> mainClass, String[] args) throws Exception {
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
-      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
+      LOG.warn(
+          "Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
       mainClass.newInstance().doMain(args);
     } else {
       Thread.currentThread().setContextClassLoader(classLoader);
@@ -109,14 +110,15 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       // We need to find the DaemonMain class from the super class chain
       Class<?> cls = classLoader.loadClass(mainClass.getName());
       Class<?> superClass = cls.getSuperclass();
-      while (!DaemonMain.class.getName().equals(superClass.getName()) && !Object.class.equals(superClass)) {
+      while (!DaemonMain.class.getName().equals(superClass.getName()) && !Object.class.equals(
+          superClass)) {
         superClass = superClass.getSuperclass();
       }
 
       if (!DaemonMain.class.getName().equals(superClass.getName())) {
         // This should never happen
-        throw new IllegalStateException("Main service class " + mainClass.getName() +
-                                          " should inherit from " + DaemonMain.class.getName());
+        throw new IllegalStateException("Main service class " + mainClass.getName()
+            + " should inherit from " + DaemonMain.class.getName());
       }
 
       Method method = superClass.getDeclaredMethod("doMain", String[].class);
@@ -136,9 +138,11 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
-    TypeToken<?> type = TypeToken.of(getClass()).resolveType(AbstractServiceMain.class.getTypeParameters()[0]);
+    TypeToken<?> type = TypeToken.of(getClass())
+        .resolveType(AbstractServiceMain.class.getTypeParameters()[0]);
     T options = (T) type.getRawType().newInstance();
-    OptionsParser.init(options, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
+    OptionsParser.init(options, args, getClass().getSimpleName(),
+        ProjectInfo.getVersion().toString(), System.out);
 
     CConfiguration cConf = CConfiguration.create();
     SecurityUtil.loginForMasterService(cConf);
@@ -152,8 +156,10 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     Configuration hConf = new Configuration();
 
-    masterEnv = MasterEnvironments.setMasterEnvironment(MasterEnvironments.create(cConf, options.getEnvProvider()));
-    MasterEnvironmentContext masterEnvContext = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+    masterEnv = MasterEnvironments.setMasterEnvironment(
+        MasterEnvironments.create(cConf, options.getEnvProvider()));
+    MasterEnvironmentContext masterEnvContext = MasterEnvironments.createContext(cConf, hConf,
+        masterEnv.getName());
     masterEnv.initialize(masterEnvContext);
 
     List<Module> modules = new ArrayList<>();
@@ -166,9 +172,10 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       @Override
       protected void configure() {
         bind(DiscoveryService.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+            .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
-          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+            .toProvider(
+                new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
       }
     });
     modules.add(getLogAppenderModule());
@@ -185,11 +192,13 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     injector = Guice.createInjector(modules);
 
     // Initialize logging context
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(
+        LogAppenderInitializer.class);
     closeableResources.add(logAppenderInitializer);
 
     logAppenderInitializer.initialize();
-    Optional.ofNullable(getLoggingContext(options)).ifPresent(LoggingContextAccessor::setLoggingContext);
+    Optional.ofNullable(getLoggingContext(options))
+        .ifPresent(LoggingContextAccessor::setLoggingContext);
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
@@ -199,7 +208,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     addServices(injector, services, closeableResources, masterEnv, masterEnvContext, options);
 
     // Optionally get the storage provider. It is for destroy() method to close it on shutdown.
-    Binding<StorageProvider> storageBinding = injector.getExistingBinding(Key.get(StorageProvider.class));
+    Binding<StorageProvider> storageBinding = injector.getExistingBinding(
+        Key.get(StorageProvider.class));
     if (storageBinding != null) {
       storageProvider = storageBinding.getProvider().get();
     }
@@ -226,7 +236,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         service.stopAndWait();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure each service has a chance to stop
-        LOG.warn("Exception raised when stopping service {} for {}", service, getClass().getName(), e);
+        LOG.warn("Exception raised when stopping service {} for {}", service, getClass().getName(),
+            e);
       }
     }
 
@@ -235,7 +246,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         closeable.close();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure all closeables are closed
-        LOG.warn("Exception raised when closing resource {} for {}", closeable, getClass().getName(), e);
+        LOG.warn("Exception raised when closing resource {} for {}", closeable,
+            getClass().getName(), e);
       }
     }
     LOG.info("All services for {} stopped", getClass().getName());
@@ -273,7 +285,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
         // Bind transaction system to a constant one, basically no transaction, with every write become
         // visible immediately.
         // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
-        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
+        bind(TransactionSystemClientService.class).to(
+            DelegatingTransactionSystemClientService.class);
         bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
       }
     };
@@ -299,20 +312,23 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   /**
    * Returns a {@link List} of Guice {@link Module} that this specific for this master service.
    */
-  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv, T options, CConfiguration cConf);
+  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv, T options,
+      CConfiguration cConf);
 
   /**
    * Adds {@link Service} to run.
+   *
    * @param injector the Guice {@link Injector} for all the necessary bindings
    * @param services the {@link List} to populate services to run
-   * @param closeableResources the {@link List} to populate {@link AutoCloseable} that will be closed on stopping
+   * @param closeableResources the {@link List} to populate {@link AutoCloseable} that will be
+   *     closed on stopping
    * @param masterEnv the {@link MasterEnvironment} created for this main service
    * @param masterEnvContext the {@link MasterEnvironmentContext} created for this main service
    */
   protected abstract void addServices(Injector injector, List<? super Service> services,
-                                      List<? super AutoCloseable> closeableResources,
-                                      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                                      T options);
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      T options);
 
   /**
    * Returns the {@link LoggingContext} to use for this service main.

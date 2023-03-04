@@ -28,7 +28,9 @@ import org.slf4j.LoggerFactory;
 /**
  * A constraint which dictates an upper bound on the number of concurrent schedule runs.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements CheckableConstraint {
+public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements
+    CheckableConstraint {
+
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrencyConstraint.class);
 
   public ConcurrencyConstraint(int maxConcurrency) {
@@ -40,7 +42,7 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
     Map<ProgramRunId, RunRecordDetail> activeRuns = context.getActiveRuns(schedule.getProgramId());
     if (activeRuns.size() >= maxConcurrency) {
       LOG.debug("Skipping run of program {} from schedule {} because there are {} active runs.",
-                schedule.getProgramId(), schedule.getName(), activeRuns.size());
+          schedule.getProgramId(), schedule.getName(), activeRuns.size());
       return notSatisfied(context);
     }
     return ConstraintResult.SATISFIED;
@@ -51,6 +53,6 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
       return ConstraintResult.NEVER_SATISFIED;
     }
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
+        context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
   }
 }

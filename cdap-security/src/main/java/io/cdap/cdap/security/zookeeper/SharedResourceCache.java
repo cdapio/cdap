@@ -50,11 +50,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ZooKeeper recipe to propagate changes to a shared cache across a number of listeners.  The cache entries
- * are materialized as child znodes under a common parent.
+ * ZooKeeper recipe to propagate changes to a shared cache across a number of listeners.  The cache
+ * entries are materialized as child znodes under a common parent.
+ *
  * @param <T> The type of resource that is distributed to all participants in the cache.
  */
 public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
+
   private static final String ZNODE_PATH_SEP = "/";
   private static final int MAX_RETRIES = 3;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCache.class);
@@ -68,7 +70,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private Map<String, T> resources;
   private ListenerManager listeners;
 
-  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode, List<ACL> znodeACL) {
+  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode,
+      List<ACL> znodeACL) {
     this.zookeeper = zookeeper;
     this.codec = codec;
     this.parentZnode = parentZnode;
@@ -84,7 +87,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         // may be created in parallel by another instance
         // Also the child nodes are secure even without adding any ACLs to parent node.
         ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT),
-                                 KeeperException.NodeExistsException.class, null).get();
+            KeeperException.NodeExistsException.class, null).get();
       }
     } catch (ExecutionException ee) {
       // recheck if already created
@@ -102,7 +105,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
         LOG.info("Listing existing children for node {}", parentZnode);
         List<String> children = nodeChildren.getChildren();
         for (String child : children) {
-          OperationFuture<NodeData> dataFuture = zookeeper.getData(joinZNode(parentZnode, child), watcher);
+          OperationFuture<NodeData> dataFuture = zookeeper.getData(joinZNode(parentZnode, child),
+              watcher);
           final String nodeName = getZNode(dataFuture.getRequestPath());
           Futures.addCallback(dataFuture, new FutureCallback<NodeData>() {
             @Override
@@ -133,6 +137,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
   /**
    * Adds a {@code ResourceListener} to be notified of cache updates.
+   *
    * @param listener the listener to be invoked
    */
   public void addListener(ResourceListener<T> listener) {
@@ -141,6 +146,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
   /**
    * Removes a previously registered listener from further notifications.
+   *
    * @param listener the listener to remove
    * @return whether or not the listener was found and removed
    */
@@ -170,22 +176,23 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
       final SettableFuture<T> completion = SettableFuture.create();
       Futures.addCallback(
-        ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec, MAX_RETRIES, znodeACL),
-        new FutureCallback<T>() {
-          @Override
-          public void onSuccess(T result) {
-            LOG.debug("Created or set node {}", znode);
-            resources.put(name, result);
-            completion.set(result);
-          }
+          ZKExtOperations.createOrSet(zookeeper, znode, Suppliers.ofInstance(instance), codec,
+              MAX_RETRIES, znodeACL),
+          new FutureCallback<T>() {
+            @Override
+            public void onSuccess(T result) {
+              LOG.debug("Created or set node {}", znode);
+              resources.put(name, result);
+              completion.set(result);
+            }
 
-          @Override
-          public void onFailure(Throwable t) {
-            LOG.error("Failed to set value for node {}", znode, t);
-            listeners.notifyError(name, t);
-            completion.setException(t);
+            @Override
+            public void onFailure(Throwable t) {
+              LOG.error("Failed to set value for node {}", znode, t);
+              listeners.notifyError(name, t);
+              completion.setException(t);
+            }
           }
-        }
       );
 
       // Block until it is done
@@ -198,6 +205,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
 
   /**
    * Removes a resource from the shared cache.
+   *
    * @param key the name of the resource to remove
    */
   public void remove(Object key) {
@@ -249,8 +257,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
     }
 
     SharedResourceCache other = (SharedResourceCache) object;
-    return Objects.equals(this.parentZnode, other.parentZnode) &&
-      Objects.equals(this.resources, other.resources);
+    return Objects.equals(this.parentZnode, other.parentZnode)
+        && Objects.equals(this.resources, other.resources);
   }
 
   @Override
@@ -344,6 +352,7 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   }
 
   private class ZKWatcher implements Watcher {
+
     @Override
     public void process(WatchedEvent event) {
       LOG.debug("Watcher got event {}", event);
@@ -368,12 +377,13 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   }
 
   private class ListenerManager {
+
     private final Set<ResourceListener<T>> listeners = Sets.newCopyOnWriteArraySet();
     private ExecutorService listenerExecutor;
 
     private ListenerManager() {
       this.listenerExecutor = Executors.newSingleThreadExecutor(
-        Threads.createDaemonThreadFactory("SharedResourceCache-listener-%d"));
+          Threads.createDaemonThreadFactory("SharedResourceCache-listener-%d"));
     }
 
     private void add(ResourceListener<T> listener) {

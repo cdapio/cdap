@@ -25,6 +25,7 @@ import java.util.Objects;
  * Represents query result.
  */
 public class QueryResult {
+
   private final List<Object> columns;
 
   public QueryResult(List<Object> columns) {
@@ -72,8 +73,8 @@ public class QueryResult {
 
   @Override
   public String toString() {
-    return "QueryResult{" +
-      "columns=" + columns +
-      '}';
+    return "QueryResult{"
+        + "columns=" + columns
+        + '}';
   }
 }

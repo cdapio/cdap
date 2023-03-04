@@ -27,6 +27,7 @@ public interface ServiceStore extends Service {
 
   /**
    * Get the service instance count.
+   *
    * @param serviceName Service Name.
    * @return Instance Count (can be null if no value was present for the given ServiceName).
    */
@@ -35,6 +36,7 @@ public interface ServiceStore extends Service {
 
   /**
    * Set the service instance count.
+   *
    * @param serviceName Service Name.
    * @param instances Instance Count.
    */
@@ -49,8 +51,9 @@ public interface ServiceStore extends Service {
    * @param isSuccess Whether or not the operation successful.
    * @param instanceId The instance Id to be restarted.
    */
-  void setRestartInstanceRequest(String serviceName, long startTime, long endTime, boolean isSuccess,
-                                 int instanceId);
+  void setRestartInstanceRequest(String serviceName, long startTime, long endTime,
+      boolean isSuccess,
+      int instanceId);
 
   /**
    * Update the service instances restart request.
@@ -60,7 +63,8 @@ public interface ServiceStore extends Service {
    * @param endTime End time in Ms from Epoch.
    * @param isSuccess Whether or not the operation successful.
    */
-  void setRestartAllInstancesRequest(String serviceName, long startTime, long endTime, boolean isSuccess);
+  void setRestartAllInstancesRequest(String serviceName, long startTime, long endTime,
+      boolean isSuccess);
 
   /**
    * Get the latest service instances restart as JSON String.
@@ -69,5 +73,6 @@ public interface ServiceStore extends Service {
    * @return JSON string representation of latest restart instances for the service.
    * @throws IllegalStateException when restart request can not be found for the service name.
    */
-  RestartServiceInstancesStatus getLatestRestartInstancesRequest(String serviceName) throws IllegalStateException;
+  RestartServiceInstancesStatus getLatestRestartInstancesRequest(String serviceName)
+      throws IllegalStateException;
 }

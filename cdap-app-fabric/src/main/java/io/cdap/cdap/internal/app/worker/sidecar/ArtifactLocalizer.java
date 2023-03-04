@@ -42,34 +42,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the worker pod. The HTTP
- * endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This class will run in the sidecar container
- * that is defined by {@link ArtifactLocalizerTwillRunnable}.
+ * ArtifactLocalizer is responsible for fetching, caching and unpacking artifacts requested by the
+ * worker pod. The HTTP endpoints are defined in {@link ArtifactLocalizerHttpHandlerInternal}. This
+ * class will run in the sidecar container that is defined by {@link
+ * ArtifactLocalizerTwillRunnable}.
  *
  * Artifacts will be cached using the following file structure:
- * /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar
+ * {@code /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>.jar}
  *
  * Artifacts will be unpacked using the following file structure:
- * /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...
+ * {@code /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>/...}
  *
  * The procedure for fetching an artifact is:
  *
- * 1. Check if there is a locally cached version of the artifact, if so fetch the lastModified timestamp from
- * the filename.
- * 2. Send a request to the {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal#getArtifactBytes} endpoint
- * in appfabric and provide the lastModified timestamp (if available)
- * 3. If a lastModified timestamp was not specified, or there is a newer version of the artifact: appfabric will stream
- * the bytes for the newest version of the jar and pass the new lastModified timestamp in the response headers
+ * 1. Check if there is a locally cached version of the artifact, if so fetch the lastModified
+ * timestamp from the filename. 2. Send a request to the
+ * {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal#getArtifactBytes}
+ * endpoint in appfabric and provide the lastModified timestamp (if available) 3. If a lastModified
+ * timestamp was not specified, or there is a newer version of the artifact: appfabric will stream
+ * the bytes for the newest version of the jar and pass the new lastModified timestamp in the
+ * response headers
  *
  * OR
  *
- * If the provided lastModified timestamp matches the newest version of the artifact: appfabric will return
- * NOT_MODIFIED
+ * If the provided lastModified timestamp matches the newest version of the artifact: appfabric will
+ * return NOT_MODIFIED
  *
  * 4. Return the local path to the newest version of the artifact jar.
  *
- * NOTE: There is no need to invalidate the cache at any point since we will always need to call appfabric to confirm
- * that the cached version is the newest version available.
+ * NOTE: There is no need to invalidate the cache at any point since we will always need to call
+ * appfabric to confirm that the cached version is the newest version available.
  */
 public class ArtifactLocalizer extends AbstractArtifactLocalizer {
 
@@ -81,20 +83,20 @@ public class ArtifactLocalizer extends AbstractArtifactLocalizer {
 
   @Inject
   public ArtifactLocalizer(CConfiguration cConf, RemoteClientFactory remoteClientFactory,
-                           ArtifactManagerFactory artifactManagerFactory) {
+      ArtifactManagerFactory artifactManagerFactory) {
     super(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-          RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+        RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
     this.cConf = cConf;
     this.artifactManagerFactory = artifactManagerFactory;
     // TODO (CDAP-18047) verify SSL cert should be enabled.
     this.remoteClient = remoteClientFactory.createRemoteClient(Constants.Service.APP_FABRIC_HTTP,
-                                                               RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
-                                                               Constants.Gateway.INTERNAL_API_VERSION_3);
+        RemoteClientFactory.NO_VERIFY_HTTP_REQUEST_CONFIG,
+        Constants.Gateway.INTERNAL_API_VERSION_3);
   }
 
   /**
-   * Gets the location on the local filesystem for the given artifact. This method handles fetching the artifact as
-   * well as caching it.
+   * Gets the location on the local filesystem for the given artifact. This method handles fetching
+   * the artifact as well as caching it.
    *
    * @param artifactId The ArtifactId of the artifact to fetch
    * @return The Local Location for this artifact
@@ -106,18 +108,20 @@ public class ArtifactLocalizer extends AbstractArtifactLocalizer {
   }
 
   /**
-   * Gets the location on the local filesystem for the directory that contains the unpacked artifact. This method
-   * handles fetching, caching and unpacking the artifact.
+   * Gets the location on the local filesystem for the directory that contains the unpacked
+   * artifact. This method handles fetching, caching and unpacking the artifact.
    *
    * @param artifactId The ArtifactId of the artifact to fetch and unpack
    * @return The Local Location of the directory that contains the unpacked artifact files
    * @throws ArtifactNotFoundException if the given artifact does not exist
-   * @throws IOException if there was an exception while fetching, caching or unpacking the artifact
+   * @throws IOException if there was an exception while fetching, caching or unpacking the
+   *     artifact
    * @throws Exception if there was an unexpected error
    */
   public File getAndUnpackArtifact(ArtifactId artifactId) throws Exception {
     File jarLocation = getArtifact(artifactId);
-    File unpackDir = getUnpackLocalPath(artifactId, Long.parseLong(jarLocation.getName().split("\\.")[0]));
+    File unpackDir = getUnpackLocalPath(artifactId,
+        Long.parseLong(jarLocation.getName().split("\\.")[0]));
     if (unpackDir.exists()) {
       LOG.debug("Found unpack directory as {}", unpackDir);
       return unpackDir;
@@ -127,28 +131,31 @@ public class ArtifactLocalizer extends AbstractArtifactLocalizer {
 
     // Ensure the path leading to the unpack directory is created so we can create a temp directory
     if (!DirUtils.mkdirs(unpackDir.getParentFile())) {
-      throw new IOException(String.format("Failed to create one or more directories along the path %s",
-                                          unpackDir.getParentFile().getPath()));
+      throw new IOException(
+          String.format("Failed to create one or more directories along the path %s",
+              unpackDir.getParentFile().getPath()));
     }
 
     // It is guarantee that the jarLocation is a file, not a directory, as this is the class who cache unpacked
     // artifact.
     try (ClassLoaderFolder classLoaderFolder = BundleJarUtil.prepareClassLoaderFolder(
-      jarLocation, () -> DirUtils.createTempDir(unpackDir.getParentFile()))) {
+        jarLocation, () -> DirUtils.createTempDir(unpackDir.getParentFile()))) {
 
-      Files.move(classLoaderFolder.getDir().toPath(), unpackDir.toPath(), StandardCopyOption.ATOMIC_MOVE,
-                 StandardCopyOption.REPLACE_EXISTING);
+      Files.move(classLoaderFolder.getDir().toPath(), unpackDir.toPath(),
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
     }
     return unpackDir;
   }
 
   /**
-   * fetchArtifact attempts to connect to app fabric to download the given artifact. This method will throw
-   * {@linkRetryableException} in certain circumstances.
+   * fetchArtifact attempts to connect to app fabric to download the given artifact. This method
+   * will throw {@linkRetryableException} in certain circumstances.
    *
    * @param artifactId The ArtifactId of the artifact to fetch
    * @return The Local Location for this artifact
-   * @throws IOException If an unexpected error occurs while writing the artifact to the filesystem
+   * @throws IOException If an unexpected error occurs while writing the artifact to the
+   *     filesystem
    * @throws ArtifactNotFoundException If the given artifact does not exist
    */
   public File fetchArtifact(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
@@ -158,38 +165,42 @@ public class ArtifactLocalizer extends AbstractArtifactLocalizer {
 
   private Path getLocalPath(String dirName, ArtifactId artifactId) {
     return Paths.get(dataDir, dirName, artifactId.getNamespace(), artifactId.getArtifact(),
-                     artifactId.getVersion());
+        artifactId.getVersion());
   }
 
   /**
-   * Returns a {@link File} representing the cache directory jars for the given artifact. The file path is:
-   * /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/
+   * Returns a {@link File} representing the cache directory jars for the given artifact. The file
+   * path is: /DATA_DIRECTORY/artifacts/<namespace>/<artifact-name>/<artifact-version>/
    */
   private File getArtifactDirLocation(ArtifactId artifactId) {
     return getLocalPath("artifacts", artifactId).toFile();
   }
 
   /**
-   * Returns a {@link File} representing the directory containing the unpacked contents of the jar for the given
-   * artifact and timestamp. The file path is:
-   * /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>
+   * Returns a {@link File} representing the directory containing the unpacked contents of the jar
+   * for the given artifact and timestamp. The file path is:
+   * {@code /DATA_DIRECTORY/unpacked/<namespace>/<artifact-name>/<artifact-version>/<last-modified-timestamp>}
    */
   private File getUnpackLocalPath(ArtifactId artifactId, long lastModifiedTimestamp) {
-    return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp)).toFile();
+    return getLocalPath("unpacked", artifactId).resolve(String.valueOf(lastModifiedTimestamp))
+        .toFile();
   }
 
-  public void preloadArtifacts(Set<String> artifactNames) throws IOException, ArtifactNotFoundException {
+  public void preloadArtifacts(Set<String> artifactNames)
+      throws IOException, ArtifactNotFoundException {
     ArtifactManager artifactManager = artifactManagerFactory.create(
-      NamespaceId.SYSTEM, RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
+        NamespaceId.SYSTEM,
+        RetryStrategies.fromConfiguration(cConf, Constants.Service.TASK_WORKER + "."));
 
     for (ArtifactInfo info : artifactManager.listArtifacts()) {
       if (artifactNames.contains(info.getName()) && info.getParents().isEmpty()) {
         String className = info.getClasses().getApps().stream()
-          .findFirst()
-          .map(ApplicationClass::getClassName)
-          .orElse(null);
+            .findFirst()
+            .map(ApplicationClass::getClassName)
+            .orElse(null);
 
-        LOG.info("Preloading artifact {}:{}-{}", info.getScope(), info.getName(), info.getVersion());
+        LOG.info("Preloading artifact {}:{}-{}", info.getScope(), info.getName(),
+            info.getVersion());
 
         ArtifactId artifactId = NamespaceId.SYSTEM.artifact(info.getName(), info.getVersion());
         try {

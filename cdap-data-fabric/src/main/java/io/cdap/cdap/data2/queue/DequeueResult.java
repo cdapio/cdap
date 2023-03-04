@@ -21,7 +21,8 @@ import java.util.Iterator;
 
 
 /**
- * Represents result of an dequeue. The iterable gives dequeued data entries in the order of dequeue.
+ * Represents result of an dequeue. The iterable gives dequeued data entries in the order of
+ * dequeue.
  *
  * @param <T> type of dequeue result
  */
@@ -33,10 +34,10 @@ public interface DequeueResult<T> extends Iterable<T> {
   boolean isEmpty();
 
   /**
-   * Reclaim all dequeue entries represented by this result. The effect is to put entries represented by this
-   * result back to the dequeued set of the queue consumer. Note that call to this method is transactional
-   * and requires a new transaction on the consumer instance who provides the instance of this
-   * {@link DequeueResult}.
+   * Reclaim all dequeue entries represented by this result. The effect is to put entries
+   * represented by this result back to the dequeued set of the queue consumer. Note that call to
+   * this method is transactional and requires a new transaction on the consumer instance who
+   * provides the instance of this {@link DequeueResult}.
    *
    * E.g.
    * <pre>
@@ -67,6 +68,7 @@ public interface DequeueResult<T> extends Iterable<T> {
    * Static helper class for creating empty result of different result type.
    */
   final class Empty {
+
     public static <T> DequeueResult<T> result() {
       return new DequeueResult<T>() {
         @Override

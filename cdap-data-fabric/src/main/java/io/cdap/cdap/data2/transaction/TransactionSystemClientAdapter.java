@@ -30,8 +30,8 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
 
 /**
- * Translates exceptions thrown by Tephra's TransactionServiceClient when the tx service is unavailable into
- * CDAP's ServiceUnavailableException.
+ * Translates exceptions thrown by Tephra's TransactionServiceClient when the tx service is
+ * unavailable into CDAP's ServiceUnavailableException.
  */
 public class TransactionSystemClientAdapter implements TransactionSystemClient {
 
@@ -69,7 +69,8 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   }
 
   @Override
-  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+  public boolean canCommit(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionNotInProgressException {
     try {
       //noinspection deprecation
       return delegate.canCommit(tx, changeIds);
@@ -79,7 +80,8 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   }
 
   @Override
-  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds)
+      throws TransactionFailureException {
     try {
       delegate.canCommitOrThrow(tx, changeIds);
     } catch (RuntimeException e) {

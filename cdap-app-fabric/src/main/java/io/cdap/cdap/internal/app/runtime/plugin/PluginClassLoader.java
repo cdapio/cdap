@@ -46,8 +46,8 @@ import java.util.jar.Manifest;
  * }</pre>
  *
  * <p/>
- * The Plugin ClassLoader is then a URLClassLoader created by expanding the plugin bundle jar, with the parent
- * ClassLoader as the Combine ClassLoader.
+ * The Plugin ClassLoader is then a URLClassLoader created by expanding the plugin bundle jar, with
+ * the parent ClassLoader as the Combine ClassLoader.
  */
 public class PluginClassLoader extends DirectoryClassLoader {
 
@@ -68,7 +68,7 @@ public class PluginClassLoader extends DirectoryClassLoader {
     Manifest manifest = ((ProgramClassLoader) programClassLoader).getManifest();
     Set<String> exportPackages = ManifestFields.getExportPackages(manifest);
     ClassLoader filteredTemplateClassLoader = new PackageFilterClassLoader(templateClassLoader,
-                                                                           exportPackages::contains);
+        exportPackages::contains);
 
     // The lib Classloader needs to be able to see all cdap api classes as well.
     // In this way, parent ClassLoader of the plugin ClassLoader will load class from the parent of the
@@ -92,15 +92,14 @@ public class PluginClassLoader extends DirectoryClassLoader {
   }
 
   /**
-   * Creates a new {@link ClassLoader} that only exposes classes in packages declared by "Export-Package"
-   * in the manifest.
+   * Creates a new {@link ClassLoader} that only exposes classes in packages declared by
+   * "Export-Package" in the manifest.
    */
   public ClassLoader getExportPackagesClassLoader() {
     return new PackageFilterClassLoader(this, exportPackages::contains);
   }
 
   /**
-   *
    * @return a file name of top level plugin jar. Main plugin class should reside in this jar.
    */
   public String getTopLevelJar() {

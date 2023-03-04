@@ -23,6 +23,7 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public final class TimeValue implements Comparable<TimeValue> {
+
   private final long timestamp;
   private final long value;
 

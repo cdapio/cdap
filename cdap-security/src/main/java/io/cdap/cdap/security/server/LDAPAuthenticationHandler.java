@@ -26,17 +26,20 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
 /**
- * An Authentication handler that authenticates against a LDAP server instance for External Authentication.
+ * An Authentication handler that authenticates against a LDAP server instance for External
+ * Authentication.
  */
 public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
 
-  private static final List<String> mandatoryConfigurables = ImmutableList.of("debug", "hostname", "port", "userBaseDn",
-                                                                              "userRdnAttribute", "userObjectClass");
+  private static final List<String> mandatoryConfigurables = ImmutableList.of("debug", "hostname",
+      "port", "userBaseDn",
+      "userRdnAttribute", "userObjectClass");
 
-  private static final List<String> optionalConfigurables = ImmutableList.of("bindDn", "bindPassword", "useLdaps",
-                                                                             "userIdAttribute", "userPasswordAttribute",
-                                                                             "roleBaseDn", "roleNameAttribute",
-                                                                             "roleMemberAttribute", "roleObjectClass");
+  private static final List<String> optionalConfigurables = ImmutableList.of("bindDn",
+      "bindPassword", "useLdaps",
+      "userIdAttribute", "userPasswordAttribute",
+      "roleBaseDn", "roleNameAttribute",
+      "roleMemberAttribute", "roleObjectClass");
 
   private static boolean ldapSSLVerifyCertificate = true;
 
@@ -59,19 +62,20 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
         String ldapsVerifyCertificate = handlerProps.get("ldapsVerifyCertificate");
         String useLdaps = handlerProps.get("useLdaps");
         if (Boolean.parseBoolean(Objects.firstNonNull(useLdaps, "false"))) {
-          ldapSSLVerifyCertificate = Boolean.parseBoolean(Objects.firstNonNull(ldapsVerifyCertificate, "true"));
+          ldapSSLVerifyCertificate = Boolean.parseBoolean(
+              Objects.firstNonNull(ldapsVerifyCertificate, "true"));
         }
 
-        return new AppConfigurationEntry[] {
-          new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
-                                    AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
+        return new AppConfigurationEntry[]{
+            new AppConfigurationEntry(handlerProps.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
+                AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, map)
         };
       }
     };
   }
 
   private void copyProperties(Map<String, String> fromMap, Map<String, String> toMap,
-                              List<String> keys, boolean mandatory) {
+      List<String> keys, boolean mandatory) {
     for (String key : keys) {
       String value = fromMap.get(key);
       if (value != null) {

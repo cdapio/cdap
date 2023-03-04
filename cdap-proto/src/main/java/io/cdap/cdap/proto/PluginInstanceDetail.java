@@ -21,6 +21,7 @@ import io.cdap.cdap.api.plugin.Plugin;
  * Represents a plugin instance in an HTTP Response
  */
 public class PluginInstanceDetail extends PluginDetail {
+
   private final Plugin spec;
 
   public PluginInstanceDetail(String pluginId, Plugin spec) {

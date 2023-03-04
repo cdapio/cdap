@@ -30,6 +30,7 @@ import java.util.function.Predicate;
  */
 @Beta
 public class CubeDeleteQuery {
+
   private final long startTs;
   private final long endTs;
   private final int resolution;
@@ -38,17 +39,21 @@ public class CubeDeleteQuery {
   private final Predicate<List<String>> tagPredicate;
 
   /**
-   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from {@link Cube}.
+   * Creates instance of {@link CubeDeleteQuery} that defines selection of data to delete from
+   * {@link Cube}.
+   *
    * @param startTs start time of the data selection, in seconds since epoch
    * @param endTs end time of the data selection, in seconds since epoch
    * @param resolution resolution of the aggregations to delete from
-   * @param dimensionValues dimension name, dimension value pairs that define the data selection
+   * @param dimensionValues dimension name, dimension value pairs that define the data
+   *     selection
    * @param measureNames name of the measures to delete, {@code null} means delete all
-   * @param tagPredicate predicate to decide how to match the aggregation group to the given tags
+   * @param tagPredicate predicate to decide how to match the aggregation group to the given
+   *     tags
    */
   public CubeDeleteQuery(long startTs, long endTs, int resolution,
-                         Map<String, String> dimensionValues, Collection<String> measureNames,
-                         Predicate<List<String>> tagPredicate) {
+      Map<String, String> dimensionValues, Collection<String> measureNames,
+      Predicate<List<String>> tagPredicate) {
     this.startTs = startTs;
     this.endTs = endTs;
     this.resolution = resolution;

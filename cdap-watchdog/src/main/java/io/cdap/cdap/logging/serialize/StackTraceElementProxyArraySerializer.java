@@ -26,13 +26,17 @@ import org.apache.avro.generic.GenericRecord;
  * Serializer for an array of StackTraceElementProxies.
  */
 final class StackTraceElementProxyArraySerializer {
-  private StackTraceElementProxyArraySerializer() {}
 
-  static GenericArray<GenericRecord> encode(Schema schema, StackTraceElementProxy[] stackTraceElementProxies) {
+  private StackTraceElementProxyArraySerializer() {
+  }
+
+  static GenericArray<GenericRecord> encode(Schema schema,
+      StackTraceElementProxy[] stackTraceElementProxies) {
     if (stackTraceElementProxies != null) {
       Schema steArraySchema = schema.getTypes().get(1);
-      GenericArray<GenericRecord> steArray = new GenericData.Array<>(stackTraceElementProxies.length,
-                                                                                  steArraySchema);
+      GenericArray<GenericRecord> steArray = new GenericData.Array<>(
+          stackTraceElementProxies.length,
+          steArraySchema);
       for (StackTraceElementProxy ste : stackTraceElementProxies) {
         steArray.add(StackTraceElementProxySerializer.encode(steArraySchema.getElementType(), ste));
       }

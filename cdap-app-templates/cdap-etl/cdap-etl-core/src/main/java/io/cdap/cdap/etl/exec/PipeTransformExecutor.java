@@ -28,6 +28,7 @@ import java.util.Set;
  * @param <IN> Type of input
  */
 public class PipeTransformExecutor<IN> implements Destroyable {
+
   private final Set<String> startingPoints;
   private final Map<String, PipeStage> pipeStages;
 

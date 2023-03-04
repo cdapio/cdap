@@ -33,7 +33,8 @@ import java.util.Map;
  * @param <V> type of service context
  */
 public abstract class AbstractService<T extends ServiceConfigurer, V extends ServiceContext>
-  extends AbstractPluginConfigurable<T> implements Service<T, V> {
+    extends AbstractPluginConfigurable<T> implements Service<T, V> {
+
   private T configurer;
   private V context;
 
@@ -45,6 +46,7 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
 
   /**
    * Set the name for the Service.
+   *
    * @param name of the service.
    */
   protected void setName(String name) {
@@ -53,6 +55,7 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
 
   /**
    * Set the description of the Service.
+   *
    * @param description of the service.
    */
   protected void setDescription(String description) {
@@ -61,6 +64,7 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
 
   /**
    * Add handler to the Service.
+   *
    * @param handler to serve requests with.
    */
   protected void addHandler(HttpServiceHandler handler) {
@@ -69,6 +73,7 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
 
   /**
    * Add a list of handlers to the Service.
+   *
    * @param handlers to service requests with.
    */
   protected void addHandlers(Iterable<? extends HttpServiceHandler> handlers) {
@@ -76,7 +81,9 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
   }
 
   /**
-   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of
+   * this Service.
+   *
    * @param instances Number of instances, must be > 0.
    */
   protected void setInstances(int instances) {
@@ -84,7 +91,9 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
   }
 
   /**
-   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of
+   * this Service.
+   *
    * @param resources The requirements.
    */
   protected void setResources(Resources resources) {
@@ -92,8 +101,8 @@ public abstract class AbstractService<T extends ServiceConfigurer, V extends Ser
   }
 
   /**
-   * Sets a set of properties that will be available through the {@link ServiceSpecification#getProperties()}
-   * at runtime.
+   * Sets a set of properties that will be available through the {@link
+   * ServiceSpecification#getProperties()} at runtime.
    *
    * @param properties the properties to set
    */

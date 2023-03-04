@@ -20,6 +20,7 @@ package io.cdap.cdap.security.auth;
  * This exception indicates an encryption/decryption failure.
  */
 public class CipherException extends Exception {
+
   public CipherException(String message, Throwable cause) {
     super(message, cause);
   }

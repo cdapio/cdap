@@ -25,6 +25,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
  * Registers LevelDB-based implementations of the basic datasets
  */
 public class LevelDBTableModule implements DatasetModule {
+
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     registry.add(new LevelDBTableDefinition("table"));

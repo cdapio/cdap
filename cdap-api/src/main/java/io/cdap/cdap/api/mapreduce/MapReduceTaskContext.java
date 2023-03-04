@@ -35,30 +35,32 @@ import javax.annotation.Nullable;
 /**
  * MapReduce task execution context.
  *
- * @param <KEYOUT>   output key type
+ * @param <KEYOUT> output key type
  * @param <VALUEOUT> output value type
  */
 @Beta
-public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgramContext, RuntimeContext,
-  DatasetContext, ServiceDiscoverer, PluginContext, TaskLocalizationContext, SecureStore {
+public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgramContext,
+    RuntimeContext,
+    DatasetContext, ServiceDiscoverer, PluginContext, TaskLocalizationContext, SecureStore {
 
   /**
-   * Write key and value to the named output Dataset. This method must only be used if the MapReduce writes to
-   * more than one output. If there is a single output, {@link #write(Object, Object)} must be used, or the
-   * data may not be written correctly.
+   * Write key and value to the named output Dataset. This method must only be used if the MapReduce
+   * writes to more than one output. If there is a single output, {@link #write(Object, Object)}
+   * must be used, or the data may not be written correctly.
    *
    * @param namedOutput the name of the output Dataset
-   * @param key         the key
-   * @param value       the value
+   * @param key the key
+   * @param value the value
    */
   <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException;
 
   /**
-   * Write key and value to the Hadoop context. This method must only be used if the MapReduce writes to a single
-   * output. If there is more than one output, {@link #write(String, Object, Object)} must be used instead.
+   * Write key and value to the Hadoop context. This method must only be used if the MapReduce
+   * writes to a single output. If there is more than one output, {@link #write(String, Object,
+   * Object)} must be used instead.
    *
-   * @param key         the key
-   * @param value       the value
+   * @param key the key
+   * @param value the value
    */
   void write(KEYOUT key, VALUEOUT value) throws IOException, InterruptedException;
 
@@ -68,9 +70,9 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgr
   MapReduceSpecification getSpecification();
 
   /**
-   * Returns the logical start time of this MapReduce job. Logical start time is the time when this MapReduce
-   * job is supposed to start if this job is started by the scheduler. Otherwise, it is the current time when the
-   * job runs.
+   * Returns the logical start time of this MapReduce job. Logical start time is the time when this
+   * MapReduce job is supposed to start if this job is started by the scheduler. Otherwise, it is
+   * the current time when the job runs.
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
    */
@@ -82,23 +84,24 @@ public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends SchedulableProgr
   <T> T getHadoopContext();
 
   /**
-   * @return the {@link WorkflowToken} associated with the current {@link Workflow},
-   * if the {@link MapReduce} program is executed as a part of the Workflow; returns {@code null} otherwise.
+   * @return the {@link WorkflowToken} associated with the current {@link Workflow}, if the {@link
+   *     MapReduce} program is executed as a part of the Workflow; returns {@code null} otherwise.
    */
   @Nullable
   WorkflowToken getWorkflowToken();
 
   /**
-   * @return information about the enclosing {@link Workflow} run, if this {@link MapReduce} program is executed
-   * as a part of the Workflow; returns {@code null} otherwise.
+   * @return information about the enclosing {@link Workflow} run, if this {@link MapReduce} program
+   *     is executed as a part of the Workflow; returns {@code null} otherwise.
    */
   @Nullable
   WorkflowInfo getWorkflowInfo();
 
   /**
-   * Returns an {@link InputContext} of the input configured for this task. The returned object will be a
-   * {@link PartitionedFileSetInputContext} if the input for this task was configured from the PartitionedFileSet APIs.
-   * Returns null, if this task is a Reducer or no inputs were configured through CDAP APIs.
+   * Returns an {@link InputContext} of the input configured for this task. The returned object will
+   * be a {@link PartitionedFileSetInputContext} if the input for this task was configured from the
+   * PartitionedFileSet APIs. Returns null, if this task is a Reducer or no inputs were configured
+   * through CDAP APIs.
    */
   InputContext getInputContext();
 }

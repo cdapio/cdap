@@ -27,11 +27,12 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represents an input to a field operation: in case of a {@link ReadOperation},
- * a list of datasets ({@link EndPoint}); otherwise a list of {@link InputField}.
+ * Represents an input to a field operation: in case of a {@link ReadOperation}, a list of datasets
+ * ({@link EndPoint}); otherwise a list of {@link InputField}.
  */
 @Beta
 public class FieldOperationInput {
+
   private final EndPoint endPoint;
   private final List<InputField> fields;
 
@@ -79,8 +80,8 @@ public class FieldOperationInput {
       return false;
     }
     FieldOperationInput input = (FieldOperationInput) o;
-    return Objects.equals(endPoint, input.endPoint) &&
-            Objects.equals(fields, input.fields);
+    return Objects.equals(endPoint, input.endPoint)
+        && Objects.equals(fields, input.fields);
   }
 
   @Override

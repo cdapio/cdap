@@ -25,9 +25,11 @@ import javax.annotation.Nullable;
 
 /**
  * Base class for defining a row with set of columns.
+ *
  * @param <T> implementor type - to support handy builder-like methods.
  */
 public abstract class RowColumns<T> {
+
   private final byte[] row;
 
   private List<byte[]> columns;
@@ -35,8 +37,9 @@ public abstract class RowColumns<T> {
   // key & column as byte[]
 
   /**
-   * Defines a row with all columns included. If any of the {@code add} method is called, only columns specified through
-   * those {@code add} method calls are included.
+   * Defines a row with all columns included. If any of the {@code add} method is called, only
+   * columns specified through those {@code add} method calls are included.
+   *
    * @param row the row to define.
    */
   public RowColumns(byte[] row) {
@@ -45,6 +48,7 @@ public abstract class RowColumns<T> {
 
   /**
    * Defines a row, with the specified set of columns.
+   *
    * @param row the row to define
    * @param columns the set of columns of the row to included
    */
@@ -56,17 +60,19 @@ public abstract class RowColumns<T> {
   // key and column as String
 
   /**
-   * Defines a row with all columns included. If any of the {@code add} method is called, only columns specified through
-   * those {@code add} method calls are included.
-   * @param row the row to define. Note: It will be converted to {@code byte[]} with UTF-8 encoding.
+   * Defines a row with all columns included. If any of the {@code add} method is called, only
+   * columns specified through those {@code add} method calls are included.
+   *
+   * @param row the row to define. Note: It will be converted to {@code byte[]} with UTF-8
+   *     encoding.
    */
   public RowColumns(String row) {
     this(Bytes.toBytes(row));
   }
 
   /**
-   * Defines a row, including all columns, unless additional columns are specified.
-   * Note that the provided strings will be converted to {@code byte[]} with UTF-8 encoding.
+   * Defines a row, including all columns, unless additional columns are specified. Note that the
+   * provided strings will be converted to {@code byte[]} with UTF-8 encoding.
    *
    * @param row the row to define
    * @param columns the set of columns of the row to included
@@ -78,6 +84,7 @@ public abstract class RowColumns<T> {
 
   /**
    * Specifies column(s) to be included.
+   *
    * @param firstColumn the first column being included
    * @param moreColumns a collection of additional columns being included
    * @return the {@link RowColumns} object being defined
@@ -92,6 +99,7 @@ public abstract class RowColumns<T> {
 
   /**
    * Specifies column(s) to be included.
+   *
    * @param columns a collection of columns being included
    * @return the {@link RowColumns} object being defined
    */
@@ -103,8 +111,9 @@ public abstract class RowColumns<T> {
   }
 
   /**
-   * Specifies column(s) to be included.
-   * Note that the provided strings will be converted to {@code byte[]} with UTF-8 encoding.
+   * Specifies column(s) to be included. Note that the provided strings will be converted to {@code
+   * byte[]} with UTF-8 encoding.
+   *
    * @param firstColumn the first column being included
    * @param moreColumns a collection of additional columns being included
    * @return the {@link RowColumns} object being defined
@@ -121,6 +130,7 @@ public abstract class RowColumns<T> {
 
   /**
    * Specifies column(s) to be included.
+   *
    * @param columns a collection of columns being included
    * @return the {@link RowColumns} object being defined
    */

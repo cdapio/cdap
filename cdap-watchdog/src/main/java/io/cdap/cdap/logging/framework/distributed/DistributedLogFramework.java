@@ -62,14 +62,14 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
   @Inject
   DistributedLogFramework(CConfiguration cConf,
-                          ZKClient zkClient,
-                          DiscoveryService discoveryService,
-                          DiscoveryServiceClient discoveryServiceClient,
-                          Provider<AppenderContext> contextProvider,
-                          BrokerService brokerService,
-                          TransactionRunner txRunner) {
+      ZKClient zkClient,
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      Provider<AppenderContext> contextProvider,
+      BrokerService brokerService,
+      TransactionRunner txRunner) {
     super(SERVICE_NAME, cConf.getInt(Constants.Logging.NUM_PARTITIONS),
-          zkClient, discoveryService, discoveryServiceClient);
+        zkClient, discoveryService, discoveryServiceClient);
     this.cConf = cConf;
     this.contextProvider = contextProvider;
     this.brokerService = brokerService;
@@ -78,7 +78,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
   @Override
   protected Service createService(Set<Integer> partitions) {
-    Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(cConf).load(contextProvider);
+    Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(
+        cConf).load(contextProvider);
     int pipelineCount = specs.size();
 
     // Create one KafkaLogProcessorPipeline per spec
@@ -90,19 +91,20 @@ public class DistributedLogFramework extends ResourceBalancerService {
       long bufferSize = getBufferSize(pipelineCount, cConf, partitions.size());
       final String topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
       final KafkaPipelineConfig config = new KafkaPipelineConfig(
-        topic, partitions, bufferSize,
-        cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
-        cConf.getInt(Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE),
-        cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS)
+          topic, partitions, bufferSize,
+          cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
+          cConf.getInt(Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE),
+          cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS)
       );
 
       RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
       pipelines.add(new RetryOnStartFailureService(
-        () -> new KafkaLogProcessorPipeline(
-          new LogProcessorPipelineContext(cConf, context.getName(), context,
-                                          context.getMetricsContext(), context.getInstanceId()),
-          new KafkaCheckpointManager(txRunner, pipelineSpec.getCheckpointPrefix() + topic), brokerService, config),
-        retryStrategy));
+          () -> new KafkaLogProcessorPipeline(
+              new LogProcessorPipelineContext(cConf, context.getName(), context,
+                  context.getMetricsContext(), context.getInstanceId()),
+              new KafkaCheckpointManager(txRunner, pipelineSpec.getCheckpointPrefix() + topic),
+              brokerService, config),
+          retryStrategy));
     }
 
     // Returns a Service that start/stop all pipelines.
@@ -124,7 +126,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
   /**
    * Blocks and validates all the given futures completed successfully.
    */
-  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures) throws Exception {
+  private void validateAllFutures(Iterable<? extends ListenableFuture<?>> futures)
+      throws Exception {
     // The get call shouldn't throw exception. It just block until all futures completed.
     Futures.successfulAsList(futures).get();
 
@@ -162,12 +165,13 @@ public class DistributedLogFramework extends ResourceBalancerService {
 
     double bufferRatio = cConf.getDouble(Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
     Preconditions.checkArgument(bufferRatio > 0 && bufferRatio < 1,
-                                "Config %s must be between 0 and 1", Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
+        "Config %s must be between 0 and 1", Constants.Logging.PIPELINE_AUTO_BUFFER_RATIO);
 
     int kafkaFetchSize = cConf.getInt(Constants.Logging.PIPELINE_KAFKA_FETCH_SIZE) * partitions;
 
     // Try to derive it from the total memory size, the number of pipelines and the kafka fetch size
-    bufferSize = (long) ((Runtime.getRuntime().maxMemory() * bufferRatio - kafkaFetchSize) / numberOfPipelines);
+    bufferSize = (long) ((Runtime.getRuntime().maxMemory() * bufferRatio - kafkaFetchSize)
+        / numberOfPipelines);
     // The size has to be > 0 for it to make any progress. This is just to safe guard
     return bufferSize > 0 ? bufferSize : 1L;
   }

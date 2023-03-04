@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class SQLReadResult implements Serializable {
+
   private final String datasetName;
   private final SQLReadOperationResult result;
   private final SQLDataset sqlDataset;
@@ -34,13 +35,14 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Creates a new SQLReadResult instance
+   *
    * @param datasetName The name of the dataset (stage) that is being written
    * @param result result of this read operation
    * @param sqlDataset the SQL Dataset
    */
   protected SQLReadResult(String datasetName,
-                       SQLReadOperationResult result,
-                       @Nullable SQLDataset sqlDataset) {
+      SQLReadOperationResult result,
+      @Nullable SQLDataset sqlDataset) {
     this.datasetName = datasetName;
     this.result = result;
     this.sqlDataset = sqlDataset;
@@ -48,6 +50,7 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Utility method to create a successful SQL Read Result
+   *
    * @param datasetName dataset name
    * @param sqlDataset the SQL Dataset
    * @return new instance with a Success result and the number of specified records.
@@ -58,6 +61,7 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Utility method to create an unsupported SQL Read Result
+   *
    * @param datasetName dataset name
    * @return new instance with an unsupported result status and no output records.
    */
@@ -67,6 +71,7 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Utility method to create a failed SQL Read Result
+   *
    * @param datasetName dataset name
    * @return new instance with an unsupported failed status and no output records.
    */
@@ -90,6 +95,7 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Get the SQL Dataset instance
+   *
    * @return SQL Dataset if the operation is successful, null otherwise
    */
   @Nullable
@@ -99,6 +105,7 @@ public class SQLReadResult implements Serializable {
 
   /**
    * Used to check if the read operation was successful
+   *
    * @return true if successful, false otherwise.
    */
   public boolean isSuccessful() {

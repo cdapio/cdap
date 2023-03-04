@@ -30,12 +30,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Wrapper around an ExecutorService that keeps track of submitted tasks by a key. Enforces that
- * only one runnable per key is ever running, and exposes methods to get the corresponding future for a key, and check
- * if there is a runnable for a given key.
+ * only one runnable per key is ever running, and exposes methods to get the corresponding future
+ * for a key, and check if there is a runnable for a given key.
  *
  * @param <K> type of key
  */
 public class KeyedExecutor<K> {
+
   private final ScheduledExecutorService scheduler;
   private final ConcurrentMap<K, CompletableFuture<Void>> futures;
 
@@ -45,8 +46,9 @@ public class KeyedExecutor<K> {
   }
 
   /**
-   * Submits a Runnable task for execution and returns a Future representing that task. If there is already a task
-   * running for the key, the given task will not be executed, and the existing Future for the key will be returned.
+   * Submits a Runnable task for execution and returns a Future representing that task. If there is
+   * already a task running for the key, the given task will not be executed, and the existing
+   * Future for the key will be returned.
    *
    * @param key the task key
    * @param task the task to submit
@@ -61,9 +63,9 @@ public class KeyedExecutor<K> {
   }
 
   /**
-   * Submits a {@link RepeatedTask} for execution and returns a Future representing that task.
-   * If there is already a task running for the key, the given task will not be executed,
-   * and the existing Future for the key will be returned.
+   * Submits a {@link RepeatedTask} for execution and returns a Future representing that task. If
+   * there is already a task running for the key, the given task will not be executed, and the
+   * existing Future for the key will be returned.
    *
    * @param key the task key
    * @param task the task to submit

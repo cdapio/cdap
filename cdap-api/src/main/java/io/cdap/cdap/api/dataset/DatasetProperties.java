@@ -69,16 +69,17 @@ public final class DatasetProperties {
 
   @Override
   public String toString() {
-    return "DatasetProperties{" +
-      "description='" + description + '\'' +
-      ", properties=" + properties +
-      '}';
+    return "DatasetProperties{"
+        + "description='" + description + '\''
+        + ", properties=" + properties
+        + '}';
   }
 
   /**
    * A Builder to construct DatasetProperties instances.
    */
   public static class Builder {
+
     private String description;
     private Map<String, String> properties = new HashMap<>();
 
@@ -98,6 +99,7 @@ public final class DatasetProperties {
 
     /**
      * Adds a property.
+     *
      * @param key the name of the property
      * @param value the value of the property
      * @return this builder object to allow chaining
@@ -109,6 +111,7 @@ public final class DatasetProperties {
 
     /**
      * Adds a property.
+     *
      * @param key the name of the property
      * @param value the value of the property
      * @return this builder object to allow chaining
@@ -120,6 +123,7 @@ public final class DatasetProperties {
 
     /**
      * Adds a property.
+     *
      * @param key the name of the property
      * @param value the value of the property
      * @return this builder object to allow chaining
@@ -131,6 +135,7 @@ public final class DatasetProperties {
 
     /**
      * Adds multiple properties.
+     *
      * @param properties the map of properties to add
      * @return this builder object to allow chaining
      */

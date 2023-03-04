@@ -23,14 +23,15 @@ import java.io.IOException;
 /**
  * Defines split of the dataset.
  * <b>
- *   Typically a dataset is spit into multiple chunks that are fed into a batch job.
+ * Typically a dataset is spit into multiple chunks that are fed into a batch job.
  * </b>
  *
- * Sub-class can implements the {@link #writeExternal(DataOutput)} and the {@link #readExternal(DataInput)}
- * and have a public default constructor (constructor without arguments)
+ * Sub-class can implements the {@link #writeExternal(DataOutput)} and the {@link
+ * #readExternal(DataInput)} and have a public default constructor (constructor without arguments)
  * to provide a more efficient serialization mechanism.
  */
 public abstract class Split {
+
   /**
    * By default assume that the size of each split is roughly the same.
    *

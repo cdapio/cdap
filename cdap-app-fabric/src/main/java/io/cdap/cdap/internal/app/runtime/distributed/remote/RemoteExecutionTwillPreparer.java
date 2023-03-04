@@ -87,18 +87,20 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private final Map<String, Location> secretFiles;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               Cluster cluster, SSHConfig sshConfig, Map<String, Location> secretFiles,
-                               TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
-                               LocationCache locationCache, LocationFactory locationFactory,
-                               TwillControllerFactory controllerFactory) {
-    super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
+      Cluster cluster, SSHConfig sshConfig, Map<String, Location> secretFiles,
+      TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
+      LocationCache locationCache, LocationFactory locationFactory,
+      TwillControllerFactory controllerFactory) {
+    super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory,
+        controllerFactory);
     this.cluster = cluster;
     this.sshConfig = sshConfig;
     this.secretFiles = secretFiles;
   }
 
   @Override
-  protected void addLocalFiles(Path stagingDir, Map<String, LocalFile> localFiles) throws IOException {
+  protected void addLocalFiles(Path stagingDir, Map<String, LocalFile> localFiles)
+      throws IOException {
     createLauncherJar(localFiles);
     createTwillJar(createBundler(stagingDir), localFiles);
   }
@@ -110,9 +112,10 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   @Override
-  protected void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
-                        JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
-                        TimeoutChecker timeoutChecker) throws Exception {
+  protected void launch(TwillRuntimeSpecification twillRuntimeSpec,
+      RuntimeSpecification runtimeSpec,
+      JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
+      TimeoutChecker timeoutChecker) throws Exception {
     try (SSHSession session = new DefaultSSHSession(sshConfig)) {
       // Validate kerberos setting if any
       Map<String, String> clusterProperties = cluster.getProperties();
@@ -121,7 +124,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       validateKerberos(principal, keytab, session);
 
       String targetPath = session.executeAndWait("mkdir -p ./" + getProgramRunId().getRun(),
-                                                 "echo `pwd`/" + getProgramRunId().getRun()).trim();
+          "echo `pwd`/" + getProgramRunId().getRun()).trim();
       // Upload files
       localizeFiles(session, localFiles, targetPath, runtimeSpec);
 
@@ -130,23 +133,24 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
       // Currently we only support one TwillRunnable
       String runnableName = runtimeSpec.getName();
-      int memory = Resources.computeMaxHeapSize(runtimeSpec.getResourceSpecification().getMemorySize(),
-                                                twillRuntimeSpec.getReservedMemory(runnableName),
-                                                twillRuntimeSpec.getMinHeapRatio(runnableName));
+      int memory = Resources.computeMaxHeapSize(
+          runtimeSpec.getResourceSpecification().getMemorySize(),
+          twillRuntimeSpec.getReservedMemory(runnableName),
+          twillRuntimeSpec.getMinHeapRatio(runnableName));
 
       // Spark env setup script
       session.executeAndWait(String.format("bash %s/%s/%s %s/%s/%s %s/%s",
-                                           targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
-                                           targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
-                                           targetPath, SPARK_ENV_SH));
+          targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
+          targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
+          targetPath, SPARK_ENV_SH));
 
       // Generates the launch script
       byte[] scriptContent = generateLaunchScript(targetPath, runnableName,
-                                                  memory, jvmOptions, environments,
-                                                  principal, keytab).getBytes(StandardCharsets.UTF_8);
+          memory, jvmOptions, environments,
+          principal, keytab).getBytes(StandardCharsets.UTF_8);
       //noinspection OctalInteger
       session.copy(new ByteArrayInputStream(scriptContent),
-                   targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
+          targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
 
       timeoutChecker.throwIfTimeout();
 
@@ -155,7 +159,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     }
   }
 
-  private void validateKerberos(@Nullable String principal, @Nullable String keytab, SSHSession session) {
+  private void validateKerberos(@Nullable String principal, @Nullable String keytab,
+      SSHSession session) {
     if (Strings.isNullOrEmpty(principal) || Strings.isNullOrEmpty(keytab)) {
       return;
     }
@@ -164,15 +169,17 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     try {
       klistPath = session.executeAndWait("which klist").trim();
     } catch (IOException e) {
-      LOG.warn("Failed to locate klist command for Kerberos validation. " +
-                 "If the Kerberos principal and keytab are mis-configured, program execution will fail.", e);
+      LOG.warn("Failed to locate klist command for Kerberos validation. "
+              + "If the Kerberos principal and keytab are mis-configured, program execution will fail.",
+          e);
       return;
     }
 
     try {
       String result = session.executeAndWait(String.format("%s -k -t %s", klistPath, keytab));
       if (!result.contains(principal)) {
-        throw new IllegalArgumentException("Kerberos principal " + principal + " not found in the keytab");
+        throw new IllegalArgumentException(
+            "Kerberos principal " + principal + " not found in the keytab");
       }
     } catch (IOException e) {
       throw new IllegalArgumentException("Kerberos information is not valid: " + e.getMessage(), e);
@@ -183,7 +190,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
    * Localize files to the target host.
    */
   private void localizeFiles(SSHSession session, Map<String, LocalFile> localFiles,
-                             String targetPath, RuntimeSpecification runtimeSpec) throws IOException {
+      String targetPath, RuntimeSpecification runtimeSpec) throws IOException {
 
     // A map to remember what URI has already been uploaded to what target path.
     // This helps reducing the bandwidth when same file is uploaded to different target path.
@@ -197,13 +204,15 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       // If not yet uploaded, upload it
       String localizedFile = localizedFiles.get(uri);
       if (localizedFile == null) {
-        String fileName = Hashing.md5().hashString(uri.toString()).toString() + "-" + getFileName(uri);
+        String fileName =
+            Hashing.md5().hashString(uri.toString()).toString() + "-" + getFileName(uri);
         localizedFile = localizedDir + "/" + fileName;
         try (InputStream inputStream = openURI(uri)) {
-          LOG.debug("Upload file {} to {}@{}:{}", uri, session.getUsername(), session.getAddress(), localizedFile);
+          LOG.debug("Upload file {} to {}@{}:{}", uri, session.getUsername(), session.getAddress(),
+              localizedFile);
           //noinspection OctalInteger
           session.copy(inputStream, localizedDir, fileName, localFile.getSize(), 0644,
-                       localFile.getLastModified(), localFile.getLastModified());
+              localFile.getLastModified(), localFile.getLastModified());
         }
         localizedFiles.put(uri, localizedFile);
       }
@@ -212,32 +221,36 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       if (localFile.isArchive()) {
         String expandedDir = targetPath + "/" + localFile.getName();
         LOG.debug("Expanding archive {} on host {} to {}",
-                  localizedFile, session.getAddress().getHostName(), expandedDir);
+            localizedFile, session.getAddress().getHostName(), expandedDir);
         session.executeAndWait(
-          "mkdir -p " + expandedDir,
-          "cd " + expandedDir,
-          String.format("jar xf %s", localizedFile)
+            "mkdir -p " + expandedDir,
+            "cd " + expandedDir,
+            String.format("jar xf %s", localizedFile)
         );
       } else {
         LOG.debug("Create hardlink {} on host {} to {}/{}",
-                  localizedFile, session.getAddress().getHostName(), targetPath, localFile.getName());
-        session.executeAndWait(String.format("ln %s %s/%s", localizedFile, targetPath, localFile.getName()));
+            localizedFile, session.getAddress().getHostName(), targetPath, localFile.getName());
+        session.executeAndWait(
+            String.format("ln %s %s/%s", localizedFile, targetPath, localFile.getName()));
       }
     }
   }
 
   private void createTwillJar(final ApplicationBundler bundler,
-                              Map<String, LocalFile> localFiles) throws IOException {
+      Map<String, LocalFile> localFiles) throws IOException {
     LOG.debug("Create and copy {}", Constants.Files.TWILL_JAR);
-    Location location = getLocationCache().get(Constants.Files.TWILL_JAR, new LocationCache.Loader() {
-      @Override
-      public void load(String name, Location targetLocation) throws IOException {
-        bundler.createBundle(targetLocation, ApplicationMasterMain.class, TwillContainerMain.class, OptionSpec.class);
-      }
-    });
+    Location location = getLocationCache().get(Constants.Files.TWILL_JAR,
+        new LocationCache.Loader() {
+          @Override
+          public void load(String name, Location targetLocation) throws IOException {
+            bundler.createBundle(targetLocation, ApplicationMasterMain.class,
+                TwillContainerMain.class, OptionSpec.class);
+          }
+        });
 
     LOG.debug("Done {}", Constants.Files.TWILL_JAR);
-    localFiles.put(Constants.Files.TWILL_JAR, createLocalFile(Constants.Files.TWILL_JAR, location, true));
+    localFiles.put(Constants.Files.TWILL_JAR,
+        createLocalFile(Constants.Files.TWILL_JAR, location, true));
   }
 
   /**
@@ -247,40 +260,43 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
     LOG.debug("Create and copy {}", Constants.Files.LAUNCHER_JAR);
 
-    Location location = getLocationCache().get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
-      @Override
-      public void load(String name, Location targetLocation) throws IOException {
-        // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
-        try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
-          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          if (classLoader == null) {
-            classLoader = getClass().getClassLoader();
-          }
-          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-            @Override
-            public boolean accept(String className, URL classUrl, URL classPathUrl) {
-              try {
-                jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-                try (InputStream is = classUrl.openStream()) {
-                  ByteStreams.copy(is, jarOut);
-                }
-              } catch (IOException e) {
-                throw new RuntimeException(e);
+    Location location = getLocationCache().get(Constants.Files.LAUNCHER_JAR,
+        new LocationCache.Loader() {
+          @Override
+          public void load(String name, Location targetLocation) throws IOException {
+            // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
+            try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
+              ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+              if (classLoader == null) {
+                classLoader = getClass().getClassLoader();
               }
-              return true;
+              Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+                @Override
+                public boolean accept(String className, URL classUrl, URL classPathUrl) {
+                  try {
+                    jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                    try (InputStream is = classUrl.openStream()) {
+                      ByteStreams.copy(is, jarOut);
+                    }
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }
+              }, RemoteLauncher.class.getName(), FindFreePort.class.getName());
             }
-          }, RemoteLauncher.class.getName(), FindFreePort.class.getName());
-        }
-      }
-    });
+          }
+        });
 
     LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
 
-    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
+    localFiles.put(Constants.Files.LAUNCHER_JAR,
+        createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
   }
 
   /**
-   * Finds a resource from the current {@link ClassLoader} and copy the content to the given directory.
+   * Finds a resource from the current {@link ClassLoader} and copy the content to the given
+   * directory.
    */
   private void saveResource(Path targetDir, String resourceName) throws IOException {
     URL url = getClassLoader().getResource(resourceName);
@@ -322,7 +338,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   /**
-   * Returns the file name of a given {@link URI}. The file name is the last part of the path, separated by {@code /}.
+   * Returns the file name of a given {@link URI}. The file name is the last part of the path,
+   * separated by {@code /}.
    */
   private String getFileName(URI uri) {
     String path = uri.getPath();
@@ -331,13 +348,14 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   /**
-   * Generates the shell script for launching the JVM process of the runnable that will run on the remote host.
+   * Generates the shell script for launching the JVM process of the runnable that will run on the
+   * remote host.
    */
   private String generateLaunchScript(String targetPath, String runnableName,
-                                      int memory, JvmOptions jvmOptions,
-                                      Map<String, String> environments,
-                                      @Nullable String kerberosPrincipal,
-                                      @Nullable String kerberosKeytab) {
+      int memory, JvmOptions jvmOptions,
+      Map<String, String> environments,
+      @Nullable String kerberosPrincipal,
+      @Nullable String kerberosKeytab) {
     String logsDir = targetPath + "/logs";
 
     StringWriter writer = new StringWriter();
@@ -369,13 +387,15 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     }
 
     scriptWriter.printf(
-      "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s >%s/stdout 2>%s/stderr &\n",
-      getProgramRunId().getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
-      jvmOptions.getAMExtraOptions(),
-      RemoteLauncher.class.getName(),
-      RemoteExecutionJobMain.class.getName(),
-      args.entrySet().stream().map(e -> "--" + e.getKey() + "=" + e.getValue()).collect(Collectors.joining(" ")),
-      logsDir, logsDir);
+        "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s "
+            + ">%s/stdout 2>%s/stderr &\n",
+        getProgramRunId().getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
+        jvmOptions.getAMExtraOptions(),
+        RemoteLauncher.class.getName(),
+        RemoteExecutionJobMain.class.getName(),
+        args.entrySet().stream().map(e -> "--" + e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining(" ")),
+        logsDir, logsDir);
 
     scriptWriter.flush();
 
@@ -391,7 +411,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       try (InputStream is = secretFile.getValue().getInputStream()) {
         //noinspection OctalInteger
         session.copy(is, targetPath, secretFile.getKey(),
-                     secretFile.getValue().length(), 0600, null, null);
+            secretFile.getValue().length(), 0600, null, null);
       }
     }
   }

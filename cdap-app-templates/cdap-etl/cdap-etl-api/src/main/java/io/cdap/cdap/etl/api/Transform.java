@@ -26,7 +26,8 @@ import io.cdap.cdap.api.annotation.Beta;
  */
 @Beta
 public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>,
-  SubmitterLifecycle<StageSubmitterContext>, Transformation<IN, OUT>, PipelineConfigurable {
+    SubmitterLifecycle<StageSubmitterContext>, Transformation<IN, OUT>, PipelineConfigurable {
+
   public static final String PLUGIN_TYPE = "transform";
 
   private TransformContext context;
