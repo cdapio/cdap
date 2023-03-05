@@ -45,6 +45,7 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.LocalGitServer;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
@@ -60,19 +61,11 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * Tests for {@link RemoteSourceControlOperationRunner}
  */
-public class RemoteSourceControlOperationRunnerTest {
-  
-  private static final String NAMESPACE1 = "ns1";
-  private static final String DEFAULT_BRANCH_NAME = "develop";
-  private static final String GIT_SERVER_USERNAME = "oauth2";
-  private static final String MOCK_TOKEN = UUID.randomUUID().toString();
-  private static final String TOKEN_NAME = "gittoken";
-  private static final int GIT_COMMAND_TIMEOUT = 2;
+public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBase {
   private static final ApplicationDetail mockAppDetails = new ApplicationDetail(
     "app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
     new ArrayList<>(), new ArrayList<>(), null, null);
@@ -95,12 +88,10 @@ public class RemoteSourceControlOperationRunnerTest {
   private static RemoteSecureStore remoteSecureStore;
   @ClassRule
   public static final TemporaryFolder TEST_TEMP_FOLDER = new TemporaryFolder();
-  public TemporaryFolder tempFolder = new TemporaryFolder();
-  public LocalGitServer gitServer =
-    new LocalGitServer(GIT_SERVER_USERNAME, MOCK_TOKEN, 0, DEFAULT_BRANCH_NAME, tempFolder);
+  public LocalGitServer gitServer = getGitServer();
   @Rule
-  public RuleChain chain = RuleChain.outerRule(tempFolder).around(gitServer);
-  
+  public RuleChain chain = RuleChain.outerRule(baseTempFolder).around(gitServer);
+
   @BeforeClass
   public static void init() throws Exception {
     // Set up CConf, SConf and necessary services
@@ -121,7 +112,7 @@ public class RemoteSourceControlOperationRunnerTest {
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
     InMemoryNamespaceAdmin namespaceClient = new InMemoryNamespaceAdmin();
 
-    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(NAMESPACE1).build();
+    NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(NAMESPACE).build();
     namespaceClient.create(namespaceMeta);
 
     FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(cConf, sConf, namespaceClient,
@@ -155,7 +146,7 @@ public class RemoteSourceControlOperationRunnerTest {
         bind(RemoteClientFactory.class).toInstance(remoteClientFactory);
       }
     }).getInstance(RemoteSecureStore.class);
-    remoteSecureStore.put(NAMESPACE1, TOKEN_NAME, MOCK_TOKEN, "fake git token", ImmutableMap.of("prop1", "value1"));
+    remoteSecureStore.put(NAMESPACE, TOKEN_NAME, MOCK_TOKEN, "fake git token", ImmutableMap.of("prop1", "value1"));
   }
 
   @AfterClass
@@ -170,7 +161,7 @@ public class RemoteSourceControlOperationRunnerTest {
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
     PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE1), repoConfig, mockAppDetails, mockCommit);
+        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -189,7 +180,7 @@ public class RemoteSourceControlOperationRunnerTest {
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
     PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE1), repoConfig, mockAppDetails, mockCommit);
+        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -206,7 +197,7 @@ public class RemoteSourceControlOperationRunnerTest {
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
     PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE1), repoConfig, mockAppDetails, mockCommit);
+        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -228,7 +219,7 @@ public class RemoteSourceControlOperationRunnerTest {
             .setTokenName(TOKEN_NAME + "not_exist")
             .build();
     PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE1), repoConfig, mockAppDetails, mockCommit);
+        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
