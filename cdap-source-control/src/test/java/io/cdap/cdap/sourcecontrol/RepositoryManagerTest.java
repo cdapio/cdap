@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.sourcecontrol;
 
-import com.google.common.hash.Hashing;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.common.NotFoundException;
@@ -32,13 +31,11 @@ import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -49,38 +46,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
  * Tests for {@link  RepositoryManager}.
  */
-public class RepositoryManagerTest {
-  private static final String DEFAULT_BRANCH_NAME = "develop";
-  private static final String GIT_SERVER_USERNAME = "oauth2";
-  private static final String MOCK_TOKEN = UUID.randomUUID().toString();
-  private static final String NAMESPACE = "namespace1";
-  private static final String GITHUB_TOKEN_NAME = "github-pat";
-  private static final int GIT_COMMAND_TIMEOUT = 2;
+public class RepositoryManagerTest extends SourceControlTestBase {
   @Mock
   private SecureStore secureStore;
   private CConfiguration cConf;
-  public TemporaryFolder tempFolder = new TemporaryFolder();
-  public LocalGitServer gitServer =
-    new LocalGitServer(GIT_SERVER_USERNAME, MOCK_TOKEN, 0, DEFAULT_BRANCH_NAME, tempFolder);
+  public LocalGitServer gitServer = getGitServer();
   @Rule
-  public RuleChain chain = RuleChain.outerRule(tempFolder).around(gitServer);
+  public RuleChain chain = RuleChain.outerRule(baseTempFolder).around(gitServer);
 
   @Before
   public void beforeEach() throws Exception {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(secureStore.get(NAMESPACE, GITHUB_TOKEN_NAME))
+    Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
       .thenReturn(new SecureStoreData(null, MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
     cConf = CConfiguration.create();
     cConf.setInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS, GIT_COMMAND_TIMEOUT);
     cConf.set(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
-              tempFolder.newFolder("repository").getAbsolutePath());
+              baseTempFolder.newFolder("repository").getAbsolutePath());
   }
 
   @Test
@@ -90,7 +78,7 @@ public class RepositoryManagerTest {
       .setLink(serverURL + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME + "invalid")
+      .setTokenName(TOKEN_NAME + "invalid")
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
     try {
@@ -104,7 +92,7 @@ public class RepositoryManagerTest {
   @Test
   public void testValidateInvalidToken() throws Exception {
     SourceControlConfig sourceControlConfig = getSourceControlConfig();
-    Mockito.when(secureStore.get(NAMESPACE, GITHUB_TOKEN_NAME))
+    Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
       .thenReturn(new SecureStoreData(null, "invalid-token".getBytes(StandardCharsets.UTF_8)));
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
@@ -121,7 +109,7 @@ public class RepositoryManagerTest {
       .setLink(serverURL + "ignored")
       .setDefaultBranch("develop-invalid")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
     try {
@@ -138,7 +126,7 @@ public class RepositoryManagerTest {
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
       .setLink(serverURL + "ignored")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
     RepositoryManager.validateConfig(secureStore, sourceControlConfig);
@@ -154,7 +142,7 @@ public class RepositoryManagerTest {
     String fileName = "pipeline.json";
     Path path = Paths.get(fileName);
     String fileContents = "{name: pipeline}";
-    addFileToGit(path, fileContents);
+    addFileToGit(path, fileContents, gitServer);
     RepositoryManager manager = getRepositoryManager();
     String commitID = manager.cloneRemote();
     String fileHash = manager.getFileHash(path, commitID);
@@ -167,7 +155,7 @@ public class RepositoryManagerTest {
     Assert.assertEquals(expectedHash, fileHash);
     manager.close();
     // Change the file contents and commit, the hash should also change.
-    addFileToGit(path, "change 2");
+    addFileToGit(path, "change 2", gitServer);
     commitID = manager.cloneRemote();
     Assert.assertNotEquals(manager.getFileHash(path, commitID), expectedHash);
     manager.close();
@@ -188,7 +176,7 @@ public class RepositoryManagerTest {
     String fileContents1 = "abc";
     String fileContents2 = "def";
     Path path = Paths.get(fileName1);
-    addFileToGit(path, fileContents1);
+    addFileToGit(path, fileContents1, gitServer);
     // check file hash of link.
     RepositoryManager manager = getRepositoryManager();
     manager.cloneRemote();
@@ -203,7 +191,7 @@ public class RepositoryManagerTest {
     Assert.assertEquals(new String(Files.readAllBytes(absoluteRepoPath), StandardCharsets.UTF_8), fileContents2);
     manager.close();
     // Commit the symlink change.
-    addFileToGit(path, fileContents2);
+    addFileToGit(path, fileContents2, gitServer);
     manager.cloneRemote();
     // Check the file hash at previous commit.
     Assert.assertEquals(hash, manager.getFileHash(path, commitID));
@@ -216,7 +204,7 @@ public class RepositoryManagerTest {
   public void testGetFileHashInvalidCommitID() throws Exception {
     String fileName = "pipeline.json";
     Path path = Paths.get(fileName);
-    addFileToGit(path, "{name: pipeline}");
+    addFileToGit(path, "{name: pipeline}", gitServer);
     RepositoryManager manager = getRepositoryManager();
     manager.cloneRemote();
     try {
@@ -231,7 +219,7 @@ public class RepositoryManagerTest {
       .setLink(gitServer.getServerURL() + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME);
+      .setTokenName(TOKEN_NAME);
   }
 
   /**
@@ -252,57 +240,6 @@ public class RepositoryManagerTest {
     return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), getRepositoryConfigBuilder().build());
   }
 
-  /**
-   * Clones the Git repository hosted by the {@link LocalGitServer}.
-   *
-   * @param dir the directory to clone the repository in.
-   * @return the cloned {@link Git} object.
-   */
-  private Git getClonedGit(Path dir) throws GitAPIException {
-    return Git.cloneRepository()
-      .setURI(gitServer.getServerURL() + "ignored")
-      .setDirectory(dir.toFile())
-      .setBranch(DEFAULT_BRANCH_NAME)
-      .setTimeout(GIT_COMMAND_TIMEOUT)
-      .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME, MOCK_TOKEN))
-      .call();
-  }
-
-  /**
-   * Adds a file to the git repository hosted by the {@link LocalGitServer}.
-   *
-   * @param relativePath path relative to git repo root.
-   * @param contents     the contents of the file.
-   */
-  private void addFileToGit(Path relativePath, String contents) throws GitAPIException, IOException {
-    Path tempDirPath = tempFolder.newFolder("temp-local-git").toPath();
-    Git localGit = getClonedGit(tempDirPath);
-    Path absolutePath = tempDirPath.resolve(relativePath);
-    // Create parent directories if they don't exist.
-    Files.createDirectories(absolutePath.getParent());
-    Files.write(absolutePath, contents.getBytes(StandardCharsets.UTF_8));
-    localGit.add().addFilepattern(".").call();
-    localGit.commit().setMessage("Adding " + relativePath).call();
-    localGit.push()
-      .setTimeout(GIT_COMMAND_TIMEOUT)
-      .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME, MOCK_TOKEN))
-      .call();
-    localGit.close();
-    DirUtils.deleteDirectoryContents(tempDirPath.toFile());
-  }
-
-  /**
-   * Calculates the hash for provided file contents in a similar way to Git.
-   */
-  private String getGitStyleHash(String fileContents) {
-    // Git prefixes the object with "blob ", followed by the length (as a human-readable integer), followed by a NUL
-    // character and takes the sha1 hash to find the file hash.
-    // See https://stackoverflow.com/a/7225329.
-    return Hashing.sha1()
-      .hashString("blob " + fileContents.length() + "\0" + fileContents, StandardCharsets.UTF_8)
-      .toString();
-  }
-
   @Test
   public void testCommitAndPushSuccess() throws Exception {
     String serverURL = gitServer.getServerURL();
@@ -310,7 +247,7 @@ public class RepositoryManagerTest {
       .setLink(serverURL + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
@@ -332,7 +269,7 @@ public class RepositoryManagerTest {
       .setLink(serverURL + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
@@ -355,7 +292,7 @@ public class RepositoryManagerTest {
       .setDefaultBranch("develop")
       .setPathPrefix(pathPrefix)
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
@@ -374,7 +311,7 @@ public class RepositoryManagerTest {
       .setLink(serverURL + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
-      .setTokenName(GITHUB_TOKEN_NAME)
+      .setTokenName(TOKEN_NAME)
       .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
@@ -390,8 +327,8 @@ public class RepositoryManagerTest {
   }
 
   private void verifyNoCommit() throws GitAPIException, IOException {
-    Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
-    Git localGit = getClonedGit(tempDirPath);
+    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify").toPath();
+    Git localGit = getClonedGit(tempDirPath, gitServer);
     List<RevCommit> commits =
       StreamSupport.stream(localGit.log().all().call().spliterator(), false).collect(Collectors.toList());
     Assert.assertEquals(1, commits.size());
@@ -399,8 +336,8 @@ public class RepositoryManagerTest {
 
   private void verifyCommit(Path pathFromRepoRoot, String expectedContent, CommitMeta commitMeta) throws
     GitAPIException, IOException {
-    Path tempDirPath = tempFolder.newFolder("temp-local-git-verify").toPath();
-    Git localGit = getClonedGit(tempDirPath);
+    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify").toPath();
+    Git localGit = getClonedGit(tempDirPath, gitServer);
     Path filePath = tempDirPath.resolve(pathFromRepoRoot);
 
     String actualContent = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
