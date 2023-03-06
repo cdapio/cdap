@@ -479,9 +479,16 @@ public interface Store {
   /**
    * Removes all program under the given application and also the application itself.
    *
-   * @param id Application id
+   * @param appRef Application reference
    */
-  void removeApplication(ApplicationId id);
+  void removeApplication(ApplicationReference appRef);
+
+  /**
+   * Removes all program under the given application and also the application itself.
+   *
+   * @param appId Application Id
+   */
+  void removeApplication(ApplicationId appId);
 
   /**
    * Remove all metadata associated with the given namespace.

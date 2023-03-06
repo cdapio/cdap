@@ -663,15 +663,27 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void removeApplication(ApplicationReference appRef) {
+    LOG.trace("Removing application: namespace: {}, application: {}", appRef.getNamespace(),
+        appRef.getApplication());
+
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppStateTable(context).deleteAll(appRef.getNamespaceId(), appRef.getApplication());
+      AppMetadataStore metaStore = getAppMetadataStore(context);
+      metaStore.deleteApplication(appRef);
+      metaStore.deleteProgramHistory(appRef);
+    });
+  }
+
+  @Override
   public void removeApplication(ApplicationId id) {
     LOG.trace("Removing application: namespace: {}, application: {}", id.getNamespace(),
-        id.getApplication());
+              id.getApplication(), id.getVersion());
 
     TransactionRunners.run(transactionRunner, context -> {
       getAppStateTable(context).deleteAll(id.getNamespaceId(), id.getApplication());
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplication(id.getNamespace(), id.getApplication(), id.getVersion());
-      metaStore.deleteApplicationEditRecord(id.getAppReference());
       metaStore.deleteProgramHistory(id.getNamespace(), id.getApplication(), id.getVersion());
     });
   }

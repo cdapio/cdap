@@ -78,6 +78,12 @@ import io.cdap.cdap.proto.id.ProgramReference;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.store.DefaultNamespaceStore;
+import org.apache.twill.api.RunId;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -94,11 +100,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import org.apache.twill.api.RunId;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Tests for {@link DefaultStore}.
@@ -696,8 +697,8 @@ public abstract class DefaultStoreTest {
     for (RunCountResult runCountResult : result) {
       ProgramReference programReference = runCountResult.getProgramReference();
       Long count = runCountResult.getCount();
-      if (programReference.equals(nonExistingAppProgramId.getProgramReference())
-          || programReference.equals(nonExistingProgramId.getProgramReference())) {
+      if (programReference.equals(nonExistingAppProgramId.getProgramReference()) ||
+        programReference.equals(nonExistingProgramId.getProgramReference())) {
         Assert.assertNull(count);
         Assert.assertTrue(runCountResult.getException() instanceof NotFoundException);
       } else {
@@ -1162,16 +1163,16 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveApplication() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n"
-        + "\"offset\" : 12345\n"
-        + "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n" +
+                         "\"offset\" : 12345\n" +
+                         "}").getBytes(StandardCharsets.UTF_8);
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
-        new ChangeDetail(null, null, null,
-            System.currentTimeMillis()));
+                                                  new ChangeDetail(null, null, null,
+                                                                   System.currentTimeMillis()));
     store.addApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, spec.getName(), stateKey, stateValue));
 
@@ -1188,17 +1189,17 @@ public abstract class DefaultStoreTest {
   @Test
   public void testStateRemovedOnRemoveAll() throws ApplicationNotFoundException, ConflictException {
     String stateKey = "kafka";
-    byte[] stateValue = ("{\n"
-        + "\"offset\" : 12345\n"
-        + "}").getBytes(StandardCharsets.UTF_8);
+    byte[] stateValue = ("{\n" +
+                         "\"offset\" : 12345\n" +
+                         "}").getBytes(StandardCharsets.UTF_8);
     String appName = "application1";
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(appName);
     ApplicationMeta appMeta = new ApplicationMeta(spec.getName(), spec,
-        new ChangeDetail(null, null, null,
-            System.currentTimeMillis()));
+                                                  new ChangeDetail(null, null, null,
+                                                                   System.currentTimeMillis()));
     store.addApplication(appId, appMeta);
     store.saveState(new AppStateKeyValue(namespaceId, appName, stateKey, stateValue));
 
