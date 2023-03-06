@@ -18,18 +18,28 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
+import io.cdap.cdap.api.metrics.MetricValue;
+import io.cdap.cdap.api.metrics.MetricValues;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.BinaryDecoder;
+import io.cdap.cdap.common.io.BinaryEncoder;
+import io.cdap.cdap.common.io.DatumReader;
+import io.cdap.cdap.common.io.DatumWriter;
+import io.cdap.cdap.common.io.StringCachingDecoder;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
@@ -37,9 +47,15 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.io.ASMDatumWriterFactory;
+import io.cdap.cdap.internal.io.ASMFieldAccessorFactory;
+import io.cdap.cdap.internal.io.ReflectionDatumReaderFactory;
+import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.metrics.collect.AggregatedMetricsEmitter;
+import io.cdap.cdap.metrics.process.MessagingMetricsProcessorService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -48,10 +64,13 @@ import io.cdap.cdap.proto.id.TopicId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -64,6 +83,7 @@ import java.util.function.LongConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 /**
  * A service that periodically relay messages from local TMS to the runtime server.
@@ -72,12 +92,13 @@ import java.util.stream.StreamSupport;
 public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeClientService.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(
-    LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.all(
+    LogSamplers.skipFirstN(5),
+    LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
   private static final Gson GSON = new Gson();
 
   private final List<TopicRelayer> topicRelayers;
-  private final MessagingContext messagingContext;
+  private final MessagingContext payloads;
   private final long pollTimeMillis;
   private final long gracefulShutdownMillis;
   private final ProgramRunId programRunId;
@@ -86,18 +107,34 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   private final AtomicLong programFinishTime;
 
   @Inject
-  RuntimeClientService(CConfiguration cConf, MessagingService messagingService,
-                       RuntimeClient runtimeClient, ProgramRunId programRunId) {
+  RuntimeClientService(CConfiguration cConf,
+                       MessagingService messagingService,
+                       RuntimeClient runtimeClient,
+                       ProgramRunId programRunId) {
     super(RetryStrategies.fromConfiguration(cConf, Constants.Service.RUNTIME_MONITOR_RETRY_PREFIX));
-    this.messagingContext = new MultiThreadMessagingContext(messagingService);
+    this.payloads = new MultiThreadMessagingContext(messagingService);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.programRunId = programRunId;
     this.runtimeClient = runtimeClient;
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.programFinishTime = new AtomicLong(-1L);
+    Schema schema;
+    DatumWriter<MetricValues> recordWriter;
+    DatumReader<MetricValues> reader;
+    try {
+      TypeToken<MetricValues> metricValueType = TypeToken.of(MetricValues.class);
+      schema = new ReflectionSchemaGenerator().generate(metricValueType.getType());
+      recordWriter = new ASMDatumWriterFactory(new ASMFieldAccessorFactory()).create(metricValueType, schema);
+      reader = new ReflectionDatumReaderFactory().create(metricValueType, schema);
+    } catch (UnsupportedTypeException e) {
+      throw new RuntimeException("Failed to generate schema for MetricValues", e);
+    }
+
     this.topicRelayers = RuntimeMonitors.createTopicNameList(cConf)
-      .stream().map(name -> createTopicRelayer(cConf, name)).collect(Collectors.toList());
+      .stream()
+      .map(name -> createTopicRelayer(cConf, name, reader, recordWriter, schema))
+      .collect(Collectors.toList());
   }
 
   @Override
@@ -116,8 +153,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       // If the nextPollDelay returned by all topicRelays equals to the pollTimeMillis,
       // that means all of them fetched till the end of the corresponding topic in the latest fetch.
       long now = System.currentTimeMillis();
-      if ((nextPollDelay == pollTimeMillis && now - (gracefulShutdownMillis >> 1) > getProgramFinishTime())
-          || (now - gracefulShutdownMillis > getProgramFinishTime())) {
+      if ((nextPollDelay == pollTimeMillis && now - (gracefulShutdownMillis >> 1) > getProgramFinishTime()) ||
+        (now - gracefulShutdownMillis > getProgramFinishTime())) {
         LOG.debug("Program {} terminated. Shutting down runtime client service.", programRunId);
         stop();
       }
@@ -135,8 +172,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   @Override
   protected void doShutdown() throws Exception {
     // Keep polling until it sees the program completion
-    RetryStrategy retryStrategy = RetryStrategies.timeLimit(gracefulShutdownMillis, TimeUnit.MILLISECONDS,
-                                                            getRetryStrategy());
+    RetryStrategy retryStrategy =
+      RetryStrategies.timeLimit(gracefulShutdownMillis, TimeUnit.MILLISECONDS, getRetryStrategy());
     Retries.runWithRetries(() -> {
       for (TopicRelayer topicRelayer : topicRelayers) {
         topicRelayer.prepareClose();
@@ -169,7 +206,9 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   /**
    * Accepts a Runnable and passes it to RuntimeClient
-   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the argument
+   *
+   * @param stopper a {@link LongConsumer} with the termination timestamp in seconds as the
+   *                argument
    */
   public void onProgramStopRequested(LongConsumer stopper) {
     runtimeClient.onProgramStopRequested(stopper);
@@ -178,14 +217,22 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
   /**
    * Creates an instance of {@link TopicRelayer} based on the topic.
    */
-  private TopicRelayer createTopicRelayer(CConfiguration cConf, String topic) {
+  private TopicRelayer createTopicRelayer(CConfiguration cConf,
+                                          String topic,
+                                          @Nullable DatumReader<MetricValues> reader,
+                                          @Nullable DatumWriter<MetricValues> writer,
+                                          Schema metricSchema) {
     TopicId topicId = NamespaceId.SYSTEM.topic(topic);
 
     String programStatusTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC);
     if (topic.matches("^" + Pattern.quote(programStatusTopic) + "[0-9]*$")) {
       return new ProgramStatusTopicRelayer(topicId);
     }
-    return new TopicRelayer(topicId);
+    String metricsTopic = cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    if (topic.matches("^" + Pattern.quote(metricsTopic) + "[0-9]]*$")) {
+      return new TopicRelayer(topicId, new MetricsMessageAggregator(reader, metricSchema, writer));
+    }
+    return new TopicRelayer(topicId, null);
   }
 
   /**
@@ -196,13 +243,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     private final Logger progressLog = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
     protected final TopicId topicId;
+    private final MessageAggregator messageAggregator;
     private String lastMessageId;
     private long nextPublishTimeMillis;
     private int totalPublished;
 
-
-    TopicRelayer(TopicId topicId) {
+    TopicRelayer(TopicId topicId, @Nullable MessageAggregator messageAggregator) {
       this.topicId = topicId;
+      this.messageAggregator = messageAggregator;
     }
 
     public TopicId getTopicId() {
@@ -214,8 +262,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      *
      * @return delay in milliseconds till the next poll
      * @throws TopicNotFoundException if the TMS topic to fetch from does not exist
-     * @throws IOException if failed to read from TMS or write to RuntimeClient
-     * @throws GoneException if run already finished
+     * @throws IOException            if failed to read from TMS or write to RuntimeClient
+     * @throws GoneException          if run already finished
      */
     long publishMessages() throws TopicNotFoundException, IOException, BadRequestException, GoneException {
       long currentTimeMillis = System.currentTimeMillis();
@@ -226,20 +274,23 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         return nextPublishTimeMillis - currentTimeMillis;
       }
 
-      try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher().fetch(topicId.getNamespace(),
-                                                                                            topicId.getTopic(),
-                                                                                            fetchLimit,
-                                                                                            lastMessageId)) {
+      try (CloseableIterator<Message> iterator = payloads.getMessageFetcher()
+        .fetch(topicId.getNamespace(), topicId.getTopic(), fetchLimit, lastMessageId)) {
+        Iterator<Message> messageIterator = iterator;
+        if (messageAggregator != null) {
+          messageIterator = messageAggregator.aggregate(iterator);
+        }
         AtomicInteger messageCount = new AtomicInteger();
-        if (iterator.hasNext()) {
+        if (messageIterator.hasNext()) {
           String[] messageId = new String[1];
+          Iterator<Message> finalMessageIterator = messageIterator;
           processMessages(new AbstractIterator<Message>() {
             @Override
             protected Message computeNext() {
-              if (!iterator.hasNext()) {
+              if (!finalMessageIterator.hasNext()) {
                 return endOfData();
               }
-              Message message = iterator.next();
+              Message message = finalMessageIterator.next();
               messageId[0] = message.getId();
               messageCount.incrementAndGet();
               return message;
@@ -298,8 +349,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         // So just log the cause for debugging.
         LOG.error("Failed to publish messages on close for topic {}", topicId, e);
       } catch (GoneException e) {
-        LOG.warn("Failed to publish final messages on topic {} since the run is already marked completed",
-                 topicId, e);
+        LOG.warn("Failed to publish final messages on topic {} since the run is already marked completed", topicId, e);
       } catch (Exception e) {
         LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId, e);
       }
@@ -320,21 +370,21 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     private boolean detectedProgramFinish;
 
     ProgramStatusTopicRelayer(TopicId topicId) {
-      super(topicId);
+      super(topicId, null);
       this.lastProgramStateMessages = new LinkedList<>();
       LOG.trace("Watching for status messages in topic {}", topicId.getTopic());
     }
 
     @Override
     protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException, GoneException {
-      List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
-        .collect(Collectors.toList());
+      List<Message> message =
+        StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false).collect(Collectors.toList());
 
       if (programFinishTime.get() == -1L) {
         long finishTime = findProgramFinishTime(message);
         if (finishTime >= 0) {
           detectedProgramFinish = true;
-          LOG.trace("Detected program {} finish time {} in topic {}", programRunId, finishTime,  topicId.getTopic());
+          LOG.trace("Detected program {} finish time {} in topic {}", programRunId, finishTime, topicId.getTopic());
         }
         programFinishTime.compareAndSet(-1L, finishTime);
       }
@@ -364,10 +414,10 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       super.close();
       if (!lastProgramStateMessages.isEmpty()) {
         try {
-          LOG.debug("Sending {} program completion messages to {}",
-                    lastProgramStateMessages.size(), topicId);
+          LOG.debug("Sending {} program completion messages to {}", lastProgramStateMessages.size(), topicId);
           Retries.runWithRetries(() -> super.processMessages(lastProgramStateMessages.iterator()),
-                                 getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
+                                 getRetryStrategy(),
+                                 t -> t instanceof IOException || t instanceof RetryableException);
         } catch (BadRequestException e) {
           // This shouldn't happen. If it does, that means the server thinks this program is no longer running.
           // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
@@ -375,7 +425,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           LOG.warn("Bad request when program state messages to runtime server: {}", lastProgramStateMessages, e);
         } catch (GoneException e) {
           LOG.warn("Failed to publish program state messages to {} since the run id already marked completed",
-                   topicId, e);
+                   topicId,
+                   e);
         } catch (Exception e) {
           LOG.error("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
         }
@@ -420,6 +471,162 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       }
 
       return -1L;
+    }
+  }
+
+  /**
+   * An aggregator for messages.
+   */
+  private interface MessageAggregator {
+    Iterator<Message> aggregate(Iterator<Message> input);
+  }
+
+  /**
+   * An aggregator for metrics that combines metrics with the same tags and metric name.
+   */
+  private static class MetricsMessageAggregator implements MessageAggregator {
+    private final HashMap<String, String> cachemap;
+    private final MessagingMetricsProcessorService.PayloadInputStream decodingOutputStream;
+    private final StringCachingDecoder decoder;
+    private final DatumReader<MetricValues> reader;
+    private final Schema schema;
+    private final ByteArrayOutputStream encodeOutputStream;
+    private final BinaryEncoder encoder;
+    private final DatumWriter<MetricValues> recordWriter;
+
+    MetricsMessageAggregator(DatumReader<MetricValues> reader, Schema schema, DatumWriter<MetricValues> recordWriter) {
+      // One time set up for decoding.
+      this.cachemap = new HashMap<>();
+      decodingOutputStream = new MessagingMetricsProcessorService.PayloadInputStream();
+      decoder = new StringCachingDecoder(new BinaryDecoder(decodingOutputStream), cachemap);
+      this.encodeOutputStream = new ByteArrayOutputStream(1024);
+      encoder = new BinaryEncoder(encodeOutputStream);
+      this.reader = reader;
+      this.schema = schema;
+      this.recordWriter = recordWriter;
+    }
+
+    @Override
+    public Iterator<Message> aggregate(Iterator<Message> input) {
+      if (!input.hasNext()) {
+        return input;
+      }
+      ArrayList<Message> messages = new ArrayList<>();
+      while (input.hasNext()) {
+        Message message = input.next();
+        messages.add(message);
+      }
+
+      // Skip decoding and encoding if there is no benefit.
+      if (messages.size() <= 1) {
+        LOG.warn("Aggregate from (1) -> (1)");
+        return messages.iterator();
+      }
+      ArrayList<MetricValues> decoded = new ArrayList<>();
+
+      long encEnd1 = System.currentTimeMillis();
+
+      // Decode the messages into MetricValues.
+      String lastMessageId = null;
+      for (Message message : messages) {
+        lastMessageId = message.getId();
+        decodingOutputStream.reset(message.getPayload());
+        try {
+          decoded.add(reader.read(decoder, schema));
+        } catch (IOException e) {
+          LOG.warn("Failed to decode metric message.", e);
+        }
+      }
+      cachemap.clear();
+
+      long decEnd = System.currentTimeMillis();
+      LOG.warn("Time taken to decode: " + (decEnd - encEnd1));
+
+      // Aggregate the metrics.
+      ArrayList<MetricValues> aggregated = aggregateMetricValues(decoded);
+      long aggEnd = System.currentTimeMillis();
+      LOG.warn("Time taken to aggregate: " + (aggEnd - decEnd));
+      LOG.warn("Aggregate from ({}) -> ({})", decoded.size(), aggregated.size());
+
+      ArrayList<Message> result = new ArrayList<>();
+      // Encode metrics back to messages.
+      for (MetricValues metricValues : aggregated) {
+        // Encode the metric value into a message.
+        encodeOutputStream.reset();
+        try {
+          recordWriter.encode(metricValues, encoder);
+          byte[] payload = encodeOutputStream.toByteArray();
+          // creating a final copy to access in inner class.
+          final String finalLastMessageId = lastMessageId;
+          result.add(new Message() {
+            @Override
+            public String getId() {
+              // TopicRelayers keep track of the last message ID
+              // to fetch messages in the next iteration.
+              // Message IDs are generated by the messaging service. Return the last message ID before aggregation
+              // everytime.
+              return finalLastMessageId;
+            }
+
+            @Override
+            public byte[] getPayload() {
+              return payload;
+            }
+          });
+        } catch (IOException e) {
+          LOG.warn("Failed to encode metric to message payload.", e);
+        }
+      }
+
+      return result.iterator();
+    }
+
+    private ArrayList<MetricValues> aggregateMetricValues(ArrayList<MetricValues> metrics) {
+      ArrayList<MetricValues> result = new ArrayList<>();
+
+      // Group metrics with the same tags.
+      HashMap<Map<String, String>, ArrayList<MetricValues>> grouped = new HashMap<>();
+      for (MetricValues mv : metrics) {
+        if (mv.getMetrics().isEmpty()) {
+          continue;
+        }
+        grouped.putIfAbsent(mv.getTags(), new ArrayList<>());
+        grouped.get(mv.getTags()).add(mv);
+      }
+
+      // Aggregate metrics with the same tags and name.
+      for (Map.Entry<Map<String, String>, ArrayList<MetricValues>> iter : grouped.entrySet()) {
+        // Sort according to timestamp so that gauge values that were emitted at the end are retained.
+        ArrayList<MetricValues> sorted = iter.getValue();
+        sorted.sort((MetricValues m1, MetricValues m2) -> (int) (m1.getTimestamp() - m2.getTimestamp()));
+        HashMap<String, AggregatedMetricsEmitter> emitters = new HashMap<>();
+        ArrayList<MetricValue> aggregatedMetrics = new ArrayList<>();
+
+        for (MetricValues mvs : sorted) {
+          for (MetricValue metric : mvs.getMetrics()) {
+            switch (metric.getType()) {
+              case COUNTER:
+                emitters.computeIfAbsent(metric.getName(), AggregatedMetricsEmitter::new).increment(metric.getValue());
+                break;
+              case GAUGE:
+                emitters.computeIfAbsent(metric.getName(), AggregatedMetricsEmitter::new).gauge(metric.getValue());
+                break;
+              default:
+                // Don't know how to aggregate other metric types, so just add them without aggregation.
+                aggregatedMetrics.add(metric);
+            }
+          }
+        }
+
+        for (AggregatedMetricsEmitter emitter : emitters.values()) {
+          aggregatedMetrics.add(emitter.emit());
+        }
+
+        // Retain the last timestamp for the aggregated metrics.
+        long lastTimestamp = sorted.get(sorted.size() - 1).getTimestamp();
+        result.add(new MetricValues(iter.getKey(), lastTimestamp, aggregatedMetrics));
+      }
+      return result;
     }
   }
 }

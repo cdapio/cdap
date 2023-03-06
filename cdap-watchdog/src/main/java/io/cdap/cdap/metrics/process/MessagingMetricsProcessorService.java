@@ -505,13 +505,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     return false;
   }
 
-  private class PayloadInputStream extends ByteArrayInputStream {
+  public static class PayloadInputStream extends ByteArrayInputStream {
 
-    PayloadInputStream() {
+    public PayloadInputStream() {
       super(Bytes.EMPTY_BYTE_ARRAY);
     }
 
-    void reset(byte[] buf) {
+    public void reset(byte[] buf) {
       this.buf = buf;
       this.pos = 0;
       this.count = buf.length;
