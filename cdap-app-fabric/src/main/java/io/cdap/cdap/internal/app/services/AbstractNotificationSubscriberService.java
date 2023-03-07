@@ -51,6 +51,18 @@ public abstract class AbstractNotificationSubscriberService extends
       MessagingService messagingService,
       MetricsCollectionService metricsCollectionService,
       TransactionRunner transactionRunner) {
+    this(name, cConf, topicName, fetchSize, emptyFetchDelayMillis, messagingService,
+        metricsCollectionService,
+        transactionRunner, fetchSize);
+  }
+
+  protected AbstractNotificationSubscriberService(String name, CConfiguration cConf,
+      String topicName,
+      int fetchSize, long emptyFetchDelayMillis,
+      MessagingService messagingService,
+      MetricsCollectionService metricsCollectionService,
+      TransactionRunner transactionRunner,
+      int txSize) {
     super(NamespaceId.SYSTEM.topic(topicName), fetchSize,
         cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
         emptyFetchDelayMillis,
@@ -61,7 +73,8 @@ public abstract class AbstractNotificationSubscriberService extends
             Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
             Constants.Metrics.Tag.TOPIC, topicName,
             Constants.Metrics.Tag.CONSUMER, name
-        )));
+        )),
+        txSize);
     this.name = name;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactionRunner = transactionRunner;

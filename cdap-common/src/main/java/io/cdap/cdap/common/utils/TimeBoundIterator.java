@@ -38,12 +38,13 @@ public class TimeBoundIterator<T> extends AbstractIterator<T> {
     this(delegate, timeBoundMillis, new Stopwatch());
   }
 
-  @VisibleForTesting
-  TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis, Stopwatch stopwatch) {
+  public TimeBoundIterator(Iterator<T> delegate, long timeBoundMillis, Stopwatch stopwatch) {
     this.delegate = delegate;
     this.timeBoundMillis = timeBoundMillis;
     this.stopwatch = stopwatch;
-    this.stopwatch.start();
+    if (!this.stopwatch.isRunning()) {
+      this.stopwatch.start();
+    }
   }
 
   @Override

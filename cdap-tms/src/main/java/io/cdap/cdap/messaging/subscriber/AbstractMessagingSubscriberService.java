@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.messaging.subscriber;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.AbstractIterator;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -26,7 +27,9 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,22 +50,48 @@ public abstract class AbstractMessagingSubscriberService<T> extends
   private final int txTimeoutSeconds;
 
   /**
-   * Constructor.
+   * Specifies tx size for processing fetched messages. If txSize and fetchSize are identical, then
+   * all fetched messages are processed in one transaction.
+   */
+  private final int txSize;
+
+  /**
+   * time bound in which fetched messages have to be processed. Message processing will abort of
+   * time bound hits.
+   */
+  private final long timeBoundMillis;
+
+  /**
+   * Constructor with txSize being identical to fetchSize.
    *
    * @param topicId the topic to consume from
    * @param fetchSize number of messages to fetch in each batch
    * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
    * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty
-   *     result
+   * result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
    * @param metricsContext the {@link MetricsContext} for emitting metrics about the message
-   *     consumption.
+   * consumption.
    */
   protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
       int txTimeoutSeconds, long emptyFetchDelayMillis,
       RetryStrategy retryStrategy, MetricsContext metricsContext) {
+    this(topicId, fetchSize, txTimeoutSeconds, emptyFetchDelayMillis, retryStrategy, metricsContext,
+        fetchSize);
+
+  }
+
+  protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
+      int txTimeoutSeconds, long emptyFetchDelayMillis,
+      RetryStrategy retryStrategy, MetricsContext metricsContext,
+      int txSize) {
     super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
     this.txTimeoutSeconds = txTimeoutSeconds;
+    this.txSize = txSize;
+    // Process the notifications and record the message id of where the processing is up to.
+    // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+    this.timeBoundMillis = 900L * txTimeoutSeconds;
+
   }
 
   /**
@@ -76,7 +105,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances.
    * @return the last persisted message id or {@code null} to have first fetch starts from the first
-   *     available message in the topic.
+   * available message in the topic.
    * @throws Exception if failed to load the message id
    */
   @Nullable
@@ -87,8 +116,8 @@ public abstract class AbstractMessagingSubscriberService<T> extends
    * transaction for the call to {@link #processMessages(StructuredTableContext, Iterator)}.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(StructuredTableContext,
-   *     Iterator)} has been processed up to.
+   * @param messageId the message id that the
+   * {@link #processMessages(StructuredTableContext, Iterator)} has been processed up to.
    * @throws Exception if failed to persist the message id
    * @see #processMessages(StructuredTableContext, Iterator)
    */
@@ -112,11 +141,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends
    * raised from this method, the messages as provided through the {@code messages} parameter will
    * be replayed in the next call.
    *
-   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for
-   *     the transaction
-   * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link
-   *     ImmutablePair#first} as the message id, and the {@link ImmutablePair#second} as the decoded
-   *     message
+   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for the
+   * transaction
+   * @param messages an {@link Iterator} of {@link ImmutablePair}, with the
+   * {@link ImmutablePair#first} as the message id, and the {@link ImmutablePair#second} as the
+   * decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(StructuredTableContext, String)
    */
@@ -139,30 +168,88 @@ public abstract class AbstractMessagingSubscriberService<T> extends
     return TransactionRunners.run(getTransactionRunner(), (TxCallable<String>) this::loadMessageId);
   }
 
+  /**
+   * Process messages in multiple transactions where each transaction has size of
+   * {@link this#txSize} messages or size of ONE in case
+   * {@link this#shouldRunInSeparateTx(ImmutablePair)} returns true For example, for given (m1, m2,
+   * m3, m4, m5) with txSize equals 3, and  shouldRunInSeparateTx(m3)=true we process them in the
+   * following three transactions (m1, m2) (m3) (m4, m5)
+   *
+   * @param messages an {@link Iterable} of {@link ImmutablePair}, with the
+   * {@link ImmutablePair#first} as the message id, and the {@link ImmutablePair#second} as the
+   * decoded message
+   */
   @Nullable
   @Override
   protected String processMessages(Iterable<ImmutablePair<String, T>> messages) throws Exception {
-    MessageTrackingIterator iterator;
+    List<ImmutablePair<String, T>> currentTxMessages;
+    String lastMessageId = null;
+    MessageTrackingIterator iterator = new MessageTrackingIterator(messages.iterator());
+    Stopwatch stopwatch = new Stopwatch();
+    while (iterator.hasNext()) {
+      currentTxMessages = new ArrayList<>();
 
-    // Process the notifications and record the message id of where the processing is up to.
-    // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
-    long timeBoundMillis = 900L * txTimeoutSeconds;
-    iterator = TransactionRunners.run(getTransactionRunner(), context -> {
-      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(
-          messages.iterator(),
-          timeBoundMillis);
-      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-      processMessages(context, trackingIterator);
-      String lastMessageId = trackingIterator.getLastMessageId();
+      while (iterator.hasNext() && currentTxMessages.size() < this.txSize) {
+        if (shouldRunInSeparateTx(iterator.peek())) {
+          // If next message should run in a separate transaction, two cases exist:
+          // 1. if currentTxMessages is empty, we can add next message and go to process it.
+          // 2. If currentTxMessages is not empty, we have to process what is in currentTxMessages,
+          // and process next message in the next round.
+          if (currentTxMessages.isEmpty()) {
+            currentTxMessages.add(iterator.next());
+          }
+          break;
+        }
+        currentTxMessages.add(iterator.next());
+      }
+
+      try {
+        String result = processSingleTxn(currentTxMessages, stopwatch);
+        if (result != null) {
+          // we only set lastMessageId if result of current batch is not null
+          // in order to avoid setting lastMessageId to null in case current batch returned null
+          // but previous batch finished.
+          lastMessageId = result;
+        }
+      } catch (Exception ex) {
+        if (lastMessageId == null) {
+          // exception has happened when processing first batch. So we throw the exception
+          throw ex;
+        }
+        LOG.debug(
+            "Got exception when processing messages. Last successful processed message Id is {}",
+            lastMessageId, ex);
+      }
+    }
+
+    stopwatch.stop();
+    return lastMessageId;
+  }
+
+  /**
+   * Processes messages in a single transaction. Given that the transaction may be retried due to an
+   * exception, messages are of type {@link Iterable} instead of {@link Iterator}. Therefore, inside
+   * the transaction, we have to call {@link Iterable#iterator()} every time the transaction is
+   * called.
+   */
+  @Nullable
+  private String processSingleTxn(Iterable<ImmutablePair<String, T>> messages, Stopwatch stopwatch)
+      throws Exception {
+
+    return TransactionRunners.run(getTransactionRunner(), context -> {
+      TimeBoundIterator timeBoundIterator = new TimeBoundIterator<>(messages.iterator(),
+          timeBoundMillis, stopwatch);
+      MessageTrackingIterator messageTrackingIterator = new MessageTrackingIterator(
+          timeBoundIterator);
+      processMessages(context, messageTrackingIterator);
+      String lastMessageId = messageTrackingIterator.getLastMessageId();
 
       // Persist the message id of the last message being consumed from the iterator
       if (lastMessageId != null) {
         storeMessageId(context, lastMessageId);
       }
-      return trackingIterator;
+      return lastMessageId;
     }, Exception.class);
-
-    return iterator.getLastMessageId();
   }
 
   /**
@@ -170,40 +257,22 @@ public abstract class AbstractMessagingSubscriberService<T> extends
    */
   private final class MessageTrackingIterator extends AbstractIterator<ImmutablePair<String, T>> {
 
-    private final Iterator<ImmutablePair<String, T>> messages;
-    private String lastMessageId;
-    private int consumedCount;
-    private boolean shouldEnd;
+    Iterator<ImmutablePair<String, T>> iterator;
 
-    MessageTrackingIterator(Iterator<ImmutablePair<String, T>> messages) {
-      this.messages = messages;
-      this.consumedCount = 0;
-      this.shouldEnd = false;
+    private String lastMessageId;
+
+    MessageTrackingIterator(Iterator<ImmutablePair<String, T>> iterator) {
+      this.iterator = iterator;
     }
 
     @Override
     protected ImmutablePair<String, T> computeNext() {
-      if (shouldEnd || !messages.hasNext()) {
-        return endOfData();
+      if (iterator.hasNext()) {
+        ImmutablePair<String, T> message = iterator.next();
+        lastMessageId = message.getFirst();
+        return message;
       }
-
-      ImmutablePair<String, T> message = messages.next();
-      if (shouldRunInSeparateTx(message)) {
-        // if we should process this message in a separate tx and we've already processed other messages,
-        // pretend we've gone through all messages already. The next time we try to process a batch of messages,
-        // this expensive one will be the first message.
-        if (consumedCount > 0) {
-          LOG.debug("Ending message batch early to process {} in a separate tx",
-              message.getSecond());
-          return endOfData();
-        }
-        // if we should process this message in a separate tx and we haven't processed any messages yet,
-        // remember that we should pretend this iterator only had one element in it
-        shouldEnd = true;
-      }
-      consumedCount++;
-      lastMessageId = message.getFirst();
-      return message;
+      return endOfData();
     }
 
     @Nullable

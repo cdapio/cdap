@@ -196,6 +196,7 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   private final CConfiguration cConf;
   private final Store store;
   private final RunRecordMonitorService runRecordMonitorService;
+  private final boolean checkTxSeparation;
 
   ProgramNotificationSingleTopicSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                                   MetricsCollectionService metricsCollectionService,
@@ -210,7 +211,8 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     super(name, cConf, topicName,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
-          messagingService, metricsCollectionService, transactionRunner);
+          messagingService, metricsCollectionService, transactionRunner,
+          cConf.getInt(Constants.AppFabric.STATUS_EVENT_TX_SIZE));
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
@@ -222,6 +224,11 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
     this.runRecordMonitorService = runRecordMonitorService;
     this.cConf = cConf;
     this.store = store;
+
+    // If number of partitions equals 1, DB deadlock cannot happen as a result of concurrent modifications to
+    // programCountsTable
+    this.checkTxSeparation = cConf.getInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS) > 1
+      && cConf.getBoolean(Constants.AppFabric.PROGRAM_STATUS_EVENT_TX_SEPARATION);
   }
 
   @Override
@@ -277,6 +284,22 @@ class ProgramNotificationSingleTopicSubscriberService extends AbstractNotificati
   protected void storeMessageId(StructuredTableContext context, String messageId)
     throws IOException, TableNotFoundException {
     getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), "", messageId);
+  }
+
+  @Override
+  protected boolean shouldRunInSeparateTx(ImmutablePair<String, Notification> message) {
+    if (!checkTxSeparation) {
+      return false;
+    }
+
+    String clusterStatusStr = message.getSecond().getProperties().get(ProgramOptionConstants.CLUSTER_STATUS);
+    if (clusterStatusStr != null &&
+      ProgramRunClusterStatus.valueOf(clusterStatusStr) == ProgramRunClusterStatus.PROVISIONING) {
+      // PROVISIONING notifications result in increment in programCountsTable which may result in DB deadlock
+      // under high load
+      return true;
+    }
+    return false;
   }
 
   @Override
