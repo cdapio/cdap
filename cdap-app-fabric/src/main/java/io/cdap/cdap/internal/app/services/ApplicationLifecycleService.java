@@ -1092,7 +1092,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws CannotBeDeletedException if there are active programs running
    */
   public void removeApplication(ApplicationReference appRef)
-      throws ApplicationNotFoundException, CannotBeDeletedException {
+    throws ApplicationNotFoundException, CannotBeDeletedException, IOException {
     // enforce DELETE privileges on the app
     accessEnforcer.enforce(appRef.app(ApplicationId.DEFAULT_VERSION),
         authenticationContext.getPrincipal(), StandardPermission.DELETE);
@@ -1107,17 +1107,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // since already checked DELETE privileges above, no need to check again for appDetail
     // ensure no running programs across all versions of the application
     ensureNoRunningPrograms(appRef);
-
-    store.scanApplications(
-        ScanApplicationsRequest.builder().setApplicationReference(appRef).build(),
-        batchSize,
-        (appId, app) -> {
-          try {
-            deleteApp(appId, app.getSpec());
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        });
+    ApplicationId appId = new ApplicationId(appRef.getNamespace(), appRef.getApplication(),
+                                            appMeta.getSpec().getAppVersion());
+    // TODO :refactor to take application reference - CDAP-20425
+    deleteApp(appId, appMeta.getSpec());
   }
 
   /**
@@ -1340,7 +1333,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     deletePreferences(appId, spec);
-    store.removeApplication(appId);
+    store.removeApplication(appId.getAppReference());
 
     try {
       // delete the owner as it has already been determined that this is the only version of the app

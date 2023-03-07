@@ -676,9 +676,9 @@ public class AppMetadataStore {
     getApplicationSpecificationTable().delete(fields);
   }
 
-  public void deleteApplicationEditRecord(ApplicationReference appRef) throws IOException {
-    List<Field<?>> fields = getNamespaceApplicationKeys(appRef);
-    getApplicationEditTable().delete(fields);
+  public void deleteApplication(ApplicationReference appRef) throws IOException {
+    getApplicationEditTable().delete(getNamespaceApplicationKeys(appRef));
+    getApplicationSpecificationTable().deleteAll(getNamespaceAndApplicationRange(appRef));
   }
 
   public void deleteApplications(String namespaceId)
@@ -2072,6 +2072,20 @@ public class AppMetadataStore {
         Range.singleton(getCountApplicationPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationId)));
   }
 
+  public void deleteProgramHistory(ApplicationReference applicationReference)
+    throws IOException {
+    getRunRecordsTable()
+      .deleteAll(
+        Range.singleton(getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_ACTIVE, applicationReference)));
+    getRunRecordsTable()
+      .deleteAll(Range.singleton(
+        getRunRecordApplicationRefPrefix(TYPE_RUN_RECORD_COMPLETED, applicationReference)));
+    getProgramCountsTable().deleteAll(
+      Range.singleton(getCountApplicationRefPrefix(TYPE_COUNT, applicationReference)));
+    getProgramCountsTable().deleteAll(
+      Range.singleton(getCountApplicationRefPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationReference)));
+  }
+
   public void deleteProgramHistory(NamespaceId namespaceId) throws IOException {
     getRunRecordsTable().deleteAll(
         Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId)));
@@ -2449,6 +2463,15 @@ public class AppMetadataStore {
     return fields;
   }
 
+  private List<Field<?>> getCountApplicationRefPrefix(String countType, ApplicationReference applicationReference) {
+    List<Field<?>> fields = getCountTypePrefix(countType);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,
+                                  applicationReference.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD,
+                                  applicationReference.getApplication()));
+    return fields;
+  }
+
   // Do NOT use with type = RunRecordDetail since that needs custom deserialization {@link deserializeRunRecordMeta}
   private <T> List<T> scanWithRange(Range range, Type typeofT, StructuredTable table, String field)
       throws IOException {
@@ -2515,6 +2538,16 @@ public class AppMetadataStore {
       return fields;
     }
     fields.addAll(getApplicationPrimaryKeys(applicationId));
+    return fields;
+  }
+
+  private List<Field<?>> getRunRecordApplicationRefPrefix(String status,
+                                                          @Nullable ApplicationReference applicationReference) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
+    if (applicationReference == null) {
+      return fields;
+    }
+    fields.addAll(getNamespaceApplicationKeys(applicationReference));
     return fields;
   }
 
