@@ -46,8 +46,9 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppContext;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
@@ -174,8 +175,9 @@ public class SourceControlManagementService {
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
     CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(new PushAppContext(appRef.getParent(), repoConfig,
-                                                                                        appDetail, commitMeta));
+    PushAppResponse pushResponse = sourceControlOperationRunner.push(
+      new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
+    );
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -230,7 +232,7 @@ public class SourceControlManagementService {
     throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
-    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(appRef, repoConfig);
+    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
 
     if (latestMeta != null &&
       latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {

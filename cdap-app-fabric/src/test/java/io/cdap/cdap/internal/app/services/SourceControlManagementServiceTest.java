@@ -298,7 +298,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
                                                                   appId1.getId() + " " + "hash", mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
 
     // Assert the result is as expected
     ApplicationRecord result = sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
@@ -330,7 +330,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
                                                                   appId1.getId() + " hash", mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
 
     sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
   }
@@ -349,7 +349,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doThrow(new ApplicationNotFoundException(appRef))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -376,7 +376,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doThrow(new AuthenticationConfigException("Repo config is invalid"))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -403,7 +403,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doThrow(new SourceControlException("Failed to pull application", new Exception()))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+      .when(mockSourceControlOperationRunner).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -442,7 +442,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Set up the pullResponse so that the fileHashes are the same
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(), mockedFileHash, mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any(), Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
     try {
       ApplicationReference appRef = namespaceId.appReference(appId1.getId());
       sourceControlService.pullAndDeploy(appRef);

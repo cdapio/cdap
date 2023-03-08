@@ -19,6 +19,7 @@ package io.cdap.cdap.common;
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import io.cdap.cdap.proto.id.EntityId;
 import io.netty.handler.codec.http.HttpResponseStatus;
+
 import javax.annotation.Nullable;
 
 /**
@@ -47,6 +48,11 @@ public class NotFoundException extends Exception implements HttpErrorStatusProvi
 
   public NotFoundException(String errorMessage) {
     super(errorMessage);
+    this.object = null;
+  }
+
+  public NotFoundException(String errorMessage, Throwable cause) {
+    super(errorMessage, cause);
     this.object = null;
   }
 

@@ -43,6 +43,7 @@ public abstract class SourceControlTestBase {
   protected static final String MOCK_TOKEN = UUID.randomUUID().toString();
   protected static final String NAMESPACE = "namespace1";
   protected static final String TOKEN_NAME = "github-pat";
+  protected static final String PATH_PREFIX = "pathPrefix";
   protected static final String TEST_APP_NAME = "app1";
   protected static final String TEST_APP_SPEC = "{\n" +
     "  \"artifact\": {\n" +

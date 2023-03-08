@@ -27,11 +27,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
-import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
 import org.slf4j.Logger;
@@ -62,13 +62,13 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
   }
 
   @Override
-  public PushAppResponse push(PushAppContext pushAppContext) throws NoChangesToPushException,
+  public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
     try {
-      RunnableTaskRequest request =
-        RunnableTaskRequest.getBuilder(PushAppTask.class.getName()).withParam(GSON.toJson(pushAppContext)).build();
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
+        .withParam(GSON.toJson(pushAppOperationRequest)).build();
       
-      LOG.info("Pushing application {} to linked repository", pushAppContext.getAppToPush());
+      LOG.trace("Pushing application {} to linked repository", pushAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
     } catch (RemoteExecutionException e) {
@@ -94,10 +94,35 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
   }
 
   @Override
-  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig) throws NotFoundException,
+  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest) throws NotFoundException,
     AuthenticationConfigException {
-    // TODO: CDAP-20356, pull application in task worker
-    throw new UnsupportedOperationException("Not implemented");
+    try {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
+          .withParam(GSON.toJson(pulAppOperationRequest)).build();
+
+      LOG.trace("Pulling application {} from linked repository", pulAppOperationRequest.getApp());
+      byte[] result = remoteTaskExecutor.runTask(request);
+      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PullAppResponse.class);
+    } catch (RemoteExecutionException e) {
+      // Getting the actual RemoteTaskException
+      // which has the root cause stackTrace and error message
+      RemoteTaskException remoteTaskException = e.getCause();
+      String exceptionClass = remoteTaskException.getRemoteExceptionClassName();
+      String exceptionMessage = remoteTaskException.getMessage();
+      Throwable cause = remoteTaskException.getCause();
+
+      if (AuthenticationConfigException.class.getName().equals(exceptionClass)) {
+        throw new AuthenticationConfigException(exceptionMessage, cause);
+      }
+
+      if (NotFoundException.class.getName().equals(exceptionClass)) {
+        throw new NotFoundException(exceptionMessage, cause);
+      }
+
+      throw new SourceControlException(exceptionMessage, cause);
+    } catch (Exception ex) {
+      throw new SourceControlException(ex.getMessage(), ex);
+    }
   }
 
   @Override

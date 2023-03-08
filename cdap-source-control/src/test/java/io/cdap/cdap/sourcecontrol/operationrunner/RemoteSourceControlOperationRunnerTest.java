@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -33,6 +34,8 @@ import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.namespace.InMemoryNamespaceAdmin;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
@@ -60,23 +63,28 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TemporaryFolder;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
  * Tests for {@link RemoteSourceControlOperationRunner}
  */
 public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBase {
+  private static final ApplicationReference mockAppRef = new ApplicationReference(NAMESPACE, TEST_APP_NAME);
   private static final ApplicationDetail mockAppDetails = new ApplicationDetail(
-    "app1", "v1", "description1", null, null, "conf1", new ArrayList<>(),
+    TEST_APP_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
     new ArrayList<>(), new ArrayList<>(), null, null);
   private static final CommitMeta mockCommit = new CommitMeta("author", "commiter", System.currentTimeMillis(),
                                                               "commit");
+  @ClassRule
+  public static final TemporaryFolder TEST_TEMP_FOLDER = new TemporaryFolder();
   private static final RepositoryConfig mockRepoConfig =
       new RepositoryConfig.Builder()
           .setProvider(Provider.GITHUB)
           .setLink("ignored")
           .setDefaultBranch(DEFAULT_BRANCH_NAME)
-          .setPathPrefix("pathPrefix")
+          .setPathPrefix(PATH_PREFIX)
           .setAuthType(AuthType.PAT)
           .setTokenName(TOKEN_NAME)
           .build();
@@ -86,12 +94,9 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   private static RemoteClientFactory remoteClientFactory;
   private static MetricsCollectionService metricsCollectionService;
   private static RemoteSecureStore remoteSecureStore;
-  @ClassRule
-  public static final TemporaryFolder TEST_TEMP_FOLDER = new TemporaryFolder();
   public LocalGitServer gitServer = getGitServer();
   @Rule
   public RuleChain chain = RuleChain.outerRule(baseTempFolder).around(gitServer);
-
   @BeforeClass
   public static void init() throws Exception {
     // Set up CConf, SConf and necessary services
@@ -155,13 +160,13 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   }
 
   @Test
-  public void testRemoteSourceControlOperationRunner() throws Exception {
+  public void testPushSuccess() throws Exception {
     // Get the actual repo config
     String serverURL = gitServer.getServerURL();
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
-    PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
+    PushAppOperationRequest mockPushContext =
+        new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -174,13 +179,13 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   }
 
   @Test(expected = SourceControlException.class)
-  public void testRemoteSourceControlOperationRunnerPushFailureException() throws Exception {
+  public void testPushFailureException() throws Exception {
     // Get the actual repo config
     String serverURL = gitServer.getServerURL();
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
-    PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
+    PushAppOperationRequest mockPushContext =
+        new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -191,13 +196,13 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   }
 
   @Test(expected = NoChangesToPushException.class)
-  public void testRemoteSourceControlOperationRunnerNoChangesToPushException() throws Exception {
+  public void testNoChangesToPushException() throws Exception {
     // Get the actual repo config
     String serverURL = gitServer.getServerURL();
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
-    PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
+    PushAppOperationRequest mockPushContext =
+        new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
@@ -208,7 +213,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
   }
 
   @Test(expected = AuthenticationConfigException.class)
-  public void testRemoteSourceControlOperationRunnerAuthenticationConfigException() throws Exception {
+  public void testPushAuthenticationConfigException() throws Exception {
     String serverURL = gitServer.getServerURL();
 
     // Get the actual repo config
@@ -218,12 +223,80 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
             .setLink(serverURL + "ignored")
             .setTokenName(TOKEN_NAME + "not_exist")
             .build();
-    PushAppContext mockPushContext =
-        new PushAppContext(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
+    PushAppOperationRequest mockPushContext =
+        new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
 
     RemoteSourceControlOperationRunner operationRunner =
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
 
     operationRunner.push(mockPushContext);
+  }
+
+  @Test
+  public void testPullSuccess() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig repoConfig =
+      new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
+    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+
+    RemoteSourceControlOperationRunner operationRunner =
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+    Path configFilePath = Paths.get(PATH_PREFIX, TEST_APP_NAME+".json");
+
+    addFileToGit(configFilePath, TEST_APP_SPEC, gitServer);
+
+    PullAppResponse<?> response = operationRunner.pull(mockPullRequest);
+
+    // validate pull response
+    AppRequest<?> appRequest = response.getAppRequest();
+    validateTestAppRequest(appRequest);
+    Assert.assertEquals(response.getApplicationName(), mockAppDetails.getName());
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void testPullAppConfigNotFoundException() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig repoConfig =
+      new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
+    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+
+    RemoteSourceControlOperationRunner operationRunner =
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+    operationRunner.pull(mockPullRequest);
+  }
+
+  @Test(expected = SourceControlException.class)
+  public void testPullFailureException() throws Exception {
+    String serverURL = gitServer.getServerURL();
+    RepositoryConfig repoConfig =
+      new RepositoryConfig.Builder(mockRepoConfig).setLink(serverURL + "ignored").build();
+    PulAppOperationRequest mockPullRequest = new PulAppOperationRequest(mockAppRef, repoConfig);
+
+    RemoteSourceControlOperationRunner operationRunner =
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+
+    // close the remote repository simulating failure
+    gitServer.after();
+    operationRunner.pull(mockPullRequest);
+  }
+
+  @Test(expected = AuthenticationConfigException.class)
+  public void testPullAuthenticationConfigException() throws Exception {
+    String serverURL = gitServer.getServerURL();
+
+    // Get the actual repo config
+    // But set a non-existing token name
+    RepositoryConfig repoConfig =
+      new RepositoryConfig.Builder(mockRepoConfig)
+        .setLink(serverURL + "ignored")
+        .setTokenName(TOKEN_NAME + "not_exist")
+        .build();
+    PulAppOperationRequest mockPullRequest =
+      new PulAppOperationRequest(mockAppRef, repoConfig);
+
+    RemoteSourceControlOperationRunner operationRunner =
+      new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
+
+    operationRunner.pull(mockPullRequest);
   }
 }

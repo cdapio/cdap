@@ -26,7 +26,6 @@ import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
-import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -67,10 +66,12 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
   }
 
   @Override
-  public PushAppResponse push(PushAppContext pushContext) throws NoChangesToPushException,
+  public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest) throws NoChangesToPushException,
     AuthenticationConfigException {
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(pushContext.getNamespaceId(),
-                                                                         pushContext.getRepositoryConfig())) {
+    try (
+      RepositoryManager repositoryManager = repoManagerFactory.create(pushAppOperationRequest.getNamespaceId(),
+                                                                      pushAppOperationRequest.getRepositoryConfig())
+    ) {
       try {
         repositoryManager.cloneRemote();
       } catch (GitAPIException | IOException e) {
@@ -78,21 +79,27 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
                                                        e.getMessage()), e);
       }
 
-      LOG.info("Pushing application configs for : {}", pushContext.getAppToPush().getName());
+      LOG.info("Pushing application configs for : {}", pushAppOperationRequest.getApp().getName());
 
       //TODO: CDAP-20371, Add retry logic here in case the head at remote moved while we are doing push
-      return writeAppDetailAndPush(repositoryManager, pushContext.getAppToPush(), pushContext.getCommitDetails());
+      return writeAppDetailAndPush(
+        repositoryManager,
+        pushAppOperationRequest.getApp(),
+        pushAppOperationRequest.getCommitDetails()
+      );
     }
   }
 
   @Override
-  public PullAppResponse<?> pull(ApplicationReference appRef, RepositoryConfig repoConfig)
+  public PullAppResponse<?> pull(PulAppOperationRequest pulAppOperationRequest)
     throws NotFoundException, AuthenticationConfigException {
-    String applicationName = appRef.getApplication();
+    String applicationName = pulAppOperationRequest.getApp().getApplication();
     String configFileName = generateConfigFileName(applicationName);
     LOG.info("Cloning remote to pull application {}", applicationName);
     Path appRelativePath = null;
-    try (RepositoryManager repositoryManager = repoManagerFactory.create(appRef.getNamespaceId(), repoConfig)) {
+    try (RepositoryManager repositoryManager =
+           repoManagerFactory.create(pulAppOperationRequest.getApp().getNamespaceId(),
+                                     pulAppOperationRequest.getRepositoryConfig())) {
       appRelativePath = repositoryManager.getFileRelativePath(configFileName);
       String commitID = repositoryManager.cloneRemote();
       Path filePathToRead;

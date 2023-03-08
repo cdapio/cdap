@@ -25,19 +25,19 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
  * Information required by {@link SourceControlOperationRunner} to execute the task of pushing an application to
  * linked repository.
  */
-public class PushAppContext {
+public class PushAppOperationRequest {
   private final NamespaceId namespace;
   private final RepositoryConfig repoConfig;
-  private final ApplicationDetail appToPush;
+  private final ApplicationDetail app;
   private final CommitMeta commitDetails;
 
-  public PushAppContext(NamespaceId namespace,
-                        RepositoryConfig repoConfig,
-                        ApplicationDetail appToPush,
-                        CommitMeta commitDetails) {
+  public PushAppOperationRequest(NamespaceId namespace,
+                                 RepositoryConfig repoConfig,
+                                 ApplicationDetail app,
+                                 CommitMeta commitDetails) {
     this.namespace = namespace;
     this.repoConfig = repoConfig;
-    this.appToPush = appToPush;
+    this.app = app;
     this.commitDetails = commitDetails;
   }
 
@@ -49,8 +49,8 @@ public class PushAppContext {
     return repoConfig;
   }
 
-  public ApplicationDetail getAppToPush() {
-    return appToPush;
+  public ApplicationDetail getApp() {
+    return app;
   }
 
   public CommitMeta getCommitDetails() {

@@ -20,11 +20,11 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
-import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
-import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
+import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -33,16 +33,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/**
- * The task that pushes an application to linked repository.
- */
-public class PushAppTask extends SourceControlTask implements RunnableTask {
-
+public class PullAppTask extends SourceControlTask implements RunnableTask {
   private static final Gson GSON = new Gson();
-  private static final Logger LOG = LoggerFactory.getLogger(PushAppTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(PullAppTask.class);
 
   @Inject
-  PushAppTask(CConfiguration cConf,
+  PullAppTask(CConfiguration cConf,
               DiscoveryService discoveryService,
               DiscoveryServiceClient discoveryServiceClient) {
     super(cConf, discoveryService, discoveryServiceClient);
@@ -50,11 +46,11 @@ public class PushAppTask extends SourceControlTask implements RunnableTask {
 
   @Override
   public void run(RunnableTaskContext context)
-    throws AuthenticationConfigException, NoChangesToPushException, IOException {
-    PushAppOperationRequest pushAppOperationRequest = GSON.fromJson(context.getParam(), PushAppOperationRequest.class);
+    throws AuthenticationConfigException, IOException, NotFoundException {
+    PulAppOperationRequest pulAppOperationRequest = GSON.fromJson(context.getParam(), PulAppOperationRequest.class);
 
-    LOG.info("Pushing application {} in worker.", pushAppOperationRequest.getApp().getName());
-    PushAppResponse result = inMemoryOperationRunner.push(pushAppOperationRequest);
+    LOG.info("Pulling application {} in worker.", pulAppOperationRequest.getApp().getApplication());
+    PullAppResponse<?> result = inMemoryOperationRunner.pull(pulAppOperationRequest);
     context.writeResult(GSON.toJson(result).getBytes(StandardCharsets.UTF_8));
   }
 }
