@@ -47,6 +47,19 @@ public interface ExpressionFactory<T> {
   Expression compile(T expression);
 
   /**
+   * Compiles expression into language-independent form taking the input relation into account.
+   * The relation may be used for purposes such as expression validation. It is ignored by default.
+   *
+   * @param expression expression to compile with
+   * @param relation input relation on which the expression will operate
+   * @return language-independent expression object that can be used in {@link Relation} calls.
+   *     Check {@link Expression#isValid()} for any validation errors
+   */
+  default Expression compile(T expression, Relation relation) {
+    return compile(expression);
+  }
+
+  /**
    * Provides fully qualified name to be used in expressions for a given dataset. Available with
    * {@link CoreExpressionCapabilities#CAN_GET_QUALIFIED_DATASET_NAME}
    */
