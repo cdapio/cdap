@@ -36,6 +36,7 @@ import com.google.cloud.dataproc.v1.JobControllerSettings;
 import com.google.cloud.dataproc.v1.JobPlacement;
 import com.google.cloud.dataproc.v1.JobReference;
 import com.google.cloud.dataproc.v1.JobStatus;
+import com.google.cloud.dataproc.v1.SparkJob;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
@@ -655,6 +656,49 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
       List<LocalFile> localFiles) throws IOException {
+    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
+    String runId = runInfo.getRun();
+
+    // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
+    List<String> arguments = new ArrayList<>();
+    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
+    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
+    localFiles.stream()
+      .filter(LocalFile::isArchive)
+      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
+      .forEach(arguments::add);
+    for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
+      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
+    }
+
+    Map<String, String> properties = new LinkedHashMap<>();
+    properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
+    properties.put(CDAP_RUNTIME_APPLICATION, runInfo.getApplication());
+    properties.put(CDAP_RUNTIME_VERSION, runInfo.getVersion());
+    properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
+    properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
+    properties.put(CDAP_RUNTIME_RUNID, runId);
+
+    String jobType = provisionerContext.getProperties()
+        .getOrDefault("dataproc.job.type", "hadoop");
+    SparkJob.Builder sparkJobBuilder = null;
+    if ("spark".equals(jobType)) {
+      sparkJobBuilder = SparkJob.newBuilder()
+          .setMainClass(DataprocJobMain.class.getName())
+          .addAllArgs(arguments)
+          .putAllProperties(properties);
+
+      for (LocalFile localFile : localFiles) {
+        // add jar file
+        URI uri = localFile.getURI();
+        if (localFile.getName().endsWith("jar")) {
+          sparkJobBuilder.addJarFileUris(uri.toString());
+        } else {
+          sparkJobBuilder.addFileUris(uri.toString());
+        }
+      }
+    }
+
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
         // set main class
         .setMainClass(DataprocJobMain.class.getName())
@@ -672,7 +716,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
     }
 
-    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     Job.Builder dataprocJobBuilder = Job.newBuilder()
         // use program run uuid as hadoop job id on dataproc
         .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
@@ -684,8 +727,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         // Since program name and type are class names they should follow that pattern once we remove all
         // capitals
         .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
-        .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
-        .setHadoopJob(hadoopJobBuilder.build());
+        .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase());
+    if (sparkJobBuilder != null) {
+      dataprocJobBuilder = dataprocJobBuilder.setSparkJob(sparkJobBuilder.build());
+    } else {
+      dataprocJobBuilder = dataprocJobBuilder.setHadoopJob(hadoopJobBuilder.build());
+    }
 
     GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
         .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
