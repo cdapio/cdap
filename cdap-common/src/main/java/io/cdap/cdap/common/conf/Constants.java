@@ -52,7 +52,7 @@ public final class Constants {
   public static final String COLLECT_APP_CONTAINER_LOG_LEVEL = "master.collect.app.containers.log.level";
   public static final String HTTP_CLIENT_CONNECTION_TIMEOUT_MS = "http.client.connection.timeout.ms";
   public static final String HTTP_CLIENT_READ_TIMEOUT_MS = "http.client.read.timeout.ms";
-  /** Uniquely identifies a CDAP instance */
+  /** Uniquely identifies a CDAP instance. */
   public static final String INSTANCE_NAME = "instance.name";
   // Environment variable name for spark home
   public static final String SPARK_HOME = "SPARK_HOME";
@@ -82,7 +82,7 @@ public final class Constants {
   public static final String NETWORK_PROXY_ADDRESS = "network.proxy.address";
 
   /**
-   * Option to pass CDAP version when application was created / upgraded
+   * Option to pass CDAP version when application was created / upgraded.
    */
   public static final String APP_CDAP_VERSION = "app.cdap.version";
 
@@ -291,7 +291,7 @@ public final class Constants {
     public static final String QUERY_PARAM_START_TIME = "start";
 
     /**
-     * Query parameter to indicate status of a program {active, completed, failed}
+     * Query parameter to indicate status of a program {active, completed, failed}.
      */
     public static final String QUERY_PARAM_STATUS = "status";
 
@@ -308,7 +308,7 @@ public final class Constants {
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
 
     /**
-     * Configuration setting to set the maximum size of a workflow token in MB
+     * Configuration setting to set the maximum size of a workflow token in MB.
      */
     public static final String WORKFLOW_TOKEN_MAX_SIZE_MB = "workflow.token.max.size.mb";
 
@@ -338,12 +338,12 @@ public final class Constants {
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
 
     /**
-     * Topic prefix for publishing status transitioning events of program runs to the messaging system
+     * Topic prefix for publishing status transitioning events of program runs to the messaging system.
      */
     public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
 
     /**
-     * Prefix for program status retry strategy settings
+     * Prefix for program status retry strategy settings.
      */
     public static final String PROGRAM_STATUS_RETRY_STRATEGY_PREFIX = "system.program.state.";
 
@@ -356,12 +356,12 @@ public final class Constants {
     public static final String PROGRAM_STATUS_EVENT_NUM_PARTITIONS = "program.status.event.topic.num.partitions";
 
     /**
-     * Topic name for publishing program status recording events to the messaging system
+     * Topic name for publishing program status recording events to the messaging system.
      */
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
 
     /**
-     * Interval at which system programs are monitored
+     * Interval at which system programs are monitored.
      */
     public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
 
@@ -369,12 +369,12 @@ public final class Constants {
     public static final String FACTORY_IMPLEMENTATION_REMOTE = "remote";
 
     /**
-     * Disable user program launch on cdap environment
+     * Disable user program launch on cdap environment.
      */
     public static final String USER_PROGRAM_LAUNCH_DISABLED = "user.program.launch.disabled";
 
     /**
-     * Annotation for binding remote execution twill service
+     * Annotation for binding remote execution twill service.
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
@@ -446,7 +446,7 @@ public final class Constants {
   public static final class TaskWorker {
 
     /**
-     * Task worker pool configuration
+     * Task worker pool configuration.
      */
     public static final String CONTAINER_COUNT = "task.worker.container.count";
     public static final String POOL_CHECK_INTERVAL = "task.worker.pool.check.interval";
@@ -455,7 +455,7 @@ public final class Constants {
     public static final String PRELOAD_ARTIFACTS = "task.worker.preload.artifacts";
 
     /**
-     * Task worker container configurations
+     * Task worker container configurations.
      */
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
@@ -488,7 +488,7 @@ public final class Constants {
       "task.worker.systemapp.http.client.connection.timeout.ms";
 
     /**
-     * Task worker http handler configuration
+     * Task worker http handler configuration.
      */
     public static final String ADDRESS = "task.worker.bind.address";
     public static final String PORT = "task.worker.bind.port";
@@ -517,7 +517,7 @@ public final class Constants {
     public static final String ARTIFACT_LOCALIZER_ENABLED = "system.worker.artifact.localizer.enabled";
 
     /**
-     * System worker http handler configuration
+     * System worker http handler configuration.
      */
     public static final String ADDRESS = "system.worker.bind.address";
     public static final String PORT = "system.worker.bind.port";
@@ -531,19 +531,19 @@ public final class Constants {
   public static final class ArtifactLocalizer {
 
     /**
-     * Artifact localizer service clean up configurations
+     * Artifact localizer service clean up configurations.
      */
     public static final String CACHE_CLEANUP_INTERVAL_MIN = "artifact.localizer.cache.cleanup.interval.min";
 
     /**
-     * Artifact localizer sidecar container configurations
+     * Artifact localizer sidecar container configurations.
      */
     public static final String CONTAINER_MEMORY_MB = "artifact.localizer.container.memory.mb";
     public static final String CONTAINER_CORES = "artifact.localizer.container.num.cores";
     public static final String CONTAINER_JVM_OPTS = "artifact.localizer.container.jvm.opts";
 
     /**
-     * Artifact localizer http handler configuration
+     * Artifact localizer http handler configuration.
      */
     public static final String PORT = "artifact.localizer.bind.port";
     public static final String BOSS_THREADS = "artifact.localizer.boss.threads";
@@ -557,7 +557,7 @@ public final class Constants {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
     /**
-     * Topic name for publishing time events from time scheduler to the messaging system
+     * Topic name for publishing time events from time scheduler to the messaging system.
      */
     public static final String TIME_EVENT_TOPIC = "time.event.topic";
 
@@ -687,7 +687,7 @@ public final class Constants {
     public static final String TABLE_TYPE_NO_TX = "table.type.no.tx";
 
     /**
-     * Constants for PartitionedFileSet's DynamicPartitioner
+     * Constants for PartitionedFileSet's DynamicPartitioner.
      */
     public static final class Partitioned {
       public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
@@ -709,7 +709,7 @@ public final class Constants {
       public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
       /**
-       * Annotation for binding default dataset modules for the dataset service
+       * Annotation for binding default dataset modules for the dataset service.
        */
       @Retention(RetentionPolicy.RUNTIME)
       @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
@@ -766,7 +766,7 @@ public final class Constants {
     public static final String API_KEY = "X-ApiKey";
 
     /**
-     * Internal API
+     * Internal API.
      */
     public static final String INTERNAL_API_VERSION_3_TOKEN = "v3Internal";
     public static final String INTERNAL_API_VERSION_3 = "/" + INTERNAL_API_VERSION_3_TOKEN;
@@ -919,7 +919,7 @@ public final class Constants {
     }
 
     /**
-     * Metrics context tags
+     * Metrics context tags.
      */
     public static final class Tag {
       // NOTES:
@@ -985,15 +985,17 @@ public final class Constants {
 
       //For scheduler
       public static final String SCHEDULE = "sch";
+
+      public static final String METADATA_CONSUMER = "met";
     }
 
     /**
-     * Metric names
+     * Metric names.
      */
     public static final class Name {
 
       /**
-       * Service metrics
+       * Service metrics.
        */
       public static final class Service {
         public static final String SERVICE_INPUT = "system.requests.count";
@@ -1002,7 +1004,7 @@ public final class Constants {
       }
 
       /**
-       * Dataset metrics
+       * Dataset metrics.
        */
       public static final class Dataset {
         public static final String READ_COUNT = "dataset.store.reads";
@@ -1012,7 +1014,7 @@ public final class Constants {
       }
 
       /**
-       * Logs metrics
+       * Logs metrics.
        */
       public static final class Log {
         public static final String PROCESS_MIN_DELAY = "log.process.min.delay";
@@ -1022,7 +1024,7 @@ public final class Constants {
     }
 
     /**
-     * Metrics query constants and defaults
+     * Metrics query constants and defaults.
      */
     public static final class Query {
       public static final long MAX_HOUR_RESOLUTION_QUERY_INTERVAL = 36000;
@@ -1030,7 +1032,7 @@ public final class Constants {
     }
 
     /**
-     * Flow control metrics
+     * Flow control metrics.
      */
     public static final class FlowControl {
       public static final String LAUNCHING_COUNT = "flowcontrol.launching.count";
@@ -1038,7 +1040,7 @@ public final class Constants {
     }
 
     /**
-     * Program metrics
+     * Program metrics.
      */
     public static final class Program {
       public static final String PROGRAM_COMPLETED_RUNS = "program.completed.runs";
@@ -1057,7 +1059,7 @@ public final class Constants {
     }
 
     /**
-     * JVM resource metrics
+     * JVM resource metrics.
      */
     public static final class JVMResource {
       public static final String HEAP_USED_MB = "jvm.resource.heap.used.mb";
@@ -1067,7 +1069,7 @@ public final class Constants {
     }
 
     /**
-     * Program event publish
+     * Program event publish.
      */
     public static final class ProgramEvent {
       public static final String PUBLISHED_COUNT = "program.event.published.count";
@@ -1075,7 +1077,7 @@ public final class Constants {
     }
 
     /**
-     * Preview metrics
+     * Preview metrics.
      */
     public static final class Preview {
       public static final String RUN_TIME_SECONDS = "preview.run.seconds";
@@ -1100,7 +1102,7 @@ public final class Constants {
     }
 
     /**
-     * Structured table metrics
+     * Structured table metrics.
      */
     public static final class StructuredTable {
 
@@ -1113,14 +1115,14 @@ public final class Constants {
     }
 
     /**
-     * Metadata storage metrics
+     * Metadata storage metrics.
      */
     public static final class MetadataStorage {
       public static final String METRICS_PREFIX = "metadata.storage.";
     }
 
     /**
-     * Authorization metrics
+     * Authorization metrics.
      */
     public static final class Authorization {
       public static final String INTERNAL_CHECK_SUCCESS_COUNT = "authorization.internal.check.success.count";
@@ -1136,7 +1138,7 @@ public final class Constants {
     }
 
     /**
-     * Scheduled job metrics
+     * Scheduled job metrics.
      */
     public static final class ScheduledJob {
       public static final String SCHEDULE_FAILURE = "schedulejob.failure";
@@ -1153,7 +1155,7 @@ public final class Constants {
     }
 
     /**
-     * Deploy event metrics
+     * Deploy event metrics.
      */
     public static final class AppMetadataStore {
       public static final String DEPLOY_NEW_COUNT = "event.app.create.count";
@@ -1465,7 +1467,7 @@ public final class Constants {
     }
 
     /**
-     * Secure Store
+     * Secure Store.
      */
     public static final class Store {
       /** Location of the secure store file. */
@@ -1601,7 +1603,7 @@ public final class Constants {
   public static final int DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET = 10;
 
   /**
-   * Used for upgrade and backwards compatability
+   * Used for upgrade and backwards compatability.
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
 
@@ -1642,17 +1644,17 @@ public final class Constants {
   }
 
   /**
-   * Constants for endpoints
+   * Constants for endpoints.
    */
   public static final class EndPoints {
     /**
-    * Status endpoint
+    * Status endpoint.
     */
     public static final String STATUS = "/status";
   }
 
   /**
-   * Constants for namespaces
+   * Constants for namespaces.
    */
   public static final class Namespace {
     public static final String NAMESPACES_DIR = "namespaces.dir";
@@ -1660,7 +1662,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for metadata service and metadata migrator
+   * Constants for metadata service and metadata migrator.
    */
   public static final class Metadata {
     public static final String SERVICE_DESCRIPTION = "Service to perform metadata operations.";
@@ -1685,7 +1687,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for publishing audit
+   * Constants for publishing audit.
    */
   public static final class Audit {
     public static final String ENABLED = "audit.enabled";
@@ -1694,7 +1696,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for the messaging system
+   * Constants for the messaging system.
    */
   public static final class MessagingSystem {
     public static final String SERVICE_DESCRIPTION = "Service for providing messaging system.";
@@ -1758,7 +1760,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for operational stats
+   * Constants for operational stats.
    */
   public static final class OperationalStats {
     public static final String EXTENSIONS_DIR = "operational.stats.extensions.dir";
@@ -1766,7 +1768,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for provisioners
+   * Constants for provisioners.
    */
   public static final class Provisioner {
     public static final String EXTENSIONS_DIR = "runtime.extensions.dir";
@@ -1785,7 +1787,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for Replication
+   * Constants for Replication.
    */
   public static final class Replication {
     public static final String CDAP_SHUTDOWN_TIME_FILENAME = "cdap_shutdown_time";
@@ -1811,7 +1813,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for HBase DDL executor
+   * Constants for HBase DDL executor.
    */
   public static final class HBaseDDLExecutor {
     public static final String EXTENSIONS_DIR = "hbase.ddlexecutor.extension.dir";
@@ -1825,11 +1827,11 @@ public final class Constants {
   }
 
   /**
-   * Constants for field lineage
+   * Constants for field lineage.
    */
   public static final class FieldLineage {
     /**
-     * Direction for lineage
+     * Direction for lineage.
      */
     public enum Direction {
       INCOMING,
@@ -1839,7 +1841,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for profile
+   * Constants for profile.
    */
   public static final class Profile {
     private static final String PREFIX = "profile.";
@@ -1850,25 +1852,25 @@ public final class Constants {
   }
 
   /**
-   * Constants for capability management
+   * Constants for capability management.
    */
   public static final class Capability {
     /**
-     * Interval for scanning config
+     * Interval for scanning config.
      */
     public static final String DIR_SCAN_INTERVAL_MINUTES = "capability.dir.scan.interval.minutes";
     /**
-     * Capability config directory path key
+     * Capability config directory path key.
      */
     public static final String CONFIG_DIR = "capability.config.dir";
     /**
-     * Number of executor threads used to auto install resources when a capability is enabled
+     * Number of executor threads used to auto install resources when a capability is enabled.
      */
     public static final String AUTO_INSTALL_THREADS = "capability.autoinstall.threads";
   }
 
   /**
-   * Constants for capability management
+   * Constants for capability management.
    */
   public static final class Event {
 
@@ -1888,7 +1890,7 @@ public final class Constants {
   }
 
   /**
-   * Constans for Spark Metrics Provider
+   * Constans for Spark Metrics Provider.
    */
 
   public static final class Spark {
@@ -1925,7 +1927,7 @@ public final class Constants {
       public static final String MASTER_SECRET_DISK_PATH = "twill.security.master.secret.disk.path";
 
       /**
-       * Whether to mount a secret disk for worker runnables
+       * Whether to mount a secret disk for worker runnables.
        */
       public static final String WORKER_MOUNT_SECRET = "twill.security.worker.mount.secret";
 
@@ -2009,13 +2011,13 @@ public final class Constants {
   public static final class ArtifactCache {
 
     /**
-     * Artifact cache service clean up configurations
+     * Artifact cache service clean up configurations.
      */
     public static final String CACHE_CLEANUP_INTERVAL_MIN = "artifact.cache.cache.cleanup.interval.min";
     public static final String LOCAL_DATA_DIR = "artifact.cache.local.data.dir";
 
     /**
-     * Artifact cache http handler configuration
+     * Artifact cache http handler configuration.
      */
     public static final String ADDRESS = "artifact.cache.bind.address";
     public static final String PORT = "artifact.cache.bind.port";
@@ -2024,7 +2026,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for MetadataConsumer
+   * Constants for MetadataConsumer.
    */
   public static final class MetadataConsumer {
     public static final String METADATA_CONSUMER_PREFIX = "metadata.consumer";
@@ -2033,7 +2035,7 @@ public final class Constants {
   }
 
   /**
-   * Constants for Source Control Management
+   * Constants for Source Control Management.
    */
   public static final class SourceControlManagement {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
