@@ -234,7 +234,8 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   /**
    * Add select LocalFiles and cConf entries to the control message payload
    */
-  private TetheringLaunchMessage createLaunchPayload(RuntimeJobInfo runtimeJobInfo)
+  @VisibleForTesting
+  TetheringLaunchMessage createLaunchPayload(RuntimeJobInfo runtimeJobInfo)
       throws IOException {
     TetheringLaunchMessage.Builder builder = new TetheringLaunchMessage.Builder()
         .addFileNames(DistributedProgramRunner.LOGBACK_FILE_NAME)
@@ -248,7 +249,7 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
     Collection<? extends LocalFile> localFiles = runtimeJobInfo.getLocalizeFiles();
     for (String fileName : builder.getFileNames()) {
       LocalFile localFile = localFiles.stream().filter(file -> file.getName().equals(fileName))
-          .findFirst().orElseThrow(() -> new IllegalStateException("Cannot find file" + fileName));
+          .findFirst().orElseThrow(() -> new IllegalStateException("Cannot find file " + fileName));
       builder.addLocalizeFiles(fileName, getLocalFileAsCompressedBytes(localFile));
     }
 
