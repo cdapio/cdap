@@ -47,6 +47,138 @@ import org.junit.Test;
 public class LineageOperationProcessorTest {
 
   @Test
+  public void testSimpleSourceToSinkPipeline() {
+    // n1-->n2
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n2"));
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read", "reading data", EndPoint.of("default", "file"), "offset"));
+    stageOperations.put("n1", fieldOperations);
+
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write", "writing data", EndPoint.of("default", "file2"),
+                                                "offset"));
+    stageOperations.put("n2", fieldOperations);
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.emptySet());
+    Set<Operation> processedOperations = processor.process();
+    Set<Operation> expected = new HashSet<>();
+    expected.add(new ReadOperation("n1.read", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("stageName", "n1")),
+                                   "offset"));
+    expected.add(new WriteOperation("n2.write", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("stageName", "n2")),
+                                    InputField.of("n1.read", "offset")));
+
+    Assert.assertEquals(new FieldLineageInfo(expected), new FieldLineageInfo(processedOperations));
+  }
+
+  @Test
+  public void testSimpleSourceToSinkMultiPipelineWithUniqueFields() {
+    // n1-->n2 where n1 is reading from multiple assets and n2 is writing to multiple assets
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n2"));
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read_a", "reading data", EndPoint.of("default", "file",
+                                                                                     ImmutableMap.of("marker", "a")),
+                                               "id1", "name"));
+    fieldOperations.add(new FieldReadOperation("read_b", "reading data", EndPoint.of("default", "file",
+                                                                                     ImmutableMap.of("marker", "b")),
+                                               "id2", "description"));
+    stageOperations.put("n1", fieldOperations);
+
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write_a", "writing data", EndPoint.of("default", "file2",
+                                                                                       ImmutableMap.of("marker", "a")),
+                                                "id1", "name"));
+    fieldOperations.add(new FieldWriteOperation("write_b", "writing data", EndPoint.of("default", "file2",
+                                                                                       ImmutableMap.of("marker", "b")),
+                                                "id2", "description"));
+    stageOperations.put("n2", fieldOperations);
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.emptySet());
+    Set<Operation> processedOperations = processor.process();
+    Set<Operation> expected = new HashSet<>();
+    expected.add(new ReadOperation("n1.read_a", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("marker", "a", "stageName", "n1")),
+                                   "id1", "name"));
+    expected.add(new ReadOperation("n1.read_b", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("marker", "b", "stageName", "n1")),
+                                   "id2", "description"));
+    expected.add(new WriteOperation("n2.write_a", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("marker", "a", "stageName", "n2")),
+                                    InputField.of("n1.read_a", "id1"), InputField.of("n1.read_a", "name")));
+    expected.add(new WriteOperation("n2.write_b", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("marker", "b", "stageName", "n2")),
+                                    InputField.of("n1.read_b", "id2"), InputField.of("n1.read_b", "description")));
+
+    Assert.assertEquals(new FieldLineageInfo(expected), new FieldLineageInfo(processedOperations));
+  }
+
+  @Test
+  public void testSimpleSourceToSinkMultiPipelineWithDuplicateFields() {
+    // n1-->n2 where n1 is reading from multiple assets and n2 is writing to multiple assets
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n2"));
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    List<FieldOperation> fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldReadOperation("read_a", "reading data", EndPoint.of("default", "file",
+                                                                                     ImmutableMap.of("marker", "a")),
+                                               "id", "name"));
+    fieldOperations.add(new FieldReadOperation("read_b", "reading data", EndPoint.of("default", "file",
+                                                                                     ImmutableMap.of("marker", "b")),
+                                               "id", "description"));
+    fieldOperations.add(new FieldReadOperation("read_c", "reading data", EndPoint.of("default", "file",
+                                                                                     ImmutableMap.of("marker", "c")),
+                                               "id", "comment"));
+    stageOperations.put("n1", fieldOperations);
+
+    fieldOperations = new ArrayList<>();
+    fieldOperations.add(new FieldWriteOperation("write_a", "writing data", EndPoint.of("default", "file2",
+                                                                                       ImmutableMap.of("marker", "a")),
+                                                "id", "name"));
+    fieldOperations.add(new FieldWriteOperation("write_b", "writing data", EndPoint.of("default", "file2",
+                                                                                       ImmutableMap.of("marker", "b")),
+                                                "id", "description"));
+    fieldOperations.add(new FieldWriteOperation("write_c", "writing data", EndPoint.of("default", "file2",
+                                                                                       ImmutableMap.of("marker", "c")),
+                                                "id", "comment"));
+    stageOperations.put("n2", fieldOperations);
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.emptySet());
+    Set<Operation> processedOperations = processor.process();
+      Set<Operation> expected = new HashSet<>();
+    expected.add(new ReadOperation("n1.read_a", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("marker", "a", "stageName", "n1")),
+                                   "id", "name"));
+    expected.add(new ReadOperation("n1.read_b", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("marker", "b", "stageName", "n1")),
+                                   "id", "description"));
+    expected.add(new ReadOperation("n1.read_c", "reading data",
+                                   EndPoint.of("default", "file", ImmutableMap.of("marker", "c", "stageName", "n1")),
+                                   "id", "comment"));
+    expected.add(new WriteOperation("n2.write_a", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("marker", "a", "stageName", "n2")),
+                                    InputField.of("n1.read_a", "id"), InputField.of("n1.read_a", "name")));
+    expected.add(new WriteOperation("n2.write_b", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("marker", "b", "stageName", "n2")),
+                                    InputField.of("n1.read_b", "id"), InputField.of("n1.read_b", "description")));
+    expected.add(new WriteOperation("n2.write_c", "writing data",
+                                    EndPoint.of("default", "file2", ImmutableMap.of("marker", "c", "stageName", "n2")),
+                                    InputField.of("n1.read_c", "id"), InputField.of("n1.read_c", "comment")));
+
+    Assert.assertEquals(new FieldLineageInfo(expected), new FieldLineageInfo(processedOperations));
+  }
+
+  @Test
   public void testMergeOperationsNonRepeat() {
     // n1 -> n3 ----
     //           |---- n5
@@ -201,7 +333,7 @@ public class LineageOperationProcessorTest {
   }
 
   @Test
-  public void testSimplePipeline() {
+  public void testSimplePipelineWithTransform() {
     // n1-->n2-->n3
     Set<Connection> connections = new HashSet<>();
     connections.add(new Connection("n1", "n2"));
