@@ -61,9 +61,9 @@ jobs:
           detailed_summary: true
           commit: ${{ github.event.workflow_run.head_sha }}
           check_name: Test Report
-      - name: Checkstyle report
-        uses: tivv/checkstyle-github-action@fcf8ffb7c6a5c110bbc5dafb84aca54caf359b80
+        uses: tivv/checkstyle-github-action@add_filter
         if: always()
         with:
           path: '**/checkstyle-result.xml'
           commit: ${{ github.event.workflow_run.head_sha }}
+          changed-since: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
