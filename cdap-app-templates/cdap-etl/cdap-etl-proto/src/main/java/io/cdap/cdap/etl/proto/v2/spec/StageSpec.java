@@ -189,8 +189,8 @@ public class StageSpec implements Serializable {
   public static class Builder {
 
     private final String name;
-    private final PluginSpec plugin;
     private final boolean isSplitter;
+    private PluginSpec plugin;
     private Map<String, Schema> inputSchemas;
     private Map<String, Schema> portSchemas;
     private Map<String, Port> outputs;
@@ -238,6 +238,12 @@ public class StageSpec implements Serializable {
       if (port != null) {
         this.portSchemas.put(port, outputSchema);
       }
+      return this;
+    }
+
+    public Builder setPluginProperties(Map<String, String> properties) {
+      this.plugin = new PluginSpec(plugin.getType(), plugin.getName(), new HashMap<>(properties),
+          plugin.getArtifact());
       return this;
     }
 
@@ -343,8 +349,10 @@ public class StageSpec implements Serializable {
 
     if (newMaxPreviewRecords < stageSpec.getMaxPreviewRecords()) {
       LOG.warn(
-          "Max preview records exceeds allowed limit. Setting maximum preview records to {} instead of {} ",
-          newMaxPreviewRecords, stageSpec.maxPreviewRecords);
+          "Max preview records exceeds allowed limit. Setting maximum preview records to {} instead"
+              + " of {} ",
+          newMaxPreviewRecords,
+          stageSpec.maxPreviewRecords);
     }
     return new StageSpec(stageSpec.name, stageSpec.plugin, stageSpec.inputSchemas,
         stageSpec.outputSchema,

@@ -67,12 +67,6 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -83,6 +77,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * Tests for the data pipeline service.
@@ -201,39 +200,6 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     // test it can still pass validation
     actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), true));
     Assert.assertTrue(actual.getFailures().isEmpty());
-  }
-
-  @Test
-  public void testMacroResolutionFromProperties() throws Exception {
-    // StringValueFilterTransform checks that the field exists in the input schema
-    String stageName = "tx";
-    Map<String, String> properties = new HashMap<>();
-    properties.put("field", "x");
-    properties.put("value", "${someProperty}");
-    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
-                                                           properties));
-    Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.STRING)));
-
-    // Set the preference value in the store
-    getPreferencesService().setProperties(NamespaceId.DEFAULT, Collections.singletonMap("someProperty", "someValue"));
-
-    // This call should include the resolved value for Field
-    StageValidationRequest requestBody1 =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 true);
-    StageValidationResponse actual1 = sendRequest(requestBody1);
-    Assert.assertTrue(actual1.getFailures().isEmpty());
-    Assert.assertNotNull(actual1.getSpec().getPlugin());
-    Assert.assertEquals("someValue", actual1.getSpec().getPlugin().getProperties().get("value"));
-
-    // This call should NOT include the resolved value for Field
-    StageValidationRequest requestBody2 =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 false);
-    StageValidationResponse actual2 = sendRequest(requestBody2);
-    Assert.assertTrue(actual2.getFailures().isEmpty());
-    Assert.assertNotNull(actual2.getSpec().getPlugin());
-    Assert.assertEquals("${someProperty}", actual2.getSpec().getPlugin().getProperties().get("value"));
   }
 
   @Test

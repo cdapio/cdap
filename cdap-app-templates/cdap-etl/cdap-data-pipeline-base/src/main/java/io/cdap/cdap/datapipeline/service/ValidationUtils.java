@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.validation.StageSchema;
 import io.cdap.cdap.etl.proto.v2.validation.StageValidationRequest;
@@ -63,17 +64,19 @@ public final class ValidationUtils {
    * @param macroFn           {@link Function} for evaluating macros
    * @return {@link StageValidationResponse} in json format
    */
-  public static StageValidationResponse validate(String namespace, StageValidationRequest validationRequest,
-                                                 PluginConfigurer pluginConfigurer,
-                                                 Function<Map<String, String>, Map<String, String>> macroFn,
-                                                 FeatureFlagsProvider featureFlagsProvider) {
+  public static StageValidationResponse validate(String namespace,
+      StageValidationRequest validationRequest,
+      PluginConfigurer pluginConfigurer,
+      Function<Map<String, String>, Map<String, String>> macroFn,
+      FeatureFlagsProvider featureFlagsProvider) {
 
     ETLStage stageConfig = validationRequest.getStage();
-    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(pluginConfigurer, featureFlagsProvider);
+    ValidatingConfigurer validatingConfigurer =
+        new ValidatingConfigurer(pluginConfigurer, featureFlagsProvider);
     // Batch or Streaming doesn't matter for a single stage.
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
-      new BatchPipelineSpecGenerator(namespace, validatingConfigurer, null, Collections.emptySet(),
-                                     Collections.emptySet(), Engine.SPARK, featureFlagsProvider);
+      new BatchPipelineSpecGenerator(namespace, validatingConfigurer, null,
+          Collections.emptySet(), Collections.emptySet(), Engine.SPARK, featureFlagsProvider);
 
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer(stageConfig.getName());
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
@@ -85,14 +88,19 @@ public final class ValidationUtils {
                                     stageConfigurer, featureFlagsProvider);
 
     // evaluate macros
-    Map<String, String> evaluatedProperties = macroFn.apply(stageConfig.getPlugin().getProperties());
+    Map<String, String> evaluatedProperties =
+        macroFn.apply(stageConfig.getPlugin().getProperties());
 
     ETLPlugin originalConfig = stageConfig.getPlugin();
     ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),
-                                              evaluatedProperties, originalConfig.getArtifactConfig());
+        evaluatedProperties, originalConfig.getArtifactConfig());
     try {
-      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), evaluatedConfig,
-                                                            pipelineConfigurer).build();
+      StageSpec spec = pipelineSpecGenerator
+          .configureStage(stageConfig.getName(), evaluatedConfig, pipelineConfigurer)
+          // replace macro evaluated properties with unevaluated values to prevent
+          // secure macro values from being returned in the response
+          .setPluginProperties(originalConfig.getProperties())
+          .build();
       return new StageValidationResponse(spec);
     } catch (ValidationException e) {
       return new StageValidationResponse(e.getFailures());
