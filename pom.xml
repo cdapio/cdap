@@ -1881,6 +1881,9 @@
     <!-- Profile to turn on inclusion of all cdap-app-templates -->
     <profile>
       <id>templates</id>
+      <activation>
+        <property><name>cloudBuild</name></property>
+      </activation>
       <modules>
         <module>cdap-app-templates</module>
       </modules>
