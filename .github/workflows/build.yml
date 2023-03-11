@@ -61,6 +61,7 @@ jobs:
           detailed_summary: true
           commit: ${{ github.event.workflow_run.head_sha }}
           check_name: Test Report
+      - name: Checkstyle report
         uses: chapio/checkstyle-github-action@add_filter
         if: always()
         with:
