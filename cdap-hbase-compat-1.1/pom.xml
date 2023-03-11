@@ -436,6 +436,9 @@
     </profile>
     <profile>
       <id>skip-hbase-compat-tests</id>
+      <activation>
+        <property><name>cloudBuild</name></property>
+      </activation>
       <build>
          <plugins>
            <plugin>

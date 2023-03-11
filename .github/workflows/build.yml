@@ -42,7 +42,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-${{ github.workflow }}
       - name: Build with Maven
-        run: mvn clean test -fae -T 2 -B -V -P templates,skip-hbase-compat-tests -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+        run: mvn clean test -fae -T 2 -B -V -DcloudBuild -Dmaven.wagon.http.retryHandler.count=3 -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2.2.2
         if: always()
@@ -61,9 +61,9 @@ jobs:
           detailed_summary: true
           commit: ${{ github.event.workflow_run.head_sha }}
           check_name: Test Report
-      - name: Checkstyle report
-        uses: tivv/checkstyle-github-action@fcf8ffb7c6a5c110bbc5dafb84aca54caf359b80
+        uses: chapio/checkstyle-github-action@add_filter
         if: always()
         with:
           path: '**/checkstyle-result.xml'
           commit: ${{ github.event.workflow_run.head_sha }}
+          changed-since: ${{ github.event.workflow_run.pull_requests[0].base.ref }}
