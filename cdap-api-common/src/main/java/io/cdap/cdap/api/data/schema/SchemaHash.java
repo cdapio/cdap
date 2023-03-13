@@ -24,7 +24,6 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Formatter;
 import java.util.HashSet;
 import java.util.Set;
 
