@@ -70,4 +70,6 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
    * @return boolean indicating whether this pipeline run has state store enabled
    */
   boolean isStateStoreEnabled();
+
+  AppStateStore getAppStateStore();
 }

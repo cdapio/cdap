@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime.spark
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 import java.{lang, util}
 import io.cdap.cdap.api.TxRunnable
+import io.cdap.cdap.api.app.AppStateStore
 import io.cdap.cdap.api.data.batch.Split
 import io.cdap.cdap.api.lineage.field.Operation
 import io.cdap.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
@@ -128,6 +129,10 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
 
   override def saveState(key: String, value: Array[Byte]): Unit = {
     delegate.saveState(key, value);
+  }
+
+  override def getAppStateStore(): AppStateStore = {
+    delegate.getAppStateStore();
   }
 
   override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]) = {

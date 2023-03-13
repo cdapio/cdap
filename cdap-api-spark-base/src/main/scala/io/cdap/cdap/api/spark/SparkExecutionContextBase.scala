@@ -232,4 +232,10 @@ trait SparkExecutionContextBase extends RuntimeContext
     * Returns a new instance of [[io.cdap.cdap.api.spark.JavaSparkExecutionContext]].
     */
   def toJavaSparkExecutionContext(): JavaSparkExecutionContext
+
+  /**
+   * Return
+   * @return
+   */
+  def getAppStateStore(): AppStateStore
 }

@@ -17,7 +17,7 @@
 package io.cdap.cdap.app.runtime.spark
 
 import io.cdap.cdap.api._
-import io.cdap.cdap.api.app.ApplicationSpecification
+import io.cdap.cdap.api.app.{AppStateStore, ApplicationSpecification}
 import io.cdap.cdap.api.data.batch.BatchWritable
 import io.cdap.cdap.api.data.batch.DatasetOutputCommitter
 import io.cdap.cdap.api.data.batch.OutputFormatProvider
@@ -311,6 +311,10 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
 
   override def getState(key: String): Optional[Array[Byte]] = {
     return runtimeContext.getState(key)
+  }
+
+  override def getAppStateStore(): AppStateStore = {
+    runtimeContext.getAppStateStore();
   }
 
   override def saveState(key: String, value: Array[Byte]): Unit = {

@@ -931,4 +931,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public void saveState(String key, byte[] value) throws IOException {
     appStateStore.saveState(key, value);
   }
+
+  public AppStateStore getAppStateStore() {
+    return appStateStore;
+  }
 }

@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spark.streaming;
 import io.cdap.cdap.api.Admin;
 import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
+import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
@@ -148,5 +149,10 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     // Make the key unique for the app
     String pluginKey = String.format("%s.%s", getStageName(), key);
     sec.getSparkExecutionContext().saveState(pluginKey, value);
+  }
+
+  @Override
+  public AppStateStore getAppStateStore() {
+    return sec.getSparkExecutionContext().getAppStateStore();
   }
 }
