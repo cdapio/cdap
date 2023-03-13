@@ -27,18 +27,16 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
-import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;
 import io.cdap.common.http.HttpRequestConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.charset.StandardCharsets;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Remote implementation for {@link SourceControlOperationRunner}.
@@ -50,6 +48,15 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
 
   private static final Logger LOG = LoggerFactory.getLogger(RemoteSourceControlOperationRunner.class);
   private final RemoteTaskExecutor remoteTaskExecutor;
+
+  private final RemoteExceptionProvider<NotFoundException> notFoundExceptionProvider =
+    new RemoteExceptionProvider<>(NotFoundException.class, NotFoundException::new);
+
+  private final RemoteExceptionProvider<AuthenticationConfigException> authConfigExceptionProvider =
+    new RemoteExceptionProvider<>(AuthenticationConfigException.class, AuthenticationConfigException::new);
+
+  private final RemoteExceptionProvider<NoChangesToPushException> noChangeToPushExceptionProvider =
+    new RemoteExceptionProvider<>(NoChangesToPushException.class, NoChangesToPushException::new);
 
   @Inject
   RemoteSourceControlOperationRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -67,27 +74,12 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PushAppTask.class.getName())
         .withParam(GSON.toJson(pushAppOperationRequest)).build();
-      
+
       LOG.trace("Pushing application {} to linked repository", pushAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PushAppResponse.class);
     } catch (RemoteExecutionException e) {
-      // Getting the actual RemoteTaskException
-      // which has the root cause stackTrace and error message
-      RemoteTaskException remoteTaskException = e.getCause();
-      String exceptionClass = remoteTaskException.getRemoteExceptionClassName();
-      String exceptionMessage = remoteTaskException.getMessage();
-      Throwable cause = remoteTaskException.getCause();
-
-      if (NoChangesToPushException.class.getName().equals(exceptionClass)) {
-        throw new NoChangesToPushException(exceptionMessage, cause);
-      }
-
-      if (AuthenticationConfigException.class.getName().equals(exceptionClass)) {
-        throw new AuthenticationConfigException(exceptionMessage, cause);
-      }
-
-      throw new SourceControlException(exceptionMessage, cause);
+      throw propagateRemoteException(e, noChangeToPushExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
@@ -98,36 +90,78 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
     AuthenticationConfigException {
     try {
       RunnableTaskRequest request = RunnableTaskRequest.getBuilder(PullAppTask.class.getName())
-          .withParam(GSON.toJson(pulAppOperationRequest)).build();
+        .withParam(GSON.toJson(pulAppOperationRequest)).build();
 
       LOG.trace("Pulling application {} from linked repository", pulAppOperationRequest.getApp());
       byte[] result = remoteTaskExecutor.runTask(request);
       return GSON.fromJson(new String(result, StandardCharsets.UTF_8), PullAppResponse.class);
     } catch (RemoteExecutionException e) {
-      // Getting the actual RemoteTaskException
-      // which has the root cause stackTrace and error message
-      RemoteTaskException remoteTaskException = e.getCause();
-      String exceptionClass = remoteTaskException.getRemoteExceptionClassName();
-      String exceptionMessage = remoteTaskException.getMessage();
-      Throwable cause = remoteTaskException.getCause();
-
-      if (AuthenticationConfigException.class.getName().equals(exceptionClass)) {
-        throw new AuthenticationConfigException(exceptionMessage, cause);
-      }
-
-      if (NotFoundException.class.getName().equals(exceptionClass)) {
-        throw new NotFoundException(exceptionMessage, cause);
-      }
-
-      throw new SourceControlException(exceptionMessage, cause);
+      throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
     } catch (Exception ex) {
       throw new SourceControlException(ex.getMessage(), ex);
     }
   }
 
   @Override
-  public RepositoryAppsResponse list(NamespaceId namespace, RepositoryConfig repoConfig)
+  public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository)
     throws AuthenticationConfigException, NotFoundException {
-    // TODO: CDAP-20357, list applications in task worker
-    throw new UnsupportedOperationException("Not implemented");  }
+    try {
+      RunnableTaskRequest request = RunnableTaskRequest.getBuilder(ListAppsTask.class.getName())
+        .withParam(GSON.toJson(nameSpaceRepository)).build();
+      LOG.trace("Listing applications for namespace {} in linked repository", nameSpaceRepository.getNamespaceId());
+      byte[] result = remoteTaskExecutor.runTask(request);
+      return GSON.fromJson(new String(result, StandardCharsets.UTF_8), RepositoryAppsResponse.class);
+    } catch (RemoteExecutionException e) {
+      throw propagateRemoteException(e, notFoundExceptionProvider, authConfigExceptionProvider);
+    } catch (Exception ex) {
+      throw new SourceControlException(ex.getMessage(), ex);
+    }
+  }
+
+  /**
+   * Helper method to propagate underlying exceptions correctly from {@link RemoteExecutionException}.
+   *
+   * @param remoteException remote exception raised by task
+   * @param propagateType1 provider for exception that should be propagated as is
+   * @param propagateType2 provider for exception that should be propagated as is
+   * @param <X1> exception type of propagateType1
+   * @param <X2> exception type of propagateType2
+   * @throws X1 if underlying exception is propagateType1
+   * @throws X2 if underlying exception is propagateType2
+   * @throws SourceControlException otherwise
+   */
+  private static <X1 extends Exception, X2 extends Exception> X1 propagateRemoteException(
+    RemoteExecutionException remoteException,
+    RemoteExceptionProvider<X1> propagateType1,
+    RemoteExceptionProvider<X2> propagateType2
+  ) throws X1, X2, SourceControlException {
+    // Getting the actual RemoteTaskException which has the root cause stackTrace and error message
+    RemoteTaskException remoteTaskException = remoteException.getCause();
+    String exceptionClass = remoteTaskException.getRemoteExceptionClassName();
+    String exceptionMessage = remoteTaskException.getMessage();
+    Throwable cause = remoteTaskException.getCause();
+
+    propagateIfInstanceOf(propagateType1, exceptionClass, cause, exceptionMessage);
+    propagateIfInstanceOf(propagateType2, exceptionClass, cause, exceptionMessage);
+
+    throw new SourceControlException(exceptionMessage, cause);
+  }
+
+  /**
+   * Creates and throws an exception to type propagateType if the exceptionClass matches.
+   *
+   * @param exceptionClass actual exception class
+   * @param propagateType provider class of exception to be matched
+   * @param cause the cause of exception
+   * @param exceptionMessage message for the exception
+   * @param <X> exception type of propagateType
+   * @throws X if exceptionClass and propagateType matches
+   */
+  private static <X extends Exception> void propagateIfInstanceOf(
+    RemoteExceptionProvider<X> propagateType, String exceptionClass, Throwable cause, String exceptionMessage
+  ) throws X {
+    if (propagateType.isOfClass(exceptionClass)) {
+      throw propagateType.createException(exceptionMessage, cause);
+    }
+  }
 }

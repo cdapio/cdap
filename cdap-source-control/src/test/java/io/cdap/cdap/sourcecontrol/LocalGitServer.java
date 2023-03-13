@@ -77,7 +77,7 @@ public class LocalGitServer extends ExternalResource {
   }
 
   @Nullable
-  public String getServerURL() {
+  public String getServerUrl() {
     return serverConnector == null ? null : String.format("http://localhost:%s/", serverConnector.getLocalPort());
   }
 
@@ -101,7 +101,6 @@ public class LocalGitServer extends ExternalResource {
     gitServlet.setRepositoryResolver((HttpServletRequest req, String name) -> bareGit.getRepository());
     // Git requests try to authenticate as admin by default, so set that as the required
     // security role for all paths.
-    Set<String> constraintRoles = Collections.singleton("admin");
     String[] roles = {"admin"};
     Constraint constraint = new Constraint();
     constraint.setRoles(roles);
@@ -113,6 +112,7 @@ public class LocalGitServer extends ExternalResource {
     constraintMapping.setConstraint(constraint);
 
     List<ConstraintMapping> constraintMappings = Collections.singletonList(constraintMapping);
+    Set<String> constraintRoles = Collections.singleton("admin");
 
     // Setup authentication for a single user whose username and password is provided in the constructor.
     ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();

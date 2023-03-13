@@ -46,6 +46,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
+import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
@@ -59,11 +60,10 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.store.NamespaceTable;
 import io.cdap.cdap.store.RepositoryTable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Service that manages source control for repositories and applications.
@@ -81,6 +81,9 @@ public class SourceControlManagementService {
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
+  /**
+   * Constructor for SourceControlManagementService with all params injected via guice.
+   */
   @Inject
   public SourceControlManagementService(CConfiguration cConf,
                                         SecureStore secureStore,
@@ -108,6 +111,14 @@ public class SourceControlManagementService {
     return new NamespaceTable(context);
   }
 
+  /**
+   * Add a repository config to a namespace.
+   *
+   * @param namespace {@link NamespaceId} to link repository to
+   * @param repository {@link RepositoryConfig} for the linked repository
+   * @return {@link RepositoryMeta} representing the linked repository
+   * @throws NamespaceNotFoundException if the namespace is non-existent
+   */
   public RepositoryMeta setRepository(NamespaceId namespace, RepositoryConfig repository)
     throws NamespaceNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
@@ -124,6 +135,11 @@ public class SourceControlManagementService {
     }, NamespaceNotFoundException.class);
   }
 
+  /**
+   * Delete the current repository config from namespace.
+   *
+   * @param namespace {@link NamespaceId} do unlink repository from
+   */
   public void deleteRepository(NamespaceId namespace) {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.DELETE);
 
@@ -133,6 +149,11 @@ public class SourceControlManagementService {
     });
   }
 
+  /**
+   * Return the repository config for the given namespace.
+   *
+   * @throws RepositoryNotFoundException if repository config is not available for the namespace
+   */
   public RepositoryMeta getRepositoryMeta(NamespaceId namespace) throws RepositoryNotFoundException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
 
@@ -147,13 +168,19 @@ public class SourceControlManagementService {
     }, RepositoryNotFoundException.class);
   }
 
+  /**
+   * Validates the remote repository config for the given namespace.
+   *
+   * @throws RemoteRepositoryValidationException if validation of remote repository fails
+   */
   public void validateRepository(NamespaceId namespace, RepositoryConfig repoConfig)
     throws RemoteRepositoryValidationException {
     RepositoryManager.validateConfig(secureStore, new SourceControlConfig(namespace, repoConfig, cConf));
   }
 
   /**
-   * The method to push an application to linked repository
+   * The method to push an application to linked repository.
+   *
    * @param appRef {@link ApplicationReference}
    * @param commitMessage enforced commit message from user
    * @return {@link PushAppResponse}
@@ -187,6 +214,7 @@ public class SourceControlManagementService {
 
   /**
    * Pull the application from linked repository and deploy it in current namespace.
+   *
    * @param appRef application reference to deploy with
    * @return {@link ApplicationRecord} of the deployed application.
    * @throws Exception when {@link ApplicationLifecycleService} fails to deploy.
@@ -205,8 +233,8 @@ public class SourceControlManagementService {
     ApplicationWithPrograms app = appLifecycleService.deployApp(appRef.app(versionId), appRequest,
                                                                 sourceControlMeta, x -> { });
 
-    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and " +
-               "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
+    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
+            + "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
              app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
     );
 
@@ -221,6 +249,7 @@ public class SourceControlManagementService {
 
   /**
    * Pull the application from repository, look up the fileHash in store and compare it with the cone in repository.
+   *
    * @param appRef {@link ApplicationReference} to fetch the application with
    * @return {@link PullAppResponse}
    * @throws NoChangesToPullException if the fileHashes are the same
@@ -234,10 +263,10 @@ public class SourceControlManagementService {
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
     PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
 
-    if (latestMeta != null &&
-      latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
-      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is " +
-                                                         "no new change for the pulled application: %s", appRef));
+    if (latestMeta != null
+        && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
+          + "no new change for the pulled application: %s", appRef));
     }
     return pullResponse;
   }
@@ -254,7 +283,6 @@ public class SourceControlManagementService {
     AuthenticationConfigException {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    return sourceControlOperationRunner.list(namespace, repoConfig);
+    return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
   }
-
 }

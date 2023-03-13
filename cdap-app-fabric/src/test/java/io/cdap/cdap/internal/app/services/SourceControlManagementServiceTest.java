@@ -44,18 +44,21 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
+import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import java.util.Arrays;
 
 /**
  * Tests for {@link SourceControlManagementService}
@@ -335,7 +338,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
   }
 
-  @Test
+  @Test(expected = NotFoundException.class)
   public void testPullAndDeployAppNotFoundException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     String namespace = Id.Namespace.DEFAULT.getId();
@@ -353,16 +356,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     try {
       sourceControlService.pullAndDeploy(appRef);
-      Assert.fail();
-    } catch (ApplicationNotFoundException e) {
-      // no-op
+    } finally {
+      sourceControlService.deleteRepository(namespaceId);
     }
-
-    // Cleanup
-    sourceControlService.deleteRepository(namespaceId);
   }
 
-  @Test
+  @Test(expected = AuthenticationConfigException.class)
   public void testPullAndDeployAuthenticationConfigException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     String namespace = Id.Namespace.DEFAULT.getId();
@@ -380,16 +379,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     try {
       sourceControlService.pullAndDeploy(appRef);
-      Assert.fail();
-    } catch (AuthenticationConfigException e) {
-      // no-op
+    } finally {
+      sourceControlService.deleteRepository(namespaceId);
     }
-
-    // Cleanup
-    sourceControlService.deleteRepository(namespaceId);
   }
 
-  @Test
+  @Test(expected = SourceControlException.class)
   public void testPullAndDeploySourceControlException() throws Exception {
     Id.Application appId1 = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
     String namespace = Id.Namespace.DEFAULT.getId();
@@ -407,13 +402,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     try {
       sourceControlService.pullAndDeploy(appRef);
-      Assert.fail();
-    } catch (SourceControlException e) {
-      // no-op
+    } finally {
+      sourceControlService.deleteRepository(namespaceId);
     }
-
-    // Cleanup
-    sourceControlService.deleteRepository(namespaceId);
   }
 
   @Test
@@ -470,11 +461,13 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doReturn(expectedListResult)
-      .when(mockSourceControlOperationRunner).list(namespaceId, namespaceRepo);
+      .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));
 
     RepositoryAppsResponse result = sourceControlService.listApps(namespaceId);
+    List<RepositoryApp> actualAppsList = result.getApps().stream()
+        .sorted(Comparator.comparing(RepositoryApp::getName)).collect(Collectors.toList());
 
-    Assert.assertEquals(result.getApps(), expectedListResult.getApps());
+    Assert.assertEquals(actualAppsList, expectedListResult.getApps());
   }
 
   @Test(expected = SourceControlException.class)
@@ -486,7 +479,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, namespaceRepo);
 
     Mockito.doThrow(SourceControlException.class)
-      .when(mockSourceControlOperationRunner).list(namespaceId, namespaceRepo);
+      .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));
 
     sourceControlService.listApps(namespaceId);
   }

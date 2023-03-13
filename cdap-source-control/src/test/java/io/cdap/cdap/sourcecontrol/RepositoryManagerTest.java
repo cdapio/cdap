@@ -28,6 +28,14 @@ import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -39,15 +47,6 @@ import org.junit.rules.RuleChain;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Tests for {@link  RepositoryManager}.
@@ -73,9 +72,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test
   public void testValidateIncorrectKeyName() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME + "invalid")
@@ -104,9 +103,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test
   public void testValidateInvalidBranchName() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop-invalid")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME)
@@ -122,9 +121,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test
   public void testValidateNullBranchName() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME)
       .build();
@@ -144,8 +143,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     String fileContents = "{name: pipeline}";
     addFileToGit(path, fileContents, gitServer);
     RepositoryManager manager = getRepositoryManager();
-    String commitID = manager.cloneRemote();
-    String fileHash = manager.getFileHash(path, commitID);
+    String commitId = manager.cloneRemote();
+    String fileHash = manager.getFileHash(path, commitId);
 
     String expectedHash = getGitStyleHash(fileContents);
     Assert.assertEquals(expectedHash, fileHash);
@@ -156,16 +155,16 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     manager.close();
     // Change the file contents and commit, the hash should also change.
     addFileToGit(path, "change 2", gitServer);
-    commitID = manager.cloneRemote();
-    Assert.assertNotEquals(manager.getFileHash(path, commitID), expectedHash);
+    commitId = manager.cloneRemote();
+    Assert.assertNotEquals(manager.getFileHash(path, commitId), expectedHash);
     manager.close();
   }
 
   @Test(expected = NotFoundException.class)
   public void testGetFileHashInvlidPath() throws Exception {
     try (RepositoryManager manager = getRepositoryManager();) {
-      String commitID = manager.cloneRemote();
-      manager.getFileHash(Paths.get("data-pipelines", "pipeline.json"), commitID);
+      String commitId = manager.cloneRemote();
+      manager.getFileHash(Paths.get("data-pipelines", "pipeline.json"), commitId);
     }
   }
 
@@ -180,13 +179,13 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     // check file hash of link.
     RepositoryManager manager = getRepositoryManager();
     manager.cloneRemote();
-    String commitID = manager.resolveHead().getName();
-    String hash = manager.getFileHash(path, commitID);
+    String commitId = manager.resolveHead().getName();
+    String hash = manager.getFileHash(path, commitId);
     // Change file contents, but don't commit.
     Path absoluteRepoPath = manager.getRepositoryRoot().resolve(path);
     Files.write(absoluteRepoPath, fileContents2.getBytes(StandardCharsets.UTF_8));
     // Check the file hash of the link, it should be unchanged.
-    Assert.assertEquals(hash, manager.getFileHash(path, commitID));
+    Assert.assertEquals(hash, manager.getFileHash(path, commitId));
     // Check that working directory changes are still present.
     Assert.assertEquals(new String(Files.readAllBytes(absoluteRepoPath), StandardCharsets.UTF_8), fileContents2);
     manager.close();
@@ -194,14 +193,14 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     addFileToGit(path, fileContents2, gitServer);
     manager.cloneRemote();
     // Check the file hash at previous commit.
-    Assert.assertEquals(hash, manager.getFileHash(path, commitID));
+    Assert.assertEquals(hash, manager.getFileHash(path, commitId));
     // Check the file hash at head.
     Assert.assertNotEquals(hash, manager.getFileHash(path, manager.resolveHead().getName()));
     manager.close();
   }
 
   @Test(expected = IOException.class)
-  public void testGetFileHashInvalidCommitID() throws Exception {
+  public void testGetFileHashInvalidCommitId() throws Exception {
     String fileName = "pipeline.json";
     Path path = Paths.get(fileName);
     addFileToGit(path, "{name: pipeline}", gitServer);
@@ -216,7 +215,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   private RepositoryConfig.Builder getRepositoryConfigBuilder() {
     return new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(gitServer.getServerURL() + "ignored")
+      .setLink(gitServer.getServerUrl() + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME);
@@ -242,9 +241,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test
   public void testCommitAndPushSuccess() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME)
@@ -264,9 +263,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test(expected = SourceControlException.class)
   public void testCommitAndPushSourceControlFailure() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME)
@@ -286,9 +285,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test(expected = NoChangesToPushException.class)
   public void testCommitAndPushNoChangeSuccess() throws Exception {
     String pathPrefix = "prefix";
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop")
       .setPathPrefix(pathPrefix)
       .setAuthType(AuthType.PAT)
@@ -306,9 +305,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Test(expected = GitAPIException.class)
   public void testCommitAndPushFails() throws Exception {
-    String serverURL = gitServer.getServerURL();
+    String serverUrl = gitServer.getServerUrl();
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverURL + "ignored")
+      .setLink(serverUrl + "ignored")
       .setDefaultBranch("develop")
       .setAuthType(AuthType.PAT)
       .setTokenName(TOKEN_NAME)
