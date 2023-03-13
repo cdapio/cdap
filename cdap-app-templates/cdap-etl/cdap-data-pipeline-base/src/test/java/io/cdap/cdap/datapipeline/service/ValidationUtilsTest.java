@@ -45,12 +45,13 @@ import java.util.Map;
  */
 public class ValidationUtilsTest {
 
-  private static final FeatureFlagsProvider MOCK_FEATURE_FLAGS_PROVIDER = new FeatureFlagsProvider() {
-  };
+  private static final FeatureFlagsProvider MOCK_FEATURE_FLAGS_PROVIDER =
+      new FeatureFlagsProvider() { };
 
   @Test
   public void testValidateNoException() {
-    Schema testSchema = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
+    Schema testSchema = Schema.recordOf("a",
+        Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
     StageSchema testStageSchema = new StageSchema("source", testSchema);
     ETLStage etlStage = new ETLStage("source", MockSource.getPlugin("testtable"));
     StageValidationRequest validationRequest = new StageValidationRequest(
@@ -65,7 +66,8 @@ public class ValidationUtilsTest {
 
   @Test
   public void testValidateException() {
-    Schema testSchema = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
+    Schema testSchema = Schema.recordOf("a",
+        Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
     StageSchema testStageSchema = new StageSchema("source", testSchema);
     ETLStage etlStage = new ETLStage("source", MockSource.getPlugin(null));
     StageValidationRequest validationRequest = new StageValidationRequest(
@@ -79,8 +81,9 @@ public class ValidationUtilsTest {
   }
 
   @Test
-  public void testMacroSubstitution() {
-    Schema testSchema = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
+  public void testMacroSubstitutionNotReturned() {
+    Schema testSchema = Schema.recordOf("a",
+        Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
     StageSchema testStageSchema = new StageSchema("source", testSchema);
     ETLStage etlStage = new ETLStage("source", MockSource.getPlugin("@{tName}"));
     StageValidationRequest validationRequest = new StageValidationRequest(
@@ -97,37 +100,40 @@ public class ValidationUtilsTest {
         return propertiesCopy;
       }, MOCK_FEATURE_FLAGS_PROVIDER);
     Assert.assertTrue(stageValidationResponse.getFailures().isEmpty());
-    Assert.assertEquals(testtable, stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
+    Assert.assertEquals("@{tName}",
+        stageValidationResponse.getSpec().getPlugin().getProperties().get("tableName"));
   }
 
   //Mock PluginConfigurer
   private PluginConfigurer getPluginConfigurer(PluginClass pluginClass) {
     return new PluginConfigurer() {
       @Override
-      public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
-                             PluginSelector selector) {
+      public <T> T usePlugin(String pluginType, String pluginName, String pluginId,
+          PluginProperties properties, PluginSelector selector) {
         String tableName = properties.getProperties().get("tableName");
         if (tableName == null || tableName.isEmpty()) {
-          throw new InvalidPluginConfigException(pluginClass, Collections.singleton("tableName"), new HashSet<>());
+          throw new InvalidPluginConfigException(pluginClass, Collections.singleton("tableName"),
+              new HashSet<>());
         }
         MockSource.Config config = new MockSource.Config();
         MockSource.ConnectionConfig connectionConfig = new MockSource.ConnectionConfig();
         String schema = properties.getProperties().get("schema");
         String sleep = properties.getProperties().get("sleepInMillis");
         connectionConfig.setTableName(tableName);
-        config.setConfig(connectionConfig, schema, null, sleep == null ? null : Long.parseLong(sleep));
+        config.setConfig(connectionConfig, schema, null,
+            sleep == null ? null : Long.parseLong(sleep));
         return (T) new MockSource(config);
       }
 
       @Override
       public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
-                                         PluginProperties properties, PluginSelector selector) {
+          PluginProperties properties, PluginSelector selector) {
         return null;
       }
 
       @Override
       public Map<String, String> evaluateMacros(Map<String, String> properties,
-                                                MacroEvaluator evaluator, MacroParserOptions options) throws
+          MacroEvaluator evaluator, MacroParserOptions options) throws
         InvalidMacroException {
         return null;
       }
