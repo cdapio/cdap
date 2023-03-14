@@ -193,7 +193,6 @@ public class MetadataConsumerSubscriberService extends
       // Intellij would warn here that the condition is always false - because the switch above covers all cases.
       // But if there is ever an unexpected message, we can't throw exception, that would leave the message there.
       if (processor == null) {
-        LOG.warn("Unsupported metadata message type {}. Message ignored.", message.getType());
         continue;
       }
       try {
