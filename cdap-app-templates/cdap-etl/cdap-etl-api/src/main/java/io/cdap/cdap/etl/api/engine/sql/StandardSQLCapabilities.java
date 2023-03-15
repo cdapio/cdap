@@ -19,15 +19,24 @@ package io.cdap.cdap.etl.api.engine.sql;
 import io.cdap.cdap.etl.api.relational.Capability;
 
 /**
- * Defines capabilities for SQL Engine factories
+ * Defines capabilities for SQL Engine factories.
  */
+@SuppressWarnings({"abbreviationAsWordInName"})
 public enum StandardSQLCapabilities implements Capability {
   /**
-   * Defines that factory implements SQL92 language
+   * Defines that factory implements SQL92 language.
    */
   SQL92,
   /**
-   * Defines that factory implements support for BigQuery specific language
+   * Defines that factory implements support for BigQuery specific language.
    */
-  BIGQUERY
+  BIGQUERY,
+  /**
+   * Defines that factory implements support for Postgres SQL dialect.
+   */
+  POSTGRES,
+  /**
+   * Defines that factory implements support for Spark SQL dialect.
+   */
+  SPARK
 }

@@ -18,10 +18,13 @@ package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import io.cdap.cdap.etl.api.engine.sql.StandardSQLCapabilities;
+import io.cdap.cdap.etl.api.relational.Capability;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.relational.RelationalTranformContext;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -92,5 +95,9 @@ public class BasicRelationalTransformContext implements RelationalTranformContex
 
   public Relation getOutputRelation() {
     return outputRelation;
+  }
+
+  public Collection<Capability> getDefaultLanguageCapabilityList() {
+    return Collections.singleton(StandardSQLCapabilities.POSTGRES);
   }
 }

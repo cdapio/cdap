@@ -18,32 +18,39 @@ package io.cdap.cdap.etl.api.relational;
 
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.feature.FeatureFlagsProvider;
+import java.util.Collection;
 import java.util.Set;
 
 /**
  * This interface provides sql engine, input relation(s) and a way to set tranformation results to a
- * {@link RelationalTransform#transform(RelationalTranformContext)} call
+ * {@link RelationalTransform#transform(RelationalTranformContext)} call.
  */
 public interface RelationalTranformContext extends FeatureFlagsProvider {
 
   /**
-   * @return relational engine to be used for tranformation
+   * Gets the relational engine to be used for the transformation.
+   *
+   * @return relational engine to be used for transformation
    */
   Engine getEngine();
 
   /**
+   * Gets the relation corresponding to the given input.
+   *
    * @param inputStage input name
    * @return relation corresponding to the given input
    */
   Relation getInputRelation(String inputStage);
 
   /**
+   * Gets the set of all relation names in the input.
+   *
    * @return set of all input relation names
    */
   Set<String> getInputRelationNames();
 
   /**
-   * Gets schema for input stage
+   * Gets schema for input stage.
    *
    * @param inputStage input name
    * @return relation corresponding to the given input
@@ -51,19 +58,35 @@ public interface RelationalTranformContext extends FeatureFlagsProvider {
   Schema getInputSchema(String inputStage);
 
   /**
-   * Gets the output schema for this transform context
+   * Gets the output schema for this transform context.
    *
    * @return output schema
    */
   Schema getOutputSchema();
 
   /**
-   * sets the primary output relation for the transform
+   * Sets the primary output relation for the transform.
+   *
+   * @param outputRelation the output relation
    */
   void setOutputRelation(Relation outputRelation);
 
   /**
+   * Sets the output relation corresponding to an output stage.
    *
+   * @param portName name of output stage
+   * @param outputDataSet output relation
    */
   void setOutputRelation(String portName, Relation outputDataSet);
+
+  /**
+   * Provides a list of capabilities that plugins must use to locate an ExpressionFactory to parse user-entered
+   * expressions.
+   *
+   * @return the list of languages supported by default as a list of {@link Capability}s.
+   */
+  default Collection<Capability> getDefaultLanguageCapabilityList() {
+    throw new UnsupportedOperationException("Default language capabilities are not supported for this relation "
+            + "transform context.");
+  }
 }
