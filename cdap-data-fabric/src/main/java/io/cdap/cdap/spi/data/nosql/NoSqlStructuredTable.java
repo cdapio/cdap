@@ -71,7 +71,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTable.class);
   private static final Logger LOG_RATE_LIMITED =
-      Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(10L)));
+      Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(5L)));
   private final IndexedTable table;
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
