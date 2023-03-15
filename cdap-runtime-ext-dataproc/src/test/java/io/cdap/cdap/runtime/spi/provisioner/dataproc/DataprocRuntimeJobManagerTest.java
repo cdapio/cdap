@@ -27,89 +27,117 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.twill.api.LocalFile;
+import org.apache.twill.internal.Constants;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * Tests for DataprocRuntimeJobManager.
- */
+/** Tests for DataprocRuntimeJobManager. */
 public class DataprocRuntimeJobManagerTest {
 
   private static RuntimeJobInfo runtimeJobInfo;
 
   @BeforeClass
   public static void setUp() {
-    runtimeJobInfo = new RuntimeJobInfo() {
-      private final ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-        .setNamespace("namespace").setApplication("application").setVersion("1.0")
-        .setProgramType("workflow").setProgram("program").setRun(UUID.randomUUID().toString()).build();
-      @Override
-      public Collection<? extends LocalFile> getLocalizeFiles() {
-        return Collections.emptyList();
-      }
+    runtimeJobInfo =
+        new RuntimeJobInfo() {
+          private final ProgramRunInfo runInfo =
+              new ProgramRunInfo.Builder()
+                  .setNamespace("namespace")
+                  .setApplication("application")
+                  .setVersion("1.0")
+                  .setProgramType("workflow")
+                  .setProgram("program")
+                  .setRun(UUID.randomUUID().toString())
+                  .build();
 
-      @Override
-      public String getRuntimeJobClassname() {
-        return DataprocRuntimeJobManager.getJobId(runInfo);
-      }
+          @Override
+          public Collection<? extends LocalFile> getLocalizeFiles() {
+            return Collections.emptyList();
+          }
 
-      @Override
-      public ProgramRunInfo getProgramRunInfo() {
-        return runInfo;
-      }
+          @Override
+          public String getRuntimeJobClassname() {
+            return DataprocRuntimeJobManager.getJobId(runInfo);
+          }
 
-      @Override
-      public Map<String, String> getJvmProperties() {
-        return ImmutableMap.of("key", "val");
-      }
-    };
+          @Override
+          public ProgramRunInfo getProgramRunInfo() {
+            return runInfo;
+          }
+
+          @Override
+          public Map<String, String> getJvmProperties() {
+            return ImmutableMap.of("key", "val");
+          }
+        };
   }
 
   @Test
   public void jobNameTest() {
-    ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-      .setNamespace("namespace").setApplication("application").setVersion("1.0")
-      .setProgramType("workflow").setProgram("program").setRun(UUID.randomUUID().toString()).build();
+    ProgramRunInfo runInfo =
+        new ProgramRunInfo.Builder()
+            .setNamespace("namespace")
+            .setApplication("application")
+            .setVersion("1.0")
+            .setProgramType("workflow")
+            .setProgram("program")
+            .setRun(UUID.randomUUID().toString())
+            .build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
     Assert.assertTrue(jobName.startsWith("namespace_application_program"));
   }
 
   @Test
   public void longJobNameTest() {
-    ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-        .setNamespace("namespace")
-        .setApplication("very_very_long_app_name_is_provided_this_should_be"
-            + "_trimed_so_that_correct_name_is_produced")
-      .setVersion("1.0")
-      .setProgramType("workflow")
-      .setProgram("program").setRun(UUID.randomUUID().toString()).build();
+    ProgramRunInfo runInfo =
+        new ProgramRunInfo.Builder()
+            .setNamespace("namespace")
+            .setApplication(
+                "very_very_long_app_name_is_provided_this_should_be"
+                    + "_trimed_so_that_correct_name_is_produced")
+            .setVersion("1.0")
+            .setProgramType("workflow")
+            .setProgram("program")
+            .setRun(UUID.randomUUID().toString())
+            .build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
-    Assert.assertTrue(jobName.startsWith("namespace_very_very_long_app_name_is_provided_this_should_be_tr_"));
+    Assert.assertTrue(
+        jobName.startsWith("namespace_very_very_long_app_name_is_provided_this_should_be_tr_"));
     Assert.assertEquals(100, jobName.length());
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void invalidJobNameTest() {
-    ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-      .setNamespace("namespace").setApplication("application$$$")
-      .setVersion("1.0")
-      .setProgramType("workflow")
-      .setProgram("program")
-      .setRun(UUID.randomUUID().toString()).build();
+    ProgramRunInfo runInfo =
+        new ProgramRunInfo.Builder()
+            .setNamespace("namespace")
+            .setApplication("application$$$")
+            .setVersion("1.0")
+            .setProgramType("workflow")
+            .setProgram("program")
+            .setRun(UUID.randomUUID().toString())
+            .build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
     Assert.assertTrue(jobName.startsWith("namespace_application_program"));
   }
 
   @Test
   public void getArgumentsTest() {
-    List<String> arguments = DataprocRuntimeJobManager.getArguments(runtimeJobInfo, Collections.emptyList(),
-                                                                    SparkCompat.SPARK3_2_12.getCompat());
-    Assert.assertEquals(3, arguments.size());
+    List<String> arguments =
+        DataprocRuntimeJobManager.getArguments(
+            runtimeJobInfo,
+            Collections.emptyList(),
+            SparkCompat.SPARK3_2_12.getCompat(),
+            Constants.Files.APPLICATION_JAR);
+    Assert.assertEquals(4, arguments.size());
     Assert.assertTrue(arguments.contains("--propkey=\"val\""));
-    Assert.assertTrue(arguments.contains("--runtimeJobClass=" + runtimeJobInfo.getRuntimeJobClassname()));
+    Assert.assertTrue(
+        arguments.contains("--runtimeJobClass=" + runtimeJobInfo.getRuntimeJobClassname()));
     Assert.assertTrue(arguments.contains("--sparkCompat=" + SparkCompat.SPARK3_2_12.getCompat()));
-
+    Assert.assertTrue(
+        arguments.contains(
+            "--" + Constants.Files.APPLICATION_JAR + "=" + Constants.Files.APPLICATION_JAR));
   }
 
   @Test
@@ -117,11 +145,19 @@ public class DataprocRuntimeJobManagerTest {
     Map<String, String> properties = DataprocRuntimeJobManager.getProperties(runtimeJobInfo);
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     Assert.assertEquals(6, properties.size());
-    Assert.assertEquals(runInfo.getNamespace(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_NAMESPACE));
-    properties.put(runInfo.getApplication(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_APPLICATION));
-    Assert.assertEquals(runInfo.getVersion(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_VERSION));
-    Assert.assertEquals(runInfo.getProgramType(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_PROGRAM_TYPE));
-    Assert.assertEquals(runInfo.getProgram(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_PROGRAM));
-    Assert.assertEquals(runInfo.getRun(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_RUNID));
+    Assert.assertEquals(
+        runInfo.getNamespace(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_NAMESPACE));
+    properties.put(
+        runInfo.getApplication(),
+        properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_APPLICATION));
+    Assert.assertEquals(
+        runInfo.getVersion(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_VERSION));
+    Assert.assertEquals(
+        runInfo.getProgramType(),
+        properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_PROGRAM_TYPE));
+    Assert.assertEquals(
+        runInfo.getProgram(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_PROGRAM));
+    Assert.assertEquals(
+        runInfo.getRun(), properties.get(DataprocRuntimeJobManager.CDAP_RUNTIME_RUNID));
   }
 }
