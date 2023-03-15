@@ -17,9 +17,12 @@
 package io.cdap.cdap.etl.api.streaming;
 
 /**
- * Marker interface for indicating that a @link{StreamingSource} plugin allows native state handling
+ * Interface for indicating that a @link{StreamingSource} plugin allows native state handling
  * for at least once processing
  */
 public interface StreamingStateHandler {
 
+  default boolean retryEnabled() {
+    return true;
+  }
 }

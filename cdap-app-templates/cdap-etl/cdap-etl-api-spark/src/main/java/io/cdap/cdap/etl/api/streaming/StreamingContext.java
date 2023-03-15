@@ -72,4 +72,7 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
   boolean isStateStoreEnabled();
 
   AppStateStore getAppStateStore();
+
+  //TODO
+  // Add method to get batch duration
 }

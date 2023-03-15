@@ -125,6 +125,13 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
         sparkConf.set("spark.streaming.driver.writeAheadLog.closeFileAfterWrite", "true");
       }
     }
+
+    LOG.info("Getting state spec retry enabled value {}.", spec.getStateSpec().isRetryEnabled());
+    if (!spec.getStateSpec().isRetryEnabled()) {
+      sparkConf.set("spark.task.maxFailures", "1");
+      sparkConf.set("spark.stage.maxConsecutiveAttempts", "1");
+    }
+
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     sparkConf.set("spark.network.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));

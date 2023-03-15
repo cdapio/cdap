@@ -31,6 +31,7 @@ public class DataStreamsStateSpec {
   private final Mode mode;
   @Nullable
   private final String checkpointDir;
+  private final boolean retryEnabled;
 
   public Mode getMode() {
     return mode;
@@ -41,9 +42,14 @@ public class DataStreamsStateSpec {
     return checkpointDir;
   }
 
-  private DataStreamsStateSpec(Mode mode, @Nullable String checkpointDir) {
+  public boolean isRetryEnabled() {
+    return retryEnabled;
+  }
+
+  private DataStreamsStateSpec(Mode mode, @Nullable String checkpointDir, boolean retryEnabled) {
     this.mode = mode;
     this.checkpointDir = checkpointDir;
+    this.retryEnabled = retryEnabled;
   }
 
   @Override
@@ -55,7 +61,8 @@ public class DataStreamsStateSpec {
       return false;
     }
     DataStreamsStateSpec stateSpec = (DataStreamsStateSpec) o;
-    return mode == stateSpec.mode && Objects.equals(checkpointDir, stateSpec.checkpointDir);
+    return mode == stateSpec.mode && Objects.equals(checkpointDir, stateSpec.checkpointDir)
+        && retryEnabled == retryEnabled;
   }
 
   @Override
@@ -78,6 +85,7 @@ public class DataStreamsStateSpec {
   public static class Builder {
     private Mode mode;
     private String checkpointDir;
+    private boolean retryEnabled;
 
     private Builder(Mode mode) {
       this.mode = mode;
@@ -88,8 +96,13 @@ public class DataStreamsStateSpec {
       return this;
     }
 
+    public Builder setRetryEnabled(boolean retryEnabled) {
+      this.retryEnabled = retryEnabled;
+      return this;
+    }
+
     public DataStreamsStateSpec build() {
-      return new DataStreamsStateSpec(mode, checkpointDir);
+      return new DataStreamsStateSpec(mode, checkpointDir, retryEnabled);
     }
   }
 }

@@ -66,6 +66,7 @@ public class DataStreamsPipelineSpecGenerator
   //Set of sources in this pipeline that supports @link{StreamingStateHandler}
   private Set<String> stateHandlingSources;
   private Set<String> sourcePluginTypes;
+  private boolean retryEnabled;
 
   <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(
     String namespace, T configurer, @Nullable RuntimeConfigurer runtimeConfigurer, Set<String> sourcePluginTypes,
@@ -75,6 +76,7 @@ public class DataStreamsPipelineSpecGenerator
     this.runtimeConfigurer = runtimeConfigurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.stateHandlingSources = new HashSet<>();
+    this.retryEnabled = true;
   }
 
   @Override
@@ -164,8 +166,9 @@ public class DataStreamsPipelineSpecGenerator
     if (nativeStateTrackingSupported(config, sourcePluginTypes, stateHandlingSources)) {
       // Native state tracking and spark checkpointing is mutually exclusive
       // This is because Spark recreates context from checkpoint data
-      DataStreamsStateSpec stateSpec = DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.STATE_STORE)
-        .build();
+      DataStreamsStateSpec stateSpec =
+          DataStreamsStateSpec.getBuilder(DataStreamsStateSpec.Mode.STATE_STORE)
+              .setRetryEnabled(retryEnabled).build();
       specBuilder.setStateSpec(stateSpec);
     } else {
       String checkpointDir = config.getCheckpointDir();
@@ -228,6 +231,10 @@ public class DataStreamsPipelineSpecGenerator
     super.configureSourcePlugin(stageName, plugin, stageConfigurer, collector);
     if (plugin instanceof StreamingStateHandler) {
       stateHandlingSources.add(stageName);
+      // If the plugin does not support retrying tasks, disable it
+      if (!((StreamingStateHandler) plugin).retryEnabled()) {
+        this.retryEnabled = false;
+      }
     }
   }
 }
