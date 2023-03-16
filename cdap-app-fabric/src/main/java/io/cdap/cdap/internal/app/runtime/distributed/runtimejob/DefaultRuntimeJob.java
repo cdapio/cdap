@@ -148,6 +148,7 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -275,6 +276,23 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
+      //Listen for failure of core service and terminate the program if any service fails
+      for (Service service : coreServices) {
+        service.addListener(new ServiceListenerAdapter() {
+          @Override
+          public void failed(Service.State from, Throwable failure) {
+            LOG.error("Core service {} failed, prev state {}, terminating program run",
+                      service, from, failure);
+            try {
+              programStateWriter.error(programRunId, failure);
+            } catch (Exception e) {
+              LOG.error("Error in updating program state to failed", e);
+            }
+            programCompletion.completeExceptionally(failure);
+          }
+        }, Threads.SAME_THREAD_EXECUTOR);
+      }
+
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class)
           .create(programId.getType());
 
