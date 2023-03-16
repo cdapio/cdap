@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.retry.Idempotency;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
@@ -66,7 +67,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   public List<SecureStoreMetadata> list(String namespace) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createPath(namespace))
         .build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, "", "Error occurred while listing keys");
     return GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
   }
@@ -76,7 +77,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     // 1. Get metadata of the secure key
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
         createPath(namespace, name) + "/metadata").build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while getting metadata for key %s:%s",
             namespace, name));
@@ -85,7 +86,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
 
     // 2. Get sensitive data for the secure key
     request = remoteClient.requestBuilder(HttpMethod.GET, createPath(namespace, name)).build();
-    response = remoteClient.execute(request);
+    response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while getting key %s:%s",
             namespace, name));
@@ -101,7 +102,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
         properties);
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createPath(namespace, name))
         .withBody(GSON.toJson(createRequest)).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while putting key %s:%s", namespace, name));
   }
@@ -110,7 +111,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   public void delete(String namespace, String name) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE,
         createPath(namespace, name)).build();
-    HttpResponse response = remoteClient.execute(request);
+    HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while deleting key %s:%s",
             namespace, name));
