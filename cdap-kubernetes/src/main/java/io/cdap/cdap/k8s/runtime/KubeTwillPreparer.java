@@ -204,6 +204,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private String workloadIdentityServiceAccount;
   private boolean runtimeCleanupDisabled;
   private String cdapRuntimeNamespace;
+  private StringBuilder globalJvmOptions;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -262,6 +263,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
         confTTLStr);
     this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
     this.cdapRuntimeNamespace = null;
+    this.globalJvmOptions = new StringBuilder();
   }
 
   @Override
@@ -442,9 +444,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer setJVMOptions(String options) {
-    for (String runnable : runnables) {
-      setJVMOptions(runnable, options);
-    }
+    globalJvmOptions = new StringBuilder(options);
     return this;
   }
 
@@ -456,9 +456,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   @Override
   public TwillPreparer addJVMOptions(String options) {
-    for (String runnable : runnableJVMOptions.keySet()) {
-      runnableJVMOptions.get(runnable).append(JAVA_OPTS_DELIM).append(options);
-    }
+    globalJvmOptions.append(JAVA_OPTS_DELIM).append(options);
     return this;
   }
 
@@ -1251,8 +1249,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     RuntimeSpecification mainRuntimeSpec = getMainRuntimeSpecification(runtimeSpecs);
     String runnableName = mainRuntimeSpec.getName();
     environs.putAll(environments.get(runnableName));
+    String jvmOpts = globalJvmOptions.toString() + JAVA_OPTS_DELIM + runnableJVMOptions.get(runnableName).toString();
     // Add JVM options to environment.
-    environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(runnableName).toString());
+    environs.put(JAVA_OPTS_KEY, jvmOpts);
     // Add workload identity environment variable if applicable.
     if (workloadIdentityEnabled && WorkloadIdentityUtil.shouldMountWorkloadIdentity(
         cdapInstallNamespace,
@@ -1278,7 +1277,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       // Add all environments for the runnable
       environs.putAll(environments.get(name));
       // Add JVM options to environment.
-      environs.put(JAVA_OPTS_KEY, runnableJVMOptions.get(name).toString());
+      environs.put(JAVA_OPTS_KEY, jvmOpts);
       mounts = addSecreteVolMountIfNeeded(spec, volumeMounts);
       containers.add(
           createContainer(name, podInfo.getContainerImage(), podInfo.getImagePullPolicy(), workDir,
