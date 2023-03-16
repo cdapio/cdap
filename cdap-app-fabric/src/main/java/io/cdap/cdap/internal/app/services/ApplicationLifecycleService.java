@@ -1110,8 +1110,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationId appId = new ApplicationId(appRef.getNamespace(), appRef.getApplication(),
                                             appMeta.getSpec().getAppVersion());
     // TODO :refactor to take application reference - CDAP-20425
-    LOG.info("Removing application {} in namespace {}", appId.getNamespace(),
-             appId.getApplication());
     deleteApp(appId, appMeta.getSpec());
   }
 

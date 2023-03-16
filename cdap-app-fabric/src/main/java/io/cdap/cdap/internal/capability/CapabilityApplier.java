@@ -275,6 +275,8 @@ class CapabilityApplier {
 
   private void removeApplication(ApplicationReference applicationReference) throws Exception {
     try {
+      LOG.info("Removing application {} in namespace {}", applicationReference.getApplication(),
+               applicationReference.getNamespace());
       applicationLifecycleService.removeApplication(applicationReference);
     } catch (NotFoundException ex) {
       //ignore, could have been removed with REST api or was not deployed

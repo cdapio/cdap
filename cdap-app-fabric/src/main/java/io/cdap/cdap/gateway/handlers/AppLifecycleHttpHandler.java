@@ -439,6 +439,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
+    LOG.info("Removing application {} in namespace {}", appName, namespaceId);
     applicationLifecycleService.removeApplication(new ApplicationReference(namespaceId, appName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
