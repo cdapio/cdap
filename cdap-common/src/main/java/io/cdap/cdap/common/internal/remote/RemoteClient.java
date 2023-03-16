@@ -101,15 +101,23 @@ public class RemoteClient {
 
   /**
    * Perform the request, returning the response. If there was a ConnectException while making the
-   * request, a ServiceUnavailableException is thrown.
+   * request, a ServiceUnavailableException is thrown. Wraps exceptions from {@link
+   * RemoteClient#execute(HttpRequest)} into {@link RetryableException} that are retryable for
+   * idempotent methods (GET/PUT/DELETE).
    *
    * @param request the request to perform
    * @return the response
    * @throws IOException if there was an IOException while performing the request
    * @throws ServiceUnavailableException if there was a ConnectException while making the
    *     request, or if the response was a 503
+   * @throws RetryableException if there was an exception while performing an idempotent
+   *     request
    */
   public HttpResponse execute(HttpRequest request) throws IOException, UnauthorizedException {
+    return execute(request, Idempotency.AUTO);
+  }
+
+  private HttpResponse executeNonIdempotent(HttpRequest request) throws IOException, UnauthorizedException {
     URL rewrittenURL = rewriteURL(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
@@ -173,13 +181,13 @@ public class RemoteClient {
           return executeIdempotent(request);
         } // fall through
       default:
-        return execute(request);
+        return executeNonIdempotent(request);
     }
   }
 
   private HttpResponse executeIdempotent(HttpRequest request) {
     try {
-      return execute(request);
+      return executeNonIdempotent(request);
     } catch (IOException | ServiceException e) {
       throw new RetryableException(e);
     }
