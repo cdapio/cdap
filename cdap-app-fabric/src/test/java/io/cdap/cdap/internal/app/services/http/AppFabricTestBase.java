@@ -357,6 +357,7 @@ public abstract class AppFabricTestBase {
     // reduce the number of dataset executor threads
     cConf.setInt(Constants.Dataset.Executor.WORKER_THREADS, 2);
     cConf.setInt(Constants.Dataset.Executor.EXEC_THREADS, 5);
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
     return cConf;
   }
 

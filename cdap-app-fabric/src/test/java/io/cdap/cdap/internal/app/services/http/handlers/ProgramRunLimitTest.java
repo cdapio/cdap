@@ -40,9 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-/**
- * Tests for {@link ProgramLifecycleHttpHandler}
- */
+/** Tests for {@link ProgramLifecycleHttpHandler} */
 public class ProgramRunLimitTest extends AppFabricTestBase {
   private static final String STOPPED = "STOPPED";
   private static final String RUNNING = "RUNNING";
@@ -51,18 +49,24 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = createBasicCConf();
-    // we enable Kerberos for these unit tests, so we can test namespace group permissions (see testDataDirCreation).
+    // we enable Kerberos for these unit tests, so we can test namespace group permissions (see
+    // testDataDirCreation).
     cConf.setInt(Constants.AppFabric.MAX_CONCURRENT_RUNS, 2);
     cConf.setInt(Constants.AppFabric.MAX_CONCURRENT_LAUNCHING, 1);
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
     initializeAndStartServices(cConf);
   }
 
   @Category(SlowTests.class)
   @Test
   public void testConcurrentServiceLaunchingAndRunningLimit() throws Exception {
-    // Launching/running a new service should NOT be controlled by flow-control mechanism. 
+    // Launching/running a new service should NOT be controlled by flow-control mechanism.
     // deploy, check the status
-    deploy(AppWithServicesAndWorker.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(
+        AppWithServicesAndWorker.class,
+        200,
+        Constants.Gateway.API_VERSION_3_TOKEN,
+        TEST_NAMESPACE1);
 
     ApplicationId appId = new ApplicationId(TEST_NAMESPACE1, AppWithServicesAndWorker.NAME);
     ProgramId noOpService = appId.service(AppWithServicesAndWorker.NO_OP_SERVICE);
@@ -83,12 +87,15 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
 
     // starting the worker should succeed
     startProgram(noOpWorker);
-    Tasks.waitFor(1, () -> getProgramRuns(noOpWorker, ProgramRunStatus.COMPLETED).size(), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(
+        1,
+        () -> getProgramRuns(noOpWorker, ProgramRunStatus.COMPLETED).size(),
+        10,
+        TimeUnit.SECONDS);
 
     // stop one service
     stopProgram(noOpService);
     waitState(noOpService, STOPPED);
-
 
     // stop other service
     stopProgram(pingService);
@@ -108,9 +115,13 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     Assert.assertEquals(STOPPED, getProgramStatus(workflowId));
 
     // Start the program and wait until it goes into STARTING state
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
-                                             "outputPath",
-                                             new File(tmpFolder.newFolder(), "output").getAbsolutePath()));
+    startProgram(
+        workflowId,
+        ImmutableMap.of(
+            "inputPath",
+            createInput("input"),
+            "outputPath",
+            new File(tmpFolder.newFolder(), "output").getAbsolutePath()));
     waitState(workflowId, STARTING);
 
     // Starting the second run should fail since only 1 launching run is allowed
@@ -118,21 +129,31 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
 
     // Continue waiting for the first run to start running
     waitState(workflowId, RUNNING);
-    Tasks.waitFor(2, () ->
-      getProgramRuns(workflowId, ProgramRunStatus.ALL).size(), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(
+        2, () -> getProgramRuns(workflowId, ProgramRunStatus.ALL).size(), 10, TimeUnit.SECONDS);
 
     // There should be one REJECTED run and one RUNNING runs
-    Assert.assertEquals(1, getProgramRuns(workflowId, ProgramRunStatus.ALL)
-      .stream().filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.RUNNING).count());
-    Assert.assertEquals(1, getProgramRuns(workflowId, ProgramRunStatus.ALL)
-      .stream().filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.REJECTED).count());
+    Assert.assertEquals(
+        1,
+        getProgramRuns(workflowId, ProgramRunStatus.ALL).stream()
+            .filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.RUNNING)
+            .count());
+    Assert.assertEquals(
+        1,
+        getProgramRuns(workflowId, ProgramRunStatus.ALL).stream()
+            .filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.REJECTED)
+            .count());
 
     // Start the second run to have two active runs
-    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input2"),
-                                             "outputPath",
-                                             new File(tmpFolder.newFolder(), "output2").getAbsolutePath()));
-    Tasks.waitFor(3, () ->
-      getProgramRuns(workflowId, ProgramRunStatus.ALL).size(), 10, TimeUnit.SECONDS);
+    startProgram(
+        workflowId,
+        ImmutableMap.of(
+            "inputPath",
+            createInput("input2"),
+            "outputPath",
+            new File(tmpFolder.newFolder(), "output2").getAbsolutePath()));
+    Tasks.waitFor(
+        3, () -> getProgramRuns(workflowId, ProgramRunStatus.ALL).size(), 10, TimeUnit.SECONDS);
 
     // starting the third run should fail since there are two active runs already
     // I.e., one running and one in launching/running
@@ -142,10 +163,16 @@ public class ProgramRunLimitTest extends AppFabricTestBase {
     waitState(workflowId, STOPPED);
 
     // There should be two REJECTED runs and two COMPLETED runs
-    Assert.assertEquals(2, getProgramRuns(workflowId, ProgramRunStatus.ALL)
-      .stream().filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.COMPLETED).count());
-    Assert.assertEquals(2, getProgramRuns(workflowId, ProgramRunStatus.ALL)
-      .stream().filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.REJECTED).count());
+    Assert.assertEquals(
+        2,
+        getProgramRuns(workflowId, ProgramRunStatus.ALL).stream()
+            .filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.COMPLETED)
+            .count());
+    Assert.assertEquals(
+        2,
+        getProgramRuns(workflowId, ProgramRunStatus.ALL).stream()
+            .filter(runRecord -> runRecord.getStatus() == ProgramRunStatus.REJECTED)
+            .count());
   }
 
   private String createInput(String folderName) throws IOException {
