@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -36,6 +37,7 @@ import org.junit.rules.TemporaryFolder;
  * Base class for source control tests.
  */
 public abstract class SourceControlTestBase {
+
   protected static final String DEFAULT_BRANCH_NAME = "develop";
   protected static final String GIT_SERVER_USERNAME = "oauth2";
   protected static final int GIT_COMMAND_TIMEOUT = 2;
@@ -73,7 +75,9 @@ public abstract class SourceControlTestBase {
 
 
   public LocalGitServer getGitServer() {
-    return new LocalGitServer(GIT_SERVER_USERNAME, MOCK_TOKEN, 0, DEFAULT_BRANCH_NAME, baseTempFolder);
+    return new LocalGitServer(GIT_SERVER_USERNAME, MOCK_TOKEN, 0,
+        DEFAULT_BRANCH_NAME,
+        baseTempFolder);
   }
 
   /**
@@ -82,14 +86,17 @@ public abstract class SourceControlTestBase {
    * @param dir the directory to clone the repository in.
    * @return the cloned {@link Git} object.
    */
-  public Git getClonedGit(Path dir, LocalGitServer gitServer) throws GitAPIException {
+  public Git getClonedGit(Path dir, LocalGitServer gitServer)
+      throws GitAPIException {
     return Git.cloneRepository()
-      .setURI(gitServer.getServerUrl() + "ignored")
-      .setDirectory(dir.toFile())
-      .setBranch(DEFAULT_BRANCH_NAME)
-      .setTimeout(GIT_COMMAND_TIMEOUT)
-      .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME, MOCK_TOKEN))
-      .call();
+        .setURI(gitServer.getServerUrl() + "ignored")
+        .setDirectory(dir.toFile())
+        .setBranch(DEFAULT_BRANCH_NAME)
+        .setTimeout(GIT_COMMAND_TIMEOUT)
+        .setCredentialsProvider(
+            new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME,
+                MOCK_TOKEN))
+        .call();
   }
 
   /**
@@ -97,9 +104,12 @@ public abstract class SourceControlTestBase {
    *
    * @param relativePath path relative to git repo root.
    * @param contents     the contents of the file.
+   * @return commit of the pushed change.
    */
-  public void addFileToGit(Path relativePath, String contents, LocalGitServer gitServer) throws GitAPIException,
-    IOException {
+  public RevCommit addFileToGit(Path relativePath, String contents,
+      LocalGitServer gitServer)
+      throws GitAPIException,
+      IOException {
     Path tempDirPath = baseTempFolder.newFolder("temp-local-git").toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
     Path absolutePath = tempDirPath.resolve(relativePath);
@@ -107,13 +117,18 @@ public abstract class SourceControlTestBase {
     Files.createDirectories(absolutePath.getParent());
     Files.write(absolutePath, contents.getBytes(StandardCharsets.UTF_8));
     localGit.add().addFilepattern(".").call();
-    localGit.commit().setMessage("Adding " + relativePath).call();
+    final RevCommit commit = localGit.commit()
+        .setMessage("Adding " + relativePath)
+        .call();
     localGit.push()
-      .setTimeout(GIT_COMMAND_TIMEOUT)
-      .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME, MOCK_TOKEN))
-      .call();
+        .setTimeout(GIT_COMMAND_TIMEOUT)
+        .setCredentialsProvider(
+            new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME,
+                MOCK_TOKEN))
+        .call();
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
+    return commit;
   }
 
   /**
@@ -124,14 +139,16 @@ public abstract class SourceControlTestBase {
     // character and takes the sha1 hash to find the file hash.
     // See https://stackoverflow.com/a/7225329.
     return Hashing.sha1()
-      .hashString("blob " + fileContents.length() + "\0" + fileContents, StandardCharsets.UTF_8)
-      .toString();
+        .hashString("blob " + fileContents.length() + "\0" + fileContents,
+            StandardCharsets.UTF_8)
+        .toString();
   }
 
 
   public void validateTestAppRequest(AppRequest<?> appRequest) {
     Assert.assertNotNull(appRequest.getArtifact());
-    Assert.assertEquals("cdap-notifiable-workflow", appRequest.getArtifact().getName());
+    Assert.assertEquals("cdap-notifiable-workflow",
+        appRequest.getArtifact().getName());
     Assert.assertNotNull(appRequest.getPreview());
     Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
   }
