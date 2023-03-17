@@ -181,7 +181,8 @@
     <name>namespaces.creation.hook.enabled</name>
     <value>false</value>
     <description>
-      Whether to invoke a master environment-specific method hook upon namespace creation.
+      Whether to invoke a master environment-specific method hook upon namespace
+      creation.
     </description>
   </property>
 
@@ -227,7 +228,8 @@
     <value>0.6</value>
     <description>
       The minimum ratio of heap to non-heap memory for all launched Apache Twill
-      containers. Container-specific settings also exist for CDAP system containers.
+      containers. Container-specific settings also exist for CDAP system
+      containers.
     </description>
   </property>
 
@@ -235,8 +237,10 @@
     <name>twill.java.reserved.memory.mb</name>
     <value>768</value>
     <description>
-      Desired reserved non-heap memory in megabytes for all launched Apache Twill containers.
-      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
+      Desired reserved non-heap memory in megabytes for all launched Apache
+      Twill containers.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting
+      of the container memory size.
       Container-specific settings also exist for CDAP system containers.
     </description>
   </property>
@@ -276,7 +280,8 @@
     <name>twill.security.master.secret.disk.name</name>
     <value>cdap-security</value>
     <description>
-      The name of the Twill security disk mount which contains cdap-security.xml for master services.
+      The name of the Twill security disk mount which contains cdap-security.xml
+      for master services.
     </description>
   </property>
 
@@ -284,7 +289,8 @@
     <name>twill.security.master.secret.disk.path</name>
     <value>/etc/cdap/security</value>
     <description>
-      The absolute directory of the Twill security disk mount which contains cdap-security.xml for master services.
+      The absolute directory of the Twill security disk mount which contains
+      cdap-security.xml for master services.
     </description>
   </property>
 
@@ -300,7 +306,8 @@
     <name>twill.security.worker.secret.disk.name</name>
     <value>cdap-security</value>
     <description>
-      The name of the Twill security disk mount which contains cdap-security.xml for worker runnables.
+      The name of the Twill security disk mount which contains cdap-security.xml
+      for worker runnables.
     </description>
   </property>
 
@@ -308,7 +315,8 @@
     <name>twill.security.worker.secret.disk.path</name>
     <value>/etc/cdap/security</value>
     <description>
-      The absolute directory of the Twill security disk mount which contains cdap-security.xml for worker runnables.
+      The absolute directory of the Twill security disk mount which contains
+      cdap-security.xml for worker runnables.
     </description>
   </property>
 
@@ -316,7 +324,8 @@
     <name>twill.yarn.am.memory.mb</name>
     <value>512</value>
     <description>
-      The memory size in megabytes of the Apache Twill application master container
+      The memory size in megabytes of the Apache Twill application master
+      container
     </description>
   </property>
 
@@ -324,8 +333,10 @@
     <name>twill.yarn.am.reserved.memory.mb</name>
     <value>${twill.java.reserved.memory.mb}</value>
     <description>
-      Desired reserved non-heap memory in megabytes for Apache Twill application master container.
-      The actual value is bounded by the ${twill.java.heap.memory.ratio} of the ${twill.yarn.am.memory.mb} setting.
+      Desired reserved non-heap memory in megabytes for Apache Twill application
+      master container.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} of the
+      ${twill.yarn.am.memory.mb} setting.
     </description>
   </property>
 
@@ -341,7 +352,8 @@
     <name>upgrade.thread.pool.size</name>
     <value>1</value>
     <description>
-      Number of threads to be used running operations concurrently during a CDAP upgrade
+      Number of threads to be used running operations concurrently during a CDAP
+      upgrade
     </description>
   </property>
 
@@ -378,9 +390,12 @@
     <name>bootstrap.file</name>
     <value>/opt/cdap/master/bootstrap/distributed.json</value>
     <description>
-      File that contains bootstrap steps that should be executed on a new CDAP instance as well
-      as steps that should be executed on every restart of CDAP. Bootstrap steps include operations
-      like loading system artifacts, creating the native profile, and creating the data prep
+      File that contains bootstrap steps that should be executed on a new CDAP
+      instance as well
+      as steps that should be executed on every restart of CDAP. Bootstrap steps
+      include operations
+      like loading system artifacts, creating the native profile, and creating
+      the data prep
       application.
     </description>
   </property>
@@ -389,8 +404,10 @@
     <name>system.app.config.dir</name>
     <value>/opt/cdap/master/system-app-config</value>
     <description>
-      Directory that contains definitions for what system apps should be running. This directory is continuously
-      monitored for new/modified config files and updating application state to match what is defined in those files.
+      Directory that contains definitions for what system apps should be
+      running. This directory is continuously
+      monitored for new/modified config files and updating application state to
+      match what is defined in those files.
     </description>
   </property>
 
@@ -421,7 +438,8 @@
     <value>15</value>
     <description>
       If greater than 0, ensures that has values are time bucketed every x days.
-      Therefore, generating hash of an identical value x days apart will result in different hash values.
+      Therefore, generating hash of an identical value x days apart will result
+      in different hash values.
     </description>
   </property>
 
@@ -429,7 +447,8 @@
     <name>app.artifact.compute.hash</name>
     <value>false</value>
     <description>
-      If true, a hash for sharable artifacts will be computed and appended to artifact filename.
+      If true, a hash for sharable artifacts will be computed and appended to
+      artifact filename.
     </description>
   </property>
 
@@ -437,9 +456,11 @@
     <name>app.artifact.compute.hash.snapshot</name>
     <value>false</value>
     <description>
-      If true, a hash for sharable artifacts with SNAPSHOT in their versions will be computed and appended
+      If true, a hash for sharable artifacts with SNAPSHOT in their versions
+      will be computed and appended
       to artifact filename.
-      Should only be enabled for testing purposes. Otherwise, should always remain false.
+      Should only be enabled for testing purposes. Otherwise, should always
+      remain false.
     </description>
   </property>
 
@@ -456,8 +477,10 @@
     <name>app.artifact.parallelism.max</name>
     <value>50</value>
     <description>
-      Maximum parallelism of system artifact loading. This can be a resource-consuming process, e.g. with
-      repository on GCS upload can use 64MB buffer, so we need to ensure app fabric is not overwhelmed during
+      Maximum parallelism of system artifact loading. This can be a
+      resource-consuming process, e.g. with
+      repository on GCS upload can use 64MB buffer, so we need to ensure app
+      fabric is not overwhelmed during
       the process.
     </description>
   </property>
@@ -500,7 +523,8 @@
     <name>app.max.concurrent.runs</name>
     <value>-1</value>
     <description>
-      Maximum number of concurrent program runs allowed; set to -1 for unlimited.
+      Maximum number of concurrent program runs allowed; set to -1 for
+      unlimited.
       Program runs are those with an active run record.
     </description>
   </property>
@@ -509,7 +533,8 @@
     <name>app.max.concurrent.launching</name>
     <value>-1</value>
     <description>
-      Maximum number of concurrent launching runs allowed; set to -1 for unlimited.
+      Maximum number of concurrent launching runs allowed; set to -1 for
+      unlimited.
       Launching runs have an active run record with PENDING or STARTING status.
     </description>
   </property>
@@ -518,17 +543,21 @@
     <name>user.program.launch.disabled</name>
     <value>false</value>
     <description>Allows users to disable program launches on CDAP cluster.
-      True means program launch on CDAP cluster is not allowed.</description>
+      True means program launch on CDAP cluster is not allowed.
+    </description>
   </property>
 
   <property>
     <name>run.record.monitor.record.age.threshold.seconds</name>
     <value>3600</value>
     <description>
-      Maximum amount of time (in seconds) in which a run record is retained in run record monitor.
-      This is to safe guard launch requests flow-control such that if a request is somehow stuck in PENDING/STARTING
+      Maximum amount of time (in seconds) in which a run record is retained in
+      run record monitor.
+      This is to safe guard launch requests flow-control such that if a request
+      is somehow stuck in PENDING/STARTING
       state, it will be dropped from after the threshold.
-      Note that run.record.monitor.cleanup.interval.seconds might be needed to changed if this config changes.
+      Note that run.record.monitor.cleanup.interval.seconds might be needed to
+      changed if this config changes.
     </description>
   </property>
 
@@ -536,8 +565,10 @@
     <name>run.record.monitor.cleanup.interval.seconds</name>
     <value>300</value>
     <description>
-      Cleanup interval (in seconds) in which run record monitor service cleanup logic runs to delete old entries.
-      Note that run.record.monitor.record.age.threshold.seconds might be needed to changed if this config changes.
+      Cleanup interval (in seconds) in which run record monitor service cleanup
+      logic runs to delete old entries.
+      Note that run.record.monitor.record.age.threshold.seconds might be needed
+      to changed if this config changes.
     </description>
   </property>
 
@@ -570,7 +601,8 @@
     <name>program.twill.controller.start.seconds</name>
     <value>${app.program.max.start.seconds}</value>
     <description>
-      Upon starting a program, the amount of time to wait for a program twill controller to either go into
+      Upon starting a program, the amount of time to wait for a program twill
+      controller to either go into
       running or termination before returning.
     </description>
   </property>
@@ -597,7 +629,8 @@
     <name>app.program.runid.corrector.tx.batch.size</name>
     <value>1000</value>
     <description>
-      Number of run records being fetched per transaction for checking if needed for correction.
+      Number of run records being fetched per transaction for checking if needed
+      for correction.
       This value is directly proportional to the ${data.tx.timeout} setting.
     </description>
   </property>
@@ -606,7 +639,8 @@
     <name>app.program.local.dataset.deleter.initial.delay</name>
     <value>300</value>
     <description>
-      Interval in seconds for initial delay for the local dataset deletion thread;
+      Interval in seconds for initial delay for the local dataset deletion
+      thread;
       this value should be greater than 0
     </description>
   </property>
@@ -615,7 +649,8 @@
     <name>app.program.local.dataset.deleter.interval</name>
     <value>3600</value>
     <description>
-      Interval in seconds of how often the local dataset deletion thread will run;
+      Interval in seconds of how often the local dataset deletion thread will
+      run;
       this value should be greater than 0
     </description>
   </property>
@@ -633,7 +668,8 @@
     <name>app.program.terminate.time.buffer.secs</name>
     <value>60</value>
     <description>
-      Interval in seconds of how much buffer time is given to programs to allow them
+      Interval in seconds of how much buffer time is given to programs to allow
+      them
       to stop on their own before issuing a hard kill
     </description>
   </property>
@@ -679,7 +715,8 @@
     <name>app.program.spark.event.logs.dir</name>
     <value>spark-histories</value>
     <description>
-      When ${app.program.spark.event.logs.enabled} is true, the directory under the ${root.namespace}
+      When ${app.program.spark.event.logs.enabled} is true, the directory under
+      the ${root.namespace}
       for storing the logs.
     </description>
   </property>
@@ -697,10 +734,13 @@
     <name>app.program.status.event.tx.separation</name>
     <value>false</value>
     <description>
-      if true, ProgramNotificationSubscriberService will go shouldRunInSeparateTx to
+      if true, ProgramNotificationSubscriberService will go
+      shouldRunInSeparateTx to
       see if certain messages need to run in a separate transaction.
-      This is usually not needed, unless scale is extremely high, which in turn may result
-      in transactions being deadlock with program.status.event.topic.num.partitions is greater than 1.
+      This is usually not needed, unless scale is extremely high, which in turn
+      may result
+      in transactions being deadlock with
+      program.status.event.topic.num.partitions is greater than 1.
     </description>
   </property>
 
@@ -708,7 +748,8 @@
     <name>app.program.status.event.fetch.size</name>
     <value>100</value>
     <description>
-      Maximum number of events to fetch from the messaging system in each processing cycle for
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for
       program status update events
     </description>
   </property>
@@ -717,7 +758,8 @@
     <name>app.program.status.event.tx.size</name>
     <value>${app.program.status.event.fetch.size}</value>
     <description>
-      Maximum number of events to process in one transaction when messages are fetched from the messaging system
+      Maximum number of events to process in one transaction when messages are
+      fetched from the messaging system
       in each processing cycle for program status update events
     </description>
   </property>
@@ -726,7 +768,8 @@
     <name>app.program.status.event.poll.delay.millis</name>
     <value>2000</value>
     <description>
-      The delay in milliseconds to check again for new program status events after it detects there was no event
+      The delay in milliseconds to check again for new program status events
+      after it detects there was no event
     </description>
   </property>
 
@@ -734,9 +777,12 @@
     <name>app.program.yarn.attempt.failures.validity.interval</name>
     <value>60000</value>
     <description>
-      The interval in milliseconds for the time window used by YARN Resource Manager to check for
-      application max failure attempts. By default, this is only used for long running program, but
-      can be override through runtime argument `system.yarn.attempt.failures.validity.interval`
+      The interval in milliseconds for the time window used by YARN Resource
+      Manager to check for
+      application max failure attempts. By default, this is only used for long
+      running program, but
+      can be override through runtime argument
+      `system.yarn.attempt.failures.validity.interval`
     </description>
   </property>
 
@@ -745,8 +791,10 @@
     <value>implicit</value>
     <description>
       Defines how transactions are controlled for program methods invocation;
-      "implicit" means that the platform encloses method execution into a transaction,
-      whereas "explicit" means that the method itself is in control of executing transactions.
+      "implicit" means that the platform encloses method execution into a
+      transaction,
+      whereas "explicit" means that the method itself is in control of executing
+      transactions.
     </description>
   </property>
 
@@ -770,10 +818,14 @@
     <name>app.deploy.update.schedules</name>
     <value>true</value>
     <description>
-      If true, redeploying an application will modify any schedules that currently exist
-      for the application; if false, redeploying an application does not create any new
-      schedules and existing schedules are neither deleted nor updated. This property only
-      affects the redeployment of an application; all related actions or endpoints are
+      If true, redeploying an application will modify any schedules that
+      currently exist
+      for the application; if false, redeploying an application does not create
+      any new
+      schedules and existing schedules are neither deleted nor updated. This
+      property only
+      affects the redeployment of an application; all related actions or
+      endpoints are
       unaffected.
     </description>
   </property>
@@ -827,7 +879,8 @@
     <name>scheduler.event.poll.delay.millis</name>
     <value>2000</value>
     <description>
-      The delay in milliseconds that the scheduler checks again for new events after it detects there was no event
+      The delay in milliseconds that the scheduler checks again for new events
+      after it detects there was no event
     </description>
   </property>
 
@@ -835,7 +888,8 @@
     <name>scheduler.time.event.fetch.size</name>
     <value>100</value>
     <description>
-      Maximum number of events to fetch from the messaging system in each processing cycle for
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for
       time schedule events
     </description>
   </property>
@@ -844,7 +898,8 @@
     <name>scheduler.stream.size.event.fetch.size</name>
     <value>100</value>
     <description>
-      Maximum number of events to fetch from the messaging system in each processing cycle for
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for
       stream size schedule events
     </description>
   </property>
@@ -853,7 +908,8 @@
     <name>scheduler.data.event.fetch.size</name>
     <value>100</value>
     <description>
-      Maximum number of events to fetch from the messaging system in each processing cycle for
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for
       data schedule events
     </description>
   </property>
@@ -862,7 +918,8 @@
     <name>scheduler.program.status.event.fetch.size</name>
     <value>100</value>
     <description>
-      Maximum number of events to fetch from the messaging system in each processing cycle for
+      Maximum number of events to fetch from the messaging system in each
+      processing cycle for
       program status schedule events
     </description>
   </property>
@@ -872,7 +929,8 @@
     <name>time.event.topic</name>
     <value>timeevent</value>
     <description>
-      Topic name for publishing time events from time scheduler to the messaging system
+      Topic name for publishing time events from time scheduler to the messaging
+      system
     </description>
   </property>
 
@@ -880,9 +938,12 @@
     <name>program.status.event.topic</name>
     <value>programstatusevent</value>
     <description>
-      Topic prefix for publishing status transitioning events of program runs to the messaging system.
-      Note that depending on program.status.event.topic.num.partitions, it's either topic name
-      (when 1 partition is requested) or prefix (when more than 1 partition is requested). Also all subscribers
+      Topic prefix for publishing status transitioning events of program runs to
+      the messaging system.
+      Note that depending on program.status.event.topic.num.partitions, it's
+      either topic name
+      (when 1 partition is requested) or prefix (when more than 1 partition is
+      requested). Also all subscribers
       must always subscribe to the bare name to ensure backwards compatibility.
     </description>
   </property>
@@ -891,9 +952,12 @@
     <name>program.status.event.topic.num.partitions</name>
     <value>1</value>
     <description>
-      Number of topics to use for program run events. All events realted to same run should always
-      go to same topic. Note that for backwards compatiblity reasons 1 extra topic without number suffix is always
-      created and subscribed. As for publishing, bare topic is used when 1 parition is requested and suffixed
+      Number of topics to use for program run events. All events realted to same
+      run should always
+      go to same topic. Note that for backwards compatiblity reasons 1 extra
+      topic without number suffix is always
+      created and subscribed. As for publishing, bare topic is used when 1
+      parition is requested and suffixed
       topics are used when more than 1 partition is requested.
     </description>
   </property>
@@ -902,7 +966,8 @@
     <name>program.status.record.event.topic</name>
     <value>programstatusrecordevent</value>
     <description>
-      Topic name for publishing program status recording events to the messaging system
+      Topic name for publishing program status recording events to the messaging
+      system
     </description>
   </property>
 
@@ -919,9 +984,11 @@
     <name>requirements.datasetTypes.exclude.list</name>
     <value></value>
     <description>
-      Comma separated list of plugin datset type requirements that cannot be met in the instance.
+      Comma separated list of plugin datset type requirements that cannot be met
+      in the instance.
       Plugins that require any of these will be treated as if they don't exist.
-      For example, if 'table' is given, any plugin that requires 'table' will be treated as
+      For example, if 'table' is given, any plugin that requires 'table' will be
+      treated as
       if they don't exist.
     </description>
   </property>
@@ -992,7 +1059,8 @@
     <value>104857600</value>
     <description>
       Cache size in bytes for data fabric when in CDAP Local Sandbox.
-      Note that this value is only used by LevelDB in the JNI mode, in java mode please use
+      Note that this value is only used by LevelDB in the JNI mode, in java mode
+      please use
       data.local.storage.cachesize.files to control LevelDB cache
     </description>
   </property>
@@ -1002,7 +1070,8 @@
     <value>200</value>
     <description>
       Cache size in number of open files when in CDAP Local Sandbox.
-      Note that this value is only used by LevelDB in java mode, in JNI mode please use
+      Note that this value is only used by LevelDB in java mode, in JNI mode
+      please use
       data.local.storage.cachesize to control LevelDB cache
     </description>
   </property>
@@ -1032,11 +1101,13 @@
     <name>data.storage.sql.jdbc.driver.external</name>
     <value>true</value>
     <description>
-      Indicates whether the JDBC driver has to be loaded from an external directory.
+      Indicates whether the JDBC driver has to be loaded from an external
+      directory.
       If true, then the JDBC driver directory has to be specified using
       "data.storage.sql.jdbc.driver.directory".
       If false, then the JDBC driver is present in the CDAP classpath.
-      This config can only be used when the storage implementation is postgresql.
+      This config can only be used when the storage implementation is
+      postgresql.
     </description>
   </property>
 
@@ -1045,11 +1116,14 @@
     <value>/opt/cdap/master/ext/jdbc</value>
     <description>
       The base directory for storing JDBC driver jars.
-      Sub-directory with the name that matches with the value of "data.storage.implementation" setting
+      Sub-directory with the name that matches with the value of
+      "data.storage.implementation" setting
       will be searched for the corresponding JDBC driver and
       dependencies jars to connect to the configured sql instance.
-      The JDBC driver class to load has to be specified using "data.storage.sql.jdbc.driver.name".
-      This config can only be used when the storage implementation is postgresql.
+      The JDBC driver class to load has to be specified using
+      "data.storage.sql.jdbc.driver.name".
+      This config can only be used when the storage implementation is
+      postgresql.
     </description>
   </property>
 
@@ -1070,7 +1144,8 @@
       The jdbc url to connect to the sql instance. No sensitive information
       should be provided using the jdbc url. The username and password can
       be specified in cdap-security.xml. For non-sensitive properties, it can be
-      specified by adding a property with name prefixed with "data.storage.sql.jdbc.property.",
+      specified by adding a property with name prefixed with
+      "data.storage.sql.jdbc.property.",
       followed by the sql property name.
     </description>
   </property>
@@ -1095,7 +1170,8 @@
     <name>data.storage.sql.tx.runner.max.retries</name>
     <value>20</value>
     <description>
-      The max number of retries for the sql transaction runner on retryable failures.
+      The max number of retries for the sql transaction runner on retryable
+      failures.
     </description>
   </property>
 
@@ -1233,7 +1309,8 @@
     <value>${master.service.max.instances}</value>
     <description>
       Maximum number of transaction service instances.
-      Increasing the number of transaction service instances only improves availability, but not scalability
+      Increasing the number of transaction service instances only improves
+      availability, but not scalability
     </description>
   </property>
 
@@ -1308,11 +1385,16 @@
     <name>data.tx.retain.client.id</name>
     <value>committed</value>
     <description>
-      Whether and how long to retain the client id of a transaction. Valid values are:
-      "off" to disable retention of the client id; "active" to retain the client id until
-      a transaction is committed; or "committed" to retain the client id as long as its
-      change set participates in conflict detection. Retaining the client id slightly
-      increases the memory footprint of the transaction service. Client ids are never
+      Whether and how long to retain the client id of a transaction. Valid
+      values are:
+      "off" to disable retention of the client id; "active" to retain the client
+      id until
+      a transaction is committed; or "committed" to retain the client id as long
+      as its
+      change set participates in conflict detection. Retaining the client id
+      slightly
+      increases the memory footprint of the transaction service. Client ids are
+      never
       retained past a restart or fail-over of the transaction manager.
     </description>
   </property>
@@ -1561,7 +1643,8 @@
     <name>system.dataset.remote.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for notification publish or subscription. Allowed options:
+      The type of retry policy for notification publish or subscription. Allowed
+      options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
@@ -1570,9 +1653,12 @@
     <name>hive.version.resolution.strategy</name>
     <value>auto.strict</value>
     <description>
-      Determines how to behave when the Hive version on a cluster is an unsupported value.
-      The default value of "auto.strict" will require that the Hive version matches a
-      supported value. Set to "auto.latest" to use the latest Hive version of CDAP
+      Determines how to behave when the Hive version on a cluster is an
+      unsupported value.
+      The default value of "auto.strict" will require that the Hive version
+      matches a
+      supported value. Set to "auto.latest" to use the latest Hive version of
+      CDAP
       modules available on the cluster with an unsupported Hive version.
     </description>
   </property>
@@ -1581,8 +1667,10 @@
     <name>hive.server2.jdbc.url</name>
     <value></value>
     <description>
-      The JDBC URL for the HiveServer2 in the cluster. This is needed if user programs
-      need HiveServer2 delegation token to interact with HiveServer2. It can remain empty
+      The JDBC URL for the HiveServer2 in the cluster. This is needed if user
+      programs
+      need HiveServer2 delegation token to interact with HiveServer2. It can
+      remain empty
       if the delegation token is not required for the user programs.
     </description>
   </property>
@@ -1744,7 +1832,8 @@
     <name>log.base.dir</name>
     <value>/logs/avro</value>
     <description>
-      In Distributed CDAP, the HDFS directory under which the system log pipeline saves
+      In Distributed CDAP, the HDFS directory under which the system log
+      pipeline saves
       log files
     </description>
   </property>
@@ -1793,7 +1882,8 @@
     <name>app.program.log.appender.provider</name>
     <value></value>
     <description>
-      Provider for log appender. The log appender provided by this provider will be loaded in each program container
+      Provider for log appender. The log appender provided by this provider will
+      be loaded in each program container
     </description>
   </property>
 
@@ -1801,7 +1891,8 @@
     <name>app.program.log.appender.provisioners</name>
     <value>native</value>
     <description>
-      Comma-separated list of provisioners to enable log appender provider for program executions
+      Comma-separated list of provisioners to enable log appender provider for
+      program executions
     </description>
   </property>
 
@@ -1809,7 +1900,8 @@
     <name>log.buffer.recovery.batch.size</name>
     <value>5000</value>
     <description>
-      Log buffer recovery batch size in number of log events read. This will be used to recover logs in batches from
+      Log buffer recovery batch size in number of log events read. This will be
+      used to recover logs in batches from
       log buffer upon log service restart
     </description>
   </property>
@@ -1866,7 +1958,8 @@
     <name>log.pipeline.cdap.file.max.lifetime.ms</name>
     <value>21600000</value>
     <description>
-      Maximum time span in milliseconds of a log file created by the system log pipeline
+      Maximum time span in milliseconds of a log file created by the system log
+      pipeline
     </description>
   </property>
 
@@ -2086,7 +2179,8 @@
     <name>twill.runner.service.monitor.disable</name>
     <value>SystemWorkerTwillRunnable</value>
     <description>
-      Comma separated list of Twill Runnable classes which start KubeTwillRunnerService, but wants its monitoring to
+      Comma separated list of Twill Runnable classes which start
+      KubeTwillRunnerService, but wants its monitoring to
       be disabled.
     </description>
   </property>
@@ -2112,10 +2206,13 @@
     <name>hbase.version.resolution.strategy</name>
     <value>auto.strict</value>
     <description>
-      Determines how to behave when the HBase version on a cluster is an unsupported
-      value. The default value of "auto.strict" will require that the HBase version match
+      Determines how to behave when the HBase version on a cluster is an
+      unsupported
+      value. The default value of "auto.strict" will require that the HBase
+      version match
       a supported value, and CDAP Master will not start if the HBase version is
-      unsupported. Set to "auto.latest" to use the latest HBase version available on the
+      unsupported. Set to "auto.latest" to use the latest HBase version
+      available on the
       cluster with an unsupported HBase version.
     </description>
   </property>
@@ -2382,7 +2479,8 @@
     <value>${master.service.max.instances}</value>
     <description>
       Maximum number of instances for the messaging service.
-      Increasing the number of messaging service instances only improves availability, but not scalability
+      Increasing the number of messaging service instances only improves
+      availability, but not scalability
     </description>
     <final>true</final>
   </property>
@@ -2457,7 +2555,8 @@
     <value>org.apache.hadoop.hbase.regionserver.DisabledRegionSplitPolicy</value>
     <description>
       The class name that controls the HBase table region split policy.
-      Ideally, auto-splitting should be disabled for HBase tables used by the messaging system.
+      Ideally, auto-splitting should be disabled for HBase tables used by the
+      messaging system.
     </description>
   </property>
 
@@ -2474,7 +2573,8 @@
     <name>messaging.twill.java.heap.memory.ratio</name>
     <value>0.6</value>
     <description>
-      The minimum ratio of heap to non-heap memory for the messaging service container
+      The minimum ratio of heap to non-heap memory for the messaging service
+      container
     </description>
   </property>
 
@@ -2483,8 +2583,10 @@
     <name>messaging.twill.java.reserved.memory.mb</name>
     <value>512</value>
     <description>
-      Desired reserved non-heap memory in megabytes for the messaging service container.
-      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
+      Desired reserved non-heap memory in megabytes for the messaging service
+      container.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting
+      of the container memory size.
     </description>
   </property>
 
@@ -2614,7 +2716,8 @@
     <name>metrics.minimum.resolution.seconds</name>
     <value>1</value>
     <description>
-      Minimum metrics resolution in seconds, this value should be less than 60 seconds, otherwise the minimum metrics
+      Minimum metrics resolution in seconds, this value should be less than 60
+      seconds, otherwise the minimum metrics
       resolution will be 60 seconds.
     </description>
   </property>
@@ -2624,7 +2727,8 @@
     <value>7200</value>
     <description>
       Retention resolution in seconds of the minimum resolution table;
-      default retention period is 2 hours, this retention will not be applied if the
+      default retention period is 2 hours, this retention will not be applied if
+      the
       minimum resolution is greater than or equal to 60.
     </description>
   </property>
@@ -2667,9 +2771,12 @@
     <name>metrics.data.coarse.lag.factor</name>
     <value>12</value>
     <description>
-      Resolution-based factor that defines wall clock lag. After incoming metrics processing delay reaches this lag,
-      metrics will be aggregated to bigger inteval based on round factor. E.g. for resolution of 5 seconds and
-      lag factor of 12, coarsing will be done for any metrics that are more than 5*12=60 seconds late.
+      Resolution-based factor that defines wall clock lag. After incoming
+      metrics processing delay reaches this lag,
+      metrics will be aggregated to bigger inteval based on round factor. E.g.
+      for resolution of 5 seconds and
+      lag factor of 12, coarsing will be done for any metrics that are more than
+      5*12=60 seconds late.
     </description>
   </property>
 
@@ -2677,12 +2784,18 @@
     <name>metrics.data.coarse.round.factor</name>
     <value>20</value>
     <description>
-      Resolution-based factor that defines increased interval at which metrics will be stored after coarsing kicked
-      in based on lag factor. E.g. for resolution of 5 seconds and round factor of 20, metrics will be stored
-      each 5*20=100 seconds instead of each 5 seconds. They will still be stored in the same 5 second table, so
-      table users don't need to be changed, they would just see data at more rare timestamps. The only quirk here
-      is that now data can be attributed to the moment up to 99 seconds earlier and not 5 seconds earlier than it was
-      produced due to a higher rounding involved. This mechanism allows to handle overload more gracefully.
+      Resolution-based factor that defines increased interval at which metrics
+      will be stored after coarsing kicked
+      in based on lag factor. E.g. for resolution of 5 seconds and round factor
+      of 20, metrics will be stored
+      each 5*20=100 seconds instead of each 5 seconds. They will still be stored
+      in the same 5 second table, so
+      table users don't need to be changed, they would just see data at more
+      rare timestamps. The only quirk here
+      is that now data can be attributed to the moment up to 99 seconds earlier
+      and not 5 seconds earlier than it was
+      produced due to a higher rounding involved. This mechanism allows to
+      handle overload more gracefully.
     </description>
   </property>
 
@@ -2706,8 +2819,10 @@
     <name>metrics.data.table.write.parallelism</name>
     <value>5</value>
     <description>
-      Controls parallel computations and writes to each resolution metrics table. While write itself is guarded
-      by a mutex, pre-write computations and aggregations takes time, so it makes sense to do it in parallel.
+      Controls parallel computations and writes to each resolution metrics
+      table. While write itself is guarded
+      by a mutex, pre-write computations and aggregations takes time, so it
+      makes sense to do it in parallel.
     </description>
   </property>
 
@@ -2859,7 +2974,8 @@
     <name>metrics.admin.topic</name>
     <value>metricsadmin</value>
     <description>
-      Topic name for publishing metrics administrative events to the messaging system
+      Topic name for publishing metrics administrative events to the messaging
+      system
     </description>
   </property>
 
@@ -2867,7 +2983,8 @@
     <name>metrics.admin.poll.delay.millis</name>
     <value>2000</value>
     <description>
-      The delay in milliseconds to check again for new metrics administrative events after it detects there was no event
+      The delay in milliseconds to check again for new metrics administrative
+      events after it detects there was no event
     </description>
   </property>
 
@@ -2892,7 +3009,8 @@
     <name>metrics.processor.offer.timeout.ms</name>
     <value>10000</value>
     <description>
-      How long to wait for queue to be able to accept newly-fetched metrics before giving up
+      How long to wait for queue to be able to accept newly-fetched metrics
+      before giving up
     </description>
   </property>
 
@@ -2900,7 +3018,8 @@
     <name>metrics.processor.max.delay.ms</name>
     <value>3000</value>
     <description>
-      Maximum delay in milliseconds allowed between the latest metrics timestamp and the
+      Maximum delay in milliseconds allowed between the latest metrics timestamp
+      and the
       time when it is processed
     </description>
   </property>
@@ -2909,7 +3028,8 @@
     <name>app.program.metrics.enabled</name>
     <value>true</value>
     <description>
-      Enable or disable emitting metrics from user application programs, by default set to true.
+      Enable or disable emitting metrics from user application programs, by
+      default set to true.
     </description>
   </property>
 
@@ -2917,8 +3037,10 @@
     <name>app.program.spark.metrics.enabled</name>
     <value>false</value>
     <description>
-      Enable or disable emitting spark-specific metrics, by default set to false.
-      Note that spark-specific metrics are very resource consuming and are deprecated. If you need spark metrics
+      Enable or disable emitting spark-specific metrics, by default set to
+      false.
+      Note that spark-specific metrics are very resource consuming and are
+      deprecated. If you need spark metrics
       it's better to use data from spark history server.
     </description>
   </property>
@@ -2935,8 +3057,10 @@
     <name>metrics.table.splits</name>
     <value>16</value>
     <description>
-      Number of splits for all metrics tables. This property can only be changed before CDAP starts up for the first
-      time and creates the metrics tables. Once all metrics tables are created, this property will not take any effect.
+      Number of splits for all metrics tables. This property can only be changed
+      before CDAP starts up for the first
+      time and creates the metrics tables. Once all metrics tables are created,
+      this property will not take any effect.
     </description>
   </property>
 
@@ -2945,7 +3069,8 @@
     <value>org.apache.hadoop.hbase.regionserver.DisabledRegionSplitPolicy</value>
     <description>
       The class name that controls the HBase table region split policy.
-      Ideally, auto-splitting should be disabled for HBase tables used by the metrics system.
+      Ideally, auto-splitting should be disabled for HBase tables used by the
+      metrics system.
     </description>
   </property>
 
@@ -2981,7 +3106,8 @@
     <name>metadata.consumer.extensions.enabled.list</name>
     <value></value>
     <description>
-      Comma separated list of metadata consumer extension names that are enabled.
+      Comma separated list of metadata consumer extension names that are
+      enabled.
       Extensions that are not present in this list will be ignored.
     </description>
   </property>
@@ -3018,7 +3144,8 @@
     <value>10</value>
     <description>
       Maximum number of threads for the provisioning context executor.
-      It is used by the provisioner implementation to perform task asynchronously.
+      It is used by the provisioner implementation to perform task
+      asynchronously.
     </description>
   </property>
 
@@ -3026,7 +3153,8 @@
     <name>provisioner.cconf.reload.interval.ms</name>
     <value>10000</value>
     <description>
-      Minimum interval in milliseconds to reload configration in provisioner operations.
+      Minimum interval in milliseconds to reload configration in provisioner
+      operations.
     </description>
   </property>
 
@@ -3068,8 +3196,10 @@
     <name>app.program.runtime.monitor.graceful.shutdown.ms</name>
     <value>30000</value>
     <description>
-      Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
-      This value should be larger than the value of the "app.program.runtime.monitor.polltime.ms" property
+      Number of milliseconds to wait for the runtime to shutdown after a program
+      execution completed in that runtime.
+      This value should be larger than the value of the
+      "app.program.runtime.monitor.polltime.ms" property
     </description>
   </property>
 
@@ -3077,7 +3207,8 @@
     <name>app.program.runtime.monitor.initialize.batch.size</name>
     <value>100</value>
     <description>
-      Number of runtime states to fetch from dataset in each batch during runtime monitor initialization.
+      Number of runtime states to fetch from dataset in each batch during
+      runtime monitor initialization.
     </description>
   </property>
 
@@ -3085,8 +3216,10 @@
     <name>app.program.runtime.monitor.run.record.fetch.class</name>
     <value>io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher</value>
     <description>
-      Class name of the ProgramRunRecordFetcher used by the runtime monitoring system.
-      This value controls the run record fetching mechanism depending on the CDAP setup.
+      Class name of the ProgramRunRecordFetcher used by the runtime monitoring
+      system.
+      This value controls the run record fetching mechanism depending on the
+      CDAP setup.
     </description>
   </property>
 
@@ -3110,7 +3243,8 @@
     <name>app.program.runtime.monitor.server.ssl.enabled</name>
     <value>${ssl.internal.enabled}</value>
     <description>
-      Enable usage of SSL for the runtime monitor server. By default is disabled.
+      Enable usage of SSL for the runtime monitor server. By default is
+      disabled.
       This is because traffic is already encrypted through the SSH tunnel.
     </description>
   </property>
@@ -3129,7 +3263,8 @@
     <name>app.program.runtime.monitor.server.consume.chunk.size</name>
     <value>60000</value>
     <description>
-      Approximate size in bytes of each chunk streamed back to Runtime Monitor client
+      Approximate size in bytes of each chunk streamed back to Runtime Monitor
+      client
     </description>
   </property>
 
@@ -3137,7 +3272,8 @@
     <name>app.program.runtime.monitor.threads</name>
     <value>20</value>
     <description>
-      Maximum number of threads being used by runtime monitor for runtime monitoring
+      Maximum number of threads being used by runtime monitor for runtime
+      monitoring
     </description>
   </property>
 
@@ -3415,7 +3551,8 @@
     <name>preview.request.poll.delay.millis</name>
     <value>2000</value>
     <description>
-      The delay in milliseconds to check again for new preview request after it detects there was no request
+      The delay in milliseconds to check again for new preview request after it
+      detects there was no request
     </description>
   </property>
 
@@ -3423,7 +3560,8 @@
     <name>preview.max.runs</name>
     <value>0</value>
     <description>
-      The maximum number of preview execution per preview runner process. Default is 0 to have no maximum limit.
+      The maximum number of preview execution per preview runner process.
+      Default is 0 to have no maximum limit.
     </description>
   </property>
 
@@ -3447,7 +3585,8 @@
     <name>preview.messaging.topic</name>
     <value>preview</value>
     <description>
-      Topic name used to publish preview messages including status, data, and runid to the messaging system
+      Topic name used to publish preview messages including status, data, and
+      runid to the messaging system
     </description>
   </property>
 
@@ -3471,7 +3610,8 @@
     <name>preview.runner.container.count</name>
     <value>0</value>
     <description>
-      Number of preview runner containers for preview execution. If it is set to 0, preview execution will be
+      Number of preview runner containers for preview execution. If it is set to
+      0, preview execution will be
       running in the same process as the preview manager.
     </description>
   </property>
@@ -3586,8 +3726,10 @@
     <name>spark.streaming.checkpoint.rewrite.enabled</name>
     <value>true</value>
     <description>
-      Specify whether to rewrite the temporary checkpoint file name by adding the checkpoint timestamp to the temporary
-      file name. This is useful when using object storage as the checkpoint directory.
+      Specify whether to rewrite the temporary checkpoint file name by adding
+      the checkpoint timestamp to the temporary
+      file name. This is useful when using object storage as the checkpoint
+      directory.
     </description>
   </property>
 
@@ -3734,7 +3876,8 @@
     <name>system.notification.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for notification publish or subscription. Allowed options:
+      The type of retry policy for notification publish or subscription. Allowed
+      options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
@@ -3775,7 +3918,8 @@
     <name>system.preview.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for notification publish or subscription. Allowed options:
+      The type of retry policy for notification publish or subscription. Allowed
+      options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
@@ -3816,7 +3960,8 @@
     <name>system.preview.store.update.retry.policy.type</name>
     <value>exponential.backoff</value>
     <description>
-      The type of retry policy for notification publish or subscription. Allowed options:
+      The type of retry policy for notification publish or subscription. Allowed
+      options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
@@ -4104,7 +4249,7 @@
   </property>
 
   <property>
-    <name> spark.metrics.strategy.retry.policy.max.time.secs</name>
+    <name>spark.metrics.strategy.retry.policy.max.time.secs</name>
     <value>30</value>
     <description>
       The maximum elapsed time in seconds before retries are aborted
@@ -4232,7 +4377,8 @@
     <name>router.ssl.cert.path</name>
     <value></value>
     <description>
-      File path to certificate and private key file in PEM format to use for CDAP Router
+      File path to certificate and private key file in PEM format to use for
+      CDAP Router
       when ssl.external.enabled is set to true.
     </description>
   </property>
@@ -4252,9 +4398,12 @@
     <name>security.authentication.mode</name>
     <value>MANAGED</value>
     <description>
-      Determines the mode of authentication to use if security is enabled. Supported modes include MANAGED and PROXY.
-      MANAGED mode supports a CDAP-managed authentication server and uses CDAP's access tokens to authenticate the user.
-      PROXY mode assumes that authentication has already been performed upstream and instead extracts the user's
+      Determines the mode of authentication to use if security is enabled.
+      Supported modes include MANAGED and PROXY.
+      MANAGED mode supports a CDAP-managed authentication server and uses CDAP's
+      access tokens to authenticate the user.
+      PROXY mode assumes that authentication has already been performed upstream
+      and instead extracts the user's
       identity and credentials from the configured headers.
     </description>
   </property>
@@ -4263,8 +4412,10 @@
     <name>security.authentication.propagate.user.credentials</name>
     <value>false</value>
     <description>
-      Determines whether credentials in the Authorization header of requests are propagated from the request router
-      to the rest of the backend handlers. Should be false unless the authorization extension requires the end-user
+      Determines whether credentials in the Authorization header of requests are
+      propagated from the request router
+      to the rest of the backend handlers. Should be false unless the
+      authorization extension requires the end-user
       credential to authorize users.
     </description>
   </property>
@@ -4273,8 +4424,10 @@
     <name>security.authentication.proxy.user.identity.header</name>
     <value>CDAP-UserId</value>
     <description>
-      The header to extract the user identity from. The user identity header must be provided for PROXY mode to
-      function, and CDAP requires that the header must be set on all requests to the backend.
+      The header to extract the user identity from. The user identity header
+      must be provided for PROXY mode to
+      function, and CDAP requires that the header must be set on all requests to
+      the backend.
     </description>
   </property>
 
@@ -4319,9 +4472,12 @@
     <name>security.auth.server.announce.urls</name>
     <value></value>
     <description>
-      CDAP Authentication service announce URL's separated by comma. Each URL is in the format of protocol://host:port.
-      These are the URL's that clients should use to communicate with the Authentication Server.
-      Leave empty to use the default value generated by the Authentication Server.
+      CDAP Authentication service announce URL's separated by comma. Each URL is
+      in the format of protocol://host:port.
+      These are the URL's that clients should use to communicate with the
+      Authentication Server.
+      Leave empty to use the default value generated by the Authentication
+      Server.
     </description>
   </property>
 
@@ -4381,7 +4537,8 @@
     <name>security.authorization.cache.max.entries</name>
     <value>150000</value>
     <description>
-      Number of entries to hold in the container authorization cache. If set to 0, no
+      Number of entries to hold in the container authorization cache. If set to
+      0, no
       caching will be performed.
     </description>
   </property>
@@ -4390,7 +4547,8 @@
     <name>security.authorization.extension.config.cache.max.entries</name>
     <value>${security.authorization.cache.max.entries}</value>
     <description>
-      Number of entries to hold in the container authorization cache. If set to 0, no
+      Number of entries to hold in the container authorization cache. If set to
+      0, no
       caching will be performed.
     </description>
   </property>
@@ -4439,8 +4597,10 @@
     <name>security.authorization.extension.operation.time.warn.threshold.ms</name>
     <value>5000</value>
     <description>
-      Time taken by an authorization extension to perform an enforce operation is recorded and
-      logged at TRACE level. This property sets the upper limit for the time taken by the extension in milliseconds
+      Time taken by an authorization extension to perform an enforce operation
+      is recorded and
+      logged at TRACE level. This property sets the upper limit for the time
+      taken by the extension in milliseconds
       after which it is logged at WARN level rather than TRACE.
     </description>
   </property>
@@ -4451,7 +4611,8 @@
     <description>
       Path to the secret key file. In distributed CDAP, if the zookeeper.quorum
       properties is overridden, then
-      Zookeeper will be used for storing secret key and this property will be ignore.
+      Zookeeper will be used for storing secret key and this property will be
+      ignore.
     </description>
   </property>
 
@@ -4521,7 +4682,8 @@
     <name>security.store.extensions.dir</name>
     <value>/opt/cdap/master/ext/securestores</value>
     <description>
-      Semicolon-separated list of local directories that are scanned for secure store extensions
+      Semicolon-separated list of local directories that are scanned for secure
+      store extensions
     </description>
   </property>
 
@@ -4537,11 +4699,15 @@
     <name>security.store.provider</name>
     <value>none</value>
     <description>
-      Backend provider for the secure store; values can be 'none' if no secure store, 'kms' for hadoop kms based store
+      Backend provider for the secure store; values can be 'none' if no secure
+      store, 'kms' for hadoop kms based store
       or name of the secure store extension.
-      If the provider is set to 'file' then the user must provide the password to be used to access the keystore.
-      The password can be set using 'security.store.file.password' property in cdap-security.xml.
-      KMS based provider is supported for Apache Hadoop 2.6.0 and above versions.
+      If the provider is set to 'file' then the user must provide the password
+      to be used to access the keystore.
+      The password can be set using 'security.store.file.password' property in
+      cdap-security.xml.
+      KMS based provider is supported for Apache Hadoop 2.6.0 and above
+      versions.
     </description>
   </property>
 
@@ -4600,7 +4766,8 @@
     <name>ssl.internal.cert.path</name>
     <value></value>
     <description>
-      File path to certificate and private key file in PEM format to use when ssl.internal.enabled is set to true.
+      File path to certificate and private key file in PEM format to use when
+      ssl.internal.enabled is set to true.
     </description>
   </property>
 
@@ -4610,7 +4777,8 @@
     <name>security.internal.auth.enabled</name>
     <value>false</value>
     <description>
-      A security-hardening measure which enforces authenticated communication between internal system services.
+      A security-hardening measure which enforces authenticated communication
+      between internal system services.
     </description>
   </property>
 
@@ -4618,8 +4786,10 @@
     <name>security.runtime.identity.compatibility.enabled</name>
     <value>true</value>
     <description>
-      A backwards-compatibility setting which does not add the runtime identity handler to the runtime service. This
-      setting is enabled by default for backwards compatibility but should not be used for new secure deployments.
+      A backwards-compatibility setting which does not add the runtime identity
+      handler to the runtime service. This
+      setting is enabled by default for backwards compatibility but should not
+      be used for new secure deployments.
     </description>
   </property>
 
@@ -4637,7 +4807,8 @@
     <name>security.authorization.metrics.tags.enabled</name>
     <value>false</value>
     <description>
-      Whether to enable entity tagging for authorization metrics for metrics aggregations.
+      Whether to enable entity tagging for authorization metrics for metrics
+      aggregations.
     </description>
   </property>
 
@@ -4646,7 +4817,8 @@
     <name>remote.authenticator.extensions.dir</name>
     <value>/opt/cdap/master/ext/authenticators</value>
     <description>
-      Semicolon-separated list of local directories that are scanned for CDAP remote authenticator extensions.
+      Semicolon-separated list of local directories that are scanned for CDAP
+      remote authenticator extensions.
     </description>
   </property>
 
@@ -4714,7 +4886,8 @@
     <name>program.heartbeat.interval.seconds</name>
     <value>1800</value>
     <description>
-      Interval of heartbeat sent from program while it's running, default 30 minutes
+      Interval of heartbeat sent from program while it's running, default 30
+      minutes
     </description>
   </property>
 
@@ -4730,7 +4903,8 @@
     <name>profile.update.allowed</name>
     <value>true</value>
     <description>
-      Determine if new profile can be created or existing profile can be updated.
+      Determine if new profile can be created or existing profile can be
+      updated.
     </description>
   </property>
 
@@ -4752,14 +4926,16 @@
     <name>capability.config.dir</name>
     <value>/opt/cdap/master/capability-config</value>
     <description>
-      Internal directory that maintains the currently disabled and enabled configurations
+      Internal directory that maintains the currently disabled and enabled
+      configurations
     </description>
   </property>
   <property>
     <name>capability.autoinstall.threads</name>
     <value>5</value>
     <description>
-      Number of threads to be used for auto installing resources when a capability is enabled
+      Number of threads to be used for auto installing resources when a
+      capability is enabled
     </description>
   </property>
 
@@ -4910,7 +5086,8 @@
     <name>task.worker.preload.artifacts</name>
     <value></value>
     <description>
-      A command separated list of system artifacts to be preloaded into each task worker
+      A command separated list of system artifacts to be preloaded into each
+      task worker
     </description>
   </property>
 
@@ -4998,7 +5175,8 @@
     <name>task.worker.source.control.http.client.read.timeout.ms</name>
     <value>${task.worker.http.client.read.timeout.ms}</value>
     <description>
-      Read timeout in milliseconds for source control management task HTTP requests.
+      Read timeout in milliseconds for source control management task HTTP
+      requests.
     </description>
   </property>
 
@@ -5006,7 +5184,8 @@
     <name>task.worker.source.control.http.client.connection.timeout.ms</name>
     <value>${task.worker.http.client.connection.timeout.ms}</value>
     <description>
-      Connection timeout in milliseconds for source control management task HTTP requests.
+      Connection timeout in milliseconds for source control management task HTTP
+      requests.
     </description>
   </property>
 
@@ -5031,7 +5210,8 @@
     <name>system.worker.program.twill.controller.start.seconds</name>
     <value>${app.program.max.start.seconds}</value>
     <description>
-      Sets value of app.program.twill.controller.start.seconds in system workers.
+      Sets value of app.program.twill.controller.start.seconds in system
+      workers.
       This value should only be changed in hybrid setups.
       (TODO) CDAP-19405 to remove the need for this configuration
     </description>
@@ -5161,7 +5341,8 @@
     <name>artifact.localizer.worker.threads</name>
     <value>10</value>
     <description>
-      The number of artifact localizer threads in the file localizer sidecar container.
+      The number of artifact localizer threads in the file localizer sidecar
+      container.
     </description>
   </property>
 
@@ -5201,7 +5382,8 @@
     <name>artifact.localizer.cache.cleanup.interval.min</name>
     <value>60</value>
     <description>
-      The interval (in minutes) that the cleanup service will delete old artifact cache files.
+      The interval (in minutes) that the cleanup service will delete old
+      artifact cache files.
     </description>
   </property>
 
@@ -5210,8 +5392,10 @@
     <name>router.block.request.enabled</name>
     <value>false</value>
     <description>
-      Determines whether server should start blocking inbound requests. If true, server would start
-      responding to every request (not router health checks) with response declared in cconf.
+      Determines whether server should start blocking inbound requests. If true,
+      server would start
+      responding to every request (not router health checks) with response
+      declared in cconf.
     </description>
   </property>
 
@@ -5350,7 +5534,8 @@
     <name>support.bundle.temp.dir</name>
     <value>${local.data.dir}/support/tmp</value>
     <description>
-      Support Bundle Temp directory for storing the support bundle zip file and use that generate download link
+      Support Bundle Temp directory for storing the support bundle zip file and
+      use that generate download link
     </description>
   </property>
 
@@ -5407,7 +5592,8 @@
     <name>tethering.program.state.topic.prefix</name>
     <value>tether_program_state_</value>
     <description>
-      TMS topic prefix used on tethering client that contains program status updates for the peer
+      TMS topic prefix used on tethering client that contains program status
+      updates for the peer
     </description>
   </property>
 
@@ -5447,7 +5633,8 @@
     <name>tethering.control.message.batch.size</name>
     <value>100</value>
     <description>
-      Maximum number of control messages sent by tethering server in response to poll.
+      Maximum number of control messages sent by tethering server in response to
+      poll.
     </description>
   </property>
 
@@ -5455,7 +5642,8 @@
     <name>jmx.metrics.collector.poll.interval.secs</name>
     <value>60</value>
     <description>
-      Interval (in seconds) for polling JMXServer for resource utilization metrics.
+      Interval (in seconds) for polling JMXServer for resource utilization
+      metrics.
     </description>
   </property>
 
@@ -5527,7 +5715,8 @@
     <name>feature.streaming.pipeline.checkpoint.deletion.enabled</name>
     <value>false</value>
     <description>
-      Enables auto deletion of streaming pipeline checkpoint on successful graceful shutdown
+      Enables auto deletion of streaming pipeline checkpoint on successful
+      graceful shutdown
     </description>
   </property>
 
@@ -5535,7 +5724,8 @@
     <name>feature.streaming.pipeline.native.state.tracking.enabled</name>
     <value>true</value>
     <description>
-      Enable native state tracking for streaming pipelines for Atleast Once guarantee
+      Enable native state tracking for streaming pipelines for Atleast Once
+      guarantee
     </description>
   </property>
 
@@ -5543,7 +5733,8 @@
     <name>feature.wrangler.fail.pipeline.for.error.enabled</name>
     <value>false</value>
     <description>
-      Enables pipeline failures when Wrangler transformations fail in 'Fail Pipeline' mode
+      Enables pipeline failures when Wrangler transformations fail in 'Fail
+      Pipeline' mode
     </description>
   </property>
 
@@ -5591,7 +5782,8 @@
     <name>artifact.cache.cache.cleanup.interval.min</name>
     <value>60</value>
     <description>
-      The interval (in minutes) that the cleanup service will delete old artifact cache files.
+      The interval (in minutes) that the cleanup service will delete old
+      artifact cache files.
     </description>
   </property>
 
