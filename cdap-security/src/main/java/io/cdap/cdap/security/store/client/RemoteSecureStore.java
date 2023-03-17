@@ -81,7 +81,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     handleResponse(response, namespace, name,
         String.format("Error occurred while getting metadata for key %s:%s",
             namespace, name));
-    SecureStoreMetadata metadata = GSON.fromJson(response.getResponseBodyAsString(),
+    final SecureStoreMetadata metadata = GSON.fromJson(response.getResponseBodyAsString(),
         SecureStoreMetadata.class);
 
     // 2. Get sensitive data for the secure key

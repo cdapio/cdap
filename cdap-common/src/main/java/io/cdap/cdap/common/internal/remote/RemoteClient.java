@@ -117,11 +117,46 @@ public class RemoteClient {
     return execute(request, Idempotency.AUTO);
   }
 
+  /**
+   * Perform the request, returning the response. Wraps exceptions from {@link
+   * RemoteClient#execute(HttpRequest)} into {@link RetryableException} that are retryable for
+   * idempotent operations.
+   *
+   * @param request the request to perform
+   * @param idempotency the type of idempotency
+   * @return the response
+   * @throws IOException if there was an IOException while performing the non-idempotent
+   *     request
+   * @throws RetryableException if there was an exception while performing an idempotent
+   *     request
+   */
+  public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
+    switch (idempotency) {
+      case IDEMPOTENT:
+        return executeIdempotent(request);
+      case AUTO:
+        HttpMethod method = request.getMethod();
+        if (method == HttpMethod.GET || method == HttpMethod.PUT || method == HttpMethod.DELETE) {
+          return executeIdempotent(request);
+        } // fall through
+      default:
+        return executeNonIdempotent(request);
+    }
+  }
+
+  private HttpResponse executeIdempotent(HttpRequest request) {
+    try {
+      return executeNonIdempotent(request);
+    } catch (IOException | ServiceException e) {
+      throw new RetryableException(e);
+    }
+  }
+
   private HttpResponse executeNonIdempotent(HttpRequest request) throws IOException, UnauthorizedException {
-    URL rewrittenURL = rewriteURL(request.getURL());
+    URL rewrittenUrl = rewriteUrl(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
-    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL,
+    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl,
         headers, request.getBody(), request.getBodyLength());
 
     try {
@@ -159,50 +194,15 @@ public class RemoteClient {
   }
 
   /**
-   * Perform the request, returning the response. Wraps exceptions from {@link
-   * RemoteClient#execute(HttpRequest)} into {@link RetryableException} that are retryable for
-   * idempotent operations.
-   *
-   * @param request the request to perform
-   * @param idempotency the type of idempotency
-   * @return the response
-   * @throws IOException if there was an IOException while performing the non-idempotent
-   *     request
-   * @throws RetryableException if there was an exception while performing an idempotent
-   *     request
-   */
-  public HttpResponse execute(HttpRequest request, Idempotency idempotency) throws IOException {
-    switch (idempotency) {
-      case IDEMPOTENT:
-        return executeIdempotent(request);
-      case AUTO:
-        HttpMethod method = request.getMethod();
-        if (method == HttpMethod.GET || method == HttpMethod.PUT || method == HttpMethod.DELETE) {
-          return executeIdempotent(request);
-        } // fall through
-      default:
-        return executeNonIdempotent(request);
-    }
-  }
-
-  private HttpResponse executeIdempotent(HttpRequest request) {
-    try {
-      return executeNonIdempotent(request);
-    } catch (IOException | ServiceException e) {
-      throw new RetryableException(e);
-    }
-  }
-
-  /**
    * Makes a streaming {@link HttpRequest} and consumes the response using the {@link
    * HttpContentConsumer} provided in the request. It retries on failure.
    */
   public void executeStreamingRequest(HttpRequest request)
       throws IOException, UnauthorizedException {
-    URL rewrittenURL = rewriteURL(request.getURL());
+    URL rewrittenUrl = rewriteUrl(request.getURL());
     Multimap<String, String> headers = setHeader(request);
 
-    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+    HttpRequest httpRequest = new HttpRequest(request.getMethod(), rewrittenUrl, headers,
         request.getBody(), request.getBodyLength(), request.getConsumer());
     HttpResponse httpResponse = HttpRequests.execute(httpRequest, httpRequestConfig);
 
@@ -267,7 +267,7 @@ public class RemoteClient {
 
     URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
     try {
-      return rewriteURL(uri.toURL());
+      return rewriteUrl(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
       throw new IllegalStateException(
@@ -296,13 +296,13 @@ public class RemoteClient {
   /**
    * Rewrites the given URL based on the runtime service.
    */
-  private URL rewriteURL(URL url) {
+  private URL rewriteUrl(URL url) {
     if (url.getPort() != 0) {
       return url;
     }
 
-    String baseURI = System.getProperty(RUNTIME_SERVICE_ROUTING_BASE_URI);
-    if (baseURI == null) {
+    String baseUri = System.getProperty(RUNTIME_SERVICE_ROUTING_BASE_URI);
+    if (baseUri == null) {
       return url;
     }
     try {
@@ -311,7 +311,7 @@ public class RemoteClient {
       while (!path.isEmpty() && path.charAt(0) == '/') {
         path = path.substring(1);
       }
-      return URI.create(baseURI).resolve(discoverableServiceName + "/").resolve(path).toURL();
+      return URI.create(baseUri).resolve(discoverableServiceName + "/").resolve(path).toURL();
     } catch (IllegalArgumentException | MalformedURLException e) {
       return url;
     }
