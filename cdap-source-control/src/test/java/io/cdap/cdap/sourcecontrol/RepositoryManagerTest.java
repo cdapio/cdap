@@ -52,39 +52,48 @@ import org.mockito.MockitoAnnotations;
  * Tests for {@link  RepositoryManager}.
  */
 public class RepositoryManagerTest extends SourceControlTestBase {
+
   @Mock
   private SecureStore secureStore;
   private CConfiguration cConf;
   public LocalGitServer gitServer = getGitServer();
   @Rule
-  public RuleChain chain = RuleChain.outerRule(baseTempFolder).around(gitServer);
+  public RuleChain chain = RuleChain.outerRule(baseTempFolder)
+      .around(gitServer);
 
   @Before
   public void beforeEach() throws Exception {
     MockitoAnnotations.initMocks(this);
     Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
-      .thenReturn(new SecureStoreData(null, MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new SecureStoreData(null,
+            MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
     cConf = CConfiguration.create();
-    cConf.setInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS, GIT_COMMAND_TIMEOUT);
-    cConf.set(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
-              baseTempFolder.newFolder("repository").getAbsolutePath());
+    cConf.setInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS,
+        GIT_COMMAND_TIMEOUT);
+    cConf.set(
+        Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
+        baseTempFolder.newFolder("repository").getAbsolutePath());
   }
 
   @Test
   public void testValidateIncorrectKeyName() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME + "invalid")
-      .build();
-    SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME + "invalid")
+        .build();
+    SourceControlConfig sourceControlConfig = new SourceControlConfig(
+        new NamespaceId(NAMESPACE),
+        config, cConf);
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
-      Assert.assertTrue(e.getMessage().contains("Failed to get authentication credentials"));
+      Assert.assertTrue(
+          e.getMessage().contains("Failed to get authentication credentials"));
     }
   }
 
@@ -92,7 +101,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   public void testValidateInvalidToken() throws Exception {
     SourceControlConfig sourceControlConfig = getSourceControlConfig();
     Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
-      .thenReturn(new SecureStoreData(null, "invalid-token".getBytes(StandardCharsets.UTF_8)));
+        .thenReturn(new SecureStoreData(null,
+            "invalid-token".getBytes(StandardCharsets.UTF_8)));
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
       Assert.fail();
@@ -104,30 +114,37 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test
   public void testValidateInvalidBranchName() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop-invalid")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
-    SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop-invalid")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
+    SourceControlConfig sourceControlConfig = new SourceControlConfig(
+        new NamespaceId(NAMESPACE),
+        config, cConf);
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
-      Assert.assertTrue(e.getMessage().contains("Default branch not found in remote repository"));
+      Assert.assertTrue(e.getMessage()
+          .contains("Default branch not found in remote repository"));
     }
   }
 
   @Test
   public void testValidateNullBranchName() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
-    SourceControlConfig sourceControlConfig = new SourceControlConfig(new NamespaceId(NAMESPACE), config, cConf);
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
+    SourceControlConfig sourceControlConfig = new SourceControlConfig(
+        new NamespaceId(NAMESPACE),
+        config, cConf);
     RepositoryManager.validateConfig(secureStore, sourceControlConfig);
   }
 
@@ -149,10 +166,10 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     String expectedHash = getGitStyleHash(fileContents);
     Assert.assertEquals(expectedHash, fileHash);
     // Change the file, but don't commit. The hash should remain the same.
-    Files.write(manager.getBasePath().resolve(fileName), "change 1".getBytes(StandardCharsets.UTF_8));
+    Files.write(manager.getBasePath().resolve(fileName),
+        "change 1".getBytes(StandardCharsets.UTF_8));
     fileHash = manager.getFileHash(path, manager.resolveHead().getName());
     Assert.assertEquals(expectedHash, fileHash);
-    manager.close();
     // Change the file contents and commit, the hash should also change.
     addFileToGit(path, "change 2", gitServer);
     commitId = manager.cloneRemote();
@@ -161,10 +178,11 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   }
 
   @Test(expected = NotFoundException.class)
-  public void testGetFileHashInvlidPath() throws Exception {
-    try (RepositoryManager manager = getRepositoryManager();) {
+  public void testGetFileHashInvalidPath() throws Exception {
+    try (RepositoryManager manager = getRepositoryManager()) {
       String commitId = manager.cloneRemote();
-      manager.getFileHash(Paths.get("data-pipelines", "pipeline.json"), commitId);
+      manager.getFileHash(Paths.get("data-pipelines", "pipeline.json"),
+          commitId);
     }
   }
 
@@ -183,19 +201,22 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     String hash = manager.getFileHash(path, commitId);
     // Change file contents, but don't commit.
     Path absoluteRepoPath = manager.getRepositoryRoot().resolve(path);
-    Files.write(absoluteRepoPath, fileContents2.getBytes(StandardCharsets.UTF_8));
+    Files.write(absoluteRepoPath,
+        fileContents2.getBytes(StandardCharsets.UTF_8));
     // Check the file hash of the link, it should be unchanged.
     Assert.assertEquals(hash, manager.getFileHash(path, commitId));
     // Check that working directory changes are still present.
-    Assert.assertEquals(new String(Files.readAllBytes(absoluteRepoPath), StandardCharsets.UTF_8), fileContents2);
-    manager.close();
+    Assert.assertEquals(new String(Files.readAllBytes(absoluteRepoPath),
+            StandardCharsets.UTF_8),
+        fileContents2);
     // Commit the symlink change.
     addFileToGit(path, fileContents2, gitServer);
     manager.cloneRemote();
     // Check the file hash at previous commit.
     Assert.assertEquals(hash, manager.getFileHash(path, commitId));
     // Check the file hash at head.
-    Assert.assertNotEquals(hash, manager.getFileHash(path, manager.resolveHead().getName()));
+    Assert.assertNotEquals(hash,
+        manager.getFileHash(path, manager.resolveHead().getName()));
     manager.close();
   }
 
@@ -213,12 +234,37 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     }
   }
 
+  @Test
+  public void testCloneUntrackedFiles() throws Exception {
+    try (RepositoryManager manager = getRepositoryManager()) {
+      manager.cloneRemote();
+      Path path = manager.getRepositoryRoot().resolve("my-file.txt");
+      Files.write(path, "abc".getBytes(StandardCharsets.UTF_8));
+      Assert.assertTrue(Files.exists(path));
+      manager.cloneRemote();
+      Assert.assertFalse(Files.exists(path));
+    }
+  }
+
+  @Test
+  public void testFetchNewCommitForFileHash() throws Exception {
+    try (RepositoryManager manager = getRepositoryManager()) {
+      manager.cloneRemote();
+      String fileName = "pipeline.json";
+      Path path = Paths.get(fileName);
+      String contents = "{name: pipeline}";
+      RevCommit commit = addFileToGit(path, contents, gitServer);
+      Assert.assertEquals(manager.getFileHash(path, commit.getName()),
+          getGitStyleHash(contents));
+    }
+  }
+
   private RepositoryConfig.Builder getRepositoryConfigBuilder() {
     return new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(gitServer.getServerUrl() + "ignored")
-      .setDefaultBranch("develop")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME);
+        .setLink(gitServer.getServerUrl() + "ignored")
+        .setDefaultBranch("develop")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME);
   }
 
   /**
@@ -227,7 +273,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
    * @return the {@link SourceControlConfig}.
    */
   private SourceControlConfig getSourceControlConfig() {
-    return new SourceControlConfig(new NamespaceId(NAMESPACE), getRepositoryConfigBuilder().build(), cConf);
+    return new SourceControlConfig(new NamespaceId(NAMESPACE),
+        getRepositoryConfigBuilder().build(),
+        cConf);
   }
 
   /**
@@ -236,27 +284,32 @@ public class RepositoryManagerTest extends SourceControlTestBase {
    * @return the {@link RepositoryManager}.
    */
   private RepositoryManager getRepositoryManager() {
-    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), getRepositoryConfigBuilder().build());
+    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE),
+        getRepositoryConfigBuilder().build());
   }
 
   @Test
   public void testCommitAndPushSuccess() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+        new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
-      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
+          "message");
       Path filePath = manager.getBasePath().resolve("file1");
       String fileContent = "content";
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
-      manager.commitAndPush(commitMeta, manager.getBasePath().relativize(filePath));
+      manager.commitAndPush(commitMeta,
+          manager.getBasePath().relativize(filePath));
       verifyCommit(filePath, fileContent, commitMeta);
     }
   }
@@ -264,16 +317,19 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test(expected = SourceControlException.class)
   public void testCommitAndPushSourceControlFailure() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+        new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
-      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
+          "message");
       Path filePath = manager.getBasePath().resolve("file1");
       String fileContent = "content";
 
@@ -286,17 +342,20 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   public void testCommitAndPushNoChangeSuccess() throws Exception {
     String pathPrefix = "prefix";
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop")
-      .setPathPrefix(pathPrefix)
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop")
+        .setPathPrefix(pathPrefix)
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+        new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
-      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
+          "message");
       manager.commitAndPush(commitMeta, Paths.get(pathPrefix));
 
       verifyNoCommit();
@@ -306,50 +365,63 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test(expected = GitAPIException.class)
   public void testCommitAndPushFails() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(serverUrl + "ignored")
-      .setDefaultBranch("develop")
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setDefaultBranch("develop")
+        .setAuthType(AuthType.PAT)
+        .setTokenName(TOKEN_NAME)
+        .build();
 
-    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE), config)) {
+    try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
+        new NamespaceId(NAMESPACE), config)) {
       manager.cloneRemote();
-      CommitMeta commitMeta = new CommitMeta("author", "committer", 100, "message");
+      CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
+          "message");
       Path filePath = manager.getBasePath().resolve("file1");
       String fileContent = "content";
 
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
       gitServer.after();
-      manager.commitAndPush(commitMeta, manager.getBasePath().relativize(filePath));
+      manager.commitAndPush(commitMeta,
+          manager.getBasePath().relativize(filePath));
     }
   }
 
   private void verifyNoCommit() throws GitAPIException, IOException {
-    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify").toPath();
+    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
+        .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
     List<RevCommit> commits =
-      StreamSupport.stream(localGit.log().all().call().spliterator(), false).collect(Collectors.toList());
+        StreamSupport.stream(localGit.log().all().call().spliterator(), false)
+            .collect(Collectors.toList());
     Assert.assertEquals(1, commits.size());
   }
 
-  private void verifyCommit(Path pathFromRepoRoot, String expectedContent, CommitMeta commitMeta) throws
-    GitAPIException, IOException {
-    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify").toPath();
+  private void verifyCommit(Path pathFromRepoRoot, String expectedContent,
+      CommitMeta commitMeta)
+      throws
+      GitAPIException, IOException {
+    Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
+        .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
     Path filePath = tempDirPath.resolve(pathFromRepoRoot);
 
-    String actualContent = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
+    String actualContent = new String(Files.readAllBytes(filePath),
+        StandardCharsets.UTF_8);
     Assert.assertEquals(expectedContent, actualContent);
 
     List<RevCommit> commits =
-      StreamSupport.stream(localGit.log().all().call().spliterator(), false).collect(Collectors.toList());
+        StreamSupport.stream(localGit.log().all().call().spliterator(), false)
+            .collect(Collectors.toList());
     Assert.assertEquals(2, commits.size());
     RevCommit latestCommit = commits.get(0);
 
     Assert.assertEquals(latestCommit.getFullMessage(), commitMeta.getMessage());
-    Assert.assertEquals(commitMeta.getAuthor(), latestCommit.getAuthorIdent().getName());
-    Assert.assertEquals(commitMeta.getCommitter(), latestCommit.getCommitterIdent().getName());
+    Assert.assertEquals(commitMeta.getAuthor(),
+        latestCommit.getAuthorIdent().getName());
+    Assert.assertEquals(commitMeta.getCommitter(),
+        latestCommit.getCommitterIdent().getName());
 
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
