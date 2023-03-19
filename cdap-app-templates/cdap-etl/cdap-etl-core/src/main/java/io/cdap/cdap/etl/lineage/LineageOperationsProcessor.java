@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Class responsible for processing the field lineage operations recorded by plugins and converting
@@ -66,8 +67,8 @@ public class LineageOperationsProcessor {
   private final Dag stageDag;
   // Map of stage to list of operations recorded by that stage
   private final Map<String, List<FieldOperation>> stageOperations;
-  // Map of stage name to another map which contains the output field names to the corresponding origin
-  private final Map<String, Map<String, String>> stageOutputsWithOrigins;
+  // Map of stage name to another map which contains the output field names to their possible origins
+  private final Map<String, Map<String, List<Origin>>> stageOutputsWithOrigins;
   // Set of stages which requires no implicit merge operation, currently the only stage which does not require merge
   // operations is Joiner
   private final Set<String> noMergeRequiredStages;
@@ -119,6 +120,7 @@ public class LineageOperationsProcessor {
         Operation newOperation = null;
         String newOperationName = prefixedName(stageName, fieldOperation.getName());
         Set<String> currentOperationOutputs = new LinkedHashSet<>();
+        String marker = null;
         switch (fieldOperation.getType()) {
           case READ:
             FieldReadOperation read = (FieldReadOperation) fieldOperation;
@@ -126,6 +128,9 @@ public class LineageOperationsProcessor {
             sourceProperties.put("stageName", stageName);
             EndPoint sourceEndpoint = EndPoint.of(read.getSource().getNamespace(),
                 read.getSource().getName(), sourceProperties);
+            if (sourceProperties.containsKey("marker")) {
+              marker = sourceProperties.get("marker");
+            }
             newOperation = new ReadOperation(newOperationName, read.getDescription(),
                 sourceEndpoint, read.getOutputFields());
             currentOperationOutputs.addAll(read.getOutputFields());
@@ -133,7 +138,7 @@ public class LineageOperationsProcessor {
           case TRANSFORM:
             FieldTransformOperation transform = (FieldTransformOperation) fieldOperation;
             List<InputField> inputFields = createInputFields(transform.getInputFields(), stageName,
-                processedOperations);
+                processedOperations, null);
             newOperation = new TransformOperation(newOperationName, transform.getDescription(),
                 inputFields,
                 transform.getOutputFields());
@@ -141,9 +146,12 @@ public class LineageOperationsProcessor {
             break;
           case WRITE:
             FieldWriteOperation write = (FieldWriteOperation) fieldOperation;
-            inputFields = createInputFields(write.getInputFields(), stageName, processedOperations);
             Map<String, String> sinkProperties = new HashMap<>(write.getSink().getProperties());
             sinkProperties.put("stageName", stageName);
+            if (sinkProperties.containsKey("marker")) {
+              marker = sinkProperties.get("marker");
+            }
+            inputFields = createInputFields(write.getInputFields(), stageName, processedOperations, marker);
             EndPoint sinkEndpoint = EndPoint.of(write.getSink().getNamespace(),
                 write.getSink().getName(), sinkProperties);
             newOperation = new WriteOperation(newOperationName, write.getDescription(),
@@ -151,11 +159,15 @@ public class LineageOperationsProcessor {
             break;
         }
         for (String currentOperationOutput : currentOperationOutputs) {
-          // For all fields outputted by the current operation assign the operation name as origin
-          // If the field appears in the output again for some other operation belonging to the same stage,
-          // its origin will get updated to the new operation
-          stageOutputsWithOrigins.get(stageName)
-              .put(currentOperationOutput, newOperation.getName());
+          // For all fields outputted by the current operation assign the operation name with marker as origin
+          // If the field appears in the output again for some other operation belonging to the same stage
+          // and marker is null, its origin will get updated to the new operation to keep existing behavior
+          // if marker is not null, add the new operation with marker as possible origin
+          Map<String, List<Origin>> fieldOriginsMap = stageOutputsWithOrigins.get(stageName);
+          List<Origin> origins = (fieldOriginsMap.get(currentOperationOutput) == null || marker == null)
+            ? new ArrayList<>() : fieldOriginsMap.get(currentOperationOutput);
+          origins.add(new Origin(newOperation.getName(), marker));
+          fieldOriginsMap.put(currentOperationOutput, origins);
         }
         processedOperations.put(newOperation.getName(), newOperation);
       }
@@ -204,15 +216,14 @@ public class LineageOperationsProcessor {
       Set<String> visitedField = new HashSet<>();
       for (String parentStage : parentStages) {
         // get the map of all the outputs to the origin map from a stage
-        Map<String, String> fieldOrigins = stageOutputsWithOrigins.get(parentStage);
-        for (Map.Entry<String, String> fieldOrigin : fieldOrigins.entrySet()) {
+        Map<String, List<Origin>> fieldOrigins = stageOutputsWithOrigins.get(parentStage);
+        for (Map.Entry<String, List<Origin>> fieldOrigin : fieldOrigins.entrySet()) {
           String fieldName = fieldOrigin.getKey();
           if (visitedField.contains(fieldName)) {
             continue;
           }
-          List<String> inputFields = fieldNameMap.computeIfAbsent(fieldName,
-              k -> new ArrayList<>());
-          inputFields.add(fieldOrigin.getValue());
+          List<String> inputFields = fieldNameMap.computeIfAbsent(fieldName, k -> new ArrayList<>());
+          fieldOrigin.getValue().forEach(origin -> inputFields.add(origin.getStageOperation()));
           visitedField.add(fieldName);
         }
       }
@@ -245,10 +256,12 @@ public class LineageOperationsProcessor {
    * @param fields the List of input field names for an operation for which InputFields to be
    *     created
    * @param currentStage name of the stage which recorded the operation
+   * @param processedOperations operations processed so far
+   * @param marker may contain information about the source/sink asset
    * @return List of InputFields
    */
   private List<InputField> createInputFields(List<String> fields, String currentStage,
-      Map<String, Operation> processedOperations) {
+      Map<String, Operation> processedOperations, @Nullable String marker) {
     // We need to return InputFields in the same order as fields.
     // Keep them in map so we can iterate later on received fields to return InputFields.
 
@@ -296,9 +309,22 @@ public class LineageOperationsProcessor {
         // first
         String stage = parentsIterator.previous();
         // check if the current field is output by any one of operation created by current stage
-        String origin = stageOutputsWithOrigins.get(stage).get(actualField);
-        if (origin != null) {
-          inputFields.put(field, InputField.of(origin, actualField));
+        // a field can have multiple origins only if marker is not null,
+        // otherwise the existing behavior is retained where there is only one Origin and there is no marker
+        List<Origin> possibleOrigins = stageOutputsWithOrigins.get(stage).get(actualField);
+        if (possibleOrigins != null) {
+          // if there is only one origin, update the input field. In this case, marker will be null.
+          // if there is more than one origin, marker is not null.
+          // We then need to match the marker to find the correct input.
+          if (possibleOrigins.size() == 1) {
+            inputFields.put(field, InputField.of(possibleOrigins.get(0).getStageOperation(), actualField));
+          } else {
+            for (Origin possibleOrigin: possibleOrigins) {
+              if (marker != null && marker.equals(possibleOrigin.getMarker())) {
+                inputFields.put(field, InputField.of(possibleOrigin.getStageOperation(), actualField));
+              }
+            }
+          }
           break;
         }
       }
