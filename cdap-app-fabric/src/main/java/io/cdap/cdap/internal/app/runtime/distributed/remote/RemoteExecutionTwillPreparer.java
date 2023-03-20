@@ -111,6 +111,11 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   @Override
+  String getApplicationJarLocalizedName(String hashVal) {
+    return Constants.Files.APPLICATION_JAR;
+  }
+
+  @Override
   protected void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
                         JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
                         TimeoutChecker timeoutChecker) throws Exception {
