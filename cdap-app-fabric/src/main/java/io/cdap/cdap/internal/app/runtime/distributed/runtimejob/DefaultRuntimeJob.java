@@ -276,23 +276,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
     CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
-      //Listen for failure of core service and terminate the program if any service fails
-      for (Service service : coreServices) {
-        service.addListener(new ServiceListenerAdapter() {
-          @Override
-          public void failed(Service.State from, Throwable failure) {
-            LOG.error("Core service {} failed, prev state {}, terminating program run",
-                      service, from, failure);
-            try {
-              programStateWriter.error(programRunId, failure);
-            } catch (Exception e) {
-              LOG.error("Error in updating program state to failed", e);
-            }
-            programCompletion.completeExceptionally(failure);
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-      }
-
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class)
           .create(programId.getType());
 
@@ -300,6 +283,32 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+
+        //Listen for failure of core service and terminate the program if any service fails
+        for (Service service : coreServices) {
+          service.addListener(new ServiceListenerAdapter() {
+            @Override
+            public void failed(Service.State from, Throwable failure) {
+              LOG.error("Core service {} failed, prev state {}, terminating program run",
+                        service, from, failure);
+              try {
+                LOG.error("Forcefully terminating program run {}", programRunId);
+                controller.kill();
+              } catch (Exception e) {
+                LOG.error("Error in terminating program run", e);
+                //Fallback in case controller could not be stopped
+                //Update program state and complete programCompletion
+                try {
+                  programStateWriter.error(programRunId, failure);
+                } catch (Exception ex) {
+                  LOG.error("Error in updating program state to error", ex);
+                }
+                programCompletion.completeExceptionally(failure);
+              }
+            }
+          }, Threads.SAME_THREAD_EXECUTOR);
+        }
+
         runtimeClientService.onProgramStopRequested(terminateTs -> {
           long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
               - System.currentTimeMillis();
