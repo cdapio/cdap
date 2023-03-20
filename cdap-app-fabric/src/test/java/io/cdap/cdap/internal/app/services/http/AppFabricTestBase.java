@@ -740,8 +740,9 @@ public abstract class AppFabricTestBase {
   }
 
   protected void deleteApp(ApplicationId app, int expectedResponseCode) throws Exception {
+    // Changing to non version specific app deletion - since version specific app deletion isn't supported after LCM.
     HttpResponse response = doDelete(getVersionedAPIPath(
-      String.format("/apps/%s/versions/%s", app.getApplication(), app.getVersion()), app.getNamespace()));
+      String.format("/apps/%s", app.getApplication()), app.getNamespace()));
     assertResponseCode(expectedResponseCode, response);
   }
 

@@ -57,19 +57,16 @@ public class ListAppsCommand extends AbstractAuthCommand {
       }
     }
     Table table = Table.builder()
-        .setHeader("id", "appVersion", "description", "artifactName", "artifactVersion",
-            "artifactScope", "principal")
-        .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion),
-            new RowMaker<ApplicationRecord>() {
-              @Override
-              public List<?> makeRow(ApplicationRecord object) {
-                return Lists.newArrayList(object.getName(), object.getAppVersion(),
-                    object.getDescription(),
-                    object.getArtifact().getName(), object.getArtifact().getVersion(),
-                    object.getArtifact().getScope(),
-                    object.getOwnerPrincipal());
-              }
-            }).build();
+      .setHeader("id", "appVersion", "description", "artifactName", "artifactVersion", "artifactScope", "principal")
+      .setRows(appClient.list(cliConfig.getCurrentNamespace(), artifactNames, artifactVersion, null),
+        new RowMaker<ApplicationRecord>() {
+          @Override
+          public List<?> makeRow(ApplicationRecord object) {
+            return Lists.newArrayList(object.getName(), object.getAppVersion(), object.getDescription(),
+              object.getArtifact().getName(), object.getArtifact().getVersion(), object.getArtifact().getScope(),
+              object.getOwnerPrincipal());
+          }
+        }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 

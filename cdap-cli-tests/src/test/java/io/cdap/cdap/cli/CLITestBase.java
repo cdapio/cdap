@@ -239,8 +239,7 @@ public abstract class CLITestBase {
 
   @Test
   public void testList() throws Exception {
-    testCommandOutputContains("list app versions " + FakeApp.NAME, V1_SNAPSHOT);
-    testCommandOutputContains("list app versions " + FakeApp.NAME, ApplicationId.DEFAULT_VERSION);
+    // Introducing in LCM : App versions are not explicit
     testCommandOutputContains("list dataset instances", FakeApp.DS_NAME);
   }
 

@@ -113,24 +113,23 @@ public class ApplicationClient {
    * that use the specified artifact name and version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactName the name of the artifact to filter by. If null, no filtering will be
-   *     done.
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will
-   *     be done.
+   * @param artifactName the name of the artifact to filter by. If null, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
+   * @param latestOnly if set to true then return only the latest version of the app.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the
    *     gateway server
    */
   public List<ApplicationRecord> list(
-      NamespaceId namespace, @Nullable String artifactName,
-      @Nullable String artifactVersion)
-      throws IOException, UnauthenticatedException, UnauthorizedException {
+    NamespaceId namespace, @Nullable String artifactName,
+    @Nullable String artifactVersion, @Nullable Boolean latestOnly)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     Set<String> names = new HashSet<>();
     if (artifactName != null) {
       names.add(artifactName);
     }
-    return list(namespace, names, artifactVersion);
+    return list(namespace, names, artifactVersion, latestOnly);
   }
 
   /**
@@ -138,24 +137,23 @@ public class ApplicationClient {
    * that use one of the specified artifact names and the specified artifact version.
    *
    * @param namespace the namespace to list applications from
-   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be
-   *     done.
-   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will
-   *     be done.
+   * @param artifactNames the set of artifact names to allow. If empty, no filtering will be done.
+   * @param artifactVersion the version of the artifact to filter by. If null, no filtering will be done.
+   * @param latestOnly if set to true then return only the latest version of the app.
    * @return list of {@link ApplicationRecord ApplicationRecords}.
    * @throws IOException if a network error occurred
    * @throws UnauthenticatedException if the request is not authorized successfully in the
    *     gateway server
    */
   public List<ApplicationRecord> list(
-      NamespaceId namespace, Set<String> artifactNames, @Nullable String artifactVersion)
-      throws IOException, UnauthenticatedException, UnauthorizedException {
+    NamespaceId namespace, Set<String> artifactNames, @Nullable String artifactVersion, @Nullable Boolean latestOnly)
+    throws IOException, UnauthenticatedException, UnauthorizedException {
     if (artifactNames.isEmpty() && artifactVersion == null) {
       return list(namespace);
     }
 
     List<String> params = new ArrayList<>();
-    params.add("latestOnly=false");
+    params.add(String.format("latestOnly=%s", Boolean.TRUE.equals(latestOnly)));
     if (!artifactNames.isEmpty()) {
       params.add("artifactName=" + Joiner.on(',').join(artifactNames));
     }
@@ -325,7 +323,8 @@ public class ApplicationClient {
    */
   public void delete(ApplicationId app)
       throws ApplicationNotFoundException, IOException, AccessException {
-    String path = String.format("apps/%s/versions/%s", app.getApplication(), app.getVersion());
+    // Changing to non version specific app deletion - since version specific app deletion isn't supported after LCM.
+    String path = String.format("apps/%s", app.getApplication());
     HttpResponse response = restClient.execute(HttpMethod.DELETE,
         config.resolveNamespacedURLV3(app.getParent(), path),
         config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);

@@ -559,11 +559,11 @@ public class DefaultStore implements Store {
 
   // todo: this method should be moved into DeletedProgramHandlerState, bad design otherwise
   @Override
-  public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationId id,
+  public List<ProgramSpecification> getDeletedProgramSpecifications(ApplicationReference appRef,
       ApplicationSpecification appSpec) {
 
     ApplicationMeta existing = TransactionRunners.run(transactionRunner, context -> {
-      return getAppMetadataStore(context).getApplication(id);
+      return getAppMetadataStore(context).getLatest(appRef);
     });
 
     List<ProgramSpecification> deletedProgramSpecs = Lists.newArrayList();
