@@ -20,7 +20,7 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.util.Map;
 
 /**
- * Interface for an {@link MetadataConsumer} context
+ * Interface for an {@link MetadataConsumer} context.
  */
 @Beta
 public interface MetadataConsumerContext {
@@ -34,4 +34,9 @@ public interface MetadataConsumerContext {
    * @return the MetadataConsumer properties for the program run
    */
   Map<String, String> getProperties();
+
+  /**
+   * Returns a {@link MetadataConsumerMetrics} object configured based on {@code context}.
+   */
+  MetadataConsumerMetrics getMetrics(Map<String, String> context);
 }
