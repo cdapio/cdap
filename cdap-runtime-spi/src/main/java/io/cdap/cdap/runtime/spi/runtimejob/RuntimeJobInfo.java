@@ -50,4 +50,11 @@ public interface RuntimeJobInfo {
   default Map<String, String> getJvmProperties() {
     return Collections.emptyMap();
   }
+
+  /**
+   * Returns a set of arguments for process that runs the {@link RuntimeJob}.
+   */
+  default Map<String, String> getArguments() {
+    return Collections.emptyMap();
+  }
 }

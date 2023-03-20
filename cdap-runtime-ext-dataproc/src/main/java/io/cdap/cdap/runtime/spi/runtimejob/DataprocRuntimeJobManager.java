@@ -130,7 +130,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private volatile ClusterControllerClient clusterControllerClient;
   // CDAP specific artifacts which will be cached in GCS.
   private static final List<String> artifactsCacheablePerCDAPVersion = new ArrayList<>(
-    Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR, Constants.Files.APPLICATION_JAR)
+    Arrays.asList(Constants.Files.TWILL_JAR, Constants.Files.LAUNCHER_JAR)
   );
   private static final int SNAPSHOT_EXPIRE_DAYS = 7;
   private static final int EXPIRE_DAYS = 730;
@@ -631,6 +631,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo,
                                                List<LocalFile> localFiles) throws IOException {
+    String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     String runId = runInfo.getRun();
 
@@ -645,6 +646,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
       arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
     }
+    arguments.add("--" + Constants.Files.APPLICATION_JAR + "=" + applicationJarLocalizedName);
 
     Map<String, String> properties = new LinkedHashMap<>();
     properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
