@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.deploy;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -58,6 +57,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.lang.jar.ClassLoaderFolder;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.HashUtils;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentRuntimeInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
@@ -672,32 +672,9 @@ public class InMemoryProgramRunDispatcher implements ProgramRunDispatcher {
   private String getArtifactHash(Hasher hasher) {
     String hashVal = hasher.hash().toString();
     if (artifactsComputeHashTimeBucketDays > 0) {
-      return timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays,
-          System.currentTimeMillis());
+      return HashUtils.timeBucketHash(hashVal, artifactsComputeHashTimeBucketDays,
+                                      System.currentTimeMillis());
     }
     return hashVal;
-  }
-
-  /**
-   * Return timed bucketed hash value. Therefore, for a given hash, result is identical as long as
-   * call to this method has happened within the given window. This method also uses a jitter based
-   * on provided hash to reduce likelihood of two time bucket with different hashes to be identical.
-   * For a given n as the jitter chosen from 0 to window-1, time bucket windows will be as follows:
-   * [window -n, 2*window -n), [2*window -n , 3*window -n), ... The beginning of an above time
-   * bucket window which currentTime lies in uniquely identifies the time bucket window for the
-   * given hash.
-   *
-   * @param hash value that needs to be time bucketed.
-   * @param window in days
-   * @param currentTime current time in millisecond
-   */
-  @VisibleForTesting
-  public static String timeBucketHash(String hash, int window, long currentTime) {
-    // jitter is used to avoid having identical time bucket windows for different keys
-    long jitter = TimeUnit.DAYS.toMillis(hash.hashCode() % window);
-    long windowMSec = TimeUnit.DAYS.toMillis(window);
-
-    long nextBucket = (currentTime / windowMSec) * windowMSec + windowMSec - jitter;
-    return String.format("%s_%s", hash, nextBucket);
   }
 }

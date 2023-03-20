@@ -32,6 +32,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.File;
@@ -514,15 +515,18 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
     }
 
     // The location name is computed from the MD5 of all the classes names
-    // The localized name is always APPLICATION_JAR
+    // The localized name is always APPLICATION_JAR when the job is launched using SSH.
     List<String> classList = classes.stream().map(Class::getName).sorted()
         .collect(Collectors.toList());
     Hasher hasher = Hashing.md5().newHasher();
     for (String name : classList) {
       hasher.putString(name);
     }
-    // Only depends on class list so that it can be reused across different launches
-    String name = hasher.hash().toString() + "-" + Constants.Files.APPLICATION_JAR;
+    // Add cdap version to the hash so that application jars are distinguishable when upgrade happens.
+    hasher.putString(ProjectInfo.getVersion().toString());
+    // Only depends on class list and cdap version so that it can be reused across different launches
+    String hashVal = hasher.hash().toString();
+    String name = hashVal + "-" + Constants.Files.APPLICATION_JAR;
 
     LOG.debug("Create and copy {}", Constants.Files.APPLICATION_JAR);
     Location location = locationCache.get(name, new LocationCache.Loader() {
@@ -535,8 +539,10 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
     LOG.debug("Done {}", Constants.Files.APPLICATION_JAR);
 
     localFiles.put(Constants.Files.APPLICATION_JAR,
-        createLocalFile(Constants.Files.APPLICATION_JAR, location, true));
+        createLocalFile(getApplicationJarLocalizedName(hashVal), location, true));
   }
+
+  abstract String getApplicationJarLocalizedName(String hashVal);
 
   private void createResourcesJar(ApplicationBundler bundler, Map<String, LocalFile> localFiles,
       Path stagingDir) throws IOException {

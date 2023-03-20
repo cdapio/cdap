@@ -69,6 +69,10 @@ public class DataprocJobMain {
       throw new RuntimeException(
           "Missing --" + SPARK_COMPAT + " argument for the spark compat version");
     }
+    if (!arguments.containsKey(Constants.Files.APPLICATION_JAR)) {
+      throw new RuntimeException(
+        String.format("Missing --%s argument for the application jar name", Constants.Files.APPLICATION_JAR));
+    }
 
     Thread.setDefaultUncaughtExceptionHandler(
         (t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
@@ -86,6 +90,7 @@ public class DataprocJobMain {
 
     String runtimeJobClassName = arguments.get(RUNTIME_JOB_CLASS).iterator().next();
     String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
+    String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator().next();
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
@@ -94,7 +99,7 @@ public class DataprocJobMain {
 
     // create classpath from resources, application and twill jars
     URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
-        Constants.Files.APPLICATION_JAR,
+        applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
