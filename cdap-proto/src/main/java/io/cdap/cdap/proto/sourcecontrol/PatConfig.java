@@ -19,53 +19,45 @@ package io.cdap.cdap.proto.sourcecontrol;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
- * Auth Configuration for the linked repository.
+ * The PAT configuration associated with the source control management.
  */
-public class AuthConfig {
+public class PatConfig {
+  private final String passwordName;
+  private final String username;
 
-  private final AuthType type;
-  private final PatConfig patConfig;
-  
   /**
-   * Constructor for AuthConfig.
-
-   * @param authType {@link AuthType} to use
-   * @param patConfig {@link PatConfig} the PAT config
+   * Construct a PAT config.
+   *
+   * @param passwordName the password name
+   * @param username the username
    */
-  public AuthConfig(AuthType authType, PatConfig patConfig) {
-    this.type = authType;
-    this.patConfig = patConfig;
+  public PatConfig(String passwordName, @Nullable String username) {
+    this.passwordName = passwordName;
+    this.username = username;
   }
 
-  public AuthType getType() {
-    return type;
+  public String getPasswordName() {
+    return passwordName;
   }
 
-  public PatConfig getPatConfig() {
-    return patConfig;
+  @Nullable
+  public String getUsername() {
+    return username;
   }
 
   /**
-   * Validate the AuthConfig.
+   * Validate PatConfig.
 
    * @return a collection of {@link RepositoryValidationFailure}.
    */
   public Collection<RepositoryValidationFailure> validate() {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
-    if (type == null) {
-      failures.add(new RepositoryValidationFailure("'type' must be specified in 'auth'."));
+    if (passwordName == null || passwordName.equals("")) {
+      failures.add(new RepositoryValidationFailure("'passwordName' must be specified in 'patConfig'."));
     }
-
-    if (type == AuthType.PAT) {
-      if (patConfig == null) {
-        failures.add(new RepositoryValidationFailure("'patConfig' must be specified in 'auth'."));
-      } else {
-        failures.addAll(patConfig.validate());
-      }
-    }
-
     return failures;
   }
 
@@ -77,21 +69,21 @@ public class AuthConfig {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AuthConfig that = (AuthConfig) o;
-    return Objects.equals(type, that.type)
-        && Objects.equals(patConfig, that.patConfig);
+    PatConfig that = (PatConfig) o;
+    return Objects.equals(passwordName, that.passwordName)
+        && Objects.equals(username, that.username);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, patConfig);
+    return Objects.hash(passwordName, username);
   }
 
   @Override
   public String toString() {
-    return "Auth{"
-        + "type=" + type
-        + ", patConfig=" + patConfig
+    return "PatConfig{"
+        + "passwordName=" + passwordName
+        + ", username=" + username
         + '}';
   }
 }

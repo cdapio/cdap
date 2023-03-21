@@ -23,7 +23,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
@@ -64,7 +66,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Before
   public void beforeEach() throws Exception {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
+    Mockito.when(secureStore.get(NAMESPACE, PASSWORD_NAME))
         .thenReturn(new SecureStoreData(null,
             MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
     cConf = CConfiguration.create();
@@ -78,13 +80,13 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test
   public void testValidateIncorrectKeyName() throws Exception {
     String serverUrl = gitServer.getServerUrl();
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
-            Provider.GITHUB)
-        .setLink(serverUrl + "ignored")
-        .setDefaultBranch("develop")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME + "invalid")
-        .build();
+    RepositoryConfig config =
+        new RepositoryConfig.Builder()
+            .setProvider(Provider.GITHUB)
+            .setLink(serverUrl + "ignored")
+            .setDefaultBranch("develop")
+            .setAuth(new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME + "invalid", null)))
+            .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(
         new NamespaceId(NAMESPACE),
         config, cConf);
@@ -100,7 +102,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test
   public void testValidateInvalidToken() throws Exception {
     SourceControlConfig sourceControlConfig = getSourceControlConfig();
-    Mockito.when(secureStore.get(NAMESPACE, TOKEN_NAME))
+    Mockito.when(secureStore.get(NAMESPACE, PASSWORD_NAME))
         .thenReturn(new SecureStoreData(null,
             "invalid-token".getBytes(StandardCharsets.UTF_8)));
     try {
@@ -118,8 +120,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop-invalid")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(
         new NamespaceId(NAMESPACE),
@@ -139,8 +140,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(
         new NamespaceId(NAMESPACE),
@@ -263,8 +263,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     return new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
         .setLink(gitServer.getServerUrl() + "ignored")
         .setDefaultBranch("develop")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME);
+        .setAuth(AUTH_CONFIG);
   }
 
   /**
@@ -295,8 +294,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
@@ -321,8 +319,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
@@ -347,8 +344,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop")
         .setPathPrefix(pathPrefix)
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
@@ -369,8 +365,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             Provider.GITHUB)
         .setLink(serverUrl + "ignored")
         .setDefaultBranch("develop")
-        .setAuthType(AuthType.PAT)
-        .setTokenName(TOKEN_NAME)
+        .setAuth(AUTH_CONFIG)
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,

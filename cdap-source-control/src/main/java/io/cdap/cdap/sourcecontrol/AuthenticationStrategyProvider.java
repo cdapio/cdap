@@ -26,11 +26,11 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
  */
 public class AuthenticationStrategyProvider {
 
-  private final String namespaceID;
+  private final String namespaceId;
   private final SecureStore secureStore;
 
-  public AuthenticationStrategyProvider(String namespaceID, SecureStore secureStore) {
-    this.namespaceID = namespaceID;
+  public AuthenticationStrategyProvider(String namespaceId, SecureStore secureStore) {
+    this.namespaceId = namespaceId;
     this.secureStore = secureStore;
   }
 
@@ -45,7 +45,7 @@ public class AuthenticationStrategyProvider {
       AuthenticationStrategyNotFoundException {
     if (repoConfig.getProvider() == Provider.GITHUB) {
       if (repoConfig.getAuth().getType() == AuthType.PAT) {
-        return new GitPATAuthenticationStrategy(secureStore, repoConfig, namespaceID);
+        return new GitPatAuthenticationStrategy(secureStore, repoConfig, namespaceId);
       }
     }
     throw new AuthenticationStrategyNotFoundException(

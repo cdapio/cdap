@@ -19,6 +19,9 @@ package io.cdap.cdap.sourcecontrol;
 import com.google.common.hash.Hashing;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
+import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -43,7 +46,9 @@ public abstract class SourceControlTestBase {
   protected static final int GIT_COMMAND_TIMEOUT = 2;
   protected static final String MOCK_TOKEN = UUID.randomUUID().toString();
   protected static final String NAMESPACE = "namespace1";
-  protected static final String TOKEN_NAME = "github-pat";
+  protected static final String PASSWORD_NAME = "github-pat";
+  protected static final PatConfig PAT_CONFIG = new PatConfig(PASSWORD_NAME, null);
+  protected static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, PAT_CONFIG);
   protected static final String PATH_PREFIX = "pathPrefix";
   protected static final String TEST_APP_NAME = "app1";
   protected static final String TEST_APP_SPEC = "{\n"

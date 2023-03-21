@@ -20,36 +20,36 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link RepositoryConfig} class
+ * Tests for {@link RepositoryConfig} class.
  */
 public class RepositoryConfigTest {
   private static final Provider PROVIDER = Provider.GITHUB;
   private static final String LINK = "example.com";
   private static final String DEFAULT_BRANCH = "develop";
   private static final AuthType AUTH_TYPE = AuthType.PAT;
-  private static final String TOKEN_NAME = "token";
+  private static final String PASSWORD_NAME = "password";
   private static final String USERNAME = "user";
+  private static final AuthConfig AUTH_CONFIG = new AuthConfig(
+      AUTH_TYPE, new PatConfig(PASSWORD_NAME, USERNAME));
 
   @Test
   public void testValidRepositoryConfig() {
     RepositoryConfig repo = new RepositoryConfig.Builder().setProvider(PROVIDER)
-      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
-      .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuth(AUTH_CONFIG).build();
 
     Assert.assertEquals(PROVIDER, repo.getProvider());
     Assert.assertEquals(LINK, repo.getLink());
     Assert.assertEquals(DEFAULT_BRANCH, repo.getDefaultBranch());
     Assert.assertEquals(AUTH_TYPE, repo.getAuth().getType());
-    Assert.assertEquals(TOKEN_NAME, repo.getAuth().getTokenName());
-    Assert.assertEquals(USERNAME, repo.getAuth().getUsername());
+    Assert.assertEquals(PASSWORD_NAME, repo.getAuth().getPatConfig().getPasswordName());
+    Assert.assertEquals(USERNAME, repo.getAuth().getPatConfig().getUsername());
   }
 
   @Test
   public void testInvalidProvider() {
     try {
       new RepositoryConfig.Builder().setProvider(null)
-        .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
-        .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+        .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuth(AUTH_CONFIG).build();
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
@@ -62,8 +62,7 @@ public class RepositoryConfigTest {
   public void testInvalidLink() {
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
-        .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
-        .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+        .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuth(AUTH_CONFIG).build();
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
@@ -76,26 +75,29 @@ public class RepositoryConfigTest {
   public void testInvalidAuthType() {
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
-        .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)
-        .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+          .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH)
+          .setAuth(new AuthConfig(null, new PatConfig(PASSWORD_NAME, USERNAME)))
+          .build();
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
+      Assert.assertEquals("'type' must be specified in 'auth'.",
                           e.getFailures().get(0).getMessage());
     }
   }
 
   @Test
-  public void testInvalidTokenName() {
+  public void testInvalidPasswordName() {
     try {
       new RepositoryConfig.Builder().setProvider(PROVIDER)
-        .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AUTH_TYPE)
-        .setTokenName(null).setUsername(USERNAME).build();
+          .setLink(LINK)
+          .setDefaultBranch(DEFAULT_BRANCH)
+          .setAuth(new AuthConfig(AUTH_TYPE, new PatConfig(null, USERNAME)))
+          .build();
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(1, e.getFailures().size());
-      Assert.assertEquals("'type' and 'tokenName' fields must be specified.",
+      Assert.assertEquals("'passwordName' must be specified in 'patConfig'.",
                           e.getFailures().get(0).getMessage());
     }
   }
@@ -104,8 +106,9 @@ public class RepositoryConfigTest {
   public void testMultipleInvalidFields() {
     try {
       new RepositoryConfig.Builder().setProvider(null)
-        .setLink(null).setDefaultBranch(DEFAULT_BRANCH).setAuthType(null)
-        .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+          .setLink(null).setDefaultBranch(DEFAULT_BRANCH)
+          .setAuth(new AuthConfig(null, new PatConfig(PASSWORD_NAME, USERNAME)))
+          .build();
       Assert.fail();
     } catch (RepositoryConfigValidationException e) {
       Assert.assertEquals(3, e.getFailures().size());
