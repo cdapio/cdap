@@ -284,7 +284,9 @@ public class DefaultRuntimeJob implements RuntimeJob {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
 
-        //Listen for failure of core service and terminate the program if any service fails
+        // Failure of any core service can leave the program in an orphaned state
+        // One example is RuntimeClientService failure when CDAP instance is deleted
+        // In such situations runtime job should be stopped to free up resources (CDAP-20216)
         for (Service service : coreServices) {
           service.addListener(new ServiceListenerAdapter() {
             @Override
@@ -296,8 +298,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
                 controller.kill();
               } catch (Exception e) {
                 LOG.error("Error in terminating program run", e);
-                //Fallback in case controller could not be stopped
-                //Update program state and complete programCompletion
+                // Fallback in case controller could not be stopped
                 try {
                   programStateWriter.error(programRunId, failure);
                 } catch (Exception ex) {
