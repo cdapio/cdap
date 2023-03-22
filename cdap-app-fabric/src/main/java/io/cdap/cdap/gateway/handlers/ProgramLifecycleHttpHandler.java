@@ -271,7 +271,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Returns status of a type specified by the type{flows,workflows,mapreduce,spark,services,schedules}.
+   *
+   * Deprecated: Only allowing program info retrieval for the latest app version (active app).
    */
+  @Deprecated
   @GET
   @Path("/apps/{app-id}/versions/{version-id}/{program-type}/{program-id}/status")
   public void getStatusVersioned(HttpRequest request, HttpResponder responder,
@@ -450,7 +453,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param startTimeSeconds lower bound in millis of the stoppage time for programs
    *     (inclusive)
    * @param endTimeSeconds upper bound in millis of the stoppage time for programs (exclusive)
+   *
+   * Deprecated: Only allowing for the latest app version (active app).
    */
+  @Deprecated
   @PUT
   @Path("apps/{app-id}/versions/{app-version}/restart-programs")
   public void restartStoppedPrograms(HttpRequest request, HttpResponder responder,
@@ -585,7 +591,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Returns run record for a particular run of a program of an app version.
+   * Deprecated: Run id is sufficient to identify a program run.
    */
+  @Deprecated
   @GET
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}")
   public void programRunRecordVersioned(HttpRequest request,
@@ -646,7 +654,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Get runtime args of a program with app version.
+   *
+   * Deprecated : runtime args are versionless.
    */
+  @Deprecated
   @GET
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
   public void getProgramRuntimeArgsVersioned(HttpRequest request, HttpResponder responder,
@@ -663,7 +674,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Save runtime args of program with app version.
+   *
+   * Deprecated : runtime args are versionless.
    */
+  @Deprecated
   @PUT
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runtimeargs")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -707,7 +721,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         type, programName);
   }
 
-
+  /*
+  * Deprecated : program info fetch is only allowed for the latest version.
+  * */
+  @Deprecated
   @GET
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}")
   public void programSpecificationVersioned(HttpRequest request, HttpResponder responder,
@@ -848,6 +865,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doGetSchedule(responder, namespaceId, appName, scheduleName);
   }
 
+  /*
+  * Deprecated: Schedules are versionless.
+  * */
+  @Deprecated
   @GET
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
   public void getScheduleVersioned(HttpRequest request, HttpResponder responder,
@@ -893,7 +914,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    *     returned regardless of trigger type
    * @param scheduleStatus the status of the schedule, must be values in {@link
    *     ProgramScheduleStatus}.
+   *
+   * Deprecated : Schedules are versionless.
    */
+  @Deprecated
   @GET
   @Path("apps/{app-name}/versions/{app-version}/schedules")
   public void getAllSchedulesVersioned(HttpRequest request, HttpResponder responder,
@@ -925,7 +949,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Get Workflow schedules
+   *
+   * Deprecated : Schedules are versionless.
    */
+  @Deprecated
   @GET
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/schedules")
   public void getProgramSchedulesVersioned(HttpRequest request, HttpResponder responder,
@@ -1169,6 +1196,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doAddSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
+  /*
+  * Deprecated : Schedules are versionless.
+  * */
+  @Deprecated
   @PUT
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -1233,6 +1264,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doUpdateSchedule(request, responder, namespaceId, appName, scheduleName);
   }
 
+  /*
+   * Deprecated : Schedules are versionless.
+   * */
+  @Deprecated
   @POST
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -1298,6 +1333,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     doDeleteSchedule(responder, namespaceId, appName, scheduleName);
   }
 
+  /*
+  * Deprecated : Schedules are versionless.
+  * */
+  @Deprecated
   @DELETE
   @Path("apps/{app-name}/versions/{app-version}/schedules/{schedule-name}")
   public void deleteScheduleVersioned(HttpRequest request, HttpResponder responder,
@@ -1320,6 +1359,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * program types are {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}. The request body
    * is expected to contain a map of log levels, where key is loggername, value is one of the valid
    * {@link org.apache.twill.api.logging.LogEntry.Level} or null.
+   *
    */
   @PUT
   @Path("/apps/{app-name}/{program-type}/{program-name}/runs/{run-id}/loglevels")
@@ -1337,7 +1377,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Update the log level for a running program according to the request body.
+   * Deprecated : Run-id is sufficient to identify a program run.
    */
+  @Deprecated
   @PUT
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/loglevels")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -1373,6 +1415,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Reset the log level for a running program back to where it starts.
+   *
+   * Deprecated : Run-id is sufficient to identify a program run.
    */
   @POST
   @Path("/apps/{app-name}/versions/{app-version}/{program-type}/{program-name}/runs/{run-id}/resetloglevels")
@@ -2034,7 +2078,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Return the availability (i.e. discoverable registration) status of a service.
+   *
+   * Deprecated : Only allow checking availability of the service corresponding to the latest app version.
    */
+  @Deprecated
   @GET
   @Path("/apps/{app-name}/versions/{app-version}/{service-type}/{program-name}/available")
   public void getServiceAvailabilityVersioned(HttpRequest request, HttpResponder responder,
