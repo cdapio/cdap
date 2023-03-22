@@ -37,7 +37,9 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.security.auth.context.AuthenticationTestContext;
@@ -79,6 +81,9 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     new ArrayList<>(), new ArrayList<>(), null, null);
   private static final CommitMeta mockCommit = new CommitMeta("author", "commiter", System.currentTimeMillis(),
                                                               "commit");
+  private static final AuthConfig AUTH_CONFIG = new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, null));
+  private static final AuthConfig NON_EXISTS_AUTH_CONFIG = new AuthConfig(
+      AuthType.PAT, new PatConfig(PASSWORD_NAME + "not_exist", null));
   @ClassRule
   public static final TemporaryFolder TEST_TEMP_FOLDER = new TemporaryFolder();
   private static final RepositoryConfig mockRepoConfig =
@@ -87,8 +92,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
           .setLink("ignored")
           .setDefaultBranch(DEFAULT_BRANCH_NAME)
           .setPathPrefix(PATH_PREFIX)
-          .setAuthType(AuthType.PAT)
-          .setTokenName(TOKEN_NAME)
+          .setAuth(AUTH_CONFIG)
           .build();
   private static CConfiguration cConf;
   private static SConfiguration sConf;
@@ -154,7 +158,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
         bind(RemoteClientFactory.class).toInstance(remoteClientFactory);
       }
     }).getInstance(RemoteSecureStore.class);
-    remoteSecureStore.put(NAMESPACE, TOKEN_NAME, MOCK_TOKEN, "fake git token", ImmutableMap.of("prop1", "value1"));
+    remoteSecureStore.put(NAMESPACE,
+        PASSWORD_NAME, MOCK_TOKEN, "fake git token", ImmutableMap.of("prop1", "value1"));
   }
 
   @AfterClass
@@ -224,7 +229,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     RepositoryConfig repoConfig =
         new RepositoryConfig.Builder(mockRepoConfig)
             .setLink(serverUrl + "ignored")
-            .setTokenName(TOKEN_NAME + "not_exist")
+            .setAuth(NON_EXISTS_AUTH_CONFIG)
             .build();
     PushAppOperationRequest mockPushContext =
         new PushAppOperationRequest(new NamespaceId(NAMESPACE), repoConfig, mockAppDetails, mockCommit);
@@ -289,10 +294,9 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
 
     // Get the actual repo config
     // But set a non-existing token name
-    RepositoryConfig repoConfig =
-      new RepositoryConfig.Builder(mockRepoConfig)
+    RepositoryConfig repoConfig = new RepositoryConfig.Builder(mockRepoConfig)
         .setLink(serverUrl + "ignored")
-        .setTokenName(TOKEN_NAME + "not_exist")
+        .setAuth(NON_EXISTS_AUTH_CONFIG)
         .build();
     PulAppOperationRequest mockPullRequest =
       new PulAppOperationRequest(mockAppRef, repoConfig);
@@ -366,10 +370,9 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     String serverUrl = gitServer.getServerUrl();
     // Get the actual repo config
     // But set a non-existing token name
-    RepositoryConfig repoConfig =
-      new RepositoryConfig.Builder(mockRepoConfig)
+    RepositoryConfig repoConfig = new RepositoryConfig.Builder(mockRepoConfig)
         .setLink(serverUrl + "ignored")
-        .setTokenName(TOKEN_NAME + "not_exist")
+        .setAuth(NON_EXISTS_AUTH_CONFIG)
         .build();
     NamespaceRepository testNamespaceRepository = new NamespaceRepository(new NamespaceId(NAMESPACE), repoConfig);
 

@@ -38,6 +38,7 @@ import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigRequest;
@@ -79,11 +80,13 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
   private static final String NAME = "testNamespace";
   private static final String LINK = "example.com";
   private static final String DEFAULT_BRANCH = "develop";
-  private static final String TOKEN_NAME = "test_token_name";
+  private static final String PASSWORD_NAME = "test_password_name";
   private static final String USERNAME = "test_user";
   private static final String TEST_FIELD = "test";
   private static final String REPO_FIELD = "repository";
   private static final Gson GSON = new Gson();
+  private static final AuthConfig AUTH_CONFIG = new AuthConfig(
+      AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME));
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -144,9 +147,12 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     assertResponseCode(404, response);
 
     // Set repository config
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder()
+        .setProvider(Provider.GITHUB)
+        .setLink(LINK)
+        .setDefaultBranch(DEFAULT_BRANCH)
+        .setAuth(AUTH_CONFIG)
+        .build();
 
     // Assert the namespace does not exist
     response = setRepository(NAME, createRepoRequestString(namespaceRepo));
@@ -165,8 +171,9 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     Assert.assertNotEquals(0, repository.getUpdatedTimeMillis());
 
     RepositoryConfig newRepoConfig = new RepositoryConfig.Builder(namespaceRepo)
-      .setTokenName("a new token name")
-      .setLink("a new link").build();
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("a new password name", null)))
+        .setLink("a new link")
+        .build();
 
     response = setRepository(NAME, createRepoRequestString(newRepoConfig));
     assertResponseCode(200, response);
@@ -200,24 +207,27 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     assertResponseCode(404, getRepository(NAME));
 
     // Set the invalid repository that's missing provider
-    String configMissingProvider = buildRepoRequestString(null, LINK, DEFAULT_BRANCH,
-                                                          new AuthConfig(AuthType.PAT, TOKEN_NAME, USERNAME),
-                                                          null);
+    String configMissingProvider = buildRepoRequestString(
+        null, LINK, DEFAULT_BRANCH,
+        new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME)),
+        null);
     assertResponseCode(400, setRepository(NAME, configMissingProvider));
     assertResponseCode(404, getRepository(NAME));
 
     // Set the invalid repository that's missing link
-    String configMissingLink = buildRepoRequestString(Provider.GITHUB, null, DEFAULT_BRANCH,
-                                                      new AuthConfig(AuthType.PAT, TOKEN_NAME, USERNAME),
-                                                      null);
+    String configMissingLink = buildRepoRequestString(
+        Provider.GITHUB, null, DEFAULT_BRANCH,
+        new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME, USERNAME)),
+        null);
     assertResponseCode(400, setRepository(NAME, configMissingLink));
     assertResponseCode(404, getRepository(NAME));
 
     // Set the invalid repository that's missing auth token name
-    String configMissingTokenName = buildRepoRequestString(Provider.GITHUB, LINK, "",
-                                                           new AuthConfig(AuthType.PAT, "", USERNAME),
-                                                           null);
-    assertResponseCode(400, setRepository(NAME, configMissingTokenName));
+    String configMissingPasswordName = buildRepoRequestString(
+        Provider.GITHUB, LINK, "",
+        new AuthConfig(AuthType.PAT, new PatConfig("", USERNAME)),
+        null);
+    assertResponseCode(400, setRepository(NAME, configMissingPasswordName));
     assertResponseCode(404, getRepository(NAME));
 
     // cleanup
@@ -230,9 +240,12 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
     setScmFeatureFlag(false);
 
     // Set repository config
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(LINK).setDefaultBranch(DEFAULT_BRANCH).setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME).setUsername(USERNAME).build();
+    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder()
+        .setProvider(Provider.GITHUB)
+        .setLink(LINK)
+        .setDefaultBranch(DEFAULT_BRANCH)
+        .setAuth(AUTH_CONFIG)
+        .build();
 
     // Assert the namespace does not exist
     assertResponseCode(403, setRepository(NAME, createRepoRequestString(namespaceRepo)));
@@ -242,12 +255,12 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
   @Test
   public void testValidateRepoConfigSuccess() throws Exception {
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(LINK)
-      .setDefaultBranch(DEFAULT_BRANCH)
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder()
+        .setProvider(Provider.GITHUB)
+        .setLink(LINK)
+        .setDefaultBranch(DEFAULT_BRANCH)
+        .setAuth(AUTH_CONFIG)
+        .build();
 
     Mockito.doNothing()
       .when(sourceControlService)
@@ -259,12 +272,12 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
   @Test
   public void testValidateRepoConfigFails() throws Exception {
-    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink(LINK)
-      .setDefaultBranch(DEFAULT_BRANCH)
-      .setAuthType(AuthType.PAT)
-      .setTokenName(TOKEN_NAME)
-      .build();
+    RepositoryConfig config = new RepositoryConfig.Builder()
+        .setProvider(Provider.GITHUB)
+        .setLink(LINK)
+        .setDefaultBranch(DEFAULT_BRANCH)
+        .setAuth(AUTH_CONFIG)
+        .build();
     RepositoryConfigValidationException ex =
       new RepositoryConfigValidationException(Arrays.asList(new RepositoryValidationFailure("fake error 1"),
                                                             new RepositoryValidationFailure("another fake error")));
@@ -486,14 +499,18 @@ public class SourceControlManagementHttpHandlerTests extends AppFabricTestBase {
 
   private String buildRepoRequestString(Provider provider, String link, String defaultBranch,
                                         AuthConfig authConfig, @Nullable String pathPrefix) {
-    Map<String, Object> authJsonMap = ImmutableMap.of("type", authConfig.getType().toString(),
-                                                      "tokenName", authConfig.getTokenName(),
-                                                      "username", authConfig.getUsername());
-    Map<String, Object> repoString = ImmutableMap.of("provider", provider == null ? "" : provider.toString(),
-                                                     "link", link == null ? "" : link,
-                                                     "defaultBranch", defaultBranch,
-                                                     "pathPrefix", pathPrefix == null ? "" : pathPrefix,
-                                                     "auth", authJsonMap);
+    Map<String, Object> patJsonMap = ImmutableMap.of(
+        "passwordName", authConfig.getPatConfig().getPasswordName(),
+        "username", authConfig.getPatConfig().getUsername());
+    Map<String, Object> authJsonMap = ImmutableMap.of(
+        "type", authConfig.getType().toString(),
+        "patConfig", patJsonMap);
+    Map<String, Object> repoString = ImmutableMap.of(
+        "provider", provider == null ? "" : provider.toString(),
+        "link", link == null ? "" : link,
+        "defaultBranch", defaultBranch,
+        "pathPrefix", pathPrefix == null ? "" : pathPrefix,
+        "auth", authJsonMap);
     return GSON.toJson(ImmutableMap.of(TEST_FIELD, "false", REPO_FIELD, repoString));
   }
 

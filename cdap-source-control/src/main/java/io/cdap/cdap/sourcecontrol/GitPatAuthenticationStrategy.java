@@ -30,16 +30,23 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 /**
  * An {@link AuthenticationStrategy} to use with GitHub and Personal Access Tokens.
  */
-public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
+public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
 
   private static final String GITHUB_PAT_USERNAME = "oauth2";
   private final SecureStorePasswordProvider credentialsProvider;
 
-  public GitPATAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
+  /**
+   * Construct a Git PAT auth strategy.
+
+   * @param secureStore {@link SecureStore} to fetch the secrets with.
+   * @param config {@link RepositoryConfig}
+   * @param namespaceId the namespaceId
+   */
+  public GitPatAuthenticationStrategy(SecureStore secureStore, RepositoryConfig config,
       String namespaceId) {
     this.credentialsProvider =
         new SecureStorePasswordProvider(secureStore, GITHUB_PAT_USERNAME,
-            config.getAuth().getTokenName(), namespaceId);
+            config.getAuth().getPatConfig().getPasswordName(), namespaceId);
   }
 
   @Override
@@ -56,22 +63,22 @@ public class GitPATAuthenticationStrategy implements AuthenticationStrategy {
     private final SecureStore secureStore;
     private final String username;
     private final String passwordKeyName;
-    private final String namespaceID;
+    private final String namespaceId;
     private String password;
 
     SecureStorePasswordProvider(SecureStore secureStore, String username, String passwordKeyName,
-        String namespaceID) {
+        String namespaceId) {
       this.secureStore = secureStore;
       this.username = username;
       this.passwordKeyName = passwordKeyName;
-      this.namespaceID = namespaceID;
+      this.namespaceId = namespaceId;
     }
 
     @Override
     public void refresh() throws IOException, AuthenticationConfigException {
       SecureStoreData data;
       try {
-        data = secureStore.get(namespaceID, passwordKeyName);
+        data = secureStore.get(namespaceId, passwordKeyName);
       } catch (Exception e) {
         Throwables.propagateIfInstanceOf(e, IOException.class);
         throw new AuthenticationConfigException("Failed to get password from secure store", e);

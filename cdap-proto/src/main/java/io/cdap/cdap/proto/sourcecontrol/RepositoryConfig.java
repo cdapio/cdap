@@ -36,12 +36,12 @@ public class RepositoryConfig {
   private RepositoryConfig(Provider provider,
       String link,
       @Nullable String defaultBranch,
-      AuthConfig authConfig,
+      AuthConfig auth,
       @Nullable String pathPrefix) {
     this.provider = provider;
     this.link = link;
     this.defaultBranch = defaultBranch;
-    this.auth = authConfig;
+    this.auth = auth;
     this.pathPrefix = pathPrefix;
   }
 
@@ -67,6 +67,9 @@ public class RepositoryConfig {
     return auth;
   }
 
+  /**
+   * Validate if the {@link RepositoryConfig} is valid.
+   */
   public void validate() {
     Collection<RepositoryValidationFailure> failures = new ArrayList<>();
 
@@ -80,9 +83,8 @@ public class RepositoryConfig {
 
     if (auth == null) {
       failures.add(new RepositoryValidationFailure("'auth' field must be specified."));
-    } else if (!auth.isValid()) {
-      failures.add(
-          new RepositoryValidationFailure("'type' and 'tokenName' fields must be specified."));
+    } else {
+      failures.addAll(auth.validate());
     }
 
     if (!failures.isEmpty()) {
@@ -91,7 +93,7 @@ public class RepositoryConfig {
   }
 
   /**
-   * Builder used to build {@link RepositoryConfig}
+   * Builder used to build {@link RepositoryConfig}.
    */
   public static final class Builder {
 
@@ -99,23 +101,25 @@ public class RepositoryConfig {
     private String link;
     private String defaultBranch;
     private String pathPrefix;
-    private AuthType authType;
-    private String tokenName;
-    private String username;
+    private AuthConfig auth;
 
     public Builder() {
       // no-op
     }
 
+    /**
+     * Builder to build {@link RepositoryConfig}.
+
+     * @param repoConfig {@link RepositoryConfig} to build with
+     */
     public Builder(RepositoryConfig repoConfig) {
       this.provider = repoConfig.getProvider();
       this.link = repoConfig.getLink();
       this.defaultBranch = repoConfig.getDefaultBranch();
       this.pathPrefix = repoConfig.getPathPrefix();
       if (repoConfig.getAuth() != null) {
-        this.authType = repoConfig.getAuth().getType();
-        this.tokenName = repoConfig.getAuth().getTokenName();
-        this.username = repoConfig.getAuth().getUsername();
+        AuthConfig authConfig = repoConfig.getAuth();
+        this.auth = new AuthConfig(authConfig.getType(), authConfig.getPatConfig());
       }
     }
 
@@ -139,24 +143,19 @@ public class RepositoryConfig {
       return this;
     }
 
-    public Builder setAuthType(AuthType authType) {
-      this.authType = authType;
+    public Builder setAuth(AuthConfig auth) {
+      this.auth = auth;
       return this;
     }
 
-    public Builder setTokenName(String tokenName) {
-      this.tokenName = tokenName;
-      return this;
-    }
+    /**
+     * Build a RepositoryConfig.
 
-    public Builder setUsername(String username) {
-      this.username = username;
-      return this;
-    }
-
+     * @return The built {@link RepositoryConfig}.
+     */
     public RepositoryConfig build() {
       RepositoryConfig repoConfig = new RepositoryConfig(provider, link, defaultBranch,
-          new AuthConfig(authType, tokenName, username), pathPrefix);
+          auth, pathPrefix);
       repoConfig.validate();
       return repoConfig;
     }

@@ -35,7 +35,9 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryMeta;
@@ -61,12 +63,18 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 /**
- * Tests for {@link SourceControlManagementService}
+ * Tests for {@link SourceControlManagementService}.
  */
 public class SourceControlManagementServiceTest extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static NamespaceAdmin namespaceAdmin;
   private static SourceControlManagementService sourceControlService;
+  private static final RepositoryConfig REPOSITORY_CONFIG = new RepositoryConfig.Builder()
+      .setProvider(Provider.GITHUB)
+      .setLink("example.com")
+      .setDefaultBranch("develop")
+      .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("passwordName", "user")))
+      .build();
   private static final SourceControlOperationRunner mockSourceControlOperationRunner =
     Mockito.mock(SourceControlOperationRunner.class);
 
@@ -93,12 +101,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testSetRepoConfig() throws Exception {
     String namespace = "custompaceNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
     
     try {
-      sourceControlService.setRepository(namespaceId, namespaceRepo);
+      sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
       Assert.fail();
     } catch (NamespaceNotFoundException e) {
       // no-op
@@ -107,15 +112,17 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Create namespace and repository should succeed
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespaceId);
-    Assert.assertEquals(namespaceRepo, repoMeta.getConfig());
+    Assert.assertEquals(REPOSITORY_CONFIG, repoMeta.getConfig());
     Assert.assertNotEquals(0, repoMeta.getUpdatedTimeMillis());
 
-    RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("another.example.com").setDefaultBranch("master").setAuthType(AuthType.PAT)
-      .setTokenName("another.token").setUsername("another.user").build();
+    RepositoryConfig newRepositoryConfig = new RepositoryConfig.Builder(REPOSITORY_CONFIG)
+        .setLink("another.example.com")
+        .setDefaultBranch("master")
+        .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("another.password", "another.user")))
+        .build();
     sourceControlService.setRepository(namespaceId, newRepositoryConfig);
 
     // Verify repository updated
@@ -138,11 +145,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   public void testDeleteRepoConfig() throws Exception {
     String namespace = "custompaceNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
+
     try {
-      sourceControlService.setRepository(namespaceId, namespaceRepo);
+      sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
       Assert.fail();
     } catch (NamespaceNotFoundException e) {
       // no-op
@@ -151,14 +156,14 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Create namespace and repository should succeed
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     RepositoryMeta repoMeta = sourceControlService.getRepositoryMeta(namespaceId);
-    Assert.assertEquals(namespaceRepo, repoMeta.getConfig());
+    Assert.assertEquals(REPOSITORY_CONFIG, repoMeta.getConfig());
 
     // Delete repository and verify it's deleted
     sourceControlService.deleteRepository(namespaceId);
-    
+
     try {
       sourceControlService.getRepositoryMeta(namespaceId);
       Assert.fail();
@@ -183,11 +188,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Set the repository config
     String namespace = Id.Namespace.DEFAULT.getId();
     NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
-    
+
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
+
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
                                                               appId1.getId() + " hash");
 
@@ -234,7 +237,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     } catch (RepositoryNotFoundException e) {
       // no-op
     }
-    
+
     // Cleanup
     deleteApp(appId1, 200);
     deleteArtifact(artifactId, 200);
@@ -258,12 +261,9 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     // Do not set the repository config
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
 
     // Set the repository config
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new SourceControlException("push apps failed", new Exception()))
       .when(mockSourceControlOperationRunner).push(Mockito.any());
@@ -294,10 +294,8 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Set the repository config
     String namespace = Id.Namespace.DEFAULT.getId();
     NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
                                                                   appId1.getId() + " " + "hash", mockAppRequest);
@@ -346,10 +344,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     ApplicationReference appRef = namespaceId.appReference(appId1.getId());
 
     // Set the repository config
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new ApplicationNotFoundException(appRef))
       .when(mockSourceControlOperationRunner).pull(Mockito.any());
@@ -369,10 +364,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     ApplicationReference appRef = namespaceId.appReference(appId1.getId());
 
     // Set the repository config
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new AuthenticationConfigException("Repo config is invalid"))
       .when(mockSourceControlOperationRunner).pull(Mockito.any());
@@ -392,10 +384,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     ApplicationReference appRef = namespaceId.appReference(appId1.getId());
 
     // Set the repository config
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new SourceControlException("Failed to pull application", new Exception()))
       .when(mockSourceControlOperationRunner).pull(Mockito.any());
@@ -420,10 +409,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Set the repository config
     String namespace = Id.Namespace.DEFAULT.getId();
     NamespaceId namespaceId = new NamespaceId(namespace);
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     // Push the application and update source control metadata
     String mockedFileHash = appId1.getId() + " hash";
@@ -455,10 +441,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     RepositoryApp app2 = new RepositoryApp("app2", "hash2");
     RepositoryAppsResponse expectedListResult = new RepositoryAppsResponse(Arrays.asList(app1, app2));
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doReturn(expectedListResult)
       .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));
@@ -473,10 +456,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   @Test(expected = SourceControlException.class)
   public void testListAppsFailed() throws Exception {
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
-    RepositoryConfig namespaceRepo = new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-      .setLink("example.com").setDefaultBranch("develop").setAuthType(AuthType.PAT)
-      .setTokenName("token").setUsername("user").build();
-    sourceControlService.setRepository(namespaceId, namespaceRepo);
+    sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(SourceControlException.class)
       .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));

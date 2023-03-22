@@ -23,7 +23,9 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
 import io.cdap.cdap.proto.sourcecontrol.AuthType;
+import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
@@ -53,13 +55,12 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     TEST_APP_NAME, "v1", "description1", null, null, "conf1", new ArrayList<>(),
     new ArrayList<>(), new ArrayList<>(), null, null);
   private static final RepositoryConfig testRepoConfig = new RepositoryConfig.Builder()
-    .setProvider(Provider.GITHUB)
-    .setLink("ignored")
-    .setDefaultBranch("develop")
-    .setPathPrefix(PATH_PREFIX)
-    .setAuthType(AuthType.PAT)
-    .setTokenName("GITHUB_TOKEN_NAME")
-    .build();
+      .setProvider(Provider.GITHUB)
+      .setLink("ignored")
+      .setDefaultBranch("develop")
+      .setPathPrefix(PATH_PREFIX)
+      .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("GITHUB_TOKEN_NAME", null)))
+      .build();
   private static final CommitMeta testCommit =
     new CommitMeta("author1", "committer1", 123, "message1");
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
