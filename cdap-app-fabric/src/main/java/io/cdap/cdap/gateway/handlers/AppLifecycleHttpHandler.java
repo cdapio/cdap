@@ -446,7 +446,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Delete an application specified by appId and versionId.
+   * Deprecated : Version specific deletion is not allowed.
    */
+  @Deprecated
   @DELETE
   @Path("/apps/{app-id}/versions/{version-id}")
   public void deleteAppVersion(HttpRequest request, HttpResponder responder,
@@ -499,7 +501,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Updates an existing application.
+   * Deprecated : Unused - just another deploy action after introduction of edit versions
    */
+  @Deprecated
   @POST
   @Path("/apps/{app-id}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
@@ -643,7 +647,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * The response will be an array of {@link BatchApplicationDetail} object, which either indicates
    * a success (200) or failure for each of the requested application in the same order as the
    * request.
+   *
+   * Deprecated : Unused
    */
+  @Deprecated
   @POST
   @Path("/appdetail")
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
