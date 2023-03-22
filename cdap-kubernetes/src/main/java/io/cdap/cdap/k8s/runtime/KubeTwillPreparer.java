@@ -653,8 +653,9 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   /**
    * Creates a {@link V1ObjectMeta} for the given resource type.
    */
-  private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis,
-                                              boolean runtimeCleanupDisabled) {
+  @VisibleForTesting
+  V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis,
+                                      boolean runtimeCleanupDisabled) {
     String resourceName = getResourceName(twillSpec.getName(), twillRunId, getMaxLength(resourceType));
 
     // labels have more strict requirements around valid character sets,
@@ -671,8 +672,11 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       objectMetaBuilder.addToAnnotations(KubeTwillRunnerService.RUNTIME_CLEANUP_DISABLED, Boolean.TRUE.toString());
     }
 
-    // OwnerReference must be in same namespace as object
-    if (kubeNamespace.equals(programRuntimeNamespace)) {
+    // Only set owner reference if preparing an app in the system namespace.
+    // For user program runs, we don't want owner references. Owner reference will mean that
+    // a deletion of the system worker that launched the run (happens on app-fabric restart)
+    // will cause the k8s job to also be deleted
+    if (isSystemNamespace(cdapRuntimeNamespace) && kubeNamespace.equals(programRuntimeNamespace)) {
       objectMetaBuilder.withOwnerReferences(podInfo.getOwnerReferences());
     }
     return objectMetaBuilder.build();
