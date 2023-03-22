@@ -69,6 +69,7 @@ import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
+import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
@@ -153,6 +154,7 @@ public class StandaloneMain {
   private final MetadataStorage metadataStorage;
   private final RuntimeServer runtimeServer;
   private final ArtifactLocalizerService artifactLocalizerService;
+  private final EventPublishManager eventPublishManager;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
 
@@ -184,6 +186,7 @@ public class StandaloneMain {
     runtimeServer = injector.getInstance(RuntimeServer.class);
     cConf.setInt(Constants.ArtifactLocalizer.PORT, 0);
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    eventPublishManager = injector.getInstance(EventPublishManager.class);
 
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
       txService = injector.getInstance(InMemoryTransactionService.class);
@@ -297,6 +300,7 @@ public class StandaloneMain {
     operationalStatsService.startAndWait();
     secureStoreService.startAndWait();
     supportBundleInternalService.startAndWait();
+    eventPublishManager.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled
@@ -334,6 +338,7 @@ public class StandaloneMain {
       previewRunnerManager.stopAndWait();
       previewHttpServer.stopAndWait();
       artifactLocalizerService.stopAndWait();
+      eventPublishManager.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       runtimeServer.stopAndWait();
