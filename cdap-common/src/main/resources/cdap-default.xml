@@ -563,7 +563,7 @@
 
   <property>
     <name>run.record.monitor.cleanup.interval.seconds</name>
-    <value>300</value>
+    <value>60</value>
     <description>
       Cleanup interval (in seconds) in which run record monitor service cleanup
       logic runs to delete old entries.
