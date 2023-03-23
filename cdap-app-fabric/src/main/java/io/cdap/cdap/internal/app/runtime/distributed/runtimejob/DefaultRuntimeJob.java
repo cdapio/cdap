@@ -148,6 +148,7 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -282,6 +283,33 @@ public class DefaultRuntimeJob implements RuntimeJob {
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
+
+        // Failure of any core service can leave the program in an orphaned state
+        // One example is RuntimeClientService failure when CDAP instance is deleted
+        // In such situations runtime job should be stopped to free up resources (CDAP-20216)
+        for (Service service : coreServices) {
+          service.addListener(new ServiceListenerAdapter() {
+            @Override
+            public void failed(Service.State from, Throwable failure) {
+              LOG.error("Core service {} failed, prev state {}, terminating program run",
+                        service, from, failure);
+              try {
+                LOG.error("Forcefully terminating program run {}", programRunId);
+                controller.kill();
+              } catch (Exception e) {
+                LOG.error("Error in terminating program run", e);
+                // Fallback in case controller could not be stopped
+                try {
+                  programStateWriter.error(programRunId, failure);
+                } catch (Exception ex) {
+                  LOG.error("Error in updating program state to error", ex);
+                }
+                programCompletion.completeExceptionally(failure);
+              }
+            }
+          }, Threads.SAME_THREAD_EXECUTOR);
+        }
+
         runtimeClientService.onProgramStopRequested(terminateTs -> {
           long timeout = TimeUnit.SECONDS.toMillis(terminateTs - STOP_PROPAGATION_DELAY_SECS)
               - System.currentTimeMillis();
