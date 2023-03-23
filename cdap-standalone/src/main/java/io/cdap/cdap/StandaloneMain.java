@@ -69,6 +69,7 @@ import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerService;
+import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
@@ -145,7 +146,7 @@ public class StandaloneMain {
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
-  private final LevelDBTableService levelDBTableService;
+  private final LevelDBTableService levelDbTableService;
   private final SecureStoreService secureStoreService;
   private final SupportBundleInternalService supportBundleInternalService;
   private final PreviewHttpServer previewHttpServer;
@@ -153,6 +154,7 @@ public class StandaloneMain {
   private final MetadataStorage metadataStorage;
   private final RuntimeServer runtimeServer;
   private final ArtifactLocalizerService artifactLocalizerService;
+  private final EventPublishManager eventPublishManager;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
 
@@ -162,7 +164,7 @@ public class StandaloneMain {
 
     injector = Guice.createInjector(modules);
 
-    levelDBTableService = injector.getInstance(LevelDBTableService.class);
+    levelDbTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
     router = injector.getInstance(NettyRouter.class);
@@ -184,6 +186,7 @@ public class StandaloneMain {
     runtimeServer = injector.getInstance(RuntimeServer.class);
     cConf.setInt(Constants.ArtifactLocalizer.PORT, 0);
     artifactLocalizerService = injector.getInstance(ArtifactLocalizerService.class);
+    eventPublishManager = injector.getInstance(EventPublishManager.class);
 
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
       txService = injector.getInstance(InMemoryTransactionService.class);
@@ -297,6 +300,7 @@ public class StandaloneMain {
     operationalStatsService.startAndWait();
     secureStoreService.startAndWait();
     supportBundleInternalService.startAndWait();
+    eventPublishManager.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled
@@ -334,6 +338,7 @@ public class StandaloneMain {
       previewRunnerManager.stopAndWait();
       previewHttpServer.stopAndWait();
       artifactLocalizerService.stopAndWait();
+      eventPublishManager.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       runtimeServer.stopAndWait();
@@ -364,7 +369,7 @@ public class StandaloneMain {
       logAppenderInitializer.close();
       accessControllerInstantiator.close();
       metadataStorage.close();
-      levelDBTableService.close();
+      levelDbTableService.close();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);
@@ -394,6 +399,12 @@ public class StandaloneMain {
     }
   }
 
+  /**
+   * Main method for standalone instance.
+   *
+   * @param args String args.
+   * @throws Exception Any exception.
+   */
   public static void main(String[] args) throws Exception {
     // Includes logging extension jars as part of the system classpath.
     // It is needed to support custom appenders loaded from those extension jars.
@@ -463,9 +474,9 @@ public class StandaloneMain {
     if (OSDetector.isWindows()) {
       // not set anywhere by the project, expected to be set from IDEs if running from the project instead of sdk
       // hadoop.dll is at cdap-unit-test\src\main\resources\hadoop.dll for some reason
-      String hadoopDLLPath = System.getProperty("hadoop.dll.path");
-      if (hadoopDLLPath != null) {
-        System.load(hadoopDLLPath);
+      String hadoopDllPath = System.getProperty("hadoop.dll.path");
+      if (hadoopDllPath != null) {
+        System.load(hadoopDllPath);
       } else {
         // this is where it is when the standalone sdk is built
         String userDir = System.getProperty("user.dir");

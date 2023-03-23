@@ -35,7 +35,6 @@ import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
-import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -85,7 +84,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
-  private final EventPublishManager eventPublishManager;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -114,7 +112,6 @@ public class AppFabricServer extends AbstractIdleService {
       BootstrapService bootstrapService,
       SystemAppManagementService systemAppManagementService,
       TransactionRunner transactionRunner,
-      EventPublishManager eventPublishManager,
       RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.hostname = hostname;
@@ -137,7 +134,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
-    this.eventPublishManager = eventPublishManager;
     this.runRecordCounterService = runRecordCounterService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
   }
@@ -162,7 +158,6 @@ public class AppFabricServer extends AbstractIdleService {
             runRecordCorrectorService.start(),
             programRunStatusMonitorService.start(),
             coreSchedulerService.start(),
-            eventPublishManager.start(),
             runRecordCounterService.start()
         )
     ).get();
@@ -218,7 +213,6 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordCorrectorService.stopAndWait();
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
-    eventPublishManager.stopAndWait();
     runRecordCounterService.stopAndWait();
   }
 
