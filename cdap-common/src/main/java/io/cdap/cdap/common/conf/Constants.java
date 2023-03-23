@@ -1158,9 +1158,9 @@ public final class Constants {
      * Deploy event metrics.
      */
     public static final class AppMetadataStore {
-      public static final String DEPLOY_NEW_COUNT = "event.app.create.count";
-      public static final String DEPLOY_EDIT_COUNT = "event.app.edit.count";
-      public static final String DEPLOY_UPGRADE_COUNT = "event.app.upgrade.count";
+      public static final String DEPLOY_NEW_COUNT = "app.deploy.event.count.create";
+      public static final String DEPLOY_EDIT_COUNT = "app.deploy.event.count.edit";
+      public static final String DEPLOY_UPGRADE_COUNT = "app.deploy.event.count.upgrade";
     }
   }
 
