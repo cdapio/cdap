@@ -80,7 +80,7 @@ import javax.annotation.Nullable;
 public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(AppFabricServiceMain.class, args);
@@ -130,10 +130,10 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
+    final CConfiguration cConf = injector.getInstance(CConfiguration.class);
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));

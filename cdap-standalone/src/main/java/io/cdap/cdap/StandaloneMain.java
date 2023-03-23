@@ -154,7 +154,7 @@ public class StandaloneMain {
   private final OperationalStatsService operationalStatsService;
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
-  private final LevelDBTableService levelDBTableService;
+  private final LevelDBTableService levelDbTableService;
   private final SecureStoreService secureStoreService;
   private final SupportBundleInternalService supportBundleInternalService;
   private final PreviewHttpServer previewHttpServer;
@@ -173,7 +173,7 @@ public class StandaloneMain {
 
     injector = Guice.createInjector(modules);
 
-    levelDBTableService = injector.getInstance(LevelDBTableService.class);
+    levelDbTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
     router = injector.getInstance(NettyRouter.class);
@@ -389,7 +389,7 @@ public class StandaloneMain {
       logAppenderInitializer.close();
       accessControllerInstantiator.close();
       metadataStorage.close();
-      levelDBTableService.close();
+      levelDbTableService.close();
     } catch (Throwable e) {
       halt = true;
       LOG.error("Exception during shutdown", e);
@@ -419,6 +419,12 @@ public class StandaloneMain {
     }
   }
 
+  /**
+   * Main method for standalone instance.
+   *
+   * @param args String args.
+   * @throws Exception Any exception.
+   */
   public static void main(String[] args) throws Exception {
     // Includes logging extension jars as part of the system classpath.
     // It is needed to support custom appenders loaded from those extension jars.
@@ -486,9 +492,9 @@ public class StandaloneMain {
     if (OSDetector.isWindows()) {
       // not set anywhere by the project, expected to be set from IDEs if running from the project instead of sdk
       // hadoop.dll is at cdap-unit-test\src\main\resources\hadoop.dll for some reason
-      String hadoopDLLPath = System.getProperty("hadoop.dll.path");
-      if (hadoopDLLPath != null) {
-        System.load(hadoopDLLPath);
+      String hadoopDllPath = System.getProperty("hadoop.dll.path");
+      if (hadoopDllPath != null) {
+        System.load(hadoopDllPath);
       } else {
         // this is where it is when the standalone sdk is built
         String userDir = System.getProperty("user.dir");
