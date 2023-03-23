@@ -78,7 +78,7 @@ import org.apache.twill.zookeeper.ZKClientService;
 public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(AppFabricServiceMain.class, args);
@@ -133,7 +133,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       List<? super AutoCloseable> closeableResources,
       MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
       EnvironmentOptions options) {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    final CConfiguration cConf = injector.getInstance(CConfiguration.class);
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
