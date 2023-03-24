@@ -67,8 +67,16 @@ public class SQLEngineRelationalEngine implements SparkCollectionRelationalEngin
   public <T> Optional<SparkCollection<T>> tryRelationalTransform(
     StageSpec stageSpec, RelationalTransform transform, Map<String, SparkCollection<Object>> input) {
 
-    return adapter.tryRelationalTransform(stageSpec, transform, input).map(job ->
-      new SQLEngineCollection<T>(sec, functionCacheFactory, jsc, sqlContext,
-                                 datasetContext, sinkFactory, stageSpec.getName(), adapter, job));
+     return adapter.tryRelationalTransform(stageSpec, transform, input)
+      .map(job -> {
+        SQLEngineCollection<T> sqlEngineCollection = new SQLEngineCollection<T>(sec, functionCacheFactory, jsc,
+                                                                                sqlContext, datasetContext, sinkFactory,
+                                                                                stageSpec.getName(), adapter, job);
+        // If it is a Spark Sql Job with a local engine, then Perform a Pull resulting in RddCollection.
+        if (adapter.getSQLEngineClassName().equals(SparkSQLEngine.class.getName())) {
+          return sqlEngineCollection.pull();
+        }
+        return sqlEngineCollection;
+      });
   }
 }

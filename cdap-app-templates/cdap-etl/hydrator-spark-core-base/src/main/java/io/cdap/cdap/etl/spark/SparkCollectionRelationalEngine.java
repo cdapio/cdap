@@ -34,12 +34,12 @@ public interface SparkCollectionRelationalEngine {
   Engine getRelationalEngine();
 
   /**
-   * Tries to perform a relational tranform for the stage with given transform plugin
+   * Tries to perform a relational transform for the stage with given transform plugin
    * @param stageSpec stage
    * @param transform transform plugin
    * @param input map of input collections
    * @param <T> type of elements in the output spark collection
-   * @return tranformed output {@link SparkCollection} or empty {@link Optional} if relational tranform is not
+   * @return transformed output {@link SparkCollection} or empty {@link Optional} if relational transform is not
    * possible for this engine with the passed plugin
    */
   <T> Optional<SparkCollection<T>> tryRelationalTransform(StageSpec stageSpec,
