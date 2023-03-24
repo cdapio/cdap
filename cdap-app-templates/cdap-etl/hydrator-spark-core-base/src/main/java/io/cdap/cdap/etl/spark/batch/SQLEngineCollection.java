@@ -126,7 +126,7 @@ public class SQLEngineCollection<T> implements SQLBackedCollection<T> {
    * @return (@ link RDDCollection } representing the records pulled from the SQL Engine.
    */
   @SuppressWarnings("raw")
-  private SparkCollection<T> pull() {
+  protected SparkCollection<T> pull() {
     // Ensure the local collection is only generated once across multiple threads
     synchronized (this) {
       if (localCollection == null) {

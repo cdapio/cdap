@@ -115,12 +115,22 @@ public class BatchSQLEngineAdapter implements Closeable {
   private final Map<String, StageStatisticsCollector> statsCollectors;
   private final ExecutorService executorService;
   private final Map<SQLEngineJobKey, SQLEngineJob<?>> jobs;
+  private final boolean isLocalEngine;
 
   public BatchSQLEngineAdapter(String pluginName,
                                SQLEngine<?, ?, ?, ?> sqlEngine,
                                JavaSparkExecutionContext sec,
                                JavaSparkContext jsc,
                                Map<String, StageStatisticsCollector> statsCollectors) {
+    this(pluginName, sqlEngine, sec, jsc, statsCollectors, false);
+  }
+
+  public BatchSQLEngineAdapter(String pluginName,
+                               SQLEngine<?, ?, ?, ?> sqlEngine,
+                               JavaSparkExecutionContext sec,
+                               JavaSparkContext jsc,
+                               Map<String, StageStatisticsCollector> statsCollectors,
+                               boolean isLocalEngine) {
     this.pluginName = pluginName;
     this.sqlEngine = sqlEngine;
     this.metrics = sec.getMetrics();
@@ -136,6 +146,11 @@ public class BatchSQLEngineAdapter implements Closeable {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     ThreadFactory threadFactory = new SQLEngineAdapterThreadFactory(classLoader);
     this.executorService = Executors.newCachedThreadPool(threadFactory);
+    this.isLocalEngine = isLocalEngine;
+  }
+
+  boolean isLocalEngine() {
+    return this.isLocalEngine;
   }
 
   /**
