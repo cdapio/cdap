@@ -39,6 +39,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Gateway;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.ImmutablePair;
@@ -54,6 +55,8 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.app.store.state.AppStateKey;
+import io.cdap.cdap.internal.app.store.state.AppStateKeyValue;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
@@ -80,6 +83,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import io.cdap.common.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,6 +91,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.jboss.resteasy.util.HttpResponseCodes;
@@ -1252,6 +1257,41 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // cleanup
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
+  }
+
+  @Test
+  public void testDeleteState() throws Exception {
+    // deploy an app
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+
+    ApplicationLifecycleService lifecycleService = getInjector().getInstance(
+        ApplicationLifecycleService.class);
+    // add state for the app
+    String testKey = "test-key";
+    String testDataString = "test-data";
+    byte[] testData = testDataString.getBytes(StandardCharsets.UTF_8);
+    lifecycleService.saveState(
+        new AppStateKeyValue(new NamespaceId(TEST_NAMESPACE1), AllProgramsApp.NAME, testKey,
+            testData));
+    // verify that state exists
+    Optional<byte[]> state = lifecycleService.getState(
+        new AppStateKey(new NamespaceId(TEST_NAMESPACE1), AllProgramsApp.NAME, testKey));
+    Assert.assertEquals(true, state.isPresent());
+    Assert.assertEquals(testDataString, new String(state.get(), StandardCharsets.UTF_8));
+    // delete state
+    String deleteStateUrl = String.format("apps/%s/state", AllProgramsApp.NAME);
+    String versionedStateDeletePath = getVersionedAPIPath(deleteStateUrl,
+        Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    doDelete(versionedStateDeletePath);
+    // verify that state does not exist
+    state = lifecycleService.getState(
+        new AppStateKey(new NamespaceId(TEST_NAMESPACE1), AllProgramsApp.NAME, testKey));
+    Assert.assertEquals(false, state.isPresent());
+
+    // cleanup
+    Assert.assertEquals(200,
+        doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME,
+            TEST_NAMESPACE1)).getResponseCode());
   }
 
   /**

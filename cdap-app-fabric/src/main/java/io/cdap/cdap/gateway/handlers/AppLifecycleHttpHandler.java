@@ -448,6 +448,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Deletes all application state stored in CDAP state store for the given application.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespaceId Namespace id string.
+   * @param appName App name string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
+  @DELETE
+  @Path("/apps/{app-id}/state")
+  public void deleteAppState(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") final String appName) throws Exception {
+    LOG.debug("Deleting all application state for {} in namespace {}", appName, namespaceId);
+    applicationLifecycleService.deleteAllStates(new NamespaceId(namespaceId), appName);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
    * Delete an application specified by appId and versionId.
    * Deprecated : Version specific deletion is not allowed.
    */

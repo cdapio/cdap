@@ -1500,6 +1500,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void deleteAllStates(NamespaceId namespaceId, String appName)
       throws ApplicationNotFoundException {
+
+    // ensure that there is UPDATE permission on the app.
+    accessEnforcer.enforce(namespaceId.app(appName),
+        authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     store.deleteAllStates(namespaceId, appName);
   }
 
