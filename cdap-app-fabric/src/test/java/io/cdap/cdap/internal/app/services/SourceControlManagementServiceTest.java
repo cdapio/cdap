@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.services;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import io.cdap.cdap.ConfigTestApp;
@@ -46,8 +47,11 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
+import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
+import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryApp;
 import io.cdap.cdap.sourcecontrol.operationrunner.RepositoryAppsResponse;
@@ -66,6 +70,7 @@ import org.mockito.Mockito;
  * Tests for {@link SourceControlManagementService}.
  */
 public class SourceControlManagementServiceTest extends AppFabricTestBase {
+
   private static CConfiguration cConf;
   private static NamespaceAdmin namespaceAdmin;
   private static SourceControlManagementService sourceControlService;
@@ -75,15 +80,16 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       .setDefaultBranch("develop")
       .setAuth(new AuthConfig(AuthType.PAT, new PatConfig("passwordName", "user")))
       .build();
-  private static final SourceControlOperationRunner mockSourceControlOperationRunner =
-    Mockito.mock(SourceControlOperationRunner.class);
+  private static final SourceControlOperationRunner sourceControlOperationRunnerSpy =
+      Mockito.spy(new MockSourceControlOperationRunner());
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = createBasicCConf();
     initializeAndStartServices(cConf);
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
-    sourceControlService = getInjector().getInstance(SourceControlManagementService.class);
+    sourceControlService =
+        getInjector().getInstance(SourceControlManagementService.class);
   }
 
   protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
@@ -92,16 +98,16 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
       protected void configure() {
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
         bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        bind(SourceControlOperationRunner.class).toInstance(mockSourceControlOperationRunner);
+        bind(SourceControlOperationRunner.class).toInstance(sourceControlOperationRunnerSpy);
       }
     });
   }
 
   @Test
   public void testSetRepoConfig() throws Exception {
-    String namespace = "custompaceNamespace";
+    String namespace = "customNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
-    
+
     try {
       sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
       Assert.fail();
@@ -143,7 +149,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
   @Test
   public void testDeleteRepoConfig() throws Exception {
-    String namespace = "custompaceNamespace";
+    String namespace = "customNamespace";
     NamespaceId namespaceId = new NamespaceId(namespace);
 
     try {
@@ -194,7 +200,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
                                                               appId1.getId() + " hash");
 
-    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
     // Assert the result is as expected
     PushAppResponse result = sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
@@ -228,7 +234,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(),
                                                               appId1.getId() + " hash");
 
-    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -266,7 +272,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new SourceControlException("push apps failed", new Exception()))
-      .when(mockSourceControlOperationRunner).push(Mockito.any());
+      .when(sourceControlOperationRunnerSpy).push(Mockito.any());
 
     // Assert the result is as expected
     try {
@@ -299,7 +305,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
 
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
                                                                   appId1.getId() + " " + "hash", mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     // Assert the result is as expected
     ApplicationRecord result = sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
@@ -331,7 +337,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     NamespaceId namespaceId = new NamespaceId(Id.Namespace.DEFAULT.getId());
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(),
                                                                   appId1.getId() + " hash", mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     sourceControlService.pullAndDeploy(namespaceId.appReference(appId1.getId()));
   }
@@ -347,7 +353,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new ApplicationNotFoundException(appRef))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any());
+      .when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -367,7 +373,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new AuthenticationConfigException("Repo config is invalid"))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any());
+      .when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -387,7 +393,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(new SourceControlException("Failed to pull application", new Exception()))
-      .when(mockSourceControlOperationRunner).pull(Mockito.any());
+      .when(sourceControlOperationRunnerSpy).pull(Mockito.any());
 
     try {
       sourceControlService.pullAndDeploy(appRef);
@@ -414,12 +420,12 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     // Push the application and update source control metadata
     String mockedFileHash = appId1.getId() + " hash";
     PushAppResponse expectedAppResponse = new PushAppResponse(appId1.getId(), appId1.getVersion(), mockedFileHash);
-    Mockito.doReturn(expectedAppResponse).when(mockSourceControlOperationRunner).push(Mockito.any());
+    Mockito.doReturn(expectedAppResponse).when(sourceControlOperationRunnerSpy).push(Mockito.any());
     sourceControlService.pushApp(namespaceId.appReference(appId1.getId()), "some commit");
 
     // Set up the pullResponse so that the fileHashes are the same
     PullAppResponse<?> expectedPullResponse = new PullAppResponse(appId1.getId(), mockedFileHash, mockAppRequest);
-    Mockito.doReturn(expectedPullResponse).when(mockSourceControlOperationRunner).pull(Mockito.any());
+    Mockito.doReturn(expectedPullResponse).when(sourceControlOperationRunnerSpy).pull(Mockito.any());
     try {
       ApplicationReference appRef = namespaceId.appReference(appId1.getId());
       sourceControlService.pullAndDeploy(appRef);
@@ -427,7 +433,6 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     } catch (NoChangesToPullException e) {
       // no-op
     }
-
 
     // Cleanup
     deleteApp(appId1, 200);
@@ -444,7 +449,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doReturn(expectedListResult)
-      .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));
+      .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
     RepositoryAppsResponse result = sourceControlService.listApps(namespaceId);
     List<RepositoryApp> actualAppsList = result.getApps().stream()
@@ -459,8 +464,50 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     sourceControlService.setRepository(namespaceId, REPOSITORY_CONFIG);
 
     Mockito.doThrow(SourceControlException.class)
-      .when(mockSourceControlOperationRunner).list(Mockito.any(NamespaceRepository.class));
+      .when(sourceControlOperationRunnerSpy).list(Mockito.any(NamespaceRepository.class));
 
     sourceControlService.listApps(namespaceId);
+  }
+
+  @Test
+  public void testOperationRunnerStarted() {
+    Assert.assertTrue(sourceControlOperationRunnerSpy.isRunning());
+  }
+
+  /**
+   * A Mock {@link SourceControlOperationRunner} that can be used for tests.
+   */
+  private static class MockSourceControlOperationRunner extends
+      AbstractIdleService implements
+      SourceControlOperationRunner {
+
+    @Override
+    public PushAppResponse push(PushAppOperationRequest pushAppOperationRequest)
+        throws NoChangesToPushException, AuthenticationConfigException {
+      return null;
+    }
+
+    @Override
+    public PullAppResponse<?> pull(
+        PulAppOperationRequest pulAppOperationRequest)
+        throws NotFoundException, AuthenticationConfigException {
+      return null;
+    }
+
+    @Override
+    public RepositoryAppsResponse list(NamespaceRepository nameSpaceRepository)
+        throws AuthenticationConfigException, NotFoundException {
+      return null;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+      // no-op.
+    }
+
+    @Override
+    protected void shutDown() throws Exception {
+      // no-op.
+    }
   }
 }

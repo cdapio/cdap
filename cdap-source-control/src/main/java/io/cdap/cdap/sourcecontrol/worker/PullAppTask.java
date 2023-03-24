@@ -18,22 +18,20 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-public class PullAppTask extends SourceControlTask implements RunnableTask {
+public class PullAppTask extends SourceControlTask {
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(PullAppTask.class);
 
@@ -45,7 +43,7 @@ public class PullAppTask extends SourceControlTask implements RunnableTask {
   }
 
   @Override
-  public void run(RunnableTaskContext context)
+  public void doRun(RunnableTaskContext context)
     throws AuthenticationConfigException, IOException, NotFoundException {
     PulAppOperationRequest pulAppOperationRequest = GSON.fromJson(context.getParam(), PulAppOperationRequest.class);
 

@@ -18,7 +18,6 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,7 +34,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The task that lists applications found in linked repository.
  */
-public class ListAppsTask extends SourceControlTask implements RunnableTask  {
+public class ListAppsTask extends SourceControlTask {
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(ListAppsTask.class);
 
@@ -47,7 +46,7 @@ public class ListAppsTask extends SourceControlTask implements RunnableTask  {
   }
 
   @Override
-  public void run(RunnableTaskContext context) throws IOException, AuthenticationConfigException, NotFoundException {
+  public void doRun(RunnableTaskContext context) throws IOException, AuthenticationConfigException, NotFoundException {
     NamespaceRepository nameSpaceRepository = GSON.fromJson(context.getParam(), NamespaceRepository.class);
 
     LOG.trace("Listing applications for namespace {} in task worker.", nameSpaceRepository.getNamespaceId());

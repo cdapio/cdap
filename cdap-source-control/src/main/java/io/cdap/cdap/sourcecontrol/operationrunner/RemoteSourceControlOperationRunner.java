@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Singleton;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RemoteExecutionException;
 import io.cdap.cdap.api.service.worker.RemoteTaskException;
@@ -42,7 +44,9 @@ import org.slf4j.LoggerFactory;
  * Remote implementation for {@link SourceControlOperationRunner}.
  * Runs all git operation inside task worker.
  */
-public class RemoteSourceControlOperationRunner implements SourceControlOperationRunner {
+@Singleton
+public class RemoteSourceControlOperationRunner extends
+    AbstractIdleService implements SourceControlOperationRunner {
 
   private static final Gson GSON = new GsonBuilder().create();
 
@@ -163,5 +167,15 @@ public class RemoteSourceControlOperationRunner implements SourceControlOperatio
     if (propagateType.isOfClass(exceptionClass)) {
       throw propagateType.createException(exceptionMessage, cause);
     }
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // no-op.
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // no-op.
   }
 }

@@ -50,6 +50,7 @@ import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.LocalGitServer;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
@@ -62,6 +63,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.eclipse.jgit.util.SystemReader;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -130,7 +132,7 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(cConf, sConf, namespaceClient,
                                                                                FileSecureStoreService.CURRENT_CODEC
                                                                                  .newInstance());
-    
+
     httpService = new CommonNettyHttpServiceBuilder(cConf, "test", new NoOpMetricsCollectionService())
       .setHttpHandlers(
         new TaskWorkerHttpHandlerInternal(cConf, discoveryService, discoveryService, className -> {
@@ -180,6 +182,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
       new RemoteSourceControlOperationRunner(cConf, metricsCollectionService, remoteClientFactory);
 
     PushAppResponse pushResponse = operationRunner.push(mockPushContext);
+    // Verify SecureSystemReader is being used.
+    Assert.assertTrue(SystemReader.getInstance() instanceof SecureSystemReader);
 
     // Assert the pushed app in response
     Assert.assertEquals(pushResponse.getName(), mockAppDetails.getName());
@@ -254,6 +258,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     addFileToGit(configFilePath, TEST_APP_SPEC, gitServer);
 
     PullAppResponse<?> response = operationRunner.pull(mockPullRequest);
+    // Verify SecureSystemReader is being used.
+    Assert.assertTrue(SystemReader.getInstance() instanceof SecureSystemReader);
 
     // validate pull response
     AppRequest<?> appRequest = response.getAppRequest();
@@ -326,6 +332,8 @@ public class RemoteSourceControlOperationRunnerTest extends SourceControlTestBas
     addFileToGit(configFile2, TEST_APP_SPEC, gitServer);
 
     RepositoryAppsResponse response = operationRunner.list(testNamespaceRepository);
+    // Verify SecureSystemReader is being used.
+    Assert.assertTrue(SystemReader.getInstance() instanceof SecureSystemReader);
     List<RepositoryApp> apps = response.getApps().stream()
       .sorted(Comparator.comparing(RepositoryApp::getName)).collect(Collectors.toList());
 

@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
@@ -80,6 +81,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
   private final SystemAppManagementService systemAppManagementService;
+  private final SourceControlOperationRunner sourceControlOperationRunner;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -113,7 +115,8 @@ public class AppFabricServer extends AbstractIdleService {
       SystemAppManagementService systemAppManagementService,
       TransactionRunner transactionRunner,
       RunRecordMonitorService runRecordCounterService,
-      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
+      CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      SourceControlOperationRunner sourceControlOperationRunner) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -136,6 +139,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.transactionRunner = transactionRunner;
     this.runRecordCounterService = runRecordCounterService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
+    this.sourceControlOperationRunner = sourceControlOperationRunner;
   }
 
   /**
@@ -158,7 +162,8 @@ public class AppFabricServer extends AbstractIdleService {
             runRecordCorrectorService.start(),
             programRunStatusMonitorService.start(),
             coreSchedulerService.start(),
-            runRecordCounterService.start()
+            runRecordCounterService.start(),
+            sourceControlOperationRunner.start()
         )
     ).get();
 
@@ -214,6 +219,7 @@ public class AppFabricServer extends AbstractIdleService {
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
+    sourceControlOperationRunner.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {

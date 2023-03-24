@@ -35,12 +35,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.util.SystemReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,6 +77,9 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     cConf.set(
         Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH,
         baseTempFolder.newFolder("repository").getAbsolutePath());
+    // Disable hooks. In non-test environments, this is done by services on
+    // start-up.
+    SecureSystemReader.setAsSystemReader();
   }
 
   @Test
@@ -85,7 +90,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
             .setProvider(Provider.GITHUB)
             .setLink(serverUrl + "ignored")
             .setDefaultBranch("develop")
-            .setAuth(new AuthConfig(AuthType.PAT, new PatConfig(PASSWORD_NAME + "invalid", null)))
+            .setAuth(new AuthConfig(AuthType.PAT,
+                new PatConfig(PASSWORD_NAME + "invalid", null)))
             .build();
     SourceControlConfig sourceControlConfig = new SourceControlConfig(
         new NamespaceId(NAMESPACE),
@@ -259,32 +265,56 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     }
   }
 
-  private RepositoryConfig.Builder getRepositoryConfigBuilder() {
-    return new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
-        .setLink(gitServer.getServerUrl() + "ignored")
-        .setDefaultBranch("develop")
-        .setAuth(AUTH_CONFIG);
+  @Test
+  public void testGitHooksEnabled()
+      throws IOException, GitAPIException, NoChangesToPushException,
+      AuthenticationConfigException {
+    try (RepositoryManager manager = getRepositoryManager()) {
+      SecureSystemReader secureSystemReader = (SecureSystemReader) SystemReader.getInstance();
+      SystemReader.setInstance(secureSystemReader.getDelegate());
+      // Re-enable hooks to ensure test environment is correct and hooks
+      // are set up correctly.
+      manager.cloneRemote();
+      // Install a git hook in the repository.
+      installHook(manager);
+      // commit a change.
+      commitFileToLocalRepository(
+          Paths.get("abc.txt"),
+          "init file abc", manager, new CommitMeta(
+              "user-1", "user-2",
+              System.currentTimeMillis(),
+              "first commit"));
+      // Verify the hook was executed.
+      Assert.assertTrue(manager
+          .getRepositoryRoot()
+          .resolve("hook_executed")
+          .toFile()
+          .exists());
+    }
   }
 
-  /**
-   * Creates a valid {@link SourceControlConfig}.
-   *
-   * @return the {@link SourceControlConfig}.
-   */
-  private SourceControlConfig getSourceControlConfig() {
-    return new SourceControlConfig(new NamespaceId(NAMESPACE),
-        getRepositoryConfigBuilder().build(),
-        cConf);
-  }
-
-  /**
-   * Creates a valid {@link RepositoryManager}.
-   *
-   * @return the {@link RepositoryManager}.
-   */
-  private RepositoryManager getRepositoryManager() {
-    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE),
-        getRepositoryConfigBuilder().build());
+  @Test
+  public void testGitHooksDisabled()
+      throws IOException, GitAPIException, NoChangesToPushException,
+      AuthenticationConfigException {
+    try (RepositoryManager manager = getRepositoryManager()) {
+      manager.cloneRemote();
+      // Install a git hook in the repository.
+      installHook(manager);
+      // commit a change.
+      commitFileToLocalRepository(
+          Paths.get("abc.txt"),
+          "init file abc", manager, new CommitMeta(
+              "user-1", "user-2",
+              System.currentTimeMillis(),
+              "first commit"));
+      // Verify the hook wasn't executed.
+      Assert.assertFalse(manager
+          .getRepositoryRoot()
+          .resolve("hook_executed")
+          .toFile()
+          .exists());
+    }
   }
 
   @Test
@@ -420,5 +450,52 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
+  }
+
+  private RepositoryConfig.Builder getRepositoryConfigBuilder() {
+    return new RepositoryConfig.Builder().setProvider(Provider.GITHUB)
+        .setLink(gitServer.getServerUrl() + "ignored")
+        .setDefaultBranch("develop")
+        .setAuth(AUTH_CONFIG);
+  }
+
+  /**
+   * Creates a valid {@link SourceControlConfig}.
+   *
+   * @return the {@link SourceControlConfig}.
+   */
+  private SourceControlConfig getSourceControlConfig() {
+    return new SourceControlConfig(new NamespaceId(NAMESPACE),
+        getRepositoryConfigBuilder().build(),
+        cConf);
+  }
+
+  /**
+   * Creates a valid {@link RepositoryManager}.
+   *
+   * @return the {@link RepositoryManager}.
+   */
+  private RepositoryManager getRepositoryManager() {
+    return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE),
+        getRepositoryConfigBuilder().build());
+  }
+
+  private void commitFileToLocalRepository(Path filePath, String contents,
+      RepositoryManager manager, CommitMeta commitMeta)
+      throws IOException, NoChangesToPushException, GitAPIException {
+    Files.write(manager.getRepositoryRoot().resolve(filePath),
+        contents.getBytes(StandardCharsets.UTF_8));
+    manager.commitAndPush(commitMeta, filePath);
+  }
+
+  private void installHook(RepositoryManager manager) throws IOException {
+    Path gitHookPath = manager
+        .getRepositoryRoot()
+        .resolve(".git/hooks/pre-commit");
+    Files.createDirectories(gitHookPath.getParent());
+    Files.createFile(gitHookPath, PosixFilePermissions.asFileAttribute(
+        PosixFilePermissions.fromString("rwxr--r--")));
+    Files.write(gitHookPath, "touch hook_executed\nexit 0".getBytes(
+        StandardCharsets.UTF_8));
   }
 }
