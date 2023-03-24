@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.utils.DirUtils;
@@ -31,6 +33,7 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
+import io.cdap.cdap.sourcecontrol.SecureSystemReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
@@ -49,7 +52,9 @@ import org.slf4j.LoggerFactory;
  * In-Memory implementation for {@link SourceControlOperationRunner}.
  * Runs all git operation inside calling service.
  */
-public class InMemorySourceControlOperationRunner implements SourceControlOperationRunner {
+@Singleton
+public class InMemorySourceControlOperationRunner extends
+    AbstractIdleService implements SourceControlOperationRunner {
   // Gson for decoding request
   private static final Gson DECODE_GSON =
     new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
@@ -259,6 +264,16 @@ public class InMemorySourceControlOperationRunner implements SourceControlOperat
       return Files.isRegularFile(file.toPath(), LinkOption.NOFOLLOW_LINKS) // only allow regular files
           && FileUtils.getExtension(file.getName()).equalsIgnoreCase("json"); // filter json extension
     };
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    SecureSystemReader.setAsSystemReader();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // No-op.
   }
 }
 

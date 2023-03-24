@@ -18,6 +18,8 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.service.worker.RunnableTask;
+import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.RemoteAuthenticatorModules;
@@ -29,9 +31,9 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * The abstract class that creates the {@link InMemorySourceControlOperationRunner}
+ * The abstract class that creates the {@link InMemorySourceControlOperationRunner}.
  */
-abstract class SourceControlTask {
+abstract class SourceControlTask implements RunnableTask {
 
   protected final InMemorySourceControlOperationRunner inMemoryOperationRunner;
 
@@ -47,4 +49,12 @@ abstract class SourceControlTask {
     );
     inMemoryOperationRunner = injector.getInstance(InMemorySourceControlOperationRunner.class);
   }
+
+  @Override
+  public void run(RunnableTaskContext context) throws Exception {
+    inMemoryOperationRunner.startAndWait();
+    doRun(context);
+  }
+
+  protected abstract void doRun(RunnableTaskContext context) throws Exception;
 }

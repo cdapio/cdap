@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.sourcecontrol.operationrunner;
 
+import com.google.common.util.concurrent.Service;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
@@ -23,7 +24,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 /**
  * An interface encapsulating all operations needed for source control management.
  */
-public interface SourceControlOperationRunner {
+public interface SourceControlOperationRunner extends Service {
   /**
    * Push an application config to remote git repository.
    *

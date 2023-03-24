@@ -18,25 +18,23 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PushAppResponse;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 /**
  * The task that pushes an application to linked repository.
  */
-public class PushAppTask extends SourceControlTask implements RunnableTask {
+public class PushAppTask extends SourceControlTask {
 
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(PushAppTask.class);
@@ -49,7 +47,7 @@ public class PushAppTask extends SourceControlTask implements RunnableTask {
   }
 
   @Override
-  public void run(RunnableTaskContext context)
+  public void doRun(RunnableTaskContext context)
     throws AuthenticationConfigException, NoChangesToPushException, IOException {
     PushAppOperationRequest pushAppOperationRequest = GSON.fromJson(context.getParam(), PushAppOperationRequest.class);
 
