@@ -28,7 +28,6 @@ import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -225,7 +224,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * @throws GoneException if run already finished
      */
     long publishMessages()
-        throws TopicNotFoundException, IOException, BadRequestException, GoneException, NotFoundException {
+        throws TopicNotFoundException, IOException, BadRequestException, GoneException {
       long currentTimeMillis = System.currentTimeMillis();
 
       // Not too publish more than necessary in one topic.
@@ -277,7 +276,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * RuntimeClient}.
      */
     protected void processMessages(Iterator<Message> iterator)
-        throws IOException, BadRequestException, GoneException, NotFoundException {
+        throws IOException, BadRequestException, GoneException {
       runtimeClient.sendMessages(programRunId, topicId, iterator);
     }
 
@@ -303,8 +302,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           while (publishMessages() == 0) {
             LOG.trace("Continue processing final messages for {}", topicId.getTopic());
           }
-        }, getRetryStrategy(), t -> !(t instanceof GoneException || t instanceof NotFoundException
-          || t instanceof BadRequestException));
+        }, getRetryStrategy(), t -> !(t instanceof GoneException));
       } catch (TopicNotFoundException | BadRequestException e) {
         // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
         // So just log the cause for debugging.
@@ -313,9 +311,6 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
         LOG.warn(
             "Failed to publish final messages on topic {} since the run is already marked completed",
             topicId, e);
-      } catch (NotFoundException e) {
-        LOG.error(
-          "Failed to publish final messages on topic {} since the run cannot be found", topicId, e);
       } catch (Exception e) {
         LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId,
             e);
@@ -345,7 +340,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
     @Override
     protected void processMessages(Iterator<Message> iterator)
-        throws IOException, BadRequestException, GoneException, NotFoundException {
+        throws IOException, BadRequestException, GoneException {
       List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0),
               false)
           .collect(Collectors.toList());

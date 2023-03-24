@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.GoneException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -102,7 +101,7 @@ public class RuntimeClient {
    */
   public void sendMessages(ProgramRunId programRunId,
       TopicId topicId, Iterator<Message> messages)
-      throws IOException, BadRequestException, GoneException, NotFoundException {
+      throws IOException, BadRequestException, GoneException {
 
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
@@ -182,7 +181,7 @@ public class RuntimeClient {
       try (OutputStream os = urlConn.getOutputStream()) {
         Files.copy(eventFile.toPath(), os);
         throwIfError(programRunId, urlConn);
-      } catch (BadRequestException | GoneException | NotFoundException e) {
+      } catch (BadRequestException | GoneException e) {
         // Just treat bad request as IOException since it won't be retriable
         throw new IOException(e);
       }
@@ -227,7 +226,7 @@ public class RuntimeClient {
    * if it is not 200.
    */
   private void throwIfError(ProgramRunId programRunId,
-      HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException, NotFoundException {
+      HttpURLConnection urlConn) throws IOException, BadRequestException, GoneException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -244,8 +243,6 @@ public class RuntimeClient {
           throw new ServiceUnavailableException(Constants.Service.RUNTIME, errorMsg);
         case HttpURLConnection.HTTP_GONE:
           throw new GoneException(errorMsg);
-        case HttpURLConnection.HTTP_NOT_FOUND:
-          throw new NotFoundException(errorMsg);
       }
 
       throw new IOException(
