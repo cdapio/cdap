@@ -141,13 +141,31 @@ public final class ClassPathResources {
 
   static ClassAcceptor createClassAcceptor(final ClassLoader classLoader,
       final Collection<String> result) {
-    final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
+    // final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
+    ClassLoader platformClassloader;
+    try {
+      platformClassloader = (ClassLoader) ClassLoader.class.getMethod("getPlatformClassLoader")
+          .invoke(null);
+    } catch (Exception e) {
+      platformClassloader = ClassLoader.getSystemClassLoader().getParent();
+    }
+    LOG.info("Platform classloader is {}", platformClassloader);
+
     final Set<URL> classPathSeen = Sets.newHashSet();
+    ClassLoader finalPlatformClassloader = platformClassloader;
     return new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes
-        if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+        // if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+        //   return false;
+        // }
+
+        // Ignore platform classes
+        if (finalPlatformClassloader != null
+            && finalPlatformClassloader.getResource(className.replace('.', '/') + ".class")
+            != null) {
+          LOG.info("Ignore platform class {}", className);
           return false;
         }
 
@@ -184,7 +202,7 @@ public final class ClassPathResources {
             }
           } catch (NumberFormatException e) {
             // If the class version fails to parse, allow it through.
-            LOG.debug("Failed to parse multi-release versioned dependency class '%s'", className);
+            LOG.debug("Failed to parse multi-release versioned dependency class '{}'", className);
           }
         }
 

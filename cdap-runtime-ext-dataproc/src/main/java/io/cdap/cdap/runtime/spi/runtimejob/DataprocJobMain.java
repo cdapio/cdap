@@ -93,21 +93,25 @@ public class DataprocJobMain {
     String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator().next();
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
-    if (!(cl instanceof URLClassLoader)) {
-      throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
-    }
+    // if (!(cl instanceof URLClassLoader)) {
+    //   throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
+    // }
 
     // create classpath from resources, application and twill jars
-    URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
+    List<URL> urls = getClasspath(cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
-    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
+
+    if (!(cl instanceof URLClassLoader)) {
+      addSystemClassPath(urls);
+    }
+    urls.forEach(url -> LOG.debug("Classpath URL: {}", url));
 
     // Create new URL classloader with provided classpath.
     // Don't close the classloader since this is the main classloader,
     // which can be used for shutdown hook execution.
     // Closing it too early can result in NoClassDefFoundError in shutdown hook execution.
-    ClassLoader newCL = createContainerClassLoader(urls);
+    ClassLoader newCL = createContainerClassLoader(urls.toArray(new URL[0]));
     CompletableFuture<?> completion = new CompletableFuture<>();
     try {
       Thread.currentThread().setContextClassLoader(newCL);
@@ -170,8 +174,7 @@ public class DataprocJobMain {
    * expanded.application.jar/classes expanded.twill.jar expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
    */
-  private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
-    URL[] urls = cl.getURLs();
+  private static List<URL> getClasspath(ClassLoader cl, List<String> jarFiles) throws IOException {
     List<URL> urlList = new ArrayList<>();
     for (String file : jarFiles) {
       File jarDir = new File(file);
@@ -183,8 +186,10 @@ public class DataprocJobMain {
       urlList.addAll(createClassPathURLs(jarDir));
     }
 
-    urlList.addAll(Arrays.asList(urls));
-    return urlList.toArray(new URL[0]);
+    if (cl instanceof URLClassLoader) {
+      urlList.addAll(Arrays.asList(((URLClassLoader) cl).getURLs()));
+    }
+    return urlList;
   }
 
   private static List<URL> createClassPathURLs(File dir) throws MalformedURLException {
@@ -299,6 +304,22 @@ public class DataprocJobMain {
     } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(
           "Failed to create container class loader of class " + containerClassLoaderName, e);
+    }
+  }
+
+  private static void addSystemClassPath(Collection<URL> urls) throws MalformedURLException {
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      if (path.endsWith("*")) {
+        File[] jarFiles = new File(path.substring(0, path.length() - 2))
+            .listFiles(f -> f.isFile() && f.getName().endsWith(".jar"));
+        if (jarFiles != null) {
+          for (File f : jarFiles) {
+            urls.add(f.toURI().toURL());
+          }
+        }
+      } else {
+        urls.add(new File(path).toURI().toURL());
+      }
     }
   }
 }
