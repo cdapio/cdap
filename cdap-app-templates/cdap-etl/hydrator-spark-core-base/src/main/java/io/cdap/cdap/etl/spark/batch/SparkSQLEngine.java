@@ -45,7 +45,6 @@ import io.cdap.cdap.etl.spark.batch.relation.SparkSQLExpressionFactory;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLPullProducer;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLPushConsumer;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLRelation;
-import org.apache.avro.generic.GenericData;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.spark.sql.Dataset;
@@ -65,7 +64,7 @@ import java.util.stream.Collectors;
  * Spark SQLEngine implementation, where compatible ANSI SQL in the given transformation will
  * run in Spark SQL over a Dataset.
  */
-public class SparkSQLEngine extends BatchSQLEngine<LongWritable, GenericData.Record, StructuredRecord, NullWritable>
+public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Object>
   implements Engine {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkSQLEngine.class);
