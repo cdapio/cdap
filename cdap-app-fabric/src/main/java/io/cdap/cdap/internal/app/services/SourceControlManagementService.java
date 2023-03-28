@@ -197,6 +197,11 @@ public class SourceControlManagementService {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
+    LOG.info("Start to push app {} in namespace {} to linked repository by user {}",
+        appRef.getApplication(),
+        appRef.getParent(),
+        appLifecycleService.decodeUserId(authenticationContext));
+
     String committer = authenticationContext.getPrincipal().getName();
 
     // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
@@ -230,7 +235,15 @@ public class SourceControlManagementService {
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pullResponse.getApplicationFileHash());
     // Deploy with a generated uuid
     String versionId = RunIds.generate().getId();
-    ApplicationWithPrograms app = appLifecycleService.deployApp(appRef.app(versionId), appRequest,
+    ApplicationId appId = appRef.app(versionId);
+    
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    LOG.info("Start to deploy app {} in namespace {} by user {}",
+        appId.getApplication(),
+        appId.getParent(),
+        appLifecycleService.decodeUserId(authenticationContext));
+
+    ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
                                                                 sourceControlMeta, x -> { });
 
     LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
