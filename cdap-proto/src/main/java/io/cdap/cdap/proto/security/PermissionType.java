@@ -24,7 +24,8 @@ public enum PermissionType {
   STANDARD(StandardPermission.class),
   APPLICATION(ApplicationPermission.class),
   ACCESS(AccessPermission.class),
-  INSTANCE(InstancePermission.class);
+  INSTANCE(InstancePermission.class),
+  NAMESPACE(NamespacePermission.class);
 
   private final Class<? extends Permission> permissionClass;
 
