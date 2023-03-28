@@ -70,16 +70,16 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
         input.getChangeDetail(), input.getSourceControlMeta());
     try {
       int editCount = store.addApplication(input.getApplicationId(), appMeta);
-      // increment metric : event.deploy.upgrade.count
+      // increment metric : app.deploy.event.count.upgrade
       if (input.isUpgrade()) {
         emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
             Constants.Metrics.AppMetadataStore.DEPLOY_UPGRADE_COUNT);
-      } else if (editCount == 0) {
-        // increment metric : event.deploy.new.count
+      } else if (editCount == 1) {
+        // increment metric : app.deploy.event.count.create
         emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
             Constants.Metrics.AppMetadataStore.DEPLOY_NEW_COUNT);
       } else {
-        // When the app already exists, it is an edit - increment metric : event.deploy.edit.count
+        // When the app already exists, it is an edit - increment metric : app.deploy.event.count.edit
         emitMetrics(applicationId.getNamespace(), applicationId.getApplication(),
             Constants.Metrics.AppMetadataStore.DEPLOY_EDIT_COUNT);
       }
