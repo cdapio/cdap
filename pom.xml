@@ -147,6 +147,7 @@
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
+    <log4j2.slf4j.version>2.20.0</log4j2.slf4j.version>
     <pragmatists.version>1.0.5</pragmatists.version>
     <kafka.version>0.10.2.2</kafka.version>
     <leveldb.version>0.12</leveldb.version>
@@ -208,6 +209,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>log4j-over-slf4j</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-to-slf4j</artifactId>
+        <version>${log4j2.slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>

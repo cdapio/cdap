@@ -190,11 +190,7 @@ public class DataprocJobMain {
 
     // Add the system class path to the URL list
     for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
-      try {
-        urls.add(Paths.get(path).toRealPath().toUri().toURL());
-      } catch (NoSuchFileException e) {
-        // ignore anything that doesn't exist
-      }
+      urls.add(Paths.get(path).toRealPath().toUri().toURL());
     }
 
     return urls.toArray(new URL[0]);

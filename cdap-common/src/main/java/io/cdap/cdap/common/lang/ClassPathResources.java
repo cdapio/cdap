@@ -19,7 +19,6 @@ package io.cdap.cdap.common.lang;
 import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.internal.guava.ClassPath.ClassInfo;
 import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
