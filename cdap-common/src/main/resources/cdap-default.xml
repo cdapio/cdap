@@ -5274,6 +5274,30 @@
   </property>
 
   <property>
+    <description>
+      The number of worker threads in the system worker.
+    </description>
+    <name>system.worker.worker.threads</name>
+    <value>${task.worker.worker.threads}</value>
+  </property>
+
+  <property>
+    <description>
+      The number of executor threads for the system worker.
+    </description>
+    <name>system.worker.exec.threads</name>
+    <value>${task.worker.exec.threads}</value>
+  </property>
+
+  <property>
+    <description>
+      The number of boss threads for the system worker.
+    </description>
+    <name>system.worker.boss.threads</name>
+    <value>${task.worker.boss.threads}</value>
+  </property>
+
+  <property>
     <name>system.worker.request.limit</name>
     <value>10</value>
     <description>

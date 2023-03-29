@@ -521,6 +521,9 @@ public final class Constants {
      */
     public static final String ADDRESS = "system.worker.bind.address";
     public static final String PORT = "system.worker.bind.port";
+    public static final String EXEC_THREADS = "system.worker.exec.threads";
+    public static final String BOSS_THREADS = "system.worker.boss.threads";
+    public static final String WORKER_THREADS = "system.worker.worker.threads";
     public static final String REQUEST_LIMIT = "system.worker.request.limit";
     public static final String METRIC_PREFIX = "task.worker.";
   }
