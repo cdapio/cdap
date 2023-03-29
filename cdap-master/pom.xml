@@ -346,7 +346,7 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-	<dependency>
+        <dependency>
           <groupId>io.cdap.cdap</groupId>
           <artifactId>cdap-securestore-ext-gcp-secretstore</artifactId>
           <version>${project.version}</version>
@@ -899,6 +899,15 @@
           <artifactId>cdap-kubernetes</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.slf4j</groupId>
+          <artifactId>log4j-over-slf4j</artifactId>
+          <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-to-slf4j</artifactId>
         </dependency>
       </dependencies>
 
