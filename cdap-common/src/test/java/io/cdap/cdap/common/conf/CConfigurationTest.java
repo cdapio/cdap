@@ -19,7 +19,10 @@ package io.cdap.cdap.common.conf;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.common.Bytes;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,7 +88,6 @@ public class CConfigurationTest {
     conf.set("test.property.enum", TestEnum.FIRST.name());
     String testRegex = ".*";
     conf.set("test.property.pattern", testRegex);
-
 
     try {
       conf.getInt("missing.property");
@@ -169,8 +171,9 @@ public class CConfigurationTest {
 
       // Test a deprecated property on loading from resources
       InputStream resource = new ByteArrayInputStream(Bytes.toBytes(
-        String.format("<configuration><property><name>%s</name><value>%s</value></property></configuration>",
-                      property.getKey(), DEPRECATED_PROPERTY_VALUE)));
+          String.format(
+              "<configuration><property><name>%s</name><value>%s</value></property></configuration>",
+              property.getKey(), DEPRECATED_PROPERTY_VALUE)));
       conf.addResource(resource);
       conf.reloadConfiguration();
       // Validate new properties, which should be used instead of deprecated
@@ -193,5 +196,50 @@ public class CConfigurationTest {
     }
   }
 
-  private enum TestEnum { FIRST }
+  @Test
+  public void testActivation() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource("test-default.xml");
+
+    Assert.assertEquals(2, cConf.getInt("conf.test.activate"));
+  }
+
+  @Test
+  public void testActivationWithCopy() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource("test-default.xml");
+
+    cConf = CConfiguration.copy(cConf);
+
+    Assert.assertEquals(2, cConf.getInt("conf.test.activate"));
+  }
+
+  @Test
+  public void testActivationWithOverride() {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource("test-default.xml");
+
+    Assert.assertEquals(2, cConf.getInt("conf.test.activate"));
+
+    cConf.addResource("test-override.xml");
+    Assert.assertEquals(3, cConf.getInt("conf.test.activate"));
+  }
+
+  @Test
+  public void testActivationCombine() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.addResource("test-default.xml");
+    cConf.addResource("test-override.xml");
+
+    StringWriter writer = new StringWriter();
+    cConf.writeXml(writer);
+
+    cConf = CConfiguration.create(
+        new ByteArrayInputStream(writer.toString().getBytes(StandardCharsets.UTF_8)));
+
+    cConf.addResource("test-override.xml");
+    Assert.assertEquals(3, cConf.getInt("conf.test.activate"));
+  }
+
+  private enum TestEnum {FIRST}
 }
