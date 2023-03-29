@@ -36,15 +36,12 @@ public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
   private final Map<String, String> jvmProperties;
 
   private final Map<String, String> arguments;
-
-
-  public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files,
-      Map<String, String> jvmProperties) {
-    this(programRunId, files, jvmProperties, Collections.emptyMap());
-  }
+  private final int virtualCores;
+  private final int memoryMb;
 
   public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files,
-                               Map<String, String> jvmProperties, Map<String, String> arguments) {
+      Map<String, String> jvmProperties, Map<String, String> arguments,
+      int virtualCores, int memoryMb) {
     this.info = new ProgramRunInfo.Builder()
       .setNamespace(programRunId.getNamespace())
       .setApplication(programRunId.getApplication())
@@ -55,6 +52,8 @@ public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
     this.files = Collections.unmodifiableCollection(new ArrayList<>(files));
     this.jvmProperties = Collections.unmodifiableMap(new LinkedHashMap<>(jvmProperties));
     this.arguments = Collections.unmodifiableMap(arguments);
+    this.virtualCores = virtualCores;
+    this.memoryMb = memoryMb;
   }
 
   @Override
@@ -80,5 +79,15 @@ public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
   @Override
   public Map<String, String> getArguments() {
     return arguments;
+  }
+
+  @Override
+  public int getVirtualCores() {
+    return virtualCores;
+  }
+
+  @Override
+  public int getMemoryMb() {
+    return memoryMb;
   }
 }

@@ -50,6 +50,7 @@ public class DataprocJobMain {
   public static final String SPARK_COMPAT = "sparkCompat";
   public static final String ARCHIVE = "archive";
   public static final String PROPERTY_PREFIX = "prop";
+  public static final String LAUNCH_MODE = "launchMode";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
@@ -69,6 +70,10 @@ public class DataprocJobMain {
     if (!arguments.containsKey(SPARK_COMPAT)) {
       throw new RuntimeException(
           "Missing --" + SPARK_COMPAT + " argument for the spark compat version");
+    }
+    if (!arguments.containsKey(LAUNCH_MODE)) {
+      throw new RuntimeException(
+          "Missing -- " + LAUNCH_MODE + " argument for the launch mode");
     }
     if (!arguments.containsKey(Constants.Files.APPLICATION_JAR)) {
       throw new RuntimeException(
@@ -94,6 +99,7 @@ public class DataprocJobMain {
     String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
     String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator()
         .next();
+    String launchMode = arguments.get(LAUNCH_MODE).iterator().next();
 
     // create classpath from resources, application and twill jars
     URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
@@ -117,9 +123,11 @@ public class DataprocJobMain {
 
       try {
         // call initialize() method on dataprocEnvClass
-        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class);
-        LOG.info("Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
-        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat);
+        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
+            String.class);
+        LOG.info("Invoking initialize() on {} with {}, {}",
+            dataprocEnvClassName, sparkCompat, launchMode);
+        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat, launchMode);
 
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
