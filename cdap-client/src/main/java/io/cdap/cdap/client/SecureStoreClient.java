@@ -43,7 +43,6 @@ import java.util.List;
  * Provides ways to get/set Secure keys.
  */
 public class SecureStoreClient {
-
   private static final Gson GSON = new Gson();
   private static final String SECURE_KEYS = "securekeys";
 

@@ -314,7 +314,7 @@ public final class SparkPackageUtils {
   /**
    * Returns the Spark environment setup via the start up script.
    */
-  private static synchronized Map<String, String> getSparkEnv() {
+  public static synchronized Map<String, String> getSparkEnv() {
     if (sparkEnv != null) {
       return sparkEnv;
     }

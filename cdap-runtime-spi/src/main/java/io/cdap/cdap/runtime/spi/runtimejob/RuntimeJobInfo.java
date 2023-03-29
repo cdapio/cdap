@@ -58,4 +58,18 @@ public interface RuntimeJobInfo {
   default Map<String, String> getArguments() {
     return Collections.emptyMap();
   }
+
+  /**
+   * Returns the number of virtual cores to use for the {@link RuntimeJob}.
+   */
+  default int getVirtualCores() {
+    return 0;
+  }
+
+  /**
+   * Returns the amount of memory to use for the {@link RuntimeJob}.
+   */
+  default int getMemoryMb() {
+    return 0;
+  }
 }
