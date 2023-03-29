@@ -120,6 +120,8 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -153,6 +155,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -373,7 +376,12 @@ public class TestBase {
           EnumSet.allOf(StandardPermission.class));
       accessControllerInstantiator.get()
           .grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-              EnumSet.allOf(StandardPermission.class));
+              new HashSet<Permission>() {
+                {
+                  addAll(EnumSet.allOf(StandardPermission.class));
+                  addAll(EnumSet.allOf(NamespacePermission.class));
+                }
+              });
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
