@@ -84,9 +84,9 @@ public class SystemWorkerService extends AbstractIdleService {
             Constants.Service.SYSTEM_WORKER)
         .setHost(cConf.get(Constants.SystemWorker.ADDRESS))
         .setPort(cConf.getInt(Constants.SystemWorker.PORT))
-        .setExecThreadPoolSize(cConf.getInt(Constants.TaskWorker.EXEC_THREADS))
-        .setBossThreadPoolSize(cConf.getInt(Constants.TaskWorker.BOSS_THREADS))
-        .setWorkerThreadPoolSize(cConf.getInt(Constants.TaskWorker.WORKER_THREADS))
+        .setExecThreadPoolSize(cConf.getInt(Constants.SystemWorker.EXEC_THREADS))
+        .setBossThreadPoolSize(cConf.getInt(Constants.SystemWorker.BOSS_THREADS))
+        .setWorkerThreadPoolSize(cConf.getInt(Constants.SystemWorker.WORKER_THREADS))
         .setChannelPipelineModifier(new ChannelPipelineModifier() {
           @Override
           public void modify(ChannelPipeline pipeline) {
