@@ -389,9 +389,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
-    // enforce LIST privileges on the app
+    // enforce GET privileges on the app
     accessEnforcer.enforce(new ApplicationId(namespaceId, appName), authenticationContext.getPrincipal(),
-                           StandardPermission.LIST);
+                           StandardPermission.GET);
     Collection<String> versions = applicationLifecycleService
         .getAppVersions(new ApplicationReference(namespaceId, appName));
     if (versions.isEmpty()) {
