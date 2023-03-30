@@ -37,6 +37,7 @@ import com.google.cloud.dataproc.v1.JobPlacement;
 import com.google.cloud.dataproc.v1.JobReference;
 import com.google.cloud.dataproc.v1.JobStatus;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
+import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -88,6 +89,7 @@ import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.threeten.bp.Duration;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc
@@ -171,11 +173,34 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         return client;
       }
 
+      int gcsHttpRequestConnectionTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS,
+          DataprocUtils.GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS_DEFAULT
+      ));
+      int gcsHttpRequestReadTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS,
+          DataprocUtils.GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS_DEFAULT
+      ));
+      int gcsHttpRequestTotalTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS,
+          DataprocUtils.GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS_DEFAULT
+      ));
+
+      HttpTransportOptions transportOptions = StorageOptions.getDefaultHttpTransportOptions()
+          .toBuilder()
+          .setConnectTimeout(gcsHttpRequestConnectionTimeout)
+          .setReadTimeout(gcsHttpRequestReadTimeout)
+          .build();
+
       // instantiate a gcs client
       this.storageClient = client = StorageOptions.newBuilder()
-          .setStorageRetryStrategy(StorageRetryStrategy.getDefaultStorageRetryStrategy())
+          // Customize retry strategy so all requests are retried.
+          .setStorageRetryStrategy(StorageRetryStrategy.getUniformStorageRetryStrategy())
           .setProjectId(projectId)
           .setCredentials(credentials)
+          .setRetrySettings(StorageOptions.getDefaultRetrySettings().toBuilder()
+              .setTotalTimeout(Duration.ofMinutes(gcsHttpRequestTotalTimeout)).build())
+          .setTransportOptions(transportOptions)
           .build()
           .getService();
     }
