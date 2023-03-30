@@ -43,6 +43,7 @@ import io.cdap.cdap.spi.data.SortOrder;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,7 +65,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
@@ -1480,16 +1483,94 @@ public abstract class AppMetadataStoreTest {
     Assert.assertEquals(1 + numThreads, appEditNumber.get());
   }
 
+  @Test
+  public void testDeleteCompletedRunsStartedBefore() throws Exception {
+    // Map an iterator to one of 15 different program+workflow permutations. Used to ensure
+    // (1) Multiple types of ProgramId exist (2) Multiple runs exist for each ProgramId.
+    IntFunction<ProgramId> getProgramId =
+        (int i) ->
+            NamespaceId.DEFAULT
+                .app(String.format("test%d", i % 3))
+                .workflow(String.format("test%d", i % 5));
+
+    Instant ttlCutoff = Instant.ofEpochSecond(1631629389);
+
+    Set<ProgramRunId> shouldExpire =
+        IntStream.range(1, 101)
+            .mapToObj(i -> createCompletedRun(getProgramId.apply(i), ttlCutoff.minusSeconds(i)))
+            .collect(Collectors.toSet());
+    Set<ProgramRunId> shouldNotExpire =
+        IntStream.range(1, 101)
+            .mapToObj(i -> createCompletedRun(getProgramId.apply(i), ttlCutoff.plusSeconds(i)))
+            .collect(Collectors.toSet());
+
+    TransactionRunners.run(
+        transactionRunner,
+        context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          // Check that run data exists for both job sets initially.
+          store.getRuns(shouldExpire).values().forEach(Assert::assertNotNull);
+          store.getRuns(shouldNotExpire).values().forEach(Assert::assertNotNull);
+
+          // Run expiration process.
+          store.deleteCompletedRunsStartedBefore(ttlCutoff);
+        });
+
+    TransactionRunners.run(
+        transactionRunner,
+        context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+
+          // Assert only the older runs were deleted.
+          store.getRuns(shouldExpire).values().forEach(Assert::assertNull);
+          store.getRuns(shouldNotExpire).values().forEach(Assert::assertNotNull);
+        });
+  }
+
+  /**
+   * Creates a new run of {@code programRunId} in the completed state with a starting time of {@code
+   * startingTime} and returns its corresponding run id.
+   *
+   * <p>The job will enter the following states: Provisioning -> Provisioned -> Starting -> Running
+   * -> Completed
+   *
+   * <p>The "start" and "end" times for the returned RunId will be after the provided "starting"
+   * time.
+   */
+  private ProgramRunId createCompletedRun(ProgramId programId, Instant startingTime) {
+    RunId runId = RunIds.generate(startingTime.toEpochMilli());
+    ProgramRunId run = programId.run(runId);
+
+    TransactionRunners.run(
+        transactionRunner,
+        context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+          recordProvisionAndStart(run, store);
+          store.recordProgramRunning(
+              run,
+              startingTime.plusSeconds(10).getEpochSecond(),
+              null,
+              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+          store.recordProgramStop(
+              run,
+              startingTime.plusSeconds(20).getEpochSecond(),
+              ProgramRunStatus.COMPLETED,
+              null,
+              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        });
+    return run;
+  }
+
+  /**
+   * Adds {@code count} new runs of {@code programRunId} in the completed state, returning their
+   * corresponding run ids.
+   */
   private List<ProgramRunId> addProgramCount(ProgramId programId, int count) throws Exception {
+    Instant startTimeBase = Instant.ofEpochSecond(0);
     List<ProgramRunId> runIds = new ArrayList<>();
     for (int i = 0; i < count; i++) {
-      RunId runId = RunIds.generate(i * 1000);
-      ProgramRunId run = programId.run(runId);
-      runIds.add(run);
-      TransactionRunners.run(transactionRunner, context -> {
-        AppMetadataStore store = AppMetadataStore.create(context);
-        recordProvisionAndStart(run, store);
-      });
+      runIds.add(createCompletedRun(programId, startTimeBase.plusSeconds(i)));
     }
     return runIds;
   }
