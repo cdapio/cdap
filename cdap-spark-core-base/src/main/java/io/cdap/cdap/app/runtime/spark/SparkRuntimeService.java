@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -146,13 +147,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final FieldLineageWriter fieldLineageWriter;
   private final CommonNettyHttpServiceFactory commonNettyHttpServiceFactory;
   private final MasterEnvironment masterEnv;
+  private final String jvmOpts;
 
   private Callable<SparkJobFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
   private ArtifactFetcherService artifactFetcherService;
   private volatile long gracefulTimeoutMillis;
 
-  SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
+  SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive, String jvmOpts,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
                       LocationFactory locationFactory, boolean isLocal, FieldLineageWriter fieldLineageWriter,
                       MasterEnvironment masterEnv, CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
@@ -160,6 +162,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.spark = spark;
     this.runtimeContext = runtimeContext;
     this.pluginArchive = pluginArchive;
+    this.jvmOpts = jvmOpts;
     this.sparkSubmitter = sparkSubmitter;
     this.locationFactory = locationFactory;
     this.completion = new AtomicReference<>();
@@ -630,6 +633,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     prependConfig(configs, "spark.executor.extraJavaOptions", sparkCheckpointTempRewrite, " ");
 
     // Prepend the extra java opts
+    if (!Strings.isNullOrEmpty(jvmOpts)) {
+      prependConfig(configs, "spark.driver.extraJavaOptions", jvmOpts, " ");
+      prependConfig(configs, "spark.executor.extraJavaOptions", jvmOpts, " ");
+    }
     prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
     prependConfig(configs, "spark.executor.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
 
