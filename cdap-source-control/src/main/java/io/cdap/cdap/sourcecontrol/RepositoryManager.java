@@ -149,7 +149,7 @@ public class RepositoryManager implements AutoCloseable {
     RefreshableCredentialsProvider credentialsProvider;
     try {
       credentialsProvider = new AuthenticationStrategyProvider(
-          sourceControlConfig.getNamespaceID(),
+          sourceControlConfig.getNamespaceId(),
           secureStore)
           .get(sourceControlConfig.getRepositoryConfig())
           .getCredentialsProvider();

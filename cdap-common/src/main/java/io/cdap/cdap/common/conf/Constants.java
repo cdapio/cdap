@@ -462,9 +462,11 @@ public final class Constants {
     /**
      * Task worker container configurations.
      */
+    public static final String WORK_DIR = "task.worker.work.dir";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
     public static final String CONTAINER_MEMORY_MB = "task.worker.container.memory.mb";
+    public static final String CONTAINER_WORKDIR_SIZE_MB = "task.worker.container.workdir.size.mb";
     public static final String CONTAINER_CORES = "task.worker.container.num.cores";
     public static final String CONTAINER_CPU_MULTIPLIER = "task.worker.container.cpu.multiplier";
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
