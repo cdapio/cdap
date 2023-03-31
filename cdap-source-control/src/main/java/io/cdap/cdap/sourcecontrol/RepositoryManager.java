@@ -464,6 +464,7 @@ public class RepositoryManager implements AutoCloseable {
    *
    * @return The commit ID for the head.
    * @throws IOException when git is unable to resolve head.
+   * @throws SourceControlException if the repository is not initialized.
    */
   @VisibleForTesting
   ObjectId resolveHead() throws IOException {
@@ -471,7 +472,15 @@ public class RepositoryManager implements AutoCloseable {
       throw new IllegalStateException(
           "Call cloneRemote() before getting HEAD.");
     }
-    return git.getRepository().resolve(Constants.HEAD);
+
+    ObjectId commitObjectId = git.getRepository().resolve(Constants.HEAD);
+
+    if (commitObjectId == null) {
+      throw new SourceControlException(
+          "Failed to resolve Git HEAD. Please make sure the repository is initialized.");
+    }
+
+    return commitObjectId;
   }
 
   /**
