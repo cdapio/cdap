@@ -30,6 +30,8 @@ import java.util.UUID;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -127,9 +129,7 @@ public abstract class SourceControlTestBase {
         .call();
     localGit.push()
         .setTimeout(GIT_COMMAND_TIMEOUT)
-        .setCredentialsProvider(
-            new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME,
-                MOCK_TOKEN))
+        .setCredentialsProvider(getCredentialsProviderForLocalServer())
         .call();
     localGit.close();
     DirUtils.deleteDirectoryContents(tempDirPath.toFile());
@@ -156,5 +156,38 @@ public abstract class SourceControlTestBase {
         appRequest.getArtifact().getName());
     Assert.assertNotNull(appRequest.getPreview());
     Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
+  }
+
+  /**
+   * Deletes all the branches in the remote repository.
+   *
+   * @param gitServer the server hosting the remote repository.
+   */
+  public void deleteAllBranches(final LocalGitServer gitServer)
+      throws IOException, GitAPIException {
+    Path tempDir = baseTempFolder.newFolder("temp-local-git").toPath();
+    CredentialsProvider creds = getCredentialsProviderForLocalServer();
+    try (Git git = getClonedGit(tempDir, gitServer)) {
+      RefSpec[] heads = git.lsRemote()
+          .setTimeout(GIT_COMMAND_TIMEOUT)
+          .setCredentialsProvider(getCredentialsProviderForLocalServer())
+          .setHeads(true)
+          .setTags(false)
+          .call().stream()
+          .map(ref -> new RefSpec(":" + ref.getName()))
+          .toArray(RefSpec[]::new);
+
+        //delete branches on remote
+        git.push()
+            .setRefSpecs(heads)
+            .setTimeout(GIT_COMMAND_TIMEOUT)
+            .setCredentialsProvider(creds)
+            .call();
+    }
+  }
+
+  private CredentialsProvider getCredentialsProviderForLocalServer() {
+    return new UsernamePasswordCredentialsProvider(GIT_SERVER_USERNAME,
+        MOCK_TOKEN);
   }
 }
