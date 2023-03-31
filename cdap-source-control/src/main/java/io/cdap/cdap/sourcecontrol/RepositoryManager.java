@@ -168,10 +168,8 @@ public class RepositoryManager implements AutoCloseable {
     // Try fetching heads in the remote repository.
     try (Git git = Git.wrap(new InMemoryRepository.Builder().build())) {
       LsRemoteCommand cmd =
-          createCommand(git::lsRemote, sourceControlConfig,
-              credentialsProvider).setRemote(
-                  config.getLink())
-              .setHeads(true)
+          createCommand(git::lsRemote, sourceControlConfig, credentialsProvider)
+              .setRemote(config.getLink())
               .setTags(false);
       validateDefaultBranch(cmd.callAsMap(), config.getDefaultBranch());
     } catch (TransportException e) {
@@ -426,8 +424,14 @@ public class RepositoryManager implements AutoCloseable {
   private static void validateDefaultBranch(final Map<String, Ref> refs,
       final @Nullable String defaultBranchName) throws
       RepositoryConfigValidationException {
-    // If default branch is not provided, skip validation.
+
     if (getBranchRefName(defaultBranchName) == null) {
+      // If default branch is not provided, check for existence of "HEAD" that
+      // points to the default branch in the remote repository.
+      if (refs.get(Constants.HEAD) == null) {
+        throw new RepositoryConfigValidationException(
+            "HEAD not found in remote repository. Ensure a default branch is set in the remote repository.");
+      }
       return;
     }
     // Check if default branch exists.
