@@ -154,6 +154,21 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     RepositoryManager.validateConfig(secureStore, sourceControlConfig);
   }
 
+  @Test(expected = RepositoryConfigValidationException.class)
+  public void testValidateNoDefaultBranchFound() throws Exception {
+    deleteAllBranches(gitServer);
+    String serverUrl = gitServer.getServerUrl();
+    RepositoryConfig config = new RepositoryConfig.Builder().setProvider(
+            Provider.GITHUB)
+        .setLink(serverUrl + "ignored")
+        .setAuth(AUTH_CONFIG)
+        .build();
+    SourceControlConfig sourceControlConfig = new SourceControlConfig(
+        new NamespaceId(NAMESPACE),
+        config, cConf);
+    RepositoryManager.validateConfig(secureStore, sourceControlConfig);
+  }
+
   @Test
   public void testValidateSuccess() throws Exception {
     RepositoryManager.validateConfig(secureStore, getSourceControlConfig());
