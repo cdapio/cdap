@@ -3358,6 +3358,32 @@
     </description>
   </property>
 
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable metrics aggregation in runtime client service.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.window.secs</name>
+    <value>5</value>
+    <description>
+      When metrics aggregation in runtime client service is enabled, this property controls the max time difference
+      between two metrics which can be aggregated.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.polltime.ms</name>
+    <value>5000</value>
+    <description>
+      Polling time in milliseconds to poll updates from a runtime when metrics aggregation is enabled.
+      This enables setting longer poll intervals to have better aggregation of metrics.
+    </description>
+  </property>
+
   <!-- Operational Statistics Configuration -->
 
   <property>

@@ -1285,6 +1285,11 @@ public final class Constants {
     // Configuration key for the service proxy password. It is only used within a runtime cluster.
     public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
     public static final String SERVICE_PROXY_PASSWORD_FILE = "cdap.service.proxy.secret";
+    public static final String METRICS_AGGREGATION_ENABLED = "app.program.runtime.monitor.metrics.aggregation.enabled";
+    public static final String METRICS_AGGREGATION_WINDOW_SECONDS =
+        "app.program.runtime.monitor.metrics.aggregation.window.secs";
+    public static final String  METRICS_AGGREGATION_POLL_TIME_MS =
+        "app.program.runtime.monitor.metrics.aggregation.polltime.ms";
   }
 
   /**
