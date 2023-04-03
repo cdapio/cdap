@@ -128,7 +128,7 @@ public class SparkSQLRelation implements Relation {
                     SELECT,
                     getColumnAliasCSV(columnExpMap),
                     FROM,
-                    this.datasetName)
+                    "relational_transform_stage")
     );
 
     if (filterCondition != null && !filterCondition.isEmpty()) {

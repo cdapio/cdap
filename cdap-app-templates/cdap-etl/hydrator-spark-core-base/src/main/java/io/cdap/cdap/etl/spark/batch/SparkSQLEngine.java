@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spark.batch;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.engine.sql.BatchSQLEngine;
 import io.cdap.cdap.etl.api.engine.sql.SQLEngineException;
 import io.cdap.cdap.etl.api.engine.sql.capability.DefaultPullCapability;
@@ -36,8 +35,10 @@ import io.cdap.cdap.etl.api.engine.sql.request.SQLRelationDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformDefinition;
 import io.cdap.cdap.etl.api.engine.sql.request.SQLTransformRequest;
 import io.cdap.cdap.etl.api.relational.Capability;
+import io.cdap.cdap.etl.api.relational.DelegatingMultiRelation;
 import io.cdap.cdap.etl.api.relational.Engine;
 import io.cdap.cdap.etl.api.relational.ExpressionFactory;
+import io.cdap.cdap.etl.api.relational.LinearRelationalTransformCapabilities;
 import io.cdap.cdap.etl.api.relational.Relation;
 import io.cdap.cdap.etl.api.relational.StringExpressionFactoryType;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLDataset;
@@ -45,8 +46,6 @@ import io.cdap.cdap.etl.spark.batch.relation.SparkSQLExpressionFactory;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLPullProducer;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLPushConsumer;
 import io.cdap.cdap.etl.spark.batch.relation.SparkSQLRelation;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -95,18 +94,13 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
 
   @Override
   public SQLDataset transform(SQLTransformRequest context) throws SQLEngineException {
-    SparkSQLRelation sparkSQLRelation = (SparkSQLRelation) context.getOutputRelation();
+    SparkSQLRelation sparkSQLRelation = getSparkSQLRelationFromContext(context);
 
-    if (context.getInputDataSets().values().size() > 1) {
-      throw new SQLEngineException("Only linear transformation is supported as of now, " +
-                                     "the input data contains more than  1 dataset");
-    }
-
-    Map<String, SparkSQLDataset> sparkDatasets = context.getInputDataSets().entrySet()
+    List<SparkSQLDataset> sparkDatasets = context.getInputDataSets()
+      .values()
       .stream()
-      .collect(Collectors.toMap(
-        k -> getNormalizedDatasetName(k.getKey()),
-        e -> (SparkSQLDataset) e.getValue()));
+      .map(ds -> (SparkSQLDataset) ds)
+      .collect(Collectors.toList());
 
     return executeSQL(sparkSQLRelation.getSqlStatement(), sparkDatasets, context);
   }
@@ -166,7 +160,10 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
 
   @Override
   public Set<Capability> getCapabilities() {
-    return Collections.singleton(StringExpressionFactoryType.SQL);
+    Set<Capability> capabilities = new HashSet<>();
+    capabilities.add(StringExpressionFactoryType.SQL);
+    capabilities.add(LinearRelationalTransformCapabilities.CAN_HANDLE_MULTIPLE_INPUTS);
+    return Collections.unmodifiableSet(capabilities);
   }
 
   @Override
@@ -174,23 +171,26 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
     return Collections.singletonList(new SparkSQLExpressionFactory());
   }
 
-  private SparkSQLDataset executeSQL(String sqlStatement, Map<String, SparkSQLDataset>  sparkDatasets,
+  private SparkSQLDataset executeSQL(String sqlStatement,
+                                     List<SparkSQLDataset> sparkDatasets,
                                      SQLTransformRequest context) {
-    // Register all datasets as temp view in spark sql
-    for (Map.Entry<String, SparkSQLDataset> dsEntry : sparkDatasets.entrySet()) {
-      LOG.debug("Creating temp view for dataset : {}", dsEntry.getKey());
-      Dataset<Row> ds = dsEntry.getValue().getDs();
-      ds.createOrReplaceTempView(dsEntry.getKey());
+    Dataset<Row> combinedDs = null;
+
+    // Combine all input datasets to execute this statement.
+    for (SparkSQLDataset sparkDataset : sparkDatasets) {
+      Dataset<Row> ds = sparkDataset.getDs();
+      combinedDs = combinedDs == null ? ds : combinedDs.union(ds);
     }
 
-    SparkSQLDataset sparkSQLDataset = sparkDatasets.values().stream().findFirst().get();
-    Dataset<Row> ds = sparkSQLDataset.getDs();
-    SparkSession sparkSession = ds.sparkSession();
+    // Create temporary view for table
+    LOG.debug("Creating temp view for stage : {}", context.getOutputDatasetName());
+    combinedDs.createOrReplaceTempView("relational_transform_stage");
 
+    // Execute filter statement for this input stage.
+    SparkSession sparkSession = combinedDs.sparkSession();
     LOG.info("Executing SQL in spark : {}", sqlStatement);
     Dataset<Row> result = sparkSession.sql(sqlStatement);
 
-    //TODO Doubt : df.count will trigger the action. ? Expected ?
     return new SparkSQLDataset(result, result.count(), context.getOutputDatasetName(), context.getOutputSchema());
   }
 
@@ -198,5 +198,35 @@ public class SparkSQLEngine extends BatchSQLEngine<Object, Object, Object, Objec
   // Replace all non Alphanumeric chars with "_"
   private String getNormalizedDatasetName(String datasetName) {
     return datasetName.replaceAll("[^A-Za-z0-9]", "_");
+  }
+
+  /**
+   * Find an instance of {@link SparkSQLRelation} from a {@link SQLTransformRequest}'s Output Relation.
+   * @param transformRequest the SQL Trasnsformation request
+   * @return a SparkSQLRelation instance from this request
+   * @thrpws {@link IllegalArgumentException} if the supplied {@link SQLTransformRequest} doesn't contain any output
+   * relation of type {@link SparkSQLRelation}.
+   */
+  private SparkSQLRelation getSparkSQLRelationFromContext(SQLTransformRequest transformRequest) {
+    Relation outputRelation = transformRequest.getOutputRelation();
+    if (outputRelation instanceof SparkSQLRelation) {
+      return (SparkSQLRelation) outputRelation;
+    }
+
+    if (outputRelation instanceof DelegatingMultiRelation) {
+      List<Relation> delegates = ((DelegatingMultiRelation) outputRelation).getDelegates();
+
+      for (Relation delegate : delegates) {
+        if (delegate instanceof SparkSQLRelation) {
+          return (SparkSQLRelation) delegate;
+        }
+      }
+
+      throw new IllegalArgumentException("DelegatingMultiRelation did not contain any SparkSQLRelation instances.");
+    }
+
+    throw new IllegalArgumentException(
+      String.format("Invalid Relation type: %s. Must be either SparkSQLRelation or DelegatingMultiRelation.",
+                    outputRelation.getClass().getName()));
   }
 }

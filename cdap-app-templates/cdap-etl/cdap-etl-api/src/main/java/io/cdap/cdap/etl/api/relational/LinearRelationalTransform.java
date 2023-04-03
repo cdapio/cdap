@@ -19,8 +19,11 @@ package io.cdap.cdap.etl.api.relational;
 import java.util.Set;
 
 /**
- * Linear variant of {@link RelationalTransform} for plugins that has 1 input and produce 1 output
- * relation.
+ * Variant of {@link RelationalTransform} for plugins that has 1 or more inputs and produces exactly 1 output.
+ *
+ * Linear relational transform stages must handle at least one (1) input stage, but can have the ability to handle more
+ * than 1 input stage. This is determined by the  {@link LinearRelationalTransformCapabilities#CAN_HANDLE_MULTIPLE_INPUTS}
+ * capability.
  */
 public interface LinearRelationalTransform extends RelationalTransform {
 
@@ -29,15 +32,32 @@ public interface LinearRelationalTransform extends RelationalTransform {
    * Relation)}.
    *
    * @param context tranformation context with engine, input and output parameters
-   * @return true if the number of input relations is 1. False otherwise.
+   * @return true if the transformation can be performed, false otherwise.
    */
   default boolean transform(RelationalTranformContext context) {
+    Set<Capability> capabilities = context.getEngine().getCapabilities();
     Set<String> names = context.getInputRelationNames();
-    if (names.size() != 1) {
+
+    // Check the number if inputs. If there are more than 1 inputs, check if the engine can handle this.
+    if (names.size() != 1 && !capabilities.contains(LinearRelationalTransformCapabilities.CAN_HANDLE_MULTIPLE_INPUTS)) {
       return false;
     }
-    context.setOutputRelation(
-        transform(context, context.getInputRelation(names.iterator().next())));
+
+    Relation outputRelation;
+    if (names.size() > 1) {
+      // Combine multiple output relations into a single DelegatingMultiRelation.
+      DelegatingMultiRelation.Builder builder = DelegatingMultiRelation.newBuilder();
+      for (String name : names) {
+        builder.addRelation(transform(context, context.getInputRelation(name)));
+      }
+      outputRelation = builder.build();
+    } else {
+      // Set output relation from the input stage.
+      outputRelation = transform(context, context.getInputRelation(names.iterator().next()));
+    }
+
+    // Set the output relation.
+    context.setOutputRelation(outputRelation);
     return true;
   }
 

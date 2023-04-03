@@ -45,9 +45,10 @@ public class SparkSQLRelationTest {
     SparkSQLRelation actualRelation =
       (SparkSQLRelation) baseSQLRelation.setColumn("c", factory.compile("a+b"));
 
-    SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
-                                                     Arrays.asList("a", "b", "c"),
-                                                     "SELECT a AS a , b AS b , a+b AS c FROM testDataset");
+    SparkSQLRelation expectedRelation =
+      new SparkSQLRelation("testDataset",
+                           Arrays.asList("a", "b", "c"),
+                           "SELECT a AS a , b AS b , a+b AS c FROM relational_transform_stage");
 
     Assert.assertTrue(expectedRelation.equals(actualRelation));
   }
@@ -55,9 +56,10 @@ public class SparkSQLRelationTest {
   @Test
   public void testDropColumn() {
     SparkSQLRelation actualRelation = (SparkSQLRelation) baseSQLRelation.dropColumn("b");
-    SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
-                                                             Arrays.asList("a"),
-                                                             "SELECT a AS a FROM testDataset");
+    SparkSQLRelation expectedRelation =
+      new SparkSQLRelation("testDataset",
+                           Arrays.asList("a"),
+                           "SELECT a AS a FROM relational_transform_stage");
     Assert.assertTrue(expectedRelation.equals(actualRelation));
   }
 
@@ -68,20 +70,22 @@ public class SparkSQLRelationTest {
     selectColumns.put("new_b", factory.compile("b"));
 
     SparkSQLRelation actualRelation = (SparkSQLRelation) baseSQLRelation.select(selectColumns);
-    SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
-                                                             Arrays.asList("new_a", "new_b"),
-                                                             "SELECT a AS new_a , b AS new_b FROM " +
-                                                               "testDataset");
+    SparkSQLRelation expectedRelation =
+      new SparkSQLRelation("testDataset",
+                           Arrays.asList("new_a", "new_b"),
+                           "SELECT a AS new_a , b AS new_b FROM " +
+                             "relational_transform_stage");
     Assert.assertTrue(expectedRelation.equals(actualRelation));
   }
 
   @Test
   public void testFilter() {
     SparkSQLRelation actualRelation = (SparkSQLRelation) baseSQLRelation.filter(factory.compile("a > 2"));
-    SparkSQLRelation expectedRelation = new SparkSQLRelation("testDataset",
-                                                             Arrays.asList("a", "b"),
-                                                             "SELECT a AS a , b AS b FROM testDataset " +
-                                                               "WHERE a > 2");
+    SparkSQLRelation expectedRelation =
+      new SparkSQLRelation("testDataset",
+                           Arrays.asList("a", "b"),
+                           "SELECT a AS a , b AS b FROM relational_transform_stage " +
+                             "WHERE a > 2");
     Assert.assertEquals(expectedRelation.getSqlStatement(), actualRelation.getSqlStatement());
   }
 }
