@@ -1456,6 +1456,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
             new V1ResourceRequirements()
                 .requests(Collections.singletonMap("storage",
                     Quantity.fromString(String.format("%dGi", disk.getDiskSizeGB())))))
+        .withStorageClassName("regional-standard0")
         .endSpec()
         .build();
   }
