@@ -323,6 +323,16 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return delegate.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return delegate.getData(namespace, name);
+  }
+
+  @Override
   public void execute(TxRunnable runnable) throws TransactionFailureException {
     throw new TransactionFailureException(
         "Attempted to start a transaction within a MapReduce transaction");

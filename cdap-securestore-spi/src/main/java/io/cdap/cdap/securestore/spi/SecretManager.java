@@ -67,6 +67,40 @@ public interface SecretManager {
   Secret get(String namespace, String name) throws SecretNotFoundException, IOException;
 
   /**
+   * Returns securely stored secret without its metadata. Use {@link #get(String, String)} if
+   * both the secret and its metadata are needed. Implementations should implement this method
+   * instead of relying on the default if the underlying system requires different calls to
+   * get the secret itself and its metadata.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param name the name of the secret
+   * @return the sensitive data
+   * @throws SecretNotFoundException if the secret is not present in the namespace
+   * @throws IOException if unable to retrieve the secret
+   */
+  default byte[] getData(String namespace, String name)
+      throws SecretNotFoundException, IOException {
+    return get(namespace, name).getData();
+  }
+
+  /**
+   * Returns metadata about the securely stored secret. Use {@link #get(String, String)} if both the
+   * secret and its metadata are needed. Implementations should implement this method
+   * instead of relying on the default if the underlying system requires different calls to
+   * get the secret itself and its metadata.
+   *
+   * @param namespace the namespace that this secret belongs to
+   * @param name the name of the secret
+   * @return the metadata for the secret
+   * @throws SecretNotFoundException if the secret is not present in the namespace
+   * @throws IOException if unable to retrieve the secret
+   */
+  default SecretMetadata getMetadata(String namespace, String name)
+      throws SecretNotFoundException, IOException {
+    return get(namespace, name).getMetadata();
+  }
+
+  /**
    * Returns {@link Collection} of metadata of all the secrets in the provided namespace.
    *
    * @param namespace the namespace that secrets belong to

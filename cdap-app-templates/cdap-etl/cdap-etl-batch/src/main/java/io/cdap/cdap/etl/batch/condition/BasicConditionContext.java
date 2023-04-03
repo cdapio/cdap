@@ -128,6 +128,16 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return context.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return context.getData(namespace, name);
+  }
+
+  @Override
   public void put(String namespace, String name, String data, @Nullable String description,
       Map<String, String> properties) throws Exception {
     context.getAdmin().put(namespace, name, data, description, properties);
