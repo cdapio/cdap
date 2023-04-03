@@ -827,7 +827,9 @@ public class BatchSQLEngineAdapter implements Closeable {
       // Push all stages that need to be pushed to execute this aggregation
       input.forEach((name, collection) -> {
         if (!exists(name)) {
-          push(name, stageSpec.getInputSchemas().get(name), collection);
+          // Cache input dataset to prevent reprocessing and metrics skew.
+          SparkCollection<Object> cachedCollection = collection.cache();
+          push(name, stageSpec.getInputSchemas().get(name), cachedCollection);
         }
       });
 
