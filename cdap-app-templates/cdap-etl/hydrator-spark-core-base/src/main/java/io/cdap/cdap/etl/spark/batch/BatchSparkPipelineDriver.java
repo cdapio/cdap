@@ -218,6 +218,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     }
 
     boolean isSuccessful = true;
+    boolean isPreviewEnabled = phaseSpec.isPreviewEnabled(sec);
 
     try {
       PipelinePluginInstantiator pluginInstantiator =
@@ -228,7 +229,6 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
       boolean shouldDisablePushdown = Boolean.parseBoolean(
         sec.getRuntimeArguments().getOrDefault(Constants.DISABLE_ELT_PUSHDOWN, Boolean.FALSE.toString()));
-      boolean isPreviewEnabled = phaseSpec.isPreviewEnabled(sec);
 
       // Initialize SQL engine instance if needed.
       if (!isPreviewEnabled && phaseSpec.getSQLEngineStageSpec() != null && !shouldDisablePushdown) {
@@ -247,7 +247,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                        (SQLEngine<?, ?, ?, ?>) instance,
                                                        sec,
                                                        jsc,
-                                                       collectors);
+                                                       collectors,
+                                                       isPreviewEnabled);
           sqlEngineAdapter.prepareRun();
         } catch (InstantiationException ie) {
           LOG.error("Could not create plugin instance for SQLEngine class", ie);
@@ -263,6 +264,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                      sec,
                                                      jsc,
                                                      collectors,
+                                                     isPreviewEnabled,
                                                      true);
 
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
