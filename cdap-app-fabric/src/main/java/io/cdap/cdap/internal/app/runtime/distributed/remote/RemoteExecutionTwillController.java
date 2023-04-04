@@ -117,8 +117,10 @@ class RemoteExecutionTwillController implements TwillController {
   }
 
   public void complete() {
+    LOG.error("ashau - stopping RemoteExecutionService...", new Exception());
     terminateOnServiceStop = true;
     executionService.stop();
+    LOG.error("ashau - stopped RemoteExecutionService");
     try {
       RuntimeJobStatus status;
       RetryStrategy retryStrategy = RetryStrategies.timeLimit(

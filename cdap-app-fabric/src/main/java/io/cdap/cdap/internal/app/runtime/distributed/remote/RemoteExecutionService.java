@@ -82,6 +82,8 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
 
     long now = System.currentTimeMillis();
     if (now >= nextCheckRunningMillis) {
+      LOG.error("ashau - RemoteExecutionService checking liveness while in state {}",
+          state().name());
       // Periodically check the liveness. We allow one non-running to pass to accommodate for the delay
       // of TMS messages relay from the remote runtime back to CDAP.
       if (!processController.isRunning() && ++notRunningCount > 1) {
