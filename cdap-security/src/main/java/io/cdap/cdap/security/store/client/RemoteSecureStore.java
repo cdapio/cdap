@@ -74,25 +74,29 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
 
   @Override
   public SecureStoreData get(String namespace, String name) throws Exception {
-    // 1. Get metadata of the secure key
+    return new SecureStoreData(getMetadata(namespace, name), getData(namespace, name));
+  }
+
+  @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
         createPath(namespace, name) + "/metadata").build();
     HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while getting metadata for key %s:%s",
             namespace, name));
-    final SecureStoreMetadata metadata = GSON.fromJson(response.getResponseBodyAsString(),
-        SecureStoreMetadata.class);
+    return GSON.fromJson(response.getResponseBodyAsString(), SecureStoreMetadata.class);
+  }
 
-    // 2. Get sensitive data for the secure key
-    request = remoteClient.requestBuilder(HttpMethod.GET, createPath(namespace, name)).build();
-    response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
+        createPath(namespace, name)).build();
+    HttpResponse response = remoteClient.execute(request, Idempotency.IDEMPOTENT);
     handleResponse(response, namespace, name,
         String.format("Error occurred while getting key %s:%s",
             namespace, name));
-    // response is not a json object
-    byte[] data = response.getResponseBody();
-    return new SecureStoreData(metadata, data);
+    return response.getResponseBody();
   }
 
   @Override

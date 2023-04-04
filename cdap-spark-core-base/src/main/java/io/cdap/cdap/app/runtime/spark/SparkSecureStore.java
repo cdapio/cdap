@@ -19,7 +19,6 @@ package io.cdap.cdap.app.runtime.spark;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -57,6 +56,16 @@ public class SparkSecureStore implements SecureStore, Externalizable {
   @Override
   public SecureStoreData get(String namespace, String name) throws Exception {
     return delegate.get(namespace, name);
+  }
+
+  @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return delegate.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return delegate.getData(namespace, name);
   }
 
   @Override

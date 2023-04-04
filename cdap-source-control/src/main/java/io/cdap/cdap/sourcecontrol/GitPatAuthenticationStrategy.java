@@ -18,7 +18,6 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -76,9 +75,9 @@ public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
 
     @Override
     public void refresh() throws IOException, AuthenticationConfigException {
-      SecureStoreData data;
+      byte[] data;
       try {
-        data = secureStore.get(namespaceId, passwordKeyName);
+        data = secureStore.getData(namespaceId, passwordKeyName);
       } catch (Exception e) {
         Throwables.propagateIfInstanceOf(e, IOException.class);
         throw new AuthenticationConfigException("Failed to get password from secure store", e);
@@ -88,7 +87,7 @@ public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
             String.format("Password with key name %s not found in secure store",
                 passwordKeyName));
       }
-      password = new String(data.get(), StandardCharsets.UTF_8);
+      password = new String(data, StandardCharsets.UTF_8);
     }
 
     @Override

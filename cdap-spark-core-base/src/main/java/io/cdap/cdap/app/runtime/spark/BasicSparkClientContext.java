@@ -334,6 +334,16 @@ final class BasicSparkClientContext implements SparkClientContext {
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return sparkRuntimeContext.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return sparkRuntimeContext.getData(namespace, name);
+  }
+
+  @Override
   public ProgramState getState() {
     return state;
   }

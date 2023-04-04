@@ -37,7 +37,8 @@ public interface SecureStore {
   List<SecureStoreMetadata> list(String namespace) throws Exception;
 
   /**
-   * Returns the data stored in the secure store.
+   * Returns the secret and its metadata for the given namespace and name.
+   * Use {@link #getData(String, String)} if the metadata is not required.
    *
    * @param namespace The namespace that this key belongs to
    * @param name Name of the data element
@@ -46,4 +47,30 @@ public interface SecureStore {
    * @throws Exception if the specified namespace or name does not exist
    */
   SecureStoreData get(String namespace, String name) throws Exception;
+
+  /**
+   * Returns the metadata for the secret.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the data element
+   * @return Metadata for the securely stored data associated with the name
+   * @throws IOException If there was a problem reading from the store
+   * @throws Exception if the specified namespace or name does not exist
+   */
+  default SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return get(namespace, name).getMetadata();
+  }
+
+  /**
+   * Returns the secret data.
+   *
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the data element
+   * @return The securely stored data associated with the name
+   * @throws IOException If there was a problem reading from the store
+   * @throws Exception if the specified namespace or name does not exist
+   */
+  default byte[] getData(String namespace, String name) throws Exception {
+    return get(namespace, name).get();
+  }
 }

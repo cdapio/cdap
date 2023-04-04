@@ -24,7 +24,6 @@ import io.cdap.cdap.securestore.spi.SecretManagerContext;
 import io.cdap.cdap.securestore.spi.SecretNotFoundException;
 import io.cdap.cdap.securestore.spi.secret.Secret;
 import io.cdap.cdap.securestore.spi.secret.SecretMetadata;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -90,10 +89,26 @@ public class GcpSecretManager implements SecretManager {
 
   @Override
   public Secret get(String namespace, String name) throws SecretNotFoundException, IOException {
+    return new Secret(getData(namespace, name), getMetadata(namespace, name));
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws SecretNotFoundException, IOException {
     try {
-      WrappedSecret wrappedSecret = client.getSecret(namespace, name);
-      byte[] secretData = client.getSecretData(wrappedSecret);
-      return new Secret(secretData, wrappedSecret.getCdapSecretMetadata());
+      return client.getSecretData(namespace, name);
+    } catch (ApiException e) {
+      if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
+        throw new SecretNotFoundException(namespace, name);
+      }
+      throw new IOException("Secret Manager get API call failed", e);
+    }
+  }
+
+  @Override
+  public SecretMetadata getMetadata(String namespace, String name)
+      throws SecretNotFoundException, IOException {
+    try {
+      return client.getSecret(namespace, name).getCdapSecretMetadata();
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
         throw new SecretNotFoundException(namespace, name);
