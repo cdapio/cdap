@@ -29,14 +29,12 @@ public interface LinearRelationalTransform extends RelationalTransform {
    * Relation)}.
    *
    * @param context tranformation context with engine, input and output parameters
-   * @return true
+   * @return true if the number of input relations is 1. False otherwise.
    */
   default boolean transform(RelationalTranformContext context) {
     Set<String> names = context.getInputRelationNames();
     if (names.size() != 1) {
-      throw new IllegalArgumentException(
-          "Plugin " + getClass().getName() + " supports only single input and got "
-              + names.size() + ": " + names);
+      return false;
     }
     context.setOutputRelation(
         transform(context, context.getInputRelation(names.iterator().next())));
