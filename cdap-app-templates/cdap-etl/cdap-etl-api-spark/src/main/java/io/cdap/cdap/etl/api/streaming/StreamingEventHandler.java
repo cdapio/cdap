@@ -17,7 +17,7 @@
 package io.cdap.cdap.etl.api.streaming;
 
 /**
- * Interface for handling Streaming batch events
+ * Interface for handling Streaming batch events.
  */
 public interface StreamingEventHandler {
 
@@ -27,4 +27,22 @@ public interface StreamingEventHandler {
    * @param streamingContext @link{StreamingContext} Context object for this stage
    */
   void onBatchCompleted(StreamingContext streamingContext);
+
+  /**
+   * Call before starting each batch.
+   *
+   * @param streamingContext @link{StreamingContext} Context object for this stage
+   */
+  default void onBatchStarted(StreamingContext streamingContext) {
+    // default implementation for backward compatibility
+  }
+
+  /**
+   * Call before batch retry.
+   *
+   * @param streamingContext @link{StreamingContext} Context object for this stage
+   */
+  default void onBatchRetry(StreamingContext streamingContext) {
+    // default implementation for backward compatibility
+  }
 }

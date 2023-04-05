@@ -57,9 +57,16 @@ public class StreamingBatchSinkFunction<T> extends AbstractStreamingSinkFunction
   private final StageSpec stageSpec;
   private final FunctionCache functionCache;
 
-  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec, FunctionCache functionCache,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+      FunctionCache functionCache, StreamingRetrySettings retrySettings) {
+    this(sec, stageSpec, functionCache, retrySettings, () -> null);
+
+  }
+
+  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+      FunctionCache functionCache, StreamingRetrySettings retrySettings,
+      SerializableCallable batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.stageSpec = stageSpec;
     this.functionCache = functionCache;

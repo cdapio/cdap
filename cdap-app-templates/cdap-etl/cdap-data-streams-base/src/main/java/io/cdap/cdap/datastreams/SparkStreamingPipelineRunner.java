@@ -27,7 +27,6 @@ import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
@@ -44,6 +43,7 @@ import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.EmittedRecords;
+import io.cdap.cdap.etl.spark.SinkRunnableProvider;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
@@ -57,19 +57,18 @@ import io.cdap.cdap.etl.spark.streaming.DefaultStreamingContext;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
 import io.cdap.cdap.etl.spark.streaming.PairDStreamCollection;
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import io.cdap.cdap.etl.spark.streaming.StreamingSinkRunnableProvider;
 import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinOn;
-import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
-import io.cdap.cdap.etl.spark.streaming.function.StreamingMultiSinkFunction;
-import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
+import io.cdap.cdap.etl.spark.streaming.function.SerializableCallable;
 import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import javax.annotation.Nullable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -251,15 +250,15 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   @Override
   protected void processDag(PhaseSpec phaseSpec, String sourcePluginType, JavaSparkExecutionContext sec,
-                            Map<String, Integer> stagePartitions, PluginContext pluginContext,
-                            Map<String, StageStatisticsCollector> collectors, PipelinePhase pipelinePhase,
-                            FunctionCache.Factory functionCacheFactory,
-                            MacroEvaluator macroEvaluator, CombinerDag groupedDag,
-                            Map<String, Set<String>> groups, Set<String> branchers,
-                            Set<String> shufflers) throws Exception {
+      Map<String, Integer> stagePartitions, PluginContext pluginContext,
+      Map<String, StageStatisticsCollector> collectors, PipelinePhase pipelinePhase,
+      FunctionCache.Factory functionCacheFactory,
+      MacroEvaluator macroEvaluator, CombinerDag groupedDag,
+      Map<String, Set<String>> groups, Set<String> branchers,
+      Set<String> shufflers) throws Exception {
     if (!stateStoreEnabled) {
       super.processDag(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
-                       functionCacheFactory, macroEvaluator, groupedDag, groups, branchers, shufflers);
+          functionCacheFactory, macroEvaluator, groupedDag, groups, branchers, shufflers);
       return;
     }
 
@@ -275,8 +274,25 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         batchIntervalMillis);
     DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
     AtomicBoolean failedBatch = new AtomicBoolean();
+    // Event handler on which batch processing events will be called.
+    StreamingEventHandler eventHandler = getEventHandler(dStream);
+    // Call onBatchRetry in case of retries
+    SerializableCallable batchRetryCallable = () -> {
+      if (eventHandler != null) {
+        eventHandler.onBatchRetry(streamingContext);
+      }
+      return null;
+    };
+
     dStream.foreachRDD((javaRDD, time) -> {
+      // Starting the batch
+      if (eventHandler != null) {
+        eventHandler.onBatchStarted(streamingContext);
+      }
+
       Collection<Runnable> sinkRunnables = new ArrayList<>();
+      SinkRunnableProvider sinkRunnableProvider = new StreamingSinkRunnableProvider(sec,
+          stateStoreEnabled, streamingRetrySettings, batchRetryCallable, time.milliseconds());
       Transactionals.execute(sec, context -> {
         JavaRDD<Object> batchRDD = javaRDD;
         if (dataTracer.isEnabled()) {
@@ -284,23 +300,24 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
           batchRDD = new LimitingFunction<>(spec.getNumOfRecordsPreview()).call(batchRDD);
         }
         batchRDD = new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer)
-          .call(batchRDD);
+            .call(batchRDD);
         JavaRDD<RecordInfo<Object>> wrapped = batchRDD.map(new WrapOutputTransformFunction<>(stageSpec.getName()));
         RDDCollection<RecordInfo<Object>> rddCollection =
-          new RDDCollection<RecordInfo<Object>>(sec, functionCacheFactory, javaStreamingContext.sparkContext(),
-                                                new SQLContext(javaStreamingContext.sparkContext()),
-                                                context, new SparkBatchSinkFactory(), wrapped);
+            new RDDCollection<RecordInfo<Object>>(sec, functionCacheFactory, javaStreamingContext.sparkContext(),
+                new SQLContext(javaStreamingContext.sparkContext()),
+                context, new SparkBatchSinkFactory(), wrapped);
         EmittedRecords records = getEmittedRecords(pipelinePhase, stageSpec, rddCollection, groupedDag,
-                                                   branchers, shufflers, false, false);
+            branchers, shufflers, false, false);
         Map<String, EmittedRecords> emittedRecords = new HashMap<>();
         emittedRecords.put(source, records);
 
         //process the remaining stages
         for (int i = 1; i < topologicalOrder.size(); i++) {
           String stageName = topologicalOrder.get(i);
-          processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
-                       functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers,
-                       sinkRunnables, stageName, time.milliseconds(), context);
+          processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors,
+              pipelinePhase, functionCacheFactory, macroEvaluator, emittedRecords, groupedDag,
+              groups, branchers, shufflers, sinkRunnables, stageName, time.milliseconds(), context,
+              sinkRunnableProvider);
         }
       }, Exception.class);
 
@@ -322,65 +339,21 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         return;
       }
 
-      if (dStream instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) dStream).onBatchCompleted(streamingContext);
-      } else if (dStream.dstream() instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) (dStream.dstream())).onBatchCompleted(streamingContext);
+      if (eventHandler != null) {
+        eventHandler.onBatchCompleted(streamingContext);
       }
     });
   }
 
-  @Override
-  protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
-                                          SparkSink<Object> sparkSink, long time) throws Exception {
-    if (!stateStoreEnabled) {
-      return super.getSparkSinkRunnable(stageSpec, stageData, sparkSink, time);
+
+  @Nullable
+  private StreamingEventHandler getEventHandler(JavaDStream<Object> dStream) {
+    if (dStream instanceof StreamingEventHandler) {
+      return (StreamingEventHandler) dStream;
+    } else if (dStream.dstream() instanceof StreamingEventHandler) {
+      return (StreamingEventHandler) (dStream.dstream());
     }
 
-    return () -> {
-      try {
-        new StreamingSparkSinkFunction<>(sec, stageSpec, streamingRetrySettings)
-          .call(stageData.getUnderlying(), Time.apply(time));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
-  @Override
-  protected Runnable getBatchSinkRunnable(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
-                                          SparkCollection<Object> stageData,
-                                          PluginFunctionContext pluginFunctionContext, long time) {
-    if (!stateStoreEnabled) {
-      return super.getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData, pluginFunctionContext, time);
-    }
-
-    return () -> {
-      try {
-        new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache(), streamingRetrySettings)
-          .call(stageData.getUnderlying(), Time.apply(time));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
-  @Override
-  protected Runnable getGroupSinkRunnable(PhaseSpec phaseSpec, Set<String> groupStages,
-                                          Map<String, StageStatisticsCollector> collectors,
-                                          SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
-                                          long time) {
-    if (!stateStoreEnabled) {
-      return super.getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
-    }
-
-    return () -> {
-      try {
-        new StreamingMultiSinkFunction(sec, phaseSpec, groupStages, groupSinks, collectors, streamingRetrySettings)
-          .call(fullInput.getUnderlying(), Time.apply(time));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    };
+    return null;
   }
 }
