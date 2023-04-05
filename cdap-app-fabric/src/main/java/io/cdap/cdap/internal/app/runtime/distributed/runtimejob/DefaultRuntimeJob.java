@@ -36,12 +36,14 @@ import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
+import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.deploy.Configurator;
 import io.cdap.cdap.app.guice.AppStateModule;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.guice.DefaultProgramRunnerFactory;
+import io.cdap.cdap.app.guice.DistributedProgramContainerModule;
 import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -114,6 +116,7 @@ import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
@@ -161,6 +164,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillRunner;
@@ -516,22 +520,46 @@ public class DefaultRuntimeJob implements RuntimeJob {
       ProgramRunId programRunId,
       ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
-    modules.add(new ConfigModule(cConf));
+    // doesn't make sense to run a service program in isolated mode
+    ServiceAnnouncer serviceAnnouncer = new ServiceAnnouncer() {
+      @Override
+      public Cancellable announce(String s, int i) {
+        throw new UnsupportedOperationException("Services are not supported in remote jobs");
+      }
 
-    RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
-        programOpts);
-    modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+      @Override
+      public Cancellable announce(String s, int i, byte[] bytes) {
+        throw new UnsupportedOperationException("Services are not supported in remote jobs");
+      }
+    };
+    // module for running programs, except with MessagingServer bindings
+    // instead of MessagingClient. This is because this class runs a local MessagingService
+    // that the actual program will write to, while the RuntimeClientService relays the messages
+    // back to the actual system messaging service.
+    Module programModule = Modules.override(new DistributedProgramContainerModule(
+        cConf, new Configuration(), programRunId, programOpts, serviceAnnouncer))
+        .with(new MessagingServerRuntimeModule().getStandaloneModules());
+    modules.add(programModule);
 
-    modules.add(new IOModule());
-    modules.add(new TMSLogAppenderModule());
-    modules.add(new RemoteExecutionDiscoveryModule());
-    modules.add(new AuthorizationEnforcementModule().getDistributedModules());
-    modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
-    modules.add(new MetricsClientRuntimeModule().getDistributedModules());
-    modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
-    modules.add(new NamespaceQueryAdminModule());
 
-    LaunchMode launchMode = runtimeJobEnv.getLaunchMode();
+    //modules.add(new ConfigModule(cConf));
+
+    //RuntimeMonitorType runtimeMonitorType = SystemArguments.getRuntimeMonitorType(cConf,
+    //    programOpts);
+    //modules.add(RuntimeMonitors.getRemoteAuthenticatorModule(runtimeMonitorType, programOpts));
+
+    //modules.add(new IOModule());
+    //modules.add(new TMSLogAppenderModule());
+    //modules.add(new RemoteExecutionDiscoveryModule());
+    //modules.add(new AuthorizationEnforcementModule().getDistributedModules());
+    //modules.add(new AuthenticationContextModules().getProgramContainerModule(cConf));
+    //modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    // module for local MessagingService that the program will talk to, before it
+    // gets relayed back by the RuntimeClientService
+    //modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
+    //modules.add(new NamespaceQueryAdminModule());
+
+    /*
     if (launchMode == LaunchMode.CLIENT) {
       modules.add(new DataSetServiceModules().getStandaloneModules());
       modules.add(Modules.override(new DataFabricModules().getInMemoryModules())
@@ -544,22 +572,22 @@ public class DefaultRuntimeJob implements RuntimeJob {
                   .in(Scopes.SINGLETON);
             }
           }));
-      modules.add(new DataSetsModules().getDistributedModules());
-      modules.add(new MetadataReaderWriterModules().getDistributedModules());
-      modules.add(new SecureStoreClientModule());
-      modules.add(new AppStateModule());
-    }
+      //modules.add(new DataSetsModules().getDistributedModules());
+      //modules.add(new MetadataReaderWriterModules().getDistributedModules());
+      //modules.add(new SecureStoreClientModule());
+      //modules.add(new AppStateModule());
+    }*/
 
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
-        bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
+        //bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
-        // Bindings from the environment
+        // Bindings from the environment for program runners
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
             .toInstance(runtimeJobEnv.getTwillRunner());
-        bind(LocationFactory.class).toInstance(runtimeJobEnv.getLocationFactory());
+        //bind(LocationFactory.class).toInstance(runtimeJobEnv.getLocationFactory());
 
         MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder = MapBinder.newMapBinder(
             binder(), ProgramType.class, ProgramRunner.class);
@@ -570,7 +598,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
               .to(MapReduceProgramRunner.class);
           defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW)
               .to(WorkflowProgramRunner.class);
-          bind(WorkflowStateWriter.class).to(MessagingWorkflowStateWriter.class);
+          //bind(WorkflowStateWriter.class).to(MessagingWorkflowStateWriter.class);
+          /*
           bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
           // TODO: figure out how to get a ServiceAnnouncer
           bind(ServiceAnnouncer.class).toInstance(new ServiceAnnouncer() {
@@ -583,7 +612,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
             public Cancellable announce(String s, int i, byte[] bytes) {
               return () -> { };
             }
-          });
+          });*/
         } else {
           bind(ProgramRuntimeProvider.Mode.class).toInstance(Mode.DISTRIBUTED);
           defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE)
@@ -595,21 +624,21 @@ public class DefaultRuntimeJob implements RuntimeJob {
         }
         bind(ProgramRunnerFactory.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
             .to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
-        bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class)
-            .in(Scopes.SINGLETON);
-        bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
+        //bind(ProgramStatePublisher.class).to(MessagingProgramStatePublisher.class)
+        //    .in(Scopes.SINGLETON);
+        //bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
-        bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
+        //bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
 
+        // needed for app-spec regeneration
         install(
             new FactoryModuleBuilder()
                 .implement(Configurator.class, InMemoryConfigurator.class)
                 .build(ConfiguratorFactory.class)
         );
-
         bind(String.class)
             .annotatedWith(Names.named(RemoteIsolatedPluginFinder.ISOLATED_PLUGIN_DIR))
             .toInstance(programOpts.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR,

@@ -147,7 +147,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private List<Module> getCoreModules() {
     Arguments systemArgs = programOpts.getArguments();
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOpts);
-
     List<Module> modules = new ArrayList<>();
 
     modules.add(new ConfigModule(cConf, hConf));
