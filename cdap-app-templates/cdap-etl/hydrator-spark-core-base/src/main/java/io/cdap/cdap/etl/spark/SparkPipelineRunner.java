@@ -67,10 +67,10 @@ import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec.Port;
+import io.cdap.cdap.etl.spark.batch.BatchSinkRunnableProvider;
 import io.cdap.cdap.etl.spark.batch.SQLBackedCollection;
 import io.cdap.cdap.etl.spark.batch.WrappedSQLEngineCollection;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
-import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
 import io.cdap.cdap.etl.spark.function.ErrorPassFilter;
 import io.cdap.cdap.etl.spark.function.ErrorTransformFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
@@ -85,10 +85,6 @@ import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.RecordInfoWrapper;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -105,6 +101,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base Spark program to run a Hydrator pipeline.
@@ -193,10 +192,12 @@ public abstract class SparkPipelineRunner {
     Collection<Runnable> sinkRunnables = new ArrayList<>();
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
     //Emitted records and sinkRunnables will be populated as each stage is processed
+    SinkRunnableProvider sinkRunnableProvider = new BatchSinkRunnableProvider();
     for (String stageName : groupedDag.getTopologicalOrder()) {
-      processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
-                   functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers,
-                   sinkRunnables, stageName, System.currentTimeMillis(), null);
+      processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors,
+          pipelinePhase, functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups,
+          branchers, shufflers, sinkRunnables, stageName, System.currentTimeMillis(), null,
+          sinkRunnableProvider);
     }
     //We should have all the sink runnables at this point, execute them
     executeSinkRunnables(sec, sinkRunnables);
@@ -238,17 +239,20 @@ public abstract class SparkPipelineRunner {
     }
   }
 
-  protected void processStage(PhaseSpec phaseSpec, String sourcePluginType, JavaSparkExecutionContext sec,
-                              Map<String, Integer> stagePartitions, PluginContext pluginContext,
-                              Map<String, StageStatisticsCollector> collectors, PipelinePhase pipelinePhase,
-                              FunctionCache.Factory functionCacheFactory, MacroEvaluator macroEvaluator,
-                              Map<String, EmittedRecords> emittedRecords, CombinerDag groupedDag,
-                              Map<String, Set<String>> groups, Set<String> branchers, Set<String> shufflers,
-                              Collection<Runnable> sinkRunnables, String stageName, long time,
-                              @Nullable DatasetContext datasetContext) throws Exception {
+  protected void processStage(PhaseSpec phaseSpec, String sourcePluginType,
+      JavaSparkExecutionContext sec,
+      Map<String, Integer> stagePartitions, PluginContext pluginContext,
+      Map<String, StageStatisticsCollector> collectors, PipelinePhase pipelinePhase,
+      FunctionCache.Factory functionCacheFactory, MacroEvaluator macroEvaluator,
+      Map<String, EmittedRecords> emittedRecords, CombinerDag groupedDag,
+      Map<String, Set<String>> groups, Set<String> branchers, Set<String> shufflers,
+      Collection<Runnable> sinkRunnables, String stageName, long time,
+      @Nullable DatasetContext datasetContext,
+      SinkRunnableProvider sinkRunnableProvider) throws Exception {
     if (groups.containsKey(stageName)) {
-      sinkRunnables.add(getGroupRunnable(sec, phaseSpec, groups.get(stageName), groupedDag.getNodeInputs(stageName),
-                                         emittedRecords, collectors, time, datasetContext));
+      sinkRunnables.add(getGroupRunnable(sec, phaseSpec, groups.get(stageName),
+          groupedDag.getNodeInputs(stageName), emittedRecords, collectors, time, datasetContext,
+          sinkRunnableProvider));
       return;
     }
 
@@ -312,12 +316,13 @@ public abstract class SparkPipelineRunner {
         }
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
-        sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData,
-                pluginFunctionContext, time));
+        sinkRunnables.add(sinkRunnableProvider.getBatchSinkRunnable(stageSpec, stageData,
+            functionCacheFactory, pluginFunctionContext));
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
+        sinkRunnables.add(
+            sinkRunnableProvider.getSparkSinkRunnable(stageSpec, stageData, sparkSink));
 
       } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -405,18 +410,6 @@ public abstract class SparkPipelineRunner {
       }
     }
     return EmittedRecords.builder().build();
-  }
-
-  protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
-                                          SparkSink<Object> sparkSink, long time) throws Exception {
-    return stageData.createStoreTask(stageSpec, sparkSink);
-  }
-
-  protected Runnable getBatchSinkRunnable(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
-                                          SparkCollection<Object> stageData,
-                                          PluginFunctionContext pluginFunctionContext, long time) {
-    return stageData.createStoreTask(stageSpec, new BatchSinkFunction(
-      pluginFunctionContext, functionCacheFactory.newCache()));
   }
 
   private SparkCollection<Object> getStageData(String pluginType,
@@ -579,10 +572,10 @@ public abstract class SparkPipelineRunner {
     return Collections.emptyList();
   }
 
-  private Runnable getGroupRunnable(JavaSparkExecutionContext sec, PhaseSpec phaseSpec, Set<String> groupStages,
-                                    Set<String> groupInputs, Map<String, EmittedRecords> emittedRecords,
-                                    Map<String, StageStatisticsCollector> collectors, long time,
-                                    DatasetContext datasetContext) {
+  private Runnable getGroupRunnable(JavaSparkExecutionContext sec, PhaseSpec phaseSpec,
+      Set<String> groupStages, Set<String> groupInputs, Map<String, EmittedRecords> emittedRecords,
+      Map<String, StageStatisticsCollector> collectors, long time, DatasetContext datasetContext,
+      SinkRunnableProvider sinkRunnableProvider) {
     /*
         with a pipeline like:
 
@@ -615,14 +608,8 @@ public abstract class SparkPipelineRunner {
 
     // Sets.intersection returns an unserializable Set, so copy it into a HashSet.
     Set<String> groupSinks = new HashSet<>(Sets.intersection(groupStages, phaseSpec.getPhase().getSinks()));
-    return getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
-  }
-
-  protected Runnable getGroupSinkRunnable(PhaseSpec phaseSpec, Set<String> groupStages,
-                                          Map<String, StageStatisticsCollector> collectors,
-                                          SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
-                                          long time) {
-    return fullInput.createMultiStoreTask(phaseSpec, groupStages, groupSinks, collectors);
+    return sinkRunnableProvider.getGroupSinkRunnable(phaseSpec, fullInput, groupStages, collectors,
+        groupSinks);
   }
 
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
