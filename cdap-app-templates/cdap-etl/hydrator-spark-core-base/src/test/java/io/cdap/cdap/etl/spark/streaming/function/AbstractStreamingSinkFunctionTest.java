@@ -35,7 +35,7 @@ public class AbstractStreamingSinkFunctionTest {
     AtomicInteger attempt = new AtomicInteger(1);
     StreamingRetrySettings streamingRetrySettings = new StreamingRetrySettings(2L, 1L, 10L);
     AbstractStreamingSinkFunction<Object> testFunction =
-      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings) {
+      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings, () -> null) {
         @Override
         protected Set<String> getSinkNames() {
           return Collections.singleton("test-recovering-sink");
@@ -57,7 +57,7 @@ public class AbstractStreamingSinkFunctionTest {
     StreamingRetrySettings streamingRetrySettings = new StreamingRetrySettings(2L, 1L, 10L);
     long startTime = System.currentTimeMillis();
     AbstractStreamingSinkFunction<Object> testFunction =
-      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings) {
+      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings, () -> null) {
         @Override
         protected Set<String> getSinkNames() {
           return Collections.singleton("test-sink");

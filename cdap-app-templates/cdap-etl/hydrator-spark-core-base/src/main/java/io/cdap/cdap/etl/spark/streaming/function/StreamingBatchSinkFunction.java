@@ -37,6 +37,7 @@ import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
@@ -57,9 +58,10 @@ public class StreamingBatchSinkFunction<T> extends AbstractStreamingSinkFunction
   private final StageSpec stageSpec;
   private final FunctionCache functionCache;
 
-  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec, FunctionCache functionCache,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+      FunctionCache functionCache, StreamingRetrySettings retrySettings,
+      Callable<Void> batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.stageSpec = stageSpec;
     this.functionCache = functionCache;

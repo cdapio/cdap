@@ -27,4 +27,6 @@ public interface StreamingEventHandler {
    * @param streamingContext @link{StreamingContext} Context object for this stage
    */
   void onBatchCompleted(StreamingContext streamingContext);
+
+  void onBatchRetry(StreamingContext streamingContext);
 }

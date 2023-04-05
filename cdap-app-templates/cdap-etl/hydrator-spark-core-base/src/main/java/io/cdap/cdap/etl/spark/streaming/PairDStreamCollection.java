@@ -20,6 +20,7 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
@@ -37,15 +38,18 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   private final FunctionCache.Factory functionCacheFactory;
   private final JavaPairDStream<K, V> pairStream;
   private final StreamingRetrySettings streamingRetrySettings;
+  private final Callable<Void> batchRetryFunction;
 
   public PairDStreamCollection(JavaSparkExecutionContext sec,
                                FunctionCache.Factory functionCacheFactory,
                                JavaPairDStream<K, V> pairStream,
-                               StreamingRetrySettings streamingRetrySettings) {
+                               StreamingRetrySettings streamingRetrySettings,
+      Callable<Void> batchRetryFunction) {
     this.sec = sec;
     this.functionCacheFactory = functionCacheFactory;
     this.pairStream = pairStream;
     this.streamingRetrySettings = streamingRetrySettings;
+    this.batchRetryFunction = batchRetryFunction;
   }
 
   @SuppressWarnings("unchecked")
@@ -56,7 +60,8 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new DStreamCollection<>(sec, functionCacheFactory, pairStream.flatMap(function), streamingRetrySettings);
+    return new DStreamCollection<>(sec, functionCacheFactory, pairStream.flatMap(function), streamingRetrySettings,
+        batchRetryFunction);
   }
 
   @Override
@@ -105,6 +110,7 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <T, U> PairDStreamCollection<T, U> wrap(JavaPairDStream<T, U> pairStream) {
-    return new PairDStreamCollection<>(sec, functionCacheFactory, pairStream, streamingRetrySettings);
+    return new PairDStreamCollection<>(sec, functionCacheFactory, pairStream, streamingRetrySettings,
+        batchRetryFunction);
   }
 }

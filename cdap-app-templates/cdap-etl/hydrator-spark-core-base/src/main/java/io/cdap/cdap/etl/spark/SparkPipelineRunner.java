@@ -85,6 +85,7 @@ import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.RecordInfoWrapper;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,18 +118,20 @@ public abstract class SparkPipelineRunner {
 
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    FunctionCache.Factory functionCacheFactory,
-                                                                   StageStatisticsCollector collector) throws Exception;
+                                                                   StageStatisticsCollector collector,
+      Callable<Void> batchRetryFunction) throws Exception;
 
   protected abstract JavaSparkContext getSparkContext();
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
     StageSpec stageSpec, FunctionCache.Factory functionCacheFactory, String inputStageName,
-    SparkCollection<Object> inputCollection, StageStatisticsCollector collector) throws Exception;
+    SparkCollection<Object> inputCollection, StageStatisticsCollector collector,
+      Callable<Void> batchRetryFunction) throws Exception;
 
   protected abstract SparkCollection<Object> mergeJoinResults(
     StageSpec stageSpec,
     FunctionCache.Factory functionCacheFactory, SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
-    StageStatisticsCollector collector) throws Exception;
+    StageStatisticsCollector collector, Callable<Void> batchRetryFunction) throws Exception;
 
   public void runPipeline(PhaseSpec phaseSpec, String sourcePluginType,
                           JavaSparkExecutionContext sec,
@@ -196,7 +199,7 @@ public abstract class SparkPipelineRunner {
     for (String stageName : groupedDag.getTopologicalOrder()) {
       processStage(phaseSpec, sourcePluginType, sec, stagePartitions, pluginContext, collectors, pipelinePhase,
                    functionCacheFactory, macroEvaluator, emittedRecords, groupedDag, groups, branchers, shufflers,
-                   sinkRunnables, stageName, System.currentTimeMillis(), null);
+                   sinkRunnables, stageName, System.currentTimeMillis(), null, null);
     }
     //We should have all the sink runnables at this point, execute them
     executeSinkRunnables(sec, sinkRunnables);
@@ -245,10 +248,12 @@ public abstract class SparkPipelineRunner {
                               Map<String, EmittedRecords> emittedRecords, CombinerDag groupedDag,
                               Map<String, Set<String>> groups, Set<String> branchers, Set<String> shufflers,
                               Collection<Runnable> sinkRunnables, String stageName, long time,
-                              @Nullable DatasetContext datasetContext) throws Exception {
+                              @Nullable DatasetContext datasetContext,
+     Callable<Void> batchRetryCallable) throws Exception {
     if (groups.containsKey(stageName)) {
       sinkRunnables.add(getGroupRunnable(sec, phaseSpec, groups.get(stageName), groupedDag.getNodeInputs(stageName),
-                                         emittedRecords, collectors, time, datasetContext));
+                                         emittedRecords, collectors, time, datasetContext,
+          batchRetryCallable));
       return;
     }
 
@@ -303,7 +308,8 @@ public abstract class SparkPipelineRunner {
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType) || isConnectorSource) {
-          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector);
+          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector,
+              batchRetryCallable);
           EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
           emittedRecordsForStage = getEmittedRecords(pipelinePhase, stageSpec, combinedData, groupedDag, branchers,
                                                      shufflers, hasErrorOutput, hasAlertOutput);
@@ -313,11 +319,12 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
         sinkRunnables.add(getBatchSinkRunnable(functionCacheFactory, stageSpec, stageData,
-                pluginFunctionContext, time));
+                pluginFunctionContext, time, batchRetryCallable));
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkSink<Object> sparkSink = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time));
+        sinkRunnables.add(getSparkSinkRunnable(stageSpec, stageData, sparkSink, time,
+            batchRetryCallable));
 
       } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -408,13 +415,15 @@ public abstract class SparkPipelineRunner {
   }
 
   protected Runnable getSparkSinkRunnable(StageSpec stageSpec, SparkCollection<Object> stageData,
-                                          SparkSink<Object> sparkSink, long time) throws Exception {
+                                          SparkSink<Object> sparkSink, long time,
+      Callable<Void> batchRetryFunction) throws Exception {
     return stageData.createStoreTask(stageSpec, sparkSink);
   }
 
   protected Runnable getBatchSinkRunnable(FunctionCache.Factory functionCacheFactory, StageSpec stageSpec,
                                           SparkCollection<Object> stageData,
-                                          PluginFunctionContext pluginFunctionContext, long time) {
+                                          PluginFunctionContext pluginFunctionContext, long time,
+      Callable<Void> batchRetryFunction) {
     return stageData.createStoreTask(stageSpec, new BatchSinkFunction(
       pluginFunctionContext, functionCacheFactory.newCache()));
   }
@@ -516,7 +525,7 @@ public abstract class SparkPipelineRunner {
       Integer numPartitions = stagePartitions.get(stageName);
       SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
                                                   stageSpec, functionCacheFactory, plugin,
-                                                  numPartitions, collector, shufflers);
+                                                  numPartitions, collector, shufflers, () -> null);
       return getEmittedRecords(pipelinePhase, stageSpec,
                                mapToRecordInfoCollection(stageName, joined),
                                groupedDag, branchers, shufflers, false, false);
@@ -582,7 +591,8 @@ public abstract class SparkPipelineRunner {
   private Runnable getGroupRunnable(JavaSparkExecutionContext sec, PhaseSpec phaseSpec, Set<String> groupStages,
                                     Set<String> groupInputs, Map<String, EmittedRecords> emittedRecords,
                                     Map<String, StageStatisticsCollector> collectors, long time,
-                                    DatasetContext datasetContext) {
+                                    DatasetContext datasetContext,
+      Callable<Void> batchRetryFunction) {
     /*
         with a pipeline like:
 
@@ -615,13 +625,14 @@ public abstract class SparkPipelineRunner {
 
     // Sets.intersection returns an unserializable Set, so copy it into a HashSet.
     Set<String> groupSinks = new HashSet<>(Sets.intersection(groupStages, phaseSpec.getPhase().getSinks()));
-    return getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time);
+    return getGroupSinkRunnable(phaseSpec, groupStages, collectors, fullInput, groupSinks, time,
+        batchRetryFunction);
   }
 
   protected Runnable getGroupSinkRunnable(PhaseSpec phaseSpec, Set<String> groupStages,
                                           Map<String, StageStatisticsCollector> collectors,
                                           SparkCollection<RecordInfo<Object>> fullInput, Set<String> groupSinks,
-                                          long time) {
+                                          long time, Callable<Void> batchRetryFunction) {
     return fullInput.createMultiStoreTask(phaseSpec, groupStages, groupSinks, collectors);
   }
 
@@ -630,14 +641,16 @@ public abstract class SparkPipelineRunner {
                                                StageSpec stageSpec, FunctionCache.Factory functionCacheFactory,
                                                Object plugin, Integer numPartitions,
                                                StageStatisticsCollector collector,
-                                               Set<String> shufflers) throws Exception {
+                                               Set<String> shufflers,
+      Callable<Void> batchRetryFunction) throws Exception {
     String stageName = stageSpec.getName();
     if (plugin instanceof BatchJoiner) {
       BatchJoiner<Object, Object, Object> joiner = (BatchJoiner<Object, Object, Object>) plugin;
       BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(joinerRuntimeContext);
       shufflers.add(stageName);
-      return handleJoin(joiner, inputDataCollections, stageSpec, functionCacheFactory, numPartitions, collector);
+      return handleJoin(joiner, inputDataCollections, stageSpec, functionCacheFactory, numPartitions, collector,
+          batchRetryFunction);
     } else if (plugin instanceof AutoJoiner) {
       AutoJoiner autoJoiner = (AutoJoiner) plugin;
       Map<String, Schema> inputSchemas = new HashMap<>();
@@ -984,12 +997,14 @@ public abstract class SparkPipelineRunner {
                                                StageSpec stageSpec,
                                                FunctionCache.Factory functionCacheFactory,
                                                Integer numPartitions,
-                                               StageStatisticsCollector collector) throws Exception {
+                                               StageStatisticsCollector collector,
+      Callable<Void> batchRetryFunction) throws Exception {
     Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();
     for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
       String inputStage = inputStreamEntry.getKey();
       SparkCollection<Object> inputStream = inputStreamEntry.getValue();
-      preJoinStreams.put(inputStage, addJoinKey(stageSpec, functionCacheFactory, inputStage, inputStream, collector));
+      preJoinStreams.put(inputStage, addJoinKey(stageSpec, functionCacheFactory, inputStage, inputStream, collector,
+          batchRetryFunction));
     }
 
     Set<String> remainingInputs = new HashSet<>();
@@ -1040,7 +1055,8 @@ public abstract class SparkPipelineRunner {
       throw new IllegalStateException("There are no inputs into join stage " + stageSpec.getName());
     }
 
-    return mergeJoinResults(stageSpec, functionCacheFactory, joinedInputs, collector);
+    return mergeJoinResults(stageSpec, functionCacheFactory, joinedInputs, collector,
+        () -> null);
   }
 
 

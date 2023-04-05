@@ -34,6 +34,7 @@ import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Time;
@@ -54,8 +55,8 @@ public class StreamingSparkSinkFunction<T> extends AbstractStreamingSinkFunction
   private final StageSpec stageSpec;
 
   public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+      StreamingRetrySettings retrySettings, Callable<Void> batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.stageSpec = stageSpec;
   }

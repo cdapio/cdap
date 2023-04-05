@@ -41,6 +41,7 @@ import io.cdap.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.streaming.Time;
 import org.apache.tephra.TransactionFailureException;
@@ -66,10 +67,9 @@ public class StreamingMultiSinkFunction extends AbstractStreamingSinkFunction<Ja
   private final Map<String, StageStatisticsCollector> collectors;
 
   public StreamingMultiSinkFunction(JavaSparkExecutionContext sec, PhaseSpec phaseSpec,
-                                    Set<String> group, Set<String> sinkNames,
-                                    Map<String, StageStatisticsCollector> collectors,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+      Set<String> group, Set<String> sinkNames, Map<String, StageStatisticsCollector> collectors,
+      StreamingRetrySettings retrySettings, Callable<Void> batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.phaseSpec = phaseSpec;
     this.group = group;

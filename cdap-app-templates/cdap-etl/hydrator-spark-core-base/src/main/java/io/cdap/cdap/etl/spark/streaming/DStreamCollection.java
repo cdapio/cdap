@@ -49,6 +49,7 @@ import io.cdap.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingMultiSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
+import java.util.concurrent.Callable;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -74,15 +75,18 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   private final JavaDStream<T> stream;
   private final StreamingRetrySettings streamingRetrySettings;
   private final FunctionCache.Factory functionCacheFactory;
+  private final Callable<Void> batchRetryFunction;
 
   public DStreamCollection(JavaSparkExecutionContext sec,
                            FunctionCache.Factory functionCacheFactory,
                            JavaDStream<T> stream,
-                           StreamingRetrySettings streamingRetrySettings) {
+                           StreamingRetrySettings streamingRetrySettings,
+      Callable<Void> batchRetryFunction) {
     this.sec = sec;
     this.functionCacheFactory = functionCacheFactory;
     this.stream = stream;
     this.streamingRetrySettings = streamingRetrySettings;
+    this.batchRetryFunction = batchRetryFunction;
   }
 
   @SuppressWarnings("unchecked")
@@ -140,7 +144,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
     return new PairDStreamCollection<>(sec, functionCacheFactory, stream.flatMapToPair(function),
-                                       streamingRetrySettings);
+                                       streamingRetrySettings, batchRetryFunction);
   }
 
   @Override
@@ -187,7 +191,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
       @Override
       public void run() {
         stream.foreachRDD(new StreamingBatchSinkFunction<T>(sec, stageSpec, functionCacheFactory.newCache(),
-                                                            streamingRetrySettings));
+                                                            streamingRetrySettings,
+            batchRetryFunction));
       }
     };
   }
@@ -199,7 +204,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
       @Override
       public void run() {
         ((JavaDStream<RecordInfo<Object>>) stream).foreachRDD(
-              new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors, streamingRetrySettings));
+              new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors, streamingRetrySettings,
+                  batchRetryFunction));
       }
     };
   }
@@ -209,7 +215,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        stream.foreachRDD(new StreamingSparkSinkFunction<T>(sec, stageSpec, streamingRetrySettings));
+        stream.foreachRDD(new StreamingSparkSinkFunction<T>(sec, stageSpec, streamingRetrySettings,
+            batchRetryFunction));
       }
     };
   }
@@ -241,6 +248,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   private <U> SparkCollection<U> wrap(JavaDStream<U> stream) {
-    return new DStreamCollection<>(sec, functionCacheFactory, stream, streamingRetrySettings);
+    return new DStreamCollection<>(sec, functionCacheFactory, stream, streamingRetrySettings,
+        batchRetryFunction);
   }
 }

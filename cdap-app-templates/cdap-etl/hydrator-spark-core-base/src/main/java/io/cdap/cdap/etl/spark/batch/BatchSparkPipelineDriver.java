@@ -62,6 +62,7 @@ import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
@@ -119,7 +120,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                           FunctionCache.Factory functionCacheFactory,
-                                                          StageStatisticsCollector collector) {
+                                                          StageStatisticsCollector collector,
+      Callable<Void> batchRetryFunction) {
     // Initialize function cache factory
     this.functionCacheFactory = functionCacheFactory;
 
@@ -162,7 +164,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                            FunctionCache.Factory functionCacheFactory,
                                                            String inputStageName,
                                                            SparkCollection<Object> inputCollection,
-                                                           StageStatisticsCollector collector) throws Exception {
+                                                           StageStatisticsCollector collector,
+      Callable<Void> batchRetryFunction) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return inputCollection.flatMapToPair(
       new JoinOnFunction<>(pluginFunctionContext, functionCacheFactory.newCache(), inputStageName));
@@ -173,7 +176,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     StageSpec stageSpec,
     FunctionCache.Factory functionCacheFactory,
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
-    StageStatisticsCollector collector) throws Exception {
+    StageStatisticsCollector collector, Callable<Void> batchRetryFunction) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return joinedInputs.flatMap(new JoinMergeFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache()));

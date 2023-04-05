@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.api.retry.RetryFailedException;
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import java.util.concurrent.Callable;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
@@ -38,14 +39,17 @@ public abstract class AbstractStreamingSinkFunction<S> implements VoidFunction2<
   private final long maxRetryTimeInMillis;
   private final long baseDelayInMillis;
   private final long maxDelayInMillis;
+  private final Callable<Void> batchRetryFunction;
 
-  protected AbstractStreamingSinkFunction(StreamingRetrySettings streamingRetrySettings) {
+  protected AbstractStreamingSinkFunction(StreamingRetrySettings streamingRetrySettings,
+      Callable<Void> batchRetryFunction) {
     this.maxRetryTimeInMillis = TimeUnit.MILLISECONDS.convert(streamingRetrySettings.getMaxRetryTimeInMins(),
                                                               TimeUnit.MINUTES);
     this.baseDelayInMillis = TimeUnit.MILLISECONDS.convert(streamingRetrySettings.getBaseDelayInSeconds(),
                                                            TimeUnit.SECONDS);
     this.maxDelayInMillis = TimeUnit.MILLISECONDS.convert(streamingRetrySettings.getMaxDelayInSeconds(),
                                                           TimeUnit.SECONDS);
+    this.batchRetryFunction = batchRetryFunction;
     LOG.info("Retry settings in millis : {} , {} ,  {} ", maxRetryTimeInMillis, baseDelayInMillis, maxDelayInMillis);
   }
 
@@ -55,6 +59,9 @@ public abstract class AbstractStreamingSinkFunction<S> implements VoidFunction2<
     long startTimeInMillis = System.currentTimeMillis();
     while (true) {
       try {
+        if(attempt > 1 ){
+          batchRetryFunction.call();
+        }
         retryableCall(v1, time);
         LOG.debug("Returning successfully.");
         return;
@@ -99,4 +106,5 @@ public abstract class AbstractStreamingSinkFunction<S> implements VoidFunction2<
    * @return
    */
   protected abstract Set<String> getSinkNames();
+
 }
