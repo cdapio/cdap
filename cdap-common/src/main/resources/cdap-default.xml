@@ -248,12 +248,31 @@
   <property>
     <name>twill.jvm.gc.opts</name>
     <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <activation>
+      <jdk>(,9)</jdk>
+    </activation>
     <description>
       Java garbage collection options for all Apache Twill containers;
       "&lt;LOG_DIR&gt;" is the location of the log directory in the
       container; note that the special characters are replaced with entity
       equivalents so they can be included in the XML
     </description>
+  </property>
+
+  <property>
+    <name>twill.jvm.gc.opts</name>
+    <value>-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=&lt;LOG_DIR&gt;/gc.log:time,level,tags:filecount=10,filesize=1M</value>
+    <activation>
+      <jdk>[9,)</jdk>
+    </activation>
+    <description>
+      Java garbage collection options for all Apache Twill containers in Java 9
+      or above environment.
+      "&lt;LOG_DIR&gt;" is the location of the log directory in the
+      container; note that the special characters are replaced with entity
+      equivalents so they can be included in the XML
+    </description>
+
   </property>
 
   <property>
