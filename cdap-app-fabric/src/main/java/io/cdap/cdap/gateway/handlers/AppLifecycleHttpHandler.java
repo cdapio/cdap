@@ -670,9 +670,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * a success (200) or failure for each of the requested application in the same order as the
    * request.
    *
-   * Deprecated : Unused
    */
-  @Deprecated
   @POST
   @Path("/appdetail")
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
