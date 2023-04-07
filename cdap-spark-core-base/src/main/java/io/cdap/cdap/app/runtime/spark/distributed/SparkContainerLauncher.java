@@ -22,11 +22,11 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -102,9 +102,7 @@ public final class SparkContainerLauncher {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
 
     Set<URL> urls = new LinkedHashSet<>();
-    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
-      urls.add(Paths.get(path).toRealPath().toUri().toURL());
-    }
+    urls.addAll(ClassPathResources.getClasspathUrls());
 
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
 

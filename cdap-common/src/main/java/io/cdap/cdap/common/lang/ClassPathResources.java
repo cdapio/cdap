@@ -19,14 +19,19 @@ package io.cdap.cdap.common.lang;
 import io.cdap.cdap.common.internal.guava.ClassPath;
 import io.cdap.cdap.common.internal.guava.ClassPath.ClassInfo;
 import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.twill.api.ClassAcceptor;
@@ -40,6 +45,33 @@ import org.slf4j.LoggerFactory;
 public final class ClassPathResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClassPathResources.class);
+
+  /**
+   * Return a list of all URL entries from the java class path.
+   *
+   * @return list of all URL entries from the java class path.
+   */
+  public static List<URL> getClasspathUrls() {
+    List<URL> urls = new ArrayList<>();
+
+    // wildcards are expanded before they are places in java.class.path
+    // for example, java -cp lib/* will list out all the jars in the lib directory and
+    // add each individual jars as an element in java.class.path. The exception is if
+    // the directory doesn't exist, then it will be preserved as lib/*.
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      try {
+        urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      } catch (NoSuchFileException e) {
+        // ignore anything that doesn't exist
+      } catch (MalformedURLException e) {
+        // should never happen
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to get class path entry " + path, e);
+      }
+    }
+    return urls;
+  }
 
   /**
    * Returns the base set of resources needed to load the specified {@link Class} using the
