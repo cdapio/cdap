@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -181,7 +182,11 @@ public class DataprocJobMain {
 
     // Add the system class path to the URL list
     for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
-      urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      try {
+        urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      } catch (NoSuchFileException e) {
+        // ignore anything that doesn't exist
+      }
     }
 
     return urls.toArray(new URL[0]);
