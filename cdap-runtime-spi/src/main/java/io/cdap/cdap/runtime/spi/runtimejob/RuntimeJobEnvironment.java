@@ -40,4 +40,11 @@ public interface RuntimeJobEnvironment {
    * Returns runtime environment properties to be available to {@link RuntimeJob}.
    */
   Map<String, String> getProperties();
+
+  /**
+   * Returns how the RuntimeJob should launch the program client.
+   */
+  default LaunchMode getLaunchMode() {
+    return LaunchMode.CLUSTER;
+  }
 }
