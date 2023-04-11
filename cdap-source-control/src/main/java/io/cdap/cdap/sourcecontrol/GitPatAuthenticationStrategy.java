@@ -18,7 +18,9 @@ package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.proto.security.Credential;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
@@ -76,18 +78,33 @@ public class GitPatAuthenticationStrategy implements AuthenticationStrategy {
     @Override
     public void refresh() throws IOException, AuthenticationConfigException {
       byte[] data;
+
+      // Get the user principal, credentials and switch to system context
+      Credential userCredential = SecurityRequestContext.getUserCredential();
+      String userId = SecurityRequestContext.getUserId();
+      String userIp = SecurityRequestContext.getUserIP();
+      SecurityRequestContext.reset();
+      
       try {
         data = secureStore.getData(namespaceId, passwordKeyName);
+
+        if (data == null) {
+          throw new AuthenticationConfigException(
+              String.format("Password with key name %s not found in secure store",
+                  passwordKeyName));
+        }
+        
+        password = new String(data, StandardCharsets.UTF_8);
       } catch (Exception e) {
         Throwables.propagateIfInstanceOf(e, IOException.class);
+        Throwables.propagateIfInstanceOf(e, AuthenticationConfigException.class);
         throw new AuthenticationConfigException("Failed to get password from secure store", e);
+      } finally {
+        // Set back to user principal
+        SecurityRequestContext.setUserCredential(userCredential);
+        SecurityRequestContext.setUserId(userId);
+        SecurityRequestContext.setUserIP(userIp);
       }
-      if (data == null) {
-        throw new AuthenticationConfigException(
-            String.format("Password with key name %s not found in secure store",
-                passwordKeyName));
-      }
-      password = new String(data, StandardCharsets.UTF_8);
     }
 
     @Override
