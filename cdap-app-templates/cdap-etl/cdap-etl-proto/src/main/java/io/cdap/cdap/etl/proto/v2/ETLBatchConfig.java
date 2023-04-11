@@ -260,6 +260,7 @@ public final class ETLBatchConfig extends ETLConfig {
       this.processTimingEnabled = config.isProcessTimingEnabled();
       this.engine = config.getEngine();
       this.schedule = config.getSchedule();
+      this.resources = config.getResources();
       this.driverResources = config.getDriverResources();
       this.clientResources = config.getClientResources();
       this.numOfRecordsPreview = config.getNumOfRecordsPreview();
