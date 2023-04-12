@@ -35,4 +35,8 @@ public class ArtifactNotFoundException extends NotFoundException {
   public ArtifactNotFoundException(ArtifactId artifactId) {
     super("artifact", artifactId.toString());
   }
+
+  public ArtifactNotFoundException(String namespace, String name, String version) {
+    super("artifact", namespace + ":" + name + ' ' + version);
+  }
 }

@@ -994,7 +994,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1,
         ArtifactSortOrder.DESC);
     if (artifactDetail.isEmpty()) {
-      throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
+      throw new ArtifactNotFoundException(range.getNamespace(), range.getName(), range.getVersionString());
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta,
         programTerminator,
