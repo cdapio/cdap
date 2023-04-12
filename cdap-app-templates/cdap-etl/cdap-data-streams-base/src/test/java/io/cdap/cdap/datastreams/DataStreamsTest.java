@@ -77,12 +77,6 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.MetricsManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.TestConfiguration;
-import org.apache.twill.api.RunId;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -96,6 +90,11 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.apache.twill.api.RunId;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  *
@@ -254,6 +253,46 @@ public class DataStreamsTest extends HydratorTestBase {
     sparkManager.stop();
     sparkManager.waitForStopped(10, TimeUnit.SECONDS);
     return RunIds.fromString(sparkManager.getHistory().iterator().next().getPid());
+  }
+
+  @Test
+  public void testSourceMacrosWithAllowFlag() throws Exception {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.STRING)));
+    List<StructuredRecord> input = new ArrayList<>();
+    input.add(StructuredRecord.builder(schema).set("id", "123").build());
+
+    String outputName = UUID.randomUUID().toString();
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+        .addStage(new ETLStage("source",
+            MockSource.getPlugin(schema, input, 1L, "${logicalStartTime()}")))
+        .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
+        .setBatchInterval("1s")
+        .addConnection("source", "sink")
+        .build();
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("sourceMacroTest");
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Map<String, String> runtimeArgs = new HashMap<>();
+    runtimeArgs.put(io.cdap.cdap.etl.common.Constants.CDAP_STREAMING_ALLOW_SOURCE_MACROS, "true");
+    runtimeArgs.put("ref", "mock");
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start(runtimeArgs);
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    DataSetManager<Table> outputManager = getDataset(outputName);
+    Tasks.waitFor(
+        true,
+        () -> {
+          outputManager.flush();
+          return input.equals(MockSink.readOutput(outputManager));
+        },
+        1,
+        TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test

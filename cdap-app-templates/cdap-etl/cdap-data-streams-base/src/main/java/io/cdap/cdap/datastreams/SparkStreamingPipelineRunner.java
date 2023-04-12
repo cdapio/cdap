@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingEventHandler;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PhaseSpec;
@@ -126,25 +127,44 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   private JavaDStream<Object> getDStream(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
     StreamingSource<Object> source;
+    PluginFunctionContext pluginFunctionContext =
+        new PluginFunctionContext(stageSpec, sec, collector);
+
     if (spec.getStateSpec().getMode() != DataStreamsStateSpec.Mode.SPARK_CHECKPOINTING) {
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
       source = pluginFunctionContext.createPlugin();
     } else {
-      // check for macros in any StreamingSource. If checkpoints are enabled,
-      // SparkStreaming will serialize all InputDStreams created in the checkpoint, which means
-      // the InputDStream is deserialized directly from the checkpoint instead of instantiated through CDAP.
-      // This means there isn't any way for us to perform macro evaluation on sources when they are loaded from
-      // checkpoints. We can work around this in all other pipeline stages by dynamically instantiating the
-      // plugin in all DStream functions, but can't for InputDStreams because the InputDStream constructor
-      // adds itself to the context dag. Yay for constructors with global side effects.
-      // TODO: (HYDRATOR-1030) figure out how to do this at configure time instead of run time
-      MacroEvaluator macroEvaluator = new ErrorMacroEvaluator(
-        "Due to spark limitations, macro evaluation is not allowed in streaming sources when checkpointing "
-          + "is enabled.");
-      PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                   spec.isStageLoggingEnabled(),
-                                                                   spec.isProcessTimingEnabled());
-      source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+      boolean allowMacros = Boolean.parseBoolean(sec.getRuntimeArguments()
+        .getOrDefault(Constants.CDAP_STREAMING_ALLOW_SOURCE_MACROS, Boolean.FALSE.toString()));
+      if (allowMacros) {
+        LOG.warn("Allowing source macros with Spark checkpointing on. The Spark checkpoint will "
+            + "contain the value of the macro from the first pipeline run. "
+            + "It will not be re-evaluated for subsequent runs.");
+        source = pluginFunctionContext.createPlugin();
+      } else {
+        // check for macros in any StreamingSource. If checkpoints are enabled,
+        // SparkStreaming will serialize all InputDStreams created in the checkpoint, which means
+        // the InputDStream is deserialized directly from the checkpoint instead of instantiated
+        // through CDAP.
+        // This means there isn't any way for us to perform macro evaluation on sources when they
+        // are loaded from
+        // checkpoints. We can work around this in all other pipeline stages by dynamically
+        // instantiating the
+        // plugin in all DStream functions, but can't for InputDStreams because the InputDStream
+        // constructor
+        // adds itself to the context dag. Yay for constructors with global side effects.
+        // TODO: (HYDRATOR-1030) figure out how to do this at configure time instead of run time
+        MacroEvaluator macroEvaluator =
+            new ErrorMacroEvaluator(
+                "Due to spark limitations, macro evaluation is not allowed in streaming sources"
+                    + " when checkpointing is enabled.");
+        PluginContext pluginContext =
+            new SparkPipelinePluginContext(
+                sec.getPluginContext(),
+                sec.getMetrics(),
+                spec.isStageLoggingEnabled(),
+                spec.isProcessTimingEnabled());
+        source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+      }
     }
 
     StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
