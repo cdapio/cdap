@@ -224,7 +224,8 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext,
                                                         masterEnv, options);
       } else {
-        String launchModeStr = options.getArguments().getOption(ProgramOptionConstants.LAUNCH_MODE);
+        String launchModeStr = options.getArguments()
+            .getOption(ProgramOptionConstants.LAUNCH_MODE, LaunchMode.CLUSTER.name());
         LaunchMode launchMode = LaunchMode.valueOf(launchModeStr);
         String schedulerQueue = options.getArguments().getOption(AppFabric.APP_SCHEDULER_QUEUE);
         submitter = isLocal
