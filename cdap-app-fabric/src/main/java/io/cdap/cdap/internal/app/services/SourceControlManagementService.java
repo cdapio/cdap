@@ -33,6 +33,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ApplicationReference;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
@@ -121,7 +122,8 @@ public class SourceControlManagementService {
    */
   public RepositoryMeta setRepository(NamespaceId namespace, RepositoryConfig repository)
     throws NamespaceNotFoundException {
-    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.UPDATE);
+    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+        NamespacePermission.UPDATE_REPOSITORY_METADATA);
 
     return TransactionRunners.run(transactionRunner, context -> {
       NamespaceTable nsTable = getNamespaceTable(context);
@@ -141,7 +143,8 @@ public class SourceControlManagementService {
    * @param namespace {@link NamespaceId} do unlink repository from
    */
   public void deleteRepository(NamespaceId namespace) {
-    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.DELETE);
+    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+        NamespacePermission.UPDATE_REPOSITORY_METADATA);
 
     TransactionRunners.run(transactionRunner, context -> {
       RepositoryTable repoTable = getRepositoryTable(context);
@@ -175,6 +178,8 @@ public class SourceControlManagementService {
    */
   public void validateRepository(NamespaceId namespace, RepositoryConfig repoConfig)
     throws RemoteRepositoryValidationException {
+    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+        NamespacePermission.UPDATE_REPOSITORY_METADATA);
     RepositoryManager.validateConfig(secureStore, new SourceControlConfig(namespace, repoConfig, cConf));
   }
 
@@ -192,24 +197,34 @@ public class SourceControlManagementService {
    */
   public PushAppResponse pushApp(ApplicationReference appRef, String commitMessage)
     throws NotFoundException, IOException, NoChangesToPushException, AuthenticationConfigException {
+    accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+        NamespacePermission.WRITE_REPOSITORY);
+
     // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
     //  Need to fix it and avoid passing it in RepositoryManagerFactory
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
+    
+    // AppLifecycleService already enforces ApplicationDetail Access
     ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
+
+    String committer = authenticationContext.getPrincipal().getName();
+    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
 
     LOG.info("Start to push app {} in namespace {} to linked repository by user {}",
         appRef.getApplication(),
         appRef.getParent(),
         appLifecycleService.decodeUserId(authenticationContext));
 
-    String committer = authenticationContext.getPrincipal().getName();
-
-    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
-    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
-
     PushAppResponse pushResponse = sourceControlOperationRunner.push(
       new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
     );
+
+    LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
+        appRef.getApplication(),
+        appRef.getParent(),
+        appLifecycleService.decodeUserId(authenticationContext));
+    
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
     ApplicationId appId = appRef.app(appDetail.getAppVersion());
     store.setAppSourceControlMeta(appId, sourceControlMeta);
@@ -229,15 +244,19 @@ public class SourceControlManagementService {
    * @throws AuthenticationConfigException if the repository configuration authentication fails
    */
   public ApplicationRecord pullAndDeploy(ApplicationReference appRef) throws Exception {
+    // Deploy with a generated uuid
+    String versionId = RunIds.generate().getId();
+    ApplicationId appId = appRef.app(versionId);
+    // Enforcing application CREATE permission and Namespace READ_REPOSITORY permission upfront
+    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+    accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
+        NamespacePermission.READ_REPOSITORY);
+    
     PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
     AppRequest<?> appRequest = pullResponse.getAppRequest();
     SourceControlMeta sourceControlMeta = new SourceControlMeta(pullResponse.getApplicationFileHash());
-    // Deploy with a generated uuid
-    String versionId = RunIds.generate().getId();
-    ApplicationId appId = appRef.app(versionId);
-    
-    accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
+
     LOG.info("Start to deploy app {} in namespace {} by user {}",
         appId.getApplication(),
         appId.getParent(),
@@ -294,7 +313,8 @@ public class SourceControlManagementService {
    */
   public RepositoryAppsResponse listApps(NamespaceId namespace) throws NotFoundException,
     AuthenticationConfigException {
-    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(), StandardPermission.GET);
+    accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
+        NamespacePermission.READ_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
     return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
   }
