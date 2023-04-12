@@ -45,4 +45,11 @@ public interface AppStateStore {
    * @throws IllegalArgumentException if the key/value is null or empty
    */
   void saveState(String key, byte[] value) throws IOException;
+
+  /**
+   * Deletes the state for an app with this key.
+   * @param key Key for the state, should not be null
+   * @throws IOException if the app is not available or otherwise unable to delete state
+   */
+  void deleteSate(String key) throws IOException;
 }
