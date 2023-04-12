@@ -5814,7 +5814,7 @@
 
   <property>
     <name>feature.pushdown.transformation.windowaggregation.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enables Window aggregation transformation in pushdown execution.
     </description>
