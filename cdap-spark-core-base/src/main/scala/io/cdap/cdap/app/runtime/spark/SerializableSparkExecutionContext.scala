@@ -130,6 +130,10 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
     delegate.saveState(key, value);
   }
 
+  override def deleteSate(key: String): Unit = {
+    delegate.deleteSate(key);
+  }
+
   override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]) = {
     delegate.addProperties(metadataEntity, properties);
   }
