@@ -20,18 +20,31 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.spi.hbase.CoprocessorDescriptor;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
+import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +58,7 @@ public class CoprocessorManager {
   private final boolean manageCoprocessors;
   private final boolean includeBuildInPath;
   private final Location jarDir;
+  private final Path tempDir;
   private final Set<Class<? extends Coprocessor>> coprocessors;
 
   public CoprocessorManager(CConfiguration cConf, LocationFactory locationFactory,
@@ -53,6 +67,9 @@ public class CoprocessorManager {
     // this is really only useful in a development setting, so not putting the default in cdap-default.xml
     this.includeBuildInPath = cConf.getBoolean(INCLUDE_BUILD_IN_PATH, true);
     this.jarDir = locationFactory.create(cConf.get(Constants.CFG_HDFS_LIB_DIR));
+    this.tempDir = new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)),
+        cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+
     //noinspection unchecked
     this.coprocessors = ImmutableSet.of(
         tableUtil.getTransactionDataJanitorClassForVersion(),
@@ -99,41 +116,103 @@ public class CoprocessorManager {
    */
   public synchronized Location ensureCoprocessorExists(boolean overwrite) throws IOException {
 
-    Location targetPath = jarDir.append(getCoprocessorName());
-    if (!overwrite && targetPath.exists()) {
-      return targetPath;
+    Location targetLocation = jarDir.append(getCoprocessorName());
+    if (!overwrite && targetLocation.exists()) {
+      return targetLocation;
     }
 
     // ensure the jar directory exists
     Locations.mkdirsIfNotExists(jarDir);
 
-    StringBuilder buf = new StringBuilder();
-    for (Class<? extends Coprocessor> c : coprocessors) {
-      buf.append(c.getName()).append(", ");
+    LOG.debug("Creating jar file for coprocessor classes: {}", coprocessors);
+
+    Set<URL> dependencies = new HashSet<>();
+    for (Class<? extends Coprocessor> clz : coprocessors) {
+      Dependencies.findClassDependencies(clz.getClassLoader(), new ClassAcceptor() {
+        @Override
+        public boolean accept(String className, final URL classUrl, URL classPathUrl) {
+          // Assuming the endpoint and protocol class doesn't have dependencies
+          // other than those come with HBase, Java, fastutil, and gson
+          if (className.startsWith("io.cdap") || className.startsWith("it.unimi.dsi.fastutil")
+              || className.startsWith("org.apache.tephra") || className.startsWith(
+              "com.google.gson")) {
+            dependencies.add(classPathUrl);
+            return true;
+          }
+          return false;
+        }
+      }, clz.getName());
     }
 
-    LOG.debug("Creating jar file for coprocessor classes: {}", buf);
+    if (dependencies.isEmpty()) {
+      return null;
+    }
 
-    Location tmpLocation = jarDir.getTempFile(".jar");
-    ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
-      @Override
-      public boolean accept(String className, final URL classUrl, URL classPathUrl) {
-        // Assuming the endpoint and protocol class doesn't have dependencies
-        // other than those comes with HBase, Java, fastutil, and gson
-        // if (!dependentClasses.containsKey(className)) {
-        //   dependentClasses.put(className, classPathUrl);
-        // }
-        return className.startsWith("io.cdap") || className.startsWith("it.unimi.dsi.fastutil")
-            || className.startsWith("org.apache.tephra") || className.startsWith(
-            "com.google.gson");
+    // create the coprocessor jar on local filesystem
+    Path jarTempDir = Files.createTempDirectory(Files.createDirectories(tempDir), "coprocessor");
+    try {
+      for (URL classPathUrl : dependencies) {
+        if (!classPathUrl.getProtocol().equals("file")) {
+          LOG.warn("Ignore unsupported URL {}", classPathUrl);
+          continue;
+        }
+
+        // Prepare a directory for the coprocessor jar. This is to eliminate duplicate files/dirs.
+        File classPathFile = new File(classPathUrl.toURI());
+        if (classPathFile.getName().endsWith(".jar")) {
+          // Expand the jar to the temp directory
+          BundleJarUtil.unJarOverwrite(classPathFile, jarTempDir.toFile());
+        } else {
+          // Copy the directory to the temp directory
+          Path baseDir = classPathFile.toPath();
+          Files.walkFileTree(baseDir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+              new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                    throws IOException {
+                  Files.createDirectories(jarTempDir.resolve(baseDir.relativize(dir)));
+                  return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                  Files.copy(file, jarTempDir.resolve(baseDir.relativize(file)),
+                      StandardCopyOption.REPLACE_EXISTING);
+                  return FileVisitResult.CONTINUE;
+                }
+              });
+        }
       }
-    });
-    appBundler.setClassesDir("");
-    appBundler.setLibDir("");
-    appBundler.createBundle(tmpLocation, new ArrayList<>(coprocessors));
 
-    tmpLocation.renameTo(targetPath);
-    return targetPath;
+      // copy the local jar file to the filesystem (HDFS)
+      // copies to a tmp location then renames the tmp location to the target location in case
+      // multiple CoprocessorManagers we called at the same time. This should never be the case
+      // in distributed mode, as coprocessors should all be loaded beforehand using the
+      // CoprocessorBuildTool.
+      Location tmpLocation = jarDir.getTempFile(".jar");
+      try {
+        Path jarPath = Files.createTempFile(tempDir, "coprocessor", ".jar");
+        try (OutputStream os = tmpLocation.getOutputStream()) {
+          BundleJarUtil.createJar(jarTempDir.toFile(), jarPath.toFile());
+          // Copy jar file into filesystem (HDFS)
+          Files.copy(jarPath, os);
+        } finally {
+          Files.deleteIfExists(jarPath);
+        }
+        tmpLocation.renameTo(targetLocation);
+
+        LOG.debug("Coprocessor jar created at {}", targetLocation);
+        return targetLocation;
+      } finally {
+        Locations.deleteQuietly(tmpLocation);
+      }
+    } catch (URISyntaxException e) {
+      // This shouldn't happen
+      throw new IOException("Failed to get URI", e);
+    } finally {
+      DirUtils.deleteDirectoryContents(jarTempDir.toFile());
+    }
   }
 
   private String getCoprocessorName() {
