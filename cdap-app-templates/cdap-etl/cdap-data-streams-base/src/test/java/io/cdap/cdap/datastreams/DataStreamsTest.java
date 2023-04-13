@@ -256,6 +256,28 @@ public class DataStreamsTest extends HydratorTestBase {
   }
 
   @Test
+  public void testSourceMacrosWithoutAllowFlagFails() throws Exception {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.STRING)));
+    String outputName = UUID.randomUUID().toString();
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+        .addStage(new ETLStage("source",
+            MockSource.getPlugin(schema, Collections.emptyList(), 1L, "${logicalStartTime()}")))
+        .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
+        .setBatchInterval("1s")
+        .addConnection("source", "sink")
+        .build();
+
+    ApplicationId appId = NamespaceId.DEFAULT.app("sourceMacroFailsTest");
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    Map<String, String> runtimeArgs = new HashMap<>();
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start(runtimeArgs);
+    sparkManager.waitForRun(ProgramRunStatus.FAILED, 10, TimeUnit.SECONDS);
+  }
+
+  @Test
   public void testSourceMacrosWithAllowFlag() throws Exception {
     Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.STRING)));
     List<StructuredRecord> input = new ArrayList<>();
@@ -276,7 +298,6 @@ public class DataStreamsTest extends HydratorTestBase {
 
     Map<String, String> runtimeArgs = new HashMap<>();
     runtimeArgs.put(io.cdap.cdap.etl.common.Constants.CDAP_STREAMING_ALLOW_SOURCE_MACROS, "true");
-    runtimeArgs.put("ref", "mock");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
     sparkManager.start(runtimeArgs);
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
