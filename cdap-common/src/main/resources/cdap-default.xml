@@ -248,12 +248,31 @@
   <property>
     <name>twill.jvm.gc.opts</name>
     <value>-XX:+UseG1GC -verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <activation>
+      <jdk>(,9)</jdk>
+    </activation>
     <description>
       Java garbage collection options for all Apache Twill containers;
       "&lt;LOG_DIR&gt;" is the location of the log directory in the
       container; note that the special characters are replaced with entity
       equivalents so they can be included in the XML
     </description>
+  </property>
+
+  <property>
+    <name>twill.jvm.gc.opts</name>
+    <value>-XX:+UseG1GC -verbose:gc -Xlog:gc*:file=&lt;LOG_DIR&gt;/gc.log:time,level,tags:filecount=10,filesize=1M</value>
+    <activation>
+      <jdk>[9,)</jdk>
+    </activation>
+    <description>
+      Java garbage collection options for all Apache Twill containers in Java 9
+      or above environment.
+      "&lt;LOG_DIR&gt;" is the location of the log directory in the
+      container; note that the special characters are replaced with entity
+      equivalents so they can be included in the XML
+    </description>
+
   </property>
 
   <property>
@@ -585,6 +604,38 @@
     <value>20</value>
     <description>
       Size of the thread pool for force killing programs
+    </description>
+  </property>
+
+  <property>
+    <name>app.run.records.ttl.days</name>
+    <value>0</value>
+    <description>
+      Amount of time (in days) to retain run records for old job runs.
+      This TTL is retroactive and applies to all runs regardless of what this
+      value was when the run was started.
+      Zero or negative values will cause run records to be retained indefinitely
+      and disable this feature.
+    </description>
+  </property>
+
+  <property>
+    <name>app.run.records.ttl.frequency.hours</name>
+    <value>12</value>
+    <description>
+      How frequently (in hours) to check for and delete old run records.
+      Will always wait at least 1 hour. This value is ignored if
+      app.run.records.table.ttl.days is set to zero.
+    </description>
+  </property>
+
+  <property>
+    <name>app.run.records.ttl.initial.delay.minutes</name>
+    <value>10</value>
+    <description>
+      How long (in minutes) to wait after initial start to initially scan for
+      old run records to delete. This value is ignored if
+      app.run.records.table.ttl.days is set to zero.
     </description>
   </property>
 
@@ -3326,6 +3377,32 @@
     </description>
   </property>
 
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.enabled</name>
+    <value>false</value>
+    <description>
+      Whether to enable metrics aggregation in runtime client service.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.window.secs</name>
+    <value>5</value>
+    <description>
+      When metrics aggregation in runtime client service is enabled, this property controls the max time difference
+      between two metrics which can be aggregated.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.metrics.aggregation.polltime.ms</name>
+    <value>5000</value>
+    <description>
+      Polling time in milliseconds to poll updates from a runtime when metrics aggregation is enabled.
+      This enables setting longer poll intervals to have better aggregation of metrics.
+    </description>
+  </property>
+
   <!-- Operational Statistics Configuration -->
 
   <property>
@@ -5060,6 +5137,14 @@
     <value>true</value>
     <description>
       If true, disk volume will be mount as readonly.
+    </description>
+  </property>
+
+  <property>
+    <name>task.worker.container.workdir.size.mb</name>
+    <value>5000</value>
+    <description>
+      Size of the workdir volume for the task worker.
     </description>
   </property>
 

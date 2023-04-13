@@ -75,6 +75,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramStopSubscriberService programStopSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
+  private final RunRecordTimeToLiveService runRecordTimeToLiveService;
   private final ProgramRunStatusMonitorService programRunStatusMonitorService;
   private final RunRecordMonitorService runRecordCounterService;
   private final CoreSchedulerService coreSchedulerService;
@@ -116,6 +117,7 @@ public class AppFabricServer extends AbstractIdleService {
       TransactionRunner transactionRunner,
       RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
+      RunRecordTimeToLiveService runRecordTimeToLiveService,
       SourceControlOperationRunner sourceControlOperationRunner) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
@@ -138,6 +140,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
     this.runRecordCounterService = runRecordCounterService;
+    this.runRecordTimeToLiveService = runRecordTimeToLiveService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
   }
@@ -163,6 +166,7 @@ public class AppFabricServer extends AbstractIdleService {
             programRunStatusMonitorService.start(),
             coreSchedulerService.start(),
             runRecordCounterService.start(),
+            runRecordTimeToLiveService.start(),
             sourceControlOperationRunner.start()
         )
     ).get();
@@ -219,6 +223,7 @@ public class AppFabricServer extends AbstractIdleService {
     programRunStatusMonitorService.stopAndWait();
     provisioningService.stopAndWait();
     runRecordCounterService.stopAndWait();
+    runRecordTimeToLiveService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
   }
 

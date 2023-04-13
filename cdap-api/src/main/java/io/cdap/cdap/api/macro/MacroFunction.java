@@ -16,14 +16,15 @@
 
 package io.cdap.cdap.api.macro;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Class representing a macro function.
  */
-public class MacroFunction {
-
+public class MacroFunction implements Serializable {
+  private static final long serialVersionUID = 5883638727963250169L;
   private final String functionName;
   private final List<String> arguments;
 

@@ -63,6 +63,7 @@ import io.cdap.cdap.proto.security.AccessPermission;
 import io.cdap.cdap.proto.security.ApplicationPermission;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.NamespacePermission;
 import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
@@ -615,7 +616,8 @@ public class AuthorizationTest extends TestBase {
     DatasetId datasetId = outputDatasetNSId.dataset("store");
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(outputDatasetNSId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
+      .put(outputDatasetNSId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE,
+          StandardPermission.DELETE, NamespacePermission.UPDATE_REPOSITORY_METADATA))
       .put(datasetId, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET, StandardPermission.DELETE))
       .put(outputDatasetNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
@@ -722,7 +724,8 @@ public class AuthorizationTest extends TestBase {
     DatasetId datasetId = otherNsId.dataset("otherTable");
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(otherNsId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
+      .put(otherNsId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE,
+          NamespacePermission.UPDATE_REPOSITORY_METADATA))
       .put(datasetId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
       .put(otherNsId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
@@ -782,8 +785,8 @@ public class AuthorizationTest extends TestBase {
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(inputDatasetNSId, EnumSet.allOf(StandardPermission.class))
-      .put(outputDatasetNSId, EnumSet.allOf(StandardPermission.class))
+      .put(inputDatasetNSId, namespaceAdminPermissions)
+      .put(outputDatasetNSId, namespaceAdminPermissions)
       // We need to write some data into table1
       .put(table1Id, EnumSet.allOf(StandardPermission.class))
       // Need to read data from table2
@@ -1017,7 +1020,8 @@ public class AuthorizationTest extends TestBase {
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(otherNSId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
+      .put(otherNSId, Sets.newHashSet(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE,
+          NamespacePermission.UPDATE_REPOSITORY_METADATA))
       .put(otherTableId, EnumSet.of(StandardPermission.GET, StandardPermission.CREATE, StandardPermission.DELETE))
       .put(otherNSId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .build();
@@ -1080,8 +1084,8 @@ public class AuthorizationTest extends TestBase {
 
     Map<EntityId, Set<? extends Permission>> neededPrivileges =
       ImmutableMap.<EntityId, Set<? extends Permission>>builder()
-      .put(inputDatasetNSMetaId, EnumSet.allOf(StandardPermission.class))
-      .put(outputDatasetNSMetaId, EnumSet.allOf(StandardPermission.class))
+      .put(inputDatasetNSMetaId, namespaceAdminPermissions)
+      .put(outputDatasetNSMetaId, namespaceAdminPermissions)
       .put(inputTableId, EnumSet.allOf(StandardPermission.class))
       .put(inputDatasetNSMetaId.datasetType("keyValueTable"), EnumSet.of(StandardPermission.UPDATE))
       .put(outputTableId, EnumSet.of(StandardPermission.CREATE, StandardPermission.GET, StandardPermission.DELETE))
@@ -1360,8 +1364,14 @@ public class AuthorizationTest extends TestBase {
     AccessController accessController = getAccessController();
 
     SecurityRequestContext.setUserId(ALICE.getName());
-    grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.of(StandardPermission.DELETE,
-                                                                                           StandardPermission.GET));
+    grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(),
+        new HashSet<Permission>() {
+          {
+            add(StandardPermission.DELETE);
+            add(StandardPermission.GET);
+            add(NamespacePermission.UPDATE_REPOSITORY_METADATA);
+          }
+        });
     for (EntityId entityId : cleanUpEntities) {
       grantAndAssertSuccess(entityId, SecurityRequestContext.toPrincipal(), EnumSet.of(StandardPermission.DELETE,
                                                                                        StandardPermission.GET));

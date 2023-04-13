@@ -120,6 +120,8 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.security.Authorizable;
+import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.runtime.spi.SparkCompat;
@@ -153,6 +155,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,6 +199,7 @@ public class TestBase {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   static Injector injector;
+  public static Set<Permission> namespaceAdminPermissions;
   private static Map<String, String> customConfiguration;
   private static CConfiguration cConf;
   private static int nestedStartCount;
@@ -363,6 +367,10 @@ public class TestBase {
     metricsManager = injector.getInstance(MetricsManager.class);
     accessControllerInstantiator = injector.getInstance(AccessControllerInstantiator.class);
 
+    namespaceAdminPermissions = new HashSet<>();
+    namespaceAdminPermissions.addAll(EnumSet.allOf(StandardPermission.class));
+    namespaceAdminPermissions.addAll(EnumSet.allOf(NamespacePermission.class));
+
     // This is needed so the logged-in user can successfully create the default namespace
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       String user = System.getProperty("user.name");
@@ -372,8 +380,7 @@ public class TestBase {
       accessControllerInstantiator.get().grant(Authorizable.fromEntityId(instance), principal,
           EnumSet.allOf(StandardPermission.class));
       accessControllerInstantiator.get()
-          .grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
-              EnumSet.allOf(StandardPermission.class));
+          .grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal, namespaceAdminPermissions);
     }
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {

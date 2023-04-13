@@ -17,7 +17,6 @@
 package io.cdap.cdap.common.conf;
 
 import com.google.common.base.Preconditions;
-import com.google.gson.stream.JsonWriter;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.common.utils.DirUtils;
 import java.io.File;
@@ -40,12 +39,15 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -168,7 +170,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   /**
    * Stores the mapping of key to the resource which modifies or loads the key most recently.
    */
-  private HashMap<String, String> updatingResource;
+  private final Map<String, String> updatingResource;
+
+  private final Map<String, ActivationProperty> activatedProperties;
+  private final List<ActivationProperty> nonActivatedProperties;
 
   /**
    * Class to keep the information about the keys which replace the deprecated ones.
@@ -371,7 +376,10 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    * A new configuration.
    */
   public Configuration() {
-    updatingResource = new HashMap<>();
+    this.updatingResource = new HashMap<>();
+    this.activatedProperties = new HashMap<>();
+    this.nonActivatedProperties = new ArrayList<>();
+
     synchronized (Configuration.class) {
       REGISTRY.put(this, null);
     }
@@ -395,6 +403,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       }
 
       this.updatingResource = new HashMap<>(other.updatingResource);
+      this.activatedProperties = new HashMap<>(other.activatedProperties);
+      this.nonActivatedProperties = new ArrayList<>(other.nonActivatedProperties);
     }
 
     this.finalParameters = new HashSet<>(other.finalParameters);
@@ -452,6 +462,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   public synchronized void reloadConfiguration() {
     properties = null;                            // trigger reload
     finalParameters.clear();                      // clear site-limits
+    activatedProperties.clear();
+    nonActivatedProperties.clear();
   }
 
   private synchronized void addResourceObject(Object resource) {
@@ -1538,7 +1550,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * Get a local file name under a directory named in <i>dirsProp</i> with the given <i>path</i>. If
+   * Get a local file name under a directory named in <i>dirsProp</i> with the given <i>path</i>.
+   * If
    * <i>dirsProp</i> contains multiple directories, then one is chosen based on <i>path</i>'s hash
    * code.  If the selected directory does not exist, an attempt is made to create it.
    *
@@ -1733,6 +1746,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
         String attr = null;
         String value = null;
         boolean finalParameter = false;
+        Activation activation = null;
+
         for (int j = 0; j < fields.getLength(); j++) {
           Node fieldNode = fields.item(j);
           if (!(fieldNode instanceof Element)) {
@@ -1748,36 +1763,52 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           if ("final".equals(field.getTagName()) && field.hasChildNodes()) {
             finalParameter = "true".equals(((Text) field.getFirstChild()).getData());
           }
+          if ("activation".equals(field.getTagName()) && field.hasChildNodes()) {
+            NodeList activationChildren = field.getChildNodes();
+            for (int k = 0; k < activationChildren.getLength(); k++) {
+              Node node = activationChildren.item(k);
+              if (!(node instanceof Element)) {
+                continue;
+              }
+              Element element = (Element) node;
+              if (element.hasChildNodes()) {
+                activation = new Activation(element.getTagName(),
+                    ((Text) element.getFirstChild()).getData().trim());
+              }
+            }
+          }
         }
 
         // Ignore this parameter if it has already been marked as 'final'
         if (attr != null) {
-          if (deprecatedKeyMap.containsKey(attr)) {
-            DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(attr);
-            keyInfo.accessed = false;
-            warnOnceIfDeprecated(attr);
-            for (String key : keyInfo.newKeys) {
-              // update new keys with deprecated key's value
-              loadProperty(properties, name, key, value, finalParameter);
+          if (isActivate(activation)) {
+            if (activation != null) {
+              activatedProperties.put(attr, new ActivationProperty(attr, value, activation));
+            }
+
+            if (deprecatedKeyMap.containsKey(attr)) {
+              DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(attr);
+              keyInfo.accessed = false;
+              warnOnceIfDeprecated(attr);
+              for (String key : keyInfo.newKeys) {
+                // update new keys with deprecated key's value
+                loadProperty(properties, name, key, value, finalParameter);
+              }
+            } else {
+              loadProperty(properties, name, attr, value, finalParameter);
             }
           } else {
-            loadProperty(properties, name, attr, value, finalParameter);
+            nonActivatedProperties.add(new ActivationProperty(attr, value, activation));
           }
         }
       }
-    } catch (IOException e) {
-      LOG.error("error parsing conf file.", e);
-      throw new RuntimeException(e);
-    } catch (DOMException e) {
-      LOG.error("error parsing conf file.", e);
-      throw new RuntimeException(e);
-    } catch (SAXException e) {
-      LOG.error("error parsing conf file.", e);
-      throw new RuntimeException(e);
-    } catch (ParserConfigurationException e) {
-      LOG.error("error parsing conf file.", e);
+    } catch (IOException | DOMException | SAXException | ParserConfigurationException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private boolean isActivate(@Nullable Activation activation) {
+    return activation == null || activation.isActive();
   }
 
   private void loadProperty(Properties properties, Object name, String attr,
@@ -1796,8 +1827,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * Write out the non-default properties in this configuration to the given {@link
-   * java.io.OutputStream}.
+   * Write out the non-default properties in this configuration to the given
+   * {@link java.io.OutputStream}.
    *
    * @param out the output stream to write to.
    */
@@ -1806,8 +1837,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * Write out the non-default properties in this configuration to the given {@link
-   * java.io.Writer}.
+   * Write out the non-default properties in this configuration to the given
+   * {@link java.io.Writer}.
    *
    * @param out the writer to write to.
    */
@@ -1847,61 +1878,50 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     for (Enumeration e = properties.keys(); e.hasMoreElements(); ) {
       String name = (String) e.nextElement();
       Object object = properties.get(name);
-      String value = null;
+      String value;
       if (object instanceof String) {
         value = (String) object;
       } else {
         continue;
       }
-      Element propNode = doc.createElement("property");
-      conf.appendChild(propNode);
 
+      Element propNode = doc.createElement("property");
       if (updatingResource != null) {
         Comment commentNode = doc.createComment(
             "Loaded from " + updatingResource.get(name));
         propNode.appendChild(commentNode);
       }
-      Element nameNode = doc.createElement("name");
-      nameNode.appendChild(doc.createTextNode(name));
-      propNode.appendChild(nameNode);
 
-      Element valueNode = doc.createElement("value");
-      valueNode.appendChild(doc.createTextNode(value));
-      propNode.appendChild(valueNode);
+      if (activatedProperties.containsKey(name)) {
+        activatedProperties.get(name).addToElement(doc, propNode);
+      } else {
+        Element nameNode = doc.createElement("name");
+        nameNode.appendChild(doc.createTextNode(name));
+        propNode.appendChild(nameNode);
 
+        Element valueNode = doc.createElement("value");
+        valueNode.appendChild(doc.createTextNode(value));
+        propNode.appendChild(valueNode);
+      }
+
+      conf.appendChild(propNode);
       conf.appendChild(doc.createTextNode("\n"));
     }
-    return doc;
-  }
 
-  /**
-   * Writes out all the parameters and their properties (final and resource) to the given {@link
-   * Writer} The format of the output would be { "properties" : [ {key1,value1,key1.isFinal,key1.resource},
-   * {key2,value2, key2.isFinal,key2.resource}... ] } It does not output the parameters of the
-   * configuration object which is loaded from an input stream.
-   *
-   * @param out the Writer to write to
-   */
-  public static void dumpConfiguration(Configuration config,
-      Writer out) throws IOException {
-    JsonWriter dumpGenerator = new JsonWriter(out);
-    dumpGenerator.beginObject();
-    dumpGenerator.name("properties");
-    dumpGenerator.beginArray();
-    dumpGenerator.flush();
-    synchronized (config) {
-      for (Map.Entry<Object, Object> item : config.getProps().entrySet()) {
-        dumpGenerator.beginObject();
-        dumpGenerator.name("key").value((String) item.getKey());
-        dumpGenerator.name("value").value(config.get((String) item.getKey()));
-        dumpGenerator.name("isFinal").value(config.finalParameters.contains(item.getKey()));
-        dumpGenerator.name("resource").value(config.updatingResource.get(item.getKey()));
-        dumpGenerator.endObject();
+    // Append all the non-activated properties
+    for (ActivationProperty activationProperty : nonActivatedProperties) {
+      Element propNode = doc.createElement("property");
+      if (updatingResource != null) {
+        Comment commentNode = doc.createComment(
+            "Loaded from " + updatingResource.get(activationProperty.name));
+        propNode.appendChild(commentNode);
       }
+      activationProperty.addToElement(doc, propNode);
+      conf.appendChild(propNode);
+      conf.appendChild(doc.createTextNode("\n"));
     }
-    dumpGenerator.endArray();
-    dumpGenerator.endObject();
-    dumpGenerator.flush();
+
+    return doc;
   }
 
   /**
@@ -1992,8 +2012,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * A unique class which is used as a sentinel value in the caching for getClassByName. {@see
-   * Configuration#getClassByNameOrNull(String)}
+   * A unique class which is used as a sentinel value in the caching for getClassByName.
+   * {@see Configuration#getClassByNameOrNull(String)}
    */
   private abstract static class NegativeCacheSentinel {
 
@@ -2068,5 +2088,74 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       }
     }
     return prefixedProperties;
+  }
+
+  /**
+   * Class holding the activation information for a given property key and value.
+   */
+  private static final class ActivationProperty {
+
+    private final String name;
+    private final String value;
+    private final Activation activation;
+
+    ActivationProperty(String name, String value, Activation activation) {
+      this.name = name;
+      this.value = value;
+      this.activation = activation;
+    }
+
+    /**
+     * Generates a {@code property} XML element with the activation information.
+     */
+    void addToElement(Document doc, Element element) {
+      Element nameNode = doc.createElement("name");
+      nameNode.appendChild(doc.createTextNode(name));
+      element.appendChild(nameNode);
+
+      Element valueNode = doc.createElement("value");
+      valueNode.appendChild(doc.createTextNode(value));
+      element.appendChild(valueNode);
+
+      element.appendChild(activation.asElement(doc));
+    }
+  }
+
+  /**
+   * A class for holding activation information for a given property.
+   */
+  private static final class Activation {
+
+    private static final ServiceLoader<ConfigActivator> ACTIVATOR_LOADER =
+        ServiceLoader.load(ConfigActivator.class, CConfiguration.class.getClassLoader());
+
+    private final String value;
+    private final ConfigActivator activator;
+
+    Activation(String activationName, String value) {
+      this.value = value;
+      this.activator = StreamSupport.stream(ACTIVATOR_LOADER.spliterator(), false)
+          .filter(s -> activationName.equals(s.getActivationName()))
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException(
+              "Unsupported activation '" + activationName + "'"));
+    }
+
+    boolean isActive() {
+      return activator.test(value);
+    }
+
+    /**
+     * Generates a {@code activation} XML element based.
+     */
+    Element asElement(Document doc) {
+      Element activation = doc.createElement("activation");
+      Element jdk = doc.createElement(activator.getActivationName().toLowerCase());
+      jdk.appendChild(doc.createTextNode(value));
+
+      activation.appendChild(jdk);
+
+      return activation;
+    }
   }
 }

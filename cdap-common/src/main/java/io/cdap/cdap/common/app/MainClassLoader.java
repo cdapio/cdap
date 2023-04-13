@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.lang.GuavaClassRewriter;
@@ -104,11 +105,8 @@ public class MainClassLoader extends InterceptableClassLoader {
 
     if (classLoader instanceof URLClassLoader) {
       classpath.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
-    } else if (classLoader == ClassLoader.getSystemClassLoader()) {
-      addClassPath(classpath);
     } else {
-      // No able to create a new MainClassLoader
-      return null;
+      classpath.addAll(ClassPathResources.getClasspathUrls());
     }
 
     classpath.addAll(Arrays.asList(extraClasspath));
@@ -178,27 +176,6 @@ public class MainClassLoader extends InterceptableClassLoader {
       rewrittenCode = levelDBClassRewriter.rewriteClass(className, input);
     }
     return rewrittenCode;
-  }
-
-  /**
-   * Adds {@link URL} to the given list based on the system classpath.
-   */
-  private static void addClassPath(List<URL> urls) {
-    String wildcardSuffix = File.pathSeparator + "*";
-    // In case the system classloader is not a URLClassLoader, use the classpath property (maybe from non Oracle JDK)
-    for (String path : Splitter.on(File.pathSeparatorChar)
-        .split(System.getProperty("java.class.path"))) {
-      if ("*".equals(path) || path.endsWith(wildcardSuffix)) {
-        for (File jarFile : DirUtils.listFiles(new File(path), "jar")) {
-          try {
-            urls.add(jarFile.toURI().toURL());
-          } catch (MalformedURLException e) {
-            // Shouldn't happen. Propagate the exception.
-            throw Throwables.propagate(e);
-          }
-        }
-      }
-    }
   }
 
   private boolean isRewriteNeeded(String className) throws IOException {

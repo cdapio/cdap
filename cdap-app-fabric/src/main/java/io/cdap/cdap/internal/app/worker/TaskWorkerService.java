@@ -23,6 +23,7 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -42,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Launches an HTTP server for receiving and handling {@link RunnableTask}
+ * Launches an HTTP server for receiving and handling {@link RunnableTask}.
  */
 public class TaskWorkerService extends AbstractIdleService {
 
@@ -61,6 +62,13 @@ public class TaskWorkerService extends AbstractIdleService {
       MetricsCollectionService metricsCollectionService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory) {
     this.discoveryService = discoveryService;
+
+    // set workdir location in cConf
+    // workdir location is unique per task worker and accessible via env var
+    String workDir = System.getenv("CDAP_LOCAL_DIR");
+    if (workDir != null) {
+      cConf.set(TaskWorker.WORK_DIR, workDir);
+    }
 
     NettyHttpService.Builder builder = commonNettyHttpServiceFactory.builder(
             Constants.Service.TASK_WORKER)

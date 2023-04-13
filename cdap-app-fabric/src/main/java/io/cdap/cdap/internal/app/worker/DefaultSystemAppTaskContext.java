@@ -183,6 +183,16 @@ public class DefaultSystemAppTaskContext extends AbstractServiceDiscoverer imple
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return Retries.callWithRetries(() -> secureStore.getMetadata(namespace, name), retryStrategy);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return Retries.callWithRetries(() -> secureStore.getData(namespace, name), retryStrategy);
+  }
+
+  @Override
   public void close() {
     try {
       try {

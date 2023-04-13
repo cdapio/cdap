@@ -189,4 +189,9 @@ public final class ProgramOptionConstants {
    * This is needed for running tethered programs
    */
   public static final String PROGRAM_RESOURCE_URI = "programResourceUri";
+
+  /**
+   * Option for the {@link io.cdap.cdap.runtime.spi.runtimejob.LaunchMode} for the run.
+   */
+  public static final String LAUNCH_MODE = "launchMode";
 }

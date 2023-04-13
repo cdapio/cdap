@@ -266,6 +266,11 @@ public final class Constants {
       "run.record.monitor.cleanup.interval.seconds";
     public static final String PROGRAM_LAUNCH_THREADS = "app.program.launch.threads";
     public static final String PROGRAM_KILL_THREADS = "app.program.kill.threads";
+    public static final String RUN_DATA_CLEANUP_TTL_DAYS = "app.run.records.ttl.days";
+    public static final String RUN_DATA_CLEANUP_TTL_FREQUENCY_HOURS =
+        "app.run.records.ttl.frequency.hours";
+    public static final String RUN_DATA_CLEANUP_TTL_INITIAL_DELAY_MINUTES =
+        "app.run.records.ttl.initial.delay.minutes";
 
     // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
     // This config is not present in the cdap-default.xml as it is only set internally by CDAP.
@@ -457,9 +462,11 @@ public final class Constants {
     /**
      * Task worker container configurations.
      */
+    public static final String WORK_DIR = "task.worker.work.dir";
     public static final String LOCAL_DATA_DIR = "task.worker.local.data.dir";
     public static final String CONTAINER_DISK_SIZE_GB = "task.worker.container.disk.size.gb";
     public static final String CONTAINER_MEMORY_MB = "task.worker.container.memory.mb";
+    public static final String CONTAINER_WORKDIR_SIZE_MB = "task.worker.container.workdir.size.mb";
     public static final String CONTAINER_CORES = "task.worker.container.num.cores";
     public static final String CONTAINER_CPU_MULTIPLIER = "task.worker.container.cpu.multiplier";
     public static final String CONTAINER_MEMORY_MULTIPLIER = "task.worker.container.memory.multiplier";
@@ -1280,6 +1287,11 @@ public final class Constants {
     // Configuration key for the service proxy password. It is only used within a runtime cluster.
     public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
     public static final String SERVICE_PROXY_PASSWORD_FILE = "cdap.service.proxy.secret";
+    public static final String METRICS_AGGREGATION_ENABLED = "app.program.runtime.monitor.metrics.aggregation.enabled";
+    public static final String METRICS_AGGREGATION_WINDOW_SECONDS =
+        "app.program.runtime.monitor.metrics.aggregation.window.secs";
+    public static final String  METRICS_AGGREGATION_POLL_TIME_MS =
+        "app.program.runtime.monitor.metrics.aggregation.polltime.ms";
   }
 
   /**

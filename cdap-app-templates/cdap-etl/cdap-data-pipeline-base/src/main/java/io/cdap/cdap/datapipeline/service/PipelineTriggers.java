@@ -30,12 +30,11 @@ import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.TriggeringPipelineId;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handles parsing of pipeline runtime arguments mapping.
@@ -81,7 +80,9 @@ public final class PipelineTriggers {
     // Get the value of every triggering pipeline arguments specified in the propertiesMapping and update newRuntimeArgs
     List<ArgumentMapping> argumentMappings = propertiesMapping.getArguments();
     for (ArgumentMapping mapping : argumentMappings) {
-      if (compositeTriggerEnabled && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
+      if (compositeTriggerEnabled
+          && mapping.getTriggeringPipelineId() != null // Skip checking pipelineId for pre 6.8 triggers
+          && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
         continue;
       }
       String sourceKey = mapping.getSource();
@@ -106,7 +107,9 @@ public final class PipelineTriggers {
     Map<String, Map<String, String>> resolvedProperties =
       GSON.fromJson(triggeringArguments.get(RESOLVED_PLUGIN_PROPERTIES_MAP), STAGE_PROPERTIES_MAP);
     for (PluginPropertyMapping mapping : propertiesMapping.getPluginProperties()) {
-      if (compositeTriggerEnabled && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
+      if (compositeTriggerEnabled
+          && mapping.getTriggeringPipelineId() != null // Skip checking pipelineId for pre 6.8 triggers
+          && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
         continue;
       }
       String stageName = mapping.getStageName();

@@ -34,20 +34,6 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClient;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.apache.spark.SparkConf;
-import org.apache.spark.scheduler.EventLoggingListener;
-import org.apache.spark.scheduler.SparkListenerApplicationStart;
-import org.apache.spark.streaming.DStreamGraph;
-import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scala.Option;
-import scala.Tuple2;
-import scala.collection.parallel.TaskSupport;
-import scala.collection.parallel.ThreadPoolTaskSupport;
-import scala.collection.parallel.mutable.ParArray;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,6 +56,19 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
+import org.apache.spark.SparkConf;
+import org.apache.spark.scheduler.EventLoggingListener;
+import org.apache.spark.scheduler.SparkListenerApplicationStart;
+import org.apache.spark.streaming.DStreamGraph;
+import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import scala.Option;
+import scala.Tuple2;
+import scala.collection.parallel.TaskSupport;
+import scala.collection.parallel.ThreadPoolTaskSupport;
+import scala.collection.parallel.mutable.ParArray;
 
 /**
  * Util class for common functions needed for Spark implementation.
@@ -85,7 +84,7 @@ public final class SparkRuntimeUtils {
   public static final String STREAMING_CHECKPOINT_REWRITE_ENABLED = "streaming.checkpoint.rewrite.enabled";
   // Configuration option used to control rewriting behavior in the cdap-site.xml file.
   public static final String SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED =
-    "spark." + STREAMING_CHECKPOINT_REWRITE_ENABLED;
+      "spark." + STREAMING_CHECKPOINT_REWRITE_ENABLED;
 
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
   private static final int CHUNK_SIZE = 1 << 15;  // 32K
@@ -93,9 +92,9 @@ public final class SparkRuntimeUtils {
   private static final Gson GSON = new Gson();
 
   /**
-   * Creates a zip file which contains a serialized {@link Properties} with a given zip entry name, together with
-   * all files under the given directory. This is called from Client.createConfArchive() as a workaround for the
-   * SPARK-13441 bug.
+   * Creates a zip file which contains a serialized {@link Properties} with a given zip entry name,
+   * together with all files under the given directory. This is called from
+   * Client.createConfArchive() as a workaround for the SPARK-13441 bug.
    *
    * @param sparkConf the {@link SparkConf} to save
    * @param propertiesEntryName name of the zip entry for the properties
@@ -104,7 +103,7 @@ public final class SparkRuntimeUtils {
    * @return the zip file
    */
   public static File createConfArchive(SparkConf sparkConf, final String propertiesEntryName,
-                                       String confDirPath, final File zipFile) {
+      String confDirPath, final File zipFile) {
     final Properties properties = new Properties();
     for (Tuple2<String, String> tuple : sparkConf.getAll()) {
       properties.put(tuple._1(), tuple._2());
@@ -127,17 +126,17 @@ public final class SparkRuntimeUtils {
   }
 
   /**
-   * Sets the {@link TaskSupport} for the given Scala {@link ParArray} to {@link ThreadPoolTaskSupport}.
-   * This method is mainly used by {@link SparkRunnerClassLoader} to set the {@link TaskSupport} for the
-   * parallel array used inside the {@link DStreamGraph} class in spark to avoid thread leakage after the
-   * Spark program execution finished.
+   * Sets the {@link TaskSupport} for the given Scala {@link ParArray} to
+   * {@link ThreadPoolTaskSupport}. This method is mainly used by {@link SparkRunnerClassLoader} to
+   * set the {@link TaskSupport} for the parallel array used inside the {@link DStreamGraph} class
+   * in spark to avoid thread leakage after the Spark program execution finished.
    */
   @SuppressWarnings("unused")
   public static <T> ParArray<T> setTaskSupport(ParArray<T> parArray) {
     ThreadPoolExecutor executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1,
-                                                         TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-                                                         new ThreadFactoryBuilder()
-                                                           .setNameFormat("task-support-%d").build());
+        TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+        new ThreadFactoryBuilder()
+            .setNameFormat("task-support-%d").build());
     executor.allowCoreThreadTimeOut(true);
     parArray.tasksupport_$eq(new ThreadPoolTaskSupport(executor));
     return parArray;
@@ -147,13 +146,13 @@ public final class SparkRuntimeUtils {
    * Saves the names of localized resources to the given config.
    */
   public static void setLocalizedResources(Set<String> localizedResourcesNames,
-                                           Map<String, String> configs) {
+      Map<String, String> configs) {
     configs.put(LOCALIZED_RESOURCES, GSON.toJson(localizedResourcesNames));
   }
 
   /**
-   * Retrieves the names of localized resources in the given config and constructs a map from the resource name
-   * to local files with the resource names as the file names in the given directory.
+   * Retrieves the names of localized resources in the given config and constructs a map from the
+   * resource name to local files with the resource names as the file names in the given directory.
    */
   public static Map<String, File> getLocalizedResources(File dir, SparkConf sparkConf) {
     String resources = sparkConf.get(LOCALIZED_RESOURCES, null);
@@ -161,7 +160,8 @@ public final class SparkRuntimeUtils {
       return Collections.emptyMap();
     }
     Map<String, File> result = new HashMap<>();
-    Set<String> resourceNames = GSON.fromJson(resources, new TypeToken<Set<String>>() { }.getType());
+    Set<String> resourceNames = GSON.fromJson(resources, new TypeToken<Set<String>>() {
+    }.getType());
     for (String name : resourceNames) {
       result.put(name, new File(dir, name));
     }
@@ -169,13 +169,13 @@ public final class SparkRuntimeUtils {
   }
 
   /**
-   * Initialize a Spark main() method. This is the first method to be called from the main() method of any
-   * spark program.
+   * Initialize a Spark main() method. This is the first method to be called from the main() method
+   * of any spark program.
    *
-   * @return a {@link SparkProgramCompletion} to be called when user spark program completed.
-   * The {@link SparkProgramCompletion#completed()} must be called when the user program returned normally,
-   * while the {@link SparkProgramCompletion#completedWithException(Throwable)} must be called when the user program
-   * raised exception.
+   * @return a {@link SparkProgramCompletion} to be called when user spark program completed. The
+   *     {@link SparkProgramCompletion#completed()} must be called when the user program returned
+   *     normally, while the {@link SparkProgramCompletion#completedWithException(Throwable)} must
+   *     be called when the user program raised exception.
    */
   public static SparkProgramCompletion initSparkMain() {
     final Thread mainThread = Thread.currentThread();
@@ -187,7 +187,7 @@ public final class SparkRuntimeUtils {
     }
 
     final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
-      sparkClassLoader.getRuntimeContext().getProgramInvocationClassLoader());
+        sparkClassLoader.getRuntimeContext().getProgramInvocationClassLoader());
     final SparkExecutionContext sec = sparkClassLoader.getSparkExecutionContext(true);
     final SparkRuntimeContext runtimeContext = sparkClassLoader.getRuntimeContext();
     final Service driverService = createSparkDriverService(runtimeContext);
@@ -206,7 +206,8 @@ public final class SparkRuntimeUtils {
         // Interrupt the driver main thread to signal for stopping if the driverService.stop() is not coming from
         // the main thread.
         if (Thread.currentThread() != mainThread) {
-          LOG.debug("Issuing interrupt to mainThread '{}' to indicate a stop request.", mainThread.getName());
+          LOG.debug("Issuing interrupt to mainThread '{}' to indicate a stop request.",
+              mainThread.getName());
           mainThread.interrupt();
         }
       }
@@ -230,7 +231,7 @@ public final class SparkRuntimeUtils {
             } catch (Exception e) {
               // Just log. It shouldn't throw, and if it does (due to bug), nothing much can be done
               LOG.warn("Exception raised when calling {}.close() for program run {}.",
-                       sec.getClass().getName(), runtimeContext.getProgramRunId(), e);
+                  sec.getClass().getName(), runtimeContext.getProgramRunId(), e);
             }
           }
         } finally {
@@ -287,15 +288,22 @@ public final class SparkRuntimeUtils {
    * @param runtimeContext the {@link SparkRuntimeContext} for connecting to CDAP services
    * @return A {@link Closeable} which should be called when the Spark application completed
    */
-  public static Closeable addEventLoggingListener(SparkRuntimeContext runtimeContext) throws IOException {
+  public static Closeable addEventLoggingListener(SparkRuntimeContext runtimeContext)
+      throws IOException {
     // If upload event logs is not enabled, just return a dummy closeable
-    if (!runtimeContext.getCConfiguration().getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED)) {
-      return () -> { };
+    if (!runtimeContext.getCConfiguration()
+        .getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED)) {
+      return () -> {
+      };
     }
 
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.eventLog.enabled", Boolean.toString(true));
     sparkConf.set("spark.eventLog.compress", Boolean.toString(true));
+    // This is for Spark3, which defaulted to use zstd for event log compression, which might not
+    // be available in all environment.
+    // The Spark2 default is lz4.
+    sparkConf.set("spark.eventLog.compression.codec", "lz4");
 
     ProgramRunId programRunId = runtimeContext.getProgramRunId();
 
@@ -305,8 +313,9 @@ public final class SparkRuntimeUtils {
     // EventLoggingListener is Scala package private[spark] class.
     // However, since JVM bytecode doesn't really have this type of cross package private support, the class
     // is actually public class. This is why we can access it in Java code.
-    EventLoggingListener listener = new EventLoggingListener(Long.toString(System.currentTimeMillis()), Option.empty(),
-                                                             eventLogDir.toURI(), sparkConf) {
+    EventLoggingListener listener = new EventLoggingListener(
+        Long.toString(System.currentTimeMillis()), Option.empty(),
+        eventLogDir.toURI(), sparkConf) {
       @Override
       public void onApplicationStart(SparkListenerApplicationStart event) {
         // Rewrite the application start event with identifiable names based on the program run id such that
@@ -320,10 +329,10 @@ public final class SparkRuntimeUtils {
           appId.setAccessible(true);
 
           appName.set(event, String.format("%s.%s.%s.%s",
-                                           programRunId.getNamespace(),
-                                           programRunId.getApplication(),
-                                           programRunId.getType().getPrettyName().toLowerCase(),
-                                           programRunId.getProgram()));
+              programRunId.getNamespace(),
+              programRunId.getApplication(),
+              programRunId.getType().getPrettyName().toLowerCase(),
+              programRunId.getProgram()));
 
           appId.set(event, Option.apply(programRunId.getRun()));
         } catch (Exception e) {
@@ -344,8 +353,9 @@ public final class SparkRuntimeUtils {
   }
 
   /**
-   * Creates a {@link Service} that runs in the Spark driver process for lifecycle management. In distributed mode,
-   * it will be the {@link SparkDriverService} that also responsible for heartbeating and delegation token updates.
+   * Creates a {@link Service} that runs in the Spark driver process for lifecycle management. In
+   * distributed mode, it will be the {@link SparkDriverService} that also responsible for
+   * heartbeating and delegation token updates.
    */
   private static Service createSparkDriverService(SparkRuntimeContext runtimeContext) {
     String executorServiceURI = System.getenv(CDAP_SPARK_EXECUTION_SERVICE_URI);
@@ -371,15 +381,16 @@ public final class SparkRuntimeUtils {
   /**
    * Uploads the spark event logs through the runtime service.
    */
-  private static void uploadEventLogs(File eventLogDir, SparkRuntimeContext runtimeContext) throws IOException {
+  private static void uploadEventLogs(File eventLogDir, SparkRuntimeContext runtimeContext)
+      throws IOException {
 
     ProgramRunId programRunId = runtimeContext.getProgramRunId();
 
     // Find the event file to upload. There should only be one for the current application.
     File eventFile = Optional.ofNullable(eventLogDir.listFiles())
-      .map(Arrays::stream)
-      .flatMap(Stream::findFirst)
-      .orElse(null);
+        .map(Arrays::stream)
+        .flatMap(Stream::findFirst)
+        .orElse(null);
 
     if (eventFile == null) {
       // This shouldn't happen. If it does for some reason, just log and return.
@@ -388,16 +399,17 @@ public final class SparkRuntimeUtils {
     }
 
     RuntimeClient runtimeClient = new RuntimeClient(runtimeContext.getCConfiguration(),
-                                                    runtimeContext.getRemoteClientFactory());
+        runtimeContext.getRemoteClientFactory());
     Retries.runWithRetries(() -> runtimeClient.uploadSparkEventLogs(programRunId, eventFile),
-                           RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
+        RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
     LOG.debug("Uploaded event logs file {} for program run {}", eventFile, programRunId);
   }
 
   /**
-   * Appends value of cdap.spark.pyFiles to the original paths list.
-   * This function is used to simplify code generation in
+   * Appends value of cdap.spark.pyFiles to the original paths list. This function is used to
+   * simplify code generation in
    * {@link SparkClassRewriter#rewritePythonWorkerFactory(java.io.InputStream)}.
+   *
    * @param paths original path list
    * @return new path list with cdap.spark.pyFiles added (if any)
    */

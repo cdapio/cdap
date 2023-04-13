@@ -389,6 +389,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") final String namespaceId,
       @PathParam("app-id") final String appName) throws Exception {
     validateApplicationId(namespaceId, appName);
+    // enforce GET privileges on the app
+    accessEnforcer.enforce(new ApplicationId(namespaceId, appName), authenticationContext.getPrincipal(),
+                           StandardPermission.GET);
     Collection<String> versions = applicationLifecycleService
         .getAppVersions(new ApplicationReference(namespaceId, appName));
     if (versions.isEmpty()) {
@@ -441,6 +444,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     validateApplicationId(namespaceId, appName);
     LOG.info("Removing application {} in namespace {}", appName, namespaceId);
     applicationLifecycleService.removeApplication(new ApplicationReference(namespaceId, appName));
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  /**
+   * Deletes all application state stored in CDAP state store for the given application.
+   *
+   * @param request The {@link HttpRequest}.
+   * @param responder The {@link HttpResponder}.
+   * @param namespaceId Namespace id string.
+   * @param appName App name string.
+   * @throws Exception Any {@link Exception} encountered.
+   */
+  @DELETE
+  @Path("/apps/{app-id}/state")
+  public void deleteAppState(HttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespaceId,
+      @PathParam("app-id") final String appName) throws Exception {
+    LOG.debug("Deleting all application state for {} in namespace {}", appName, namespaceId);
+    applicationLifecycleService.deleteAllStates(new NamespaceId(namespaceId), appName);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -648,9 +670,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * a success (200) or failure for each of the requested application in the same order as the
    * request.
    *
-   * Deprecated : Unused
    */
-  @Deprecated
   @POST
   @Path("/appdetail")
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,

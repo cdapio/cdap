@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.mock.spark.streaming;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -149,6 +150,7 @@ public class MockSource extends StreamingSource<StructuredRecord> {
     private String records;
     @Nullable
     private Long intervalMillis;
+    @Macro
     @Nullable
     private String referenceName;
 
@@ -194,7 +196,7 @@ public class MockSource extends StreamingSource<StructuredRecord> {
     properties.put("intervalMillis",
         new PluginPropertyField("intervalMillis", "", "long", false, false));
     properties.put("referenceName",
-        new PluginPropertyField("referenceName", "", "string", false, false));
+        new PluginPropertyField("referenceName", "", "string", false, true));
     return PluginClass.builder().setName("Mock").setType(StreamingSource.PLUGIN_TYPE)
         .setDescription("").setClassName(MockSource.class.getName()).setProperties(properties)
         .setConfigFieldName("conf").build();

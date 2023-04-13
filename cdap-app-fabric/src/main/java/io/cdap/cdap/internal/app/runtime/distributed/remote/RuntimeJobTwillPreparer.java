@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.LocalFile;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnable;
@@ -237,7 +238,9 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
       }
     }
 
+    ResourceSpecification resourceSpecification = runtimeSpec.getResourceSpecification();
     return new DefaultRuntimeJobInfo(
-        getProgramRunId(), resultingFiles, jvmProperties, runtimeJobArguments);
+        getProgramRunId(), resultingFiles, jvmProperties, runtimeJobArguments,
+        resourceSpecification.getVirtualCores(), resourceSpecification.getMemorySize());
   }
 }
