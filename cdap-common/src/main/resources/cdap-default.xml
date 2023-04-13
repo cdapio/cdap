@@ -5141,6 +5141,14 @@
   </property>
 
   <property>
+    <name>task.worker.container.workdir.size.mb</name>
+    <value>5000</value>
+    <description>
+      Size of the workdir volume for the task worker.
+    </description>
+  </property>
+
+  <property>
     <name>task.worker.container.kill.after.request.count</name>
     <value>100</value>
     <description>
