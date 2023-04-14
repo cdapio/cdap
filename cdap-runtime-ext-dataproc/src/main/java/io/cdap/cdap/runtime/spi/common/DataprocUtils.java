@@ -93,6 +93,16 @@ public final class DataprocUtils {
   public static final String DRIVER_VCORES = "driverVCores";
   public static final String DRIVER_VCORES_DEFAULT = "1";
 
+  public static final String GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS =
+      "gcs.http.request.connection.timeout.mills";
+  public static final String GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS_DEFAULT = "60000";
+  public static final String GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS =
+      "gcs.http.request.read.timeout.mills";
+  public static final String GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS_DEFAULT = "60000";
+  public static final String GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS =
+      "gcs.http.request.total.timeout.mins";
+  public static final String GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS_DEFAULT = "5";
+
   /**
    * HTTP Status-Code 429: RESOURCE_EXHAUSTED.
    */

@@ -19,6 +19,7 @@ package io.cdap.cdap.common.lang.jar;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ThrowingSupplier;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -115,11 +116,12 @@ public class BundleJarUtil {
   }
 
   /**
-   * Creates an JAR including all the files present in the given input. Same as calling {@link
-   * #addToArchive(File, ZipOutputStream)} with a {@link JarOutputStream}.
+   * Creates an JAR including all the files present in the given input. Same as calling
+   * {@link #addToArchive(File, ZipOutputStream)} with a {@link JarOutputStream}.
    */
   public static void createJar(File input, File output) throws IOException {
-    try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(output))) {
+    try (JarOutputStream jarOut = new JarOutputStream(
+        new BufferedOutputStream(new FileOutputStream(output)))) {
       addToArchive(input, jarOut);
     }
   }
@@ -228,8 +230,8 @@ public class BundleJarUtil {
   }
 
   /**
-   * Performs the same operation as the {@link #prepareClassLoaderFolder(Location,
-   * ThrowingSupplier)} method.
+   * Performs the same operation as the
+   * {@link #prepareClassLoaderFolder(Location, ThrowingSupplier)} method.
    */
   public static ClassLoaderFolder prepareClassLoaderFolder(File jarFile,
       ThrowingSupplier<File, IOException> destinationSupplier)

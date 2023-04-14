@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory;
  * {@link MetricsEmitter} that aggregates  values for a metric during collection and emit the
  * aggregated value when emit.
  */
-final class AggregatedMetricsEmitter implements MetricsEmitter {
-
+public final class AggregatedMetricsEmitter implements MetricsEmitter {
   private static final Logger LOG = LoggerFactory.getLogger(AggregatedMetricsEmitter.class);
 
   private final String name;
@@ -34,7 +33,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private MetricType metricType = MetricType.COUNTER;
   private Distribution distribution;
 
-  AggregatedMetricsEmitter(String name) {
+  public AggregatedMetricsEmitter(String name) {
     if (name == null || name.isEmpty()) {
       LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, ");
     }

@@ -91,6 +91,22 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
     return secureStoreService.get(namespace, name);
   }
 
+  @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.GET);
+    return secureStoreService.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
+    accessEnforcer.enforce(secureKeyId, principal, StandardPermission.GET);
+    return secureStoreService.getData(namespace, name);
+  }
+
   /**
    * Puts the user provided data in the secure store, if the user has admin access to the key.
    *

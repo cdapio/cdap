@@ -29,25 +29,29 @@ import java.util.Objects;
  */
 public class SourceControlConfig {
 
-  private final String namespaceID;
+  private final String namespaceId;
   // Path where local git repositories are stored.
   private final Path localReposClonePath;
   private final int gitCommandTimeoutSeconds;
   private final RepositoryConfig repositoryConfig;
 
-  public SourceControlConfig(NamespaceId namespaceID, RepositoryConfig repositoryConfig,
+  public SourceControlConfig(NamespaceId namespaceId, RepositoryConfig repositoryConfig,
       CConfiguration cConf) {
-    this.namespaceID = namespaceID.getNamespace();
+    this.namespaceId = namespaceId.getNamespace();
     this.repositoryConfig = repositoryConfig;
-    String gitCloneDirectory = cConf.get(
-        Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH);
     this.gitCommandTimeoutSeconds = cConf.getInt(
         Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS);
-    this.localReposClonePath = Paths.get(gitCloneDirectory, "namespace", this.namespaceID);
+    // if local dir is set use it for cloned storage
+    // for task workers it would use emptydir volume
+    String defaultCloneDir = cConf.get(Constants.SourceControlManagement.GIT_REPOSITORIES_CLONE_DIRECTORY_PATH);
+    String workDir = cConf.get(Constants.TaskWorker.WORK_DIR);
+    String gitCloneDirectory = workDir == null
+        ? defaultCloneDir : String.format("%s/source-control", workDir);
+    this.localReposClonePath = Paths.get(gitCloneDirectory, "namespace", this.namespaceId);
   }
 
-  public String getNamespaceID() {
-    return namespaceID;
+  public String getNamespaceId() {
+    return namespaceId;
   }
 
   public Path getLocalReposClonePath() {
@@ -71,15 +75,15 @@ public class SourceControlConfig {
       return false;
     }
     SourceControlConfig that = (SourceControlConfig) o;
-    return gitCommandTimeoutSeconds == that.gitCommandTimeoutSeconds && namespaceID.equals(
-        that.namespaceID)
+    return gitCommandTimeoutSeconds == that.gitCommandTimeoutSeconds && namespaceId.equals(
+        that.namespaceId)
         && localReposClonePath.equals(that.localReposClonePath) && repositoryConfig.equals(
         that.repositoryConfig);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceID, localReposClonePath, gitCommandTimeoutSeconds,
+    return Objects.hash(namespaceId, localReposClonePath, gitCommandTimeoutSeconds,
         repositoryConfig);
   }
 }

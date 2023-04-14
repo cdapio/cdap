@@ -78,7 +78,7 @@ public class GcpSecretManagerTest {
     SecretMetadata metadata = createMetadata("example");
     when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any()))
       .thenReturn(WrappedSecret.fromMetadata(NAMESPACE, metadata));
-    when(client.getSecretData(ArgumentMatchers.any())).thenReturn(payload);
+    when(client.getSecretData(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(payload);
 
     // Metadata [potentially] updated, payload remains the same.
     secretManager.store(NAMESPACE, new Secret(payload, metadata));
@@ -96,7 +96,8 @@ public class GcpSecretManagerTest {
     SecretMetadata metadata = createMetadata("example");
     when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any()))
       .thenReturn(WrappedSecret.fromMetadata(NAMESPACE, metadata));
-    when(client.getSecretData(ArgumentMatchers.any())).thenReturn(oldPayload);
+    when(client.getSecretData(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        .thenReturn(oldPayload);
 
     secretManager.store(NAMESPACE, new Secret(newPayload, metadata));
 
@@ -120,7 +121,7 @@ public class GcpSecretManagerTest {
     SecretMetadata metadata = createMetadata("example");
     when(client.getSecret(ArgumentMatchers.any(), ArgumentMatchers.any()))
       .thenReturn(WrappedSecret.fromMetadata(NAMESPACE, metadata));
-    when(client.getSecretData(ArgumentMatchers.any())).thenReturn(payload);
+    when(client.getSecretData(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(payload);
 
     Secret secret = secretManager.get(NAMESPACE, "example");
 

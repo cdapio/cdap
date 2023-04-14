@@ -16,35 +16,25 @@
 
 package io.cdap.cdap.app.runtime.spark
 
-import io.cdap.cdap.api.Admin
-import io.cdap.cdap.api.ServiceDiscoverer
-import io.cdap.cdap.api.TxRunnable
+import io.cdap.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
 import io.cdap.cdap.api.app.ApplicationSpecification
 import io.cdap.cdap.api.data.batch.Split
 import io.cdap.cdap.api.lineage.field.Operation
 import io.cdap.cdap.api.messaging.MessagingContext
-import io.cdap.cdap.api.metadata.Metadata
-import io.cdap.cdap.api.metadata.MetadataEntity
-import io.cdap.cdap.api.metadata.MetadataScope
+import io.cdap.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import io.cdap.cdap.api.metrics.Metrics
 import io.cdap.cdap.api.plugin.PluginContext
 import io.cdap.cdap.api.preview.DataTracer
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
-import io.cdap.cdap.api.security.store.SecureStore
-import io.cdap.cdap.api.security.store.SecureStoreData
-import io.cdap.cdap.api.security.store.SecureStoreMetadata
-import io.cdap.cdap.api.spark.JavaSparkExecutionContext
-import io.cdap.cdap.api.spark.SparkExecutionContext
-import io.cdap.cdap.api.spark.SparkSpecification
+import io.cdap.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
+import io.cdap.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
-import io.cdap.cdap.api.workflow.WorkflowInfo
-import io.cdap.cdap.api.workflow.WorkflowToken
+import io.cdap.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import org.apache.spark.api.java.JavaPairRDD
 import org.apache.twill.api.RunId
 
 import java.io.IOException
-import java.lang
-import java.util
+import java.{lang, util}
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
@@ -143,6 +133,16 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   @throws[IOException]
   override def get(namespace: String, name: String): SecureStoreData = {
     return sec.getSecureStore.get(namespace, name)
+  }
+
+  @throws[IOException]
+  override def getMetadata(namespace: String, name: String): SecureStoreMetadata = {
+    return sec.getSecureStore.getMetadata(namespace, name)
+  }
+
+  @throws[IOException]
+  override def getData(namespace: String, name: String): Array[Byte] = {
+    return sec.getSecureStore.getData(namespace, name)
   }
 
   /**

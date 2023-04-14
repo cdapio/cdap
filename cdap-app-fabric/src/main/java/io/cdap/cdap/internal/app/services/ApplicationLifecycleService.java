@@ -994,7 +994,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1,
         ArtifactSortOrder.DESC);
     if (artifactDetail.isEmpty()) {
-      throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
+      throw new ArtifactNotFoundException(range.getNamespace(), range.getName(), range.getVersionString());
     }
     return deployApp(namespace, appName, appVersion, configStr, changeSummary, sourceControlMeta,
         programTerminator,
@@ -1500,6 +1500,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   public void deleteAllStates(NamespaceId namespaceId, String appName)
       throws ApplicationNotFoundException {
+
+    // ensure that there is UPDATE permission on the app.
+    accessEnforcer.enforce(namespaceId.app(appName),
+        authenticationContext.getPrincipal(), StandardPermission.UPDATE);
     store.deleteAllStates(namespaceId, appName);
   }
 

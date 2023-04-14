@@ -42,6 +42,7 @@ import io.cdap.cdap.app.runtime.spark.submit.MasterEnvironmentSparkSubmitter;
 import io.cdap.cdap.app.runtime.spark.submit.SparkSubmitter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.AppFabric;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceFactory;
 import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.lang.FilterClassLoader;
@@ -66,6 +67,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
 import org.apache.hadoop.conf.Configuration;
@@ -222,10 +224,14 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
         submitter = new MasterEnvironmentSparkSubmitter(cConf, locationFactory, host, runtimeContext,
                                                         masterEnv, options);
       } else {
+        String launchModeStr = options.getArguments()
+            .getOption(ProgramOptionConstants.LAUNCH_MODE, LaunchMode.CLUSTER.name());
+        LaunchMode launchMode = LaunchMode.valueOf(launchModeStr);
+        String schedulerQueue = options.getArguments().getOption(AppFabric.APP_SCHEDULER_QUEUE);
         submitter = isLocal
           ? new LocalSparkSubmitter()
           : new DistributedSparkSubmitter(hConf, locationFactory, host, runtimeContext,
-                                          options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
+                                          schedulerQueue, launchMode);
       }
 
       String jvmOpts = options.getUserArguments().getOption(SystemArguments.JVM_OPTS);

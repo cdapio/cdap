@@ -84,6 +84,32 @@
       ]
     },
     {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "radio-group",
+          "label": "Launch Mode",
+          "name": "launchMode",
+          "description": "Whether to launch the program directly in the Dataproc job (client mode) or in a separate container (cluster mode). Client mode will result in faster start up times and fewer cluster resources used, but may run into errors if the launcher requires more memory.",
+          "widget-attributes": {
+            "layout": "inline",
+            "size": "medium",
+            "default": "cluster",
+            "options": [
+              {
+                "id": "client",
+                "label": "Client"
+              },
+              {
+                "id": "cluster",
+                "label": "Cluster"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "label": "Monitoring",
       "properties": [
         {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ import io.cdap.cdap.common.io.DatumReader;
 import io.cdap.cdap.common.io.StringCachingDecoder;
 import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
+import io.cdap.cdap.common.utils.ResettableByteArrayInputStream;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessageFetcher;
@@ -47,7 +48,9 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import java.io.ByteArrayInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -63,8 +66,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
@@ -321,7 +322,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
     private final MetricsMetaKey metricsMetaKey;
     private final TopicId topic;
-    private final PayloadInputStream payloadInput;
+    private final ResettableByteArrayInputStream payloadInput;
     private final StringCachingDecoder decoder;
     private final String oldestTsMetricName;
     private final String latestTsMetricName;
@@ -337,7 +338,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           metricsPrefixForDelayMetrics, topic.getTopic());
       this.metricsMetaKey = metricsMetaKey;
       this.topic = topic;
-      this.payloadInput = new PayloadInputStream();
+      this.payloadInput = new ResettableByteArrayInputStream();
       this.decoder = new StringCachingDecoder(new BinaryDecoder(payloadInput), new HashMap<>());
     }
 
@@ -521,19 +522,5 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       return true;
     }
     return false;
-  }
-
-  private class PayloadInputStream extends ByteArrayInputStream {
-
-    PayloadInputStream() {
-      super(Bytes.EMPTY_BYTE_ARRAY);
-    }
-
-    void reset(byte[] buf) {
-      this.buf = buf;
-      this.pos = 0;
-      this.count = buf.length;
-      this.mark = 0;
-    }
   }
 }
