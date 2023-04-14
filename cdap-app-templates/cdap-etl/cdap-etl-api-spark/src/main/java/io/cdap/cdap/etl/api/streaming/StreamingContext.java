@@ -70,4 +70,11 @@ public interface StreamingContext extends StageContext, Transactional, AppStateS
    * @return boolean indicating whether this pipeline run has state store enabled
    */
   boolean isStateStoreEnabled();
+
+  /**
+   * Returns the batch interval for the pipeline.
+   *
+   * @return Long value for batch interval in millis.
+   */
+  long getBatchInterval();
 }
