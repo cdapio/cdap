@@ -66,6 +66,7 @@ import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SQLContext;
@@ -256,15 +257,20 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                                                                     stateStoreEnabled);
     DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
     AtomicBoolean failedBatch = new AtomicBoolean();
+    StreamingEventHandler eventHandler = getEventHandler(dStream);
     Callable<Void> batchRetryCallable = () -> {
-      if (dStream instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) dStream).onBatchRetry(streamingContext);
-      } else if (dStream.dstream() instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) (dStream.dstream())).onBatchRetry(streamingContext);
+      if(eventHandler != null){
+        eventHandler.onBatchRetry(streamingContext);
       }
       return null;
     };
+
     dStream.foreachRDD((javaRDD, time) -> {
+      // Invoke onBatchStarted
+      if (eventHandler != null) {
+        eventHandler.onBatchStarted(streamingContext);
+      }
+
       Collection<Runnable> sinkRunnables = new ArrayList<>();
       Transactionals.execute(sec, context -> {
         JavaRDD<Object> batchRDD = javaRDD;
@@ -311,10 +317,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         return;
       }
 
-      if (dStream instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) dStream).onBatchCompleted(streamingContext);
-      } else if (dStream.dstream() instanceof StreamingEventHandler) {
-        ((StreamingEventHandler) (dStream.dstream())).onBatchCompleted(streamingContext);
+      // Invoke onBatchCompleted
+      if(eventHandler != null){
+        eventHandler.onBatchCompleted(streamingContext);
       }
     });
   }
@@ -377,5 +382,16 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  @Nullable
+  private StreamingEventHandler getEventHandler(JavaDStream<Object> dStream){
+    if (dStream instanceof StreamingEventHandler) {
+      return (StreamingEventHandler) dStream;
+    } else if (dStream.dstream() instanceof StreamingEventHandler) {
+      return (StreamingEventHandler) (dStream.dstream());
+    }
+
+    return null;
   }
 }

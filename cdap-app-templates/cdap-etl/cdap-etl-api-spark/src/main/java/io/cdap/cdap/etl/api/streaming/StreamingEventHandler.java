@@ -28,5 +28,21 @@ public interface StreamingEventHandler {
    */
   void onBatchCompleted(StreamingContext streamingContext);
 
-  void onBatchRetry(StreamingContext streamingContext);
+  /**
+   * Call before starting each batch.
+   *
+   * @param streamingContext
+   */
+  default void onBatchStarted(StreamingContext streamingContext){
+    // no actions
+  }
+
+  /**
+   * Call before batch retry.
+   *
+   * @param streamingContext
+   */
+  default void onBatchRetry(StreamingContext streamingContext){
+    // no actions
+  }
 }
