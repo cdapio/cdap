@@ -547,6 +547,7 @@ public class TestBase {
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
     cConf.set(Constants.SupportBundle.SERVICE_BIND_ADDRESS, localhost);
+    cConf.setInt(Constants.AppFabric.PROGRAM_STATUS_EVENT_NUM_PARTITIONS, 1);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
