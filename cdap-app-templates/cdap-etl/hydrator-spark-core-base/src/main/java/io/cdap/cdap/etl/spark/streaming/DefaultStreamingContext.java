@@ -52,10 +52,11 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final JavaStreamingContext jsc;
   private final Admin admin;
   private final boolean stateStoreEnabled;
+  private final long batchInterval;
   private final boolean isPreviewEnabled;
 
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc,
-                                 boolean stateStoreEnabled) {
+                                 boolean stateStoreEnabled, long batchInterval) {
     super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
                               sec.getLogicalStartTime(), new BasicArguments(sec), sec.getMetrics(),
                               sec.getPluginContext(), sec.getServiceDiscoverer(), sec, sec, sec,
@@ -64,6 +65,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     this.jsc = jsc;
     this.admin = sec.getAdmin();
     this.stateStoreEnabled = stateStoreEnabled;
+    this.batchInterval = batchInterval;
     this.isPreviewEnabled = stageSpec.isPreviewEnabled(sec);
   }
 
@@ -75,6 +77,11 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   @Override
   public boolean isStateStoreEnabled() {
     return stateStoreEnabled;
+  }
+
+  @Override
+  public long getBatchInterval() {
+    return batchInterval;
   }
 
   @Override

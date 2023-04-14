@@ -96,6 +96,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   private final DataStreamsPipelineSpec spec;
   private final boolean stateStoreEnabled;
   private final StreamingRetrySettings streamingRetrySettings;
+  private final long batchIntervalMillis;
 
   public SparkStreamingPipelineRunner(JavaSparkExecutionContext sec, JavaStreamingContext javaStreamingContext,
                                       DataStreamsPipelineSpec spec) {
@@ -106,6 +107,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       && !spec.isPreviewEnabled(sec);
     this.streamingRetrySettings = spec.getStreamingRetrySettings();
     LOG.debug("State handling mode is : {}", spec.getStateSpec().getMode());
+    batchIntervalMillis = this.spec.getBatchIntervalMillis();
   }
 
   @Override
@@ -149,8 +151,10 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       source = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
     }
 
-    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
-                                                                 stateStoreEnabled);
+    StreamingContext sourceContext = new DefaultStreamingContext(stageSpec, sec,
+        javaStreamingContext,
+        stateStoreEnabled,
+        spec.getBatchIntervalMillis());
     return source.getStream(sourceContext);
   }
 
@@ -253,8 +257,10 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     StageSpec stageSpec = pipelinePhase.getStage(source);
     StageStatisticsCollector collector = collectors.getOrDefault(source, new NoopStageStatisticsCollector());
     JavaDStream<Object> dStream = getDStream(stageSpec, collector);
-    StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec, javaStreamingContext,
-                                                                    stateStoreEnabled);
+    StreamingContext streamingContext = new DefaultStreamingContext(stageSpec, sec,
+        javaStreamingContext,
+        stateStoreEnabled,
+        batchIntervalMillis);
     DataTracer dataTracer = sec.getDataTracer(stageSpec.getName());
     AtomicBoolean failedBatch = new AtomicBoolean();
     StreamingEventHandler eventHandler = getEventHandler(dStream);
