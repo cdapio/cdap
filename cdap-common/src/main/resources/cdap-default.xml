@@ -1001,7 +1001,7 @@
 
   <property>
     <name>program.status.event.topic.num.partitions</name>
-    <value>1</value>
+    <value>10</value>
     <description>
       Number of topics to use for program run events. All events realted to same
       run should always
