@@ -154,7 +154,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
     this.metricsWriter = metricsWriter;
     this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
-    this.queueSize = cConf.getInt(Constants.Metrics.QUEUE_SIZE);
+    this.queueSize = 5000000;
     this.offerTimeoutMillis = cConf.getInt(Constants.Metrics.OFFER_TIMEOUT_MS);
     this.fetcherLimit = Math.max(1,
         queueSize / topicNumbers.size()); // fetcherLimit is at least one

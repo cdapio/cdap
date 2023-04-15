@@ -63,6 +63,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   static final String COUNTER_METRIC_NAME = "counter_metric";
   static final String GAUGE_METRIC_NAME_PREFIX = "gauge_metric";
   static final String DISTRIBUTION_METRIC_NAME_PREFIX = "distribution_metric";
+  protected final Map<String, Long> expected = new HashMap<>();
 
   static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
     .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
@@ -71,22 +72,22 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     .put(Constants.Metrics.Tag.RUN_ID, "RUN_1")
     .put(Constants.Metrics.Tag.HANDLER, "HANDLER_1").build();
 
-  private final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   // Map containing expected metrics' names and values
-  protected final Map<String, Long> expected = new HashMap<>();
-  private final Encoder encoder = new BinaryEncoder(encoderOutputStream);
 
   protected static final long BUCKET_MASK = 1L + 1L << 2 + 1L << 8 + 1L << 20;
   protected static final long[] BUCKET_COUNTS = new long[] {1, 1, 1, 1};
+  private int numOfTopics = -1;
 
   void publishMessagingMetrics(int metricIndex, long startTimeSecs, Map<String, String> metricsContext,
                                Map<String, Long> expected, String expectedMetricPrefix,
                                MetricType metricType) {
 
+   final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
+   final Encoder encoder = new BinaryEncoder(encoderOutputStream);
     try {
       getMetricValuesAddToExpected(metricIndex, startTimeSecs,
-                                   metricsContext, expected, expectedMetricPrefix, metricType);
-      int numOfTopics = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
+                                   metricsContext, expected, expectedMetricPrefix, metricType, encoder);
+      numOfTopics = numOfTopics == -1 ? cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM) : numOfTopics;
       messagingService.publish(
         StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % numOfTopics)))
           .addPayload(encoderOutputStream.toByteArray()).build());
@@ -106,7 +107,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
    */
   private MetricValues getMetricValuesAddToExpected(int i, long startTimeSecs, Map<String, String> metricsContext,
                                                     Map<String, Long> expected, String expectedMetricPrefix,
-                                                    MetricType metricType)
+                                                    MetricType metricType, Encoder encoder)
     throws TopicNotFoundException, IOException {
     MetricValues metric = null;
     switch (metricType) {
@@ -146,8 +147,9 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     list.add(new IOModule());
     list.add(Modules.override(
       new NonCustomLocationUnitTestModule(),
-      new DataFabricModules().getInMemoryModules(),
-      new DataSetServiceModules().getInMemoryModules(),
+      // Use LevelDB for profiling metrics.
+      new DataFabricModules().getStandaloneModules(),
+      new DataSetServiceModules().getStandaloneModules(),
       new NamespaceAdminTestModule(),
       new MetricsStoreModule(),
       new AuthorizationTestModule(),

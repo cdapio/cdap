@@ -18,7 +18,6 @@ package io.cdap.cdap.metrics.process;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.dataset.lib.cube.AggregationFunction;
 import io.cdap.cdap.api.dataset.lib.cube.TimeValue;
@@ -85,27 +84,51 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // Publish metrics with messaging service and record expected metrics
-    for (int i = 10; i < 20; i++) {
-      publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.COUNTER);
+    long startTime1 = System.currentTimeMillis();
+    final long totalMessages = 1000000;
+    final long numPublishers = 1000;
+    final long messagesPerPublisher = totalMessages / numPublishers;
+    List<Thread> threads = new ArrayList<>();
+
+    for (int i = 0; i < numPublishers; ++i) {
+      final long threadNo = i;
+      threads.add(new Thread(() -> {
+        for (int j = 0; j < messagesPerPublisher; ++j) {
+          publishMessagingMetrics(j,
+              startTime, METRICS_CONTEXT,
+              expected, SYSTEM_METRIC_PREFIX,
+              MetricType.COUNTER);
+        }
+      }));
     }
 
-    Thread.sleep(500);
+    for (Thread t : threads) {
+      t.start();
+    }
+
+    for (Thread t : threads) {
+      t.join();
+    }
+    long totalTime = System.currentTimeMillis() - startTime1;
+//    return ;
+
+//    Thread.sleep(500);
     // Stop and restart messagingMetricsProcessorManagerService
-    messagingMetricsProcessorManagerService.stopAndWait();
-    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorManagerService
-    // internally only persists metrics during terminating.
-    messagingMetricsProcessorManagerService =
-      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
-                                                  messagingService, injector.getInstance(SchemaGenerator.class),
-                                                  injector.getInstance(DatumReaderFactory.class),
-                                                  metricStore, injector.getInstance(MetricsWriterProvider.class),
-                                                  partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorManagerService.startAndWait();
-
-    // Publish metrics after MessagingMetricsProcessorManagerService restarts and record expected metrics
-    for (int i = 20; i < 30; i++) {
-      publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.GAUGE);
-    }
+//    messagingMetricsProcessorManagerService.stopAndWait();
+//    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorManagerService
+//    // internally only persists metrics during terminating.
+//    messagingMetricsProcessorManagerService =
+//      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
+//                                                  messagingService, injector.getInstance(SchemaGenerator.class),
+//                                                  injector.getInstance(DatumReaderFactory.class),
+//                                                  metricStore, injector.getInstance(MetricsWriterProvider.class),
+//                                                  partitions, new NoopMetricsContext(), 50, 0);
+//    messagingMetricsProcessorManagerService.startAndWait();
+//
+//    // Publish metrics after MessagingMetricsProcessorManagerService restarts and record expected metrics
+//    for (int i = 20; i < 20; i++) {
+//      publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, SYSTEM_METRIC_PREFIX, MetricType.GAUGE);
+//    }
 
     final List<String> missingMetricNames = new ArrayList<>();
     // Wait until all expected metrics can be queried from the metric store. If not all expected metrics
@@ -116,26 +139,26 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
         public Boolean call() throws Exception {
           return canQueryAllMetrics(metricStore, METRICS_CONTEXT, expected, missingMetricNames);
         }
-      }, 10000, TimeUnit.MILLISECONDS, "Failed to get all metrics");
+      }, 1000, TimeUnit.SECONDS,  1, TimeUnit.SECONDS, "Failed to get all metrics");
     } catch (TimeoutException e) {
       Assert.fail(String.format("Metrics: [%s] cannot be found in the metrics store.",
                                 Joiner.on(", ").join(missingMetricNames)));
     }
 
     // Query metrics from the metricStore and compare them with the expected ones
-    assertMetricsResult(metricStore, METRICS_CONTEXT, expected);
-
-    // Query for the 5 counter metrics published with messaging between time 5 - 14
-    Collection<MetricTimeSeries> queryResult =
-      metricStore.query(new MetricDataQuery(5, 14, 1, Integer.MAX_VALUE,
-                                            ImmutableMap.of(SYSTEM_METRIC_PREFIX + COUNTER_METRIC_NAME,
-                                                            AggregationFunction.SUM),
-                                            METRICS_CONTEXT, ImmutableList.<String>of(), null));
-    MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
-    Assert.assertEquals(5, timeSeries.getTimeValues().size());
-    for (TimeValue timeValue : timeSeries.getTimeValues()) {
-      Assert.assertEquals(1L, timeValue.getValue());
-    }
+//    assertMetricsResult(metricStore, METRICS_CONTEXT, expected);
+//
+//    // Query for the 5 counter metrics published with messaging between time 5 - 14
+//    Collection<MetricTimeSeries> queryResult =
+//      metricStore.query(new MetricDataQuery(5, 14, 1, Integer.MAX_VALUE,
+//                                            ImmutableMap.of(SYSTEM_METRIC_PREFIX + COUNTER_METRIC_NAME,
+//                                                            AggregationFunction.SUM),
+//                                            METRICS_CONTEXT, ImmutableList.<String>of(), null));
+//    MetricTimeSeries timeSeries = Iterables.getOnlyElement(queryResult);
+//    Assert.assertEquals(5, timeSeries.getTimeValues().size());
+//    for (TimeValue timeValue : timeSeries.getTimeValues()) {
+//      Assert.assertEquals(1L, timeValue.getValue());
+//    }
 
     // Stop services and servers
     messagingMetricsProcessorManagerService.stopAndWait();

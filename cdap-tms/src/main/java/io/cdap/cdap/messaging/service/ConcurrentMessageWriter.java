@@ -66,6 +66,7 @@ final class ConcurrentMessageWriter implements Closeable {
   private final PendingStoreQueue pendingStoreQueue;
   private final AtomicBoolean writerFlag;
   private final AtomicBoolean closed;
+  private static final int[] backoffDurationsMillis = {20, 40, 80, 160, 320};
 
   /**
    * Constructor with a {@link NoopMetricsContext}. This constructor should only be used in
@@ -111,10 +112,18 @@ final class ConcurrentMessageWriter implements Closeable {
     pendingStoreQueue.enqueue(pendingStoreRequest);
 
     metricsCollector.increment("persist.requested", 1L);
-
+    int counter = 0;
     while (!pendingStoreRequest.isCompleted()) {
       if (!tryWrite()) {
-        Thread.yield();
+        if (counter + 1 <= backoffDurationsMillis.length) {
+          try {
+            Thread.sleep((long) (Math.random() * backoffDurationsMillis[counter++]));
+          } catch (InterruptedException e) {
+            Thread.yield();
+          }
+        } else {
+          Thread.yield();
+        }
       }
     }
 
