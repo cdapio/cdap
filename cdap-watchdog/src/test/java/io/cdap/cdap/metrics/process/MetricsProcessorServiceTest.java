@@ -74,13 +74,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 
     // Intentionally set queue size to a small value, so that MessagingMetricsProcessorManagerService
     // internally can persist metrics when more messages are to be fetched
-    MessagingMetricsProcessorManagerService messagingMetricsProcessorManagerService =
-      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
-                                                  messagingService, injector.getInstance(SchemaGenerator.class),
-                                                  injector.getInstance(DatumReaderFactory.class),
-                                                  metricStore, injector.getInstance(MetricsWriterProvider.class),
-                                                  partitions, new NoopMetricsContext(), 50, 0);
-    messagingMetricsProcessorManagerService.startAndWait();
+
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // Publish metrics with messaging service and record expected metrics
@@ -93,7 +87,22 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     for (int i = 0; i < numPublishers; ++i) {
       final long threadNo = i;
       threads.add(new Thread(() -> {
+        // Random wait time of 2 seconds in the beginning to stagger publishers.
+        try {
+          Thread.sleep((long) (Math.random() * 2000));
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
         for (int j = 0; j < messagesPerPublisher; ++j) {
+          if (j % 100 == 99) {
+            // Sleep for 2 seconds after publishing 100 metric. Similar to remote
+            // applications in Dataproc.
+            try {
+              Thread.sleep(2000);
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          }
           publishMessagingMetrics(j,
               startTime, METRICS_CONTEXT,
               expected, SYSTEM_METRIC_PREFIX,
@@ -110,6 +119,14 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       t.join();
     }
     long totalTime = System.currentTimeMillis() - startTime1;
+
+    MessagingMetricsProcessorManagerService messagingMetricsProcessorManagerService =
+      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
+                                                  messagingService, injector.getInstance(SchemaGenerator.class),
+                                                  injector.getInstance(DatumReaderFactory.class),
+                                                  metricStore, injector.getInstance(MetricsWriterProvider.class),
+                                                  partitions, new NoopMetricsContext(), 50, 0);
+    messagingMetricsProcessorManagerService.startAndWait();
 //    return ;
 
 //    Thread.sleep(500);
