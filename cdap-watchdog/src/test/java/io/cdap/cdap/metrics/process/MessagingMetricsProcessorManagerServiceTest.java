@@ -84,15 +84,15 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
       // will fetch metrics concurrently.
       for (int i = 0; i < 50; i++) {
         // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
-        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.COUNTER);
+        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.COUNTER, 1);
       }
       for (int i = 50; i < 100; i++) {
         // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
-        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
+        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE, 1);
       }
       for (int i = 0; i < 50; i++) {
         // TOPIC_PREFIX + (i % PARTITION_SIZE) decides which topic the metric is published to
-        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.DISTRIBUTION);
+        publishMessagingMetrics(i, startTime, METRICS_CONTEXT, expected, "", MetricType.DISTRIBUTION, 1);
       }
 
       final MockMetricStore metricStore = new MockMetricStore();
@@ -123,7 +123,7 @@ public class MessagingMetricsProcessorManagerServiceTest extends MetricsProcesso
 
       // publish a dummy metric
       // this is to force the metrics processor to publish delay metrics for all the topics
-      publishMessagingMetrics(100, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE);
+      publishMessagingMetrics(100, startTime, METRICS_CONTEXT, expected, "", MetricType.GAUGE, 1);
       // validate the newly published metric
       Tasks.waitFor(151L, () -> metricStore.getMetricsProcessedByMetricsProcessor(),
                     15, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);

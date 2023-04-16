@@ -48,24 +48,22 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
@@ -87,7 +85,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final long maxDelayMillis;
   private final int queueSize;
   private final long offerTimeoutMillis;
-  private final BlockingDeque<MetricValues> metricsFromAllTopics;
+  private final ConcurrentLinkedQueue<MetricValues> metricsFromAllTopics;
   private final AtomicBoolean persistingFlag;
   private final boolean limitWriteFrequency;
   private final MetadataHandler metadataHandler;
@@ -154,13 +152,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
     this.metricsWriter = metricsWriter;
     this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
-    this.queueSize = 5000000;
+    this.queueSize = 50000;
     this.offerTimeoutMillis = cConf.getInt(Constants.Metrics.OFFER_TIMEOUT_MS);
     this.fetcherLimit = Math.max(1,
-        queueSize / topicNumbers.size()); // fetcherLimit is at least one
+        queueSize / topicNumbers.size() / 2); // fetcherLimit is at least one
     this.metricsContextMap = metricsContext.getTags();
     this.processMetricsThreads = new ArrayList<>();
-    this.metricsFromAllTopics = new LinkedBlockingDeque<>(queueSize);
+    this.metricsFromAllTopics = new ConcurrentLinkedQueue<>();
     this.persistingFlag = new AtomicBoolean();
     // the max sleep time will be 1 min
     this.metricsProcessIntervalMillis = resolveProcessingInterval(cConf, metricsWriter,
@@ -272,7 +270,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    * @param topicProcessMetaMap a map with each key {@link MetricsMetaKey} representing a key
    *     and {@link TopicProcessMeta} which has info on messageId and processing stats
    */
-  private void persistMetricsAndTopicProcessMeta(Deque<MetricValues> metricValues,
+  private void persistMetricsAndTopicProcessMeta(
+      Queue<MetricValues> metricValues,
       Map<MetricsMetaKey, TopicProcessMeta> topicProcessMetaMap) {
     try {
       if (!metricValues.isEmpty()) {
@@ -290,9 +289,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
    *
    * @param metricValues a non-empty deque of {@link MetricValues}
    */
-  private void persistMetrics(Deque<MetricValues> metricValues) {
+  private void persistMetrics(Queue<MetricValues> metricValues) {
     long now = System.currentTimeMillis();
-    long lastMetricTime = metricValues.peekLast().getTimestamp();
+    // Getting the last value of the queue isn't efficient, so we take the
+    // timestamp of the first value as a close approximation.
+    long lastMetricTime = metricValues.peek().getTimestamp();
     List<MetricValue> topicLevelDelays = new ArrayList<>();
 
     //write topic level delay metrics
@@ -309,7 +310,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         new MetricValue(processMetricName, MetricType.COUNTER, metricValues.size()));
 
     long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(now);
-    metricValues.add(new MetricValues(metricsContextMap, nowSeconds, processorMetrics));
+    metricValues.offer(new MetricValues(metricsContextMap, nowSeconds, processorMetrics));
     metricsWriter.write(metricValues);
     metricsProcessedCount += metricValues.size();
     PROGRESS_LOG.debug(
@@ -372,6 +373,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         // Before retrieving try to free up some queue space by persisting metrics and messageId's
         // if no other thread is persisting
         tryPersist();
+        if (metricsFromAllTopics.size() + fetcherLimit > queueSize / 2) {
+          return 100;
+        }
 
         MessageFetcher fetcher = messagingService.prepareFetch(topic);
         fetcher.setLimit(fetcherLimit);
@@ -394,6 +398,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
             new TopicProcessMeta(lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                 oldestTsMetricName, latestTsMetricName);
+//        boolean enoughFree =  metricsFromAllTopics.size() + fetcherLimit <= queueSize / 2 ;
         try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
           gotMessages = iterator.hasNext();
           while (iterator.hasNext() && isRunning()) {
@@ -403,8 +408,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
               MetricValues metricValues = metricReader.read(decoder, metricSchema);
               if (currentMessageId == null) {
                 //For the first message we are willing to wait for space in queue
-                if (!metricsFromAllTopics.offer(metricValues, offerTimeoutMillis,
-                    TimeUnit.MILLISECONDS)) {
+                if (!metricsFromAllTopics.offer(metricValues)) {
                   break;
                 }
               } else if (!metricsFromAllTopics.offer(metricValues)) {
@@ -443,10 +447,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           long timeSpent = endTime - startTime;
           return Math.max(0L, metricsProcessIntervalMillis - timeSpent);
         }
-      } catch (InterruptedException e) {
-        LOG.trace("Thread interrupted while processing metrics. Probably stopping now.", e);
-        return 0L;
-      } catch (ServiceUnavailableException e) {
+      }  catch (ServiceUnavailableException e) {
         LOG.trace("Could not fetch metrics. Will be retried in next iteration.", e);
       } catch (Exception e) {
         LOG.warn("Failed to process metrics. Will be retried in next iteration.", e);
@@ -470,7 +471,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         Map<MetricsMetaKey, TopicProcessMeta> topicProcessMetaMapCopy = metadataHandler.getCache();
         // Remove at most queueSize of metrics from metricsFromAllTopics and put into metricsCopy to limit
         // the number of metrics being persisted each time
-        Deque<MetricValues> metricsCopy = new LinkedList<>();
+        Queue<MetricValues> metricsCopy = new LinkedList<>();
         Iterator<MetricValues> iterator = metricsFromAllTopics.iterator();
         // Though the blocking queue(metricsFromAllTopics) has upper bound on its size (which is the "queueSize")
         // there can be a scenario, as the current thread is removing entries from blocking queue

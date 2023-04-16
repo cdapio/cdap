@@ -79,7 +79,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // Publish metrics with messaging service and record expected metrics
     long startTime1 = System.currentTimeMillis();
-    final long totalMessages = 1000000;
+    final long totalMessages = 10000000;
     final long numPublishers = 1000;
     final long messagesPerPublisher = totalMessages / numPublishers;
     List<Thread> threads = new ArrayList<>();
@@ -93,8 +93,8 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
-        for (int j = 0; j < messagesPerPublisher; ++j) {
-          if (j % 100 == 99) {
+        for (int j = 0; j * 10 < messagesPerPublisher; ++j) {
+          if (j % 10 == 9) {
             // Sleep for 2 seconds after publishing 100 metric. Similar to remote
             // applications in Dataproc.
             try {
@@ -106,7 +106,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
           publishMessagingMetrics(j,
               startTime, METRICS_CONTEXT,
               expected, SYSTEM_METRIC_PREFIX,
-              MetricType.COUNTER);
+              MetricType.COUNTER, 10);
         }
       }));
     }
@@ -119,17 +119,21 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
       t.join();
     }
     long totalTime = System.currentTimeMillis() - startTime1;
+//    return;
 
     MessagingMetricsProcessorManagerService messagingMetricsProcessorManagerService =
-      new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(MetricDatasetFactory.class),
-                                                  messagingService, injector.getInstance(SchemaGenerator.class),
-                                                  injector.getInstance(DatumReaderFactory.class),
-                                                  metricStore, injector.getInstance(MetricsWriterProvider.class),
-                                                  partitions, new NoopMetricsContext(), 50, 0);
+        new MessagingMetricsProcessorManagerService(cConf, injector.getInstance(
+            MetricDatasetFactory.class),
+            messagingService, injector.getInstance(
+            SchemaGenerator.class),
+            injector.getInstance(
+                DatumReaderFactory.class),
+            metricStore, injector.getInstance(
+            MetricsWriterProvider.class),
+            partitions, new NoopMetricsContext(), 50, 0);
     messagingMetricsProcessorManagerService.startAndWait();
 //    return ;
 
-//    Thread.sleep(500);
     // Stop and restart messagingMetricsProcessorManagerService
 //    messagingMetricsProcessorManagerService.stopAndWait();
 //    // Intentionally set queue size to a large value, so that MessagingMetricsProcessorManagerService
@@ -148,15 +152,19 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
 //    }
 
     final List<String> missingMetricNames = new ArrayList<>();
+    Thread.sleep(500);
+
     // Wait until all expected metrics can be queried from the metric store. If not all expected metrics
     // are retrieved when timeout occurs, print out the missing metrics
     try {
       Tasks.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return canQueryAllMetrics(metricStore, METRICS_CONTEXT, expected, missingMetricNames);
-        }
-      }, 1000, TimeUnit.SECONDS,  1, TimeUnit.SECONDS, "Failed to get all metrics");
+            @Override
+            public Boolean call() throws Exception {
+              return canQueryAllMetrics(metricStore, METRICS_CONTEXT, expected,
+                  missingMetricNames);
+            }
+          }, 1000, TimeUnit.SECONDS, 1, TimeUnit.SECONDS,
+          "Failed to get all metrics");
     } catch (TimeoutException e) {
       Assert.fail(String.format("Metrics: [%s] cannot be found in the metrics store.",
                                 Joiner.on(", ").join(missingMetricNames)));
@@ -191,11 +199,21 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
     missingMetricNames.clear();
     for (Map.Entry<String, Long> metric : expected.entrySet()) {
       Collection<MetricTimeSeries> queryResult =
-        metricStore.query(new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
-                                              metric.getKey(), AggregationFunction.SUM,
-                                              metricsContext, ImmutableList.<String>of()));
+          metricStore.query(
+              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                  metric.getKey(), AggregationFunction.SUM,
+                  metricsContext, ImmutableList.<String>of()));
       if (queryResult.size() == 0) {
         missingMetricNames.add(metric.getKey());
+      } else {
+        long value = queryResult.iterator().next().getTimeValues().get(0)
+            .getValue();
+        System.out.println(
+            "Got metrics: " + queryResult.iterator().next().getTimeValues()
+                .get(0).getValue());
+        if (value < 5e6) {
+          missingMetricNames.add(metric.getKey());
+        }
       }
     }
     return missingMetricNames.isEmpty();

@@ -80,7 +80,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
 
   void publishMessagingMetrics(int metricIndex, long startTimeSecs, Map<String, String> metricsContext,
                                Map<String, Long> expected, String expectedMetricPrefix,
-                               MetricType metricType) {
+                               MetricType metricType, int copies) {
 
    final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
    final Encoder encoder = new BinaryEncoder(encoderOutputStream);
@@ -88,9 +88,12 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       getMetricValuesAddToExpected(metricIndex, startTimeSecs,
                                    metricsContext, expected, expectedMetricPrefix, metricType, encoder);
       numOfTopics = numOfTopics == -1 ? cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM) : numOfTopics;
-      messagingService.publish(
-        StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % numOfTopics)))
-          .addPayload(encoderOutputStream.toByteArray()).build());
+      byte[] payload = encoderOutputStream.toByteArray();
+      StoreRequestBuilder builder = StoreRequestBuilder.of(NamespaceId.SYSTEM.topic(TOPIC_PREFIX + (metricIndex % numOfTopics)));
+      for (int c = 0; c < copies; c++) {
+          builder.addPayload(payload);
+      }
+      messagingService.publish(builder.build());
     } catch (Exception e) {
       LOG.error("Failed to publish metric with index {} to messaging service", metricIndex, e);
     } finally {
