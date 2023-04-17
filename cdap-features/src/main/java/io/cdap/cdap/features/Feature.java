@@ -36,7 +36,8 @@ public enum Feature {
   WRANGLER_FAIL_PIPELINE_FOR_ERROR("6.8.0"),
   STREAMING_PIPELINE_NATIVE_STATE_TRACKING("6.8.0", false),
   PUSHDOWN_TRANSFORMATION_WINDOWAGGREGATION("6.9.0"),
-  SOURCE_CONTROL_MANAGEMENT_GIT("6.9.0");
+  SOURCE_CONTROL_MANAGEMENT_GIT("6.9.0"),
+  WRANGLER_PRECONDITION_SQL("6.9.1");
 
   private final PlatformInfo.Version versionIntroduced;
   private final boolean defaultAfterIntroduction;
