@@ -37,6 +37,7 @@ import com.google.cloud.dataproc.v1.JobPlacement;
 import com.google.cloud.dataproc.v1.JobReference;
 import com.google.cloud.dataproc.v1.JobStatus;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
+import com.google.cloud.http.HttpTransportOptions;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -88,6 +89,7 @@ import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.DefaultLocalFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.threeten.bp.Duration;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc
@@ -171,11 +173,34 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         return client;
       }
 
+      int gcsHttpRequestConnectionTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS,
+          DataprocUtils.GCS_HTTP_REQUEST_CONNECTION_TIMEOUT_MILLIS_DEFAULT
+      ));
+      int gcsHttpRequestReadTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS,
+          DataprocUtils.GCS_HTTP_REQUEST_READ_TIMEOUT_MILLIS_DEFAULT
+      ));
+      int gcsHttpRequestTotalTimeout = Integer.parseInt(provisionerProperties.getOrDefault(
+          DataprocUtils.GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS,
+          DataprocUtils.GCS_HTTP_REQUEST_TOTAL_TIMEOUT_MINS_DEFAULT
+      ));
+
+      HttpTransportOptions transportOptions = StorageOptions.getDefaultHttpTransportOptions()
+          .toBuilder()
+          .setConnectTimeout(gcsHttpRequestConnectionTimeout)
+          .setReadTimeout(gcsHttpRequestReadTimeout)
+          .build();
+
       // instantiate a gcs client
       this.storageClient = client = StorageOptions.newBuilder()
-          .setStorageRetryStrategy(StorageRetryStrategy.getDefaultStorageRetryStrategy())
+          // Customize retry strategy so all requests are retried.
+          .setStorageRetryStrategy(StorageRetryStrategy.getUniformStorageRetryStrategy())
           .setProjectId(projectId)
           .setCredentials(credentials)
+          .setRetrySettings(StorageOptions.getDefaultRetrySettings().toBuilder()
+              .setTotalTimeout(Duration.ofMinutes(gcsHttpRequestTotalTimeout)).build())
+          .setTransportOptions(transportOptions)
           .build()
           .getService();
     }
@@ -656,12 +681,14 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       List<LocalFile> localFiles) throws IOException {
     String applicationJarLocalizedName = runtimeJobInfo.getArguments().get(Constants.Files.APPLICATION_JAR);
 
+    LaunchMode launchMode = LaunchMode.valueOf(
+        provisionerProperties.getOrDefault("launchMode", LaunchMode.CLUSTER.name()).toUpperCase());
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
         // set main class
         .setMainClass(DataprocJobMain.class.getName())
         // set main class arguments
         .addAllArgs(getArguments(runtimeJobInfo, localFiles, provisionerContext.getSparkCompat().getCompat(),
-                                 applicationJarLocalizedName))
+                                 applicationJarLocalizedName, launchMode))
         .putAllProperties(getProperties(runtimeJobInfo));
 
     for (LocalFile localFile : localFiles) {
@@ -692,6 +719,17 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     GetClusterRequest getClusterRequest = GetClusterRequest.newBuilder()
         .setClusterName(clusterName).setProjectId(projectId).setRegion(region).build();
 
+    int driverCores = Integer.parseInt(provisionerProperties.getOrDefault(
+        DataprocUtils.DRIVER_VCORES, DataprocUtils.DRIVER_VCORES_DEFAULT));
+    int driverMemoryMb = Integer.parseInt(provisionerProperties.getOrDefault(
+        DataprocUtils.DRIVER_MEMORY_MB, DataprocUtils.DRIVER_MEMORY_MB_DEFAULT));
+    // client mode means the Workflow driver/Spark client will run within the RuntimeJob,
+    // so it needs at least the memory/vcpu specified for the program.
+    if (launchMode == LaunchMode.CLIENT) {
+      driverCores = Math.max(runtimeJobInfo.getVirtualCores(), driverCores);
+      driverMemoryMb = Math.max(runtimeJobInfo.getMemoryMb(), driverMemoryMb);
+    }
+
     // if the dataproc cluster has driver pools enabled add the driver scheduling config i.e.
     // the resources required by Runtime Job (io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob).
     // Other quotas like GetJobRequestsPerMinutePerProjectPerRegion is counted independently of
@@ -700,12 +738,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         .getAuxiliaryNodeGroupsCount() > 0) {
       dataprocJobBuilder.setDriverSchedulingConfig(
           DriverSchedulingConfig.newBuilder()
-              .setMemoryMb(Integer.parseInt(
-                  provisionerProperties.getOrDefault(DataprocUtils.DRIVER_MEMORY_MB,
-                      DataprocUtils.DRIVER_MEMORY_MB_DEFAULT)))
-              .setVcores(
-                  Integer.parseInt(provisionerProperties.getOrDefault(DataprocUtils.DRIVER_VCORES,
-                      DataprocUtils.DRIVER_VCORES_DEFAULT)))
+              .setMemoryMb(driverMemoryMb)
+              .setVcores(driverCores)
               .build());
     }
 
@@ -718,7 +752,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @VisibleForTesting
   public static List<String> getArguments(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles,
-                                          String sparkCompat, String applicationJarLocalizedName) {
+      String sparkCompat, String applicationJarLocalizedName,
+      LaunchMode launchMode) {
     // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
     List<String> arguments = new ArrayList<>();
     arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
@@ -731,6 +766,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
     }
     arguments.add("--" + Constants.Files.APPLICATION_JAR + "=" + applicationJarLocalizedName);
+    arguments.add("--" + DataprocJobMain.LAUNCH_MODE + "=" + launchMode.name());
     return arguments;
   }
 

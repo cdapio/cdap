@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class DataprocJobMain {
   public static final String SPARK_COMPAT = "sparkCompat";
   public static final String ARCHIVE = "archive";
   public static final String PROPERTY_PREFIX = "prop";
+  public static final String LAUNCH_MODE = "launchMode";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
@@ -69,9 +71,14 @@ public class DataprocJobMain {
       throw new RuntimeException(
           "Missing --" + SPARK_COMPAT + " argument for the spark compat version");
     }
+    if (!arguments.containsKey(LAUNCH_MODE)) {
+      throw new RuntimeException(
+          "Missing -- " + LAUNCH_MODE + " argument for the launch mode");
+    }
     if (!arguments.containsKey(Constants.Files.APPLICATION_JAR)) {
       throw new RuntimeException(
-        String.format("Missing --%s argument for the application jar name", Constants.Files.APPLICATION_JAR));
+          String.format("Missing --%s argument for the application jar name",
+              Constants.Files.APPLICATION_JAR));
     }
 
     Thread.setDefaultUncaughtExceptionHandler(
@@ -90,15 +97,12 @@ public class DataprocJobMain {
 
     String runtimeJobClassName = arguments.get(RUNTIME_JOB_CLASS).iterator().next();
     String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
-    String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator().next();
-
-    ClassLoader cl = DataprocJobMain.class.getClassLoader();
-    if (!(cl instanceof URLClassLoader)) {
-      throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
-    }
+    String applicationJarLocalizedName = arguments.get(Constants.Files.APPLICATION_JAR).iterator()
+        .next();
+    String launchMode = arguments.get(LAUNCH_MODE).iterator().next();
 
     // create classpath from resources, application and twill jars
-    URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
+    URL[] urls = getClasspath(Arrays.asList(Constants.Files.RESOURCES_JAR,
         applicationJarLocalizedName,
         Constants.Files.TWILL_JAR));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
@@ -119,9 +123,11 @@ public class DataprocJobMain {
 
       try {
         // call initialize() method on dataprocEnvClass
-        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class);
-        LOG.info("Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
-        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat);
+        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class,
+            String.class);
+        LOG.info("Invoking initialize() on {} with {}, {}",
+            dataprocEnvClassName, sparkCompat, launchMode);
+        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat, launchMode);
 
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
@@ -170,21 +176,28 @@ public class DataprocJobMain {
    * expanded.application.jar/classes expanded.twill.jar expanded.twill.jar/lib/*.jar
    * expanded.twill.jar/classes
    */
-  private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
-    URL[] urls = cl.getURLs();
-    List<URL> urlList = new ArrayList<>();
+  private static URL[] getClasspath(List<String> jarFiles) throws IOException {
+    List<URL> urls = new ArrayList<>();
     for (String file : jarFiles) {
       File jarDir = new File(file);
       // add url for dir
-      urlList.add(jarDir.toURI().toURL());
+      urls.add(jarDir.toURI().toURL());
       if (file.equals(Constants.Files.RESOURCES_JAR)) {
         continue;
       }
-      urlList.addAll(createClassPathURLs(jarDir));
+      urls.addAll(createClassPathURLs(jarDir));
     }
 
-    urlList.addAll(Arrays.asList(urls));
-    return urlList.toArray(new URL[0]);
+    // Add the system class path to the URL list
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      try {
+        urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      } catch (NoSuchFileException e) {
+        // ignore anything that doesn't exist
+      }
+    }
+
+    return urls.toArray(new URL[0]);
   }
 
   private static List<URL> createClassPathURLs(File dir) throws MalformedURLException {

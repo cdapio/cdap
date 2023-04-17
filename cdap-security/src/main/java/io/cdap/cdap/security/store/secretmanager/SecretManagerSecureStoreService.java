@@ -117,6 +117,28 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    validate(namespace);
+    try {
+      SecretMetadata metadata = secretManager.getMetadata(namespace, name);
+      return new SecureStoreMetadata(metadata.getName(), metadata.getDescription(),
+          metadata.getCreationTimeMs(), metadata.getProperties());
+    } catch (SecretNotFoundException e) {
+      throw new SecureKeyNotFoundException(new SecureKeyId(namespace, name), e);
+    }
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    validate(namespace);
+    try {
+      return secretManager.getData(namespace, name);
+    } catch (SecretNotFoundException e) {
+      throw new SecureKeyNotFoundException(new SecureKeyId(namespace, name), e);
+    }
+  }
+
+  @Override
   public void put(String namespace, String name, String data, @Nullable String description,
       Map<String, String> properties) throws Exception {
     validate(namespace);

@@ -17,7 +17,6 @@
 package io.cdap.cdap.sourcecontrol;
 
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -68,9 +67,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Before
   public void beforeEach() throws Exception {
     MockitoAnnotations.initMocks(this);
-    Mockito.when(secureStore.get(NAMESPACE, PASSWORD_NAME))
-        .thenReturn(new SecureStoreData(null,
-            MOCK_TOKEN.getBytes(StandardCharsets.UTF_8)));
+    Mockito.when(secureStore.getData(NAMESPACE, PASSWORD_NAME))
+        .thenReturn(MOCK_TOKEN.getBytes(StandardCharsets.UTF_8));
     cConf = CConfiguration.create();
     cConf.setInt(Constants.SourceControlManagement.GIT_COMMAND_TIMEOUT_SECONDS,
         GIT_COMMAND_TIMEOUT);
@@ -108,9 +106,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
   @Test
   public void testValidateInvalidToken() throws Exception {
     SourceControlConfig sourceControlConfig = getSourceControlConfig();
-    Mockito.when(secureStore.get(NAMESPACE, PASSWORD_NAME))
-        .thenReturn(new SecureStoreData(null,
-            "invalid-token".getBytes(StandardCharsets.UTF_8)));
+    Mockito.when(secureStore.getData(NAMESPACE, PASSWORD_NAME))
+        .thenReturn("invalid-token".getBytes(StandardCharsets.UTF_8));
     try {
       RepositoryManager.validateConfig(secureStore, sourceControlConfig);
       Assert.fail();

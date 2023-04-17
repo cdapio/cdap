@@ -138,9 +138,10 @@ public class CloudSecretManagerClient {
    *
    * @throws ApiException if Google API call fails.
    */
-  public byte[] getSecretData(WrappedSecret secret) {
+  public byte[] getSecretData(String namespace, String name) {
+    String resourceName = getSecretResourceName(namespace, name);
     return secretManager
-      .accessSecretVersion(String.format("%s/versions/latest", getSecretResourceName(secret)))
+      .accessSecretVersion(String.format("%s/versions/latest", resourceName))
       .getPayload()
       .getData()
       .toByteArray();
@@ -158,7 +159,7 @@ public class CloudSecretManagerClient {
   }
 
   /**
-   * Computes the new annotations for {@link wrappedSecret} and performs an update operation on the
+   * Computes the new annotations for {@link WrappedSecret} and performs an update operation on the
    * corresponding GCP secret to match the newly computed properties.
    *
    * @throws ApiException if Google API call fails.

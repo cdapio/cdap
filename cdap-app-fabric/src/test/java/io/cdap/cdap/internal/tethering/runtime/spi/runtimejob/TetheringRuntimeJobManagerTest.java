@@ -251,8 +251,7 @@ public class TetheringRuntimeJobManagerTest {
                                                  DistributedProgramRunner.APP_SPEC_FILE_NAME);
 
     RuntimeJobInfo runtimeJobInfo = new DefaultRuntimeJobInfo(programRunId,
-                                                              localFiles,
-                                                              Collections.emptyMap());
+        localFiles, Collections.emptyMap(), Collections.emptyMap(), 0, 0);
     TetheringLaunchMessage payload = runtimeJobManager.createLaunchPayload(runtimeJobInfo);
     Assert.assertEquals(TETHERED_NAMESPACE_NAME, payload.getRuntimeNamespace());
     Assert.assertEquals(localFilenames, payload.getFiles().keySet());

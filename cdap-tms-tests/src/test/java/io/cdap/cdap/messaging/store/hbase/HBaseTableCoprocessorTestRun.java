@@ -142,7 +142,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   }
 
   @Test
-  public void testInvalidTx() throws Exception {
+  public void
+  testInvalidTx() throws Exception {
     TopicId topicId = NamespaceId.DEFAULT.topic("invalidTx");
     TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "1000000",
             TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));

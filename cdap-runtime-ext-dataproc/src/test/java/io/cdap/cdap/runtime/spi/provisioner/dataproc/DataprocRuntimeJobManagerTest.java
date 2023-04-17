@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.LaunchMode;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import java.util.Collection;
 import java.util.Collections;
@@ -129,8 +130,9 @@ public class DataprocRuntimeJobManagerTest {
             runtimeJobInfo,
             Collections.emptyList(),
             SparkCompat.SPARK3_2_12.getCompat(),
-            Constants.Files.APPLICATION_JAR);
-    Assert.assertEquals(4, arguments.size());
+            Constants.Files.APPLICATION_JAR,
+            LaunchMode.CLIENT);
+    Assert.assertEquals(5, arguments.size());
     Assert.assertTrue(arguments.contains("--propkey=\"val\""));
     Assert.assertTrue(
         arguments.contains("--runtimeJobClass=" + runtimeJobInfo.getRuntimeJobClassname()));
@@ -138,6 +140,7 @@ public class DataprocRuntimeJobManagerTest {
     Assert.assertTrue(
         arguments.contains(
             "--" + Constants.Files.APPLICATION_JAR + "=" + Constants.Files.APPLICATION_JAR));
+    Assert.assertTrue(arguments.contains("--launchMode=CLIENT"));
   }
 
   @Test

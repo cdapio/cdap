@@ -57,14 +57,16 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
   private TwillRunnerService yarnTwillRunnerService;
   private LocationFactory locationFactory;
   private Map<String, String> properties;
+  private LaunchMode launchMode;
 
   /**
    * This method initializes the dataproc runtime environment.
    *
    * @param sparkCompat spark compat version supported by dataproc cluster
+   * @param launchMode program launch mode
    * @throws Exception any exception while initializing the environment.
    */
-  public void initialize(String sparkCompat) throws Exception {
+  public void initialize(String sparkCompat, String launchMode) throws Exception {
     addConsoleAppender();
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
@@ -78,6 +80,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
     yarnTwillRunnerService.start();
     properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
+    this.launchMode = LaunchMode.valueOf(launchMode);
   }
 
   @Override
@@ -93,6 +96,11 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
   @Override
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  @Override
+  public LaunchMode getLaunchMode() {
+    return launchMode;
   }
 
   /**

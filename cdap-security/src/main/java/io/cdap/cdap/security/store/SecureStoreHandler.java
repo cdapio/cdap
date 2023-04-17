@@ -22,8 +22,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.security.store.SecureStoreMetadata;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.security.AuditDetail;
@@ -114,7 +114,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
       @PathParam("namespace-id") String namespace,
       @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.get(namespace, name).get(),
+    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.getData(namespace, name),
         new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
   }
 
@@ -123,8 +123,8 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
       @PathParam("namespace-id") String namespace,
       @PathParam("key-name") String name) throws Exception {
-    SecureStoreData secureStoreData = secureStore.get(namespace, name);
-    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStoreData.getMetadata()));
+    SecureStoreMetadata metadata = secureStore.getMetadata(namespace, name);
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata));
   }
 
   @Path("/")

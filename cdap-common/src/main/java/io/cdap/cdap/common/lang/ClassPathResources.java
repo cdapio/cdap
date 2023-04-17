@@ -16,12 +16,8 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Function;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import io.cdap.cdap.common.internal.guava.ClassPath;
+import io.cdap.cdap.common.internal.guava.ClassPath.ClassInfo;
 import io.cdap.cdap.common.internal.guava.ClassPath.ResourceInfo;
 import java.io.File;
 import java.io.IOException;
@@ -29,10 +25,15 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
@@ -45,20 +46,32 @@ public final class ClassPathResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClassPathResources.class);
 
-  public static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_CLASS_NAME =
-      new Function<ClassPath.ClassInfo, String>() {
-        @Override
-        public String apply(ClassPath.ClassInfo input) {
-          return input.getName();
-        }
-      };
-  public static final Function<ClassPath.ResourceInfo, String> RESOURCE_INFO_TO_RESOURCE_NAME =
-      new Function<ClassPath.ResourceInfo, String>() {
-        @Override
-        public String apply(ClassPath.ResourceInfo input) {
-          return input.getResourceName();
-        }
-      };
+  /**
+   * Return a list of all URL entries from the java class path.
+   *
+   * @return list of all URL entries from the java class path.
+   */
+  public static List<URL> getClasspathUrls() {
+    List<URL> urls = new ArrayList<>();
+
+    // wildcards are expanded before they are places in java.class.path
+    // for example, java -cp lib/* will list out all the jars in the lib directory and
+    // add each individual jars as an element in java.class.path. The exception is if
+    // the directory doesn't exist, then it will be preserved as lib/*.
+    for (String path : System.getProperty("java.class.path").split(File.pathSeparator)) {
+      try {
+        urls.add(Paths.get(path).toRealPath().toUri().toURL());
+      } catch (NoSuchFileException e) {
+        // ignore anything that doesn't exist
+      } catch (MalformedURLException e) {
+        // should never happen
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to get class path entry " + path, e);
+      }
+    }
+    return urls;
+  }
 
   /**
    * Returns the base set of resources needed to load the specified {@link Class} using the
@@ -75,14 +88,14 @@ public final class ClassPathResources {
     ClassPath classPath = getClassPath(classLoader, classz);
 
     // Add everything in the classpath as visible resources
-    Set<String> result = Sets.newHashSet(Iterables.transform(classPath.getResources(),
-        RESOURCE_INFO_TO_RESOURCE_NAME));
+    Set<String> result = classPath.getResources().stream()
+        .map(ResourceInfo::getResourceName)
+        .collect(Collectors.toSet());
     // Trace dependencies for all classes in the classpath
-    findClassDependencies(
-        classLoader, Iterables.transform(classPath.getAllClasses(), CLASS_INFO_TO_CLASS_NAME),
+    return findClassDependencies(
+        classLoader,
+        classPath.getAllClasses().stream().map(ClassInfo::getName).collect(Collectors.toList()),
         result);
-
-    return result;
   }
 
   /**
@@ -98,26 +111,6 @@ public final class ClassPathResources {
   public static Set<ClassPath.ResourceInfo> getClassPathResources(ClassLoader classLoader,
       Class<?> cls) throws IOException {
     return getClassPath(classLoader, cls).getResources();
-  }
-
-  /**
-   * Returns a Set containing all bootstrap classpaths as defined in the {@code sun.boot.class.path}
-   * property.
-   */
-  public static Set<String> getBootstrapClassPaths() {
-    // Get the bootstrap classpath. This is for exclusion while tracing class dependencies.
-    Set<String> bootstrapPaths = new HashSet<>();
-    for (String classpath : Splitter.on(File.pathSeparatorChar)
-        .split(System.getProperty("sun.boot.class.path"))) {
-      File file = new File(classpath);
-      bootstrapPaths.add(file.getAbsolutePath());
-      try {
-        bootstrapPaths.add(file.getCanonicalPath());
-      } catch (IOException e) {
-        // Ignore the exception and proceed.
-      }
-    }
-    return Collections.unmodifiableSet(bootstrapPaths);
   }
 
   /**
@@ -139,71 +132,95 @@ public final class ClassPathResources {
     }
   }
 
-  static ClassAcceptor createClassAcceptor(final ClassLoader classLoader,
-      final Collection<String> result) {
-    final Set<String> bootstrapClassPaths = getBootstrapClassPaths();
-    final Set<URL> classPathSeen = Sets.newHashSet();
-    return new ClassAcceptor() {
-      @Override
-      public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        // Ignore bootstrap classes
-        if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
-          return false;
-        }
+  /**
+   * Returns a {@link URLClassLoader} for loading classes provided the JVM platform.
+   */
+  private static URLClassLoader getPlatformClassLoader() {
+    ClassLoader platformClassloader;
+    try {
+      // For Java11+, there is a ClassLoader.getPlatformClassLoader() method to get
+      // the platform classloader.
+      //noinspection JavaReflectionMemberAccess
+      platformClassloader = (ClassLoader) ClassLoader.class.getMethod("getPlatformClassLoader")
+          .invoke(null);
+    } catch (Exception e) {
+      // For Java8, the parent of the system classloader is the
+      // platform classloader (bootstrap + ext classloader)
+      platformClassloader = ClassLoader.getSystemClassLoader().getParent();
+    }
+    // Always warp it with a URLClassLoader to simplify handling of
+    // the potential `null` parent classloader in the Java 8 case.
+    return new URLClassLoader(new URL[0], platformClassloader);
+  }
 
-        // Should ignore classes from SLF4J implementation, otherwise it will includes logback lib, which shouldn't be
-        // visible through the program classloader.
-        if (className.startsWith("org.slf4j.impl.")) {
-          return false;
-        }
+  static ClassAcceptor createClassAcceptor(ClassLoader classLoader, Collection<String> result)
+      throws IOException {
+    try (URLClassLoader platformClassloader = getPlatformClassLoader()) {
+      Set<URL> classPathSeen = new HashSet<>();
+      return new ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
 
-        // Ignore classes with incompatible Java specification version in multi-release jars.
-        // See https://docs.oracle.com/javase/10/docs/specs/jar/jar.html#multi-release-jar-files for details.
-        if (className.startsWith("META-INF.versions.")) {
-          // Get current Java specification version
-          // See https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/System.html#getProperties().
-          String javaSpecVersion = System.getProperty("java.specification.version")
-              .replaceFirst("^1[.]", "");
-          int version = 0;
-          try {
-            version = Integer.parseInt(javaSpecVersion);
-          } catch (NumberFormatException e) {
-            throw new IllegalStateException(
-                String.format("Failed to parse Java specification version string %s",
-                    javaSpecVersion), e);
-          }
-          if (version < 9) {
-            // Per JAR spec, classes for Java 8 and below will not be versioned.
+          // Ignore platform classes
+          if (platformClassloader.getResource(className.replace('.', '/') + ".class") != null) {
             return false;
           }
-          // Check if the specification version matches the dependency version
-          try {
-            int classVersion = Integer.parseInt(className.split("[.]")[2]);
-            if (version < classVersion) {
+
+          // Should ignore classes from SLF4J implementation, otherwise it will include logback lib,
+          // which shouldn't be visible through the program classloader.
+          if (className.startsWith("org.slf4j.impl.")) {
+            return false;
+          }
+
+          // Ignore classes with incompatible Java specification version in multi-release jars.
+          // See https://docs.oracle.com/javase/10/docs/specs/jar/jar.html#multi-release-jar-files
+          // for details.
+          if (className.startsWith("META-INF.versions.")) {
+            // Get current Java specification version
+            // See https://docs.oracle.com/en/java/javase/12/docs/api/java.base/java/lang/System.html#getProperties().
+            String javaSpecVersion = System.getProperty("java.specification.version")
+                .replaceFirst("^1[.]", "");
+            int version;
+            try {
+              version = Integer.parseInt(javaSpecVersion);
+            } catch (NumberFormatException e) {
+              throw new IllegalStateException(
+                  String.format("Failed to parse Java specification version string %s",
+                      javaSpecVersion), e);
+            }
+            if (version < 9) {
+              // Per JAR spec, classes for Java 8 and below will not be versioned.
               return false;
             }
-          } catch (NumberFormatException e) {
-            // If the class version fails to parse, allow it through.
-            LOG.debug("Failed to parse multi-release versioned dependency class '%s'", className);
+            // Check if the specification version matches the dependency version
+            try {
+              int classVersion = Integer.parseInt(className.split("[.]")[2]);
+              if (version < classVersion) {
+                return false;
+              }
+            } catch (NumberFormatException e) {
+              // If the class version fails to parse, allow it through.
+              LOG.debug("Failed to parse multi-release versioned dependency class '{}'", className);
+            }
           }
-        }
 
-        if (!classPathSeen.add(classPathUrl)) {
+          if (!classPathSeen.add(classPathUrl)) {
+            return true;
+          }
+
+          // Add all resources in the given class path
+          try {
+            ClassPath classPath = ClassPath.from(classPathUrl.toURI(), classLoader);
+            for (ClassPath.ResourceInfo resourceInfo : classPath.getResources()) {
+              result.add(resourceInfo.getResourceName());
+            }
+          } catch (Exception e) {
+            // If fail to get classes/resources from the classpath, ignore this classpath.
+          }
           return true;
         }
-
-        // Add all resources in the given class path
-        try {
-          ClassPath classPath = ClassPath.from(classPathUrl.toURI(), classLoader);
-          for (ClassPath.ResourceInfo resourceInfo : classPath.getResources()) {
-            result.add(resourceInfo.getResourceName());
-          }
-        } catch (Exception e) {
-          // If fail to get classes/resources from the classpath, ignore this classpath.
-        }
-        return true;
-      }
-    };
+      };
+    }
   }
 
   /**
@@ -244,7 +261,7 @@ public final class ClassPathResources {
         return URI.create(path.substring(0, path.indexOf("!/"))).toURL();
       }
     } catch (MalformedURLException e) {
-      throw Throwables.propagate(e);
+      throw new RuntimeException(e);
     }
     throw new IllegalStateException("Unsupported class URL: " + resourceURL);
   }

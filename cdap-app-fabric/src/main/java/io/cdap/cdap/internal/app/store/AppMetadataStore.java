@@ -70,6 +70,7 @@ import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1820,6 +1821,18 @@ public class AppMetadataStore {
       }
       return null;
     }
+  }
+
+  /**
+   * Deletes all completed run records with a start time before {@code timeUpperBound}, throwing
+   * {@code IOException} if the delete operation fails.
+   */
+  public void deleteCompletedRunsStartedBefore(Instant timeUpperBound) throws IOException {
+    ImmutableList<Field<?>> keyPrefixFields = ImmutableList.of(
+            Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, TYPE_RUN_RECORD_COMPLETED));
+
+    getRunRecordsTable()
+        .deleteAll(createRunRecordScanRange(keyPrefixFields, 0L, timeUpperBound.getEpochSecond()));
   }
 
   /**

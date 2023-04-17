@@ -33,4 +33,20 @@
         </description>
     </property>
 
+    <property>
+        <name>conf.test.activate</name>
+        <value>1</value>
+        <activation>
+            <test>false</test>
+        </activation>
+    </property>
+
+    <property>
+        <name>conf.test.activate</name>
+        <value>2</value>
+        <activation>
+            <test>true</test>
+        </activation>
+    </property>
+
 </configuration>

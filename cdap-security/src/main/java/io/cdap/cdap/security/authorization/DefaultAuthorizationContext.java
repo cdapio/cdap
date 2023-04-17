@@ -212,6 +212,16 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return delegateSecureStore.getMetadata(namespace, name);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return delegateSecureStore.getData(namespace, name);
+  }
+
+  @Override
   public boolean namespaceExists(String namespace) throws IOException {
     return delegateAdmin.namespaceExists(namespace);
   }

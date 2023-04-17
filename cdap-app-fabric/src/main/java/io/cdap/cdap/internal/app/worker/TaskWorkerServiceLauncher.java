@@ -20,10 +20,12 @@ import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.TaskWorker;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.worker.sidecar.ArtifactLocalizerTwillRunnable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -67,6 +69,9 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
 
   private ScheduledExecutorService executor;
 
+  /**
+   * Default Constructor with injected configuration and {@link TwillRunner}.
+   */
   @Inject
   public TaskWorkerServiceLauncher(CConfiguration cConf, Configuration hConf,
       TwillRunner twillRunner) {
@@ -114,6 +119,10 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
     return executor;
   }
 
+
+  /**
+   * Inner run method for the service.
+   */
   public void run() {
     TwillController activeController = null;
     for (TwillController controller : twillRunner.lookup(TaskWorkerTwillApplication.NAME)) {
@@ -196,6 +205,12 @@ public class TaskWorkerServiceLauncher extends AbstractScheduledService {
                   .withReadonlyDisk(TaskWorkerTwillRunnable.class.getSimpleName(),
                       STATEFUL_DISK_NAME);
             }
+          }
+
+          if (twillPreparer instanceof ExtendedTwillPreparer) {
+            int workDirSize = cConf.getInt(TaskWorker.CONTAINER_WORKDIR_SIZE_MB);
+            twillPreparer = ((ExtendedTwillPreparer) twillPreparer)
+                .setWorkdirSizeLimit(workDirSize);
           }
 
           if (twillPreparer instanceof SecureTwillPreparer) {

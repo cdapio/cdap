@@ -30,6 +30,7 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.twill.Completable;
 import io.cdap.cdap.master.spi.twill.DependentTwillPreparer;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecretDisk;
 import io.cdap.cdap.master.spi.twill.SecureTwillPreparer;
 import io.cdap.cdap.master.spi.twill.SecurityContext;
@@ -131,20 +132,20 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Kubernetes version of a TwillRunner.
- * <p>
- * Runs a program in Kubernetes by creating a config-map of the app spec and program options
+ *
+ * <p>Runs a program in Kubernetes by creating a config-map of the app spec and program options
  * resources that are expected to be found in the local files of the RuntimeSpecification for the
  * TwillRunnable. A deployment is created that mounts the created config-map.
- * <p>
- * Most of these operations are no-ops as many of these methods and pretty closely coupled to the
+ *
+ * <p>Most of these operations are no-ops as many of these methods and pretty closely coupled to the
  * Hadoop implementation and have no analogy in Kubernetes.
- * <p>
- * If {@link TwillSpecification} contains multiple {@link TwillRunnable}, the first runnable will be
+ *
+ * <p>If {@link TwillSpecification} contains multiple {@link TwillRunnable}, the first runnable will be
  * treated as the main container, and the rest will be treated as sidecar containers.
  * TODO (CDAP-18058): This assumption needs to be changed by using {@link TwillSpecification.PlacementPolicy}.
  */
 class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer,
-    SecureTwillPreparer {
+    SecureTwillPreparer, ExtendedTwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
@@ -205,6 +206,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   private boolean runtimeCleanupDisabled;
   private String cdapRuntimeNamespace;
   private StringBuilder globalJvmOptions;
+  private final V1EmptyDirVolumeSource workDirVolumeSource;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient,
       String kubeNamespace,
@@ -264,6 +266,13 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     this.workloadIdentityPool = cConf.get(KubeMasterEnvironment.WORKLOAD_IDENTITY_POOL);
     this.cdapRuntimeNamespace = null;
     this.globalJvmOptions = new StringBuilder();
+    this.workDirVolumeSource = new V1EmptyDirVolumeSource();
+  }
+
+  @Override
+  public ExtendedTwillPreparer setWorkdirSizeLimit(int sizeLimitInMB) {
+    workDirVolumeSource.setSizeLimit(new Quantity(String.format("%dMi", sizeLimitInMB)));
+    return this;
   }
 
   @Override
@@ -342,20 +351,6 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
     statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
     return this;
-  }
-
-  private void setIdentity(String runnableName, String identity) {
-    if (!twillSpec.getRunnables().containsKey(runnableName)) {
-      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
-    }
-    // In Kubernetes, the identity represents the service account used to run the pod.
-    // The service account cannot be set at a container level, so we simply set it for all containers and throw an
-    // exception if there are multiple calls to withIdentity with different names.
-    if (serviceAccountName != null && !serviceAccountName.equals(identity)) {
-      throw new IllegalArgumentException(
-          "KubeTwillPreparer does not support setting per-container service accounts.");
-    }
-    serviceAccountName = identity;
   }
 
   @Override
@@ -673,6 +668,20 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
     }
   }
 
+  private void setIdentity(String runnableName, String identity) {
+    if (!twillSpec.getRunnables().containsKey(runnableName)) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
+    // In Kubernetes, the identity represents the service account used to run the pod.
+    // The service account cannot be set at a container level, so we simply set it for all containers and throw an
+    // exception if there are multiple calls to withIdentity with different names.
+    if (serviceAccountName != null && !serviceAccountName.equals(identity)) {
+      throw new IllegalArgumentException(
+          "KubeTwillPreparer does not support setting per-container service accounts.");
+    }
+    serviceAccountName = identity;
+  }
+
   /**
    * Creates a {@link V1ObjectMeta} for the given resource type.
    */
@@ -791,7 +800,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Job} to for runnable execution in Kubernetes.
    *
    * @return a {@link V1Job} if job was created, null if it already exists
-   * @throws {@link KubeAPIException} if job creation failed
+   * @throws KubeAPIException if job creation failed
    */
   @Nullable
   private KubernetesObject createJob(V1ObjectMeta metadata,
@@ -833,7 +842,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1Deployment} to for runnable execution in Kubernetes.
    *
    * @return a {@link V1Deployment} if deployment was created, null if it already exists
-   * @throws {@link KubeAPIException} if deployment creation failed
+   * @throws KubeAPIException if deployment creation failed
    */
   @Nullable
   private KubernetesObject createDeployment(V1ObjectMeta metadata,
@@ -864,7 +873,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
    * Deploys a {@link V1StatefulSet} to for runnable execution in Kubernetes.
    *
    * @return a {@link V1StatefulSet} if statefulset was created, null if it already exists
-   * @throws {@link KubeAPIException} if statefulset creation failed
+   * @throws KubeAPIException if statefulset creation failed
    */
   @Nullable
   private KubernetesObject createStatefulSet(V1ObjectMeta metadata,
@@ -894,8 +903,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Return a {@link V1Deployment} object object for the {@link TwillRunnable} represented by the
-   * given {@link RuntimeSpecification}
+   * Return a {@link V1Deployment} object for the {@link TwillRunnable} represented by the
+   * given {@link RuntimeSpecification}.
    */
   private V1Deployment buildDeployment(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs, Location runtimeConfigLocation) {
@@ -916,7 +925,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
 
   /**
    * Returns a {@link V1StatefulSet} object for the {@link TwillRunnable} represented by the given
-   * {@link RuntimeSpecification}
+   * {@link RuntimeSpecification}.
    */
   private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata,
       Map<String, RuntimeSpecification> runtimeSpecs,
@@ -943,7 +952,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
-   * Calculates the max heap size for a given total RAM size based on configurations
+   * Calculates the max heap size for a given total RAM size based on configurations.
    */
   private int computeMaxHeapSize(V1ResourceRequirements resourceRequirements) {
     // Gets the memory from either the requests or the limits
@@ -1124,7 +1133,7 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
       Map<String, RuntimeSpecification> runtimeSpecs,
       String restartPolicy, List<String> args, V1VolumeMount... extraMounts) {
     V1Volume podInfoVolume = createPodInfoVolume(podInfo);
-    V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(new V1EmptyDirVolumeSource());
+    V1Volume workDirVolume = new V1Volume().name("workdir").emptyDir(workDirVolumeSource);
 
     String workDir = "/workDir-" + twillRunId.getId();
 
@@ -1411,8 +1420,8 @@ class KubeTwillPreparer implements DependentTwillPreparer, StatefulTwillPreparer
   }
 
   /**
+   * Returns whether the given namespace is the system namespace.
    * @param namespace a namespace ID
-   * @return whether the given namespace is the system namespace
    */
   private boolean isSystemNamespace(String namespace) {
     return "system".equals(namespace);

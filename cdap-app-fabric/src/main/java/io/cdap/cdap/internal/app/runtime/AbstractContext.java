@@ -526,6 +526,16 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public SecureStoreMetadata getMetadata(String namespace, String name) throws Exception {
+    return Retries.callWithRetries(() -> secureStore.getMetadata(namespace, name), retryStrategy);
+  }
+
+  @Override
+  public byte[] getData(String namespace, String name) throws Exception {
+    return Retries.callWithRetries(() -> secureStore.getData(namespace, name), retryStrategy);
+  }
+
+  @Override
   public void execute(final TxRunnable runnable) throws TransactionFailureException {
     execute(runnable, false);
   }

@@ -35,6 +35,8 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Authorizable;
 import io.cdap.cdap.proto.security.GrantedPermission;
+import io.cdap.cdap.proto.security.NamespacePermission;
+import io.cdap.cdap.proto.security.Permission;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.proto.security.StandardPermission;
 import io.cdap.cdap.security.authorization.AccessControllerInstantiator;
@@ -46,7 +48,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Manifest;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -134,10 +138,13 @@ public class SystemArtifactsAuthorizationTest {
     // grant alice admin privileges on test namespace
     SecurityRequestContext.setUserId(ALICE.getName());
     NamespaceId namespaceId = new NamespaceId("test");
-    accessController.grant(Authorizable.fromEntityId(namespaceId), ALICE,
-                           EnumSet.allOf(StandardPermission.class));
+    Set<Permission> namespaceAdminPermissions = new HashSet<>();
+    namespaceAdminPermissions.addAll(EnumSet.allOf(StandardPermission.class));
+    namespaceAdminPermissions.addAll(EnumSet.allOf(NamespacePermission.class));
+
+    accessController.grant(Authorizable.fromEntityId(namespaceId), ALICE, namespaceAdminPermissions);
     accessController.grant(Authorizable.fromEntityId(namespaceId, EntityType.ARTIFACT), ALICE,
-                           EnumSet.of(StandardPermission.LIST));
+        EnumSet.of(StandardPermission.LIST));
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build());
 
     // test that system artifacts are available to everyone

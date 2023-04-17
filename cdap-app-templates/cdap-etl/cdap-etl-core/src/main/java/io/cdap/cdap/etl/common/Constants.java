@@ -51,6 +51,9 @@ public final class Constants {
   public static final String CDAP_STREAMING_BASE_RETRY_DELAY_IN_SECONDS = "cdap.streaming.baseRetryDelayInSeconds";
   // Can be used as a runtime argument for streaming pipeline to set max retry delay in seconds
   public static final String CDAP_STREAMING_MAX_RETRY_DELAY_IN_SECONDS = "cdap.streaming.maxRetryDelayInSeconds";
+  // Can be used as a runtime argument for streaming pipelines to allow macros in the source,
+  // even when using spark checkpointing.
+  public static final String CDAP_STREAMING_ALLOW_SOURCE_MACROS = "cdap.streaming.allow.source.macros";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

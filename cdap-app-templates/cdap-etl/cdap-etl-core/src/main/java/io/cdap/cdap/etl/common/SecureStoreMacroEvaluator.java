@@ -54,7 +54,7 @@ public class SecureStoreMacroEvaluator implements MacroEvaluator {
           "Macro '" + FUNCTION_NAME + "' should have exactly 1 argument");
     }
     try {
-      return Bytes.toString(secureStore.get(namespace, args[0]).get());
+      return Bytes.toString(secureStore.getData(namespace, args[0]));
     } catch (Exception e) {
       throw new InvalidMacroException(
           "Failed to resolve macro '" + FUNCTION_NAME + "(" + args[0] + ")'", e);
