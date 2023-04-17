@@ -5848,6 +5848,15 @@
   </property>
 
   <property>
+    <name>feature.wrangler.precondition.sql.enabled</name>
+    <value>false</value>
+    <description>
+      Enables the Precondition Language selector in Wrangler, allowing to select
+      between JEXL and SQL preconditions.
+    </description>
+  </property>
+
+  <property>
     <name>artifact.cache.bind.address</name>
     <value>0.0.0.0</value>
     <description>
