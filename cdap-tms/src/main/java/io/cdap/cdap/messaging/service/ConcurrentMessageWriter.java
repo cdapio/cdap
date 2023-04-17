@@ -120,7 +120,7 @@ final class ConcurrentMessageWriter implements Closeable {
           try {
             Thread.sleep((long) (Math.random() * backoffDurationsMillis[counter]));
           } catch (InterruptedException e) {
-            Thread.yield();
+            throw new RuntimeException(e);
           }
         } else {
           Thread.yield();
