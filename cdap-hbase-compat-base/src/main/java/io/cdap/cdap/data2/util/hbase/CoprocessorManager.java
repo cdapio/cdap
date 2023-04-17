@@ -68,7 +68,8 @@ public class CoprocessorManager {
     this.includeBuildInPath = cConf.getBoolean(INCLUDE_BUILD_IN_PATH, true);
     this.jarDir = locationFactory.create(cConf.get(Constants.CFG_HDFS_LIB_DIR));
     this.tempDir = new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)),
-        cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+        cConf.get(Constants.AppFabric.TEMP_DIR)).toPath().toAbsolutePath();
+    
 
     //noinspection unchecked
     this.coprocessors = ImmutableSet.of(
