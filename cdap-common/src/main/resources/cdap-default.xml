@@ -3076,6 +3076,15 @@
   </property>
 
   <property>
+    <name>metrics.processor.fetch.backoff.delay.ms</name>
+    <value>50</value>
+    <description>
+      Delay in milliseconds for a metrics processor topic thread to wait when metrics queue
+      is filled.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.metrics.enabled</name>
     <value>true</value>
     <description>
@@ -5927,5 +5936,4 @@
       Path where git repositories will be cloned for source control operations.
     </description>
   </property>
-
 </configuration>
