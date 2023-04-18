@@ -144,7 +144,7 @@
     <jackson.version>2.8.11</jackson.version>
     <jsch.version>0.1.54</jsch.version>
     <jetty.version>6.1.22</jetty.version>
-    <jetty8.version>8.1.15.v20140411</jetty8.version>
+    <jetty8.version>10.0.14</jetty8.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <log4j2.slf4j.version>2.20.0</log4j2.slf4j.version>
