@@ -30,11 +30,12 @@ import io.cdap.cdap.etl.proto.v2.PluginPropertyMapping;
 import io.cdap.cdap.etl.proto.v2.TriggeringPipelineId;
 import io.cdap.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles parsing of pipeline runtime arguments mapping.
