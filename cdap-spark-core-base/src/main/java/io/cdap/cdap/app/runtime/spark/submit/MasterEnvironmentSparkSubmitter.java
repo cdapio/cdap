@@ -163,9 +163,31 @@ public class MasterEnvironmentSparkSubmitter extends AbstractSparkSubmitter {
   private SparkConfig generateOrGetSparkConfig() throws Exception {
     if (sparkConfig == null) {
       SparkSpecification spec = runtimeContext.getSparkSpecification();
+      int driverCores = spec.getDriverResources().getVirtualCores();
+      String driverCoresKey = "task.driver." + SystemArguments.CORES_KEY;
+      String value = runtimeContext.getRuntimeArguments().get(driverCoresKey);
+      if (value != null) {
+        try {
+         driverCores = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+          LOG.warn("Invalid {} value: {}",
+              driverCoresKey, value);
+        }
+      }
+      int executorCores = spec.getExecutorResources().getVirtualCores();
+      String executorCoresKey = "task.executor." + SystemArguments.CORES_KEY;
+      value = runtimeContext.getRuntimeArguments().get(executorCoresKey);
+      if (value != null) {
+        try {
+          executorCores = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+          LOG.warn("Invalid {} value: {}",
+              executorCoresKey, value);
+        }
+      }
       SparkSubmitContext context = new SparkSubmitContext(getLocalizeResources(resources), namespaceConfig,
-                                                          spec.getDriverResources().getVirtualCores(),
-                                                          spec.getExecutorResources().getVirtualCores());
+                                                          driverCores,
+                                                          executorCores);
       sparkConfig = masterEnv.generateSparkSubmitConfig(context);
     }
     return sparkConfig;
