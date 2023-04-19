@@ -58,4 +58,12 @@ public interface LinearRelationalTransform extends RelationalTransform {
    *     produce 1 output.
    */
   Relation transform(RelationalTranformContext context, Relation input);
+
+  /**
+   * <p>For Linear Transformation, we need to union if there are multiple inputs as it takes only 1 input</p>
+   * @return true
+   */
+  default boolean requireUnionInputs() {
+    return true;
+  }
 }
