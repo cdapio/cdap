@@ -4683,6 +4683,15 @@
   </property>
 
   <property>
+    <name>security.authorization.access.enforcer.allowlist.users</name>
+    <value>yarn</value>
+    <description>
+      comma-separated list of users to be allow-listed from authorization access
+      enforcement.
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>

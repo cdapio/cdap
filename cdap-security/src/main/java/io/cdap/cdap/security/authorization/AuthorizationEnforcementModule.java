@@ -70,6 +70,25 @@ public class AuthorizationEnforcementModule extends RuntimeModule {
   }
 
   /**
+   * Returns an {@link AbstractModule} containing bindings for authorization enforcement to be used
+   * in case of allow listing some users like 'yarn' since authorization enforcement
+   * is not necessary in the distributed program run itself.
+   */
+  public Module getAllowlistModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AccessEnforcer.class).annotatedWith(
+            Names.named(AllowlistAccessEnforcer.ALLOWLIST_DELEGATE_ACCESS_ENFORCER)).to(
+                RemoteAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(AccessEnforcer.class).to(AllowlistAccessEnforcer.class).in(Scopes.SINGLETON);
+        bind(ContextAccessEnforcer.class).to(DefaultContextAccessEnforcer.class)
+            .in(Scopes.SINGLETON);
+      }
+    };
+  }
+
+  /**
    * Used by program containers and system services (viz explore service, stream service) that need
    * to enforce authorization in distributed mode.
    */
