@@ -126,6 +126,7 @@ public class SparkSQLRelation implements Relation {
    * @return the schema of the relation.
    */
   @Nullable
+  @Override
   public Schema getSchema() {
     return schema;
   }
