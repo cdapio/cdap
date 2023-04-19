@@ -150,16 +150,22 @@ public final class ETLBatchConfig extends ETLConfig {
    * @return a new (updated) etl batch config after performing update operations.
    */
   public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext)
-    throws Exception {
-    Set<ETLStage> upgradedStages = new HashSet<>();
+      throws Exception {
     // Upgrade all stages.
+    Set<ETLStage> upgradedStages = new HashSet<>();
     for (ETLStage stage : getStages()) {
       upgradedStages.add(stage.updateStage(upgradeContext));
     }
-    return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
-                              processTimingEnabled, engine, schedule, driverResources, clientResources,
-                              numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
-                              pushdownEnabled, transformationPushdown);
+    // Upgrade all actions.
+    List<ETLStage> upgradedPostActions = new ArrayList<>();
+    for (ETLStage postAction : getPostActions()) {
+      upgradedPostActions.add(postAction.updateStage(upgradeContext));
+    }
+    return new ETLBatchConfig(upgradedStages, connections, upgradedPostActions, resources,
+        stageLoggingEnabled,
+        processTimingEnabled, engine, schedule, driverResources, clientResources,
+        numOfRecordsPreview, maxConcurrentRuns, properties, service, connectionConfig, comments,
+        pushdownEnabled, transformationPushdown);
   }
 
   @Override
