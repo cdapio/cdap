@@ -2056,5 +2056,8 @@ public final class Constants {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
       "source.control.git.repositories.clone.directory.path";
+    public static final String REPOSITORY_CLEANUP_INTERVAL_SECONDS =
+        "source.control.repository.cleanup.interval.seconds";
+    public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
   }
 }

@@ -39,6 +39,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
@@ -83,6 +84,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final BootstrapService bootstrapService;
   private final SystemAppManagementService systemAppManagementService;
   private final SourceControlOperationRunner sourceControlOperationRunner;
+  private final RepositoryCleanupService repositoryCleanupService;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -118,7 +120,8 @@ public class AppFabricServer extends AbstractIdleService {
       RunRecordMonitorService runRecordCounterService,
       CommonNettyHttpServiceFactory commonNettyHttpServiceFactory,
       RunRecordTimeToLiveService runRecordTimeToLiveService,
-      SourceControlOperationRunner sourceControlOperationRunner) {
+      SourceControlOperationRunner sourceControlOperationRunner,
+      RepositoryCleanupService repositoryCleanupService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -143,6 +146,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.runRecordTimeToLiveService = runRecordTimeToLiveService;
     this.commonNettyHttpServiceFactory = commonNettyHttpServiceFactory;
     this.sourceControlOperationRunner = sourceControlOperationRunner;
+    this.repositoryCleanupService = repositoryCleanupService;
   }
 
   /**
@@ -167,7 +171,8 @@ public class AppFabricServer extends AbstractIdleService {
             coreSchedulerService.start(),
             runRecordCounterService.start(),
             runRecordTimeToLiveService.start(),
-            sourceControlOperationRunner.start()
+            sourceControlOperationRunner.start(),
+            repositoryCleanupService.start()
         )
     ).get();
 
@@ -225,6 +230,7 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordCounterService.stopAndWait();
     runRecordTimeToLiveService.stopAndWait();
     sourceControlOperationRunner.stopAndWait();
+    repositoryCleanupService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
