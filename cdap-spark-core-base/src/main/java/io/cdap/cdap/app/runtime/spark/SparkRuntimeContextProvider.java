@@ -25,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -71,6 +72,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AccessEnforcer;
@@ -367,7 +369,11 @@ public final class SparkRuntimeContextProvider {
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId), programOptions));
+    Module programModule = Modules.override(
+            new DistributedProgramContainerModule(cConf, hConf,
+                programId.run(runId), programOptions))
+        .with(new AuthorizationEnforcementModule().getAllowlistModules());
+    modules.add(programModule);
 
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {
