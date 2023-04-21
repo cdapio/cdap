@@ -5959,5 +5959,12 @@
       Scheduler interval for repository cleanup service, by default 1 hour
     </description>
   </property>
+  <property>
+    <name>source.control.git.appfabric.max.operation</name>
+    <value>10</value>
+    <description>
+      Number of git operations that can run parallel in appfabric
+    </description>
+  </property>
 
 </configuration>

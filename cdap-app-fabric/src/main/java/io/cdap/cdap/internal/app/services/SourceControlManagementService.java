@@ -47,6 +47,7 @@ import io.cdap.cdap.sourcecontrol.NoChangesToPullException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.SourceControlConfig;
+import io.cdap.cdap.sourcecontrol.SourceControlOperationLock;
 import io.cdap.cdap.sourcecontrol.operationrunner.NamespaceRepository;
 import io.cdap.cdap.sourcecontrol.operationrunner.PulAppOperationRequest;
 import io.cdap.cdap.sourcecontrol.operationrunner.PullAppResponse;
@@ -79,6 +80,7 @@ public class SourceControlManagementService {
   private final SourceControlOperationRunner sourceControlOperationRunner;
   private final ApplicationLifecycleService appLifecycleService;
   private final Store store;
+  private final SourceControlOperationLock operationLock;
   private static final Logger LOG = LoggerFactory.getLogger(SourceControlManagementService.class);
 
 
@@ -93,7 +95,8 @@ public class SourceControlManagementService {
                                         AuthenticationContext authenticationContext,
                                         SourceControlOperationRunner sourceControlOperationRunner,
                                         ApplicationLifecycleService applicationLifecycleService,
-                                        Store store) {
+                                        Store store,
+                                        SourceControlOperationLock operationLock) {
     this.cConf = cConf;
     this.secureStore = secureStore;
     this.transactionRunner = transactionRunner;
@@ -102,6 +105,7 @@ public class SourceControlManagementService {
     this.sourceControlOperationRunner = sourceControlOperationRunner;
     this.appLifecycleService = applicationLifecycleService;
     this.store = store;
+    this.operationLock = operationLock;
   }
 
   private RepositoryTable getRepositoryTable(StructuredTableContext context) throws TableNotFoundException {
@@ -200,36 +204,42 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.WRITE_REPOSITORY);
 
-    // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
-    //  Need to fix it and avoid passing it in RepositoryManagerFactory
-    RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
-    
-    // AppLifecycleService already enforces ApplicationDetail Access
-    ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
+      // TODO: CDAP-20396 RepositoryConfig is currently only accessible from the service layer
+      //  Need to fix it and avoid passing it in RepositoryManagerFactory
+      RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
 
-    String committer = authenticationContext.getPrincipal().getName();
-    // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
-    CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(), commitMessage);
+      // AppLifecycleService already enforces ApplicationDetail Access
+      ApplicationDetail appDetail = appLifecycleService.getLatestAppDetail(appRef, false);
 
-    LOG.info("Start to push app {} in namespace {} to linked repository by user {}",
-        appRef.getApplication(),
-        appRef.getParent(),
-        appLifecycleService.decodeUserId(authenticationContext));
+      String committer = authenticationContext.getPrincipal().getName();
+      // TODO CDAP-20371 revisit and put correct Author and Committer, for now they are the same
+      CommitMeta commitMeta = new CommitMeta(committer, committer, System.currentTimeMillis(),
+          commitMessage);
 
-    PushAppResponse pushResponse = sourceControlOperationRunner.push(
-      new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
-    );
+      LOG.info("Start to push app {} in namespace {} to linked repository by user {}",
+          appRef.getApplication(),
+          appRef.getParent(),
+          appLifecycleService.decodeUserId(authenticationContext));
 
-    LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
-        appRef.getApplication(),
-        appRef.getParent(),
-        appLifecycleService.decodeUserId(authenticationContext));
-    
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
-    ApplicationId appId = appRef.app(appDetail.getAppVersion());
-    store.setAppSourceControlMeta(appId, sourceControlMeta);
+      try {
+        operationLock.acquire();
+        PushAppResponse pushResponse = sourceControlOperationRunner.push(
+            new PushAppOperationRequest(appRef.getParent(), repoConfig, appDetail, commitMeta)
+        );
 
-    return pushResponse;
+        LOG.info("Successfully pushed app {} in namespace {} to linked repository by user {}",
+            appRef.getApplication(),
+            appRef.getParent(),
+            appLifecycleService.decodeUserId(authenticationContext));
+
+        SourceControlMeta sourceControlMeta = new SourceControlMeta(pushResponse.getFileHash());
+        ApplicationId appId = appRef.app(appDetail.getAppVersion());
+        store.setAppSourceControlMeta(appId, sourceControlMeta);
+
+        return pushResponse;
+      } finally {
+        operationLock.release();
+      }
   }
 
   /**
@@ -251,32 +261,37 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(appId, authenticationContext.getPrincipal(), StandardPermission.CREATE);
     accessEnforcer.enforce(appRef.getParent(), authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
-    
-    PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
-    AppRequest<?> appRequest = pullResponse.getAppRequest();
-    SourceControlMeta sourceControlMeta = new SourceControlMeta(pullResponse.getApplicationFileHash());
+      PullAppResponse<?> pullResponse = pullAndValidateApplication(appRef);
 
-    LOG.info("Start to deploy app {} in namespace {} by user {}",
-        appId.getApplication(),
-        appId.getParent(),
-        appLifecycleService.decodeUserId(authenticationContext));
+      AppRequest<?> appRequest = pullResponse.getAppRequest();
+      SourceControlMeta sourceControlMeta = new SourceControlMeta(
+          pullResponse.getApplicationFileHash());
 
-    ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
-                                                                sourceControlMeta, x -> { });
+      LOG.info("Start to deploy app {} in namespace {} by user {}",
+          appId.getApplication(),
+          appId.getParent(),
+          appLifecycleService.decodeUserId(authenticationContext));
 
-    LOG.info("Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
-            + "principal {}", app.getApplicationId().getApplication(), app.getApplicationId().getNamespace(),
-             app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
-    );
+      ApplicationWithPrograms app = appLifecycleService.deployApp(appId, appRequest,
+          sourceControlMeta, x -> {
+          });
 
-    return new ApplicationRecord(
-      ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
-      app.getApplicationId().getApplication(),
-      app.getApplicationId().getVersion(),
-      app.getSpecification().getDescription(),
-      Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal).orElse(null),
-      app.getChangeDetail(), app.getSourceControlMeta());
+      LOG.info(
+          "Successfully deployed app {} in namespace {} from artifact {} with configuration {} and "
+              + "principal {}", app.getApplicationId().getApplication(),
+          app.getApplicationId().getNamespace(),
+          app.getArtifactId(), appRequest.getConfig(), app.getOwnerPrincipal()
+      );
+
+      return new ApplicationRecord(
+          ArtifactSummary.from(app.getArtifactId().toApiArtifactId()),
+          app.getApplicationId().getApplication(),
+          app.getApplicationId().getVersion(),
+          app.getSpecification().getDescription(),
+          Optional.ofNullable(app.getOwnerPrincipal()).map(KerberosPrincipalId::getPrincipal)
+              .orElse(null),
+          app.getChangeDetail(), app.getSourceControlMeta());
   }
 
   /**
@@ -293,14 +308,20 @@ public class SourceControlManagementService {
     throws NoChangesToPullException, NotFoundException, AuthenticationConfigException {
     RepositoryConfig repoConfig = getRepositoryMeta(appRef.getParent()).getConfig();
     SourceControlMeta latestMeta = store.getAppSourceControlMeta(appRef);
-    PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(new PulAppOperationRequest(appRef, repoConfig));
 
-    if (latestMeta != null
-        && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
-      throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
-          + "no new change for the pulled application: %s", appRef));
+    try {
+      operationLock.acquire();
+      PullAppResponse<?> pullResponse = sourceControlOperationRunner.pull(
+          new PulAppOperationRequest(appRef, repoConfig));
+      if (latestMeta != null
+          && latestMeta.getFileHash().equals(pullResponse.getApplicationFileHash())) {
+        throw new NoChangesToPullException(String.format("Pipeline deployment was not successful because there is "
+            + "no new change for the pulled application: %s", appRef));
+      }
+      return pullResponse;
+    } finally {
+      operationLock.release();
     }
-    return pullResponse;
   }
 
   /**
@@ -316,6 +337,11 @@ public class SourceControlManagementService {
     accessEnforcer.enforce(namespace, authenticationContext.getPrincipal(),
         NamespacePermission.READ_REPOSITORY);
     RepositoryConfig repoConfig = getRepositoryMeta(namespace).getConfig();
-    return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
+    try {
+      operationLock.acquire();
+      return sourceControlOperationRunner.list(new NamespaceRepository(namespace, repoConfig));
+    } finally {
+      operationLock.release();
+    }
   }
 }

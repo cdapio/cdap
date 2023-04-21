@@ -2081,5 +2081,7 @@ public final class Constants {
     public static final String REPOSITORY_CLEANUP_INTERVAL_SECONDS =
         "source.control.repository.cleanup.interval.seconds";
     public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
+    public static final String MAX_PARALLEL_GIT_OPERATION_APPFABRIC =
+        "source.control.git.appfabric.max.operation";
   }
 }

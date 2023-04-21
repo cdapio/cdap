@@ -26,6 +26,7 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.RepositoryNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants.SourceControlManagement;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -86,6 +87,7 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     cConf = createBasicCConf();
+    cConf.set(SourceControlManagement.MAX_PARALLEL_GIT_OPERATION_APPFABRIC, "1");
     initializeAndStartServices(cConf);
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     sourceControlService =
@@ -286,6 +288,14 @@ public class SourceControlManagementServiceTest extends AppFabricTestBase {
     deleteApp(appId1, 200);
     deleteArtifact(artifactId, 200);
   }
+
+  // @Test
+  // public void testPushOperationLock() throws Exception{
+  //   List<String> listOfNumbers = Arrays.asList(1, 2, 3, 4);
+  //   listOfNumbers.parallelStream().forEach(number ->
+  //       System.out.println(number + " " + Thread.currentThread().getName())
+  //   );
+  // }
 
   @Test
   public void testPullAndDeployAppSucceeds() throws Exception {
