@@ -81,6 +81,7 @@ public class RepositoryCleanupService extends AbstractScheduledService {
   /**
    * The repositories are cloned under /clone_root/namespace/namespace_name/ path.
    * see {@link RepositoryManager}
+   *
    * @return List of repository directories
    */
   private List<File> getRepositoryDirectories() {
@@ -97,13 +98,12 @@ public class RepositoryCleanupService extends AbstractScheduledService {
       long currentTimeInSeconds = System.currentTimeMillis() / 1000;
       for (File repositoryDir : repositoryDirs) {
         FileTime createTimeStamp = FileUtils.getFileCreationTime(repositoryDir.toPath());
-        if (createTimeStamp != null && (currentTimeInSeconds - createTimeStamp.toMillis() / 1000) > ttlInSeconds){
+        if (createTimeStamp != null && (currentTimeInSeconds - createTimeStamp.toMillis() / 1000) > ttlInSeconds) {
           DirUtils.deleteDirectoryContents(repositoryDir);
           LOG.debug("Deleted expired repository {}", repositoryDir);
         }
       }
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       LOG.error("Failed to run repository cleanup", e);
     }
   }
