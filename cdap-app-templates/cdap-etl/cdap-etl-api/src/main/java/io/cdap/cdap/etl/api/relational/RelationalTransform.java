@@ -53,4 +53,12 @@ public interface RelationalTransform {
    *     produce 1 output.
    */
   boolean transform(RelationalTranformContext context);
+
+  /**
+   * <p>This will union multiple input data together if required</p>
+   * @return false
+   */
+  default boolean requireUnionInputs() {
+    return false;
+  }
 }
