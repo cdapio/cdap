@@ -107,12 +107,17 @@ public class RemoteAppStateStoreTest {
     Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
       .when(applicationLifecycleService)
       .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
+    Mockito.doThrow(new ApplicationNotFoundException(new ApplicationId(NAMESPACE, NOT_FOUND_APP)))
+        .when(applicationLifecycleService)
+        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher("NOT_FOUND_APP", NOT_FOUND_APP)));
 
     //Throw RuntimeException whenever error app is being used
     Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
       .saveState(Mockito.argThat(new AppNameAppStateKeyValueMatcher("ERROR_APP", ERROR_APP)));
     Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
       .getState(Mockito.argThat(new AppNameAppStateKeyMatcher("ERROR_APP", ERROR_APP)));
+    Mockito.doThrow(new RuntimeException("test")).when(applicationLifecycleService)
+        .deleteState(Mockito.argThat(new AppNameAppStateKeyMatcher("ERROR_APP", ERROR_APP)));
 
     String encodedInvalidKey = Base64.getEncoder().encodeToString(MISSING_KEY.getBytes(StandardCharsets.UTF_8));
     // Different response for valid and invalid keys
@@ -262,5 +267,43 @@ public class RemoteAppStateStoreTest {
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
                                                                       ERROR_APP);
     remoteAppStateStore.getState("some_key");
+  }
+  
+  @Test
+  public void testDeleteSuccess() throws IOException {
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+        NAMESPACE, SUCCESS_APP);
+    remoteAppStateStore.deleteSate("valid-key");
+  }
+
+  @Test
+  public void testDeleteSuccessWithSpaceInKey() throws IOException {
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+        NAMESPACE, SUCCESS_APP);
+    remoteAppStateStore.deleteSate("valid key with space");
+  }
+
+  @Test
+  public void testDeleteInvalidNamespace() throws IOException {
+    expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
+        "invalid", "some_app");
+    remoteAppStateStore.deleteSate("some_key");
+  }
+
+  @Test
+  public void testDeleteInvalidApp() throws IOException {
+    expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
+        NOT_FOUND_APP);
+    remoteAppStateStore.deleteSate("some_key");
+  }
+
+  @Test
+  public void testDeleteFail() throws IOException {
+    expectedException.expectCause(CoreMatchers.isA(RetryableException.class));
+    RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
+        ERROR_APP);
+    remoteAppStateStore.deleteSate("some_key");
   }
 }

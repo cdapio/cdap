@@ -117,6 +117,32 @@ public class RemoteAppStateStore implements AppStateStore {
         int responseCode = httpResponse.getResponseCode();
         if (responseCode != 200) {
           String notFoundExceptionMessage = String.format(
+              "Namespace %s or application %s not found.", namespace, appName);
+          handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(),
+              notFoundExceptionMessage);
+        }
+      }, retryStrategy);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public void deleteSate(String key) throws IOException {
+    if (key == null || key.isEmpty()) {
+      throw new IllegalArgumentException(
+          "Received null or empty value for required argument 'key'");
+    }
+    try {
+      String encodedKey = Base64.getEncoder().encodeToString(key.getBytes(StandardCharsets.UTF_8));
+      Retries.runWithRetries(() -> {
+        HttpRequest.Builder requestBuilder =
+            remoteClient.requestBuilder(HttpMethod.DELETE,
+                    String.format(REMOTE_END_POINT, namespace, appName, encodedKey));
+        HttpResponse httpResponse = remoteClient.execute(requestBuilder.build(), Idempotency.AUTO);
+        int responseCode = httpResponse.getResponseCode();
+        if (responseCode != 200) {
+          String notFoundExceptionMessage = String.format(
               "Namespace %s or application %s not found.", namespace,
               appName);
           handleErrorResponse(responseCode, httpResponse.getResponseBodyAsString(),
