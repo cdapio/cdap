@@ -50,6 +50,7 @@ import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
+import io.cdap.cdap.etl.api.relational.LinearRelationalTransform;
 import io.cdap.cdap.etl.api.relational.RelationalTransform;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -552,6 +553,28 @@ public abstract class SparkPipelineRunner {
 
     if (plugin instanceof RelationalTransform) {
       RelationalTransform transform = (RelationalTransform) plugin;
+
+      if (inputDataCollections.size() > 1 && transform.requireUnionInputs()) {
+        Iterator<String> keys = inputDataCollections.keySet().iterator();
+        String firstKey = keys.next();
+        Schema firstSchema = stageSpec.getInputSchemas().get(firstKey);
+        SparkCollection<Object> first = inputDataCollections.get(firstKey);
+
+        while (keys.hasNext()) {
+          String currKey = keys.next();
+          //Validate schema is Same for all
+          if (firstSchema.equals(stageSpec.getInputSchemas().get(currKey))) {
+            first = first.union(inputDataCollections.get(currKey));
+          } else {
+            LOG.warn(String.format("There is a schema mismatch between the given inputs for the stage %s, " +
+                                     "Pushdown transformation will be skipped for this stage.", stageName));
+            return Optional.empty();
+          }
+        }
+        inputDataCollections.clear();
+        inputDataCollections.put(firstKey, first);
+      }
+
       for (SparkCollectionRelationalEngine engine : getRelationalEngines(stageSpec, stageData)) {
         if (!transform.canUseEngine(engine.getRelationalEngine())) {
           continue;
