@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2022 Cask Data, Inc.
+ * Copyright © 2014-2023 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1181,6 +1181,18 @@ public final class Constants {
       public static final String DEPLOY_EDIT_COUNT = "app.deploy.event.count.edit";
       public static final String DEPLOY_UPGRADE_COUNT = "app.deploy.event.count.upgrade";
     }
+
+    /**
+     * Source Control Management metrics.
+     */
+    public static final class SourceControlManagement {
+      public static final String CLONE_REPOSITORY_SIZE_BYTES =
+          "source.control.git.repository.clone.size.bytes";
+      public static final String CLONE_LATENCY_MS =
+          "source.control.git.clone.latency.ms";
+      public static final String COMMIT_PUSH_LATENCY_MILLIS =
+          "source.control.git.commit.push.duration.ms";
+    }
   }
 
   /**
@@ -1915,7 +1927,7 @@ public final class Constants {
   }
 
   /**
-   * Constans for Spark Metrics Provider.
+   * Constants for Spark Metrics Provider.
    */
 
   public static final class Spark {
@@ -2075,6 +2087,7 @@ public final class Constants {
    * Constants for Source Control Management.
    */
   public static final class SourceControlManagement {
+
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
       "source.control.git.repositories.clone.directory.path";

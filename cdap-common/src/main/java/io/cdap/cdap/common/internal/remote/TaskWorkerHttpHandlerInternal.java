@@ -100,7 +100,7 @@ public class TaskWorkerHttpHandlerInternal extends AbstractHttpHandler {
     int killAfterRequestCount = cConf.getInt(
         Constants.TaskWorker.CONTAINER_KILL_AFTER_REQUEST_COUNT, 0);
     this.runnableTaskLauncher = new RunnableTaskLauncher(cConf, discoveryService,
-        discoveryServiceClient);
+        discoveryServiceClient, metricsCollectionService);
     this.metricsCollectionService = metricsCollectionService;
     this.metadataServiceEndpoint = cConf.get(Constants.TaskWorker.METADATA_SERVICE_END_POINT);
     this.taskCompletionConsumer = (succeeded, taskDetails) -> {

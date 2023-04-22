@@ -16,10 +16,15 @@
 
 package io.cdap.cdap.sourcecontrol;
 
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
+import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.AuthConfig;
@@ -35,7 +40,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.eclipse.jgit.api.Git;
@@ -50,6 +57,7 @@ import org.junit.rules.RuleChain;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 /**
  * Tests for {@link  RepositoryManager}.
@@ -58,6 +66,10 @@ public class RepositoryManagerTest extends SourceControlTestBase {
 
   @Mock
   private SecureStore secureStore;
+  @Mock
+  MetricsContext mockMetricsContext;
+  @Spy
+  private MetricsCollectionService metricsCollectionService = new NoOpMetricsCollectionService();
   private CConfiguration cConf;
   public LocalGitServer gitServer = getGitServer();
   @Rule
@@ -78,6 +90,10 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     // Disable hooks. In non-test environments, this is done by services on
     // start-up.
     SecureSystemReader.setAsSystemReader();
+    Map<String, String> tags = new HashMap<>();
+    tags.put(Tag.NAMESPACE, NAMESPACE);
+    Mockito.doReturn(mockMetricsContext).when(metricsCollectionService)
+        .getContext(tags);
   }
 
   @Test
@@ -340,7 +356,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-        new NamespaceId(NAMESPACE), config)) {
+        new NamespaceId(NAMESPACE), config, metricsCollectionService)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
@@ -350,6 +366,16 @@ public class RepositoryManagerTest extends SourceControlTestBase {
       Files.write(filePath, fileContent.getBytes(StandardCharsets.UTF_8));
       manager.commitAndPush(commitMeta,
           manager.getBasePath().relativize(filePath));
+      // Verify metrics.
+      Mockito.verify(mockMetricsContext).event(
+          Mockito.eq(SourceControlManagement.CLONE_REPOSITORY_SIZE_BYTES),
+          Mockito.anyLong());
+      Mockito.verify(mockMetricsContext).event(
+          Mockito.eq(SourceControlManagement.CLONE_LATENCY_MS),
+          Mockito.anyLong());
+      Mockito.verify(mockMetricsContext).event(
+          Mockito.eq(SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS),
+          Mockito.anyLong());
       verifyCommit(filePath, fileContent, commitMeta);
     }
   }
@@ -365,7 +391,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-        new NamespaceId(NAMESPACE), config)) {
+        new NamespaceId(NAMESPACE), config, metricsCollectionService)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
@@ -390,7 +416,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-        new NamespaceId(NAMESPACE), config)) {
+        new NamespaceId(NAMESPACE), config, metricsCollectionService)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
@@ -411,7 +437,7 @@ public class RepositoryManagerTest extends SourceControlTestBase {
         .build();
 
     try (RepositoryManager manager = new RepositoryManager(secureStore, cConf,
-        new NamespaceId(NAMESPACE), config)) {
+        new NamespaceId(NAMESPACE), config, metricsCollectionService)) {
       manager.cloneRemote();
       CommitMeta commitMeta = new CommitMeta("author", "committer", 100,
           "message");
@@ -425,13 +451,29 @@ public class RepositoryManagerTest extends SourceControlTestBase {
     }
   }
 
+  @Test
+  public void testDirectorySizeMb() throws IOException {
+    byte[] content = "abc".getBytes(StandardCharsets.UTF_8);
+    Path root = baseTempFolder.newFolder().toPath();
+    // add two files and a symlink.
+    Path file1 = root.resolve("file1.txt");
+    Files.write(file1, content);
+    Path file2 = root.resolve("dir/file2.txt");
+    Files.createDirectories(file2.getParent());
+    Files.write(file2, content);
+    Path file3 = root.resolve("dir/file3.txt");
+    Files.createSymbolicLink(file3, file1);
+    Assert.assertEquals(content.length * 2,
+        RepositoryManager.calculateDirectorySize(root));
+  }
+
   private void verifyNoCommit() throws GitAPIException, IOException {
     Path tempDirPath = baseTempFolder.newFolder("temp-local-git-verify")
         .toPath();
     Git localGit = getClonedGit(tempDirPath, gitServer);
-    List<RevCommit> commits =
-        StreamSupport.stream(localGit.log().all().call().spliterator(), false)
-            .collect(Collectors.toList());
+    List<RevCommit> commits = StreamSupport.stream(
+            localGit.log().all().call().spliterator(), false)
+        .collect(Collectors.toList());
     Assert.assertEquals(1, commits.size());
   }
 
@@ -489,7 +531,8 @@ public class RepositoryManagerTest extends SourceControlTestBase {
    */
   private RepositoryManager getRepositoryManager() {
     return new RepositoryManager(secureStore, cConf, new NamespaceId(NAMESPACE),
-        getRepositoryConfigBuilder().build());
+        getRepositoryConfigBuilder().build(),
+        metricsCollectionService);
   }
 
   private void commitFileToLocalRepository(Path filePath, String contents,

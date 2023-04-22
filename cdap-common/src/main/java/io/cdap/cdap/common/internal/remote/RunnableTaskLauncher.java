@@ -18,6 +18,7 @@ package io.cdap.cdap.common.internal.remote;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -35,10 +36,12 @@ public class RunnableTaskLauncher {
 
   public RunnableTaskLauncher(CConfiguration cConf,
       DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     injector = Guice.createInjector(
         new ConfigModule(cConf),
-        new RunnableTaskModule(discoveryService, discoveryServiceClient)
+        new RunnableTaskModule(discoveryService, discoveryServiceClient,
+            metricsCollectionService)
     );
   }
 

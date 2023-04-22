@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.inject.AbstractModule;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -27,16 +28,20 @@ public class RunnableTaskModule extends AbstractModule {
 
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricsCollectionService metricsCollectionService;
 
   public RunnableTaskModule(DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   protected void configure() {
     bind(DiscoveryService.class).toInstance(discoveryService);
     bind(DiscoveryServiceClient.class).toInstance(discoveryServiceClient);
+    bind(MetricsCollectionService.class).toInstance(metricsCollectionService);
   }
 }

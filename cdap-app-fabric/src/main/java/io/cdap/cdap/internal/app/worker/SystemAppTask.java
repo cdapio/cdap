@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
@@ -68,14 +69,17 @@ public class SystemAppTask implements RunnableTask {
   private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   SystemAppTask(CConfiguration cConf,
       DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -86,7 +90,9 @@ public class SystemAppTask implements RunnableTask {
     }
     LOG.debug("Received system app task for artifact {}", systemAppArtifactId);
 
-    Injector injector = createInjector(cConf, discoveryService, discoveryServiceClient);
+    Injector injector = createInjector(
+        cConf, discoveryService,
+        discoveryServiceClient, metricsCollectionService);
 
     ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
     Impersonator impersonator = injector.getInstance(Impersonator.class);
@@ -155,7 +161,8 @@ public class SystemAppTask implements RunnableTask {
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf,
       DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     return Guice.createInjector(
         new IOModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
@@ -166,7 +173,8 @@ public class SystemAppTask implements RunnableTask {
         new SecureStoreClientModule(),
         new AuthenticationContextModules().getMasterModule(),
         new SystemAppModule(),
-        new RunnableTaskModule(discoveryService, discoveryServiceClient));
+        new RunnableTaskModule(discoveryService, discoveryServiceClient,
+            metricsCollectionService));
   }
 
   private SystemAppTaskContext buildTaskSystemAppContext(Injector injector,
