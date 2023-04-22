@@ -54,8 +54,13 @@ public class StreamingSparkSinkFunction<T> extends AbstractStreamingSinkFunction
   private final StageSpec stageSpec;
 
   public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+      StreamingRetrySettings retrySettings) {
+    this(sec, stageSpec, retrySettings, () -> null);
+  }
+
+  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
+      StreamingRetrySettings retrySettings, SerializableCallable batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.stageSpec = stageSpec;
   }

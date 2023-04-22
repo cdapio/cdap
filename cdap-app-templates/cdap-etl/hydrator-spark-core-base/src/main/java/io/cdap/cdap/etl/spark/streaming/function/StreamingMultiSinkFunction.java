@@ -66,10 +66,15 @@ public class StreamingMultiSinkFunction extends AbstractStreamingSinkFunction<Ja
   private final Map<String, StageStatisticsCollector> collectors;
 
   public StreamingMultiSinkFunction(JavaSparkExecutionContext sec, PhaseSpec phaseSpec,
-                                    Set<String> group, Set<String> sinkNames,
-                                    Map<String, StageStatisticsCollector> collectors,
-                                    StreamingRetrySettings retrySettings) {
-    super(retrySettings);
+      Set<String> group, Set<String> sinkNames, Map<String, StageStatisticsCollector> collectors,
+      StreamingRetrySettings retrySettings) {
+    this(sec, phaseSpec, group, sinkNames, collectors, retrySettings, () -> null);
+  }
+
+  public StreamingMultiSinkFunction(JavaSparkExecutionContext sec, PhaseSpec phaseSpec,
+      Set<String> group, Set<String> sinkNames, Map<String, StageStatisticsCollector> collectors,
+      StreamingRetrySettings retrySettings, SerializableCallable batchRetryFunction) {
+    super(retrySettings, batchRetryFunction);
     this.sec = sec;
     this.phaseSpec = phaseSpec;
     this.group = group;
