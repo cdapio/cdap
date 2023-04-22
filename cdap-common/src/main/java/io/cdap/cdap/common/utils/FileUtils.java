@@ -16,7 +16,12 @@
 
 package io.cdap.cdap.common.utils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
@@ -112,6 +117,17 @@ public class FileUtils {
   public static String getNameWithoutExtension(String name) {
     int idx = name.lastIndexOf('.');
     return idx >= 0 ? name.substring(0, idx) : name;
+  }
+
+  /**
+   * Returns the creation time of the given file/directory.
+   *
+   * @param filePath Path of the file
+   * @return The creation time
+   * @throws IOException if unable to read get attribute due to I/O error
+   */
+  public static FileTime getFileCreationTime(Path filePath) throws IOException {
+    return Files.readAttributes(filePath, BasicFileAttributes.class).creationTime();
   }
 
   private static int parsePermissionGroup(String permissions, int start) {
