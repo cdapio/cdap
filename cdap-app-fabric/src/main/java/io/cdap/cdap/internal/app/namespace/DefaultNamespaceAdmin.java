@@ -65,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -128,6 +129,18 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.cConf = cConf;
   }
 
+  private boolean existsWithoutAuth(NamespaceId namespaceId) throws Exception {
+    try {
+      namespaceMetaCache.get(namespaceId);
+    } catch (ExecutionException e) {
+      if (e.getCause() instanceof NamespaceNotFoundException) {
+        return false;
+      }
+      throw e;
+    }
+    return true;
+  }
+
   /**
    * Creates a new namespace
    *
@@ -139,18 +152,19 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
     NamespaceId namespace = metadata.getNamespaceId();
-    if (exists(namespace)) {
+    Principal requestingUser = authenticationContext.getPrincipal();
+    accessEnforcer.enforce(namespace, requestingUser, StandardPermission.CREATE);
+    // It does not make sense to check permissions for getting a namespace when it may not exist.
+    if (existsWithoutAuth(namespace)) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
 
     // need to enforce on the principal id if impersonation is involved
     String ownerPrincipal = metadata.getConfig().getPrincipal();
-    Principal requestingUser = authenticationContext.getPrincipal();
     if (ownerPrincipal != null) {
       accessEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser,
           AccessPermission.SET_OWNER);
     }
-    accessEnforcer.enforce(namespace, requestingUser, StandardPermission.CREATE);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
@@ -497,7 +511,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * Checks if the specified namespace exists
    *
    * @param namespaceId the {@link Id.Namespace} to check for existence
-   * @return true, if the specified namespace exists, false otherwise
+   * @returnexists( true, if the specified namespace exists, false otherwise
    */
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
