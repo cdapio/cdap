@@ -17,6 +17,8 @@
 package io.cdap.cdap.sourcecontrol.guice;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
+import io.cdap.cdap.sourcecontrol.RepositoryCleanupService;
 import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlOperationRunner;
 
 /**
@@ -27,5 +29,6 @@ public class SourceControlModule extends AbstractModule {
   @Override
   protected void configure() {
     bind(SourceControlOperationRunner.class).toProvider(SourceControlOperationRunnerProvider.class);
+    bind(RepositoryCleanupService.class).in(Scopes.SINGLETON);
   }
 }

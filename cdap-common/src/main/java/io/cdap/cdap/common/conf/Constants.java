@@ -398,7 +398,7 @@ public final class Constants {
   }
 
   /**
-   * Preview Configurations
+   * Preview Configurations.
    */
   public static final class Preview {
     public static final String ENABLED = "enable.preview";
@@ -741,7 +741,7 @@ public final class Constants {
       public static final String WORKER_THREADS = "dataset.executor.worker.threads";
       public static final String OUTPUT_DIR = "dataset.executor.output.dir";
 
-      /** Twill Runnable configuration **/
+      /** Twill Runnable configuration. **/
       public static final String CONTAINER_VIRTUAL_CORES = "dataset.executor.container.num.cores";
       public static final String CONTAINER_MEMORY_MB = "dataset.executor.container.memory.mb";
       public static final String CONTAINER_INSTANCES = "dataset.executor.container.instances";
@@ -758,7 +758,7 @@ public final class Constants {
     public static final class Extensions {
       public static final String MODULES = "dataset.extensions.modules";
 
-      /** Over-rides for default table bindings- use with caution! **/
+      /** Over-rides for default table bindings- use with caution. **/
       public static final String DISTMODE_TABLE = "dataset.extensions.distributed.mode.table";
     }
   }
@@ -804,16 +804,16 @@ public final class Constants {
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
 
-    /** Interval in minutes at which CDAP Router reloads cconf */
+    /** Interval in minutes at which CDAP Router reloads cconf. */
     public static final String CCONF_RELOAD_INTERVAL_SECONDS = "router.cconf.reload.interval.seconds";
 
     // To block inbound requests through configuration,
     // Router will start responding to every inbound request with the response (status and message) declared in config
     /** Property to start/stop blocking requests to the router. Will be blocked if enabled */
     public static final String BLOCK_REQUEST_ENABLED = "router.block.request.enabled";
-    /** The config name to define the status code for the response */
+    /** The config name to define the status code for the response. */
     public static final String BLOCK_REQUEST_STATUS_CODE = "router.block.request.status.code";
-    /** The config name to define the response body */
+    /** The config name to define the response body. */
     public static final String BLOCK_REQUEST_MESSAGE = "router.block.request.message";
   }
 
@@ -895,23 +895,23 @@ public final class Constants {
     public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
     public static final String STRUCTURED_TABLE_TIME_METRICS_ENABLED = "structured.table.time.metrics.enabled";
 
-    /** Whether to enable metrics tracking for authorization */
+    /** Whether to enable metrics tracking for authorization. */
     public static final String AUTHORIZATION_METRICS_ENABLED = "security.authorization.metrics.enabled";
     /** Whether to enable entity tagging for metrics for aggregation purposes. */
     public static final String AUTHORIZATION_METRICS_TAGS_ENABLED = "security.authorization.metrics.tags.enabled";
 
     /**
-     * Writer specific config for use subscriber in metadata key
+     * Writer specific config for use subscriber in metadata key.
      */
     public static final String WRITER_USE_SUBSCRIBER_METADATA_KEY = "metrics.writer.%s.use.subscriber.metadata.key";
 
     /**
-     * Writer specific config for restricting write frequency
+     * Writer specific config for restricting write frequency.
      */
     public static final String WRITER_LIMIT_WRITE_FREQ = "metrics.writer.%s.limit.write.freq";
 
     /**
-     * Writer specific config for delay between writes
+     * Writer specific config for delay between writes.
      */
     public static final String WRITER_WRITE_FREQUENCY_SECONDS = "metrics.writer.%s.write.frequency.seconds";
 
@@ -922,9 +922,9 @@ public final class Constants {
      * Metric's dataset related constants.
      */
     public static final class Dataset {
-      /** Defines reporting interval for HBase stats, in seconds */
+      /** Defines reporting interval for HBase stats, in seconds. */
       public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
-      /** Defines reporting interval for LevelDB stats, in seconds */
+      /** Defines reporting interval for LevelDB stats, in seconds. */
       public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
     }
 
@@ -1093,6 +1093,9 @@ public final class Constants {
       public static final String RUN_TIME_SECONDS = "preview.run.seconds";
     }
 
+    /**
+     * Task worker configuration.
+     */
     public static final class TaskWorker {
       public static final String REQUEST_COUNT = Constants.TaskWorker.METRIC_PREFIX + "request.count";
       public static final String REQUEST_LATENCY_MS = Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
@@ -1102,6 +1105,9 @@ public final class Constants {
         "client." + Constants.TaskWorker.METRIC_PREFIX + "request.latency.millis";
     }
 
+    /**
+     * System worker configuration.
+     */
     public static final class SystemWorker {
       public static final String REQUEST_COUNT = Constants.SystemWorker.METRIC_PREFIX + "request.count";
       public static final String REQUEST_LATENCY_MS = Constants.SystemWorker.METRIC_PREFIX + "request.latency.millis";
@@ -1157,6 +1163,9 @@ public final class Constants {
       public static final String SCHEDULE_LATENCY = "schedulejob.latency";
     }
 
+    /**
+     * AppState store config.
+     */
     public static final class AppStateStore {
       public static final String STATE_STORE_GET_COUNT = "state.store.get.count";
       public static final String STATE_STORE_SAVE_COUNT = "state.store.save.count";
@@ -1391,19 +1400,19 @@ public final class Constants {
     public static final String CFG_FILE_BASED_KEYFILE_PATH = "security.data.keyfile.path";
     /** Configuration for security realm. */
     public static final String CFG_REALM = "security.realm";
-    /** Authentication Handler class name */
+    /** Authentication Handler class name. */
     public static final String AUTH_HANDLER_CLASS = "security.authentication.handlerClassName";
     /** Prefix for all configurable properties of an Authentication handler. */
     public static final String AUTH_HANDLER_CONFIG_BASE = "security.authentication.handler.";
-    /** Authentication Login Module class name */
+    /** Authentication Login Module class name. */
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
-    /** Realm file for Basic Authentication */
+    /** Realm file for Basic Authentication. */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Configuration for specifying keytab location. The location will contain ${name} which will be replaced
      * by the user/owner of the entities name. */
     public static final String KEYTAB_PATH = "security.keytab.path";
 
-    /** Key to specify the kerberos principal of the entity owner **/
+    /** Key to specify the kerberos principal of the entity owner. **/
     public static final String PRINCIPAL = "principal";
 
     /** Requires all intra-cluster communications to be authenticated. */
@@ -1414,7 +1423,7 @@ public final class Constants {
       "security.runtime.identity.compatibility.enabled";
 
     /**
-     * App Fabric
+     * App Fabric.
      */
     public static final class SSL {
       /** Enables SSL for external services. */
@@ -1442,18 +1451,18 @@ public final class Constants {
       /** Determines whether to propagate the end user credential as part of the Principal. */
       public static final String PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
 
-      /** Enable encryption for user credential in http auth header. Set in cdap-security.xml */
+      /** Enable encryption for user credential in http auth header. Set in cdap-security.xml. */
       public static final String USER_CREDENTIAL_ENCRYPTION_ENABLED =
         "security.authentication.user.credential.encryption.enabled";
-      /** Keyset used for user credential encryption. Set in cdap-security.xml */
+      /** Keyset used for user credential encryption. Set in cdap-security.xml. */
       public static final String USER_CREDENTIAL_ENCRYPTION_KEYSET =
         "security.authentication.user.credentials.encryption.keyset";
-      /** {@link CConfiguration} property to pass runtime token from driver to distributed jobs */
+      /** {@link CConfiguration} property to pass runtime token from driver to distributed jobs. */
       public static final String RUNTIME_TOKEN =
         "security.authentication.runtime.token";
-      /** File name to use to pass {@link Constants.Security.Headers#RUNTIME_TOKEN} to execution job */
+      /** File name to use to pass {@link Constants.Security.Headers#RUNTIME_TOKEN} to execution job. */
       public static final String RUNTIME_TOKEN_FILE = "cdap.runtime.token";
-      /** Identity used for runtime monitor */
+      /** Identity used for runtime monitor. */
       public static final String RUNTIME_IDENTITY = "runtime";
     }
 
@@ -1461,22 +1470,22 @@ public final class Constants {
      * Authorization.
      */
     public static final class Authorization {
-      /** Enables authorization */
+      /** Enables authorization. */
       public static final String ENABLED = "security.authorization.enabled";
-      /** Extension jar path */
+      /** Extension jar path. */
       public static final String EXTENSION_JAR_PATH = "security.authorization.extension.jar.path";
-      /** Extra classpath for security extension **/
+      /** Extra classpath for security extension. **/
       public static final String EXTENSION_EXTRA_CLASSPATH = "security.authorization.extension.extra.classpath";
-      /** Prefix for extension properties */
+      /** Prefix for extension properties. */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
-      /** TTL for entries in container's privilege cache */
+      /** TTL for entries in container's privilege cache. */
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
-      /** Maximum number of entries the authorization cache will hold */
+      /** Maximum number of entries the authorization cache will hold. */
       public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";
-      /** Batch size for query for the visibility of entities */
+      /** Batch size for query for the visibility of entities. */
       public static final int VISIBLE_BATCH_SIZE = 500;
-      /** Upper limit on extension operation time after which the time is logged as WARN rather than TRACE */
+      /** Upper limit on extension operation time after which the time is logged as WARN rather than TRACE. */
       public static final String EXTENSION_OPERATION_TIME_WARN_THRESHOLD =
         "security.authorization.extension.operation.time.warn.threshold.ms";
     }
@@ -1491,11 +1500,11 @@ public final class Constants {
       public static final String FILE_NAME = "security.store.file.name";
       /** Password to access the secure store. */
       public static final String FILE_PASSWORD = "security.store.file.password";
-      /** Backend provider for the secure store. e.g. file */
+      /** Backend provider for the secure store. e.g. file. */
       public static final String PROVIDER = "security.store.provider";
-      /** Secure store extension dir*/
+      /** Secure store extension dir. */
       public static final String EXTENSIONS_DIR = "security.store.extensions.dir";
-      /**Secure store extension property prefix*/
+      /** Secure store extension property prefix. */
       public static final String PROPERTY_PREFIX = "security.store.system.properties.";
     }
 
@@ -1503,15 +1512,15 @@ public final class Constants {
      * Headers for security.
      */
     public static final class Headers {
-      /** Internal user ID header passed from Router to downstream services */
+      /** Internal user ID header passed from Router to downstream services. */
       public static final String USER_ID = "CDAP-UserId";
-      /** User IP header passed from Router to downstream services */
+      /** User IP header passed from Router to downstream services. */
       public static final String USER_IP = "CDAP-UserIP";
-      /** User principal passed from program container to cdap service containers */
+      /** User principal passed from program container to cdap service containers. */
       public static final String USER_PRINCIPAL = "CDAP-User-Principal";
-      /** program id passed from program container to cdap service containers */
+      /** program id passed from program container to cdap service containers. */
       public static final String PROGRAM_ID = "CDAP-Program-Id";
-      /** token to authorize runtime service calls */
+      /** token to authorize runtime service calls. */
       public static final String RUNTIME_TOKEN = "X-CDAP-Runtime-Token";
     }
 
@@ -1519,13 +1528,13 @@ public final class Constants {
      * Security configuration for Router.
      */
     public static final class Router {
-      /** SSL keystore location */
+      /** SSL keystore location. */
       public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
-      /** SSL keystore key password */
+      /** SSL keystore key password. */
       public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
-      /** SSL keystore password */
+      /** SSL keystore password. */
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
-      /** Paths to exclude from authentication, given by a single regular expression */
+      /** Paths to exclude from authentication, given by a single regular expression. */
       public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
 
       /** File path to certificate file in PEM format. */
@@ -1538,31 +1547,31 @@ public final class Constants {
      * Security configuration for ExternalAuthenticationServer.
      */
     public static final class AuthenticationServer {
-      /** SSL port */
+      /** SSL port. */
       public static final String SSL_PORT = "security.auth.server.ssl.bind.port";
-      /** SSL keystore location */
+      /** SSL keystore location. */
       public static final String SSL_KEYSTORE_PATH = "security.auth.server.ssl.keystore.path";
-      /** SSL keystore type */
+      /** SSL keystore type. */
       public static final String SSL_KEYSTORE_TYPE = "security.auth.server.ssl.keystore.type";
-      /** SSL keystore key password */
+      /** SSL keystore key password. */
       public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
-      /** SSL keystore password */
+      /** SSL keystore password. */
       public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
 
-      /** Default SSL keystore type */
+      /** Default SSL keystore type. */
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
 
-      /** SSL truststore location */
+      /** SSL truststore location. */
       public static final String SSL_TRUSTSTORE_PATH = "security.auth.server.ssl.truststore.path";
-      /** SSL truststore type */
+      /** SSL truststore type. */
       public static final String SSL_TRUSTSTORE_TYPE = "security.auth.server.ssl.truststore.type";
-      /** SSL truststore password */
+      /** SSL truststore password. */
       public static final String SSL_TRUSTSTORE_PASSWORD = "security.auth.server.ssl.truststore.password";
     }
 
-    /** Path to the Kerberos keytab file used by CDAP master */
+    /** Path to the Kerberos keytab file used by CDAP master. */
     public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
-    /** Kerberos principal used by CDAP master */
+    /** Kerberos principal used by CDAP master. */
     public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
 
     public static final String UGI_CACHE_EXPIRATION_MS = "cdap.ugi.cache.expiration.ms";
@@ -1613,6 +1622,7 @@ public final class Constants {
   /**
    * LevelDB substracts 10 from maxOpenFiles configuration to calculate table cache size.
    * This constant allows us to convert it back
+   *
    * @see org.iq80.leveldb.impl.DbImpl#DbImpl
    */
   public static final int DATA_LEVELDB_CACHESIZE_MAXFILES_OFFSET = 10;
@@ -1958,6 +1968,9 @@ public final class Constants {
     }
   }
 
+  /**
+   * Support bundle config.
+   */
   public static final class SupportBundle {
     public static final String SERVICE_DESCRIPTION = "Service to generate support bundle operations.";
     public static final String SERVICE_BIND_ADDRESS = "support.bundle.service.bind.address";
@@ -1979,11 +1992,17 @@ public final class Constants {
     public static final String SUPPORT_BUNDLE_TEMP_DIR = "support.bundle.temp.dir";
   }
 
+  /**
+   * JMX metrics collector config.
+   */
   public static final class JMXMetricsCollector {
     public static final String POLL_INTERVAL_SECS = "jmx.metrics.collector.poll.interval.secs";
     public static final String SERVER_PORT = "jmx.metrics.collector.server.port";
   }
 
+  /**
+   * Tethering config.
+   */
   public static final class Tethering {
     public static final String TETHERING_SERVER_ENABLED = "tethering.server.enabled";
     public static final String PROGRAM_DIR = "tethering.program.dir";
@@ -2023,6 +2042,9 @@ public final class Constants {
     public static final String CLIENT_AUTHENTICATOR_NAME = "tethering.client.authenticator.name";
   }
 
+  /**
+   * Artifact cache config.
+   */
   public static final class ArtifactCache {
 
     /**
@@ -2056,5 +2078,8 @@ public final class Constants {
     public static final String GIT_COMMAND_TIMEOUT_SECONDS = "source.control.git.command.timeout.seconds";
     public static final String GIT_REPOSITORIES_CLONE_DIRECTORY_PATH =
       "source.control.git.repositories.clone.directory.path";
+    public static final String REPOSITORY_CLEANUP_INTERVAL_SECONDS =
+        "source.control.repository.cleanup.interval.seconds";
+    public static final String REPOSITORY_TTL_SECONDS = "source.control.repository.ttl.seconds";
   }
 }
