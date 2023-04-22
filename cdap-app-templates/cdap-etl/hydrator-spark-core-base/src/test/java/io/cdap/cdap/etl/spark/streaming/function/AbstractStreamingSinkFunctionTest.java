@@ -17,7 +17,10 @@
 package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.spark.streaming.StreamingRetrySettings;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.spark.streaming.Time;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -32,10 +35,15 @@ public class AbstractStreamingSinkFunctionTest {
 
   @Test
   public void testRetry() throws Exception {
-    AtomicInteger attempt = new AtomicInteger(1);
+    AtomicInteger attempt = new AtomicInteger(0);
     StreamingRetrySettings streamingRetrySettings = new StreamingRetrySettings(2L, 1L, 10L);
+    AtomicBoolean retryFnCalled = new AtomicBoolean();
+    SerializableCallable retryFunction = () -> {
+      retryFnCalled.set(true);
+      return null;
+    };
     AbstractStreamingSinkFunction<Object> testFunction =
-      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings) {
+      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings, retryFunction) {
         @Override
         protected Set<String> getSinkNames() {
           return Collections.singleton("test-recovering-sink");
@@ -50,6 +58,7 @@ public class AbstractStreamingSinkFunctionTest {
       };
     // Should run without throwing exception
     testFunction.call(null, Time.apply(System.currentTimeMillis()));
+    Assert.assertTrue(retryFnCalled.get());
   }
 
   @Test(expected = RuntimeException.class)
@@ -57,7 +66,7 @@ public class AbstractStreamingSinkFunctionTest {
     StreamingRetrySettings streamingRetrySettings = new StreamingRetrySettings(2L, 1L, 10L);
     long startTime = System.currentTimeMillis();
     AbstractStreamingSinkFunction<Object> testFunction =
-      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings) {
+      new AbstractStreamingSinkFunction<Object>(streamingRetrySettings, () -> null) {
         @Override
         protected Set<String> getSinkNames() {
           return Collections.singleton("test-sink");
