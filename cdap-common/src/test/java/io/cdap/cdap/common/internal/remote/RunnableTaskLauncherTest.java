@@ -24,6 +24,7 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,8 +44,9 @@ public class RunnableTaskLauncherTest {
       withParam(want).build();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(),
-                                                             discoveryService, discoveryService);
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(
+        CConfiguration.create(),
+        discoveryService, discoveryService, new NoOpMetricsCollectionService());
     RunnableTaskContext context = new RunnableTaskContext(request);
     launcher.launchRunnableTask(context);
 

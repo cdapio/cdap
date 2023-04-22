@@ -66,6 +66,7 @@ import org.junit.rules.TemporaryFolder;
 
 
 public class SystemWorkerServiceTest extends AppFabricTestBase {
+
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -93,27 +94,30 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     File keyFile = new File(keyDir, "key");
 
     CConfiguration cConf = createCConf();
-    cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH, keyFile.getAbsolutePath());
+    cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH,
+        keyFile.getAbsolutePath());
 
     Injector injector = Guice.createInjector(
-      new IOModule(),
-      new ConfigModule(cConf),
-      new FileBasedCoreSecurityModule(),
-      new InMemoryDiscoveryModule()
+        new IOModule(),
+        new ConfigModule(cConf),
+        new FileBasedCoreSecurityModule(),
+        new InMemoryDiscoveryModule()
     );
 
     SConfiguration sConf = createSConf();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    SystemWorkerService service = new SystemWorkerService(cConf, sConf, discoveryService,
-                                                          metricsCollectionService, new CommonNettyHttpServiceFactory(
-                                                            cConf, metricsCollectionService),
-                                                          injector.getInstance(TokenManager.class),
-                                                          new NoopTwillRunnerService(),
-                                                          new NoopTwillRunnerService(),
-                                                          getInjector().getInstance(ProvisioningService.class),
-                                                          Guice.createInjector(
-                                                            new RunnableTaskModule(discoveryService, discoveryService)),
-                                                          new AuthenticationTestContext(), new NoOpAccessController());
+    SystemWorkerService service = new SystemWorkerService(cConf, sConf,
+        discoveryService,
+        metricsCollectionService, new CommonNettyHttpServiceFactory(
+        cConf, metricsCollectionService),
+        injector.getInstance(TokenManager.class),
+        new NoopTwillRunnerService(),
+        new NoopTwillRunnerService(),
+        getInjector().getInstance(ProvisioningService.class),
+        Guice.createInjector(
+            new RunnableTaskModule(discoveryService, discoveryService,
+                new NoOpMetricsCollectionService())),
+        new AuthenticationTestContext(), new NoOpAccessController());
     service.startAndWait();
     this.systemWorkerService = service;
   }
@@ -129,13 +133,16 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
   @Test
   public void testStartAndStopWithValidRequest() throws IOException {
     InetSocketAddress addr = systemWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post valid request
     String want = "100";
     RunnableTaskRequest req =
-        RunnableTaskRequest.getBuilder(SystemWorkerServiceTest.TestRunnableClass.class.getName()).withParam(want)
-        .build();
+        RunnableTaskRequest.getBuilder(
+                SystemWorkerServiceTest.TestRunnableClass.class.getName())
+            .withParam(want)
+            .build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
         HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
@@ -148,19 +155,24 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
   @Test
   public void testStartAndStopWithInvalidRequest() throws Exception {
     InetSocketAddress addr = systemWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     // Post invalid request
-    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass").build();
+    RunnableTaskRequest noClassReq = RunnableTaskRequest.getBuilder("NoClass")
+        .build();
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
         HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
             .withBody(reqBody).build(),
         new DefaultHttpRequestConfig(false));
-    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+    Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST,
+        response.getResponseCode());
     BasicThrowable basicThrowable;
-    basicThrowable = GSON.fromJson(response.getResponseBodyAsString(), BasicThrowable.class);
-    Assert.assertTrue(basicThrowable.getClassName().contains("java.lang.ClassNotFoundException"));
+    basicThrowable = GSON.fromJson(response.getResponseBodyAsString(),
+        BasicThrowable.class);
+    Assert.assertTrue(basicThrowable.getClassName()
+        .contains("java.lang.ClassNotFoundException"));
     Assert.assertNotNull(basicThrowable.getMessage());
     Assert.assertTrue(basicThrowable.getMessage().contains("NoClass"));
     Assert.assertNotEquals(basicThrowable.getStackTraces().length, 0);
@@ -169,11 +181,13 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
   @Test
   public void testValidConcurrentRequests() throws Exception {
     InetSocketAddress addr = systemWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     RunnableTaskRequest request =
-        RunnableTaskRequest.getBuilder(SystemWorkerServiceTest.TestRunnableClass.class.getName()).
-        withParam("1000").build();
+        RunnableTaskRequest.getBuilder(
+                SystemWorkerServiceTest.TestRunnableClass.class.getName()).
+            withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
@@ -188,13 +202,16 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
       );
     }
 
-    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(concurrentRequests).invokeAll(calls);
+    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(
+        concurrentRequests).invokeAll(calls);
     int okResponse = 0;
     int conflictResponse = 0;
     for (int i = 0; i < concurrentRequests; i++) {
-      if (responses.get(i).get().getResponseCode() == HttpResponseStatus.OK.code()) {
+      if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.OK.code()) {
         okResponse++;
-      } else if (responses.get(i).get().getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+      } else if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
         conflictResponse++;
       }
     }
@@ -205,10 +222,12 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
   @Test
   public void testInvalidConcurrentRequests() throws Exception {
     InetSocketAddress addr = systemWorkerService.getBindAddress();
-    URI uri = URI.create(String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
+    URI uri = URI.create(
+        String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
     RunnableTaskRequest request =
-        RunnableTaskRequest.getBuilder(SystemWorkerServiceTest.TestRunnableClass.class.getName()).
+        RunnableTaskRequest.getBuilder(
+                SystemWorkerServiceTest.TestRunnableClass.class.getName()).
             withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
@@ -224,13 +243,16 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
       );
     }
 
-    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(concurrentRequests).invokeAll(calls);
+    List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(
+        concurrentRequests).invokeAll(calls);
     int okResponse = 0;
     int conflictResponse = 0;
     for (int i = 0; i < concurrentRequests; i++) {
-      if (responses.get(i).get().getResponseCode() == HttpResponseStatus.OK.code()) {
+      if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.OK.code()) {
         okResponse++;
-      } else if (responses.get(i).get().getResponseCode() == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
+      } else if (responses.get(i).get().getResponseCode()
+          == HttpResponseStatus.TOO_MANY_REQUESTS.code()) {
         conflictResponse++;
       }
     }
@@ -240,8 +262,8 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
   }
 
 
-
   public static class TestRunnableClass implements RunnableTask {
+
     @Override
     public void run(RunnableTaskContext context) throws Exception {
       if (!context.getParam().equals("")) {

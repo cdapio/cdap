@@ -25,6 +25,7 @@ import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.service.worker.RunnableTask;
@@ -75,27 +76,32 @@ public class ConfiguratorTask implements RunnableTask {
   private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   ConfiguratorTask(CConfiguration cConf,
       DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf,
       DiscoveryService discoveryService,
-      DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     return Guice.createInjector(
         new ConfigModule(cConf),
         RemoteAuthenticatorModules.getDefaultModule(),
         new LocalLocationModule(),
         new ConfiguratorTaskModule(),
         new AuthenticationContextModules().getMasterWorkerModule(),
-        new RunnableTaskModule(discoveryService, discoveryServiceClient)
+        new RunnableTaskModule(discoveryService, discoveryServiceClient,
+            metricsCollectionService)
     );
   }
 
@@ -103,7 +109,8 @@ public class ConfiguratorTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     AppDeploymentInfo deploymentInfo = GSON.fromJson(context.getParam(), AppDeploymentInfo.class);
 
-    Injector injector = createInjector(cConf, discoveryService, discoveryServiceClient);
+    Injector injector = createInjector(cConf, discoveryService,
+        discoveryServiceClient, metricsCollectionService);
     ConfigResponse result = injector.getInstance(ConfiguratorTaskRunner.class)
         .configure(deploymentInfo);
     AppSpecInfo appSpecInfo = result.getAppSpecInfo();

@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -37,9 +38,11 @@ public class PullAppTask extends SourceControlTask {
 
   @Inject
   PullAppTask(CConfiguration cConf,
-              DiscoveryService discoveryService,
-              DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, discoveryService, discoveryServiceClient);
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
+    super(cConf, discoveryService, discoveryServiceClient,
+        metricsCollectionService);
   }
 
   @Override
