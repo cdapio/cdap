@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.worker;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -39,7 +40,8 @@ public class SystemAppTaskTest {
   @Test
   public void testInjector() {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    Injector injector = SystemAppTask.createInjector(CConfiguration.create(), discoveryService, discoveryService);
+    Injector injector = SystemAppTask.createInjector(CConfiguration.create(),
+        discoveryService, discoveryService, new NoOpMetricsCollectionService());
 
     injector.getInstance(ArtifactRepositoryReader.class);
     injector.getInstance(ArtifactRepository.class);

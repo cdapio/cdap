@@ -24,7 +24,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
- * The default implementation for RepositoryManagerFactory
+ * The default implementation for RepositoryManagerFactory.
  */
 public class RepositoryManagerFactory {
 

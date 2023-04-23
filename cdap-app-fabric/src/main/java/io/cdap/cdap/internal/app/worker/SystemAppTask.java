@@ -60,11 +60,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * SystemAppTask launches a task created by system app with application classloader
+ * SystemAppTask launches a task created by system app with application
+ * classloader.
  */
 public class SystemAppTask implements RunnableTask {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SystemAppTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      SystemAppTask.class);
 
   private final CConfiguration cConf;
   private final DiscoveryService discoveryService;
@@ -72,8 +74,7 @@ public class SystemAppTask implements RunnableTask {
   private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  SystemAppTask(CConfiguration cConf,
-      DiscoveryService discoveryService,
+  SystemAppTask(CConfiguration cConf, DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
       MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
@@ -86,39 +87,37 @@ public class SystemAppTask implements RunnableTask {
   public void run(RunnableTaskContext context) throws Exception {
     ArtifactId systemAppArtifactId = context.getArtifactId();
     if (systemAppArtifactId == null) {
-      throw new IllegalArgumentException("Missing artifactId from the system app task request");
+      throw new IllegalArgumentException(
+          "Missing artifactId from the system app task request");
     }
     LOG.debug("Received system app task for artifact {}", systemAppArtifactId);
 
-    Injector injector = createInjector(
-        cConf, discoveryService,
+    Injector injector = createInjector(cConf, discoveryService,
         discoveryServiceClient, metricsCollectionService);
 
-    ArtifactRepository artifactRepository = injector.getInstance(ArtifactRepository.class);
+    ArtifactRepository artifactRepository = injector.getInstance(
+        ArtifactRepository.class);
     Impersonator impersonator = injector.getInstance(Impersonator.class);
 
     String systemAppNamespace = context.getNamespace();
-    Id.Artifact artifactId = Id.Artifact
-        .from(Id.Namespace.from(systemAppNamespace), systemAppArtifactId.getName(),
-            systemAppArtifactId.getVersion());
-    ArtifactLocalizerClient localizerClient = injector.getInstance(ArtifactLocalizerClient.class);
-    File artifactLocation = localizerClient
-        .getUnpackedArtifactLocation(
-            Artifacts.toProtoArtifactId(new NamespaceId(systemAppNamespace), systemAppArtifactId));
+    Id.Artifact artifactId = Id.Artifact.from(
+        Id.Namespace.from(systemAppNamespace), systemAppArtifactId.getName(),
+        systemAppArtifactId.getVersion());
+    ArtifactLocalizerClient localizerClient = injector.getInstance(
+        ArtifactLocalizerClient.class);
+    File artifactLocation = localizerClient.getUnpackedArtifactLocation(
+        Artifacts.toProtoArtifactId(new NamespaceId(systemAppNamespace),
+            systemAppArtifactId));
 
-    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId.toEntityId(),
-        impersonator);
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(
+        artifactId.toEntityId(), impersonator);
 
-    try (CloseableClassLoader artifactClassLoader =
-        artifactRepository.createArtifactClassLoader(
-            new ArtifactDescriptor(artifactId.getNamespace().getId(),
-                artifactId.toArtifactId(),
-                Locations.toLocation(artifactLocation)),
-            classLoaderImpersonator);
-        SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(injector,
-            systemAppNamespace,
-            systemAppArtifactId,
-            artifactClassLoader)) {
+    try (CloseableClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(
+        new ArtifactDescriptor(artifactId.getNamespace().getId(),
+            artifactId.toArtifactId(), Locations.toLocation(artifactLocation)),
+        classLoaderImpersonator); SystemAppTaskContext systemAppTaskContext = buildTaskSystemAppContext(
+        injector, systemAppNamespace, systemAppArtifactId,
+        artifactClassLoader)) {
       RunnableTaskRequest taskRequest = context.getEmbeddedRequest();
       String taskClassName = taskRequest.getClassName();
       if (taskClassName == null) {
@@ -129,14 +128,15 @@ public class SystemAppTask implements RunnableTask {
 
       Class<?> clazz = artifactClassLoader.loadClass(taskClassName);
       if (!(RunnableTask.class.isAssignableFrom(clazz))) {
-        throw new ClassCastException(String.format("%s is not a RunnableTask", taskClassName));
+        throw new ClassCastException(
+            String.format("%s is not a RunnableTask", taskClassName));
       }
 
       LOG.debug("Launching system app task {}", taskClassName);
       RunnableTask runnableTask = (RunnableTask) injector.getInstance(clazz);
 
-      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(taskRequest,
-          systemAppTaskContext) {
+      RunnableTaskContext runnableTaskContext = new RunnableTaskContext(
+          taskRequest, systemAppTaskContext) {
         @Override
         public void writeResult(byte[] data) throws IOException {
           context.writeResult(data);
@@ -158,18 +158,24 @@ public class SystemAppTask implements RunnableTask {
     }
   }
 
+  /**
+   * Create a guice injector.
+   *
+   * @param cConf                    CDAP Configuration
+   * @param discoveryService         Discovery Service
+   * @param discoveryServiceClient   Discovery Service client
+   * @param metricsCollectionService Metrics collection service
+   * @return An injector with the required bindings for the system app task.
+   */
   @VisibleForTesting
   public static Injector createInjector(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
       MetricsCollectionService metricsCollectionService) {
-    return Guice.createInjector(
-        new IOModule(),
+    return Guice.createInjector(new IOModule(),
         CoreSecurityRuntimeModule.getDistributedModule(cConf),
-        new ConfigModule(cConf),
-        RemoteAuthenticatorModules.getDefaultModule(),
-        new MessagingClientModule(),
-        new LocalLocationModule(),
+        new ConfigModule(cConf), RemoteAuthenticatorModules.getDefaultModule(),
+        new MessagingClientModule(), new LocalLocationModule(),
         new SecureStoreClientModule(),
         new AuthenticationContextModules().getMasterModule(),
         new SystemAppModule(),
@@ -178,17 +184,20 @@ public class SystemAppTask implements RunnableTask {
   }
 
   private SystemAppTaskContext buildTaskSystemAppContext(Injector injector,
-      String systemAppNamespace,
-      ArtifactId artifactId, ClassLoader artifactClassLoader) {
-    PreferencesFetcher preferencesFetcher = injector.getInstance(PreferencesFetcher.class);
+      String systemAppNamespace, ArtifactId artifactId,
+      ClassLoader artifactClassLoader) {
+    PreferencesFetcher preferencesFetcher = injector.getInstance(
+        PreferencesFetcher.class);
     PluginFinder pluginFinder = injector.getInstance(PluginFinder.class);
     SecureStore secureStore = injector.getInstance(SecureStore.class);
     ArtifactManagerFactory artifactManagerFactory = injector.getInstance(
         ArtifactManagerFactory.class);
-    RemoteClientFactory remoteClientFactory = injector.getInstance(RemoteClientFactory.class);
-    return new DefaultSystemAppTaskContext(injector.getInstance(CConfiguration.class),
-        preferencesFetcher, pluginFinder, secureStore, systemAppNamespace,
-        artifactId, artifactClassLoader, artifactManagerFactory,
+    RemoteClientFactory remoteClientFactory = injector.getInstance(
+        RemoteClientFactory.class);
+    return new DefaultSystemAppTaskContext(
+        injector.getInstance(CConfiguration.class), preferencesFetcher,
+        pluginFinder, secureStore, systemAppNamespace, artifactId,
+        artifactClassLoader, artifactManagerFactory,
         Constants.Service.TASK_WORKER, remoteClientFactory);
   }
 }

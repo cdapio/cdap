@@ -32,6 +32,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link io.cdap.cdap.api.service.worker.RunnableTask} to pull an application
+ * from a remote Git repository.
+ */
 public class PullAppTask extends SourceControlTask {
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(PullAppTask.class);

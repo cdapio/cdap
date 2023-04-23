@@ -92,6 +92,16 @@ public class RepositoryManager implements AutoCloseable {
   // each other.
   private final String randomDirectoryName;
 
+  /**
+   * Constructs a {@link RepositoryManager}.
+   *
+   * @param secureStore A store to fetch Git passwords.
+   * @param cConf CDAP configurations.
+   * @param namespace The CDAP namespace to whcih the Git repository is linked.
+   * @param repoConfig The repository configuration for the CDAP namespace.
+   * @param metricsCollectionService A metrics service to emit metrics related
+   *                                 to SCM operations.
+   */
   public RepositoryManager(final SecureStore secureStore,
       final CConfiguration cConf, final NamespaceId namespace,
       final RepositoryConfig repoConfig,

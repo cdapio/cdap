@@ -75,7 +75,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
 
   private SystemWorkerService systemWorkerService;
 
-  private CConfiguration createCConf() {
+  private CConfiguration createCconf() {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.SystemWorker.ADDRESS, "localhost");
     cConf.setInt(Constants.SystemWorker.PORT, 0);
@@ -84,7 +84,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     return cConf;
   }
 
-  private SConfiguration createSConf() {
+  private SConfiguration createSconf() {
     return SConfiguration.create();
   }
 
@@ -93,25 +93,20 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     File keyDir = TEMP_FOLDER.newFolder();
     File keyFile = new File(keyDir, "key");
 
-    CConfiguration cConf = createCConf();
+    CConfiguration cConf = createCconf();
     cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH,
         keyFile.getAbsolutePath());
 
-    Injector injector = Guice.createInjector(
-        new IOModule(),
-        new ConfigModule(cConf),
-        new FileBasedCoreSecurityModule(),
-        new InMemoryDiscoveryModule()
-    );
+    Injector injector = Guice.createInjector(new IOModule(),
+        new ConfigModule(cConf), new FileBasedCoreSecurityModule(),
+        new InMemoryDiscoveryModule());
 
-    SConfiguration sConf = createSConf();
+    SConfiguration sConf = createSconf();
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
     SystemWorkerService service = new SystemWorkerService(cConf, sConf,
-        discoveryService,
-        metricsCollectionService, new CommonNettyHttpServiceFactory(
-        cConf, metricsCollectionService),
-        injector.getInstance(TokenManager.class),
-        new NoopTwillRunnerService(),
+        discoveryService, metricsCollectionService,
+        new CommonNettyHttpServiceFactory(cConf, metricsCollectionService),
+        injector.getInstance(TokenManager.class), new NoopTwillRunnerService(),
         new NoopTwillRunnerService(),
         getInjector().getInstance(ProvisioningService.class),
         Guice.createInjector(
@@ -138,16 +133,13 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
 
     // Post valid request
     String want = "100";
-    RunnableTaskRequest req =
-        RunnableTaskRequest.getBuilder(
-                SystemWorkerServiceTest.TestRunnableClass.class.getName())
-            .withParam(want)
-            .build();
+    RunnableTaskRequest req = RunnableTaskRequest.getBuilder(
+            SystemWorkerServiceTest.TestRunnableClass.class.getName())
+        .withParam(want).build();
     String reqBody = GSON.toJson(req);
     HttpResponse response = HttpRequests.execute(
         HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
-            .withBody(reqBody).build(),
-        new DefaultHttpRequestConfig(false));
+            .withBody(reqBody).build(), new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     Assert.assertEquals(want, response.getResponseBodyAsString());
   }
@@ -164,8 +156,7 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     String reqBody = GSON.toJson(noClassReq);
     HttpResponse response = HttpRequests.execute(
         HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
-            .withBody(reqBody).build(),
-        new DefaultHttpRequestConfig(false));
+            .withBody(reqBody).build(), new DefaultHttpRequestConfig(false));
     Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST,
         response.getResponseCode());
     BasicThrowable basicThrowable;
@@ -184,22 +175,18 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request =
-        RunnableTaskRequest.getBuilder(
-                SystemWorkerServiceTest.TestRunnableClass.class.getName()).
-            withParam("1000").build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            SystemWorkerServiceTest.TestRunnableClass.class.getName())
+        .withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
     int concurrentRequests = 2;
 
     for (int i = 0; i < concurrentRequests; i++) {
-      calls.add(
-          () -> HttpRequests.execute(
-              HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
-                  .withBody(reqBody).build(),
-              new DefaultHttpRequestConfig(false))
-      );
+      calls.add(() -> HttpRequests.execute(
+          HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
+              .withBody(reqBody).build(), new DefaultHttpRequestConfig(false)));
     }
 
     List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(
@@ -225,22 +212,18 @@ public class SystemWorkerServiceTest extends AppFabricTestBase {
     URI uri = URI.create(
         String.format("http://%s:%s", addr.getHostName(), addr.getPort()));
 
-    RunnableTaskRequest request =
-        RunnableTaskRequest.getBuilder(
-                SystemWorkerServiceTest.TestRunnableClass.class.getName()).
-            withParam("1000").build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            SystemWorkerServiceTest.TestRunnableClass.class.getName())
+        .withParam("1000").build();
 
     String reqBody = GSON.toJson(request);
     List<Callable<HttpResponse>> calls = new ArrayList<>();
     int concurrentRequests = 6;
 
     for (int i = 0; i < concurrentRequests; i++) {
-      calls.add(
-          () -> HttpRequests.execute(
-              HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
-                  .withBody(reqBody).build(),
-              new DefaultHttpRequestConfig(false))
-      );
+      calls.add(() -> HttpRequests.execute(
+          HttpRequest.post(uri.resolve("/v3Internal/system/run").toURL())
+              .withBody(reqBody).build(), new DefaultHttpRequestConfig(false)));
     }
 
     List<Future<HttpResponse>> responses = Executors.newFixedThreadPool(

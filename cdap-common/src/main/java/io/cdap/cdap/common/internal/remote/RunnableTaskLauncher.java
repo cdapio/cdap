@@ -27,13 +27,21 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and calling its run
- * method.
+ * RunnableTaskLauncher launches a {@link RunnableTask} by loading its class and
+ * calling its run method.
  */
 public class RunnableTaskLauncher {
 
   private final Injector injector;
 
+  /**
+   * Creates a new {@link RunnableTaskLauncher}.
+   *
+   * @param cConf CDAP configuration
+   * @param discoveryService Discovery service
+   * @param discoveryServiceClient Discovery service client
+   * @param metricsCollectionService Metrics collection service
+   */
   public RunnableTaskLauncher(CConfiguration cConf,
       DiscoveryService discoveryService,
       DiscoveryServiceClient discoveryServiceClient,
@@ -46,13 +54,20 @@ public class RunnableTaskLauncher {
   }
 
   /**
-   * Returns a {@link RunnableTaskLauncher} using an Injector. This is used to launch a {@link
-   * RunnableTask} using the calling service's guice bindings.
+   * Returns a {@link RunnableTaskLauncher} using an Injector. This is used to
+   * launch a {@link RunnableTask} using the calling service's guice bindings.
    */
   public RunnableTaskLauncher(Injector injector) {
     this.injector = injector;
   }
 
+  /**
+   * Starts a new {@link RunnableTask}.
+   *
+   * @param context Information about the task to be launched.
+   * @throws Exception when the class for the runnable task isn't found of the
+   *                   runnable throws an exception after its started.
+   */
   public void launchRunnableTask(RunnableTaskContext context) throws Exception {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     if (classLoader == null) {
