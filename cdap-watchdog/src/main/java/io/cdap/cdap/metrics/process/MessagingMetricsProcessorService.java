@@ -48,9 +48,6 @@ import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -66,15 +63,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Process metrics by consuming metrics being published to TMS.
  */
-public class MessagingMetricsProcessorService extends AbstractExecutionThreadService {
+public class MessagingMetricsProcessorService extends
+    AbstractExecutionThreadService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsProcessorService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(
+      MessagingMetricsProcessorService.class);
   // Log the metrics processing progress no more than once per minute.
-  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
+  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG,
+      LogSamplers.limitRate(60000));
 
   private final MetricDatasetFactory metricDatasetFactory;
   private final List<TopicId> metricsTopics;
@@ -107,38 +109,31 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   @Inject
   MessagingMetricsProcessorService(CConfiguration cConf,
       MetricDatasetFactory metricDatasetFactory,
-      MessagingService messagingService,
-      SchemaGenerator schemaGenerator,
-      DatumReaderFactory readerFactory,
-      MetricsWriter metricsWriter,
+      MessagingService messagingService, SchemaGenerator schemaGenerator,
+      DatumReaderFactory readerFactory, MetricsWriter metricsWriter,
       MetadataHandler metadataHandler,
       MetricsMetaKeyProvider metricsMetaKeyProvider,
       @Assisted Set<Integer> topicNumbers,
-      @Assisted MetricsContext metricsContext,
-      @Assisted Integer instanceId) {
-    this(cConf, metricDatasetFactory, messagingService,
-        schemaGenerator, readerFactory, metricsWriter, topicNumbers, metricsContext,
+      @Assisted MetricsContext metricsContext, @Assisted Integer instanceId) {
+    this(cConf, metricDatasetFactory, messagingService, schemaGenerator,
+        readerFactory, metricsWriter, topicNumbers, metricsContext,
         TimeUnit.SECONDS.toMillis(
-            cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)), instanceId,
-        metadataHandler, metricsMetaKeyProvider);
+            cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)),
+        instanceId, metadataHandler, metricsMetaKeyProvider);
   }
 
   @VisibleForTesting
   MessagingMetricsProcessorService(CConfiguration cConf,
       MetricDatasetFactory metricDatasetFactory,
-      MessagingService messagingService,
-      SchemaGenerator schemaGenerator,
-      DatumReaderFactory readerFactory,
-      MetricsWriter metricsWriter,
-      Set<Integer> topicNumbers,
-      MetricsContext metricsContext,
-      long metricsProcessIntervalMillis,
-      int instanceId,
+      MessagingService messagingService, SchemaGenerator schemaGenerator,
+      DatumReaderFactory readerFactory, MetricsWriter metricsWriter,
+      Set<Integer> topicNumbers, MetricsContext metricsContext,
+      long metricsProcessIntervalMillis, int instanceId,
       MetadataHandler metadataHandler,
       MetricsMetaKeyProvider metricsMetaKeyProvider) {
     this.metricDatasetFactory = metricDatasetFactory;
-    this.metricsPrefixForDelayMetrics = String.format("metrics.processor.%s.%s", instanceId,
-        metricsWriter.getID());
+    this.metricsPrefixForDelayMetrics = String.format("metrics.processor.%s.%s",
+        instanceId, metricsWriter.getID());
 
     String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     this.metricsTopics = topicNumbers.stream()
@@ -147,13 +142,15 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.messagingService = messagingService;
     try {
       this.metricSchema = schemaGenerator.generate(MetricValues.class);
-      this.metricReader = readerFactory.create(TypeToken.of(MetricValues.class), metricSchema);
+      this.metricReader = readerFactory.create(TypeToken.of(MetricValues.class),
+          metricSchema);
     } catch (UnsupportedTypeException e) {
       // This should never happen
       throw Throwables.propagate(e);
     }
     this.metricsWriter = metricsWriter;
-    this.maxDelayMillis = cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
+    this.maxDelayMillis = cConf.getLong(
+        Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
     this.queueSize = cConf.getInt(Constants.Metrics.QUEUE_SIZE);
     this.offerTimeoutMillis = cConf.getInt(Constants.Metrics.OFFER_TIMEOUT_MS);
     this.fetcherLimit = Math.max(1,
@@ -163,9 +160,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.metricsFromAllTopics = new LinkedBlockingDeque<>(queueSize);
     this.persistingFlag = new AtomicBoolean();
     // the max sleep time will be 1 min
-    this.metricsProcessIntervalMillis = resolveProcessingInterval(cConf, metricsWriter,
-        metricsProcessIntervalMillis);
-    this.processMetricName = String.format("metrics.%s.process.count", instanceId);
+    this.metricsProcessIntervalMillis = resolveProcessingInterval(cConf,
+        metricsWriter, metricsProcessIntervalMillis);
+    this.processMetricName = String.format("metrics.%s.process.count",
+        instanceId);
     this.metadataHandler = metadataHandler;
     this.metricsMetaKeyProvider = metricsMetaKeyProvider;
     this.instanceId = instanceId;
@@ -175,7 +173,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private MetricsConsumerMetaTable getMetaTable() {
     while (metaTable == null) {
       if (stopping) {
-        LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
+        LOG.info(
+            "We are shutting down, giving up on acquiring consumer metaTable.");
         break;
       }
       try {
@@ -195,21 +194,23 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
   @Override
   protected void run() {
-    LOG.info("Start running MessagingMetricsProcessorService for {}", metricsWriter.getID());
+    LOG.info("Start running MessagingMetricsProcessorService for {}",
+        metricsWriter.getID());
 
     MetricsConsumerMetaTable metaTable = getMetaTable();
     if (metaTable == null) {
-      LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
+      LOG.info(
+          "Could not get MetricsConsumerMetaTable, seems like we are being shut down");
       return;
     }
 
     metadataHandler.initCache(metricsTopics, metaTable);
-    Map<TopicId, MetricsMetaKey> keys = metricsMetaKeyProvider.getKeys(metricsTopics);
+    Map<TopicId, MetricsMetaKey> keys = metricsMetaKeyProvider.getKeys(
+        metricsTopics);
     for (Map.Entry<TopicId, MetricsMetaKey> keyEntry : keys.entrySet()) {
-      ProcessMetricsThread metricsThread = new ProcessMetricsThread(keyEntry.getKey(),
-          keyEntry.getValue(),
-          String.format("processor-%s-%s", instanceId,
-              metricsWriter.getID()));
+      ProcessMetricsThread metricsThread = new ProcessMetricsThread(
+          keyEntry.getKey(), keyEntry.getValue(),
+          String.format("processor-%s-%s", instanceId, metricsWriter.getID()));
       processMetricsThreads.add(metricsThread);
     }
 
@@ -228,7 +229,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       try {
         thread.join();
       } catch (InterruptedException e) {
-        LOG.info("Thread {} is being terminated while waiting for it to finish.", thread.getName());
+        LOG.info(
+            "Thread {} is being terminated while waiting for it to finish.",
+            thread.getName());
         Thread.currentThread().interrupt();
       }
     }
@@ -242,19 +245,22 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         metadataHandler.getCache());
   }
 
-  private long resolveProcessingInterval(CConfiguration cConf, MetricsWriter metricsWriter,
-      long defaultInterval) {
-    String writeFreqConfig = String.format(Constants.Metrics.WRITER_WRITE_FREQUENCY_SECONDS,
+  private long resolveProcessingInterval(CConfiguration cConf,
+      MetricsWriter metricsWriter, long defaultInterval) {
+    String writeFreqConfig = String.format(
+        Constants.Metrics.WRITER_WRITE_FREQUENCY_SECONDS,
         metricsWriter.getID());
     int writeFreq = cConf.getInt(writeFreqConfig, -1);
-    return writeFreq == -1
-        ? Math.min(defaultInterval, Constants.Metrics.PROCESS_INTERVAL_MILLIS)
+    return writeFreq == -1 ? Math.min(defaultInterval,
+        Constants.Metrics.PROCESS_INTERVAL_MILLIS)
         : TimeUnit.SECONDS.toMillis(writeFreq);
   }
 
-  private boolean shouldLimitWriteFrequency(MetricsWriter writer, CConfiguration cConf) {
+  private boolean shouldLimitWriteFrequency(MetricsWriter writer,
+      CConfiguration cConf) {
     // If there is no writer specific configuration, default to existing behavior of no limit
-    String confKey = String.format(Constants.Metrics.WRITER_LIMIT_WRITE_FREQ, writer.getID());
+    String confKey = String.format(Constants.Metrics.WRITER_LIMIT_WRITE_FREQ,
+        writer.getID());
     return cConf.getBoolean(confKey, false);
   }
 
@@ -269,14 +275,17 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   }
 
   /**
-   * Persist metrics from all topics into metric store and messageId's of the last persisted metrics
-   * of each topic into metrics meta table
+   * Persist metrics from all topics into metric store and messageId's of the
+   * last persisted metrics of each topic into metrics meta table.
    *
-   * @param metricValues a deque of {@link MetricValues}
-   * @param topicProcessMetaMap a map with each key {@link MetricsMetaKey} representing a key
-   *     and {@link TopicProcessMeta} which has info on messageId and processing stats
+   * @param metricValues        a deque of {@link MetricValues}
+   * @param topicProcessMetaMap a map with each key {@link MetricsMetaKey}
+   *                            representing a key and {@link TopicProcessMeta}
+   *                            which has info on messageId and processing
+   *                            stats
    */
-  private void persistMetricsAndTopicProcessMeta(Deque<MetricValues> metricValues,
+  private void persistMetricsAndTopicProcessMeta(
+      Deque<MetricValues> metricValues,
       Map<MetricsMetaKey, TopicProcessMeta> topicProcessMetaMap) {
     try {
       if (!metricValues.isEmpty()) {
@@ -290,27 +299,32 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
 
   /**
-   * Persist metrics into metric store
+   * Persist metrics into metric store.
    *
    * @param metricValues a non-empty deque of {@link MetricValues}
    */
   private void persistMetrics(Deque<MetricValues> metricValues) {
     long now = System.currentTimeMillis();
-    long lastMetricTime = metricValues.peekLast().getTimestamp();
+    final long lastMetricTime = metricValues.peekLast().getTimestamp();
     List<MetricValue> topicLevelDelays = new ArrayList<>();
 
     // write topic level delay metrics
-    for (TopicProcessMeta topicProcessMeta : metadataHandler.getCache().values()) {
-      long delay = now - TimeUnit.SECONDS.toMillis(topicProcessMeta.getOldestMetricsTimestamp());
-      topicLevelDelays.add(new MetricValue(topicProcessMeta.getOldestMetricsTimestampMetricName(),
+    for (TopicProcessMeta topicProcessMeta : metadataHandler.getCache()
+        .values()) {
+      long delay = now - TimeUnit.SECONDS.toMillis(
+          topicProcessMeta.getOldestMetricsTimestamp());
+      topicLevelDelays.add(new MetricValue(
+          topicProcessMeta.getOldestMetricsTimestampMetricName(),
           MetricType.GAUGE, delay));
-      delay = now - TimeUnit.SECONDS.toMillis(topicProcessMeta.getLatestMetricsTimestamp());
-      topicLevelDelays.add(new MetricValue(topicProcessMeta.getLatestMetricsTimestampMetricName(),
+      delay = now - TimeUnit.SECONDS.toMillis(
+          topicProcessMeta.getLatestMetricsTimestamp());
+      topicLevelDelays.add(new MetricValue(
+          topicProcessMeta.getLatestMetricsTimestampMetricName(),
           MetricType.GAUGE, delay));
     }
     List<MetricValue> processorMetrics = new ArrayList<>(topicLevelDelays);
-    processorMetrics.add(
-        new MetricValue(processMetricName, MetricType.COUNTER, metricValues.size()));
+    processorMetrics.add(new MetricValue(processMetricName, MetricType.COUNTER,
+        metricValues.size()));
 
     long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(now);
     metricValues.offer(
@@ -331,9 +345,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     private final StringCachingDecoder decoder;
     private final String oldestTsMetricName;
     private final String latestTsMetricName;
-    private long lastMetricTimeSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    private long lastMetricTimeSecs = TimeUnit.MILLISECONDS.toSeconds(
+        System.currentTimeMillis());
 
-    ProcessMetricsThread(TopicId topic, MetricsMetaKey metricsMetaKey, String processorName) {
+    ProcessMetricsThread(TopicId topic, MetricsMetaKey metricsMetaKey,
+        String processorName) {
       //TODO - create a unique thread name
       super(String.format("ProcessMetricsThread-%s-%s", topic, processorName));
       setDaemon(true);
@@ -344,7 +360,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       this.metricsMetaKey = metricsMetaKey;
       this.topic = topic;
       this.payloadInput = new ResettableByteArrayInputStream();
-      this.decoder = new StringCachingDecoder(new BinaryDecoder(payloadInput), new HashMap<>());
+      this.decoder = new StringCachingDecoder(new BinaryDecoder(payloadInput),
+          new HashMap<>());
     }
 
     @Override
@@ -364,12 +381,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
 
     /**
-     * Fetch at most {@code fetcherLimit} metrics to process, and calculate the estimated sleep time
-     * before the next run with the best effort to avoid accumulating unprocessed metrics
+     * Fetch at most {@code fetcherLimit} metrics to process, and calculate the
+     * estimated sleep time before the next run with the best effort to avoid
+     * accumulating unprocessed metrics.
      *
-     * @return the estimated sleep time before the next run with the best effort to avoid
-     *     accumulating unprocessed metrics, or {@code 0} if no sleep to catch-up with new metrics
-     *     at best effort
+     * @return the estimated sleep time before the next run with the best effort
+     *     to avoid accumulating unprocessed metrics, or {@code 0} if no sleep
+     *     to catch-up with new metrics at best effort
      */
     private long processMetrics() {
       long startTime = System.currentTimeMillis();
@@ -380,7 +398,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
         MessageFetcher fetcher = messagingService.prepareFetch(topic);
         fetcher.setLimit(fetcherLimit);
-        TopicProcessMeta persistMetaInfo = metadataHandler.getTopicProcessMeta(metricsMetaKey);
+        TopicProcessMeta persistMetaInfo = metadataHandler.getTopicProcessMeta(
+            metricsMetaKey);
         byte[] lastMessageId = null;
 
         if (persistMetaInfo != null) {
@@ -395,21 +414,22 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
         byte[] currentMessageId = null;
         boolean gotMessages;
-        TopicProcessMeta localTopicProcessMeta =
-            new TopicProcessMeta(lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
-                TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                oldestTsMetricName, latestTsMetricName);
+        TopicProcessMeta localTopicProcessMeta = new TopicProcessMeta(
+            lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
+            TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+            oldestTsMetricName, latestTsMetricName);
         try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
           gotMessages = iterator.hasNext();
           while (iterator.hasNext() && isRunning()) {
             RawMessage input = iterator.next();
             try {
               payloadInput.reset(input.getPayload());
-              MetricValues metricValues = metricReader.read(decoder, metricSchema);
+              MetricValues metricValues = metricReader.read(decoder,
+                  metricSchema);
               if (currentMessageId == null) {
                 //For the first message we are willing to wait for space in queue
-                if (!metricsFromAllTopics.offer(metricValues, offerTimeoutMillis,
-                    TimeUnit.MILLISECONDS)) {
+                if (!metricsFromAllTopics.offer(metricValues,
+                    offerTimeoutMillis, TimeUnit.MILLISECONDS)) {
                   break;
                 }
               } else if (!metricsFromAllTopics.offer(metricValues)) {
@@ -424,7 +444,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
               localTopicProcessMeta.updateTopicProcessingStats(currentMessageId,
                   lastMetricTimeSecs);
             } catch (IOException e) {
-              LOG.warn("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
+              LOG.warn("Failed to decode message to MetricValue. Skipped. {}",
+                  e.getMessage());
             }
           }
         }
@@ -441,7 +462,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
         long endTime = System.currentTimeMillis();
         if (gotMessages
-            && endTime - TimeUnit.SECONDS.toMillis(lastMetricTimeSecs) > maxDelayMillis) {
+            && endTime - TimeUnit.SECONDS.toMillis(lastMetricTimeSecs)
+            > maxDelayMillis) {
           // Don't sleep if falling behind
           return 0L;
         } else {
@@ -449,19 +471,23 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           return Math.max(0L, metricsProcessIntervalMillis - timeSpent);
         }
       } catch (InterruptedException e) {
-        LOG.trace("Thread interrupted while processing metrics. Probably stopping now.", e);
+        LOG.trace(
+            "Thread interrupted while processing metrics. Probably stopping now.",
+            e);
         return 0L;
       } catch (ServiceUnavailableException e) {
-        LOG.trace("Could not fetch metrics. Will be retried in next iteration.", e);
+        LOG.trace("Could not fetch metrics. Will be retried in next iteration.",
+            e);
       } catch (Exception e) {
-        LOG.warn("Failed to process metrics. Will be retried in next iteration.", e);
+        LOG.warn(
+            "Failed to process metrics. Will be retried in next iteration.", e);
       }
       return metricsProcessIntervalMillis;
     }
 
     /**
-     * Persist metrics and messageId's of the last metrics to be persisted if no other thread is
-     * persisting
+     * Persist metrics and messageId's of the last metrics to be persisted if no
+     * other thread is persisting.
      */
     private void tryPersist() {
       if (!canPersist()) {
@@ -490,7 +516,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
         persistMetricsAndTopicProcessMeta(metricsCopy, topicProcessMetaMapCopy);
       } catch (Exception e) {
-        LOG.warn("Failed to persist metrics. Will be retried in next iteration.", e);
+        LOG.warn(
+            "Failed to persist metrics. Will be retried in next iteration.", e);
       } finally {
         // Set persistingFlag back to false after persisting completes.
         persistingFlag.set(false);
@@ -521,7 +548,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     }
     long currentTime = System.currentTimeMillis();
     long updatedTime = lastPersistedTime.updateAndGet(
-        value -> (currentTime - value > metricsProcessIntervalMillis) ? currentTime : value);
+        value -> (currentTime - value > metricsProcessIntervalMillis)
+            ? currentTime : value);
     if (updatedTime != currentTime) {
       LOG.trace("Not enough time between writes.");
       return true;
