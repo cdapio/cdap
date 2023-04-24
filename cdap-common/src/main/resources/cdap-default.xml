@@ -5945,5 +5945,19 @@
       Path where git repositories will be cloned for source control operations.
     </description>
   </property>
+  <property>
+    <name>source.control.repository.ttl.seconds</name>
+    <value>7200</value>
+    <description>
+      TTL for the cloned repository, by default 2 hours
+    </description>
+  </property>
+  <property>
+    <name>source.control.repository.cleanup.interval.seconds</name>
+    <value>3600</value>
+    <description>
+      Scheduler interval for repository cleanup service, by default 1 hour
+    </description>
+  </property>
 
 </configuration>

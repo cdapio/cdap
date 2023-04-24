@@ -35,6 +35,11 @@ public class SourceControlConfig {
   private final int gitCommandTimeoutSeconds;
   private final RepositoryConfig repositoryConfig;
 
+  public static final String cloneDirectoryPrefix = "namespace";
+
+  /**
+   * Default constructor for {@link SourceControlConfig}.
+   */
   public SourceControlConfig(NamespaceId namespaceId, RepositoryConfig repositoryConfig,
       CConfiguration cConf) {
     this.namespaceId = namespaceId.getNamespace();
@@ -47,7 +52,7 @@ public class SourceControlConfig {
     String workDir = cConf.get(Constants.TaskWorker.WORK_DIR);
     String gitCloneDirectory = workDir == null
         ? defaultCloneDir : String.format("%s/source-control", workDir);
-    this.localReposClonePath = Paths.get(gitCloneDirectory, "namespace", this.namespaceId);
+    this.localReposClonePath = Paths.get(gitCloneDirectory, cloneDirectoryPrefix, this.namespaceId);
   }
 
   public String getNamespaceId() {
