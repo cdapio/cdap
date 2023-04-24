@@ -80,6 +80,13 @@ public class RepositoryManager implements AutoCloseable {
   // each other.
   private final String randomDirectoryName;
 
+  /**
+   * Default constructor for {@link RepositoryManager}
+   * @param secureStore secure store to fetch credentials from
+   * @param cConf cdap configuration
+   * @param namespace namespace linked with the repository
+   * @param repoConfig repository config
+   */
   public RepositoryManager(final SecureStore secureStore,
       final CConfiguration cConf,
       final NamespaceId namespace,
@@ -363,7 +370,7 @@ public class RepositoryManager implements AutoCloseable {
 
   @Nullable
   private String getFileHash(final Path relativePath, final RevCommit commit)
-      throws IOException{
+      throws IOException {
     // Find the node representing the exact file path in the tree.
     try (TreeWalk walk = TreeWalk.forPath(git.getRepository(),
         relativePath.toString(),

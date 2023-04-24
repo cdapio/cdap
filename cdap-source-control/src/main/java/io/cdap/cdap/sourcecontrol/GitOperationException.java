@@ -17,7 +17,7 @@
 package io.cdap.cdap.sourcecontrol;
 
 /**
- * Exception thrown when source control operation fails due to underlying git operation failure
+ * Exception thrown when source control operation fails due to underlying git operation failure.
  **/
 public class GitOperationException extends SourceControlException {
 
