@@ -233,9 +233,13 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       }
     }
 
-    // Persist metricsFromAllTopics and messageId's after all ProcessMetricsThread's complete.
-    // No need to make a copy of metricsFromAllTopics and topicProcessMetaMap because no thread is writing to them
-    persistMetricsAndTopicProcessMeta(metricsFromAllTopics, metadataHandler.getCache());
+    // Persist metricsFromAllTopics and messageId's after all
+    // ProcessMetricsThread's complete.
+    // Make a copy of metricsFromAllTopics because even though no thread is
+    // writing to it, the delay metrics are appended to the list. If we use
+    // the BlockingDeque, adding a metrics can cause queue size to be exceeded.
+    persistMetricsAndTopicProcessMeta(new LinkedList<>(metricsFromAllTopics),
+        metadataHandler.getCache());
   }
 
   private long resolveProcessingInterval(CConfiguration cConf, MetricsWriter metricsWriter,
@@ -295,7 +299,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     long lastMetricTime = metricValues.peekLast().getTimestamp();
     List<MetricValue> topicLevelDelays = new ArrayList<>();
 
-    //write topic level delay metrics
+    // write topic level delay metrics
     for (TopicProcessMeta topicProcessMeta : metadataHandler.getCache().values()) {
       long delay = now - TimeUnit.SECONDS.toMillis(topicProcessMeta.getOldestMetricsTimestamp());
       topicLevelDelays.add(new MetricValue(topicProcessMeta.getOldestMetricsTimestampMetricName(),
@@ -309,7 +313,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         new MetricValue(processMetricName, MetricType.COUNTER, metricValues.size()));
 
     long nowSeconds = TimeUnit.MILLISECONDS.toSeconds(now);
-    metricValues.add(new MetricValues(metricsContextMap, nowSeconds, processorMetrics));
+    metricValues.offer(
+        new MetricValues(metricsContextMap, nowSeconds, processorMetrics));
     metricsWriter.write(metricValues);
     metricsProcessedCount += metricValues.size();
     PROGRESS_LOG.debug(
