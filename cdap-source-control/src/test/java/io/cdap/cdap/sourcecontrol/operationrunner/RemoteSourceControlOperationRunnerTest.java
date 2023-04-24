@@ -51,6 +51,7 @@ import io.cdap.cdap.sourcecontrol.CommitMeta;
 import io.cdap.cdap.sourcecontrol.LocalGitServer;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
+import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.NettyHttpService;
