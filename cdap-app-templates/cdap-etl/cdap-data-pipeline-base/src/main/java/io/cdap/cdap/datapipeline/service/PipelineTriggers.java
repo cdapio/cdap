@@ -81,7 +81,9 @@ public final class PipelineTriggers {
     // Get the value of every triggering pipeline arguments specified in the propertiesMapping and update newRuntimeArgs
     List<ArgumentMapping> argumentMappings = propertiesMapping.getArguments();
     for (ArgumentMapping mapping : argumentMappings) {
-      if (compositeTriggerEnabled && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
+      if (compositeTriggerEnabled
+          && mapping.getTriggeringPipelineId() != null // Skip checking pipelineId for pre 6.8 triggers
+          && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
         continue;
       }
       String sourceKey = mapping.getSource();
@@ -106,7 +108,9 @@ public final class PipelineTriggers {
     Map<String, Map<String, String>> resolvedProperties =
       GSON.fromJson(triggeringArguments.get(RESOLVED_PLUGIN_PROPERTIES_MAP), STAGE_PROPERTIES_MAP);
     for (PluginPropertyMapping mapping : propertiesMapping.getPluginProperties()) {
-      if (compositeTriggerEnabled && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
+      if (compositeTriggerEnabled
+          && mapping.getTriggeringPipelineId() != null // Skip checking pipelineId for pre 6.8 triggers
+          && !pipelineId.equals(mapping.getTriggeringPipelineId())) {
         continue;
       }
       String stageName = mapping.getStageName();
