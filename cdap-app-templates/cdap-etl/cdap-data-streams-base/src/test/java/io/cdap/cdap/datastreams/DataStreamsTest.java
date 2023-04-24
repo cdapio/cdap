@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import io.cdap.cdap.api.app.AppStateStore;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -50,6 +51,7 @@ import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
 import io.cdap.cdap.etl.mock.spark.Window;
 import io.cdap.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import io.cdap.cdap.etl.mock.spark.streaming.MockSource;
+import io.cdap.cdap.etl.mock.spark.streaming.MockStreamingEventSource;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.FilterErrorTransform;
 import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
@@ -85,6 +87,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -1605,6 +1608,192 @@ public class DataStreamsTest extends HydratorTestBase {
       sparkManager.waitForRun(ProgramRunStatus.FAILED, 2, TimeUnit.MINUTES);
     } finally {
       RecoveringTransform.reset();
+      if (sparkManager != null && sparkManager.isRunning()) {
+        sparkManager.stop();
+        sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+      }
+    }
+  }
+
+  @Test
+  public void testStreamingEvents() throws Exception {
+    SparkManager sparkManager = null;
+    DataSetManager<Table> outputManager = null;
+    try {
+      Schema schema = Schema.recordOf(
+          "streaming_event_test",
+          Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+          Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+      );
+      List<StructuredRecord> input = new ArrayList<>();
+      StructuredRecord samuelRecord = StructuredRecord.builder(schema).set("id", "123").set("name", "samuel").build();
+      StructuredRecord jacksonRecord = StructuredRecord.builder(schema).set("id", "456").set("name", "jackson").build();
+      input.add(samuelRecord);
+      input.add(jacksonRecord);
+
+      Set<StructuredRecord> expected = new HashSet<>();
+      expected.add(samuelRecord);
+      expected.add(jacksonRecord);
+
+      String sourceStageName = "streaming_event_source";
+      DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+          .addStage(new ETLStage(
+              sourceStageName, MockStreamingEventSource.getPlugin(schema, input)))
+          .addStage(new ETLStage("streaming_event_sink", MockSink.getPlugin("${streaming_event_output_macro}")))
+          .addConnection(sourceStageName, "streaming_event_sink")
+          .setBatchInterval("1s")
+          .setStopGracefully(false)
+          .build();
+
+      ApplicationId appId = NamespaceId.DEFAULT.app("StreamingEventApp");
+      AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+
+      sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+      // Timeout retry in 1 min and set the base delay to 60s.
+      String outputName = "streaming_event_output";
+      sparkManager.start(ImmutableMap.of("streaming_event_output_macro", outputName));
+      sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+      String keyFormat = "%s.%s";
+      AppStateStore state = getAppStateStore(appId.getNamespace(), appId.getApplication());
+      String completedKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_COMPLETED);
+      String startedKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_STARTED);
+      String retryKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_RETRIED);
+
+      // Wait for the calls
+      Tasks.waitFor(true,
+          () -> {
+            Optional<byte[]> startedState = state.getState(startedKey);
+            Optional<byte[]> completedState = state.getState(completedKey);
+            Optional<byte[]> retryState = state.getState(retryKey);
+            return startedState.isPresent() && completedState.isPresent()
+                && !retryState.isPresent();
+          },
+          3, TimeUnit.MINUTES);
+      state.deleteSate(completedKey);
+      state.deleteSate(startedKey);
+      state.deleteSate(retryKey);
+
+      // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+      Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 3, TimeUnit.MINUTES);
+
+      outputManager = getDataset(outputName);
+      final DataSetManager<Table> outputManagerRef = outputManager;
+      Tasks.waitFor(
+          true,
+          () -> {
+            outputManagerRef.flush();
+            Set<StructuredRecord> outputRecords = new HashSet<>(
+                MockSink.readOutput(outputManagerRef));
+            return expected.equals(outputRecords);
+          },
+          3,
+          TimeUnit.MINUTES);
+
+    } finally {
+      if (outputManager != null) {
+        MockSink.clear(outputManager);
+      }
+      if (sparkManager != null && sparkManager.isRunning()) {
+        sparkManager.stop();
+        sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+      }
+    }
+  }
+
+  @Test
+  public void testStreamingEventsWithRetry() throws Exception {
+    SparkManager sparkManager = null;
+    DataSetManager<Table> outputManager = null;
+    try {
+      Schema schema = Schema.recordOf(
+          "streaming_event_test",
+          Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+          Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+      );
+      List<StructuredRecord> input = new ArrayList<>();
+      StructuredRecord samuelRecord = StructuredRecord.builder(schema).set("id", "123").set("name", "samuel").build();
+      StructuredRecord jacksonRecord = StructuredRecord.builder(schema).set("id", "456").set("name", "jackson").build();
+      input.add(samuelRecord);
+      input.add(jacksonRecord);
+
+      Set<StructuredRecord> expected = new HashSet<>();
+      expected.add(samuelRecord);
+      expected.add(jacksonRecord);
+
+      String sourceStageName = "streaming_event_source_retry";
+      String transformStageName = "streaming_event_transform_retry";
+      String sinkStageName = "streaming_event_sink_retry";
+      String outputMacroName = "streaming_event_retry_output_macro";
+      DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+          .addStage(new ETLStage(
+              sourceStageName, MockStreamingEventSource.getPlugin(schema, input)))
+          .addStage(new ETLStage(sinkStageName, MockSink.getPlugin(
+              "${" + outputMacroName + "}")))
+          .addStage(new ETLStage(transformStageName, RecoveringTransform.getPlugin()))
+          .addConnection(sourceStageName, transformStageName)
+          .addConnection(transformStageName, sinkStageName)
+          .setBatchInterval("1s")
+          .setStopGracefully(false)
+          .build();
+
+      ApplicationId appId = NamespaceId.DEFAULT.app("StreamingEventApp");
+      AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+      ApplicationManager appManager = deployApplication(appId, appRequest);
+
+      sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+      // Timeout retry in 1 min and set the base delay to 60s.
+      String outputName = "streaming_event_output";
+      sparkManager.start(ImmutableMap.of(outputMacroName, outputName));
+      sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+      String keyFormat = "%s.%s";
+      AppStateStore state = getAppStateStore(appId.getNamespace(), appId.getApplication());
+      String completedKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_COMPLETED);
+      String startedKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_STARTED);
+      String retryKey = String.format(keyFormat, sourceStageName,
+          MockStreamingEventSource.MOCK_STREAMING_EVENT_SOURCE_RETRIED);
+
+      // Wait for the calls
+      Tasks.waitFor(true,
+          () -> {
+            Optional<byte[]> startedState = state.getState(startedKey);
+            Optional<byte[]> completedState = state.getState(completedKey);
+            Optional<byte[]> retryState = state.getState(retryKey);
+            return startedState.isPresent() && retryState.isPresent() && completedState.isPresent();
+          },
+          3, TimeUnit.MINUTES);
+      state.deleteSate(completedKey);
+      state.deleteSate(startedKey);
+      state.deleteSate(retryKey);
+
+      // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+      Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 3, TimeUnit.MINUTES);
+
+      outputManager = getDataset(outputName);
+      final DataSetManager<Table> outputManagerRef = outputManager;
+      Tasks.waitFor(
+          true,
+          () -> {
+            outputManagerRef.flush();
+            Set<StructuredRecord> outputRecords = new HashSet<>(
+                MockSink.readOutput(outputManagerRef));
+            return expected.equals(outputRecords);
+          },
+          3,
+          TimeUnit.MINUTES);
+
+    } finally {
+      RecoveringTransform.reset();
+      if (outputManager != null) {
+        MockSink.clear(outputManager);
+      }
       if (sparkManager != null && sparkManager.isRunning()) {
         sparkManager.stop();
         sparkManager.waitForStopped(10, TimeUnit.SECONDS);
