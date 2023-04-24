@@ -24,6 +24,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
@@ -483,6 +484,11 @@ class ProgramNotificationSingleTopicSubscriberService
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
     RunRecordDetail recordedRunRecord;
+    LOG.error(
+        ">>>>> messageIdBytes is {} for status {} with partition {}",
+        Bytes.toHexString(messageIdBytes),
+        programRunStatus,
+        this.getServiceName());
     switch (programRunStatus) {
       case STARTING:
         try {
@@ -908,6 +914,11 @@ class ProgramNotificationSingleTopicSubscriberService
     ProgramDescriptor programDescriptor =
         GSON.fromJson(
             properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+    LOG.error(
+        ">>>>> messageIdBytes for clusterStatus is {} for status {} with partiition {}",
+        Bytes.toHexString(messageIdBytes),
+        clusterStatus,
+        this.getServiceName());
     switch (clusterStatus) {
       case PROVISIONING:
         appMetadataStore.recordProgramProvisioning(
