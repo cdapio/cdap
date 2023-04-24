@@ -18,7 +18,7 @@ package io.cdap.cdap.sourcecontrol;
 
 /**
  * Exception thrown when source control operation fails due to underlying filesystem IO exception
- * while reading/writing cloned repository
+ * while writing config files in cloned repository.
  **/
 public class ConfigFileWriteException extends SourceControlException {
 
