@@ -31,6 +31,7 @@ import io.cdap.cdap.common.internal.remote.RemoteClientFactory;
 import io.cdap.cdap.common.internal.remote.RemoteTaskExecutor;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
+import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.worker.ListAppsTask;
 import io.cdap.cdap.sourcecontrol.worker.PullAppTask;
 import io.cdap.cdap.sourcecontrol.worker.PushAppTask;

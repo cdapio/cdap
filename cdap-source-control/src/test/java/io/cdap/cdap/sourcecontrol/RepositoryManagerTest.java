@@ -28,7 +28,6 @@ import io.cdap.cdap.proto.sourcecontrol.PatConfig;
 import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
-import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

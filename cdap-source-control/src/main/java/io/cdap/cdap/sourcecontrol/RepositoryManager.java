@@ -27,7 +27,6 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
-import io.cdap.cdap.sourcecontrol.operationrunner.SourceControlException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -200,9 +199,10 @@ public class RepositoryManager implements AutoCloseable {
    * @throws GitAPIException          when the underlying git commands fail
    * @throws NoChangesToPushException when there's no file changes for the
    *                                  commit
+   * @throws GitOperationException    when failed to get filehash due to IOException
+   *                                  or the {@link PushResult} status is not OK
    * @throws SourceControlException   when failed to get the fileHash before
-   *                                  push, or the {@link PushResult} status is
-   *                                  not OK
+   *                                  push
    */
   public String commitAndPush(final CommitMeta commitMeta,
       final Path fileChanged)
@@ -224,7 +224,7 @@ public class RepositoryManager implements AutoCloseable {
     try {
       fileHash = getFileHash(fileChanged, commit);
     } catch (IOException e) {
-      throw new SourceControlException(
+      throw new GitOperationException(
           String.format("Failed to get fileHash for %s", fileChanged),
           e);
     }
@@ -244,7 +244,7 @@ public class RepositoryManager implements AutoCloseable {
       for (RemoteRefUpdate rru : result.getRemoteUpdates()) {
         if (rru.getStatus() != RemoteRefUpdate.Status.OK
             && rru.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
-          throw new SourceControlException(
+          throw new GitOperationException(
               String.format("Push failed for %s: %s", fileChanged,
                   rru.getStatus()));
         }
@@ -363,8 +363,7 @@ public class RepositoryManager implements AutoCloseable {
 
   @Nullable
   private String getFileHash(final Path relativePath, final RevCommit commit)
-      throws IOException,
-      GitAPIException {
+      throws IOException{
     // Find the node representing the exact file path in the tree.
     try (TreeWalk walk = TreeWalk.forPath(git.getRepository(),
         relativePath.toString(),
@@ -464,7 +463,7 @@ public class RepositoryManager implements AutoCloseable {
    *
    * @return The commit ID for the head.
    * @throws IOException when git is unable to resolve head.
-   * @throws SourceControlException if the repository is not initialized.
+   * @throws GitOperationException if the repository is not initialized.
    */
   @VisibleForTesting
   ObjectId resolveHead() throws IOException {
@@ -476,7 +475,7 @@ public class RepositoryManager implements AutoCloseable {
     ObjectId commitObjectId = git.getRepository().resolve(Constants.HEAD);
 
     if (commitObjectId == null) {
-      throw new SourceControlException(
+      throw new GitOperationException(
           "Failed to resolve Git HEAD. Please make sure the repository is initialized.");
     }
 

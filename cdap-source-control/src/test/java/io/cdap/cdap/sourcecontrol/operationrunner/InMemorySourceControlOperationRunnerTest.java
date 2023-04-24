@@ -30,9 +30,11 @@ import io.cdap.cdap.proto.sourcecontrol.Provider;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
+import io.cdap.cdap.sourcecontrol.GitOperationException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
+import io.cdap.cdap.sourcecontrol.SourceControlException;
 import io.cdap.cdap.sourcecontrol.SourceControlTestBase;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -227,7 +229,7 @@ public class InMemorySourceControlOperationRunnerTest extends SourceControlTestB
     operationRunner.list(nameSpaceRepository);
   }
 
-  @Test(expected = SourceControlException.class)
+  @Test(expected = GitOperationException.class)
   public void testListFailedToGetHash() throws Exception {
     Mockito.doReturn(FAKE_COMMIT_HASH).when(mockRepositoryManager).cloneRemote();
     Mockito.doNothing().when(mockRepositoryManager).close();
