@@ -1674,9 +1674,9 @@ public class DataStreamsTest extends HydratorTestBase {
                 && !retryState.isPresent();
           },
           3, TimeUnit.MINUTES);
-      state.deleteSate(completedKey);
-      state.deleteSate(startedKey);
-      state.deleteSate(retryKey);
+      state.deleteState(completedKey);
+      state.deleteState(startedKey);
+      state.deleteState(retryKey);
 
       // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
       Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 3, TimeUnit.MINUTES);
@@ -1769,9 +1769,9 @@ public class DataStreamsTest extends HydratorTestBase {
             return startedState.isPresent() && retryState.isPresent() && completedState.isPresent();
           },
           3, TimeUnit.MINUTES);
-      state.deleteSate(completedKey);
-      state.deleteSate(startedKey);
-      state.deleteSate(retryKey);
+      state.deleteState(completedKey);
+      state.deleteState(startedKey);
+      state.deleteState(retryKey);
 
       // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
       Tasks.waitFor(true, () -> getDataset(outputName).get() != null, 3, TimeUnit.MINUTES);
