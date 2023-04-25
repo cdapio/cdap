@@ -273,14 +273,14 @@ public class RemoteAppStateStoreTest {
   public void testDeleteSuccess() throws IOException {
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
         NAMESPACE, SUCCESS_APP);
-    remoteAppStateStore.deleteSate("valid-key");
+    remoteAppStateStore.deleteState("valid-key");
   }
 
   @Test
   public void testDeleteSuccessWithSpaceInKey() throws IOException {
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
         NAMESPACE, SUCCESS_APP);
-    remoteAppStateStore.deleteSate("valid key with space");
+    remoteAppStateStore.deleteState("valid key with space");
   }
 
   @Test
@@ -288,7 +288,7 @@ public class RemoteAppStateStoreTest {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory,
         "invalid", "some_app");
-    remoteAppStateStore.deleteSate("some_key");
+    remoteAppStateStore.deleteState("some_key");
   }
 
   @Test
@@ -296,7 +296,7 @@ public class RemoteAppStateStoreTest {
     expectedException.expectCause(CoreMatchers.isA(NotFoundException.class));
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
         NOT_FOUND_APP);
-    remoteAppStateStore.deleteSate("some_key");
+    remoteAppStateStore.deleteState("some_key");
   }
 
   @Test
@@ -304,6 +304,6 @@ public class RemoteAppStateStoreTest {
     expectedException.expectCause(CoreMatchers.isA(RetryableException.class));
     RemoteAppStateStore remoteAppStateStore = new RemoteAppStateStore(cConf, remoteClientFactory, NAMESPACE,
         ERROR_APP);
-    remoteAppStateStore.deleteSate("some_key");
+    remoteAppStateStore.deleteState("some_key");
   }
 }

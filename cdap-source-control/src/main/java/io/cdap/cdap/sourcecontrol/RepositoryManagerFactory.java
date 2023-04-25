@@ -17,26 +17,31 @@
 package io.cdap.cdap.sourcecontrol;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 
 /**
- * The default implementation for RepositoryManagerFactory
+ * The default implementation for RepositoryManagerFactory.
  */
 public class RepositoryManagerFactory {
 
   private final SecureStore secureStore;
   private final CConfiguration cConf;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
-  RepositoryManagerFactory(SecureStore secureStore, CConfiguration cConf) {
+  RepositoryManagerFactory(SecureStore secureStore, CConfiguration cConf,
+      MetricsCollectionService metricsCollectionService) {
     this.secureStore = secureStore;
     this.cConf = cConf;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   public RepositoryManager create(NamespaceId namespace, RepositoryConfig repoConfig) {
-    return new RepositoryManager(secureStore, cConf, namespace, repoConfig);
+    return new RepositoryManager(secureStore, cConf, namespace, repoConfig,
+        metricsCollectionService);
   }
 }

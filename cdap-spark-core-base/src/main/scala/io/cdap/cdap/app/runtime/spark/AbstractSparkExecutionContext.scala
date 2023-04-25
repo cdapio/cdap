@@ -317,8 +317,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     runtimeContext.saveState(key, value);
   }
 
-  override def deleteSate(key: String): Unit = {
-    runtimeContext.deleteSate(key);
+  override def deleteState(key: String): Unit = {
+    runtimeContext.deleteState(key);
   }
 
   override def addProperties(metadataEntity: MetadataEntity, properties: util.Map[String, String]): Unit = {

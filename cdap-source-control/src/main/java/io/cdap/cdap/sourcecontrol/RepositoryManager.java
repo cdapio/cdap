@@ -17,11 +17,17 @@
 package io.cdap.cdap.sourcecontrol;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants.Metrics.SourceControlManagement;
+import io.cdap.cdap.common.conf.Constants.Metrics.Tag;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.sourcecontrol.RemoteRepositoryValidationException;
@@ -29,6 +35,7 @@ import io.cdap.cdap.proto.sourcecontrol.RepositoryConfig;
 import io.cdap.cdap.proto.sourcecontrol.RepositoryConfigValidationException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -36,7 +43,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -70,10 +79,12 @@ import org.slf4j.LoggerFactory;
  */
 public class RepositoryManager implements AutoCloseable {
 
+  private static final long MEGA_BYTES = 1000000;
   private static final Logger LOG = LoggerFactory.getLogger(
       RepositoryManager.class);
   private final SourceControlConfig sourceControlConfig;
   private final RefreshableCredentialsProvider credentialsProvider;
+  private final MetricsContext metricsContext;
   private Git git;
   // We clone the repository inside a randomly named directory to prevent
   // multiple repository managers for the same namespace from interfering with
@@ -81,23 +92,27 @@ public class RepositoryManager implements AutoCloseable {
   private final String randomDirectoryName;
 
   /**
-   * Default constructor for {@link RepositoryManager}
-   * @param secureStore secure store to fetch credentials from
-   * @param cConf cdap configuration
-   * @param namespace namespace linked with the repository
-   * @param repoConfig repository config
+   * Constructs a {@link RepositoryManager}.
+   *
+   * @param secureStore A store to fetch Git passwords.
+   * @param cConf CDAP configurations.
+   * @param namespace The CDAP namespace to whcih the Git repository is linked.
+   * @param repoConfig The repository configuration for the CDAP namespace.
+   * @param metricsCollectionService A metrics service to emit metrics related
+   *                                 to SCM operations.
    */
   public RepositoryManager(final SecureStore secureStore,
-      final CConfiguration cConf,
-      final NamespaceId namespace,
-      final RepositoryConfig repoConfig) {
+      final CConfiguration cConf, final NamespaceId namespace,
+      final RepositoryConfig repoConfig,
+      final MetricsCollectionService metricsCollectionService) {
+    Map<String, String> tags = ImmutableMap.of(Tag.NAMESPACE,
+        namespace.getNamespace());
+    this.metricsContext = metricsCollectionService.getContext(tags);
     this.sourceControlConfig = new SourceControlConfig(namespace, repoConfig,
         cConf);
     try {
       this.credentialsProvider = new AuthenticationStrategyProvider(
-          namespace.getNamespace(),
-          secureStore)
-          .get(repoConfig)
+          namespace.getNamespace(), secureStore).get(repoConfig)
           .getCredentialsProvider();
     } catch (AuthenticationStrategyNotFoundException e) {
       // This is not expected as only valid auth configs will be stored.
@@ -215,6 +230,7 @@ public class RepositoryManager implements AutoCloseable {
       final Path fileChanged)
       throws NoChangesToPushException, GitAPIException {
     validateInitialized();
+    final Stopwatch stopwatch = new Stopwatch().start();
 
     // if the status is clean skip
     Status preStageStatus = git.status().call();
@@ -258,6 +274,9 @@ public class RepositoryManager implements AutoCloseable {
       }
     }
 
+    metricsContext.event(
+        SourceControlManagement.COMMIT_PUSH_LATENCY_MILLIS,
+        stopwatch.stop().elapsedTime(TimeUnit.MILLISECONDS));
     return fileHash;
   }
 
@@ -293,17 +312,32 @@ public class RepositoryManager implements AutoCloseable {
     }
     // Clean up the directory if it already exists.
     deletePathIfExists(getRepositoryRoot());
-    RepositoryConfig repositoryConfig = sourceControlConfig
-        .getRepositoryConfig();
-    CloneCommand command =
-        createCommand(Git::cloneRepository).setURI(repositoryConfig.getLink())
-            .setDirectory(getRepositoryRoot().toFile());
+    RepositoryConfig repositoryConfig = sourceControlConfig.getRepositoryConfig();
+    CloneCommand command = createCommand(Git::cloneRepository).setURI(
+        repositoryConfig.getLink()).setDirectory(getRepositoryRoot().toFile());
     String branch = getBranchRefName(repositoryConfig.getDefaultBranch());
     if (branch != null) {
       command.setBranchesToClone(Collections.singleton((branch)))
           .setBranch(branch);
     }
+
+    final Stopwatch stopwatch = new Stopwatch().start();
     git = command.call();
+    final long cloneTimeMillis = stopwatch.stop()
+        .elapsedTime(TimeUnit.MILLISECONDS);
+
+    // Record the repository size metric.
+    try {
+      long repoSize = calculateDirectorySize(getRepositoryRoot());
+      metricsContext.event(SourceControlManagement.CLONE_REPOSITORY_SIZE_BYTES,
+          repoSize);
+      metricsContext.event(
+          SourceControlManagement.CLONE_LATENCY_MS, cloneTimeMillis);
+    } catch (IOException e) {
+      LOG.warn(
+          "Failed to calculate directory size, metrics for the clone operation will not be emitted.",
+          e);
+    }
     return resolveHead().getName();
   }
 
@@ -373,8 +407,7 @@ public class RepositoryManager implements AutoCloseable {
       throws IOException {
     // Find the node representing the exact file path in the tree.
     try (TreeWalk walk = TreeWalk.forPath(git.getRepository(),
-        relativePath.toString(),
-        commit.getTree())) {
+        relativePath.toString(), commit.getTree())) {
       if (walk == null) {
         LOG.warn("Path {} not found in Git tree", relativePath);
         return null;
@@ -564,5 +597,22 @@ public class RepositoryManager implements AutoCloseable {
         .call();
     git.clean().setCleanDirectories(true).setIgnore(true).call();
     return resolveHead().getName();
+  }
+
+  /**
+   * Calculates the size of a directory in bytes while ignoring symlinks.
+   *
+   * @param directoryPath the path of the root directory.
+   * @return the size of the directory in bytes.
+   * @throws IOException when there are failures while reading the file.
+   */
+  @VisibleForTesting
+  static long calculateDirectorySize(Path directoryPath) throws IOException {
+    try (Stream<Path> walk = Files.walk(directoryPath.toAbsolutePath())) {
+      return walk
+          .filter(p -> Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS))
+          .mapToLong(p -> p.toFile().length())
+          .sum();
+    }
   }
 }
