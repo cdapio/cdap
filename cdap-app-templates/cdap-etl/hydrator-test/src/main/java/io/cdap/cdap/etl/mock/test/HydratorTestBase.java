@@ -75,6 +75,7 @@ import io.cdap.cdap.etl.mock.condition.MockCondition;
 import io.cdap.cdap.etl.mock.connector.FileConnector;
 import io.cdap.cdap.etl.mock.spark.Window;
 import io.cdap.cdap.etl.mock.spark.compute.StringValueFilterCompute;
+import io.cdap.cdap.etl.mock.spark.streaming.MockStreamingEventSource;
 import io.cdap.cdap.etl.mock.transform.AllErrorTransform;
 import io.cdap.cdap.etl.mock.transform.DoubleTransform;
 import io.cdap.cdap.etl.mock.transform.DropNullTransform;
@@ -150,7 +151,8 @@ public class HydratorTestBase extends TestBase {
       FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
       NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS,
       NullAlertTransform.PLUGIN_CLASS,
-      SleepTransform.PLUGIN_CLASS, RecoveringTransform.PLUGIN_CLASS
+      SleepTransform.PLUGIN_CLASS, RecoveringTransform.PLUGIN_CLASS,
+      MockStreamingEventSource.PLUGIN_CLASS
   );
   protected static ArtifactId batchMocksArtifactId;
   protected static ArtifactId streamingMocksArtifactId;
