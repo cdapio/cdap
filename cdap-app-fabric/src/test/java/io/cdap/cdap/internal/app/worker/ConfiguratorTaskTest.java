@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.worker;
 
 import com.google.inject.Injector;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
 
@@ -26,7 +27,8 @@ public class ConfiguratorTaskTest {
   public void testConfiguratorTaskInjector()  {
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
-    Injector injector = ConfiguratorTask.createInjector(CConfiguration.create(), discoveryService, discoveryService);
+    Injector injector = ConfiguratorTask.createInjector(CConfiguration.create(),
+        discoveryService, discoveryService, new NoOpMetricsCollectionService());
     injector.getInstance(ConfiguratorTask.ConfiguratorTaskRunner.class);
   }
 }

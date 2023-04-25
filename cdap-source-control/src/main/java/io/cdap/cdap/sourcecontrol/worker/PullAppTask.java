@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -31,15 +32,21 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * A {@link io.cdap.cdap.api.service.worker.RunnableTask} to pull an application
+ * from a remote Git repository.
+ */
 public class PullAppTask extends SourceControlTask {
   private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(PullAppTask.class);
 
   @Inject
   PullAppTask(CConfiguration cConf,
-              DiscoveryService discoveryService,
-              DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, discoveryService, discoveryServiceClient);
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
+    super(cConf, discoveryService, discoveryServiceClient,
+        metricsCollectionService);
   }
 
   @Override

@@ -24,12 +24,12 @@ import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.api.service.worker.RunnableTaskRequest;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Unit test for {@link RunnableTaskLauncher}.
@@ -39,12 +39,13 @@ public class RunnableTaskLauncherTest {
   @Test
   public void testLaunchRunnableTask() throws Exception {
     String want = "test-want";
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(TestRunnableTask.class.getName()).
-      withParam(want).build();
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+        TestRunnableTask.class.getName()).withParam(want).build();
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
-    RunnableTaskLauncher launcher = new RunnableTaskLauncher(CConfiguration.create(),
-                                                             discoveryService, discoveryService);
+    RunnableTaskLauncher launcher = new RunnableTaskLauncher(
+        CConfiguration.create(), discoveryService, discoveryService,
+        new NoOpMetricsCollectionService());
     RunnableTaskContext context = new RunnableTaskContext(request);
     launcher.launchRunnableTask(context);
 
@@ -53,6 +54,7 @@ public class RunnableTaskLauncherTest {
   }
 
   public static class TestRunnableTask implements RunnableTask {
+
     @Override
     public void run(RunnableTaskContext context) throws Exception {
       context.writeResult(context.getParam().getBytes());
@@ -61,18 +63,19 @@ public class RunnableTaskLauncherTest {
 
   @Test
   public void testRunnableTaskRequestJsonConversion() {
-    ArtifactId artifactId = new ArtifactId("test-artifact", new ArtifactVersion("1.0"), ArtifactScope.SYSTEM);
-    RunnableTaskRequest request = RunnableTaskRequest.getBuilder("taskClassName").
-      withParam("param").
-      withNamespace("n1").
-      withArtifact(artifactId).
-      build();
+    ArtifactId artifactId = new ArtifactId("test-artifact",
+        new ArtifactVersion("1.0"), ArtifactScope.SYSTEM);
+    RunnableTaskRequest request = RunnableTaskRequest.getBuilder(
+            "taskClassName").withParam("param").withNamespace("n1")
+        .withArtifact(artifactId).build();
     Gson gson = new Gson();
     String requestJson = gson.toJson(request);
-    RunnableTaskRequest requestFromJson = gson.fromJson(requestJson, RunnableTaskRequest.class);
+    RunnableTaskRequest requestFromJson = gson.fromJson(requestJson,
+        RunnableTaskRequest.class);
     Assert.assertEquals(request.getClassName(), requestFromJson.getClassName());
     Assert.assertEquals(request.getNamespace(), requestFromJson.getNamespace());
     Assert.assertEquals(request.getParam(), requestFromJson.getParam());
-    Assert.assertEquals(request.getArtifactId(), requestFromJson.getArtifactId());
+    Assert.assertEquals(request.getArtifactId(),
+        requestFromJson.getArtifactId());
   }
 }
