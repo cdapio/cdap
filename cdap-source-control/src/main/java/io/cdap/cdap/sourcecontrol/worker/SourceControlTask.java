@@ -18,6 +18,7 @@ package io.cdap.cdap.sourcecontrol.worker;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.service.worker.RunnableTask;
 import io.cdap.cdap.api.service.worker.RunnableTaskContext;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -38,16 +39,19 @@ abstract class SourceControlTask implements RunnableTask {
   protected final InMemorySourceControlOperationRunner inMemoryOperationRunner;
 
   SourceControlTask(CConfiguration cConf,
-                    DiscoveryService discoveryService,
-                    DiscoveryServiceClient discoveryServiceClient) {
+      DiscoveryService discoveryService,
+      DiscoveryServiceClient discoveryServiceClient,
+      MetricsCollectionService metricsCollectionService) {
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      RemoteAuthenticatorModules.getDefaultModule(),
-      new SecureStoreClientModule(),
-      new AuthenticationContextModules().getMasterWorkerModule(),
-      new RunnableTaskModule(discoveryService, discoveryServiceClient)
+        new ConfigModule(cConf),
+        RemoteAuthenticatorModules.getDefaultModule(),
+        new SecureStoreClientModule(),
+        new AuthenticationContextModules().getMasterWorkerModule(),
+        new RunnableTaskModule(discoveryService, discoveryServiceClient,
+            metricsCollectionService)
     );
-    inMemoryOperationRunner = injector.getInstance(InMemorySourceControlOperationRunner.class);
+    inMemoryOperationRunner = injector.getInstance(
+        InMemorySourceControlOperationRunner.class);
   }
 
   @Override
