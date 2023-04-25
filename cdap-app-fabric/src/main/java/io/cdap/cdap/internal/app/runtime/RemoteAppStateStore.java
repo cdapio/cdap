@@ -128,7 +128,7 @@ public class RemoteAppStateStore implements AppStateStore {
   }
 
   @Override
-  public void deleteSate(String key) throws IOException {
+  public void deleteState(String key) throws IOException {
     if (key == null || key.isEmpty()) {
       throw new IllegalArgumentException(
           "Received null or empty value for required argument 'key'");

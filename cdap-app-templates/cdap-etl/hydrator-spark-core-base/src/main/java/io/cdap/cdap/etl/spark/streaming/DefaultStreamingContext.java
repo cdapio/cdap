@@ -158,9 +158,9 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   }
 
   @Override
-  public void deleteSate(String key) throws IOException {
+  public void deleteState(String key) throws IOException {
     // Make the key unique for the app
     String pluginKey = String.format("%s.%s", getStageName(), key);
-    sec.getSparkExecutionContext().deleteSate(pluginKey);
+    sec.getSparkExecutionContext().deleteState(pluginKey);
   }
 }
