@@ -52,5 +52,5 @@ public interface AppStateStore {
    * @param key Key for the state, should not be null
    * @throws IOException if the app is not available or otherwise unable to delete state
    */
-  void deleteSate(String key) throws IOException;
+  void deleteState(String key) throws IOException;
 }

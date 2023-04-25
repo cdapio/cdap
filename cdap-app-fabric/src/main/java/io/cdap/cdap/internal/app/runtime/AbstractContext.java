@@ -943,7 +943,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public void deleteSate(String key) throws IOException {
-    appStateStore.deleteSate(key);
+  public void deleteState(String key) throws IOException {
+    appStateStore.deleteState(key);
   }
 }
