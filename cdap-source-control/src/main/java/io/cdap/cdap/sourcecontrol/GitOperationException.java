@@ -14,20 +14,18 @@
  * the License.
  */
 
-package io.cdap.cdap.sourcecontrol.operationrunner;
+package io.cdap.cdap.sourcecontrol;
 
 /**
- * Exception thrown when source control operation fails in runner.
- * Encapsulates some underlying exceptions.
- * Should be subclassed for common root-causes
- */
-// TODO https://cdap.atlassian.net/browse/CDAP-20410 Classify and make suberrors based on root causes
-public class SourceControlException extends RuntimeException {
-  public SourceControlException(String message, Throwable cause) {
+ * Exception thrown when source control operation fails due to underlying git operation failure.
+ **/
+public class GitOperationException extends SourceControlException {
+
+  public GitOperationException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  public SourceControlException(String message) {
+  public GitOperationException(String message) {
     super(message);
   }
 }
