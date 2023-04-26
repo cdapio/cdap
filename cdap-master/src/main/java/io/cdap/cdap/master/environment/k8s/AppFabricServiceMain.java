@@ -53,6 +53,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.worker.TaskWorkerServiceLauncher;
 import io.cdap.cdap.internal.app.worker.system.SystemWorkerServiceLauncher;
+import io.cdap.cdap.internal.events.EventPublishManager;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -79,7 +80,7 @@ import javax.annotation.Nullable;
 public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
-   * Main entry point
+   * Main entry point.
    */
   public static void main(String[] args) throws Exception {
     main(AppFabricServiceMain.class, args);
@@ -129,10 +130,10 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-                             EnvironmentOptions options) {
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+      List<? super AutoCloseable> closeableResources,
+      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+      EnvironmentOptions options) {
+    final CConfiguration cConf = injector.getInstance(CConfiguration.class);
     closeableResources.add(injector.getInstance(AccessControllerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
@@ -163,6 +164,9 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     if (cConf.getBoolean(SystemWorker.POOL_ENABLE)) {
       services.add(injector.getInstance(SystemWorkerServiceLauncher.class));
     }
+
+    // Event publisher could rely on task workers for token generated for security enabled deployments
+    services.add(injector.getInstance(EventPublishManager.class));
 
     // Adds the master environment tasks
     masterEnv.getTasks().forEach(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
