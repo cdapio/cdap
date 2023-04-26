@@ -18,13 +18,14 @@ package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.lang.ClassLoaders;
+import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -48,7 +49,8 @@ public class MapReduceContainerLauncher {
   public static void launch(String mainClassName, String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new ArrayList<>());
+    Set<URL> urls = new LinkedHashSet<>();
+    urls.addAll(ClassPathResources.getClasspathUrls());
 
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
@@ -58,8 +60,9 @@ public class MapReduceContainerLauncher {
       throw new IllegalStateException("Failed to find resource for main class " + mainClassName);
     }
 
-    if (!urls.remove(ClassLoaders.getClassPathURL(mainClassName, resource))) {
-      throw new IllegalStateException("Failed to remove main class resource " + resource);
+    URL urlByClass = getURLByClass(systemClassLoader, mainClassName);
+    if (!urls.remove(urlByClass)) {
+      throw new Exception("Failed to remove url " + urlByClass + " for class " + mainClassName);
     }
 
     // Create a MainClassLoader for dataset rewrite
@@ -122,5 +125,13 @@ public class MapReduceContainerLauncher {
       t.printStackTrace();
       throw t;
     }
+  }
+  
+  private static URL getURLByClass(ClassLoader classLoader, String className) {
+    URL resource = classLoader.getResource(className.replace('.', '/') + ".class");
+    if (resource == null) {
+      throw new IllegalStateException("Failed to find .class file resource for class " + className);
+    }
+    return ClassLoaders.getClassPathURL(className, resource);
   }
 }
