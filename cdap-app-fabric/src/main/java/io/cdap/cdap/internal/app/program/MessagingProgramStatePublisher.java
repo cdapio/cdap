@@ -37,6 +37,7 @@ import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
 import io.cdap.cdap.proto.Notification;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -64,6 +65,12 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
   private final List<TopicId> topicIds;
   private final RetryStrategy retryStrategy;
 
+  /**
+   * Create a publisher that writes to MessagingService topics depending on the message content.
+   *
+   * @param cConf configuration containing the topic prefix and number of partitions
+   * @param messagingService messaging service to write messages to
+   */
   @Inject
   public MessagingProgramStatePublisher(CConfiguration cConf, MessagingService messagingService) {
     this(
@@ -75,6 +82,16 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
     );
   }
 
+  /**
+   * Create a publisher that writes to MessagingService topics depending on the message content.
+   *
+   * @param messagingService messaging service to write messages to
+   * @param topicPrefix prefix of the topic(s) to write to. If there is one topic, the prefix
+   *     will be the topic name. If there is more than one topic, the topic name will be the
+   *     prefix followed by the topic number
+   * @param numTopics number of topics to write to
+   * @param retryStrategy retry strategy to use for failures
+   */
   @VisibleForTesting
   public MessagingProgramStatePublisher(MessagingService messagingService,
       String topicPrefix, int numTopics, RetryStrategy retryStrategy) {
@@ -98,9 +115,17 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
       return topicIds.get(0);
     }
     ProgramRunId programRunId = GSON.fromJson(programRunIdStr, ProgramRunId.class);
-    return topicIds.get(Math.abs(programRunId.getRun().hashCode()) % topicIds.size());
+    ApplicationId applicationId = programRunId.getParent().getParent();
+    return topicIds.get(Math.abs(applicationId.hashCode()) % topicIds.size());
   }
 
+  /**
+   * Publish a notification to a topic. The topic chosen is based on the application id for
+   * the notification.
+   *
+   * @param notificationType type of the notification of the message
+   * @param properties properties of the message to publish, assumed to contain the program run id
+   */
   public void publish(Notification.Type notificationType, Map<String, String> properties) {
     // ProgramRunId is always required in a notification
     Notification programStatusNotification = new Notification(notificationType, properties);

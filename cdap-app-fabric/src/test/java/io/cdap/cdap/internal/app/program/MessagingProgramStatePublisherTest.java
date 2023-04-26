@@ -26,6 +26,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import java.io.IOException;
 import java.util.Map;
@@ -76,7 +77,8 @@ public class MessagingProgramStatePublisherTest {
     Map<String, String> properties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(runId));
     publisher.publish(Notification.Type.PROGRAM_STATUS, properties);
-    int topicNum = Math.abs(RUN_ID.hashCode() % NUM_PARTITIONS);
+    ApplicationId applicationId = runId.getParent().getParent();
+    int topicNum = Math.abs(applicationId.hashCode()) % NUM_PARTITIONS;
     Mockito.verify(messagingService).publish(storeRequestCaptor.capture());
     StoreRequest storeRequest = storeRequestCaptor.getValue();
     Assert.assertEquals("programstatusevent" + topicNum, storeRequest.getTopicId().getTopic());
