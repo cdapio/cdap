@@ -30,10 +30,13 @@ import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.sourcecontrol.AuthenticationConfigException;
 import io.cdap.cdap.sourcecontrol.CommitMeta;
+import io.cdap.cdap.sourcecontrol.ConfigFileWriteException;
+import io.cdap.cdap.sourcecontrol.GitOperationException;
 import io.cdap.cdap.sourcecontrol.NoChangesToPushException;
 import io.cdap.cdap.sourcecontrol.RepositoryManager;
 import io.cdap.cdap.sourcecontrol.RepositoryManagerFactory;
 import io.cdap.cdap.sourcecontrol.SecureSystemReader;
+import io.cdap.cdap.sourcecontrol.SourceControlException;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileWriter;
@@ -77,7 +80,7 @@ public class InMemorySourceControlOperationRunner extends
       try {
         repositoryManager.cloneRemote();
       } catch (GitAPIException | IOException e) {
-        throw new SourceControlException(String.format("Failed to clone remote repository: %s",
+        throw new GitOperationException(String.format("Failed to clone remote repository: %s",
                                                        e.getMessage()), e);
       }
 
@@ -116,7 +119,7 @@ public class InMemorySourceControlOperationRunner extends
       AppRequest<?> appRequest = DECODE_GSON.fromJson(contents, AppRequest.class);
       return new PullAppResponse<>(applicationName, fileHash, appRequest);
     } catch (GitAPIException e) {
-      throw new SourceControlException(String.format("Failed to pull application %s: %s",
+      throw new GitOperationException(String.format("Failed to pull application %s: %s",
                                                      applicationName,
                                                      e.getMessage()), e);
     } catch (JsonSyntaxException e) {
@@ -169,9 +172,9 @@ public class InMemorySourceControlOperationRunner extends
     try (FileWriter writer = new FileWriter(filePathToWrite.toString())) {
       GSON.toJson(appToPush, writer);
     } catch (IOException e) {
-      throw new SourceControlException(String.format("Failed to write application config to path %s",
-                                                     appRelativePath),
-                                       e);
+      throw new ConfigFileWriteException(
+          String.format("Failed to write application config to path %s", appRelativePath), e
+      );
     }
 
     LOG.debug("Wrote application configs for {} in file {}", appToPush.getName(), appRelativePath);
@@ -182,7 +185,7 @@ public class InMemorySourceControlOperationRunner extends
       String gitFileHash = repositoryManager.commitAndPush(commitDetails, appRelativePath);
       return new PushAppResponse(appToPush.getName(), appToPush.getAppVersion(), gitFileHash);
     } catch (GitAPIException e) {
-      throw new SourceControlException(String.format("Failed to push config to git: %s", e.getMessage()), e);
+      throw new GitOperationException(String.format("Failed to push config to git: %s", e.getMessage()), e);
     }
   }
 
@@ -247,7 +250,7 @@ public class InMemorySourceControlOperationRunner extends
       }
       return new RepositoryAppsResponse(responses);
     } catch (IOException | GitAPIException e) {
-      throw new SourceControlException(String.format("Failed to list application configs in directory %s: %s",
+      throw new GitOperationException(String.format("Failed to list application configs in directory %s: %s",
                                                      nameSpaceRepository.getRepositoryConfig().getPathPrefix(),
                                                      e.getMessage()), e);
     }
