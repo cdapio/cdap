@@ -1,0 +1,32 @@
+# Copyright © 2023 Cask Data, Inc.
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#  use this file except in compliance with the License. You may obtain a copy of
+#  the License at
+#  http://www.apache.org/licenses/LICENSE-2.0
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations under
+#  the License.
+
+name: Report Build Result
+on:
+  workflow_run:
+    workflows:
+      - Build with unit tests
+    types:
+      - completed
+    branches:
+      - 'release/**'
+      - 'develop'
+
+jobs:
+
+  report:
+    runs-on: cdapio-hub-k8-runner
+
+    steps:
+      - name: Write result to BigQuery
+        run: |
+          echo '{ "repository": "${{ github.repository }}", "build_name": "${{ github.event.workflow.name }}", "branch": "${{ github.event.workflow_run.head_branch }}", "conclusion": "${{ github.event.workflow_run.conclusion }}", "started_at": "${{ github.event.workflow_run.created_at }}", "ended_at": "${{ github.event.workflow_run.updated_at }}", "url": "${{ github.event.workflow_run.html_url }}", "run_id": "${{ github.event.workflow_run.id }}", "run_attempt": "${{ github.event.workflow_run.run_attempt }}" }' | bq insert ${{ vars.BUILD_HISTORY_TABLE }}
+
