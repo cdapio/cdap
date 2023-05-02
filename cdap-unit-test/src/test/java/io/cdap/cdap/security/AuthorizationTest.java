@@ -1398,8 +1398,9 @@ public class AuthorizationTest extends TestBase {
 
   private void createAuthNamespace() throws Exception {
     AccessController accessController = getAccessController();
-    grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.GET, StandardPermission.CREATE));
+    grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.CREATE));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
+    grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(StandardPermission.GET));
     Assert.assertEquals(ImmutableSet.of(new GrantedPermission(AUTH_NAMESPACE, StandardPermission.GET),
                                         new GrantedPermission(AUTH_NAMESPACE, StandardPermission.CREATE)),
                         accessController.listGrants(ALICE));
