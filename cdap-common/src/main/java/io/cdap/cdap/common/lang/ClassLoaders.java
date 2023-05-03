@@ -268,7 +268,7 @@ public final class ClassLoaders {
    */
   public static URL getClassPathURL(String className, URL classUrl) {
     try {
-      if ("file".equals(classUrl.getProtocol())) {
+      if ("file".equals(classUrl.getProtocol()) || "jrt".equals(classUrl.getProtocol())) {
         String path = classUrl.getFile();
         // Compute the directory container the class.
         int endIdx = path.length() - className.length() - ".class".length();
@@ -276,7 +276,7 @@ public final class ClassLoaders {
           // If it is not the root directory, return the end index to remove the trailing '/'.
           endIdx--;
         }
-        return new URL("file", "", -1, path.substring(0, endIdx));
+        return new URL(classUrl.getProtocol(), "", -1, path.substring(0, endIdx));
       }
       if ("jar".equals(classUrl.getProtocol())) {
         String path = classUrl.getFile();
