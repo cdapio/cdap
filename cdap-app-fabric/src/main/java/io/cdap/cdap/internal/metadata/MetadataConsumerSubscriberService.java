@@ -261,25 +261,43 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
         // create ProgramRun and LineageInfo for MetadataConsumer
         long startTimeMs = RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS);
         long endTimeMs = System.currentTimeMillis();
+        LOG.info("------startTimeMs - {}-----", startTimeMs);
+        LOG.info("------endTimeMs - {}-----", endTimeMs);
         run = getProgramRunForConsumer(programRunId, startTimeMs, endTimeMs);
+        LOG.info("------run - {}-----", run);
         info = getLineageInfoForConsumer(fieldLineageInfo, startTimeMs, endTimeMs);
+        LOG.info("------info - {}-----", info);
+        LOG.info("------sources - {}-----", info.getSources());
+        LOG.info("------targets - {}-----", info.getTargets());
+        LOG.info("------source to targets - {}-----", info.getSourceToTargets());
+        LOG.info("------target to sources - {}-----", info.getTargetToSources());
+        LOG.info("------lineage ID - {}-----", info.getLineageId());
+        LOG.info("------start time ms - {}-----", info.getStartTimeMs());
+        LOG.info("------end time ms - {}-----", info.getEndTimeMs());
       } catch (IllegalArgumentException e) {
         LOG.warn("Error while processing field-lineage information received from TMS. Ignoring : {}", message, e);
         return;
       }
       this.consumers.forEach((key, consumer) -> {
+        LOG.info("------creating consumer context-----");
         DefaultMetadataConsumerContext metadataConsumerContext =
           new DefaultMetadataConsumerContext(cConf, consumer.getName(), this.metricsCollectionService,
                                              run.getNamespace(), run.getApplication());
+        LOG.info("------consumer context - {}-----", metadataConsumerContext);
+        LOG.info("------consumer context properties - {}-----", metadataConsumerContext.getProperties());
         MetadataConsumerMetrics metrics = metadataConsumerContext.getMetrics(Collections.emptyMap());
+        LOG.info("------consumer context metrics - {}-----", metrics);
         try {
           metrics.increment("metadata.consumer.calls.attempted", 1);
           // if there is any error from the implementation, log and continue here
           // as we are already retrying at the service level
+          LOG.info("------incremented calls metrics-----");
           consumer.consumeLineage(metadataConsumerContext, run, info);
+          LOG.info("------successfully called consumer without errors-----");
         } catch (Throwable e) {
           LOG.error("Error calling the metadata consumer {}: {}", consumer.getName(), e.getMessage());
           metrics.increment("metadata.consumer.calls.failed", 1);
+          LOG.info("------incremented error metrics-----");
         }
       });
     }
