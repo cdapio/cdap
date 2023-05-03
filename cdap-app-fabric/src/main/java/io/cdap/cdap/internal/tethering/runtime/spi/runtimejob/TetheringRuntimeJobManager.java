@@ -256,8 +256,9 @@ public class TetheringRuntimeJobManager implements RuntimeJobManager {
   /**
    * Create control message payload to stop or kill a program.
    */
-  private TetheringControlMessage createProgramTerminatePayload(ProgramRunInfo programRunInfo,
-                                                                TetheringControlMessage.Type messageType) {
+  @VisibleForTesting
+  public static TetheringControlMessage createProgramTerminatePayload(ProgramRunInfo programRunInfo,
+      TetheringControlMessage.Type messageType) {
     byte[] payload = Bytes.toBytes(GSON.toJson(programRunInfo));
     return new TetheringControlMessage(messageType, payload);
   }
