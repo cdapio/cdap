@@ -18,6 +18,7 @@ package io.cdap.cdap.proto.id;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.element.EntityType;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -56,6 +57,14 @@ public class ProgramRunId extends NamespacedEntityId implements ParentedId<Progr
     this.type = type;
     this.program = program;
     this.run = run;
+  }
+
+  public ProgramRunId(ProgramRunInfo programRunInfo) {
+    this(new ApplicationId(programRunInfo.getNamespace(), programRunInfo.getApplication(),
+            programRunInfo.getVersion()),
+        ProgramType.valueOf(programRunInfo.getProgramType()),
+        programRunInfo.getProgram(),
+        programRunInfo.getRun());
   }
 
   public String getApplication() {
