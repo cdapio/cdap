@@ -315,6 +315,13 @@ public class MetadataConsumerSubscriberService extends AbstractMessagingSubscrib
 
     private LineageInfo getLineageInfoForConsumer(FieldLineageInfo lineage, long startTimeMs,
         long endTimeMs) {
+      LOG.info("------fll sources - {}-----", lineage.getSources());
+      LOG.info("------fll dests - {}-----", lineage.getDestinations());
+      LOG.info("------fll dest fields- {}-----", lineage.getDestinationFields());
+      LOG.info("------fll operations - {}-----", lineage.getOperations());
+      LOG.info("------fll inc summ - {}-----", lineage.getIncomingSummary());
+      LOG.info("------fll out summ- {}-----", lineage.getOutgoingSummary());
+      LOG.info("------fll checksum - {}-----", lineage.getChecksum());
       return LineageInfo.builder()
           .setStartTimeMs(startTimeMs)
           .setEndTimeMs(endTimeMs)
